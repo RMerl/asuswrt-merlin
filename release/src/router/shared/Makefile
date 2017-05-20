@@ -177,7 +177,7 @@ ifeq ($(CONFIG_BCMWL5),y)
 ifneq ($(RTCONFIG_DSL),y)
 CFLAGS += -DTRX_NEW
 endif
-OBJS += $(if $(wildcard private.c),private.o,prebuild/private.o)
+OBJS += prebuild/private.o
 OBJS += wlif_utils.o UdpLib.o bcmutils.o
 OBJS += bcmwifi_channels.o
 endif

@@ -81,7 +81,7 @@
 #include "clients.h"
 #include "process.h"
 #include "sendfile.h"
-#ifdef MS_IPK
+#if defined MS_IPK || defined MS_LIMIT
 #include "metadata.h"
 #endif
 
@@ -2164,7 +2164,23 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 	image_s *imsrc = NULL, *imdst = NULL;
 	int scale = 1;
 	const char *tmode;
-
+#if defined MS_IPK || defined MS_LIMIT
+	//avoid OOM when generate the small pic 
+	char *cache_file;
+	char *no_thumb_image_path_dir = NULL;
+	char no_thumb_image_path_dir_buf[PATH_MAX] = {0};
+	char no_thumb_image_path[PATH_MAX] = {0};
+	/* Get no_thumb_image_path */
+#ifdef MS_IPK
+	no_thumb_image_path_dir = realpath("/opt/etc/downloadmaster/mediaserverui/images", no_thumb_image_path_dir_buf);
+#else
+    	no_thumb_image_path_dir = realpath("/www/images", no_thumb_image_path_dir_buf);
+#endif
+	if (no_thumb_image_path_dir)
+		snprintf(no_thumb_image_path, sizeof(no_thumb_image_path), "%s/ic_file_image.jpg", no_thumb_image_path_dir);
+	else
+		snprintf(no_thumb_image_path, sizeof(no_thumb_image_path), "%s/ic_file_image.jpg", no_thumb_image_path_dir_buf);
+#endif
 	id = strtoll(object, &saveptr, 10);
 	snprintf(buf, sizeof(buf), "SELECT PATH, RESOLUTION, ROTATION from DETAILS where ID = '%lld'", (long long)id);
 	ret = sql_get_table(db, buf, &result, &rows, NULL);
@@ -2219,6 +2235,7 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 		}
 	}
 
+#if !defined MS_IPK && !defined MS_LIMIT
 #if USE_FORK
 	pid_t newpid = 0;
 	newpid = process_fork(h->req_client);
@@ -2227,6 +2244,7 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 		CloseSocket_upnphttp(h);
 		goto resized_error;
 	}
+#endif
 #endif
 	if( h->reqflags & (FLAG_XFERSTREAMING|FLAG_RANGE) )
 	{
@@ -2296,11 +2314,13 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 		scale = 2;
 
 	INIT_STR(str, header);
-
+	
+#if !defined MS_IPK && !defined MS_LIMIT
 #if USE_FORK
 	if( (h->reqflags & FLAG_XFERBACKGROUND) && (setpriority(PRIO_PROCESS, 0, 19) == 0) )
 		tmode = "Background";
 	else
+#endif
 #endif
 		tmode = "Interactive";
 	start_dlna_header(&str, 200, tmode, "image/jpeg");
@@ -2310,7 +2330,14 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 	if( strcmp(h->HttpVer, "HTTP/1.0") == 0 )
 	{
 		chunked = 0;
+#if defined MS_IPK || defined MS_LIMIT
+		if (thumb_cache_exists(file_path, &cache_file))
+			imsrc = image_new_from_jpeg(cache_file, 1, NULL, 0, 1, rotate);
+		else
+			imsrc = image_new_from_jpeg(no_thumb_image_path, 1, NULL, 0, 1, rotate);
+#else
 		imsrc = image_new_from_jpeg(file_path, 1, NULL, 0, scale, rotate);
+#endif
 	}
 	else
 	{
@@ -2327,7 +2354,11 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 			goto resized_error;
 		}
 
-		imdst = image_resize(imsrc, dstw, dsth);
+#if defined MS_IPK || defined MS_LIMIT
+        imdst = imsrc;
+#else
+        imdst = image_resize(imsrc, dstw, dsth);
+#endif
 		data = image_save_to_jpeg_buf(imdst, &size);
 
 		strcatf(&str, "Content-Length: %d\r\n\r\n", size);
@@ -2337,14 +2368,27 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 	{
 		if( chunked )
 		{
-			imsrc = image_new_from_jpeg(file_path, 1, NULL, 0, scale, rotate);
-			if( !imsrc )
+
+#if defined MS_IPK || defined MS_LIMIT
+            if (thumb_cache_exists(file_path, &cache_file))
+                imsrc = image_new_from_jpeg(cache_file, 1, NULL, 0, 1, rotate);
+            else
+                imsrc = image_new_from_jpeg(no_thumb_image_path, 1, NULL, 0, 1, rotate);
+#else
+            imsrc = image_new_from_jpeg(file_path, 1, NULL, 0, scale, rotate);
+#endif
+            if( !imsrc )
 			{
 				DPRINTF(E_WARN, L_HTTP, "Unable to open image %s!\n", file_path);
 				Send500(h);
 				goto resized_error;
 			}
-			imdst = image_resize(imsrc, dstw, dsth);
+			
+#if defined MS_IPK || defined MS_LIMIT
+            imdst = imsrc;
+#else
+            imdst = image_resize(imsrc, dstw, dsth);
+#endif
 			data = image_save_to_jpeg_buf(imdst, &size);
 
 			ret = sprintf(buf, "%x\r\n", size);
@@ -2360,14 +2404,25 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 	DPRINTF(E_INFO, L_HTTP, "Done serving %s\n", file_path);
 	if( imsrc )
 		image_free(imsrc);
-	if( imdst )
-		image_free(imdst);
+#if defined MS_IPK || defined MS_LIMIT
+    if(cache_file){
+        free(cache_file);
+        cache_file=NULL;
+    }
+    if (data)
+        free(data);
+#else
+    if( imdst )
+        image_free(imdst);
+#endif
 	CloseSocket_upnphttp(h);
 resized_error:
 	sqlite3_free_table(result);
+#if !defined MS_IPK && !defined MS_LIMIT
 #if USE_FORK
 	if( newpid == 0 )
 		_exit(0);
+#endif
 #endif
 }
 

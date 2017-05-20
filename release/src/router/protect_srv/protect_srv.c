@@ -24,12 +24,10 @@
 #include <syslog.h>
 /*--*/
 #include <libptcsrv.h>
-#include <linklist.h>
+#include "nvram.cc"
 
 #ifdef ASUSWRT_SDK /* ASUSWRT SDK */
 #else /* DSL_ASUSWRT SDK */
-#include <shared.h>
-#include "libtcapi.h"
 #endif
 
 #ifdef RTCONFIG_NOTIFICATION_CENTER
@@ -43,19 +41,6 @@
 #define ErrorMsg(fmt,args...) \
 	Debug2Console("[ProtectionSrv][%s:(%d)]"fmt, __FUNCTION__, __LINE__, ##args);
 
-/*  ### [RETRY_EXPIRED_MODE] ###       *
- *  Switch expired mode/unlimit mode   */
-#define ENABLE_RETRY_EXPIRED_MODE 1
-
-/*  ### For user retry */
-#define RETRY_INTERVAL_TIME 60
-#define RETRY 5
-
-/*  ### DROP_EXPIRED_MODE] ###  *
- *  For drop src ip time        */
-#define ENABLE_DROP_EXPIRED_MODE 1
-#define PROTECTION_VALIDITY_TIME 5 /* minutes */
-
 #define MUTEX pthread_mutex_t
 #define MUTEXINIT(m) pthread_mutex_init(m, NULL)
 #define MUTEXLOCK(m) pthread_mutex_lock(m)
@@ -63,209 +48,191 @@
 #define MUTEXUNLOCK(m) pthread_mutex_unlock(m)
 #define MUTEXDESTROY(m) pthread_mutex_destroy(m)
 
+#define WAN_SSH        1
+#define LAN_SSH        2
+#define LAN_TELNET     3
+
+#define F_SET(value,x) ( (value) |=  (0x1 << x))
+#define F_CLR(value,x) ( (value) &= ~(0x1 << x))
+
+#define RETRY 5
+#define PROTECTION_VALIDITY_TIME 5 /* minutes */
 
 enum {
-	OFF=0,
-	ON
+	F_OFF=0,
+	F_ON
 };
 
-static MUTEX report_list_lock;
-static MUTEX drop_list_lock;
-struct list *report_list=NULL;
-struct list *drop_list=NULL;
+static int RECV_SIG_FLAG = 0;
+static int LOCK = 0;
+static int WAN_ERROR_SSH_CNT = 0;
+static int LAN_ERROR_SSH_CNT = 0;
+static int LAN_ERROR_TELNET_CNT = 0;
+time_t WAN_LOCK_SSH_T;
+time_t LAN_LOCK_SSH_T;
+time_t LAN_LOCK_TELNET_T;
 static int terminated = 1;
 
-/* ------- Internal Function Define -------- */
-static int insert_drop_rules();
-static void start_local_socket(void);
-static void local_socket_thread(void);
-/* ------- Internal Function Define End ----- */
-
-
-void handlesignal(int signum)
+#ifdef RTCONFIG_NOTIFICATION_CENTER
+static void SEND_FAIL_LOGIN_EVENT(int e, char *ip)
 {
-	if (signum == SIGUSR1) {
-		insert_drop_rules();
-	} else if (signum == SIGTERM) {
-		terminated = 0;
-	} else
-		MyDBG("Unknown SIGNAL\n");
+		char msg[100];
+		snprintf(msg, sizeof(msg), "{\"IP\":\"%s\",\"msg\":\"\"}", ip);
+		SEND_NT_EVENT(e, msg);
+}
+#endif
+
+static uint32_t parseIpaddrstr(char const *ipAddress)
+{
+	unsigned int ip[4];
+	
+	if ( 4 != sscanf(ipAddress, "%u.%u.%u.%u", &ip[0], &ip[1], &ip[2], &ip[3]) ) {
+		return 0;
+	}
+	
+	return ip[3] + ip[2] * 0x100 + ip[1] * 0x10000ul + ip[0] * 0x1000000ul;
+}
+static int IsSameSubnet(uint32_t ip, uint32_t netIp, uint32_t netMask)
+{
+	if ((netIp & netMask) == (ip & netMask)) {
+		/* on same subnet */
+		return 1;
+	}
+	return 0;
 	
 }
-
-static void signal_register(void)
+static int IsLanSide(uint32_t ip)
 {
-	struct sigaction sa;
+	char lan_ip[64], lan_netmask[64];
+	uint8_t p1, p2, p3, p4;
 	
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler =  &handlesignal;
-	/* Handle Inser Firewall Rules via SIGUSR1 */
-	sigaction(SIGUSR1, &sa, NULL);
-	sigaction(SIGUSR2, &sa, NULL);
-	sigaction(SIGTERM, &sa, NULL);    
-}
-
-static PTCSRV_STATE_REPORT_T *stateReport_listcreate(PTCSRV_STATE_REPORT_T input)
-{
-	PTCSRV_STATE_REPORT_T *new=malloc(sizeof(*new));
+	p1 = (uint8_t) (ip >> 24);
+	p2 = (uint8_t)((ip >> 16) & 0x0ff);
+	p3 = (uint8_t)((ip >> 8 ) & 0x0ff);
+	p4 = (uint8_t) (ip & 0x0ff);
 	
-	memcpy(new,&input,sizeof(*new));
-	return new;
-}
-
-static DROP_REPORT_T *drop_listcreate(DROP_REPORT_T input)
-{
-	DROP_REPORT_T *new=malloc(sizeof(*new));
 	
-	memcpy(new,&input,sizeof(*new));
-	return new;
+	if (GetLanIpaddr(lan_ip, sizeof(lan_ip)) &&
+	    GetLanNetmask(lan_netmask, sizeof(lan_netmask))) {
+		if (IsSameSubnet(ip, parseIpaddrstr(lan_ip), parseIpaddrstr(lan_netmask))) {
+			MyDBG("From LAN side.\n");
+			return 1;
+		}
+	}
+	
+	MyDBG("From WAN side.\n");
+	return 0;
 }
-
-static int insert_drop_rules()
+static int insert_lock_rule(char *wanType, int serType)
 {
 	FILE *fp;
-	struct listnode *ln;
-	DROP_REPORT_T *sreport;
+	char chain[32];
 	
 	if ((fp = fopen(PROTECT_SRV_RULE_FILE, "w")) == NULL) 
 		return -1;
 	
+	snprintf(chain, sizeof(chain), "%s%s", 
+		 PROTECT_SRV_RULE_CHAIN, wanType);
+	
 	fprintf(fp, "*filter\n");
 	
-	LIST_LOOP(drop_list,sreport,ln)
-	{
-		fprintf(fp, "-A %s -s %s -j DROP\n", PROTECT_SRV_RULE_CHAIN, sreport->addr);
-	}
+	fprintf(fp, "-A %s -p tcp --dport %d  -j DROP\n",
+		chain, (serType == PROTECTION_SERVICE_SSH) ? GetSSHport() : 23);
 	
 	fprintf(fp, "COMMIT\n");
 	fclose(fp);
-	system("iptables -F " PROTECT_SRV_RULE_CHAIN);
+	
 	system("iptables-restore --noflush " PROTECT_SRV_RULE_FILE);
-	MyDBG("Finish inser ruls to %s chain.\n", PROTECT_SRV_RULE_CHAIN)
-	return 1;
-}
-
-static void insert_to_drop_list(char *addr)
-{
-	DROP_REPORT_T *sreport;
-	DROP_REPORT_T report;
-	struct listnode *ln;
-	char   log[256];
-	time_t now;
 	
-	LIST_LOOP(drop_list,sreport,ln)
-	{
-		if (!strcmp(sreport->addr, addr)) {
-			MyDBG("Already in drop_list return.\n");
-			return;
-		}
-	}
-	strcpy(report.addr, addr);
-#ifdef ENABLE_DROP_EXPIRED_MODE
-	report.tstamp = time(&now);
-#else
-	report.tstamp = 0;
-#endif
-	sreport=drop_listcreate(report);
+	MyDBG("Add %s rules into %s chain.\n",
+	      (serType == PROTECTION_SERVICE_SSH) ? "SSH" : "TELNET", chain);
 	
-	if (sreport)
-		listnode_add(drop_list,(void*)sreport);
-	
-#ifdef RTCONFIG_NOTIFICATION_CENTER
-	char msg[100];
-	snprintf(msg, sizeof(msg), "{\"IP\":\"%s\",\"msg\":\"\"}", report.addr);
-	SEND_NT_EVENT(LOGIN_FAIL_SSH_EVENT, msg);
-#endif
-	MyDBG("New [%s] dropTime:[%d minutes] add to drop list\n",report.addr, PROTECTION_VALIDITY_TIME);
-	snprintf(log, sizeof(log), "Detect [%s] abnormal logins many times, system will block this IP %d minutes.\n",
-		report.addr, PROTECTION_VALIDITY_TIME);
-	syslog(LOG_WARNING, log);
-	
-	insert_drop_rules();
-}
-
-/*
-static int query_addr_from_drop_list(char *addr)
-{
-	DROP_REPORT_T *sreport;
-	struct listnode *ln;
-	
-	LIST_LOOP(drop_list,sreport,ln)
-	{
-		if (!strcmp(sreport->addr, addr))
-			return 1;
-	}
 	return 0;
+	
 }
-*/
-
-#ifdef ENABLE_DROP_EXPIRED_MODE
-static void check_drop_list()
+static void flush_rule(char *wanType, int serType)
 {
-	DROP_REPORT_T *sreport;
-	struct listnode *ln;
-	int check;
+	char chain[32];
+	char cmd[64];
+	
+	snprintf(chain, sizeof(chain), "%s%s", 
+		 PROTECT_SRV_RULE_CHAIN, wanType);
+	
+	snprintf(cmd, sizeof(cmd), "iptables -D %s -p tcp --dport %d -j DROP",
+		 chain, (serType == PROTECTION_SERVICE_SSH) ? GetSSHport() : 23);
+	system(cmd);
+	
+	MyDBG("Flush %s chain of the %s rule.\n",
+	      chain, (serType == PROTECTION_SERVICE_SSH) ? "SSH" : "TELNET");
+}
+static void check_wanlan_lock()
+{
 	time_t now;
 	
-	check = 0;
-	MUTEXLOCK(&drop_list_lock);
-	LIST_LOOP(drop_list,sreport,ln)
-	{
-		if (time(&now) - sreport->tstamp >= PROTECTION_VALIDITY_TIME*60) {
-			MyDBG("[%s] VALIDITY_TIME:[%d] has been timeout.\n", sreport->addr, PROTECTION_VALIDITY_TIME*60);
-			check = 1;
-			break;
+	if (RECV_SIG_FLAG) {
+		
+		RECV_SIG_FLAG = F_OFF;
+		if (LOCK & (0x1 << WAN_SSH)) {
+			insert_lock_rule("WAN", PROTECTION_SERVICE_SSH);
+		}
+		
+		if (LOCK & (0x1 << LAN_SSH)) {
+			insert_lock_rule("LAN", PROTECTION_SERVICE_SSH);
+		}
+		
+		if (LOCK & (0x1 << LAN_TELNET)) {
+			insert_lock_rule("LAN", PROTECTION_SERVICE_TELNET);
 		}
 	}
-	if (check) {
-		MyDBG("Delete [%s] from drop_list\n", sreport->addr);
-		listnode_delete(drop_list, sreport);
-		MUTEXUNLOCK(&drop_list_lock);
-		insert_drop_rules();
-	} else 
-		MUTEXUNLOCK(&drop_list_lock);
-}
-#endif
-
-void check_report_list()
-{
-	PTCSRV_STATE_REPORT_T *sreport;
-	struct listnode *ln;
-	int check;
 	
-	check = 0;
-	MUTEXLOCK(&report_list_lock);
-	LIST_LOOP(report_list,sreport,ln)
-	{
-		if (sreport->frequency >= RETRY) {
-			MyDBG("[%s] already over %d retry time, add to droplist\n", sreport->addr, RETRY);
-			insert_to_drop_list(sreport->addr);
-			check = 1;
-			break;
-		} 
-#if ENABLE_RETRY_EXPIRED_MODE
-		else if (time((time_t *) NULL) - sreport->tstamp >= RETRY_INTERVAL_TIME) {
-			MyDBG("[%s] retry timeout remove from report_list\n", sreport->addr);
-			check = 1;
-			break;
+	/* SSH */
+	if (LOCK & (0x1 << WAN_SSH)) {
+		if ((time(&now) - WAN_LOCK_SSH_T) >= PROTECTION_VALIDITY_TIME*60) {
+			flush_rule("WAN", PROTECTION_SERVICE_SSH);
+			WAN_LOCK_SSH_T = 0;
+			F_CLR(LOCK, WAN_SSH);
 		}
-#endif
+	} else if (WAN_ERROR_SSH_CNT >= RETRY) {
+		WAN_ERROR_SSH_CNT = 0;
+		F_SET(LOCK, WAN_SSH);
+		WAN_LOCK_SSH_T = time(&now);
+		insert_lock_rule("WAN", PROTECTION_SERVICE_SSH);
+		
 	}
-	if (check) {
-		MyDBG("Delete [%s] from report_list\n", sreport->addr);
-		listnode_delete(report_list, sreport);
+	
+	if (LOCK & (0x1 << LAN_SSH)) {
+		if ((time(&now) - LAN_LOCK_SSH_T) >= PROTECTION_VALIDITY_TIME*60) {
+			flush_rule("LAN", PROTECTION_SERVICE_SSH);
+			LAN_LOCK_SSH_T = 0;
+			F_CLR(LOCK, LAN_SSH);
+		}
+	} else if (LAN_ERROR_SSH_CNT >= RETRY) {
+		LAN_ERROR_SSH_CNT = 0;
+		F_SET(LOCK, LAN_SSH);
+		LAN_LOCK_SSH_T = time(&now);
+		insert_lock_rule("LAN", PROTECTION_SERVICE_SSH);
 	}
-	MUTEXUNLOCK(&report_list_lock);
+	
+	/* TELNET */
+	if (LOCK & (0x1 << LAN_TELNET)) {
+		if ((time(&now) - LAN_LOCK_TELNET_T) >= PROTECTION_VALIDITY_TIME*60) {
+			flush_rule("LAN", PROTECTION_SERVICE_TELNET);
+			LAN_LOCK_TELNET_T = 0;
+			F_CLR(LOCK, LAN_TELNET);
+		}
+	} else if (LAN_ERROR_TELNET_CNT >= RETRY) {
+		LAN_ERROR_TELNET_CNT = 0;
+		F_SET(LOCK, LAN_TELNET);
+		LAN_LOCK_TELNET_T = time(&now);
+		insert_lock_rule("LAN", PROTECTION_SERVICE_TELNET);
+	}
 }
 
 void receive_s(int newsockfd)
 {
+
 	PTCSRV_STATE_REPORT_T report;
-	PTCSRV_STATE_REPORT_T *sreport;
 	int n;
-	int checkup;
-	time_t now;
-	struct listnode *ln;
 	
 	bzero(&report,sizeof(PTCSRV_STATE_REPORT_T));
 	
@@ -276,62 +243,69 @@ void receive_s(int newsockfd)
 	        return;
 	}
 	
-	MyDBG("[receive report] addr:[%s] s_type:[%d] msg:[%s]\n",report.addr, report.s_type, report.msg);
+	MyDBG("[receive report] addr:[%s] s_type:[%d] status:[%d] msg:[%s]\n",report.addr, report.s_type, report.status, report.msg);
 	
 	if (GetDebugValue(PROTECT_SRV_DEBUG)) {
 		char info[200];
-		sprintf(info, "echo \"[ProtectionSrv][receive report] addr:[%s] s_type:[%d] msg:[%s]\" >> %s",report.addr, report.s_type, report.msg, PROTECT_SRV_LOG_FILE);
+		snprintf(info, sizeof(info), "echo \"[ProtectionSrv][receive report] addr:[%s] s_type:[%d] status:[%d] msg:[%s]\" >> %s",
+			      report.addr, report.s_type, report.status, report.msg, PROTECT_SRV_LOG_FILE);
 		system(info);
 	}
 	
-	checkup = 0;
-	MUTEXLOCK(&report_list_lock);
-	if (report_list) {
-		LIST_LOOP(report_list,sreport,ln) {
-			if (!strcmp(sreport->addr, report.addr)) {
-				if (time(&now) - sreport->tstamp <= RETRY_INTERVAL_TIME) {
-					sreport->frequency +=1;
-					checkup = 1;
-					MyDBG("[%s] frequency chage to  %d \n",report.addr, sreport->frequency);
-				} 
-#if ENABLE_RETRY_EXPIRED_MODE
-				else {
-					//Update info
-					sreport->frequency = 1;
-					report.tstamp = time(&now);
-					MyDBG("[RETRY INTERVAL TIME OUT][Update] [%s] info to report_list.\n", sreport->addr);
+	
+	if (IsLanSide(parseIpaddrstr(report.addr))) {
+		
+		if (report.s_type == PROTECTION_SERVICE_SSH) {
+			if (report.status == RPT_FAIL) {
+				if (!(LOCK & (0x1 << LAN_SSH))) {
+					LAN_ERROR_SSH_CNT++;
+					MyDBG("[LAN][SSH]Error:%d\n", LAN_ERROR_SSH_CNT);
+				}
+#ifdef RTCONFIG_NOTIFICATION_CENTER
+				if ((LAN_ERROR_SSH_CNT + 1) == RETRY) {
+					SEND_FAIL_LOGIN_EVENT(ADMIN_LOGIN_FAIL_SSH_EVENT, report.addr);
 				}
 #endif
+			} else if (report.status == RPT_SUCCESS) {
+				LAN_ERROR_SSH_CNT = 0;
+				MyDBG("(LAN) SSH error count has been reset\n");
+			}
+		} else if (report.s_type == PROTECTION_SERVICE_TELNET) {
+			if (report.status == RPT_FAIL) {
+				if (!(LOCK & (0x1 << LAN_TELNET))) {
+					LAN_ERROR_TELNET_CNT++;
+					MyDBG("[LAN][TELNET]Error:%d\n", LAN_ERROR_TELNET_CNT);
+				}
+#ifdef RTCONFIG_NOTIFICATION_CENTER
+				if ((LAN_ERROR_TELNET_CNT + 1) == RETRY) {
+					SEND_FAIL_LOGIN_EVENT(ADMIN_LOGIN_FAIL_TELNET_EVENT, report.addr);
+				}
+#endif
+			} else if (report.status == RPT_SUCCESS) {
+				LAN_ERROR_TELNET_CNT = 0;
+				MyDBG("(LAN) TELNET error count has been reset\n");
 			}
 		}
-		if (!checkup) {  //The addr is new, then add in list
-			report.frequency = 1;
-#if ENABLE_RETRY_EXPIRED_MODE
-			report.tstamp = time(&now);
-#else
-			report.tstamp = 0;
+		
+	} else { /* WAN */
+		
+		if (report.s_type == PROTECTION_SERVICE_SSH) {
+			if (report.status == RPT_FAIL) {
+				if (!(LOCK & (0x1 << WAN_SSH))) {
+					WAN_ERROR_SSH_CNT++;
+					MyDBG("[WAN][SSH]Error:%d\n", WAN_ERROR_SSH_CNT);
+				}
+#ifdef RTCONFIG_NOTIFICATION_CENTER
+				if ((WAN_ERROR_SSH_CNT + 1) == RETRY) {
+					SEND_FAIL_LOGIN_EVENT(ADMIN_LOGIN_FAIL_SSH_EVENT, report.addr);
+				}
 #endif
-			MyDBG("New [%s] tstamp:[%d] add to list\n",report.addr, report.tstamp);
-			sreport=NULL;
-			sreport=stateReport_listcreate(report);
-			if (sreport)
-				listnode_add(report_list,(void*)sreport);
+			} else if (report.status == RPT_SUCCESS) {
+				WAN_ERROR_SSH_CNT = 0;
+				MyDBG("(WAN) SSH error count has been reset\n");
+			}
 		}
-	} else { //The report_list is NULL
-		report.frequency = 1;
-#if ENABLE_RETRY_EXPIRED_MODE
-			report.tstamp = time(&now);
-#else
-			report.tstamp = 0;
-#endif
-		MyDBG("New [%s] tstamp:[%d] add to list\n",report.addr, report.tstamp);
-		sreport=NULL;
-		sreport=stateReport_listcreate(report);
-		if (sreport)
-			listnode_add(report_list,(void*)sreport);
-	
 	}
-	MUTEXUNLOCK(&report_list_lock);
 	
 }
 
@@ -388,15 +362,38 @@ static void local_socket_thread(void)
 	pthread_attr_destroy(&attr);
 }
 
+void handlesignal(int signum)
+{
+	if (signum == SIGUSR1) {
+		RECV_SIG_FLAG = F_ON;
+	} else if (signum == SIGTERM) {
+		terminated = 0;
+	} else
+		MyDBG("Unknown SIGNAL\n");
+	
+}
+
+static void signal_register(void)
+{
+	struct sigaction sa;
+	
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler =  &handlesignal;
+	/* Handle Inser Firewall Rules via SIGUSR1 */
+	sigaction(SIGUSR1, &sa, NULL);
+	sigaction(SIGUSR2, &sa, NULL);
+	sigaction(SIGTERM, &sa, NULL);    
+}
+
 int main(void)
 {
-	char cmd[20];
+	char cmd[64];
 	int pid;
 	
 	MyDBG("[Start ProtectionSrv]\n");
 	
 	pid = getpid();
-	sprintf(cmd,"echo %d > %s",pid, PROTECT_SRV_PID_PATH);
+	snprintf(cmd, sizeof(cmd), "echo %d > %s",pid, PROTECT_SRV_PID_PATH);
 	system(cmd);
 	
 	/* Signal */
@@ -405,29 +402,12 @@ int main(void)
 	/* start unix socket */
 	local_socket_thread();
 	
-	/* record failed login info */
-	report_list=list_new();
-	
-	/* record drop addr */
-	drop_list=list_new();
-	
-	/* init mutex lock switch */
-	MUTEXINIT(&report_list_lock);
-	MUTEXINIT(&drop_list_lock);
-	
-	
 	while (terminated) {
-		check_report_list();
-#ifdef ENABLE_DROP_EXPIRED_MODE
-		check_drop_list();
-#endif
-		sleep(1);
-	}	
+		check_wanlan_lock();
+		usleep(1000);
+	}
 	
 	MyDBG("ProtectionSrv Terminated\n");
 	
-	MUTEXDESTROY(&report_list_lock);
-	MUTEXDESTROY(&drop_list_lock);
-
 	return 0;
 }

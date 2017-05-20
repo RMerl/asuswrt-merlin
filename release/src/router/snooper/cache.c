@@ -353,7 +353,7 @@ int init_cache(void)
 #endif
 	    HOST_POOL_SIZE * sizeof(struct host_entry));
 
-	if (switch_set_floodmap(routers.group.ea, 0) > 0)
+	if (switch_set_floodmap(routers.group.ea, 0) == 0)
 		ports.expire_support = ports.expire_active = 1;
 
 	return 0;
@@ -440,7 +440,7 @@ int add_member(unsigned char *maddr, in_addr_t addr, int port, int timeout)
 		if (!timer_pending(timer) || time_before(group->time, timer->expires))
 			mod_timer(timer, group->time);
 
-		log_cache("%-6s [" FMT_EA "] + " FMT_PORTS " add " FMT_IP " expires in %d", "member",
+		log_cache("%-6s [" FMT_EA "] + " FMT_PORTS " add " FMT_IP " timeout %d", "member",
 		    ARG_EA(group->ea), ARG_PORTS(portmap), ARG_IP(&addr), timeout / TIMER_HZ);
 	} else
 		portmap = 0;
@@ -521,9 +521,9 @@ static void router_timer(struct timer_entry *timer, void *data)
 
 	if (portmap) {
 		if (ports.expire_support) {
-			int enable = switch_set_floodmap(group->ea, group->portmap);
-			if (enable >= 0)
-				ports.expire_active = !!enable;
+			groupmap = switch_set_floodmap(group->ea, group->portmap);
+			if (groupmap >= 0)
+				ports.expire_active = (groupmap == 0);
 		}
 		STAILQ_FOREACH(group, &groups.pool, link) {
 			groupmap = portmap & ~group->portmap;
@@ -558,16 +558,16 @@ int add_router(in_addr_t addr, int port, int timeout)
 		if (!timer_pending(timer) || time_after(timer->expires, group->time))
 			mod_timer(timer, group->time);
 
-		log_cache("%-6s [" FMT_EA "] + " FMT_PORTS " add " FMT_IP " expires in %d", "router",
+		log_cache("%-6s [" FMT_EA "] + " FMT_PORTS " add " FMT_IP " timeout %d", "router",
 		    ARG_EA(group->ea), ARG_PORTS(portmap), ARG_IP(&addr), timeout / TIMER_HZ);
 	} else
 		portmap = 0;
 
 	if (portmap) {
 		if (ports.expire_support) {
-			int enable = switch_set_floodmap(group->ea, group->portmap);
-			if (enable >= 0)
-				ports.expire_active = !!enable;
+			groupmap = switch_set_floodmap(group->ea, group->portmap);
+			if (groupmap >= 0)
+				ports.expire_active = (groupmap == 0);
 		}
 		STAILQ_FOREACH(group, &groups.pool, link) {
 			groupmap = portmap & ~group->portmap;
@@ -589,12 +589,15 @@ int expire_members(unsigned char *maddr, int timeout)
 		if (!group)
 			return -1;
 		group->time = time;
+		log_cache("%-6s [" FMT_EA "] = " FMT_PORTS " set timeout %d", "expire",
+		    ARG_EA(group->ea), ARG_PORTS(group->portmap), timeout / TIMER_HZ);
 	} else
 	STAILQ_FOREACH(group, &groups.pool, link) {
 		group->time = time;
+		log_cache("%-6s [" FMT_EA "] = " FMT_PORTS " set timeout %d", "expire",
+		    ARG_EA(group->ea), ARG_PORTS(group->portmap), timeout / TIMER_HZ);
 	}
 
-	log_cache("%-6s fast expire %s in %d", "expire", maddr ? "group" : "all", timeout / TIMER_HZ);
 	if (!timer_pending(&groups.timer) || time_after(groups.timer.expires, time))
 		mod_timer(&groups.timer, time);
 

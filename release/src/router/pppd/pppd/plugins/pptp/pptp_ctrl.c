@@ -525,9 +525,12 @@ int pptp_dispatch(PPTP_CONN * conn, fd_set * read_set, fd_set * write_set)
 int pptp_write_some(PPTP_CONN * conn) {
     ssize_t retval;
     assert(conn && conn->call);
+again:
     retval = write(conn->inet_sock, conn->write_buffer, conn->write_size);
     if (retval < 0) { /* error. */
-        if (errno == EAGAIN || errno == EINTR) {
+        if (errno == EINTR)
+            goto again;
+        else if (errno == EAGAIN) {
             return 0;
         } else { /* a real error */
             log("write error: %s", strerror(errno));
@@ -555,6 +558,7 @@ int pptp_read_some(PPTP_CONN * conn)
         conn->read_alloc *= 2;
         conn->read_buffer = new_buffer;
     }
+again:
     retval = read(conn->inet_sock, conn->read_buffer + conn->read_size,
             conn->read_alloc  - conn->read_size);
     if (retval == 0) {
@@ -562,7 +566,9 @@ int pptp_read_some(PPTP_CONN * conn)
         return -1;
     }
     if (retval < 0) {
-        if (errno == EINTR || errno == EAGAIN)
+        if (errno == EINTR)
+            goto again;
+        else if (errno == EAGAIN)
 	    return 0;
         else { /* a real error */
             log("read error: %s", strerror(errno));
@@ -630,9 +636,12 @@ int pptp_send_ctrl_packet(PPTP_CONN * conn, void * buffer, size_t size)
     if( conn->write_size > 0) pptp_write_some( conn);
     if( conn->write_size == 0) {
         ssize_t retval;
+    again:
         retval = write(conn->inet_sock, buffer, size);
         if (retval < 0) { /* error. */
-            if (errno == EAGAIN || errno == EINTR) {
+            if (errno == EINTR)
+                goto again;
+            else if (errno == EAGAIN) {
                 /* ignore */;
                 retval = 0;
             } else { /* a real error */

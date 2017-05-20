@@ -123,7 +123,7 @@ void init_devs(void)
     defined(RTCONFIG_SWITCH_RTL8370MB_PHY_QCA8033_X2)
 	__mknod("/dev/rtkswitch", S_IFCHR | 0666, makedev(206, 0));
 #endif
-#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
+#if (defined(PLN11) || defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
 	eval("ln", "-sf", "/dev/mtdblock2", "/dev/caldata");	/* mtdblock2 = SPI flash, Factory MTD partition */
 #elif (defined(RTAC58U) || defined(RTAC82U))
 	eval("ln", "-sf", "/dev/mtdblock3", "/dev/caldata");	/* mtdblock3 = cal in NAND flash, Factory MTD partition */
@@ -224,6 +224,11 @@ static void init_switch_qca(void)
 #endif
 		NULL
 	}, **qmod;
+#if defined(RTCONFIG_SOC_IPQ40XX)
+	char *essedma_argv[10] = {
+		"modprobe", "-s", NULL
+	}, **v;
+#endif
 
 	for (qmod = &qca_module_list[0]; *qmod != NULL; ++qmod) {
 		if (module_loaded(*qmod))
@@ -235,10 +240,21 @@ static void init_switch_qca(void)
 				continue;
 		}
 		else if (!strcmp(*qmod, "essedma")) {
+			v = &essedma_argv[2];
+			*v++ = *qmod;
 			if (nvram_get_int("jumbo_frame_enable")) {
-				modprobe(*qmod, "overwrite_mode=1", "page_mode=1");
-				continue;
+				*v++ = "overwrite_mode=1";
+				*v++ = "page_mode=1";
 			}
+
+#if defined(RTAC58U) /* for RAM 128MB */
+			if (get_meminfo_item("MemTotal") <= 131072)
+				*v++ = "reduce_rx_ring_size=1";
+#endif
+
+			*v++ = NULL;
+			_eval(essedma_argv, NULL, 0, NULL);
+			continue;
 		}
 #endif
 		modprobe(*qmod);
@@ -247,7 +263,7 @@ static void init_switch_qca(void)
 	char *wan0_ifname = nvram_safe_get("wan0_ifname");
 	char *lan_ifname, *lan_ifnames, *ifname, *p;
 
-#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
+#if (defined(PLN11) || defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
 	wan0_ifname = MII_IFNAME;
 #endif
 
@@ -597,6 +613,19 @@ void config_switch(void)
 				__setup_vlan(10, 0, 0x02000210);
 			}
 #endif
+			else if (!strcmp(nvram_safe_get("switch_wantag"), "vodafone")) {
+				system("rtkswitch 40 1");			/* admin all frames on all ports */
+				system("rtkswitch 38 3");			/* Vodafone: P0  IPTV: P1 */
+				/* Internet:	untag: P9;   port: P4, P9 */
+				__setup_vlan(100, 1, 0x02000211);
+				/* IPTV:	untag: N/A;  port: P0, P4 */
+				__setup_vlan(101, 0, 0x00000011);
+				/* Vodafone:	untag: P1;   port: P0, P1, P4 */
+				__setup_vlan(105, 1, 0x00020013);
+			}
+			else if (!strcmp(nvram_safe_get("switch_wantag"), "hinet")) { /* Hinet MOD */
+				eval("rtkswitch", "8", "4");			/* LAN4 with WAN */
+			}
 			else {
 				/* Cherry Cho added in 2011/7/11. */
 				/* Initialize VLAN and set Port Isolation */
@@ -1275,7 +1304,7 @@ void init_syspara(void)
 	ether_etoa(buffer, macaddr2);
 #endif
 
-#if defined(PLN12) || defined(PLAC56)
+#if defined(PLN11) || defined(PLN12) || defined(PLAC56)
 	/* set et1macaddr the same as et0macaddr (for cpu connect to switch only use single RGMII) */
 	strcpy(macaddr2, macaddr);
 #endif

@@ -106,7 +106,7 @@
 24001,Telia,*99#,,,online.telia.se,Telia SE Internet
 24002,3,*99#,,,data.tre.se,3 HUTCHISON
 24006,Telenor,*99#,,,internet.telenor.se,Telenor
-24007,Tele2,*99#,,,internet.ventelo.se,Ventelo Internet
+24007,Tele2,*99#,,,4g.tele2.se,Ventelo Internet
 24008,Telenor,*99#,,,internet.telenor.se,Telenor
 24009,TelenorMobilsurf,*99#,,,services.telenor.se,TelenorMobilsurf
 24010,Spring Mobile,*99#,,,data.springmobil.se,Spring data
@@ -120,7 +120,7 @@
 24404,AINA,*99#,,,internet.aina.fi,AINA
 24405,Elisa,*99#,,,Internet,Elisa Internet
 24410,TDC Internet,*99#,song@internet,songnet,internet.song.fi,TDC Internet
-24412,DNA,*99#,,,inet.tdc.fi,TDC internet
+24412,DNA,*99#,,,internet,DNA
 24413,DNA,*99#,,,internet,DNA
 24421,Saunalahti,*99#,,,internet.saunalahti,Saunalahti Internet
 24491,Sonera,*99#,,,internet,Sonera Internet
@@ -882,11 +882,10 @@
 52802,B-Mobile,*99***1#,bmobile@u300,bmobile,dm.jplat.net,B-Mobile
 52811,DSTCom,*99#,,,Bmobilewap,DSTCom
 5282,B-Mobile,*99#,,,dst.internet,B-Mobile
-53001,Vodafone,*99#,,,live.vodafone.com,Vodafone HTTP
-53005,TelecomContent,*99#,,,wap.telecom.co.nz,TelecomContent
-53005,TelecomData,*99#,,,internet.telecom.co.nz,TelecomData
-53005,TelecomDefault,*99#,,,wap.telecom.co.nz,TelecomDefault
-53024,2degrees,*99#,,,internet,2degrees Internet
+53001,Vodafone,*99#,,,internet,Vodafone
+53004,Vodafone,*99#,,,internet,Vodafone
+53005,Spark,*99#,,,internet,Spark
+53024,2degrees,*99#,,,internet,2degrees
 60201,Mobinil,*99***1#,,,Mobinilweb,Mobinil Web
 60202,Vodafone,*99***1#,,,internet.vodafone.net,Vodafone Internet
 60203,Etisalat,*99***1#,,,Etisalat,Etisalat Wep

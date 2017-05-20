@@ -99,6 +99,12 @@ var iAmAlive = function(ret){if(ret.isdomain) top.location.href="http://" + ROUT
 
 var sw_mode = '<% nvram_get("sw_mode"); %>';
 var based_modelid = '<% nvram_get("productid"); %>';
+// parsing rc_support
+var rc_support = '<% nvram_get("rc_support"); %>';
+function isSupport(_ptn){
+	return (rc_support.search(_ptn) == -1) ? false : true;
+}
+var spirit_logo_support = isSupport("spirit");
 if(((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1) || (sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 3))
 	sw_mode = 4;
 if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
@@ -157,6 +163,64 @@ var rebootTime = eval("<% get_default_reboot_time(); %>");
 
 var wan_autodet_state = "";
 var usb_connected = 0;
+
+var htmlEnDeCode = (function() {
+	var charToEntityRegex,
+		entityToCharRegex,
+		charToEntity,
+		entityToChar;
+
+	function resetCharacterEntities() {
+		charToEntity = {};
+		entityToChar = {};
+		// add the default set
+		addCharacterEntities({
+		'&amp;'		: 	'&',
+		'&gt;'		: 	'>',
+		'&lt;'		: 	'<',
+		'&quot;'	: 	'"',
+		'&#39;'		: 	"'"
+		});
+	}
+
+	function addCharacterEntities(newEntities) {
+		var charKeys = [],
+		entityKeys = [],
+		key, echar;
+		for (key in newEntities) {
+			echar = newEntities[key];
+			entityToChar[key] = echar;
+			charToEntity[echar] = key;
+			charKeys.push(echar);
+			entityKeys.push(key);
+		}
+		charToEntityRegex = new RegExp('(' + charKeys.join('|') + ')', 'g');
+		entityToCharRegex = new RegExp('(' + entityKeys.join('|') + '|&#[0-9]{1,5};' + ')', 'g');
+	}
+
+	function htmlEncode(value){
+		var htmlEncodeReplaceFn = function(match, capture) {
+			return charToEntity[capture];
+		};
+
+		return (!value) ? value : String(value).replace(charToEntityRegex, htmlEncodeReplaceFn);
+	}
+
+	function htmlDecode(value) {
+		var htmlDecodeReplaceFn = function(match, capture) {
+			return (capture in entityToChar) ? entityToChar[capture] : String.fromCharCode(parseInt(capture.substr(2), 10));
+		};
+
+		return (!value) ? value : String(value).replace(entityToCharRegex, htmlDecodeReplaceFn);
+	}
+
+	resetCharacterEntities();
+
+	return {
+		htmlEncode: htmlEncode,
+		htmlDecode: htmlDecode
+	};
+})();
 
 function add_options_x2(o, arr, varr, orig){
 	free_options(o);
@@ -261,6 +325,16 @@ function QIS_load_body(){
 	showCase = (document.getElementById("flag").value == "") ? "welcome" : document.getElementById("flag").value;
 	winW_H();
 	
+	var banner_code = "";
+	if (spirit_logo_support)
+		banner_code += '<img src="images/New_ui/asus_spirit_title.png" width="214" height="31" align="left" style="margin-top:13px;margin-left:30px;">'
+	else {
+		banner_code += '<img src="images/New_ui/asustitle.png" width="218" height="54" align="left">'
+		banner_code += '<span class="modelName_top" style="margin-top:20px;"><#Web_Title2#></span>'
+	}
+	banner_code += '<ul id="language_menu" class="navigation"></ul>'
+	document.getElementById("QIS_banner").innerHTML = banner_code;
+
 	document.getElementById("language_menu").innerHTML = '<% shown_language_css(); %>';
 	show_selected_language();
 	
@@ -555,11 +629,7 @@ function detect_httpd(){
 
 <!--For content in ifame-->	
 <!--[if !lte IE 6]>-->
-<div class="banner1" align="center">
-	<img src="images/New_ui/asustitle.png" width="218" height="54" align="left">
-	<span class="modelName_top" style="margin-top:20px;"><#Web_Title2#></span>
-	<ul id="language_menu" class="navigation"></ul>
-</div>
+<div class="banner1" align="center" id="QIS_banner"></div>
 <!--<![endif]-->
 <!--[if lte IE 6]>
 <div class="banner1" align="center">

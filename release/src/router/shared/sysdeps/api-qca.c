@@ -1127,6 +1127,7 @@ char *get_lan_mac_name(void)
 
 	/* Check below configuration in convert_wan_nvram() too. */
 	switch (model) {
+	case MODEL_PLN11:	/* fall-through */
 	case MODEL_PLN12:	/* fall-through */
 	case MODEL_PLAC56:	/* fall-through */
 	case MODEL_RTAC55U:	/* fall-through */
@@ -1157,6 +1158,7 @@ char *get_wan_mac_name(void)
 
 	/* Check below configuration in convert_wan_nvram() too. */
 	switch (model) {
+	case MODEL_PLN11:	/* fall-through */
 	case MODEL_PLN12:	/* fall-through */
 	case MODEL_PLAC56:	/* fall-through */
 	case MODEL_RTAC55U:	/* fall-through */

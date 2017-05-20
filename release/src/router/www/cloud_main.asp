@@ -159,8 +159,57 @@ function initial(){
 	cal_panel_block("agreement_panel", 0.25);
 
 	if(!rrsut_support)
-		document.getElementById("rrsLink").style.display = "none";		
+		document.getElementById("rrsLink").style.display = "none";
+
+	//check DUT is belong to private IP.
+	setTimeout("show_warning_message();", 100);
 }
+
+var wans_mode ='<% nvram_get("wans_mode"); %>';
+var MAX_RETRY_NUM = 5;
+var external_ip_retry_cnt = MAX_RETRY_NUM;
+var privateIP_notes_str = "The wireless router currently uses a private WAN IP address.<p>This router may be in the multiple-NAT environment, and accessing AiCloud from WAN cannot work in this environment." /*untranslated*/
+function show_warning_message(){
+	if(realip_support && wans_mode != "lb"){
+		if(realip_state != "2" && external_ip_retry_cnt > 0){
+			if( external_ip_retry_cnt == MAX_RETRY_NUM )
+				get_real_ip();
+			else
+				setTimeout("get_real_ip();", 3000);
+		}
+		else if(realip_state != "2"){
+			if(validator.isPrivateIP(wanlink_ipaddr())){
+				document.getElementById("privateIP_notes").innerHTML = privateIP_notes_str;
+				document.getElementById("privateIP_notes").style.display = "";
+			}
+		}
+		else{
+			if(!external_ip){
+				document.getElementById("privateIP_notes").innerHTML = privateIP_notes_str;
+				document.getElementById("privateIP_notes").style.display = "";
+			}
+		}
+	}
+	else if(validator.isPrivateIP(wanlink_ipaddr())){
+		document.getElementById("privateIP_notes").innerHTML = privateIP_notes_str;
+		document.getElementById("privateIP_notes").style.display = "";
+	}
+}
+
+function get_real_ip(){
+	$.ajax({
+		url: 'get_real_ip.asp',
+		dataType: 'script',
+		error: function(xhr){
+			get_real_ip();
+		},
+		success: function(response){
+			external_ip_retry_cnt--;
+			show_warning_message();
+		}
+	});
+}
+
 
 function valid_is_wan_ip(ip_obj){
   // test if WAN IP is a private IP.
@@ -799,6 +848,7 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 														</tr>
 													</table>
 												</div>
+												<div id="privateIP_notes" class="formfontdesc" style="display:none; color:#FFCC00; padding:10px;"></div>
 											</td>
 									  </tr>
 

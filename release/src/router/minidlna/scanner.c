@@ -938,6 +938,27 @@ is_sys_dir(const char *dirname)
 	return 0;
 }
 
+#if defined MS_IPK || defined MS_LIMIT
+static int get_min_free_kbytes() {
+    FILE *minfp;
+    char minMemery[10];
+    int memery = 4096;
+    memset(minMemery, '\0' , sizeof(minMemery));
+
+    if((minfp = fopen("/proc/sys/vm/min_free_kbytes", "r"))) {
+        fgets(minMemery, sizeof(minMemery), minfp);
+        int len = strlen(minMemery);
+        if( len > 1)
+            minMemery[len-1] = '\0';
+    }
+
+    if(minMemery[0] != '\0')
+        memery = atoi(minMemery);
+
+    return memery;
+}
+#endif
+
 static void
 ScanDirectory(const char *dir, const char *parent, media_types dir_types)
 {
@@ -952,7 +973,7 @@ ScanDirectory(const char *dir, const char *parent, media_types dir_types)
     pid_t pid;
     int stat_val;
 //    pid_t child_pid;
-#ifdef MS_IPK
+#if defined MS_IPK || defined MS_LIMIT
     FILE *fp;
     char memdata[256] = {0};
     unsigned int memfree = 0;
@@ -1013,7 +1034,9 @@ ScanDirectory(const char *dir, const char *parent, media_types dir_types)
 			break;
 #endif
 
-#ifdef MS_IPK
+#if defined MS_IPK || defined MS_LIMIT
+        int memery = get_min_free_kbytes();
+        memery += 1024;
         if((fp = fopen("/proc/meminfo", "r")) != NULL){
             while(fgets(memdata, 255, fp) != NULL){
                 if(strstr(memdata, "MemFree") != NULL){
@@ -1023,9 +1046,9 @@ ScanDirectory(const char *dir, const char *parent, media_types dir_types)
             }
             fclose(fp);
         }
-        DPRINTF(E_DEBUG, L_SCANNER, _("memfree=%d\n"),memfree);
-        while(memfree<=5120){
-            DPRINTF(E_DEBUG, L_SCANNER, _("memory<5120\n"));
+        //DPRINTF(E_DEBUG, L_SCANNER, _("memfree=%d\n"),memfree);
+        while(memfree<=memery){
+            //DPRINTF(E_DEBUG, L_SCANNER, _("memory<5120\n"));
             sleep(2);
             if((fp = fopen("/proc/meminfo", "r")) != NULL){
                 while(fgets(memdata, 255, fp) != NULL){
@@ -1317,3 +1340,4 @@ start_scanner()
 	//JM: Set up a db version number, so we know if we need to rebuild due to a new structure.
 	sql_exec(db, "pragma user_version = %d;", DB_VERSION);
 }
+

@@ -316,6 +316,7 @@ enum {
 	MODEL_RTAC55U,
 	MODEL_RTAC55UHP,
 	MODEL_RT4GAC55U,
+	MODEL_PLN11,
 	MODEL_PLN12,
 	MODEL_PLAC56,
 	MODEL_PLAC66U,
@@ -483,7 +484,6 @@ enum btn_id {
 	BTN_EJUSB1,
 	BTN_EJUSB2,	/* If two USB LED and two EJECT USB button are true, map USB3 port to this button. */
 #endif
-
 	BTN_ID_MAX,	/* last item */
 };
 
@@ -533,9 +533,6 @@ enum led_id {
 	LED_SIG1,
 	LED_SIG2,
 	LED_SIG3,
-#ifdef RT4GAC68U
-	LED_SIG4,
-#endif
 #endif
 #if (defined(PLN12) || defined(PLAC56))
 	PLC_WAKE,
@@ -769,22 +766,26 @@ static inline int get_radio_band(int band)
 #ifdef RTCONFIG_DUALWAN
 static inline int dualwan_unit__usbif(int unit)
 {
-	return (get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_USB);
+	int type = get_dualwan_by_unit(unit);
+	return (type == WANS_DUALWAN_IF_USB
+#ifdef RTCONFIG_USB_MULTIMODEM
+			|| type == WANS_DUALWAN_IF_USB2
+#endif
+			);
 }
 
 static inline int dualwan_unit__nonusbif(int unit)
 {
 	int type = get_dualwan_by_unit(unit);
+	return (type == WANS_DUALWAN_IF_WAN || type == WANS_DUALWAN_IF_DSL || type == WANS_DUALWAN_IF_LAN || type == WANS_DUALWAN_IF_WAN2
 #ifdef RTCONFIG_MULTICAST_IPTV
-        return (type == WANS_DUALWAN_IF_WAN || type == WANS_DUALWAN_IF_DSL || type == WANS_DUALWAN_IF_LAN || WANS_DUALWAN_IF_WAN2 || 
-		type == WAN_UNIT_IPTV || type == WAN_UNIT_VOIP);
-#else
-	return (type == WANS_DUALWAN_IF_WAN || type == WANS_DUALWAN_IF_DSL || type == WANS_DUALWAN_IF_LAN || WANS_DUALWAN_IF_WAN2);
+		|| type == WAN_UNIT_IPTV || type == WAN_UNIT_VOIP
 #endif
+			);
 }
 extern int get_usbif_dualwan_unit(void);
 extern int get_primaryif_dualwan_unit(void);
-#else
+#else // RTCONFIG_DUALWAN
 static inline int dualwan_unit__usbif(int unit)
 {
 #ifdef RTCONFIG_USB_MODEM
@@ -804,17 +805,14 @@ static inline int dualwan_unit__nonusbif(int unit)
 }
 static inline int get_usbif_dualwan_unit(void)
 {
-#ifdef RTCONFIG_USB_MODEM
-	return WAN_UNIT_SECOND;
-#else
-	return -1;
-#endif
+	return get_wanunit_by_type(WANS_DUALWAN_IF_USB);
 }
+
 static inline int get_primaryif_dualwan_unit(void)
 {
 	return wan_primary_ifunit();
 }
-#endif
+#endif // RTCONFIG_DUALWAN
 
 #if defined RTCONFIG_RALINK
 static inline int guest_wlif(char *ifname)
@@ -885,6 +883,9 @@ extern int __mt7621_wan_bytecount(int unit, unsigned long *tx, unsigned long *rx
 #elif defined(RTCONFIG_QCA)
 extern char *wif_to_vif(char *wif);
 extern int config_rtkswitch(int argc, char *argv[]);
+#if defined(RTCONFIG_SOC_IPQ40XX)
+extern unsigned int rtkswitch_Port_phyStatus(unsigned int port_mask);
+#endif
 extern unsigned int rtkswitch_wanPort_phyStatus(int wan_unit);
 extern unsigned int rtkswitch_lanPorts_phyStatus(void);
 extern unsigned int __rtkswitch_WanPort_phySpeed(int wan_unit);
@@ -1101,10 +1102,6 @@ extern int get_lanports_status(void);
 extern int set_wan_primary_ifunit(const int unit);
 #ifdef RTCONFIG_USB
 extern char *get_usb_xhci_port(int port);
-extern char *get_usb_ehci_port(int port);
-extern char *get_usb_ohci_port(int port);
-extern int get_usb_port_number(const char *usb_port);
-extern int get_usb_port_host(const char *usb_port);
 #endif
 #ifdef RTCONFIG_DUALWAN
 extern void set_wanscap_support(char *feature);
@@ -1123,6 +1120,12 @@ static inline int get_wans_dualwan(void) {
 #endif
 }
 static inline int get_dualwan_by_unit(int unit) {
+#ifdef RTCONFIG_MULTICAST_IPTV
+	if(unit == WAN_UNIT_IPTV)
+		return WAN_UNIT_IPTV;
+	if(unit == WAN_UNIT_VOIP)
+		return WAN_UNIT_VOIP;
+#endif
 #ifdef RTCONFIG_USB_MODEM
 	return (unit == WAN_UNIT_FIRST) ? WANS_DUALWAN_IF_WAN : WANS_DUALWAN_IF_USB;
 #else
@@ -1405,10 +1408,10 @@ static inline int is_m2ssd_port(char *usb_node) { return 0; }
 extern int is_ac66u_v2_series();
 #endif
 
+extern int wanport_status(int wan_unit);
+
 #ifdef RTCONFIG_COOVACHILLI
 extern void deauth_guest_sta(char *, char *);
 #endif
-
-int wanport_status(int wan_unit);
 
 #endif	/* !__SHARED_H__ */

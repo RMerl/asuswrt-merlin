@@ -215,6 +215,14 @@ void recv_msg_userauth_request() {
 #endif
 
 	/* nothing matched, we just fail with a delay */
+#ifdef RTCONFIG_PROTECTION_SERVER
+		char ip[64];
+		char *addr;
+		strncpy(ip, svr_ses.addrstring, sizeof(ip)-1);
+		addr = strrchr(ip, ':');
+		*addr = '\0';
+		SEND_PTCSRV_EVENT(PROTECTION_SERVICE_SSH, RPT_FAIL, ip, "From dropbear , ACCOUNT FAIL");
+#endif
 	send_msg_userauth_failure(0, 1);
 
 out:

@@ -9,7 +9,12 @@ modem_pid=`nvram get usb_modem_act_pid`
 usb_gobi2=`nvram get usb_gobi2`
 dev_home=/dev
 
-at_lock="flock -x /tmp/at_cmd_lock"
+stop_lock=`nvram get stop_atlock`
+if [ -n "$stop_lock" ] && [ "$stop_lock" -eq "1" ]; then
+	at_lock=""
+else
+	at_lock="flock -x /tmp/at_cmd_lock"
+fi
 
 
 _find_act_devs(){
@@ -225,7 +230,7 @@ _get_gobi_device(){
 		return
 	fi
 
-	if [ "$1" == "1478" ] && [ "$2" == "36902" -o "$2" == "36903" ]; then
+	if [ "$1" == "1478" ] && [ "$2" == "36901" -o "$2" == "36902" -o "$2" == "36903" ]; then
 		echo "1"
 		return
 	fi

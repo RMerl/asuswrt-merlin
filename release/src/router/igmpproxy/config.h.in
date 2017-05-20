@@ -1,5 +1,8 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define to 1 if clock_gettime supports CLOCK_MONOTONIC. */
+#undef HAVE_CLOCK_MONOTONIC
+
 /* Define to 1 if `sin_len' is a member of `struct sockaddr_in'. */
 #undef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
 

@@ -201,7 +201,7 @@ extern int ej_get_default_reboot_time(int eid, webs_t wp, int argc, char_t **arg
 static int b64_decode( const char* str, unsigned char* space, int size );
 
 extern void send_login_page(int fromapp_flag, int error_status, char* url, char* file, int lock_time);
-extern void __send_login_page(int fromapp_flag, int error_status, char* url, int lock_time);
+extern void __send_login_page(int fromapp_flag, int error_status, char* url, char* file, int lock_time);
 
 extern char *get_cgi_json(char *name, json_object *root);
 
@@ -363,7 +363,7 @@ reltime(unsigned int seconds, char *cs)
 void websRedirect(webs_t wp, char_t *url)
 {
 	char url_str[128];
-	if(check_xxs_blacklist(url, 1)){
+	if(check_xss_blacklist(url, 1)){
 		memset(url_str, 0, sizeof(url_str));
 		strlcpy(url_str, "index.asp", sizeof(url_str));
 	}else
@@ -398,7 +398,7 @@ void websRedirect(webs_t wp, char_t *url)
 void websRedirect_iframe(webs_t wp, char_t *url)
 {
 	char url_str[32];
-	if(check_xxs_blacklist(url, 1)){
+	if(check_xss_blacklist(url, 1)){
 		memset(url_str, 0, sizeof(url_str));
 		strlcpy(url_str, "index.asp", sizeof(url_str));
 	}else
@@ -2008,6 +2008,7 @@ void del_upload_icon(char *value) {
 #define NVRAM_MODIFIED_DUALWAN_EXCHANGE		16	/* ex: {wan, usb}   =>  {usb, wan}   {wan, lan} => {lan, wan}*/
 #define NVRAM_MODIFIED_DUALWAN_REBOOT		32	/* Other cases */
 #define NVRAM_MODIFIED_DUALWAN_MODE			64  /* ex: FO => LB  or LB => FO */
+#define NVRAM_MODIFIED_DUALWAN_REMOVEUSB	128	/* ex: {wan, usb}  =>  {wan, none} */
 
 int validate_instance(webs_t wp, char *name, json_object *root)
 {
@@ -2388,7 +2389,7 @@ static int validate_apply(webs_t wp, json_object *root) {
 					else if( strstr(orig_wans_dualwan, "usb") && (strstr(orig_wans_dualwan, "none") == NULL) &&
 					    strstr(wans_dualwan, "none") && (strstr(wans_dualwan, "usb") == NULL) &&
 					   (strstr(wans_dualwan, orig_primary) || strstr(wans_dualwan, orig_second)) ){ //Remove USB
-						wans_dualwan_usb = NVRAM_MODIFIED_DUALWAN_ADDUSB;
+						wans_dualwan_usb = NVRAM_MODIFIED_DUALWAN_REMOVEUSB;
 					}
 					else if(!strcmp(orig_primary, new_second) && !strcmp(orig_second, new_primary)){ // Exchange Value
 						wans_dualwan_usb = NVRAM_MODIFIED_DUALWAN_EXCHANGE;
@@ -3106,6 +3107,46 @@ static int ej_set_variables(int eid, webs_t wp, int argc, char_t **argv) {
 }
 #endif
 
+#ifdef RTCONFIG_USB
+int usb_modem_plugged(){
+	DIR *bus_usb;
+	struct dirent *interface;
+	char usb_port[8], port_path[8], *ptr;
+	int port_num, port_order, hub_order;
+	char prefix[32];
+	int modem_plugged = 0;
+
+	if((bus_usb = opendir(USB_DEVICE_PATH)) == NULL)
+		return 0;
+
+	while((interface = readdir(bus_usb)) != NULL){
+		if(interface->d_name[0] == '.')
+			continue;
+
+		if(!isdigit(interface->d_name[0]))
+			continue;
+
+		if(strchr(interface->d_name, ':'))
+			continue;
+
+		if(get_usb_port_by_string(interface->d_name, usb_port, 8) == NULL)
+			continue;
+
+		if(get_path_by_node(interface->d_name, port_path, 8) == NULL)
+			continue;
+
+		snprintf(prefix, 32, "usb_path%s", port_path);
+		if(!strcmp(nvram_safe_get(prefix), "modem")){
+			modem_plugged = 1;
+			break;
+		}
+	}
+	closedir(bus_usb);
+
+	return modem_plugged;
+}
+#endif
+
 static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 	char *action_mode;
 	char *action_script;
@@ -3115,6 +3156,11 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 	int do_apply;
 #ifdef RTCONFIG_DUALWAN
 	char new_action_script[128], new_action_wait[16];
+#endif
+
+	int usb_modem_plug = 0;
+#ifdef RTCONFIG_USB
+	usb_modem_plug = usb_modem_plugged();
 #endif
 
 	// assign control variables
@@ -3160,15 +3206,17 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 			memset(new_action_script, 0, sizeof(new_action_script));
 			memset(new_action_wait, 0, sizeof(new_action_wait));
 			if( (has_modify & 1) == 0){
-				if( (has_modify & NVRAM_MODIFIED_DUALWAN_REBOOT) == NVRAM_MODIFIED_DUALWAN_REBOOT){
+				if( ((has_modify & NVRAM_MODIFIED_DUALWAN_REBOOT) == NVRAM_MODIFIED_DUALWAN_REBOOT) ||
+					(((has_modify & NVRAM_MODIFIED_DUALWAN_ADDUSB) == NVRAM_MODIFIED_DUALWAN_ADDUSB) && usb_modem_plug) ){
 					strcpy(new_action_script, "reboot");
 					action_script = (char *)new_action_script;
 					strcpy(new_action_wait, nvram_safe_get("reboot_time"));
 					action_wait = (char *)new_action_wait;
 				}
-				else if( ((has_modify & NVRAM_MODIFIED_DUALWAN_ADDUSB) == NVRAM_MODIFIED_DUALWAN_ADDUSB) ||
-					((has_modify & NVRAM_MODIFIED_DUALWAN_EXCHANGE) == NVRAM_MODIFIED_DUALWAN_EXCHANGE) ||
-					((has_modify & NVRAM_MODIFIED_DUALWAN_MODE) == NVRAM_MODIFIED_DUALWAN_MODE) ){
+				else if( (((has_modify & NVRAM_MODIFIED_DUALWAN_ADDUSB) == NVRAM_MODIFIED_DUALWAN_ADDUSB) && !usb_modem_plug) ||
+						 ((has_modify & NVRAM_MODIFIED_DUALWAN_REMOVEUSB) == NVRAM_MODIFIED_DUALWAN_REMOVEUSB) ||
+						 ((has_modify & NVRAM_MODIFIED_DUALWAN_EXCHANGE) == NVRAM_MODIFIED_DUALWAN_EXCHANGE) ||
+						 ((has_modify & NVRAM_MODIFIED_DUALWAN_MODE) == NVRAM_MODIFIED_DUALWAN_MODE) ){
 					strcpy(new_action_script, "start_multipath");
 					action_script = (char *)new_action_script;
 					strcpy(new_action_wait, "10");
@@ -4434,7 +4482,7 @@ static int ej_get_parameter(int eid, webs_t wp, int argc, char_t **argv){
 
 	char *value = websGetVar(wp, argv[0], "");
 	if(value != NULL){
-		if(check_xxs_blacklist(value, 0)){
+		if(check_xss_blacklist(value, 0)){
 			return ret;
 		}
 	}
@@ -7370,7 +7418,7 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		char *system_cmd;
 		system_cmd = get_cgi_json("SystemCmd",root);
 
-		if(check_xxs_blacklist(system_cmd, 0)){
+		if(check_xss_blacklist(system_cmd, 0)){
 			json_object_put(root);
 			websRedirect_iframe(wp, current_url);
 			return 0;
@@ -9175,6 +9223,7 @@ prf_file(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg, char_t *url, cha
 	char model_name;
 
 	model_name = get_model();
+/* Why not to use get_lan_hwaddr() ? */
 #ifdef RTCONFIG_RGMII_BRCM5301X
 	ddns_mac = nvram_get("lan_hwaddr");
 #else
@@ -10021,10 +10070,10 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		temp_ip_addr.s_addr = login_ip_tmp;
 		temp_ip_str = inet_ntoa(temp_ip_addr);
 
-		if(login_try%MAX_login == 0){
-			logmessage("httpd login lock", "Detect abnormal logins at %d times. The newest one was from %s.", login_try, temp_ip_str);
-		}
-		__send_login_page(fromapp_flag, LOGINLOCK, NULL, dt);
+		if(login_try%MAX_login == 0)
+			logmessage("httpd login lock", "Detect abnormal logins at %d times. The newest one was from %s in login lock.", login_try, temp_ip_str);
+
+		__send_login_page(fromapp_flag, LOGINLOCK, NULL, NULL, dt);
 		return LOGINLOCK;
 	}
 
@@ -10070,7 +10119,7 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 			websWrite(wp,"<HTML><HEAD>\n" );
 			if(!strcmp(nvram_default_get("http_passwd"), nvram_safe_get("http_passwd")) && !nvram_match("ATEMODE", "1"))
 				websWrite(wp, T("<meta http-equiv=\"refresh\" content=\"0; url=Main_Password.asp\">\r\n"));
-			else if(check_xxs_blacklist(next_page, 1))
+			else if(check_xss_blacklist(next_page, 1))
 				websWrite(wp, T("<meta http-equiv=\"refresh\" content=\"0; url=index.asp\">\r\n"));
 			else{
 				if(strncmp(next_page, "cloud_sync.asp", 14)==0)
@@ -10095,7 +10144,7 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 			lock_flag = 1;
 			temp_ip_addr.s_addr = login_ip_tmp;
 			temp_ip_str = inet_ntoa(temp_ip_addr);
-			logmessage("httpd login lock", "Detect abnormal logins at %d times. The newest one was from %s.", login_try, temp_ip_str);
+			logmessage("httpd login lock", "Detect abnormal logins at %d times. The newest one was from %s in login.", login_try, temp_ip_str);
 #ifdef RTCONFIG_NOTIFICATION_CENTER
 			json_object *root = NULL;
 			root = json_object_new_object();
@@ -10496,6 +10545,7 @@ struct mime_referer mime_referers[] = {
 	{ "login.cgi", CHECK_REFERER},
 	{ "get_webdavInfo.asp", CHECK_REFERER},
 	{ "update_clients.asp", CHECK_REFERER},
+	{ "**.CFG", CHECK_REFERER},
 	{ NULL, 0 }
 };
 
@@ -14330,7 +14380,10 @@ ej_findasus(int eid, webs_t wp, int argc, char **argv) {
 			strcat(retList, "{");
 			sprintf(strTmp, "modelName:\"%s\",", name);
 			strcat(retList, strTmp);
-			sprintf(strTmp, "ssid:\"%s\",", ssid);
+			if(check_xss_blacklist(ssid, 0))
+				sprintf(strTmp, "ssid:\"\",");
+			else
+				sprintf(strTmp, "ssid:\"%s\",", ssid);
 			strcat(retList, strTmp);
 			sprintf(strTmp, "ipAddr:\"%s\"", ip);
 			strcat(retList, strTmp);
@@ -15099,7 +15152,7 @@ ej_get_header_info(int eid, webs_t wp, int argc, char **argv)
 		snprintf(host_name_temp, sizeof(host_name), "%s", host_name);
 	}
 
-	if(check_xxs_blacklist(current_page_name, 1)) {
+	if(check_xss_blacklist(current_page_name, 1)) {
 		strcpy(current_page_name_temp, "index.asp");
 	}
 	else {
@@ -15128,7 +15181,7 @@ ej_login_error_info(int eid, webs_t wp, int argc, char **argv)
 	json_object_object_add(item,"error_status", json_object_new_int(login_error_status));
 
 	/* url */
-	if(check_xxs_blacklist(login_url, 1)){
+	if(check_xss_blacklist(login_url, 1)){
 		json_object_object_add(item,"page", json_object_new_string("index.asp"));
 	}else{
 		json_object_object_add(item,"page", json_object_new_string(login_url));
@@ -15670,7 +15723,7 @@ void write_encoded_crt(char *name, char *value){
 	nvram_set(name, tmp);
 }
 
-int check_xxs_blacklist(char* para, int check_www)
+int check_xss_blacklist(char* para, int check_www)
 {
 	int i = 0;
 	int file_len;
@@ -15683,7 +15736,7 @@ int check_xxs_blacklist(char* para, int check_www)
 
 
 	if(para == NULL || !strcmp(para, "")){
-		//_dprintf("check_xxs_blacklist: para is NULL\n");
+		//_dprintf("check_xss_blacklist: para is NULL\n");
 		return 1;
 	}
 
@@ -15691,7 +15744,7 @@ int check_xxs_blacklist(char* para, int check_www)
 	while(*para) {
 		//if(*para=='<' || *para=='>' || *para=='%' || *para=='/' || *para=='(' || *para==')' || *para=='&') {
 		if(*para=='<' || *para=='>' || *para=='%' || *para=='(' || *para==')' || *para=='&') {
-			//_dprintf("check_xxs_blacklist: para is Invalid\n");
+			//_dprintf("check_xss_blacklist: para is Invalid\n");
 			free(para_t);
 			return 1;
 		}
@@ -15703,7 +15756,7 @@ int check_xxs_blacklist(char* para, int check_www)
 	}
 
 	if(strstr(para_str, "script") || strstr(para_str, "//") ){
-		//_dprintf("check_xxs_blacklist: para include script\n");
+		//_dprintf("check_xss_blacklist: para include script\n");
 		free(para_t);
 		return 1;
 	}
@@ -15725,7 +15778,7 @@ int check_xxs_blacklist(char* para, int check_www)
 
 		snprintf(filename, sizeof(filename), "/www/%s", url_str);
 		if(!check_if_file_exist(filename)){
-			_dprintf("check_xxs_blacklist:%s is not in www\n", url_str);
+			_dprintf("check_xss_blacklist:%s is not in www\n", url_str);
 			free(para_t);
 			return 1;
 		}

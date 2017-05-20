@@ -14,7 +14,7 @@
 
 #include <protect_srv.h>
 
-extern void SEND_PTCSRV_EVENT(int s_type, const char *addr, const char *msg);
+extern void SEND_PTCSRV_EVENT(int s_type, int status, const char *addr, const char *msg);
 
 #ifndef RTCONFIG_NOTIFICATION_CENTER
 extern void Debug2Console(const char * format, ...);

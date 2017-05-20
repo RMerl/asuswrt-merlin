@@ -40,9 +40,6 @@
 #include "auth.h"
 #include "runopts.h"
 #include "crypto_desc.h"
-#ifdef RTCONFIG_PROTECTION_SERVER
-#include <libptcsrv.h>
-#endif
 
 static void svr_remoteclosed(void);
 
@@ -172,15 +169,6 @@ void svr_dropbear_exit(int exitcode, const char* format, va_list param) {
 		/* before userauth */
 		snprintf(fullmsg, sizeof(fullmsg), "Exit before auth: %s", exitmsg);
 	}
-
-#ifdef RTCONFIG_PROTECTION_SERVER
-		char ip[64];
-		char *addr;
-		strncpy(ip, svr_ses.addrstring, sizeof(ip));
-		addr = strrchr(ip, ':');
-		*addr = '\0';
-		SEND_PTCSRV_EVENT(PROTECTION_SERVICE_SSH, ip, "From dropbear , LOGIN FAIL");
-#endif
 
 	dropbear_log(LOG_INFO, "%s", fullmsg);
 

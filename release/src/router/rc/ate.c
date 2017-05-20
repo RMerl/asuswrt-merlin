@@ -1680,3 +1680,16 @@ int start_envrams(void){
 }
 
 #endif
+
+int ate_run_arpstrom(void) {
+
+	int ate_arpstorm = 0;
+	ate_arpstorm = nvram_get_int("ate_arpstorm");
+	while(ate_arpstorm) {
+		ate_arpstorm--;
+		doSystem("arpstorm &");
+		sleep(1);
+	}
+
+	return 1;
+}

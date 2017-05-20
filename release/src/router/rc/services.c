@@ -833,7 +833,7 @@ static void link_up(void)
 int restart_dnsmasq(int need_link_DownUp)
 {
 	if (need_link_DownUp) {
-#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66))
+#if (defined(PLN11) || defined(PLN12) || defined(PLAC56) || defined(PLAC66))
 		nvram_set("plc_ready", "0");
 #endif
 		link_down();
@@ -846,7 +846,7 @@ int restart_dnsmasq(int need_link_DownUp)
 
 	if (need_link_DownUp) {
 		link_up();
-#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66))
+#if (defined(PLN11) || defined(PLN12) || defined(PLAC56) || defined(PLAC66))
 		nvram_set("plc_ready", "1");
 #endif
 	}
@@ -2393,6 +2393,10 @@ ddns_updated_main(int argc, char *argv[])
 
 	logmessage("ddns", "ddns update ok");
 
+#ifdef RTCONFIG_OPENVPN
+	update_ovpn_profie_remote();
+#endif
+
 	_dprintf("done\n");
 
 	return 0;
@@ -2591,6 +2595,10 @@ stop_ddns(void)
 		killall("ez-ipupdate", SIGINT);
 	if (pids("phddns"))
 		killall("phddns", SIGINT);
+
+#ifdef RTCONFIG_OPENVPN
+	update_ovpn_profie_remote();
+#endif
 }
 
 int
@@ -3003,6 +3011,9 @@ int
 _start_telnetd(int force)
 {
 	char *telnetd_argv[] = { "telnetd",
+#ifdef RTCONFIG_PROTECTION_SERVER
+		NULL,	/* -z: enable send failed login */
+#endif
 		NULL, NULL,	/* -b address */
 		NULL };
 	int index = 1;
@@ -3024,6 +3035,9 @@ _start_telnetd(int force)
 	setup_passwd();
 	//chpass(nvram_safe_get("http_username"), nvram_safe_get("http_passwd"));	// vsftpd also needs
 
+#ifdef RTCONFIG_PROTECTION_SERVER
+	telnetd_argv[index++] = "-z";
+#endif
 	if (is_routing_enabled()) {
 		telnetd_argv[index++] = "-b";
 		telnetd_argv[index++] = nvram_safe_get("lan_ipaddr");
@@ -3193,7 +3207,7 @@ void start_upnp(void)
 {
 	FILE *f;
 	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
-	char lanmacaddr[18];
+	char et0macaddr[18];
 	char *proto, *port, *lport, *srcip, *dstip, *desc;
 	char *nv, *nvp, *b;
 	int upnp_enable, upnp_mnp_enable, upnp_port;
@@ -3232,10 +3246,15 @@ void start_upnp(void)
 				if (upnp_port < 0 || upnp_port > 65535)
 					upnp_port = 0;
 
-				strlcpy(lanmacaddr, get_lan_hwaddr(), sizeof (lanmacaddr));
-				if (strlen(lanmacaddr))
-					for (i = 0; i < strlen(lanmacaddr); i++)
-						lanmacaddr[i] = tolower(lanmacaddr[i]);;
+#if defined(RTCONFIG_RGMII_BRCM5301X)
+				strlcpy(et0macaddr, nvram_safe_get("lan_hwaddr"), sizeof (et0macaddr));
+#else
+				strlcpy(et0macaddr, get_lan_hwaddr(), sizeof (et0macaddr));
+#endif
+
+				if (strlen(et0macaddr))
+					for (i = 0; i < strlen(et0macaddr); i++)
+						et0macaddr[i] = tolower(et0macaddr[i]);;
 
 				fprintf(f,
 					"ext_ifname=%s\n"
@@ -3266,7 +3285,7 @@ void start_upnp(void)
 					get_productid(),
 					"ASUS Wireless Router",
 					rt_serialno,
-					nvram_get("serial_no") ? : lanmacaddr,
+					nvram_get("serial_no") ? : et0macaddr,
 					"/tmp/upnp.leases");
 
 				if (nvram_get_int("upnp_clean")) {
@@ -3601,13 +3620,13 @@ int generate_mdns_config(void)
 {
 	FILE *fp;
 	char avahi_config[80];
-	char lanmacaddr[18];
+	char et0macaddr[18];
 	int ret = 0;
 	char *wan1_ifname;
 
 	sprintf(avahi_config, "%s/%s", AVAHI_CONFIG_PATH, AVAHI_CONFIG_FN);
 
-	strlcpy(lanmacaddr, get_lan_hwaddr(), sizeof (lanmacaddr));
+	strlcpy(et0macaddr, get_lan_hwaddr(), sizeof (et0macaddr));
 
 	/* Generate avahi configuration file */
 	if (!(fp = fopen(avahi_config, "w"))) {
@@ -3617,7 +3636,7 @@ int generate_mdns_config(void)
 
 	/* Set [server] configuration */
 	fprintf(fp, "[Server]\n");
-	fprintf(fp, "host-name=%s-%c%c%c%c\n", get_productid(),lanmacaddr[12],lanmacaddr[13],lanmacaddr[15],lanmacaddr[16]);
+	fprintf(fp, "host-name=%s-%c%c%c%c\n", get_productid(),et0macaddr[12],et0macaddr[13],et0macaddr[15],et0macaddr[16]);
 #ifdef RTCONFIG_FINDASUS
 	fprintf(fp, "aliases=findasus,%s\n",get_productid());
 	fprintf(fp, "aliases_llmnr=findasus,%s\n",get_productid());
@@ -3929,7 +3948,7 @@ reset_plc(void)
 	if (nvram_match("plc_ready", "0"))
 		return;
 
-#if defined(PLN12)
+#if defined(PLN11) || defined(PLN12)
 	if (!get_qca8337_PHY_power(1))
 		doSystem("swconfig dev %s port 1 set power 1", MII_IFNAME);
 #elif defined(PLAC56)
@@ -5884,7 +5903,9 @@ stop_services(void)
 #ifdef RTCONFIG_SSH
 	stop_sshd();
 #endif
-
+#ifdef RTCONFIG_PROTECTION_SERVER
+	stop_ptcsrv();
+#endif
 #ifdef RTCONFIG_SNMPD
 	stop_snmpd();
 #endif
@@ -6434,7 +6455,7 @@ void handle_notifications(void)
 	int action = 0;
 	int count;
 	int i;
-#ifdef RTCONFIG_USB_MODEM
+#if defined(RTCONFIG_USB_MODEM) || defined(RTCONFIG_DUALWAN)
 	int unit;
 #endif
 
@@ -7262,7 +7283,6 @@ again:
 #ifdef RTCONFIG_DUALWAN
 	else if(!strcmp(script, "multipath")){
 		char mode[4], if_now[16], if_next[16];
-		int unit;
 		int unit_now = wan_primary_ifunit();
 		int unit_next = (unit_now+1)%WAN_UNIT_MAX;
 		int state_now = is_wan_connect(unit_now);
@@ -7937,27 +7957,17 @@ check_ddr_done:
 	}
 	else if(!strncmp(script, "modemscan", 9)){
 		char *at_cmd[] = {"/usr/sbin/modem_status.sh", "scan", NULL};
-		int usb_unit;
+
 #ifdef RTCONFIG_DUALWAN
-		char word[256], *next;
-
-		usb_unit = 0;
-		foreach(word, nvram_safe_get("wans_dualwan"), next){
-			if(!strcmp(word, "usb")){
-				break;
-			}
-
-			++usb_unit;
-		}
+		unit = get_usbif_dualwan_unit();
 #else
-		usb_unit = 1;
+		unit = 1;
 #endif
 
-		if(usb_unit != WAN_UNIT_MAX){
+		if(unit >= 0){
 			nvram_set("usb_modem_act_scanning", "3");
 
-			stop_wan_if(usb_unit);
-			start_wan_if(usb_unit);
+			stop_wan_if(unit);
 
 			_eval(at_cmd, ">/tmp/modem_action.ret", 0, NULL);
 		}

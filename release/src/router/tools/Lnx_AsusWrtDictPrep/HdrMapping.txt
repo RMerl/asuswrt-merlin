@@ -21,3 +21,6 @@ UK=Український
 HU=Hungarian
 RO=Romanian
 KR=한국어
+NL=Nederlands
+SL=Slovenščina
+

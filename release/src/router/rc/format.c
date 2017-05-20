@@ -89,3 +89,56 @@ void adjust_ddns_config(void)
 	}
 	
 }
+
+void adjust_access_restrict_config(void)
+{
+	char *nv, *nvp, *b, *chk;
+	char *ipAddr;
+	char *http_list;
+	char *restrict_list;
+	char  replacebox[2048], rerule[256];
+	int   cnt = 0;
+	int   RESAVE = OFF;
+	int   nCount = 0;
+	
+	http_list = nvram_safe_get("http_clientlist");
+	restrict_list = nvram_safe_get("restrict_rulelist");
+	
+	if ( (restrict_list[0] == '\0' && nvram_get_int("enable_acc_restriction") == 0) && 
+	     (http_list[0] != '\0') ) {
+		
+		nvram_set_int("enable_acc_restriction", nvram_get_int("http_client"));
+		
+		nv = nvp = strdup(nvram_safe_get("http_clientlist"));
+		
+		/* Change setting format 
+		From:[<ipAddr1<ipAddr2<ipAddr3]
+		To:  [<1>ipAddr1>7<1>ipAddr2>7<1>ipAddr3>7]
+		*/
+		memset(replacebox, 0, sizeof(replacebox));
+		while (nvp && (b = strsep(&nvp, "<")) != NULL) {
+			chk = strdup(b);
+			//dbg("[%s(%d)] %s\n", __FUNCTION__, __LINE__, chk);
+			while( *chk != '\0') {
+				if(*chk == '>') cnt++;
+				chk++;
+			}
+			if (cnt != 2) {
+				if (vstrsep(b, ">", &ipAddr) != 1) continue;
+				if (*ipAddr) {
+					memset(rerule, 0, sizeof(rerule));
+					snprintf(rerule, sizeof(rerule), "<1>%s>7", ipAddr);
+					//dbg("[%s(%d)] %s\n", __FUNCTION__, __LINE__, rerule);
+					nCount = sizeof(replacebox) - strlen(replacebox);
+					strncat(replacebox, rerule, nCount-1);
+					RESAVE = ON;
+				}
+			}
+			cnt = 0;
+		}
+		if (RESAVE) 
+			nvram_set("restrict_rulelist", replacebox);
+		free(nv);
+	}
+}
+

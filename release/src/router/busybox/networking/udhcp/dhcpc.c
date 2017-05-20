@@ -1799,7 +1799,7 @@ int udhcpc_main(int argc UNUSED_PARAM, char **argv)
 				udhcp_run_script(&packet, state == REQUESTING ? "bound" : "renew");
 				already_waited_sec = (unsigned)monotonic_sec() - start;
 				timeout = lease_seconds / 2;
-				rebind_timeout = timeout / 8;
+				rebind_timeout = lease_seconds / 8;
 				if ((unsigned)timeout < already_waited_sec) {
 					/* Something went wrong. Back to discover state */
 					timeout = already_waited_sec = 0;

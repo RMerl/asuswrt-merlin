@@ -293,7 +293,7 @@ var btnAction = {
 				return false;
 		}
 	
-		parent.document.getElementById("stassid").innerHTML = wlclient.ssid; 
+		parent.document.getElementById("stassid").innerHTML = parent.htmlEnDeCode.htmlEncode(wlclient.ssid);
 		saveToForm.wlClient(new wlcKey(wlclient));
 
 		if(!parent.isRepeater){

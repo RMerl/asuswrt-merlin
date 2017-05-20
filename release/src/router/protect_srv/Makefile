@@ -4,6 +4,7 @@ ifeq ($(ASUSWRT_SDK),y)
 include $(SRCBASE)/router/.config
 MAKE = make
 CFLAGS = -Wall -O2 -g  $(EXTRACFLAGS)
+CFLAGS += -I$(TOP)/shared -I$(SRCBASE)/include -I$(SRCBASE)/common/include
 CFLAGS += -I$(SRCBASE) -I$(SRCBASE)/include -I. -I$(TOP)/protect_srv/include/
 CFLAGS += -DASUSWRT_SDK
 
@@ -22,8 +23,13 @@ ifeq ($(HND_ROUTER),y)
 CFLAGS += -DNON_P_THREAD
 endif
 
+LDFLAGS += -L$(TOP)/nvram$(BCMEX) ${EXTRA_NV_LDFLAGS} -lnvram
+LDFLAGS += -L$(TOP)/shared -L$(INSTALLDIR)/shared/usr/lib -lshared
 LDFLAGS += -L$(TOP)/protect_srv/lib/ -lptcsrv
-
+ifeq ($(RTCONFIG_QTN),y)
+CFLAGS += -I$(TOP)/libqcsapi_client
+LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
+endif
 LIBS = -lpthread -lgcc_s
 
 MDIRS = lib
@@ -61,10 +67,18 @@ MAKE = make
 CFLAGS = -Wall -O2 -g 
 CFLAGS += $(TC_CFLAGS) -I.
 CFLAGS += -I$(APP_PROTECTION_SERVER_DIR)/include/
+CFLAGS += -I. -I$(APP_SHARED_DIR) -I$(APP_TCAPILIB_DIR) $(TC_CFLAGS)
 
-LDFLAGS = -lm
+LDFLAGS = -L$(APP_SHARED_DIR) -lshared -L$(APP_TCAPILIB_DIR) -ltcapi
 LDFLAGS += -L$(APP_PROTECTION_SERVER_DIR)/lib/ -lptcsrv
 LDFLAGS += -lpthread
+
+ifneq ($(strip $(RTCONFIG_NOTIFICATION_CENTER)),)
+CFLAGS += -I$(APP_NOTIFICATION_CENTER_DIR) -I$(APP_NOTIFICATION_CENTER_DIR)/lib/
+CFLAGS += -I$(APP_SQLITE_DIR)/
+LDFLAGS += -L$(APP_NOTIFICATION_CENTER_DIR)/lib -lnt -lm
+LDFLAGS += -L$(APP_SQLITE_DIR)/.libs -lsqlite3
+endif
 LIBS =
 
 MDIRS+= lib

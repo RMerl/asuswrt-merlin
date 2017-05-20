@@ -14,6 +14,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
+
+#include <rc.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -39,7 +42,9 @@
 #include <notify_rc.h>
 #include <bcmnvram.h>
 
-#include "rc.h"
+#ifdef RTCONFIG_TMOBILE
+#include <sys/reboot.h>
+#endif
 #ifdef RTCONFIG_USB
 #include <disk_io_tools.h>
 #endif
@@ -167,11 +172,7 @@ int wandog_delay, delay_detect;
 int WAN_FB_UNIT;
 #endif
 #ifdef RTCONFIG_USB_MODEM
-char modem_type[32];
 int sim_lock = 0;
-#ifdef RTCONFIG_INTERNAL_GOBI
-char usb_if[16];
-#endif
 #endif
 
 int scan_interval;
@@ -213,7 +214,9 @@ char current_lan_dns[256];
 char current_lan_subnet[11];
 
 int current_wan_unit = WAN_UNIT_FIRST;
+#if defined(RTCONFIG_DUALWAN) || defined(RTCONFIG_USB_MODEM)
 int other_wan_unit = WAN_UNIT_SECOND;
+#endif
 int current_state[WAN_UNIT_MAX];
 
 char nvram_state[WAN_UNIT_MAX][16], nvram_sbstate[WAN_UNIT_MAX][16], nvram_auxstate[WAN_UNIT_MAX][16];

@@ -82,11 +82,20 @@ var contentM_height_orig = parent.document.getElementById("contentM").height;
 var ttc = '<% nvram_get("territory_code"); %>';
 var is_TW_sku = (ttc.search("TW") == -1) ? false : true;
 var is_CN_sku = (ttc.search("CN") == -1) ? false : true;
+var is_US_sku = (ttc.search("US") == -1) ? false : true;
 var odmpid = '<% nvram_get("odmpid"); %>';
 <% start_autodet(); %>
 
 function QKinternettype_load_body(){
 	parent.document.title = "<#Web_Title#> - <#QKSet_type_head#>";
+
+	/*workaround for PPTP, L2TP connection*/
+	if(is_TW_sku || is_CN_sku || is_US_sku){
+		var dial_desc_string = document.getElementById("dialUp_string").innerHTML;
+		var key_index = dial_desc_string.indexOf("PPPoE");
+		var dial_desc_string = dial_desc_string.substr(0, key_index+5);
+		document.getElementById("dialUp_string").innerHTML = dial_desc_string;
+	}
 
 	if(parent.ISMOBILE){
 		parent.set_step("detect");
@@ -878,7 +887,7 @@ function enable_ISP_special(){
 				</tr>
 				<tr height="40px" id="dialUp_desc">
 					<td align="center"></td>
-					<td valign="top"><span class="wan_type_dec"><#QIS_SmartConn_TypeDial#></span></td>
+					<td valign="top"><span id="dialUp_string" class="wan_type_dec"><#QIS_SmartConn_TypeDial#></span></td>
 				</tr>
 
 				<tr id="non_dialUp_tr">

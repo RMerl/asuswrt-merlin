@@ -90,6 +90,9 @@ struct globals {
 	G.issuefile = "/etc/issue.net"; \
 } while (0)
 
+#ifdef SECURITY_NOTIFY
+static int EN_NOTIFY = 0;
+#endif
 
 /*
    Remove all IAC's from buf1 (received IACs are ignored and must be removed
@@ -237,8 +240,14 @@ enum {
 	OPT_INETD      = (1 << 3) * ENABLE_FEATURE_TELNETD_STANDALONE, /* -i */
 	OPT_PORT       = (1 << 4) * ENABLE_FEATURE_TELNETD_STANDALONE, /* -p PORT */
 	OPT_FOREGROUND = (1 << 6) * ENABLE_FEATURE_TELNETD_STANDALONE, /* -F */
+#ifdef SECURITY_NOTIFY
+	OPT_SECURITY   = (1 << 7) * ENABLE_FEATURE_TELNETD_STANDALONE, /* -z */
+	OPT_SYSLOG     = (1 << 8) * ENABLE_FEATURE_TELNETD_INETD_WAIT, /* -S */
+	OPT_WAIT       = (1 << 9) * ENABLE_FEATURE_TELNETD_INETD_WAIT, /* -w SEC */
+#else
 	OPT_SYSLOG     = (1 << 7) * ENABLE_FEATURE_TELNETD_INETD_WAIT, /* -S */
 	OPT_WAIT       = (1 << 8) * ENABLE_FEATURE_TELNETD_INETD_WAIT, /* -w SEC */
+#endif
 };
 
 static struct tsession *
@@ -255,6 +264,32 @@ make_new_session(
 	char tty_name[GETPTY_BUFSIZE];
 	struct tsession *ts = xzalloc(sizeof(struct tsession) + BUFSIZE * 2);
 
+#ifdef SECURITY_NOTIFY
+	socklen_t len;
+	struct sockaddr_storage addr;
+	char ipstr[INET6_ADDRSTRLEN];
+	int port;
+	
+	if (EN_NOTIFY) {
+		
+		len = sizeof(addr);
+		getpeername(sock, (struct sockaddr*)&addr, &len);
+		
+		//Handle IPv4/IPv6：
+		if (addr.ss_family == AF_INET) {
+		    struct sockaddr_in *s = (struct sockaddr_in *)&addr;
+		    port = ntohs(s->sin_port);
+		    inet_ntop(AF_INET, &s->sin_addr, ipstr, sizeof ipstr);
+		} else { // AF_INET6
+		    struct sockaddr_in6 *s = (struct sockaddr_in6 *)&addr;
+		    port = ntohs(s->sin6_port);
+		    inet_ntop(AF_INET6, &s->sin6_addr, ipstr, sizeof ipstr);
+		}
+		
+		printf("IP address: %s\n", ipstr);
+		printf("Port      : %d\n", port);
+	}
+#endif
 	/*ts->buf1 = (char *)(ts + 1);*/
 	/*ts->buf2 = ts->buf1 + BUFSIZE;*/
 
@@ -378,6 +413,16 @@ make_new_session(
 	print_login_issue(G.issuefile, tty_name);
 
 	/* Exec shell / login / whatever */
+#ifdef SECURITY_NOTIFY
+	if (EN_NOTIFY) {
+		char *argv[] = {"/bin/login", "-x", ipstr, (char *)0};
+		BB_EXECVP(G.loginpath, (char **)argv);
+	} else {
+		login_argv[0] = G.loginpath;
+		login_argv[1] = NULL;
+		BB_EXECVP(G.loginpath, (char **)login_argv);
+	}
+#else
 	login_argv[0] = G.loginpath;
 	login_argv[1] = NULL;
 	/* exec busybox applet (if PREFER_APPLETS=y), if that fails,
@@ -386,6 +431,7 @@ make_new_session(
 	 * fd has CLOEXEC set on it too. These two fds will be closed here.
 	 */
 	BB_EXECVP(G.loginpath, (char **)login_argv);
+#endif
 	/* _exit is safer with vfork, and we shouldn't send message
 	 * to remote clients anyway */
 	_exit(EXIT_FAILURE); /*bb_perror_msg_and_die("execv %s", G.loginpath);*/
@@ -501,6 +547,9 @@ int telnetd_main(int argc UNUSED_PARAM, char **argv)
 	 * don't need to guess whether it's ok to pass -i to us */
 	opt = getopt32(argv, "f:l:Ki"
 			IF_FEATURE_TELNETD_STANDALONE("p:b:F")
+#ifdef SECURITY_NOTIFY
+			"z"
+#endif
 			IF_FEATURE_TELNETD_INETD_WAIT("Sw:"),
 			&G.issuefile, &G.loginpath
 			IF_FEATURE_TELNETD_STANDALONE(, &opt_portnbr, &opt_bindaddr)
@@ -516,6 +565,11 @@ int telnetd_main(int argc UNUSED_PARAM, char **argv)
 			bb_daemonize_or_rexec(0 /*was DAEMON_CHDIR_ROOT*/, argv);
 		}
 	}
+#ifdef SECURITY_NOTIFY
+	if (opt & OPT_SECURITY) {
+		EN_NOTIFY = 1;
+	}
+#endif
 	/* Redirect log to syslog early, if needed */
 	if (IS_INETD || (opt & OPT_SYSLOG) || !(opt & OPT_FOREGROUND)) {
 		openlog(applet_name, LOG_PID, LOG_DAEMON);

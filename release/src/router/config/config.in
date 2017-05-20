@@ -254,6 +254,10 @@ config RTCONFIG_PROXYSTA
 	bool "Proxy STA"
 	default n
 
+config RTCONFIG_DISABLE_PROXYSTA_UI
+	bool "Hiden UI Media Bridge Mode"
+	default n
+
 config RTCONFIG_CONCURRENTREPEATER
 	bool "Concurrent Repeater"
 	default n
@@ -342,6 +346,11 @@ config RTCONFIG_XHCIMODE
 config RTCONFIG_MEDIA_SERVER
 	bool "Media Server (MiniDLNA)"
 	depends on RTCONFIG_USB
+	default n
+
+config RTCONFIG_LIMIT_MEDIA_SERVER
+	bool "Small memory optimization on Media Server"
+	depends on RTCONFIG_MEDIA_SERVER
 	default n
 
 config RTCONFIG_CLOUDSYNC

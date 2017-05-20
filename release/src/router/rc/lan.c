@@ -619,7 +619,9 @@ gen_qca_wifi_cfgs(void)
 #if defined(RTCONFIG_WPS_ALLLED_BTN)
 	if (nvram_match("AllLED", "1")) {
 #endif
-#if defined(PLN12)
+#if defined(PLN11)
+	; /* do nothing */
+#elif defined(PLN12)
 	//fprintf(fp2, "[ -e /sys/class/net/%s ] && led_ctrl %d %d\n", WIF_2G, LED_2G_GREEN, led_onoff[0]);
 	//fprintf(fp2, "[ -e /sys/class/net/%s ] && led_ctrl %d %d\n", WIF_2G, LED_2G_ORANGE, led_onoff[0]);
 	fprintf(fp2, "[ -e /sys/class/net/%s ] && led_ctrl %d %d\n", WIF_2G, LED_2G_RED, led_onoff[0]);
@@ -651,12 +653,14 @@ gen_qca_wifi_cfgs(void)
 	fprintf(fp2, "fi\n");
 
 #if defined(RTAC58U) /* for RAM 128MB */
-	fprintf(fp2, "iwpriv wifi1 fc_buf_max 2048\n");
-	fprintf(fp2, "iwpriv wifi1 fc_q_max 256\n");
-	fprintf(fp2, "iwpriv wifi1 fc_q_min 16\n");
-	fprintf(fp2, "iwpriv wifi0 fc_buf_max 2048\n");
-	fprintf(fp2, "iwpriv wifi0 fc_q_max 256\n");
-	fprintf(fp2, "iwpriv wifi0 fc_q_min 16\n");
+	if (get_meminfo_item("MemTotal") <= 131072) {
+		fprintf(fp2, "iwpriv wifi1 fc_buf_max 4096\n");
+		fprintf(fp2, "iwpriv wifi1 fc_q_max 512\n");
+		fprintf(fp2, "iwpriv wifi1 fc_q_min 32\n");
+		fprintf(fp2, "iwpriv wifi0 fc_buf_max 4096\n");
+		fprintf(fp2, "iwpriv wifi0 fc_q_max 512\n");
+		fprintf(fp2, "iwpriv wifi0 fc_q_min 32\n");
+	}
 #endif
 
 	fclose(fp);

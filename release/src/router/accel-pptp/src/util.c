@@ -84,6 +84,7 @@ int file2fd(const char *path, const char *mode, int fd)
 #include <fcntl.h>
 #include <signal.h>
 #include <string.h>
+#include <errno.h>
 
 /* pipe private to process */
 static int sigpipe[2];
@@ -120,7 +121,9 @@ int sigpipe_create()
 /* generic handler for signals, writes signal number to pipe */
 void sigpipe_handler(int signum)
 {
-  write(sigpipe[1], &signum, sizeof(signum));
+  while (write(sigpipe[1], &signum, sizeof(signum)) < 0) {
+    if (errno != EINTR) break;
+  }
   signal(signum, sigpipe_handler);
 }
 
@@ -144,7 +147,9 @@ int sigpipe_fd()
 int sigpipe_read()
 {
   int signum;
-  read(sigpipe[0], &signum, sizeof(signum));
+  while (read(sigpipe[0], &signum, sizeof(signum)) < 0) {
+    if (errno != EINTR) break;
+  }
   return signum;
 }
 

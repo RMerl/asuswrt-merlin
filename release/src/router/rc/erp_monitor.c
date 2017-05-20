@@ -354,7 +354,9 @@ static void ERP_BTN_WAKEUP()
 {
 	int active = 0;
 	int model = get_model();
+#ifdef RTCONFIG_LED_BTN
 	static int led_status_on = 1;
+#endif
 
 	if (erp_status != ERP_STANDBY || erp_count != -1)
 		return;

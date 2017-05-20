@@ -58,7 +58,7 @@ else
 	sleep 1 ;
 
 	echo "LTE: switch Gobi mode to internal network" | logger ;
-	chat -e '' "at+cfotamode" OK  >> /dev/ttyACM1 < /dev/ttyACM1 ;
+	sh -c "chat -e '' 'at+cfotamode' OK  >> /dev/ttyACM1 < /dev/ttyACM1" ;
 	echo $? | logger ;
 	sleep 3 ;
 
@@ -71,7 +71,7 @@ else
 	echo $? | logger ;
 	sleep 3 ;
 
-	chat -e '' "at+cexecfile=rm -rf /cache/" OK  >> /dev/ttyACM1 < /dev/ttyACM1
+	sh -c "chat -e '' 'at+cexecfile=rm -rf /cache/' OK  >> /dev/ttyACM1 < /dev/ttyACM1" ;
 	sleep 1
 
 	echo "LTE: Gobi internal network: uploading update.zip" | logger ;
@@ -87,7 +87,7 @@ else
 	sleep 1 ;
 
 	echo "LTE: updating from `cat /tmp/GobiVer` to `cat version`" | logger ;
-	chat -e '' "at+cfotaupdate" OK  >> /dev/ttyACM1 < /dev/ttyACM1
+	sh -c "chat -e '' 'at+cfotaupdate' OK  >> /dev/ttyACM1 < /dev/ttyACM1" ;
 	echo $? | logger ;
 
 	echo "LTE: Waiting for active" | logger ;
@@ -112,7 +112,7 @@ else
 	else
 		echo "LTE: ### SUCCESS ###" | logger ;
 		nvram set lte_update_status=1
-		if [ `ATE Get_GobiVersion` != `FAIL` ] ; then
+		if [ "`ATE Get_GobiVersion`" != "FAIL" ] ; then
 			nvram set usb_modem_act_swver=`ATE Get_GobiVersion`
 		fi
 	fi

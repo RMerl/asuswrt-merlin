@@ -359,6 +359,8 @@ mime_to_ext(const char * mime)
 				return "3gp";
 			else if( strncmp(mime+6, "x-tivo-mpeg", 11) == 0 )
 				return "TiVo";
+			else if( strncmp(mime+6, "x-pn-realvideo", 11) == 0 )
+                return "rmvb";
 			break;
 		case 'i':
 			if( strcmp(mime+6, "jpeg") == 0 )

@@ -1,6 +1,7 @@
 #ifndef __RTSTATE_H__
 #define __RTSTATE_H__
 #include <rtconfig.h>
+#include <bcmnvram.h>
 
 enum {
 	SW_MODE_NONE=0,
@@ -11,9 +12,21 @@ enum {
 };
 
 enum {
+	WAN_UNIT_NONE=-1,
 	WAN_UNIT_FIRST=0,
+#if defined(RTCONFIG_DUALWAN) || defined(RTCONFIG_USB_MODEM)
 	WAN_UNIT_SECOND,
+#endif
 	WAN_UNIT_MAX
+};
+
+enum {
+	MODEM_UNIT_NONE=-1,
+	MODEM_UNIT_FIRST=0,
+#ifdef RTCONFIG_USB_MULTIMODEM
+	MODEM_UNIT_SECOND,
+#endif
+	MODEM_UNIT_MAX
 };
 
 #ifdef RTCONFIG_MULTICAST_IPTV
@@ -107,7 +120,8 @@ enum {
 	LAN_STOPPED_REASON_SYSTEM_ERR
 };
 
-#if defined(CONFIG_BCMWL5) || (defined(RTCONFIG_RALINK) && defined(RTCONFIG_WIRELESSREPEATER)) || defined(RTCONFIG_QCA)
+#if defined(CONFIG_BCMWL5) || (defined(RTCONFIG_RALINK) && defined(RTCONFIG_WIRELESSREPEATER)) || defined(RTCONFIG_QCA) \
+		 || (defined(RTCONFIG_REALTEK) && defined(RTCONFIG_WIRELESSREPEATER)) || defined(RTCONFIG_ALPINE) || defined(RTCONFIG_LANTIQ)
 enum { 
 	WLC_STATE_INITIALIZING=0,
 	WLC_STATE_CONNECTING,
@@ -249,11 +263,15 @@ enum {
 #define DISKMON_DAY_HOUR 24
 #define DISKMON_HOUR_SEC 3600
 
+#if defined(RT4GAC55U) || defined(RT4GAC68U)
+#define MAX_USB_PORT 2
+#else
 #define MAX_USB_PORT 3
+#endif
 #define MAX_USB_HUB_PORT 6
-#define MAX_USB_DISK_NUM 26
+#define MAX_USB_DISK_NUM 8
 #define MAX_USB_PART_NUM 16
-#define MAX_USB_PRINTER_NUM 10
+#define MAX_USB_PRINTER_NUM 2
 #define MAX_USB_TTY_NUM 10
 #endif
 
@@ -267,14 +285,17 @@ enum {
 #define WANSCAP_WAN2	0x40
 
 // the following definition is for wans_dualwan
-#define WANS_DUALWAN_IF_NONE  0
-#define WANS_DUALWAN_IF_DSL   1
-#define WANS_DUALWAN_IF_WAN   2
-#define WANS_DUALWAN_IF_LAN   3
-#define WANS_DUALWAN_IF_USB   4
-#define WANS_DUALWAN_IF_2G    5
-#define WANS_DUALWAN_IF_5G    6
-#define WANS_DUALWAN_IF_WAN2  7
+#define WANS_DUALWAN_IF_NONE    0
+#define WANS_DUALWAN_IF_DSL     1
+#define WANS_DUALWAN_IF_WAN     2
+#define WANS_DUALWAN_IF_LAN     3
+#define WANS_DUALWAN_IF_USB     4
+#define WANS_DUALWAN_IF_2G      5
+#define WANS_DUALWAN_IF_5G      6
+#define WANS_DUALWAN_IF_WAN2	7
+#ifdef RTCONFIG_USB_MULTIMODEM
+#define WANS_DUALWAN_IF_USB2    8
+#endif
 
 // the following definition is for free_caches()
 #define FREE_MEM_NONE  "0"
@@ -295,6 +316,8 @@ extern int wan_primary_ifunit_ipv6(void);
 extern int get_wan_state(int unit);
 extern int get_wan_sbstate(int unit);
 extern int get_wan_auxstate(int unit);
+extern char *link_wan_nvname(int unit, char *buf, int size);
+extern int is_internet_connect(int unit);
 extern int is_wan_connect(int unit);
 extern int is_phy_connect(int unit);
 extern int is_ip_conflict(int unit);
@@ -303,7 +326,9 @@ extern char *get_wan_ifname(int unit);
 #ifdef RTCONFIG_IPV6
 extern char *get_wan6_ifname(int unit);
 #endif
+extern int get_ports_status(unsigned int port_status);
 extern int get_wanports_status(int wan_unit);
+extern char *get_usb_xhci_port(int port);
 extern char *get_usb_ehci_port(int port);
 extern char *get_usb_ohci_port(int port);
 extern int get_usb_port_number(const char *usb_port);
@@ -313,7 +338,25 @@ extern void set_wanscap_support(char *feature);
 extern void add_wanscap_support(char *feature);
 extern int get_wans_dualwan(void);
 extern int get_dualwan_by_unit(int unit);
+extern int get_wanunit_by_type(int wan_type);
 extern int get_dualwan_primary(void);
 extern int get_dualwan_secondary(void);
+extern int get_gate_num(void);
+#else
+static inline int get_wanunit_by_type(int wan_type){
+#ifdef RTCONFIG_USB_MODEM
+	if(wan_type == WANS_DUALWAN_IF_USB)
+		return WAN_UNIT_SECOND;
+	else
 #endif
+		return WAN_UNIT_FIRST;
+}
 #endif
+
+char *usb_modem_prefix(int modem_unit, char *prefix, int size);
+extern int get_modemunit_by_dev(const char *dev);
+extern int get_modemunit_by_node(const char *usb_node);
+extern int get_modemunit_by_type(int wan_type);
+extern int get_wantype_by_modemunit(int modem_unit);
+
+#endif	/* !__RTSTATE_H__ */

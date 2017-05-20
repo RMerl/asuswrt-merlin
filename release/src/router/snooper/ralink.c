@@ -110,7 +110,7 @@ static struct ifreq ifr;
 static int vlan;
 static int cpu_portmap;
 static int lan_portmap;
-static int cpu_forward;
+static int cpu_forward = 0;
 
 static int esw_ioctl(int write, int offset, uint32_t *value)
 {
@@ -485,6 +485,21 @@ static int read_portmap(int *vlan)
 	return portmap;
 }
 
+static int read_cpu_portmap(int vlan)
+{
+	uint32_t hwaddr[2];
+
+	if (cpu_portmap < 0) {
+		ether_etohw(ifhwaddr, hwaddr);
+
+		cpu_portmap = read_entry(hwaddr, vlan, 0);
+		log_switch("%-5s cpu@vlan%u = " FMT_PORTS, "read",
+		    vlan, ARG_PORTS(cpu_portmap));
+	}
+
+	return cpu_portmap;
+}
+
 static int forward_to_cpu(int enable)
 {
 	uint32_t value, old;
@@ -521,7 +536,7 @@ static int forward_to_cpu(int enable)
 int switch_init(char *ifname, int vid, int cputrap)
 {
 	struct vlan_ioctl_args ifv;
-	uint32_t hwaddr[2], val32;
+	uint32_t val32;
 	int esw_portmap;
 
 	fd = open_socket(AF_INET, SOCK_DGRAM, 0);
@@ -568,22 +583,15 @@ int switch_init(char *ifname, int vid, int cputrap)
 		goto error;
 	}
 
-	lan_portmap = read_portmap(&vlan);
+	lan_portmap = read_portmap(&vlan) & esw_portmap;
 	log_switch("%-5s map@vlan%u = " FMT_PORTS, "read",
 	    vlan, ARG_PORTS(lan_portmap));
 
-	ether_etohw(ifhwaddr, hwaddr);
-	cpu_portmap = read_entry(hwaddr, vlan, 0);
-	if (cpu_portmap < 0)
+	cpu_portmap = -1;
+	if (read_cpu_portmap(vlan) == 0)
 		goto error;
-	log_switch("%-5s cpu@vlan%u = " FMT_PORTS, "init",
-	    vlan, ARG_PORTS(cpu_portmap));
 
-	lan_portmap &= esw_portmap & ~cpu_portmap;
-	log_switch("%-5s lan@vlan%u = " FMT_PORTS, "init",
-	    vlan, ARG_PORTS(lan_portmap));
-
-	cpu_forward = cputrap;
+//	cpu_forward = cputrap;
 
 	return 0;
 
@@ -612,6 +620,13 @@ int switch_get_port(unsigned char *haddr)
 	log_switch("%-5s [" FMT_EA "] = " FMT_PORTS, "read",
 	    ARG_EA(haddr), ARG_PORTS(value));
 
+	if (cpu_portmap < 0 && value >= 0 &&
+	    memcmp(haddr, ifhwaddr, ETHER_ADDR_LEN) == 0) {
+		cpu_portmap = value; 
+		log_switch("%-5s cpu@vlan%u = " FMT_PORTS, "read",
+		    vlan, ARG_PORTS(cpu_portmap));
+	}
+
 	for (port = -1; value > 0; value >>= 1) {
 		port++;
 		if (value & 1)
@@ -627,6 +642,9 @@ int switch_add_portmap(unsigned char *maddr, int portmap)
 	int value;
 
 	if ((maddr[0] & 0x01) == 0)
+		return -1;
+
+	if (read_cpu_portmap(vlan) < 0)
 		return -1;
 
 	ether_etohw(maddr, hwaddr);
@@ -653,6 +671,9 @@ int switch_del_portmap(unsigned char *maddr, int portmap)
 	int value;
 
 	if ((maddr[0] & 0x01) == 0)
+		return -1;
+
+	if (read_cpu_portmap(vlan) < 0)
 		return -1;
 
 	ether_etohw(maddr, hwaddr);
@@ -698,30 +719,32 @@ int switch_clr_portmap(unsigned char *maddr)
 
 int switch_set_floodmap(unsigned char *raddr, int portmap)
 {
-	int value;
-
 	if (!cpu_forward)
-		return 0;
+		return -1;
 
+	if (read_cpu_portmap(vlan) < 0 && portmap)
+		return -1;
+
+	portmap &= lan_portmap & ~cpu_portmap;
+	if (forward_to_cpu(!portmap) < 0)
+		portmap = -1;
 	log_switch("%-5s [" FMT_EA "] = " FMT_PORTS, "flood",
 	    ARG_EA(raddr), ARG_PORTS(portmap));
 
-	value = (portmap & lan_portmap) ? 0 : 1;
-	if (forward_to_cpu(value) < 0)
-		value = -1;
-
-	return value;
+	return portmap;
 }
 
 int switch_clr_floodmap(unsigned char *raddr)
 {
 	if (!cpu_forward)
-		return 0;
+		return -1;
 
+	if (forward_to_cpu(0) < 0)
+		return -1;
 	log_switch("%-5s [" FMT_EA "] = " FMT_PORTS, "flood",
-	    ARG_EA(raddr), ARG_PORTS(-1));
+	    ARG_EA(raddr), ARG_PORTS(lan_portmap));
 
-	return forward_to_cpu(0);
+	return lan_portmap;
 }
 
 #ifdef TEST

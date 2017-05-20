@@ -317,6 +317,16 @@ var validator = {
 		return false;
 	},
 
+	domainName: function (obj) { //support a-z, 0-9, "-", "_" , "."", The first character cannot be dash "-" or under line "_"
+		var re = new RegExp(/^(?:[a-z0-9](?:[a-z0-9-_]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-_]{0,61}[a-z0-9]$/);
+		if(re.test(obj.value)){
+			return "";
+		}
+		else{
+			return "<#JS_validhostname#>";
+		}
+	},
+
 	requireWANIP: function(v){
 		if(v == 'wan_ipaddr_x' || v == 'wan_netmask_x' ||
 				v == 'lan_ipaddr' || v == 'lan_netmask' ||
@@ -1526,17 +1536,17 @@ var validator = {
 		}
 	},
 
-	rangeFloat: function(o, min, max, def){
+	rangeFloat: function(o, _min, _max, def){
 
-                if(isNaN(o.value) || o.value <= min || o.value > max) {
-                        alert('<#JS_validrange#> ' + min + ' <#JS_validrange_to#> ' + max + '.');
+		if(isNaN(o.value) || o.value <= _min || o.value > _max) {
+			alert('<#JS_validrange#> ' + min + ' <#JS_validrange_to#> ' + max + '.');
 			o.value = def;
 			o.focus();
 			o.select();
 			return false;
 		}
 
-                return true;
+		return true;
 	},
 
 	ssidChar: function(ch){

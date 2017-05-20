@@ -282,7 +282,7 @@ function overHint(itemNum){
 			statusmenu += "<div class='StatusHint'><#Mobile_no_signal#></div>";
 		}
 		else if(usb_state == 2 && usb_sbstate == 0 && usb_auxstate == 0){
-			statusmenu += "<div class='StatusHint'><#Connected#> <#HSDPAConfig_ISP_itemname#>: </div><span>" + sim_spn + "</span>";
+			statusmenu += "<div class='StatusHint'><#Connected#> <#HSDPAConfig_ISP_itemname#>: </div><span>" + modem_act_provider + "</span>";
 		}
 		else{
 			statusmenu += "<div class='StatusHint'><#Disconnected#></div>";

@@ -58,6 +58,10 @@
 #include <dirent.h>
 #include <time.h>
 
+#ifdef RTCONFIG_PROTECTION_SERVER
+#include <libptcsrv.h>
+#endif
+
 #ifdef HAVE_UTMP_H
 #include <utmp.h>
 #endif

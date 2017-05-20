@@ -269,7 +269,7 @@ start_pppd(int unit)
 			return -1;
 		}
 
-		fprintf(fp, "# automagically generated\n"
+		fprintf(fp,
 			"global\n\n"
 			"load-handler \"sync-pppd.so\"\n"
 			"load-handler \"cmd.so\"\n\n"

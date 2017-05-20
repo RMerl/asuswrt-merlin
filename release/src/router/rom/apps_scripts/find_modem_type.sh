@@ -2,13 +2,14 @@
 # echo "This is a script to find the modem type out."
 
 
-modem_act_path=`nvram get usb_modem_act_path`
 node_home=/sys/devices
-home="$node_home/"`cd $node_home && find -name "$modem_act_path" 2>/dev/null`
 modem_enable=`nvram get modem_enable`
+usb_gobi2=`nvram get usb_gobi2`
+
+modem_act_path=`nvram get usb_modem_act_path`
+home="$node_home/"`cd $node_home && find -name "$modem_act_path" 2>/dev/null`
 modem_vid=`cat $home/idVendor 2>/dev/null`
 modem_pid=`cat $home/idProduct 2>/dev/null`
-usb_gobi2=`nvram get usb_gobi2`
 
 if [ "$modem_vid" == "" -o "$modem_pid" == "" ]; then
 	echo "type=unknown"

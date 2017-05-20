@@ -1235,15 +1235,18 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 
 	val = nvram_pf_get_int(main_prefix, "channel");
 #ifdef RTCONFIG_QCA_TW_AUTO_BAND4
-	if(band) //5G, flush block-channel list
-		fprintf(fp3, "wifitool %s block_acs_channel 0\n",wif);
-#if defined(RTAC58U)
-	else
+	if (!subnet) // flush block-channel list
 	{
-		if (!strncmp(nvram_safe_get("territory_code"), "CX", 2))
+		if (band)
 			fprintf(fp3, "wifitool %s block_acs_channel 0\n",wif);
-	}
+#if defined(RTAC58U)
+		else
+		{
+			if (!strncmp(nvram_safe_get("territory_code"), "CX", 2))
+				fprintf(fp3, "wifitool %s block_acs_channel 0\n",wif);
+		}
 #endif
+	}
 #endif			
 	if(val)
 	{
@@ -1729,6 +1732,11 @@ next_mrate:
 	/* improve Tx throughput */
 	if (band)
 		fprintf(fp2, "iwpriv %s ampdu 52\n", wif);
+#endif
+
+#if defined(RTCONFIG_SOC_IPQ40XX)
+	if (!subnet)
+		fprintf(fp2, "iwpriv wifi%d dl_loglevel 5\n",band);	// disable log from target firmware
 #endif
 
 next:

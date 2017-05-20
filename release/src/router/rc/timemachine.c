@@ -56,14 +56,7 @@ int generate_afp_config(char *mpname)
 
 	sprintf(afp_config, "%s/%s", AFP_CONFIG_PATH, AFP_CONFIG_FN);
 
-#if defined(RTCONFIG_GMAC3)
-	if (nvram_match("gmac3_enable", "1"))
-		strcpy(et0macaddr, nvram_safe_get("et2macaddr"));
-	else
-		strcpy(et0macaddr, nvram_safe_get("et0macaddr"));
-#else
 	strcpy(et0macaddr, get_lan_hwaddr());
-#endif
 
 	/* Generate afp configuration file */
 	if (!(fp = fopen(afp_config, "w"))) {

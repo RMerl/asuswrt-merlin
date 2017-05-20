@@ -170,10 +170,6 @@ wps_restore_defaults(void)
 	nvram_set("wps_modelnum", get_productid());
 
 	strcpy(macstr, get_lan_hwaddr());
-#ifdef RTCONFIG_GMAC3
-	if(nvram_match("gmac3_enable", "1"))
-		strcpy(macstr, nvram_safe_get("et2macaddr"));
-#endif
 	if (strlen(macstr))
 		for (i = 0; i < strlen(macstr); i++)
 			macstr[i] = tolower(macstr[i]);
@@ -621,7 +617,12 @@ restore_defaults_wifi(int all)
 
 	macp = get_2g_hwaddr();
 	ether_atoe(macp, mac_binary);
-	sprintf((char *)ssidbase, "ASUS_%02X", mac_binary[5]);
+#if defined(RTAC58U)
+	if (!strncmp(nvram_safe_get("territory_code"), "SP", 2))
+		sprintf((char *)ssidbase, "Spirit_%02X", mac_binary[5]);
+	else
+#endif
+		sprintf((char *)ssidbase, "ASUS_%02X", mac_binary[5]);
 #else
 	macp = get_lan_hwaddr();
 	ether_atoe(macp, mac_binary);
@@ -909,12 +910,16 @@ void clean_modem_state(int flag){
 	nvram_unset("usb_modem_act_rsrq");
 	nvram_unset("usb_modem_act_rsrp");
 	nvram_unset("usb_modem_act_rssi");
+	nvram_unset("usb_modem_act_band");
 	nvram_unset("usb_modem_act_operation");
+	nvram_unset("usb_modem_act_provider");
 	nvram_unset("usb_modem_act_imsi");
 	nvram_unset("usb_modem_act_iccid");
 	nvram_unset("usb_modem_act_auth");
 	nvram_unset("usb_modem_act_auth_pin");
 	nvram_unset("usb_modem_act_auth_puk");
+	nvram_unset("usb_modem_act_ip");
+
 	nvram_unset("modem_sim_order");
 	nvram_unset("modem_bytes_rx");
 	nvram_unset("modem_bytes_tx");
@@ -944,7 +949,6 @@ void clean_modem_state(int flag){
 	nvram_unset("usb_modem_act_rx");
 	nvram_unset("usb_modem_act_hwver");
 	nvram_unset("usb_modem_act_swver");
-	nvram_unset("usb_modem_act_band");
 	nvram_unset("usb_modem_act_scanning");
 	nvram_unset("usb_modem_act_startsec");
 	nvram_unset("usb_modem_act_simdetect");
@@ -1184,6 +1188,7 @@ misc_defaults(int restore_defaults)
 		case MODEL_RT4GAC55U:
 		case MODEL_RTAC55U:
 		case MODEL_RTAC55UHP:
+		case MODEL_PLN11:
 		case MODEL_PLN12:
 		case MODEL_PLAC56:
 		case MODEL_PLAC66U:
@@ -1267,7 +1272,7 @@ misc_defaults(int restore_defaults)
 	nvram_set_int("vpnc_sbstate_t", 0);
 #endif
 
-#if (defined(PLN12) || defined(PLAC56))
+#if (defined(PLN11) || defined(PLN12) || defined(PLAC56))
 	nvram_set("plc_ready", "0");
 #elif defined(PLAC66)
 	nvram_set("plc_ready", "1");
@@ -1998,7 +2003,7 @@ static int set_basic_ifname_vars(char *wan, char *lan, char *wl2g, char *wl5g, c
 #endif
 	}
 #if (defined(RTCONFIG_DUALWAN) && defined(RTCONFIG_QCA))
-#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66U) || defined(RTAC82U) || defined(RTAC58U))
+#if (defined(PLN11) || defined(PLN12) || defined(PLAC56) || defined(PLAC66U) || defined(RTAC82U) || defined(RTAC58U))
 #else /* RT-AC55U || 4G-AC55U */
 	if(enable_dw_wan) {
 		nvram_set("vlan2hwname", "et0");
@@ -2976,6 +2981,12 @@ int init_nvram(void)
 		add_rc_support("nodm");
 		if (!strncmp(nvram_safe_get("territory_code"), "CX", 2))
 			add_rc_support("nz_isp");
+		else if (!strncmp(nvram_safe_get("territory_code"), "SP", 2))
+			add_rc_support("spirit");
+		if (get_meminfo_item("MemTotal") > 131072) {
+			add_rc_support("repeater");
+			add_rc_support("psta");
+		}
 		// the following values is model dep. so move it from default.c to here
 		nvram_set("wl0_HT_TxStream", "2");
 		nvram_set("wl0_HT_RxStream", "2");
@@ -3194,6 +3205,59 @@ int init_nvram(void)
 		add_rc_support("11AC");
 		break;
 #endif	/* RT4GAC55U */
+
+#if defined(PLN11)
+	case MODEL_PLN11:
+		nvram_set("boardflags", "0x100"); // although it is not used in ralink driver, set for vlan
+		nvram_set("vlan1hwname", "et0");  // vlan. used to get "%smacaddr" for compare and find parent interface.
+		nvram_set("vlan2hwname", "et0");  // vlan. used to get "%smacaddr" for compare and find parent interface.
+		nvram_set("lan_ifname", "br0");
+		set_basic_ifname_vars("vlan2", "vlan1", "ath0", NULL, NULL, "vlan1", NULL, "vlan3", NULL, 0);
+
+		/* Enable 1st 2G guest network only. */
+		nvram_set("wl0_vifnames", "wl0.1");
+		nvram_set("wl1_vifnames", "");
+
+		nvram_set_int("btn_rst_gpio", 15);
+		//nvram_set_int("btn_wps_gpio", 11|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_pwr_gpio", 11|GPIO_ACTIVE_LOW);
+		//nvram_set_int("led_lan_gpio", 16|GPIO_ACTIVE_LOW);
+		//nvram_set_int("led_2g_green_gpio", 12|GPIO_ACTIVE_LOW);
+		//nvram_set_int("led_2g_orange_gpio", 14|GPIO_ACTIVE_LOW);
+		//nvram_set_int("led_2g_red_gpio", 17|GPIO_ACTIVE_LOW);
+
+		/* enable bled */
+		//config_swports_bled_sleep("led_lan_gpio", 0);
+		//config_netdev_bled("led_2g_green_gpio", "ath0");
+		//config_netdev_bled("led_2g_orange_gpio", "ath0");
+		//config_netdev_bled("led_2g_red_gpio", "ath0");
+
+		nvram_set("ct_max", "300000"); // force
+
+		if (nvram_get("wl_mssid") && nvram_match("wl_mssid", "1"))
+			add_rc_support("mssid");
+		add_rc_support("2.4G update");
+		add_rc_support("qcawifi");
+		add_rc_support("switchctrl");
+		add_rc_support("manual_stb");
+		add_rc_support("swmode_switch");
+#ifdef RTCONFIG_DHCP_OVERRIDE
+		add_rc_support("dhcp_override");
+
+		if (nvram_match("dhcp_enable_x", "1") || nvram_match("x_Setting", "0"))
+			nvram_set("dnsqmode", "2");
+		else
+			nvram_set("dnsqmode", "1");
+#endif
+		add_rc_support("plc");
+		// the following values is model dep. so move it from default.c to here
+		nvram_set("wl0_HT_TxStream", "2");
+		nvram_set("wl0_HT_RxStream", "2");
+		/* avoid inserting unnecessary kernel modules */
+		nvram_set("nf_ftp", "0");
+		nvram_set("nf_pptp", "0");
+		break;
+#endif	/* PLN11 */
 
 #if defined(PLN12)
 	case MODEL_PLN12:
@@ -4220,6 +4284,8 @@ int init_nvram(void)
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
 
 #ifdef RTCONFIG_USBRESET
+		nvram_set_int("pwr_usb_gpio", 13|GPIO_ACTIVE_LOW);
+#else
 		nvram_set_int("pwr_usb_gpio", 13);
 #endif
 		nvram_set_int("led_pwr_gpio", 0|GPIO_ACTIVE_LOW);
@@ -4714,8 +4780,8 @@ int init_nvram(void)
 		nvram_unset("xhci_ports");
 		nvram_set("ehci_ports", "1-1");
 		nvram_set("ohci_ports", "2-1");
-		if (!nvram_get("ct_max"))
-			nvram_set("ct_max", "300000");
+//		if (!nvram_get("ct_max"))
+			nvram_set("ct_max", "250000");
 		add_rc_support("mssid 2.4G 5G usbX1");
 		add_rc_support("switchctrl"); // broadcom: for jumbo frame only
 		add_rc_support("manual_stb");
@@ -5763,7 +5829,9 @@ int init_nvram(void)
 #endif
 #endif
 #ifdef RTCONFIG_PROXYSTA
+#ifndef RTCONFIG_DISABLE_PROXYSTA_UI
 	add_rc_support("psta");
+#endif
 #endif
 #if defined(RTCONFIG_VHT80_80)
 	add_rc_support("vht80_80");
@@ -5960,7 +6028,7 @@ int init_nvram2(void)
 	int i;
 	char varname[20];
 
-	macp = get_lan_hwaddr();
+	macp = get_2g_hwaddr();
 	ether_atoe(macp, mac_binary);
 #ifdef RTAC1200GP
 	sprintf(friendly_name, "%s-%02X%02X", "RT-AC1200G", mac_binary[4], mac_binary[5]);
@@ -6571,9 +6639,12 @@ static void sysinit(void)
 	min_free_kbytes_check = 0;
 #endif
 #ifdef RTCONFIG_BCMARM
+	if (model==MODEL_RTAC1200G || model==MODEL_RTAC1200GP)
+		f_write_string("/proc/sys/vm/min_free_kbytes", "4096", 0, 0);
+	else
 //	f_write_string("/proc/sys/vm/min_free_kbytes", "14336", 0, 0);
 	// fix _dma_rxfill error under stress test
-	f_write_string("/proc/sys/vm/min_free_kbytes", "20480", 0, 0);
+		f_write_string("/proc/sys/vm/min_free_kbytes", "20480", 0, 0);
 	min_free_kbytes_check = 1;
 #endif
 #ifdef RTCONFIG_USB
@@ -6766,6 +6837,7 @@ void config_format_compatibility_handler(void)
 	adjust_merlin_config();
 	//adjust_url_urlelist(); /* For based on 382, new config format */
 	adjust_ddns_config();
+	adjust_access_restrict_config();
 }
 
 int init_main(int argc, char *argv[])
@@ -7029,8 +7101,12 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 					sleep(1);
 				}
 			}
+#ifdef RTCONFIG_BCM_7114
+			check_4366_dummy();
+#endif
+
 			//For 66U normal boot & check device
-			if (((get_model()==MODEL_RTN66U) || (get_model()==MODEL_RTAC66U) || (get_model()==MODEL_RTAC5300)|| (get_model()==MODEL_RTAC5300R))
+			if (((get_model()==MODEL_RTN66U) || (get_model()==MODEL_RTAC66U))
 			&& nvram_match("Ate_power_on_off_enable", "0")) {
 			    ate_dev_status();
 			    if (nvram_get_int("dev_fail_reboot")!=0) {
@@ -7143,6 +7219,9 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 #endif
 					eval("arpstorm");
 				}
+			}
+			else {
+				ate_run_arpstrom();
 			}
 
 /*#ifdef RTCONFIG_USB_MODEM

@@ -60,6 +60,7 @@
 
 #define ROBO_PHY_ADDR		0x1e /* Robo Switch PHY Address */
 #define PAGE_CTRL		0x00 /* Control registers */
+#define PAGE_STAT		0x01 /* Status registers */
 #define PAGE_MMR		0x02 /* Management/Mirroring Registers */
 #define PAGE_VTBL		0x05 /* ARL Access Registers */
 #define PAGE_VLAN		0x34 /* VLAN Registers */
@@ -159,12 +160,9 @@ static int phy_select(int write, int page, int reg, int op)
 	return -1;
 }
 
-static int robo_read(int page, int reg, uint16_t *value, int count)
+static int mdio_read(int page, int reg, uint16_t *value, int count)
 {
 	int i;
-
-	if (model == SWITCH_BCM5301x)
-		return robo_ioctl(0, page, reg, value, count);
 
 retry:
 	if (phy_select(1, page, reg, REG_MII_ADDR_READ) < 0)
@@ -177,6 +175,14 @@ retry:
 	}
 
 	return 0;
+}
+
+static int robo_read(int page, int reg, uint16_t *value, int count)
+{
+	if (model == SWITCH_BCM5301x)
+		return robo_ioctl(0, page, reg, value, count);
+
+	return mdio_read(page, reg, value, count);
 }
 
 static inline uint16_t robo_read16(int page, int reg)
@@ -193,18 +199,23 @@ static inline uint32_t robo_read32(int page, int reg)
 	return value;
 }
 
-static int robo_write(int page, int reg, uint16_t *value, int count)
+static int mdio_write(int page, int reg, uint16_t *value, int count)
 {
 	int i;
-
-	if (model == SWITCH_BCM5301x)
-		return robo_ioctl(1, page, reg, value, count);
 
 	for (i = 0; i < count; i++) {
 		if (phy_ioctl(1, ROBO_PHY_ADDR, REG_MII_DATA0 + i, &value[i]) < 0)
 			return -1;
 	}
 	return phy_select(1, page, reg, REG_MII_ADDR_WRITE);
+}
+
+static int robo_write(int page, int reg, uint16_t *value, int count)
+{
+	if (model == SWITCH_BCM5301x)
+		return robo_ioctl(1, page, reg, value, count);
+
+	return mdio_write(page, reg, value, count);
 }
 
 static inline int robo_write16(int page, int reg, uint16_t value)
@@ -215,6 +226,23 @@ static inline int robo_write16(int page, int reg, uint16_t value)
 static inline int robo_write32(int page, int reg, uint32_t value)
 {
 	return robo_write(page, reg, (uint16_t *) &value, 2);
+}
+
+static int robo_wait16(int page, int reg, uint16_t mask, uint16_t match)
+{
+	uint16_t value;
+	int ret, retry;
+
+	for (retry = 0; retry < 20; retry++) {
+		ret = robo_read(page, reg, &value, 1);
+		if (ret < 0)
+			return ret;
+		if ((value & mask) == match)
+			return 0;
+		usleep(500);
+	}
+
+	return 1;
 }
 
 static void ether_etohw(unsigned char *ea, uint8_t *hwaddr)
@@ -240,7 +268,7 @@ static int get_model(void)
 
 	ifr.ifr_data = (caddr_t) &var;
 	if (ioctl(fd, SIOCSETGETVAR, (caddr_t) &ifr) < 0) {
-		if (robo_read(PAGE_MMR, 0x30, (uint16_t *) &devid, 2) < 0)
+		if (mdio_read(PAGE_MMR, 0x30, (uint16_t *) &devid, 2) < 0)
 			goto error;
 		if (devid == 0)
 			devid = 0x25;
@@ -248,8 +276,15 @@ static int get_model(void)
 
 	log_switch("%-5s devid %08x", "read", devid);
 
-	if (devid == 0x25)
+	if (devid == 0x25) {
+		uint16_t value = 0x0f;
+		mdio_write(PAGE_VLAN, REG_VLAN_ACCESS, &value, 1);
+		if (mdio_read(PAGE_VLAN, REG_VLAN_ACCESS, &value, 1) < 0)
+			goto error;
+		if (value != 0x0f)
+			goto error;
 		return SWITCH_BCM5325;
+	}
 	else if (devid == 0x3115 || devid == 0x53115)
 		return SWITCH_BCM53115;
 	else if (devid == 0x3125 || devid == 0x53125)
@@ -263,16 +298,15 @@ error:
 
 static int read_entry(void *hwaddr, int vlan, uint16_t entry[6], int *index)
 {
-	int i, valid, portmap, vid;
+	int i, valid, portmap, vid, first = -1;
 
 	vlan &= (model == SWITCH_BCM5325) ? 0x0f : 0x0fff;
 
 	robo_write(PAGE_VTBL, REG_VTBL_MINDX, hwaddr, 3);
 	robo_write16(PAGE_VTBL, REG_VTBL_VINDX, vlan);
-
-	robo_read(PAGE_VTBL, REG_VTBL_MINDX, &entry[0], 4);
-	robo_read(PAGE_VTBL, REG_VTBL_VINDX, &entry[4], 2);
 	robo_write16(PAGE_VTBL, REG_VTBL_CTRL, 0x81);
+	if (robo_wait16(PAGE_VTBL, REG_VTBL_CTRL, 0x80, 0x00) < 0)
+		return -1;
 
 	for (i = 0; i < (model == SWITCH_BCM5325 ? 2 : 4); i++) {
 		switch (model) {
@@ -298,8 +332,8 @@ static int read_entry(void *hwaddr, int vlan, uint16_t entry[6], int *index)
 		if (valid && memcmp(entry, hwaddr, ETHER_ADDR_LEN) == 0 && vid == vlan) {
 			*index = i;
 			return portmap;
-		} else if (!valid)
-			*index = i;
+		} else if (!valid && first < 0)
+			*index = first = i;
 	}
 
 	memset(entry, 0, sizeof(entry));
@@ -309,10 +343,12 @@ static int read_entry(void *hwaddr, int vlan, uint16_t entry[6], int *index)
 
 static int write_entry(void *hwaddr, int vlan, uint16_t entry[6], int index, int portmap)
 {
+	vlan &= (model == SWITCH_BCM5325) ? 0x0f : 0x0fff;
+
 	memcpy(entry, hwaddr, ETHER_ADDR_LEN);
 	switch (model) {
 	case SWITCH_BCM5325:
-		entry[4] = vlan & 0x0f;
+		entry[4] = vlan;
 		if (portmap >= 0) {
 			entry[3] &= ~0x7f;
 			entry[3] |= 0xc000 | (portmap & 0x7f);
@@ -325,7 +361,7 @@ static int write_entry(void *hwaddr, int vlan, uint16_t entry[6], int index, int
 	case SWITCH_BCM53115:
 	case SWITCH_BCM53125:
 	case SWITCH_BCM5301x:
-		entry[3] = vlan & 0x0fff;
+		entry[3] = vlan;
 		if (portmap >= 0) {
 			entry[4] &= ~0x1ff;
 			entry[4] |= 0x8000 | (portmap & 0x1ff);
@@ -339,7 +375,12 @@ static int write_entry(void *hwaddr, int vlan, uint16_t entry[6], int index, int
 	default:
 		return -1;
 	}
+
+	robo_write(PAGE_VTBL, REG_VTBL_MINDX, hwaddr, 3);
+	robo_write16(PAGE_VTBL, REG_VTBL_VINDX, vlan);
 	robo_write16(PAGE_VTBL, REG_VTBL_CTRL, 0x80);
+	if (robo_wait16(PAGE_VTBL, REG_VTBL_CTRL, 0x80, 0x00) < 0)
+		return -1;
 
 	return portmap;
 }
@@ -347,10 +388,21 @@ static int write_entry(void *hwaddr, int vlan, uint16_t entry[6], int index, int
 static int read_portmap(int vlan)
 {
 	uint32_t entry;
+	uint16_t value;
 	int i, portmap = 0;
 
 	switch (model) {
 	case SWITCH_BCM5325:
+		if (robo_read(PAGE_STAT, 0x50, &value, 1) < 0)
+			break;
+		if (value < 3) {
+			robo_write16(PAGE_VLAN, REG_VLAN_ACCESS,
+			    0x2000 | (vlan & 0x0fff));
+			entry = robo_read32(PAGE_VLAN, REG_VLAN_READ);
+			if (((entry & 0x0100000)) &&
+			    ((entry & 0x00ff000) >> 8) == (vlan & 0x0ff0))
+				portmap = entry & 0x3f;
+		} else
 		for (i = vlan; i < vlan + 16; i++) {
 			robo_write16(PAGE_VLAN, REG_VLAN_ACCESS,
 			    0x2000 | (vlan & 0x0ff0) | (i & 0x0f));
@@ -377,12 +429,31 @@ static int read_portmap(int vlan)
 	return portmap;
 }
 
+static int read_cpu_portmap(int vlan)
+{
+	uint8_t hwaddr[ETHER_ADDR_LEN];
+	uint16_t entry[6];
+	int index;
+
+	if (cpu_portmap < 0) {
+		ether_etohw(ifhwaddr, hwaddr);
+
+		cpu_portmap = read_entry(hwaddr, vlan, entry, &index);
+		if (model == SWITCH_BCM5325 && cpu_portmap == 8)
+			cpu_portmap = (1 << 5);
+		else if (cpu_portmap >= 0)
+			cpu_portmap = (1 << cpu_portmap);
+		log_switch("%-5s cpu@vlan%u = " FMT_PORTS, "read",
+		    vlan, ARG_PORTS(cpu_portmap));
+	}
+
+	return cpu_portmap;
+}
+
 int switch_init(char *ifname, int vid, int cputrap)
 {
 	struct vlan_ioctl_args ifv;
-	uint8_t hwaddr[ETHER_ADDR_LEN];
-	uint16_t entry[6];
-	int esw_portmap, index;
+	int esw_portmap;
 
 	fd = open_socket(AF_INET, SOCK_DGRAM, 0);
 	if (fd < 0)
@@ -419,23 +490,13 @@ int switch_init(char *ifname, int vid, int cputrap)
 		goto error;
 	}
 
-	lan_portmap = read_portmap(vlan);
+	lan_portmap = read_portmap(vlan) & esw_portmap;
 	log_switch("%-5s map@vlan%u = " FMT_PORTS, "read",
 	    vlan, ARG_PORTS(lan_portmap));
 
-	ether_etohw(ifhwaddr, hwaddr);
-	cpu_portmap = read_entry(hwaddr, vlan, entry, &index);
-	if (cpu_portmap < 0)
+	cpu_portmap = -1;
+	if (read_cpu_portmap(vlan) == 0)
 		goto error;
-	if (model == SWITCH_BCM5325 && cpu_portmap == 8)
-		cpu_portmap = 5;
-	cpu_portmap = (1 << cpu_portmap);
-	log_switch("%-5s cpu@vlan%u = " FMT_PORTS, "init",
-	    vlan, ARG_PORTS(cpu_portmap));
-
-	lan_portmap &= esw_portmap & ~cpu_portmap;
-	log_switch("%-5s lan@vlan%u = " FMT_PORTS, "init",
-	    vlan, ARG_PORTS(lan_portmap));
 
 	if (model == SWITCH_BCM5325)
 		robo_write16(PAGE_CTRL, REG_CTRL_MCAST, 1);
@@ -472,7 +533,14 @@ int switch_get_port(unsigned char *haddr)
 		value = 5;
 
 	log_switch("%-5s [" FMT_EA "] = " FMT_PORTS, "read",
-	    ARG_EA(haddr), ARG_PORTS(1 << value));
+	    ARG_EA(haddr), ARG_PORTS((value < 0) ? -1 : 1 << value));
+
+	if (cpu_portmap < 0 && value >= 0 &&
+	    memcmp(haddr, ifhwaddr, ETHER_ADDR_LEN) == 0) {
+		cpu_portmap = (1 << value);
+		log_switch("%-5s cpu@vlan%u = " FMT_PORTS, "read",
+		    vlan, ARG_PORTS(cpu_portmap));
+	}
 
 	return value;
 }
@@ -484,6 +552,9 @@ int switch_add_portmap(unsigned char *maddr, int portmap)
 	int value, index = 0;
 
 	if ((maddr[0] & 0x01) == 0)
+		return -1;
+
+	if (read_cpu_portmap(vlan) < 0)
 		return -1;
 
 	ether_etohw(maddr, hwaddr);
@@ -511,6 +582,9 @@ int switch_del_portmap(unsigned char *maddr, int portmap)
 	int value, index = 0;
 
 	if ((maddr[0] & 0x01) == 0)
+		return -1;
+
+	if (read_cpu_portmap(vlan) < 0)
 		return -1;
 
 	ether_etohw(maddr, hwaddr);

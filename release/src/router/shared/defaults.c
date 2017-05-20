@@ -1076,6 +1076,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "sr_rulelist", "" },
 	{ "dr_enable_x", "1" }, // oleg patch
 	{ "mr_enable_x", "0" }, // oleg patch
+	{ "mr_qleave_x", "0" },
 	{ "mr_altnet_x", "" },
 
 	// Domain Name
@@ -1599,6 +1600,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "TM_EULA", "0" },			// EULA of Trend Micro
 	{ "apps_analysis", "0" },		// Apps Analysis in Adaptive QoS Live
 	{ "bwdpi_wh_enable", "0" },		// web history
+	{ "bwdpi_wh_stamp", "0" },		// web history timestamp
 	{ "sig_update_t", "0" },		// signature upgrade timestamp
 #endif
 #endif	/* RTCONFIG_PARENTALCTRL */
@@ -1881,8 +1883,10 @@ struct nvram_tuple router_defaults[] = {
 	{ "usb_path1_diskmon_freq_time", "" },
 	{ "usb_path2_diskmon_freq", "0" },
 	{ "usb_path2_diskmon_freq_time", "" },
+#if !defined(RT4GAC55U) && !defined(RT4GAC68U)
 	{ "usb_path3_diskmon_freq", "0" },
 	{ "usb_path3_diskmon_freq_time", "" },
+#endif
 	{ "diskformat_file_system", "tfat" }, //tfat, tntfs, thfsplus
 	{ "diskformat_label", "" },
 #ifndef RTCONFIG_BCMARM
@@ -2038,6 +2042,8 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_POWER_SAVE
 	{ "pwrsave_mode", "0"},	/* 1: auto (ondemand), 2: power save, otherwise: performance */
 #endif
+	{ "enable_acc_restriction", "0" },
+	{ "restrict_rulelist", "" },
 
 #ifdef RTCONFIG_USB_MODEM
 	{ "usb_qmi", "1" },
@@ -5179,7 +5185,12 @@ nvram_default_get(const char *name)
 	}
 #endif
 #ifdef RTCONFIG_TCODE
-	if (strncmp(name, "lan_", 4) == 0 || strncmp(name, "dhcp_", 5) == 0) {
+	if (strncmp(name, "lan_", 4) == 0 || strncmp(name, "dhcp_", 5) == 0
+#if defined(RTAC58U)
+	 || strcmp(name, "http_username") == 0
+	 || strcmp(name, "http_passwd") == 0
+#endif
+	) {
 		char *value = tcode_default_get(fixed_name);
 		if (value) {
 			return value;

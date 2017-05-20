@@ -1003,10 +1003,6 @@ int main(int argc, char *argv[])
 	if (nvram_get_int("sw_mode") == SW_MODE_REPEATER && (mac = getStaMAC()) != NULL)
 		strncpy(router_mac, mac, sizeof(router_mac));
 #endif
-#ifdef RTCONFIG_GMAC3
-        if(nvram_match("gmac3_enable", "1"))
-		strcpy(router_mac, nvram_safe_get("et2macaddr"));
-#endif
         inet_aton(router_ipaddr, &router_addr.sin_addr);
         memcpy(my_ipaddr,  &router_addr.sin_addr, 4);
 

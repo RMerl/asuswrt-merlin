@@ -506,12 +506,16 @@ setAllLedOn(void)
 #endif
 #ifdef RT4GAC68U
 			led_control(LED_LAN, LED_ON);
+			led_control(LED_WPS, LED_ON);
+#endif
+#ifdef RTCONFIG_INTERNAL_GOBI
+#ifdef RT4GAC68U
 			led_control(LED_3G, LED_ON);
+#endif
 			led_control(LED_LTE, LED_ON);
 			led_control(LED_SIG1, LED_ON);
 			led_control(LED_SIG2, LED_ON);
 			led_control(LED_SIG3, LED_ON);
-			led_control(LED_SIG4, LED_ON);
 #endif
 			eval("et", "-i", "eth0", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
 			eval("et", "-i", "eth0", "robowr", "0", "0x1a", "0x01e0");
@@ -670,6 +674,22 @@ setAllLedOn(void)
 			break;
 		}
 	}
+
+	puts("1");
+	return 0;
+}
+
+int setAllOrangeLedOn(void) {
+	int model = get_model();
+	switch (model) {
+		case MODEL_RTAC68U:
+#ifdef RTCONFIG_INTERNAL_GOBI
+#ifdef RT4GAC68U
+			led_control(LED_3G, LED_ON);
+#endif
+#endif
+			break;
+	};
 
 	puts("1");
 	return 0;
@@ -859,12 +879,16 @@ setAllLedOff(void)
 #endif
 #ifdef RT4GAC68U
 			led_control(LED_LAN, LED_OFF);
+			led_control(LED_WPS, LED_OFF);
+#endif
+#ifdef RTCONFIG_INTERNAL_GOBI
+#ifdef RT4GAC68U
 			led_control(LED_3G, LED_OFF);
+#endif
 			led_control(LED_LTE, LED_OFF);
 			led_control(LED_SIG1, LED_OFF);
 			led_control(LED_SIG2, LED_OFF);
 			led_control(LED_SIG3, LED_OFF);
-			led_control(LED_SIG4, LED_OFF);
 #endif
 			eval("et", "-i", "eth0", "robowr", "0", "0x18", "0x01e0");	// lan/wan ethernet/giga led
 			eval("et", "-i", "eth0", "robowr", "0", "0x1a", "0x01e0");
@@ -3204,7 +3228,7 @@ wl_check_chanspec()
 {
 	wl_uint32_list_t *list;
 	chanspec_t c, chansp_40m;
-	int ret = 0, i, count;
+	int ret = 0, i;
 	char data_buf[WLC_IOCTL_MAXLEN];
 	char chanbuf[CHANSPEC_STR_LEN];
 	char word[256], *next;
@@ -3213,6 +3237,7 @@ wl_check_chanspec()
 	int match;
 	int match_ctrl_ch;
 	int match_40m_ch;
+	unsigned int count;
 
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit++);
@@ -3238,6 +3263,9 @@ wl_check_chanspec()
 
 		if (!count) {
 			dbg("number of valid chanspec is 0\n");
+			continue;
+		} else if (count > (data_buf + sizeof(data_buf) - (char *)&list->element[0])/sizeof(list->element[0])) {
+			dbg("number of valid chanspec %d is invalid\n", count);
 			continue;
 		} else
 		for (i = 0; i < count; i++) {
@@ -3288,19 +3316,21 @@ wl_check_5g_band_group()
 {
 	wl_uint32_list_t *list;
 	chanspec_t c;
-	int ret = 0, i, count;
+	int ret = 0, i;
 	char data_buf[WLC_IOCTL_MAXLEN];
 	char word[256], *next;
 	char tmp[100], tmp2[100], prefix[] = "wlXXXXXXXXXX_";
 	int unit = 0;
-	unsigned int band5grp;
+	unsigned int count, band5grp;
 
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit++);
 		c = 0;
 
 		if (unit == 1) continue;
-
+#if defined(RTCONFIG_BCM_7114) || defined(HND_ROUTER)
+		if(nvram_get_int(strcat_r(prefix, "failed", tmp)) >= 3) continue;
+#endif
 		memset(data_buf, 0, WLC_IOCTL_MAXLEN);
 		ret = wl_iovar_getbuf(word, "chanspecs", &c, sizeof(chanspec_t),
 			data_buf, WLC_IOCTL_MAXLEN);
@@ -3314,6 +3344,9 @@ wl_check_5g_band_group()
 
 		if (!count) {
 			dbg("number of valid chanspec is 0\n");
+			continue;
+		} else if (count > (data_buf + sizeof(data_buf) - (char *)&list->element[0])/sizeof(list->element[0])) {
+			dbg("number of valid chanspec %d is invalid\n", count);
 			continue;
 		} else
 			for (i = 0, band5grp = 0; i < count; i++) {

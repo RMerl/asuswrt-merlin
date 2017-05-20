@@ -122,6 +122,7 @@ char referer_host[64];
 char current_page_name[128];
 char user_agent[1024];
 char gen_token[32]={0};
+char last_fail_token[32]={0};
 
 #ifdef TRANSLATE_ON_FLY
 char Accept_Language[16];
@@ -185,6 +186,8 @@ struct language_table language_tables[] = {
 	{"ms", "MS"},
 	{"ms-MY", "MS"},
 	{"ms-BN", "MS"},
+	{"nl", "NL"},
+	{"nl-NL", "NL"},
 	{"no", "NO"},
 	{"nb", "NO"},
 	{"nn", "NO"},
@@ -196,6 +199,8 @@ struct language_table language_tables[] = {
 	{"ru-ru", "RU"},
 	{"ro", "RO"},
 	{"ro-ro", "RO"},
+	{"sl", "SL"},
+	{"sl-SI", "SL"},
 	{"sv", "SV"},
 	{"sv-FI", "SV"},
 	{"sv-SE", "SV"},
@@ -231,7 +236,7 @@ static int match( const char* pattern, const char* string );
 static int match_one( const char* pattern, int patternlen, const char* string );
 static void handle_request(void);
 void send_login_page(int fromapp_flag, int error_status, char* url, char* file, int lock_time);
-void __send_login_page(int fromapp_flag, int error_status, char* url, int lock_time);
+void __send_login_page(int fromapp_flag, int error_status, char* url, char* file, int lock_time);
 int check_user_agent(char* user_agent);
 #ifdef RTCONFIG_IFTTT
 void add_ifttt_flag(void);
@@ -261,11 +266,6 @@ time_t last_login_timestamp=0; // the timestamp of the current session.
 unsigned int login_ip_tmp=0; // the ip of the current session.
 unsigned int login_try=0;
 unsigned int last_login_ip = 0;	// the last logined ip 2008.08 magic
-/* limit login IP addr; 2012.03 Yau */
-struct {
-	struct in_addr ip;
-	struct in_addr netmask;
-} access_ip[4];
 unsigned int MAX_login;
 int lock_flag = 0;
 
@@ -402,12 +402,12 @@ send_login_page(int fromapp_flag, int error_status, char* url, char* file, int l
 }
 
 void
-__send_login_page(int fromapp_flag, int error_status, char* url, int lock_time)
+__send_login_page(int fromapp_flag, int error_status, char* url, char* file, int lock_time)
 {
 	login_try++;
 	last_login_timestamp = login_timestamp_tmp;
-	
-	send_login_page(fromapp_flag, error_status, url, NULL, lock_time);
+
+	send_login_page(fromapp_flag, error_status, url, file, lock_time);
 }
 
 static char
@@ -527,11 +527,13 @@ auth_check( char* dirname, char* authorization, char* url, char* file, char* coo
 		temp_ip_addr.s_addr = login_ip_tmp;
 		temp_ip_str = inet_ntoa(temp_ip_addr);
 
-		if(login_try%MAX_login == 0)
-			logmessage(HEAD_HTTP_LOGIN, "Detect abnormal logins at %d times. The newest one was from %s.", login_try, temp_ip_str);
+		if(login_try%MAX_login == 0){
+			check_token_timeout_in_list();
+			logmessage(HEAD_HTTP_LOGIN, "Detect abnormal logins at %d times. The newest one was from %s in auth check.", login_try, temp_ip_str);
+		}
 
 //#ifdef LOGIN_LOCK
-		send_login_page(fromapp_flag, LOGINLOCK, url, NULL, dt);
+		__send_login_page(fromapp_flag, LOGINLOCK, url, NULL, dt);
 		return LOGINLOCK;
 //#endif
 	}
@@ -569,7 +571,12 @@ auth_check( char* dirname, char* authorization, char* url, char* file, char* coo
 		return 0;
 	}else{
 		//_dprintf("asus token auth_check: the wrong user and password\n");
-		send_login_page(fromapp_flag, AUTHFAIL, url, file, 0);
+		if(!strcmp(last_fail_token, asustoken))
+			send_login_page(fromapp_flag, AUTHFAIL, url, file, dt);
+		else{
+			strlcpy(last_fail_token, asustoken, sizeof(last_fail_token));
+			__send_login_page(fromapp_flag, AUTHFAIL, url, file, dt);
+		}
 		return AUTHFAIL;
 	}
 
@@ -1358,7 +1365,7 @@ handle_request(void)
 		if(strlen(file) > 50 && !(strstr(file, "findasus")) && !(strstr(file, "acme-challenge"))){
 			char inviteCode[256];
 			memset(cloud_file, 0, sizeof(cloud_file));
-			if(!check_xxs_blacklist(file, 0))
+			if(!check_xss_blacklist(file, 0))
 				strlcpy(cloud_file, file, sizeof(cloud_file));
 
 			snprintf(inviteCode, sizeof(inviteCode), "<meta http-equiv=\"refresh\" content=\"0; url=cloud_sync.asp?flag=%s\">\r\n", cloud_file);
@@ -1467,30 +1474,6 @@ void http_login_cache(usockaddr *u) {
 	temp_ip_str = inet_ntoa(temp_ip_addr);
 }
 
-void http_get_access_ip(void)
-{
-	struct in_addr addr4;
-	char *nv, *nvp, *b, *ip;
-	int i, size;
-
-	memset(&access_ip, 0, sizeof(access_ip));
-
-	nv = nvp = strdup(nvram_safe_get("http_clientlist"));
-	i = 0;
-	while (nv && (b = strsep(&nvp, "<")) != NULL && i < ARRAY_SIZE(access_ip)) {
-		ip = strsep(&b, "/");
-		size = (b && *b) ? strtoul(b, NULL, 10) : 32;
-		if (inet_pton(AF_INET, ip, &addr4) > 0) {
-			if (size > 32)
-				size = 32;
-			access_ip[i].ip.s_addr = addr4.s_addr;
-			access_ip[i].netmask.s_addr = htonl(0xffffffffUL << (32 - size));
-			i++;
-		}
-	}
-	free(nv);
-}
-
 void http_login(unsigned int ip, char *url) {
 	if(strncmp(url, "Main_Login.asp", strlen(url))==0)
 		return;
@@ -1523,24 +1506,6 @@ void http_login(unsigned int ip, char *url) {
 	memset(login_timestampstr, 0, 32);
 	sprintf(login_timestampstr, "%lu", login_timestamp);
 	nvram_set("login_timestamp", login_timestampstr);
-}
-
-int http_client_ip_check(void)
-{
-	int i = 0;
-
-	if (nvram_match("http_client", "1")) {
-		for (i = 0; i < ARRAY_SIZE(access_ip); i++) {
-			if (access_ip[i].ip.s_addr == INADDR_ANY)
-				continue;
-			if ((login_ip_tmp & access_ip[i].netmask.s_addr) ==
-			    (access_ip[i].ip.s_addr & access_ip[i].netmask.s_addr))
-				return 1;
-		}
-		return 0;
-	}
-
-	return 1;
 }
 
 // 0: can not login, 1: can login, 2: loginer, 3: not loginer
@@ -2135,8 +2100,6 @@ int main(int argc, char **argv)
 	detect_timestamp = 0;
 	signal_timestamp = 0;
 
-	http_get_access_ip();
-
 	/* Ignore broken pipes */
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGCHLD, reapchild);	// 0527 add
@@ -2266,8 +2229,7 @@ int main(int argc, char **argv)
 				}
 
 				http_login_cache(&item->usa);
-				if (http_client_ip_check())
-					handle_request();
+				handle_request();
 				fflush(conn_fp);
 #ifdef RTCONFIG_HTTPS
 				if (!do_ssl)

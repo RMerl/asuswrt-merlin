@@ -144,6 +144,9 @@ define(function(){
 				else if(lang == "MS"){
 					if(v == "CCT-8") return "SST-8";
 				}
+				else if(lang == "NL"){
+					if(v == "UTC-1DST_1") return "MEZ-1DST";
+				}
 				else if(lang == "NO"){
 					if(v == "UTC-1DST_1") return "MET-1DST";
 				}
@@ -155,6 +158,9 @@ define(function(){
 				}
 				else if(lang == "RU"){
 					if(v == "UTC-3_1") return "UTC-3_4";
+				}
+				else if(lang == "SL"){
+					if(v == "UTC-1DST_1") return "UTC-1DST_1_1";
 				}
 				else if(lang == "SV"){
 					if(v == "UTC-1DST_1") return "MET-1DST";

@@ -140,8 +140,8 @@ function initial(){
 	}
 
 	change_tabclick();
-	if(document.getElementById("t1").className == "tabclick_NW" && 	parent.Rawifi_support)	//no exist Rawifi
-		document.getElementById("wl_txbf_tr").style.display = "";		//Viz Add 2011.12 for RT-N56U Ralink 			
+	/*if(document.getElementById("t1").className == "tabclick_NW" && 	parent.Rawifi_support)	//no exist Rawifi
+		document.getElementById("wl_txbf_tr").style.display = "";		//Viz Add 2011.12 for RT-N56U Ralink     */
 
 	document.form.wl_ssid.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl_ssid"); %>');
 	document.form.wl_wpa_psk.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl_wpa_psk"); %>');

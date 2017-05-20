@@ -230,6 +230,7 @@ extern int getPSK(void);
 extern int start_envrams(void);
 extern int chk_envrams_proc(void);
 #endif
+extern int ate_run_arpstrom(void);
 
 /* tcode_rc.c */
 #ifdef RTCONFIG_TCODE
@@ -480,6 +481,7 @@ extern void fa_nvram_adjust();
 extern void adjust_merlin_config();
 extern void adjust_url_urlelist();
 extern void adjust_ddns_config();
+extern void adjust_access_restrict_config();
 
 // interface.c
 extern int _ifconfig(const char *name, int flags, const char *addr, const char *netmask, const char *dstaddr, int mtu);
@@ -526,11 +528,6 @@ extern void wan6_up(const char *wan_ifname);
 extern void wan6_down(const char *wan_ifname);
 extern void start_wan6(void);
 extern void stop_wan6(void);
-#endif
-#if defined(RTCONFIG_WANRED_LED)
-extern int test_gateway(char *gw, char *wan_ifname);
-#else
-static inline int test_gateway(char *gw, char *wan_ifname) { return 0; }
 #endif
 extern int do_dns_detect(int wan_unit);
 
@@ -963,6 +960,7 @@ extern void run_vpn_firewall_scripts();
 extern void write_vpn_dnsmasq_config(FILE*);
 extern int write_vpn_resolv(FILE*);
 extern void create_openvpn_passwd();
+extern void update_ovpn_profie_remote();
 extern int check_ovpn_server_enabled(int unit);
 extern int check_ovpn_client_enabled(int unit);
 extern void update_vpnrouting(int unit);

@@ -65,7 +65,7 @@ static const struct led_btn_table_s {
 #ifdef RTCONFIG_LED_BTN
 	{ "btn_led_gpio",	&btn_gpio_table[BTN_LED] },
 #endif
-#ifdef RTCONFIG_INTERNAL_GOBI
+#ifdef RT4GAC55U
 	{ "btn_lte_gpio",	&btn_gpio_table[BTN_LTE] },
 #endif
 #ifdef RTCONFIG_EJUSB_BTN
@@ -125,9 +125,6 @@ static const struct led_btn_table_s {
 	{ "led_sig1_gpio",	&led_gpio_table[LED_SIG1] },
 	{ "led_sig2_gpio",	&led_gpio_table[LED_SIG2] },
 	{ "led_sig3_gpio",	&led_gpio_table[LED_SIG3] },
-#ifdef RT4GAC68U
-	{ "led_sig4_gpio",	&led_gpio_table[LED_SIG4] },
-#endif
 #endif
 
 #if defined(RTCONFIG_RTAC5300) || defined(RTCONFIG_RTAC5300R)

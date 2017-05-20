@@ -799,6 +799,16 @@ int config_rtkswitch(int argc, char *argv[])
 }
 
 unsigned int
+rtkswitch_Port_phyStatus(unsigned int port_mask)
+{
+	unsigned int status = 0;
+
+	get_ipq40xx_phy_linkStatus(port_mask, &status);
+
+	return status;
+}
+
+unsigned int
 rtkswitch_wanPort_phyStatus(int wan_unit)
 {
 	unsigned int status = 0;

@@ -471,6 +471,8 @@ function show_vpnc_rulelist(){
 						code +='<td width="10%"><img title="<#Connected#>" src="/images/checked_parentctrl.png" style="width:25px;"></td>';
 					else if(vpnc_state_t == 4 && vpnc_sbstate_t == 2)
 						code +="<td width=\"10%\"><img title=\"<#qis_fail_desc1#>\" src=\"/images/button-close2.png\" style=\"width:25px;\"></td>";
+					else if(vpnc_state_t == 4 && vpnc_sbstate_t == 7)
+						code +="<td width='10%'><img title='<#vpn_openvpn_conflict#>' src='/images/New_ui/notification.png' style='background-image:url(/images/New_ui/notification.png);background-repeat:no-repeat;height:25px;width:25px;'></td>";
 				else // Stop connection
 						code +='<td width="10%"><img title="<#ConnectionFailed#>" src="/images/button-close2.png" style="width:25px;"></td>';
 			}

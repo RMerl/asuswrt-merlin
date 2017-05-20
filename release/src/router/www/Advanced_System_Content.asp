@@ -13,6 +13,7 @@
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="pwdmeter.css">
 <link rel="stylesheet" type="text/css" href="device-map/device-map.css">
+<link rel="stylesheet" type="text/css" href="css/icon.css">
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
@@ -20,14 +21,47 @@
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language-"JavaScript" type="text/javascript" src="/merlin.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<style>
+.cancel{
+	border: 2px solid #898989;
+	border-radius:50%;
+	background-color: #898989;
+}
+.check{
+	border: 2px solid #093;
+	border-radius:50%;
+	background-color: #093;
+}
+.cancel, .check{
+	width: 22px;
+	height: 22px;
+	margin:0 auto;
+	transition: .35s;
+}
+.cancel:active, .check:active{
+	transform: scale(1.5,1.5);
+	opacity: 0.5;
+	transition: 0;
+}
+.all_enable{
+	border: 1px solid #393;
+	color: #393;
+}
+.all_disable{
+	border: 1px solid #999;
+	color: #999;
+}
+</style>
 <script>
 time_day = uptimeStr.substring(5,7);//Mon, 01 Aug 2011 16:25:44 +0800(1467 secs since boot....
 time_mon = uptimeStr.substring(9,12);
 time_time = uptimeStr.substring(18,20);
 dstoffset = '<% nvram_get("time_zone_dstoff"); %>';
 
-var orig_http_clientlist = decodeURIComponent("<% nvram_char_to_ascii("","http_clientlist"); %>");
-var http_clientlist_array = decodeURIComponent("<% nvram_char_to_ascii("","http_clientlist"); %>");
+var orig_enable_acc_restriction = '<% nvram_get("enable_acc_restriction"); %>';
+var orig_restrict_rulelist_array = [];
+var restrict_rulelist_array = [];
 var accounts = [<% get_all_accounts(); %>];
 for(var i=0; i<accounts.length; i++){
 	accounts[i] = decodeURIComponent(accounts[i]);	
@@ -44,6 +78,25 @@ if(sw_mode == 3 || (sw_mode == 4))
 	theUrl = location.hostName;
 
 function initial(){	
+	//parse nvram to array
+	var parseNvramToArray = function(oriNvram) {
+		var parseArray = [];
+		var oriNvramRow = decodeURIComponent(oriNvram).split('<');
+		for(var i = 0; i < oriNvramRow.length; i += 1) {
+			if(oriNvramRow[i] != "") {
+				var oriNvramCol = oriNvramRow[i].split('>');
+				var eachRuleArray = new Array();
+				for(var j = 0; j < oriNvramCol.length; j += 1) {
+					eachRuleArray.push(oriNvramCol[j]);
+				}
+				parseArray.push(eachRuleArray);
+			}
+		}
+		return parseArray;
+	};
+	orig_restrict_rulelist_array = parseNvramToArray('<% nvram_char_to_ascii("","restrict_rulelist"); %>');
+	restrict_rulelist_array = JSON.parse(JSON.stringify(orig_restrict_rulelist_array));
+
 	show_menu();
 	show_http_clientlist();
 	display_spec_IP(document.form.http_client.value);
@@ -183,32 +236,52 @@ function applyRule(){
 			else if(location.hostname == "cellspot.asus.com") return false;
 			else return true;
 		})();
-	
-		var rule_num = document.getElementById('http_clientlist_table').rows.length;
-		var item_num = document.getElementById('http_clientlist_table').rows[0].cells.length;
-		var tmp_value = "";
 
-		for(i=0; i<rule_num; i++){
-			tmp_value += "<"		
-			for(j=0; j<item_num-1; j++){	
-				tmp_value += document.getElementById('http_clientlist_table').rows[i].cells[j].innerHTML;
-				if(j != item_num-2)	
-					tmp_value += ">";
+		var restart_firewall_flag = false;
+		var restart_httpd_flag = false;
+	
+		//parse array to nvram
+		var old_fw_tmp_value = ""; //for old version fw
+		var tmp_value = "";
+		for(var i = 0; i < restrict_rulelist_array.length; i += 1) {
+			if(restrict_rulelist_array[i].length != 0) {
+				old_fw_tmp_value += "<";
+				tmp_value += "<";
+				for(var j = 0; j < restrict_rulelist_array[i].length; j += 1) {
+					tmp_value += restrict_rulelist_array[i][j];
+					if( (j + 1) != restrict_rulelist_array[i].length)
+						tmp_value += ">";
+
+					if(j == 1) //IP, for old version fw
+						old_fw_tmp_value += restrict_rulelist_array[i][j];
+				}
 			}
 		}
-		if(tmp_value == "<"+"<#IPConnection_VSList_Norule#>" || tmp_value == "<")
-			tmp_value = "";	
-		document.form.http_clientlist.value = tmp_value;
 
-		if(document.form.http_clientlist.value == "" && document.form.http_client[0].checked == 1){
+		var getRadioItemCheck = function(obj) {
+			var checkValue = "";
+			var radioLength = obj.length;
+			for(var i = 0; i < radioLength; i += 1) {
+				if(obj[i].checked) {
+					checkValue = obj[i].value;
+					break;
+				}
+			}
+			return 	checkValue;
+		};
+		document.form.http_client.value = getRadioItemCheck(document.form.http_client_radio); //for old version fw
+		document.form.http_clientlist.value = old_fw_tmp_value; //for old version fw
+		document.form.enable_acc_restriction.value = getRadioItemCheck(document.form.http_client_radio);
+		document.form.restrict_rulelist.value = tmp_value;
+	
+		if(document.form.restrict_rulelist.value == "" && document.form.http_client_radio[0].checked == 1){
 			alert("<#JS_fieldblank#>");
 			document.form.http_client_ip_x_0.focus();
 			return false;
 		}
 
-		if(document.form.http_client[0].checked && document.form.http_clientlist.value != orig_http_clientlist){
-			document.form.action_script.value = "restart_time;restart_httpd;restart_upnp";
-		}
+		if((document.form.enable_acc_restriction.value != orig_enable_acc_restriction) || (restrict_rulelist_array.toString() != orig_restrict_rulelist_array.toString()))
+			restart_firewall_flag = true;
 
 		if(document.form.http_passwd2.value.length > 0){
 			document.form.http_passwd.value = document.form.http_passwd2.value;
@@ -245,7 +318,7 @@ function applyRule(){
 				|| document.form.misc_httpport_x.value != '<% nvram_get("misc_httpport_x"); %>'
 				|| document.form.misc_httpsport_x.value != '<% nvram_get("misc_httpsport_x"); %>'
 			){
-			document.form.action_script.value = "restart_time;restart_httpd;restart_upnp";
+			restart_httpd_flag = true;
 			if(document.form.http_enable.value == "0"){	//HTTP
 				if(isFromWAN)
 					document.form.flag.value = "http://" + location.hostname + ":" + document.form.misc_httpport_x.value;
@@ -289,6 +362,14 @@ function applyRule(){
 		if(reboot_schedule_support){
 			updateDateTime();
 		}
+
+		var action_script_tmp = "restart_time;";
+		if(restart_httpd_flag)
+			action_script_tmp += "restart_httpd;";
+		action_script_tmp += "restart_upnp;";
+		if(restart_firewall_flag)
+			action_script_tmp += "restart_firewall;";
+		document.form.action_script.value = action_script_tmp;
 
 		showLoading();
 		document.form.submit();
@@ -786,21 +867,50 @@ function hide_https_wanport(_value){
 
 // show clientlist
 function show_http_clientlist(){
-	var http_clientlist_row = http_clientlist_array.split('<');
 	var code = "";
-	code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="list_table" id="http_clientlist_table">'; 
-	if(http_clientlist_row.length == 1)
-		code +='<tr><td style="color:#FFCC00;"><#IPConnection_VSList_Norule#></td>';
-	else{
-		for(var i =1; i < http_clientlist_row.length; i++){
-		code +='<tr id="row'+i+'">';
-		code +='<td width="80%">'+ http_clientlist_row[i] +'</td>';		//Url keyword
-		code +='<td width="20%">';
-		code +="<input class=\"remove_btn\" type=\"button\" onclick=\"deleteRow(this);\" value=\"\"/></td>";
+	code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="list_table" id="http_clientlist_table">';
+	if(restrict_rulelist_array.length == 0) {
+		code +='<tr><td style="color:#FFCC00;"><#IPConnection_VSList_Norule#></td></tr>';
+	}
+	else {
+		var transformNumToText = function(restrict_type) {
+			var bit_text_array = ["", "Web UI", "SSH", "Telnet"];
+			var type_text = "";
+			for(var i = 1; restrict_type != 0 && i <= 4; i += 1) {
+				if(restrict_type & 1) {
+					if(type_text == "")
+						type_text += bit_text_array[i];
+					else 
+						type_text += ", " + bit_text_array[i];
+				}
+				restrict_type = restrict_type >> 1;
+			}
+			return type_text;
+		};
+		for(var i = 0; i < restrict_rulelist_array.length; i += 1) {
+			if(restrict_rulelist_array[i][0] == "1")
+				code += '<tr style="color:#FFFFFF;">';
+			else
+				code += '<tr style="color:#A0A0A0;">';
+			code += '<td width="10%">';
+			if(restrict_rulelist_array[i][0] == "1")
+				code += '<div class="check" onclick="control_rule_status(this);"><div style="width:16px;height:16px;margin: 3px auto" class="icon_check"></div></div>';
+			else
+				code += '<div class="cancel" style="" onclick="control_rule_status(this);"><div style="width:16px;height:16px;margin: 3px auto" class="icon_cancel"></div></div>';
+			code += '</td>';
+			code += '<td width="40%">';
+			code += restrict_rulelist_array[i][1];
+			code += "</td>";
+			code += '<td width="40%">';
+			code += transformNumToText(restrict_rulelist_array[i][2]);
+			code += "</td>";
+			code += '<td width="10%">';
+			code += '<div class="remove" style="margin:0 auto" onclick="deleteRow(this);">';
+			code += "</td>";
+			code += '</tr>';
 		}
 	}
-  	code +='</tr></table>';
-	
+	code +='</table>';
 	document.getElementById("http_clientlist_Block").innerHTML = code;
 }
 
@@ -827,25 +937,19 @@ function check_Timefield_checkbox(){	// To check Date checkbox checked or not an
 function deleteRow(r){
 	var i=r.parentNode.parentNode.rowIndex;
 	document.getElementById('http_clientlist_table').deleteRow(i);
-  
-	var http_clientlist_value = "";
-	for(i=0; i<document.getElementById('http_clientlist_table').rows.length; i++){
-		http_clientlist_value += "<";
-		http_clientlist_value += document.getElementById('http_clientlist_table').rows[i].cells[0].innerHTML;
-	}
-	
-	http_clientlist_array = http_clientlist_value;
-	if(http_clientlist_array == "")
+
+ 	restrict_rulelist_array.splice(i,1);
+
+	if(restrict_rulelist_array.length == 0)
 		show_http_clientlist();
 }
 
 function addRow(obj, upper){
 	if('<% nvram_get("http_client"); %>' != "1")
-		document.form.http_client[0].checked = true;
+		document.form.http_client_radio[0].checked = true;
 		
 	//Viz check max-limit 
-	var rule_num = document.getElementById('http_clientlist_table').rows.length;
-	var item_num = document.getElementById('http_clientlist_table').rows[0].cells.length;		
+	var rule_num = restrict_rulelist_array.length;
 	if(rule_num >= upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
 		return false;	
@@ -860,21 +964,47 @@ function addRow(obj, upper){
 	else if(validator.validIPForm(obj, 2) != true){
 		return false;
 	}
-	else{		
-		//Viz check same rule
-		for(i=0; i<rule_num; i++){
-			for(j=0; j<item_num-1; j++){		//only 1 value column
-				if(obj.value == document.getElementById('http_clientlist_table').rows[i].cells[j].innerHTML){
+	var access_type_value = 0;
+	$(".access_type").each(function() {
+		if(this.checked)
+			access_type_value += parseInt($(this).val());
+	});	
+	if(access_type_value == 0) {
+		alert("Please select at least one Access Type.");/*untranslated*/
+		return false;
+	}
+	else{
+		var newRuleArray = new Array();
+		newRuleArray.push("1");
+		newRuleArray.push(obj.value.trim());
+		newRuleArray.push(access_type_value.toString());
+		var newRuleArray_tmp = new Array();
+		newRuleArray_tmp = newRuleArray.slice();
+		newRuleArray_tmp.splice(0, 1);
+		newRuleArray_tmp.splice(1, 1);
+		if(restrict_rulelist_array.length > 0) {
+			for(var i = 0; i < restrict_rulelist_array.length; i += 1) {
+				var restrict_rulelist_array_tmp = restrict_rulelist_array[i].slice();
+				restrict_rulelist_array_tmp.splice(0, 1);
+				restrict_rulelist_array_tmp.splice(1, 1);
+				if(newRuleArray_tmp.toString() == restrict_rulelist_array_tmp.toString()) { //compare IP
 					alert("<#JS_duplicate#>");
 					return false;
-				}	
+				}
 			}
 		}
+		restrict_rulelist_array.push(newRuleArray);
 		
-		http_clientlist_array += "<";
-		http_clientlist_array += obj.value;
-		obj.value = "";		
+		obj.value = "";
+		$(".access_type").each(function() {
+			if(this.checked)
+				$(this).prop('checked', false);
+		});	
+		
 		show_http_clientlist();
+		
+		if($("#selAll").hasClass("all_enable"))
+			$("#selAll").removeClass("all_enable").addClass("all_disable");
 	}	
 }
 
@@ -1048,6 +1178,45 @@ function paste_password(){
 	pass_checked(document.form.http_passwd2);
 	pass_checked(document.form.v_password2);
 }
+function control_rule_status(obj) {
+	var $itemObj = $(obj);
+	var $trObj = $itemObj.closest('tr');
+	var row_idx = $trObj.index();
+	if($itemObj.hasClass("cancel")) {
+		$itemObj.removeClass("cancel").addClass("check");
+		$itemObj.children().removeClass("icon_cancel").addClass("icon_check");
+		restrict_rulelist_array[row_idx][0] = "1";
+		$trObj.css({"color" : "#FFFFFF"});
+	}
+	else {
+		$itemObj.removeClass("check").addClass("cancel");
+		$itemObj.children().removeClass("icon_check").addClass("icon_cancel");
+		restrict_rulelist_array[row_idx][0] = "0";
+		$trObj.css({"color" : "#A0A0A0"});
+	}
+
+	if($("#selAll").hasClass("all_enable"))
+		$("#selAll").removeClass("all_enable").addClass("all_disable");
+}
+function control_all_rule_status(obj) {
+	var set_all_rule_status = function(stauts) {
+		for(var i = 0; i < restrict_rulelist_array.length; i += 1) {
+			restrict_rulelist_array[i][0] = stauts;
+		}
+	};
+
+	var $itemObj = $(obj);
+	if($itemObj.hasClass("all_enable")) {
+		$itemObj.removeClass("all_enable").addClass("all_disable");
+		set_all_rule_status("1");
+	}
+	else {
+		$itemObj.removeClass("all_disable").addClass("all_enable");
+		set_all_rule_status("0");
+	}
+
+	show_http_clientlist();
+}
 </script>
 </head>
 
@@ -1073,7 +1242,10 @@ function paste_password(){
 <input type="hidden" name="time_zone" value="<% nvram_get("time_zone"); %>">
 <input type="hidden" name="time_zone_dstoff" value="<% nvram_get("time_zone_dstoff"); %>">
 <input type="hidden" name="http_passwd" value="" disabled>
-<input type="hidden" name="http_clientlist" value="<% nvram_get("http_clientlist"); %>">
+<input type="hidden" name="http_client" value="<% nvram_get("http_client"); %>"><!--for old fw-->
+<input type="hidden" name="http_clientlist" value="<% nvram_get("http_clientlist"); %>"><!--for old fw-->
+<input type="hidden" name="enable_acc_restriction" value="<% nvram_get("enable_acc_restriction"); %>">
+<input type="hidden" name="restrict_rulelist" value="<% nvram_get("restrict_rulelist"); %>">
 <input type="hidden" name="btn_ez_mode" value="<% nvram_get("btn_ez_mode"); %>">
 <input type="hidden" name="reboot_schedule" value="<% nvram_get_x("","reboot_schedule"); %>" disabled>
 <input type="hidden" name="reboot_schedule_enable" value="<% nvram_get_x("","reboot_schedule_enable"); %>">
@@ -1418,8 +1590,8 @@ function paste_password(){
 				<tr>
 					<th><#System_login_specified_IP#></th>
 					<td>
-						<input type="radio" name="http_client" value="1" onclick="display_spec_IP(1);" <% nvram_match_x("", "http_client", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="http_client" value="0" onclick="display_spec_IP(0);" <% nvram_match_x("", "http_client", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="http_client_radio" value="1" onclick="display_spec_IP(1);" <% nvram_match_x("", "http_client", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="http_client_radio" value="0" onclick="display_spec_IP(0);" <% nvram_match_x("", "http_client", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 			</table>
@@ -1432,20 +1604,28 @@ function paste_password(){
 				</thead>
 				
 				<tr>
-					<th width="80%"><#ConnectedClient#></th>
-					<th width="20%"><#list_add_delete#></th>
+					<th width="10%"><div id="selAll" class="all_disable" style="margin: auto;width:40px;" onclick="control_all_rule_status(this);"><#All#></div></th>
+					<th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,9);"><#FirewallConfig_LanWanDstIP_itemname#></a></th>
+					<th width="40%">Access Type<!--untranslated--></th>
+					<th width="10%"><#list_add_delete#></th>
 				</tr>
 
 				<tr>
-						<!-- client info -->
-					<td width="80%">
-						<input type="text" class="input_32_table" maxlength="18" name="http_client_ip_x_0"  onKeyPress="" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off">
+					<!-- client info -->
+					<td width="10%">-</td>
+					<td width="40%">
+						<input type="text" class="input_25_table" maxlength="18" name="http_client_ip_x_0"  onKeyPress="" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off">
 						<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_client#>">	
-						<div id="ClientList_Block_PC" class="clientlist_dropdown" style="margin-left:122px;width:345px;"></div>	
-					 </td>
-					 <td width="20%">	
-						<input class="add_btn" type="button" onClick="addRow(document.form.http_client_ip_x_0, 4);" value="">
-					 </td>	
+						<div id="ClientList_Block_PC" class="clientlist_dropdown" style="margin-left:27px;width:235px;"></div>	
+					</td>
+					<td width="40%">
+						<input type="checkbox" name="access_webui" class="input access_type" value="1">Web UI<!--untranslated-->
+						<input type="checkbox" name="access_ssh" class="input access_type" value="2">SSH<!--untranslated-->
+						<input type="checkbox" name="access_telnet" class="input access_type" value="4">Telnet (Lan only)<!--untranslated-->
+					</td>
+					<td width="10%">
+						<div id="add_delete" class="add_enable" style="margin:0 auto" onclick="addRow(document.form.http_client_ip_x_0, 4);"></div>
+					</td>
 				</tr>
 			</table>
 			<div id="http_clientlist_Block"></div>

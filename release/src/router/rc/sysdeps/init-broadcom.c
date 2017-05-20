@@ -2196,7 +2196,7 @@ void fini_wl(void)
 {
 	int model = get_model();
 
-#ifdef RTAC3200
+#if defined(RTAC3200) || defined(RTCONFIG_BCM9)
 	return;
 #endif
 

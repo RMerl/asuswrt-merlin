@@ -535,7 +535,10 @@ function show_apps(){
 		else if((apps_array[i][0] == "downloadmaster" || apps_array[i][0] == "mediaserver" || apps_array[i][0] == "mediaserver2" || apps_array[i][0] == "aicloud") && apps_array[i][3] == "yes" && apps_array[i][4] == "yes"){
 
 			var header_info = [<% get_header_info(); %>];
-			apps_array[i][6] = "http://" + header_info[0].host + ":" + dm_http_port;
+			var host_name = header_info[0].host;
+			if(host_name.split(":").length > 1)
+				host_name = host_name.split(":")[0];
+			apps_array[i][6] = "http://" + host_name + ":" + dm_http_port;
 
 			if(apps_array[i][0] == "aicloud") // append URL
 				apps_array[i][6] = "/cloud_main.asp";
@@ -805,7 +808,10 @@ function divdisplayctrl(flag1, flag2, flag3, flag4){
 	}
 	else if(flag4 != "none"){ // help
 		var header_info = [<% get_header_info(); %>];
-		var _quick_dmlink = "http://" + header_info[0].host + ":" + dm_http_port;
+		var host_name = header_info[0].host;
+		if(host_name.split(":").length > 1)
+			host_name = host_name.split(":")[0];
+		var _quick_dmlink = "http://" + host_name + ":" + dm_http_port;
 		
 		if(_dm_enable == "yes"){
 			document.getElementById("realLink").href = _quick_dmlink;

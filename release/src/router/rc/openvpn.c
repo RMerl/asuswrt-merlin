@@ -1979,6 +1979,40 @@ void create_openvpn_passwd()
 }
 
 
+void update_ovpn_profie_remote()
+{
+	char file_path[128];
+	char address[64];
+	char buffer[256], *cur;
+	int nums[5], i;
+
+	strlcpy(buffer, nvram_safe_get("vpn_serverx_eas"), sizeof(buffer));
+
+	i = 0;
+	for( cur = strtok(buffer,","); cur != NULL && i < 5; cur = strtok(NULL, ",")) { nums[i++] = atoi(cur); }
+	if(i < 5) nums[i] = 0;
+	for( i = 0; nums[i] > 0 && i < 5; i++ )
+	{
+		if(!nvram_get_int("VPNServer_enable")) continue;
+
+		snprintf(file_path, sizeof(file_path), "/etc/openvpn/server%d/client.ovpn", nums[i]);
+		if(f_exists(file_path) && f_size(file_path) > 0)
+		{
+			if( nvram_match("ddns_enable_x", "1")
+			 && nvram_match("ddns_status", "1")
+			) {
+				strlcpy(address, nvram_safe_get("ddns_hostname_x"), sizeof(address));
+			}
+			else {
+				strlcpy(address, nvram_safe_get("wan0_ipaddr"), sizeof(address));
+			}
+			snprintf(buffer, sizeof(buffer), "sed -i 's/remote [A-Za-z0-9.-]*/remote %s/ ' %s", address, file_path);
+			system(buffer);
+		}
+	}
+}
+
+
 int _check_ovpn_enabled(int unit, char *config){
         char tmp[2];
 

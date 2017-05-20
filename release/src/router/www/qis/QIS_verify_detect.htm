@@ -36,7 +36,9 @@ var ewan_index = -1;
 var usb_index = -1;
 var wans_dualwan = '<% nvram_get("wans_dualwan"); %>'.split(" ");
 var based_modelid = '<% nvram_get("productid"); %>';
-
+if(parent.document.QKform.wan_proto.value == "pptp" || parent.document.QKform.wan_proto.value == "l2tp"){
+	RetryCountDown = 10;
+}
 
 function QKDetect_load_body(){
 	parent.set_step("t1");
@@ -117,18 +119,21 @@ function getWANStatus(){
 				getDualWANState();			
 			}
 
+			if(parent.document.QKform.wan_proto.value != "pptp" && parent.document.QKform.wan_proto.value != "l2tp"){
+				if(autodet_state == "" || autodet_state == "0" || autodet_state == "1"){
+					setTimeout('getWANStatus();', 500);
+					return true;
+				}
+			}		
+
 			if(RetryCountDown < 1){
 					RetryCountDown = 10;
 					restart_autodet();
 					return true;
 			}
+
 			if(autodet_state == ""){
 				--RetryCountDown;
-				setTimeout('getWANStatus();', 500);
-				return true;
-			}
-
-			if(autodet_state == "" || autodet_state == "0" || autodet_state == "1"){
 				setTimeout('getWANStatus();', 500);
 				return true;
 			}

@@ -67,11 +67,11 @@ function wl_chanspec_list_change(){
 													wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
 												}
 												else{
-													if((country == "AU" && odmpid == "RT-AC66U_B1") && (parseInt(wl_channel_list_5g[i]) == 116)){
+													if(country == "AU" && (parseInt(wl_channel_list_5g[i]) == 116)){
 														wl_channel_list_5g[i] = wl_channel_list_5g[i];
 
 													}
-													else if((country == "AU" && odmpid == "RT-AC66U_B1") && (parseInt(wl_channel_list_5g[i]) > 116 && parseInt(wl_channel_list_5g[i]) < 140)){
+													else if(country == "AU" && (parseInt(wl_channel_list_5g[i]) > 116 && parseInt(wl_channel_list_5g[i]) < 140)){
 														wl_channel_list_5g[i] = wlextchannel_fourty(wl_channel_list_5g[i]);
 													}
 													else{
@@ -97,7 +97,7 @@ function wl_chanspec_list_change(){
 									wl_channel_list_5g.splice(wl_channel_list_5g.getIndexByValue(wl_channel_list_5g[i]),1);
 								}
 								else{
-									if((country == "AU" && odmpid == "RT-AC66U_B1") && (parseInt(wl_channel_list_5g[i]) >= 116 && parseInt(wl_channel_list_5g[i]) <= 140)){
+									if((country == "AU") && (parseInt(wl_channel_list_5g[i]) >= 116 && parseInt(wl_channel_list_5g[i]) <= 140)){
 										wl_channel_list_5g.splice(wl_channel_list_5g.getIndexByValue(wl_channel_list_5g[i]),1);
 									}
 									else{
@@ -123,7 +123,7 @@ function wl_chanspec_list_change(){
 								wl_channel_list_5g.splice(index, 1);
 							}
 
-							if(country == "AU" && odmpid == "RT-AC66U_B1"){
+							if(country == "AU"){
 								if(wl_channel_list_5g.indexOf("116") != -1){
 									var index = wl_channel_list_5g.indexOf("116");
 									wl_channel_list_5g.splice(index, 1);									
@@ -365,7 +365,7 @@ function wl_chanspec_list_change(){
 								else if((wl_channel_list_5g_2[i] == "56") && country == "TW")		//56 belong 20MHz only for TW
 									wl_channel_list_5g_2[i] = wl_channel_list_5g_2[i];
 								else if(band5g_11ac_support){
-									if(country == "EU" && parseInt(wl_channel_list_5g_2[i]) == 116){		//	belong to 20MHz
+									if((country == "EU" || country == "E0") && parseInt(wl_channel_list_5g_2[i]) == 116){		//	belong to 20MHz
 									wl_channel_list_5g_2[i] = wl_channel_list_5g_2[i];
 									}else if((country == "EU" || country == "E0")&& parseInt(wl_channel_list_5g_2[i]) > 116 && parseInt(wl_channel_list_5g_2[i]) < 140){	// belong to 40MHz												
 										wl_channel_list_5g_2[i] = wlextchannel_fourty(wl_channel_list_5g_2[i]);

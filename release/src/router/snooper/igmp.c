@@ -116,6 +116,7 @@ static struct {
 	int enabled:1;
 	int version;
 	int startup;
+	int timeout;
 	struct timer_entry timer;
 } querier;
 
@@ -180,7 +181,7 @@ static void log_packet(char *type, in_addr_t group, unsigned char *shost, struct
 	log_igmp("%-7s [" FMT_EA "] " FMT_IP " => [" FMT_EA "] " FMT_IP " <" FMT_IP "> %s", type,
 	    ARG_EA(shost), ARG_IP(&iph->ip_src.s_addr),
 	    ARG_EA(dhost), ARG_IP(&iph->ip_dst.s_addr),
-	    ARG_IP(&group), loopback ? "*" : "");
+	    ARG_IP(&group), (loopback < 0) ? "sent" : loopback ? "outgoing" : "");
 }
 #else
 #define log_packet(...) do {} while (0);
@@ -277,7 +278,8 @@ static int accept_leave(in_addr_t group, in_addr_t host, unsigned char *shost, i
 	if (querier.enabled) {
 		send_query(group);
 		expire_members(ea, LASTMEMBER_QUERY_INT * TIMER_HZ);
-	}
+	} else if (querier.timeout)
+		expire_members(ea, MAX(querier.timeout, LASTMEMBER_QUERY_INT * TIMER_HZ));
 
 	port = get_port(shost);
 	if (port < 0)
@@ -303,7 +305,8 @@ int accept_query(in_addr_t group, in_addr_t host, unsigned char *shost, int time
 	if (!querier.enabled && group && !reserved_mcast(group)) {
 		ether_mtoe(group, ea);
 		expire_members(ea, timeout);
-	}
+	} else if (!querier.enabled && !group)
+		querier.timeout = timeout;
 
 	if (loopback)
 		return 1;
@@ -416,6 +419,7 @@ static void query_timer(struct timer_entry *timer, void *data)
 	if (!querier.enabled) {
 		querier.enabled = 1;
 		querier.startup = 0;
+		querier.timeout = 0;
 	}
 
 	if (querier.startup > 0)
@@ -430,6 +434,8 @@ int init_querier(int enabled)
 	querier.enabled = !!enabled;
 	querier.version = 2;
 	querier.startup = STARTUP_QUERY_CNT;
+	querier.timeout = 0;
+
 	set_timer(&querier.timer, query_timer, NULL);
 	if (querier.enabled)
 		mod_timer(&querier.timer, now() + 1);

@@ -275,11 +275,9 @@ function initial(){
 			}
 		}
 
-		if(based_modelid == "RT-AC88N" || based_modelid == "RT-AC88Q" || based_modelid == "BRT-AC828" || based_modelid == "RT-AC58U"  || based_modelid == "RT-AC82U")
-		{
+		if(based_modelid == "RT-AC88N" || based_modelid == "RT-AC88Q" || based_modelid == "BRT-AC828" || based_modelid == "RT-AC58U"  || based_modelid == "RT-AC82U"){
 			inputCtrl(document.form.wl_txbf, 1);
 			document.getElementById("wl_MU_MIMO_field").style.display = "";
-			document.getElementById("mu_mimo_sup").innerHTML = "";
 			document.form.wl_mumimo.disabled = false;
 		}
 		if( based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP")
@@ -407,7 +405,6 @@ function initial(){
 	corrected_timezone();		
 	if(based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1'){	//for RT-AC87U 5 GHz Advanced setting
 		document.getElementById("wl_mrate_select").style.display = "none";
-		//document.getElementById("wl_plcphdr_field").style.display = "none";
 		document.getElementById("ampdu_rts_tr").style.display = "none";
 		document.getElementById("rts_threshold").style.display = "none";
 		document.getElementById("wl_frameburst_field").style.display = "none";
@@ -415,14 +412,11 @@ function initial(){
 		document.getElementById("wl_ampdu_mpdu_field").style.display = "none";
 		document.getElementById("wl_ack_ratio_field").style.display = "none";
 		document.getElementById("wl_MU_MIMO_field").style.display = "";
-		document.getElementById("mu_mimo_sup").innerHTML = " *BETA";
 		document.form.wl_mumimo.disabled = false;
-		//document.getElementById('wl_80211h_tr').style.display = "";
 	}
 
 	if(bcm_mumimo_support){
 		document.getElementById("wl_MU_MIMO_field").style.display = "";
-		document.getElementById("mu_mimo_sup").innerHTML = " *ALPHA";
 		document.form.wl_mumimo.disabled = false;
 	}
 	
@@ -1619,7 +1613,7 @@ function handle_beamforming(value){
 					
 					<!--MU-MIMO for RT-AC88U, RT-AC3100, RT-AC5300 and RT-AC87U 5 GHz only-->
 					<tr id="wl_MU_MIMO_field" style="display:none">
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="">Multi-User MIMO<sup id="mu_mimo_sup"> *BETA</sup></a></th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="">Multi-User MIMO</a></th>
 						<td>
 							<div style="display:table-cell;vertical-align:middle">
 								<select name="wl_mumimo" class="input_option" onchange="handle_mimo(this.value)" disabled>
@@ -1627,7 +1621,6 @@ function handle_beamforming(value){
 									<option value="1" <% nvram_match("wl_mumimo", "1","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>
 								</select>
 							</div>
-							<div style="display:table-cell;padding:0 5px 0 10px;color:#FC0;line-height: 18px">Current MU-MIMO specification is still under Wi-Fi Alliance's testing and might have compatibility issues among different brands. Wi-Fi Alliance is estimated to announce certification program by Jun. 2016.</div>
 						</td>
 					</tr>					
 					<tr id="wl_txbf_field">

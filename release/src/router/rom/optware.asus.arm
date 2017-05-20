@@ -13,28 +13,28 @@ URL:
 
 
 Package: asuslighttpd
-Version: 3.1.0.86
-Depends: pcre, zlib, libstdc++, openssl, spawn-fcgi
+Version: 3.1.0.97
+Depends: pcre, zlib, libstdc++, spawn-fcgi, bzip2
 OptionalUtility: 1.0.0.2
 Section: net
 Architecture: arm
 Maintainer: ASUS
-Size: 159172
-Filename: asuslighttpd_3.1.0.86_arm.ipk
+Size: 305739
+Filename: asuslighttpd_3.1.0.97_arm.ipk
 Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
 Description: 
 URL: 
 
 
 Package: downloadmaster
-Version: 3.1.0.93
-Depends: openssl, zlib, libcurl, libevent, ncurses, libxml2, libstdc++, libsigc++, libpar2, pcre, spawn-fcgi, readline, asuslighttpd, wxbase
+Version: 3.1.0.101
+Depends: zlib, libevent, ncurses, libxml2, libstdc++, libsigc++, libpar2, pcre, spawn-fcgi, readline, asuslighttpd, wxbase
 OptionalUtility: 1.0.0.2+
 Section: net
 Architecture: arm
 Maintainer: ASUS
-Size: 3293193
-Filename: downloadmaster_3.1.0.93_arm.ipk
+Size: 3300539
+Filename: downloadmaster_3.1.0.101_arm.ipk
 Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
 Description: Download tools
 URL: http://www.asusnetwork.net:8081/downloadmaster/index.asp
@@ -123,6 +123,18 @@ Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
 MD5Sum: 7962b40dbea8b0bc036b19f47adfe3c3
 Size: 336097
 Filename: libcurl_7.24.0-1_arm.ipk
+Source: http://curl.haxx.se/download/curl-7.24.0.tar.gz
+Description: Curl is a command line tool for transferring files with URL syntax, supporting FTP, FTPS, HTTP, HTTPS, GOPHER, TELNET, DICT, FILE and LDAP. Curl supports HTTPS certificates, HTTP POST, HTTP PUT, FTP uploading, kerberos, HTTP form based upload, proxies, cookies, user+password authentication, file transfer resume, http proxy tunneling and a busload of other useful tricks.
+
+
+Package: asuslibcurl
+Version: 7.24.0-1
+Depends: zlib
+Section: libs
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 186196
+Filename: asuslibcurl_7.24.0-1_arm.ipk
 Source: http://curl.haxx.se/download/curl-7.24.0.tar.gz
 Description: Curl is a command line tool for transferring files with URL syntax, supporting FTP, FTPS, HTTP, HTTPS, GOPHER, TELNET, DICT, FILE and LDAP. Curl supports HTTPS certificates, HTTP POST, HTTP PUT, FTP uploading, kerberos, HTTP form based upload, proxies, cookies, user+password authentication, file transfer resume, http proxy tunneling and a busload of other useful tricks.
 
@@ -263,6 +275,16 @@ Filename: openssl_0.9.8v-2_arm.ipk
 Source: http://www.openssl.org/source/openssl-0.9.8v.tar.gz
 Description: Openssl provides the ssl implementation in libraries libcrypto and libssl, and is needed by many other applications and libraries.
 
+
+Package: asusopenssl
+Version: 1.0.2j.v001
+Section: libs
+Architecture: arm
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 1108459 
+Filename: asusopenssl_1.0.2j.v001_arm.ipk
+Source: http://www.openssl.org/source/openssl-0.9.8v.tar.gz
+Description: Openssl provides the ssl implementation in libraries libcrypto and libssl, and is needed by many other applications and libraries.
 
 Package: pcre
 Version: 8.31-1

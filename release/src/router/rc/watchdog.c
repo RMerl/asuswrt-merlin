@@ -2482,7 +2482,7 @@ void wanduck_check(void)
 }
 #endif
 
-#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
+#if (defined(PLN11) || defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
 static int client_check_cnt = 0;
 static int no_client_cnt = 0;
 static int plc_wake = 1;
@@ -2535,7 +2535,7 @@ static void client_check(void)
 
 	if (plc_wake == 1 && no_client_cnt >= 5) {
 		//dbg("%s: trigger Powerline to sleep...\n", __func__);
-#if defined(PLN12)
+#if defined(PLN11) || defined(PLN12)
 		doSystem("swconfig dev %s port 1 set power 0", MII_IFNAME);
 #elif defined(PLAC56)
 		set_gpio((nvram_get_int("plc_wake_gpio") & 0xff), 1);
@@ -2547,7 +2547,7 @@ static void client_check(void)
 	}
 	else if (plc_wake == 0 && no_client_cnt == 0) {
 		//dbg("%s: trigger Powerline to wake...\n", __func__);
-#if defined(PLN12)
+#if defined(PLN11) || defined(PLN12)
 		doSystem("swconfig dev %s port 1 set power 1", MII_IFNAME);
 #elif defined(PLAC56)
 		set_gpio((nvram_get_int("plc_wake_gpio") & 0xff), 0);
@@ -3707,7 +3707,7 @@ void watchdog(int sig)
 	/* if timer is set to less than 1 sec, then bypass the following */
 	if (itv.it_value.tv_sec == 0) return;
 
-#if (defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
+#if (defined(PLN11) || defined(PLN12) || defined(PLAC56) || defined(PLAC66U))
 	client_check();
 #endif
 
