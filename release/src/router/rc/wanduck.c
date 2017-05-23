@@ -1841,7 +1841,7 @@ void send_page(int wan_unit, int sfd, char *file_dest, char *url){
 	}
 #ifdef RTCONFIG_HTTPS
 	if (nvram_get_int("http_enable") == 1) {
-+		snprintf(dut_proto, sizeof(dut_proto), "https://");
+		snprintf(dut_proto, sizeof(dut_proto), "https://");
 		snprintf(dut_port, sizeof(dut_port), "%d", nvram_get_int("https_lanport") ? : 443);
 	} else
 #endif
