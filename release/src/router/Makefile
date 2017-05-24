@@ -1255,11 +1255,6 @@ ifeq ($(RTCONFIG_L7PAT),y)
 endif
 
 	busybox/examples/depmod.pl -k $(LINUXDIR)/vmlinux -b $(TARGETDIR)/lib/modules/*/
-ifneq ($(RTCONFIG_BCMARM),y)
-	mv $(TARGETDIR)/lib/modules/$(LINUX_KERNEL)/modules.dep $(TARGETDIR)/lib/modules/
-else
-	mv $(TARGETDIR)/lib/modules/*/modules.dep $(TARGETDIR)/lib/modules/
-endif
 
 ifeq ($(RTCONFIG_ROMCFE),y)
 	-cp $(SRCBASE)/cfe/cfe_`echo $(BUILD_NAME)|tr A-Z a-z`.bin $(TARGETDIR)/rom/cfe
