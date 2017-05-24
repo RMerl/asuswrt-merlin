@@ -866,7 +866,21 @@ CONFIG_SCSI_WAIT_SCAN=m
 #
 # Multi-device support (RAID and LVM)
 #
-# CONFIG_MD is not set
+CONFIG_MD=y
+# CONFIG_BLK_DEV_MD is not set
+CONFIG_BLK_DEV_DM=y
+# CONFIG_DM_DEBUG is not set
+CONFIG_DM_CRYPT=y
+# CONFIG_DM_SNAPSHOT is not set
+CONFIG_DM_MIRROR=y
+# CONFIG_DM_ZERO is not set
+# CONFIG_DM_MULTIPATH is not set
+# CONFIG_DM_DELAY is not set
+
+
+
+
+
 
 #
 # Fusion MPT device support
