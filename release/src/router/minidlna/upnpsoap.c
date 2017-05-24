@@ -3,7 +3,7 @@
  * http://sourceforge.net/projects/minidlna/
  *
  * MiniDLNA media server
- * Copyright (C) 2008-2009  Justin Maggard
+ * Copyright (C) 2008-2017  Justin Maggard
  *
  * This file is part of MiniDLNA.
  *
@@ -84,7 +84,7 @@
  * --------	---------------- -----------
  * 401 		Invalid Action 	No action by that name at this service.
  * 402 		Invalid Args 	Could be any of the following: not enough in args,
- * 							too many in args, no in arg by that name, 
+ * 							too many in args, no in arg by that name,
  * 							one or more in args are of the wrong data type.
  * 403 		Out of Sync 	Out of synchronization.
  * 501 		Action Failed 	May be returned in current state of service
@@ -93,13 +93,13 @@
  * 							Technical Committee.
  * 700-799 	TBD 			Action-specific errors for standard actions.
  * 							Defined by UPnP Forum working committee.
- * 800-899 	TBD 			Action-specific errors for non-standard actions. 
+ * 800-899 	TBD 			Action-specific errors for non-standard actions.
  * 							Defined by UPnP vendor.
 */
 static void
 SoapError(struct upnphttp * h, int errCode, const char * errDesc)
 {
-	static const char resp[] = 
+	static const char resp[] =
 		"<s:Envelope "
 		"xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" "
 		"s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">"
@@ -201,13 +201,13 @@ IsAuthorizedValidated(struct upnphttp * h, const char * action)
 		int bodylen;
 		bodylen = snprintf(body, sizeof(body), resp,
 			action, "urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1",
-			1, action);	
+			1, action);
 		BuildSendAndCloseSoapResp(h, body, bodylen);
 	}
 	else
 		SoapError(h, 402, "Invalid Args");
 
-	ClearNameValueList(&data);	
+	ClearNameValueList(&data);
 }
 
 static void
@@ -245,7 +245,7 @@ GetProtocolInfo(struct upnphttp * h, const char * action)
 
 	bodylen = asprintf(&body, resp,
 		action, "urn:schemas-upnp-org:service:ConnectionManager:1",
-		action);	
+		action);
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 	free(body);
 }
@@ -270,7 +270,7 @@ GetSortCapabilities(struct upnphttp * h, const char * action)
 
 	bodylen = snprintf(body, sizeof(body), resp,
 		action, "urn:schemas-upnp-org:service:ContentDirectory:1",
-		action);	
+		action);
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 
@@ -299,7 +299,7 @@ GetSearchCapabilities(struct upnphttp * h, const char * action)
 
 	bodylen = snprintf(body, sizeof(body), resp,
 		action, "urn:schemas-upnp-org:service:ContentDirectory:1",
-		action);	
+		action);
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 
@@ -318,7 +318,7 @@ GetCurrentConnectionIDs(struct upnphttp * h, const char * action)
 
 	bodylen = snprintf(body, sizeof(body), resp,
 		action, "urn:schemas-upnp-org:service:ConnectionManager:1",
-		action);	
+		action);
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 
@@ -362,43 +362,51 @@ GetCurrentConnectionInfo(struct upnphttp * h, const char * action)
 		int bodylen;
 		bodylen = snprintf(body, sizeof(body), resp,
 			action, "urn:schemas-upnp-org:service:ConnectionManager:1",
-			action);	
+			action);
 		BuildSendAndCloseSoapResp(h, body, bodylen);
 	}
-	ClearNameValueList(&data);	
+	ClearNameValueList(&data);
 }
 
 /* Standard DLNA/UPnP filter flags */
-#define FILTER_CHILDCOUNT                        0x00000001
-#define FILTER_DC_CREATOR                        0x00000002
-#define FILTER_DC_DATE                           0x00000004
-#define FILTER_DC_DESCRIPTION                    0x00000008
-#define FILTER_DLNA_NAMESPACE                    0x00000010
-#define FILTER_REFID                             0x00000020
-#define FILTER_RES                               0x00000040
-#define FILTER_RES_BITRATE                       0x00000080
-#define FILTER_RES_DURATION                      0x00000100
-#define FILTER_RES_NRAUDIOCHANNELS               0x00000200
-#define FILTER_RES_RESOLUTION                    0x00000400
-#define FILTER_RES_SAMPLEFREQUENCY               0x00000800
-#define FILTER_RES_SIZE                          0x00001000
-#define FILTER_SEARCHABLE                        0x00002000
-#define FILTER_UPNP_ACTOR                        0x00004000
-#define FILTER_UPNP_ALBUM                        0x00008000
-#define FILTER_UPNP_ALBUMARTURI                  0x00010000
-#define FILTER_UPNP_ALBUMARTURI_DLNA_PROFILEID   0x00020000
-#define FILTER_UPNP_ARTIST                       0x00040000
-#define FILTER_UPNP_GENRE                        0x00080000
-#define FILTER_UPNP_ORIGINALTRACKNUMBER          0x00100000
-#define FILTER_UPNP_SEARCHCLASS                  0x00200000
-#define FILTER_UPNP_STORAGEUSED                  0x00400000
+#define FILTER_CHILDCOUNT			0x00000001
+#define FILTER_DC_CREATOR			0x00000002
+#define FILTER_DC_DATE				0x00000004
+#define FILTER_DC_DESCRIPTION			0x00000008
+#define FILTER_DLNA_NAMESPACE			0x00000010
+#define FILTER_REFID				0x00000020
+#define FILTER_RES				0x00000040
+#define FILTER_RES_BITRATE			0x00000080
+#define FILTER_RES_DURATION			0x00000100
+#define FILTER_RES_NRAUDIOCHANNELS		0x00000200
+#define FILTER_RES_RESOLUTION			0x00000400
+#define FILTER_RES_SAMPLEFREQUENCY		0x00000800
+#define FILTER_RES_SIZE				0x00001000
+#define FILTER_SEARCHABLE			0x00002000
+#define FILTER_UPNP_ACTOR			0x00004000
+#define FILTER_UPNP_ALBUM			0x00008000
+#define FILTER_UPNP_ALBUMARTURI			0x00010000
+#define FILTER_UPNP_ALBUMARTURI_DLNA_PROFILEID	0x00020000
+#define FILTER_UPNP_ARTIST			0x00040000
+#define FILTER_UPNP_GENRE			0x00080000
+#define FILTER_UPNP_ORIGINALTRACKNUMBER		0x00100000
+#define FILTER_UPNP_SEARCHCLASS			0x00200000
+#define FILTER_UPNP_STORAGEUSED			0x00400000
+/* Not normally used, so leave out of the default filter */
+#define FILTER_UPNP_PLAYBACKCOUNT		0x01000000
+#define FILTER_UPNP_LASTPLAYBACKPOSITION	0x02000000
 /* Vendor-specific filter flags */
-#define FILTER_SEC_CAPTION_INFO_EX               0x01000000
-#define FILTER_SEC_DCM_INFO                      0x02000000
-#define FILTER_PV_SUBTITLE_FILE_TYPE             0x04000000
-#define FILTER_PV_SUBTITLE_FILE_URI              0x08000000
-#define FILTER_PV_SUBTITLE                       0x0C000000
-#define FILTER_AV_MEDIA_CLASS                    0x10000000
+#define FILTER_SEC_CAPTION_INFO_EX		0x04000000
+#define FILTER_SEC_DCM_INFO			0x08000000
+#define FILTER_PV_SUBTITLE_FILE_TYPE		0x10000000
+#define FILTER_PV_SUBTITLE_FILE_URI		0x20000000
+#define FILTER_PV_SUBTITLE			0x30000000
+#define FILTER_AV_MEDIA_CLASS			0x40000000
+/* Masks */
+#define STANDARD_FILTER_MASK			0x00FFFFFF
+#define FILTER_BOOKMARK_MASK			(FILTER_UPNP_PLAYBACKCOUNT | \
+						 FILTER_UPNP_LASTPLAYBACKPOSITION | \
+						 FILTER_SEC_DCM_INFO)
 
 static uint32_t
 set_filter_flags(char *filter, struct upnphttp *h)
@@ -409,7 +417,7 @@ set_filter_flags(char *filter, struct upnphttp *h)
 
 	if( !filter || (strlen(filter) <= 1) ) {
 		/* Not the full 32 bits.  Skip vendor-specific stuff by default. */
-		flags = 0xFFFFFF;
+		flags = STANDARD_FILTER_MASK;
 		if (samsung)
 			flags |= FILTER_SEC_CAPTION_INFO_EX | FILTER_SEC_DCM_INFO;
 	}
@@ -537,6 +545,14 @@ set_filter_flags(char *filter, struct upnphttp *h)
 		{
 			flags |= FILTER_RES;
 			flags |= FILTER_RES_SIZE;
+		}
+		else if( strcmp(item, "upnp:playbackCount") == 0 )
+		{
+			flags |= FILTER_UPNP_PLAYBACKCOUNT;
+		}
+		else if( strcmp(item, "upnp:lastPlaybackPosition") == 0 )
+		{
+			flags |= FILTER_UPNP_LASTPLAYBACKPOSITION;
 		}
 		else if( strcmp(item, "sec:CaptionInfoEx") == 0 )
 		{
@@ -727,7 +743,7 @@ add_res(char *size, char *duration, char *bitrate, char *sampleFrequency,
 				strcatf(args->str, "pv:subtitleFileType=\"SRT\" ");
 			if( args->filter & FILTER_PV_SUBTITLE_FILE_URI )
 				strcatf(args->str, "pv:subtitleFileUri=\"http://%s:%d/Captions/%s.srt\" ",
-			                lan_addr[args->iface].str, runtime_vars.port, detailID);
+					lan_addr[args->iface].str, runtime_vars.port, detailID);
 		}
 	}
 	strcatf(args->str, "protocolInfo=\"http-get:*:%s:%s\"&gt;"
@@ -883,6 +899,16 @@ callback(void *args, int argc, char **argv, char **azColName)
 				if( strlen(title) > 23 )
 					title[23] = '\0';
 			}
+			/* Hyundai hack: Only titles with a media extension get recognized. */
+			else if( passed_args->client == EHyundaiTV )
+			{
+				ext = mime_to_ext(mime);
+				ret = asprintf(&alt_title, "%s.%s", title, ext);
+				if( ret > 0 )
+					title = alt_title;
+				else
+					alt_title = NULL;
+			}
 		}
 		else if( *mime == 'a' )
 		{
@@ -904,6 +930,9 @@ callback(void *args, int argc, char **argv, char **azColName)
 		}
 		else
 			dlna_flags |= DLNA_FLAG_TM_I;
+
+		if( passed_args->flags & FLAG_SKIP_DLNA_PN )
+			dlna_pn = NULL;
 
 		if( dlna_pn )
 			snprintf(dlna_buf, sizeof(dlna_buf), "DLNA.ORG_PN=%s;"
@@ -936,10 +965,24 @@ callback(void *args, int argc, char **argv, char **azColName)
 		if( date && (passed_args->filter & FILTER_DC_DATE) ) {
 			ret = strcatf(str, "&lt;dc:date&gt;%s&lt;/dc:date&gt;", date);
 		}
-		if( passed_args->filter & FILTER_SEC_DCM_INFO ) {
+		if( (passed_args->filter & FILTER_BOOKMARK_MASK) ) {
 			/* Get bookmark */
-			ret = strcatf(str, "&lt;sec:dcmInfo&gt;CREATIONDATE=0,FOLDER=%s,BM=%d&lt;/sec:dcmInfo&gt;",
-			              title, sql_get_int_field(db, "SELECT SEC from BOOKMARKS where ID = '%s'", detailID));
+			int sec = sql_get_int_field(db, "SELECT SEC from BOOKMARKS where ID = '%s'", detailID);
+			if( sec > 0 && (passed_args->filter & FILTER_UPNP_LASTPLAYBACKPOSITION) ) {
+				/* This format is wrong according to the UPnP/AV spec.  It should be in duration format,
+				** so HH:MM:SS. But Kodi seems to be the only user of this tag, and it only works with a
+				** raw seconds value.
+				** If Kodi gets fixed, we can use duration_str(sec * 1000) here */
+				ret = strcatf(str, "&lt;upnp:lastPlaybackPosition&gt;%d&lt;/upnp:lastPlaybackPosition&gt;",
+				              sec);
+			}
+			if( passed_args->filter & FILTER_SEC_DCM_INFO )
+				ret = strcatf(str, "&lt;sec:dcmInfo&gt;CREATIONDATE=0,FOLDER=%s,BM=%d&lt;/sec:dcmInfo&gt;",
+				              title, sec);
+			if( passed_args->filter & FILTER_UPNP_PLAYBACKCOUNT ) {
+				ret = strcatf(str, "&lt;upnp:playbackCount&gt;%d&lt;/upnp:playbackCount&gt;",
+				              sql_get_int_field(db, "SELECT WATCH_COUNT from BOOKMARKS where ID = '%s'", detailID));
+			}
 		}
 		if( artist ) {
 			if( (*mime == 'v') && (passed_args->filter & FILTER_UPNP_ACTOR) ) {
@@ -1356,7 +1399,7 @@ BrowseContentDirectory(struct upnphttp * h, const char * action)
 		}
 
 		sql = sqlite3_mprintf("SELECT %s, %s, %s, " COLUMNS
-		                      "from OBJECTS o left join DETAILS d on (d.ID = o.DETAIL_ID)"
+				      "from OBJECTS o left join DETAILS d on (d.ID = o.DETAIL_ID)"
 				      " where %s %s limit %d, %d;",
 				      objectid_sql, parentid_sql, refid_sql,
 				      where, THISORNUL(orderBy), StartingIndex, RequestedCount);
@@ -1831,10 +1874,10 @@ static void
 QueryStateVariable(struct upnphttp * h, const char * action)
 {
 	static const char resp[] =
-        "<u:%sResponse "
-        "xmlns:u=\"%s\">"
+	"<u:%sResponse "
+	"xmlns:u=\"%s\">"
 		"<return>%s</return>"
-        "</u:%sResponse>";
+	"</u:%sResponse>";
 
 	char body[512];
 	struct NameValueParserData data;
@@ -1852,10 +1895,10 @@ QueryStateVariable(struct upnphttp * h, const char * action)
 		SoapError(h, 402, "Invalid Args");
 	}
 	else if(strcmp(var_name, "ConnectionStatus") == 0)
-	{	
+	{
 		int bodylen;
 		bodylen = snprintf(body, sizeof(body), resp,
-                           action, "urn:schemas-upnp-org:control-1-0",
+		           action, "urn:schemas-upnp-org:control-1-0",
 		                   "Connected", action);
 		BuildSendAndCloseSoapResp(h, body, bodylen);
 	}
@@ -1865,7 +1908,131 @@ QueryStateVariable(struct upnphttp * h, const char * action)
 		SoapError(h, 404, "Invalid Var");
 	}
 
-	ClearNameValueList(&data);	
+	ClearNameValueList(&data);
+}
+
+/* For some reason, Kodi does URI encoding and appends a trailing slash */
+static void _kodi_decode(char *str)
+{
+	while (*str)
+	{
+		switch (*str) {
+		case '%':
+		{
+			if (isxdigit(str[1]) && isxdigit(str[2]))
+			{
+				char x[3] = { str[1], str[2], '\0' };
+				*str++ = (char)strtol(x, NULL, 16);
+				memmove(str, str+2, strlen(str+1));
+			}
+			break;
+		}
+		case '/':
+			if (!str[1])
+				*str = '\0';
+		default:
+			str++;
+			break;
+		}
+	}
+}
+
+static int duration_sec(const char *str)
+{
+	int hr, min, sec;
+
+	if (sscanf(str, "%d:%d:%d", &hr, &min, &sec) == 3)
+		return (hr * 3600) + (min * 60) + sec;
+
+	return atoi(str);
+}
+
+static void UpdateObject(struct upnphttp * h, const char * action)
+{
+	static const char resp[] =
+	    "<u:UpdateObjectResponse"
+	    " xmlns:u=\"urn:schemas-upnp-org:service:ContentDirectory:1\">"
+	    "</u:UpdateObjecResponse>";
+
+	struct NameValueParserData data;
+
+	ParseNameValue(h->req_buf + h->req_contentoff, h->req_contentlen, &data, 0);
+
+	char *ObjectID = GetValueFromNameValueList(&data, "ObjectID");
+	char *CurrentTagValue = GetValueFromNameValueList(&data, "CurrentTagValue");
+	char *NewTagValue = GetValueFromNameValueList(&data, "NewTagValue");
+	const char *rid = ObjectID;
+	char tag[32], current[32], new[32];
+	char *item, *saveptr = NULL;
+	int64_t detailID;
+	int ret = 1;
+
+	if (!ObjectID || !CurrentTagValue || !NewTagValue)
+	{
+		SoapError(h, 402, "Invalid Args");
+		ClearNameValueList(&data);
+		return;
+	}
+
+	_kodi_decode(ObjectID);
+	DPRINTF(E_DEBUG, L_HTTP, "UpdateObject %s: %s => %s\n", ObjectID, CurrentTagValue, NewTagValue);
+
+	in_magic_container(ObjectID, 0, &rid);
+	detailID = sql_get_int64_field(db, "SELECT DETAIL_ID from OBJECTS where OBJECT_ID = '%q'", rid);
+	if (detailID <= 0)
+	{
+		SoapError(h, 701, "No such object");
+		ClearNameValueList(&data);
+		return;
+	}
+
+	for (item = strtok_r(CurrentTagValue, ",", &saveptr); item; item = strtok_r(NULL, ",", &saveptr))
+	{
+		char *p;
+		if (sscanf(item, "&lt;%31[^&]&gt;%31[^&]", tag, current) != 2)
+			continue;
+		p = strstr(NewTagValue, tag);
+		if (!p || sscanf(p, "%*[^&]&gt;%31[^&]", new) != 1)
+			continue;
+
+		DPRINTF(E_DEBUG, L_HTTP, "Setting %s to %s\n", tag, new);
+		/* Kodi uses incorrect tag "upnp:playCount" instead of "upnp:playbackCount" */
+		if (strcmp(tag, "upnp:playbackCount") == 0 || strcmp(tag, "upnp:playCount") == 0)
+		{
+			//ret = sql_exec(db, "INSERT OR IGNORE into BOOKMARKS (ID, WATCH_COUNT)"
+			ret = sql_exec(db, "INSERT into BOOKMARKS (ID, WATCH_COUNT)"
+					   " VALUES (%lld, %Q)", (long long)detailID, new);
+			if (atoi(new))
+				ret = sql_exec(db, "UPDATE BOOKMARKS set WATCH_COUNT = %Q"
+						   " where WATCH_COUNT = %Q and ID = %lld",
+						   new, current, (long long)detailID);
+			else
+				ret = sql_exec(db, "UPDATE BOOKMARKS set WATCH_COUNT = 0"
+						   " where ID = %lld", (long long)detailID);
+		}
+		else if (strcmp(tag, "upnp:lastPlaybackPosition") == 0)
+		{
+			int sec = duration_sec(new);
+			if (sec < 30)
+				sec = 0;
+			else
+				sec -= 1;
+			ret = sql_exec(db, "INSERT OR IGNORE into BOOKMARKS (ID, SEC)"
+					   " VALUES (%lld, %d)", (long long)detailID, sec);
+			ret = sql_exec(db, "UPDATE BOOKMARKS set SEC = %d"
+					   " where SEC = %Q and ID = %lld",
+					   sec, current, (long long)detailID);
+		}
+		else
+			DPRINTF(E_WARN, L_HTTP, "Tag %s unsupported for writing\n", tag);
+	}
+
+	if (ret == SQLITE_OK)
+		BuildSendAndCloseSoapResp(h, resp, sizeof(resp)-1);
+	else
+		SoapError(h, 501, "Action Failed");
+
+	ClearNameValueList(&data);
 }
 
 static void
@@ -1926,18 +2093,23 @@ SamsungSetBookmark(struct upnphttp * h, const char * action)
 	ObjectID = GetValueFromNameValueList(&data, "ObjectID");
 	PosSecond = GetValueFromNameValueList(&data, "PosSecond");
 
-	if ( atoi(PosSecond) < 30 )
-		PosSecond = "0";
-
 	if( ObjectID && PosSecond )
 	{
-		int ret;
 		const char *rid = ObjectID;
+		int64_t detailID;
+		int sec = atoi(PosSecond);
+		int ret;
 
 		in_magic_container(ObjectID, 0, &rid);
-		ret = sql_exec(db, "INSERT OR REPLACE into BOOKMARKS"
-		                   " VALUES "
-		                   "((select DETAIL_ID from OBJECTS where OBJECT_ID = '%q'), %q)", rid, PosSecond);
+		detailID = sql_get_int64_field(db, "SELECT DETAIL_ID from OBJECTS where OBJECT_ID = '%q'", rid);
+
+		if ( sec < 30 )
+			sec = 0;
+		ret = sql_exec(db, "INSERT OR IGNORE into BOOKMARKS (ID, SEC)"
+				   " VALUES (%lld, %d)", (long long)detailID, sec);
+		ret = sql_exec(db, "UPDATE BOOKMARKS set SEC = %d"
+				   " where ID = %lld",
+				   sec, (long long)detailID);
 		if( ret != SQLITE_OK )
 			DPRINTF(E_WARN, L_METADATA, "Error setting bookmark %s on ObjectID='%s'\n", PosSecond, rid);
 		BuildSendAndCloseSoapResp(h, resp, sizeof(resp)-1);
@@ -1945,12 +2117,12 @@ SamsungSetBookmark(struct upnphttp * h, const char * action)
 	else
 		SoapError(h, 402, "Invalid Args");
 
-	ClearNameValueList(&data);	
+	ClearNameValueList(&data);
 }
 
-static const struct 
+static const struct
 {
-	const char * methodName; 
+	const char * methodName;
 	void (*methodImpl)(struct upnphttp *, const char *);
 }
 soapMethods[] =
@@ -1967,6 +2139,7 @@ soapMethods[] =
 	{ "IsAuthorized", IsAuthorizedValidated},
 	{ "IsValidated", IsAuthorizedValidated},
 	{ "RegisterDevice", RegisterDevice},
+	{ "UpdateObject", UpdateObject},
 	{ "X_GetFeatureList", SamsungGetFeatureList},
 	{ "X_SetBookmark", SamsungSetBookmark},
 	{ 0, 0 }

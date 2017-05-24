@@ -3,7 +3,7 @@
  * http://sourceforge.net/projects/minidlna/
  *
  * MiniDLNA media server
- * Copyright (C) 2008-2009  Justin Maggard
+ * Copyright (C) 2008-2017  Justin Maggard
  *
  * This file is part of MiniDLNA.
  *
@@ -57,7 +57,7 @@
 
 #include <sqlite3.h>
 
-#define MINIDLNA_VERSION "1.1.6"
+#define MINIDLNA_VERSION "1.2.0"
 
 #ifdef NETGEAR
 # define SERVER_NAME "ReadyDLNA"
@@ -66,7 +66,7 @@
 #endif
 
 #define USE_FORK 1
-#define DB_VERSION 9
+#define DB_VERSION 10
 
 #ifdef ENABLE_NLS
 #define _(string) gettext(string)
@@ -188,6 +188,11 @@ extern uint32_t runtime_flags;
 #define SYSTEMD_MASK          0x0010
 #define MERGE_MEDIA_DIRS_MASK 0x0020
 #define WIDE_LINKS_MASK       0x0040
+#ifdef HAVE_AVAHI
+#define TIVO_BONJOUR_MASK     0x0080
+#else
+#define TIVO_BONJOUR_MASK     0x0000
+#endif
 
 #define SETFLAG(mask)	runtime_flags |= mask
 #define GETFLAG(mask)	(runtime_flags & mask)

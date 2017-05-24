@@ -101,10 +101,11 @@
 #include "process.h"
 #include "upnpevents.h"
 #include "scanner.h"
-#include "inotify.h"
+#include "monitor.h"
 #include "log.h"
 #include "tivo_beacon.h"
 #include "tivo_utils.h"
+#include "avahi.h"
 
 #if SQLITE_VERSION_NUMBER < 3005001
 # warning "Your SQLite3 library appears to be too old!  Please use 3.5.1 or newer."
@@ -145,7 +146,7 @@ OpenAndConfHTTPSocket(unsigned short port)
 		return -1;
 	}
 
-	if (listen(s, 6) < 0)
+	if (listen(s, 16) < 0)
 	{
 		DPRINTF(E_ERROR, L_GENERAL, "listen(http): %s\n", strerror(errno));
 		close(s);
@@ -807,6 +808,10 @@ init(int argc, char **argv)
 			if (strtobool(ary_options[i].value))
 				SETFLAG(WIDE_LINKS_MASK);
 			break;
+		case TIVO_DISCOVERY:
+			if (strcasecmp(ary_options[i].value, "beacon") == 0)
+				CLEARFLAG(TIVO_BONJOUR_MASK);
+			break;
 		default:
 			DPRINTF(E_ERROR, L_GENERAL, "Unknown option in file %s\n",
 				optionsfile);
@@ -1332,14 +1337,21 @@ main(int argc, char **argv)
 		ret = sqlite3_create_function(db, "tivorandom", 1, SQLITE_UTF8, NULL, &TiVoRandomSeedFunc, NULL, NULL);
 		if (ret != SQLITE_OK)
 			DPRINTF(E_ERROR, L_TIVO, "ERROR: Failed to add sqlite randomize function for TiVo!\n");
-		/* open socket for sending Tivo notifications */
-		sbeacon = OpenAndConfTivoBeaconSocket();
-		if(sbeacon < 0)
-			DPRINTF(E_FATAL, L_GENERAL, "Failed to open sockets for sending Tivo beacon notify "
-				"messages. EXITING\n");
-		tivo_bcast.sin_family = AF_INET;
-		tivo_bcast.sin_addr.s_addr = htonl(getBcastAddress());
-		tivo_bcast.sin_port = htons(2190);
+		if (GETFLAG(TIVO_BONJOUR_MASK))
+		{
+			tivo_bonjour_register();
+		}
+		else
+		{
+			/* open socket for sending Tivo notifications */
+			sbeacon = OpenAndConfTivoBeaconSocket();
+			if(sbeacon < 0)
+				DPRINTF(E_FATAL, L_GENERAL, "Failed to open sockets for sending Tivo beacon notify "
+					"messages. EXITING\n");
+			tivo_bcast.sin_family = AF_INET;
+			tivo_bcast.sin_addr.s_addr = htonl(getBcastAddress());
+			tivo_bcast.sin_port = htons(2190);
+		}
 	}
 #endif
 

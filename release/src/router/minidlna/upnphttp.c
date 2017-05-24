@@ -944,12 +944,6 @@ ProcessHttpQuery_upnphttp(struct upnphttp * h)
 	HttpCommand[i] = '\0';
 	while(*p==' ')
 		p++;
-	if(strncmp(p, "http://", 7) == 0)
-	{
-		p = p+7;
-		while(*p!='/')
-			p++;
-	}
 	for(i = 0; i<511 && *p && *p != ' ' && *p != '\r'; i++)
 		HttpUrl[i] = *(p++);
 	HttpUrl[i] = '\0';

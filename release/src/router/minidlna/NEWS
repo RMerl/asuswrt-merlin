@@ -1,3 +1,12 @@
+1.2.0 - Released 17-May-2017
+--------------------------------
+- Add libavformat > 57 compatibility.
+- Add TiVo Bonjour discovery support using Avahi for Bolt.
+- Improve Samsung BD-J5500 support.
+- Add quirk to fix video playback on Hyundai TVs.
+- Add non-destructive update rescan support.
+- Enhance bookmark support to work with Kodi.
+
 1.1.6 - Released 16-June-2016
 --------------------------------
 - Add AllShare and Windows client detection.

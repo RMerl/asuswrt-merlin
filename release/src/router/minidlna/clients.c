@@ -1,5 +1,5 @@
 /* MiniDLNA media server
- * Copyright (C) 2013  NETGEAR
+ * Copyright (C) 2013-2017  NETGEAR
  *
  * This file is part of MiniDLNA.
  *
@@ -60,6 +60,13 @@ struct client_type_s client_types[] =
 	  FLAG_DLNA,
 	  "AllShare",
 	  "SEC_HHP_[PC]",
+	  EUserAgent
+	},
+
+	{ ESamsungBDJ5500,
+	  FLAG_SAMSUNG | FLAG_DLNA | FLAG_NO_RESIZE | FLAG_CAPTION_RES | FLAG_SKIP_DLNA_PN,
+	  "Samsung BD J5500",
+	  "[BD]J5500",
 	  EUserAgent
 	},
 
@@ -198,6 +205,13 @@ struct client_type_s client_types[] =
 	  EUserAgent
 	},
 
+	{ EHyundaiTV,
+	  FLAG_DLNA,
+	  "Hyundai TV",
+	  "HYUNDAITV",
+	  EFriendlyName
+	},
+
 	{ ERokuSoundBridge,
 	  FLAG_MS_PFS | FLAG_AUDIO_ONLY | FLAG_MIME_WAV_WAV | FLAG_FORCE_SORT,
 	  "Roku SoundBridge",
@@ -237,6 +251,13 @@ struct client_type_s client_types[] =
 	  FLAG_CAPTION_RES,
 	  "BubbleUPnP",
 	  "BubbleUPnP",
+	  EUserAgent
+	},
+
+	{ EKodi,
+	  FLAG_DLNA | FLAG_MIME_AVI_AVI | FLAG_CAPTION_RES,
+	  "Kodi",
+	  "Kodi",
 	  EUserAgent
 	},
 
@@ -324,4 +345,3 @@ AddClientCache(struct in_addr addr, int type)
 
 	return NULL;
 }
-

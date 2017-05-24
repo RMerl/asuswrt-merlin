@@ -1,5 +1,5 @@
 /* MiniDLNA media server
- * Copyright (C) 2008-2009  Justin Maggard
+ * Copyright (C) 2008-2017  Justin Maggard
  *
  * This file is part of MiniDLNA.
  *
@@ -61,7 +61,7 @@ ends_with(const char * haystack, const char * needle)
 
 	if( nlen > hlen )
 		return 0;
- 	end = haystack + hlen - nlen;
+	end = haystack + hlen - nlen;
 
 	return (strcasecmp(end, needle) ? 0 : 1);
 }
@@ -231,6 +231,20 @@ escape_tag(const char *tag, int force_alloc)
 }
 
 char *
+duration_str(int msec)
+{
+	char *str;
+
+	xasprintf(&str, "%d:%02d:%02d.%03d",
+			(msec / 3600000),
+			(msec / 60000 % 60),
+			(msec / 1000 % 60),
+			(msec % 1000));
+
+	return str;
+}
+
+char *
 strip_ext(char *name)
 {
 	char *period;
@@ -282,7 +296,7 @@ make_dir(char * path, mode_t mode)
 				return -1;
 			}
 		}
-	        if (!c)
+		if (!c)
 			return 0;
 
 		/* Remove any inserted nul from the path. */

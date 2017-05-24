@@ -57,6 +57,8 @@
 #include <avformat.h>
 #endif
 
+#define USE_CODECPAR LIBAVFORMAT_VERSION_INT >= ((57<<16)+(50<<8)+100)
+
 #ifndef FF_PROFILE_H264_BASELINE
 #define FF_PROFILE_H264_BASELINE 66
 #endif
@@ -153,12 +155,54 @@ lav_get_fps(AVStream *s)
 }
 
 static inline int
-lav_get_interlaced(AVCodecContext *vc, AVStream *s)
+lav_get_interlaced(AVStream *s)
 {
-#if LIBAVCODEC_VERSION_MAJOR < 54
-	return (vc->time_base.den ? (s->r_frame_rate.num / vc->time_base.den) : 0);
+#if LIBAVCODEC_VERSION_MAJOR >= 57
+	return (s->time_base.den ? (s->avg_frame_rate.num / s->time_base.den) : 0);
+#elif LIBAVCODEC_VERSION_MAJOR >= 54
+	return (s->codec->time_base.den ? (s->avg_frame_rate.num / s->codec->time_base.den) : 0);
 #else
-	return (vc->time_base.den ? (s->avg_frame_rate.num / vc->time_base.den) : 0);
+	return (s->codec->time_base.den ? (s->r_frame_rate.num / s->codec->time_base.den) : 0);
+#endif
+}
+
+#if USE_CODECPAR
+#define lav_codec_id(s) s->codecpar->codec_id
+#define lav_codec_type(s) s->codecpar->codec_type
+#define lav_codec_tag(s) s->codecpar->codec_tag
+#define lav_sample_rate(s) s->codecpar->sample_rate
+#define lav_bit_rate(s) s->codecpar->bit_rate
+#define lav_channels(s) s->codecpar->channels
+#define lav_width(s) s->codecpar->width
+#define lav_height(s) s->codecpar->height
+#define lav_profile(s) s->codecpar->profile
+#define lav_level(s) s->codecpar->level
+#define lav_sample_aspect_ratio(s) s->codecpar->sample_aspect_ratio
+#else
+#define lav_codec_id(x) x->codec->codec_id
+#define lav_codec_type(s) s->codec->codec_type
+#define lav_codec_tag(s) s->codec->codec_tag
+#define lav_sample_rate(s) s->codec->sample_rate
+#define lav_bit_rate(s) s->codec->bit_rate
+#define lav_channels(s) s->codec->channels
+#define lav_width(s) s->codec->width
+#define lav_height(s) s->codec->height
+#define lav_profile(s) s->codec->profile
+#define lav_level(s) s->codec->level
+#define lav_sample_aspect_ratio(s) s->codec->sample_aspect_ratio
+#endif
+
+static inline uint8_t *
+lav_codec_extradata(AVStream *s)
+{
+#if USE_CODECPAR
+	if (!s->codecpar->extradata_size)
+		return NULL;
+	return s->codecpar->extradata;
+#else
+	if (!s->codec->extradata_size)
+		return NULL;
+	return s->codec->extradata;
 #endif
 }
 
@@ -167,7 +211,7 @@ lav_is_thumbnail_stream(AVStream *s, uint8_t **data, int *size)
 {
 #if LIBAVFORMAT_VERSION_INT >= ((54<<16)+(6<<8))
 	if (s->disposition & AV_DISPOSITION_ATTACHED_PIC &&
-	    s->codec->codec_id == AV_CODEC_ID_MJPEG)
+	    lav_codec_id(s) == AV_CODEC_ID_MJPEG)
 	{
 		if (data)
 			*data = s->attached_pic.data;

@@ -194,24 +194,6 @@ static const struct argument GetProtocolInfoArgs[] =
 	{NULL, 0, 0}
 };
 
-static const struct argument PrepareForConnectionArgs[] =
-{
-	{"RemoteProtocolInfo", 1, 6},
-	{"PeerConnectionManager", 1, 4},
-	{"PeerConnectionID", 1, 7},
-	{"Direction", 1, 5},
-	{"ConnectionID", 2, 7},
-	{"AVTransportID", 2, 8},
-	{"RcsID", 2, 9},
-	{NULL, 0, 0}
-};
-
-static const struct argument ConnectionCompleteArgs[] =
-{
-	{"ConnectionID", 1, 7},
-	{NULL, 0, 0}
-};
-
 static const struct argument GetCurrentConnectionIDsArgs[] =
 {
 	{"ConnectionIDs", 2, 2},
@@ -234,8 +216,6 @@ static const struct argument GetCurrentConnectionInfoArgs[] =
 static const struct action ConnectionManagerActions[] =
 {
 	{"GetProtocolInfo", GetProtocolInfoArgs}, /* R */
-	//OPTIONAL {"PrepareForConnection", PrepareForConnectionArgs}, /* R */
-	//OPTIONAL {"ConnectionComplete", ConnectionCompleteArgs}, /* R */
 	{"GetCurrentConnectionIDs", GetCurrentConnectionIDsArgs}, /* R */
 	{"GetCurrentConnectionInfo", GetCurrentConnectionInfoArgs}, /* R */
 	{0, 0}
@@ -258,19 +238,27 @@ static const struct stateVar ConnectionManagerVars[] =
 
 static const struct argument GetSearchCapabilitiesArgs[] =
 {
-	{"SearchCaps", 2, 10},
+	{"SearchCaps", 2, 11},
 	{0, 0}
 };
 
 static const struct argument GetSortCapabilitiesArgs[] =
 {
-	{"SortCaps", 2, 11},
+	{"SortCaps", 2, 12},
 	{0, 0}
 };
 
 static const struct argument GetSystemUpdateIDArgs[] =
 {
-	{"Id", 2, 12},
+	{"Id", 2, 13},
+	{0, 0}
+};
+
+static const struct argument UpdateObjectArgs[] =
+{
+	{"ObjectID", 1, 1},
+	{"CurrentTagValue", 1, 10},
+	{"NewTagValue", 1, 10},
 	{0, 0}
 };
 
@@ -311,10 +299,10 @@ static const struct action ContentDirectoryActions[] =
 	{"GetSystemUpdateID", GetSystemUpdateIDArgs}, /* R */
 	{"Browse", BrowseArgs}, /* R */
 	{"Search", SearchArgs}, /* O */
+	{"UpdateObject", UpdateObjectArgs}, /* O */
 #if 0 // Not implementing optional features yet...
 	{"CreateObject", CreateObjectArgs}, /* O */
 	{"DestroyObject", DestroyObjectArgs}, /* O */
-	{"UpdateObject", UpdateObjectArgs}, /* O */
 	{"ImportResource", ImportResourceArgs}, /* O */
 	{"ExportResource", ExportResourceArgs}, /* O */
 	{"StopTransferResource", StopTransferResourceArgs}, /* O */
@@ -338,6 +326,7 @@ static const struct stateVar ContentDirectoryVars[] =
 	{"A_ARG_TYPE_Index", 3, 0},
 	{"A_ARG_TYPE_Count", 3, 0},
 	{"A_ARG_TYPE_UpdateID", 3, 0},
+	{"A_ARG_TYPE_TagValueList", 0, 0},
 	{"SearchCapabilities", 0, 0},
 	{"SortCapabilities", 0, 0},
 	{"SystemUpdateID", 3|EVENTED, 0, 0, 255},

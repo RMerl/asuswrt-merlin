@@ -1,5 +1,5 @@
 /* MiniDLNA media server
- * Copyright (C) 2008-2009  Justin Maggard
+ * Copyright (C) 2008-2017  Justin Maggard
  *
  * This file is part of MiniDLNA.
  *
@@ -47,7 +47,7 @@
 #include "albumart.h"
 #include "containers.h"
 #include "log.h"
-#include "inotify.h"
+#include "monitor.h"
 
 #if SCANDIR_CONST
 typedef const struct dirent scan_filter;
@@ -96,12 +96,12 @@ insert_container(const char *item, const char *rootParent, const char *refID, co
 	int ret = 0;
 
 	result = sql_get_text_field(db, "SELECT OBJECT_ID from OBJECTS o "
-	                                "left join DETAILS d on (o.DETAIL_ID = d.ID)"
-	                                " where o.PARENT_ID = '%s'"
-			                " and o.NAME like '%q'"
-			                " and d.ARTIST %s %Q"
-	                                " and o.CLASS = 'container.%s' limit 1",
-	                                rootParent, item, artist?"like":"is", artist, class);
+					"left join DETAILS d on (o.DETAIL_ID = d.ID)"
+					" where o.PARENT_ID = '%s'"
+					" and o.NAME like '%q'"
+					" and d.ARTIST %s %Q"
+					" and o.CLASS = 'container.%s' limit 1",
+					rootParent, item, artist?"like":"is", artist, class);
 	if( result )
 	{
 		base = strrchr(result, '$');
@@ -399,7 +399,7 @@ insert_directory0(const char *name, const char *path, const char *base, const ch
 		char id_buf[64], parent_buf[64], refID[64];
 		char *dir_buf, *dir;
 
- 		dir_buf = strdup(path);
+		dir_buf = strdup(path);
 		dir = dirname(dir_buf);
 		snprintf(refID, sizeof(refID), "%s%s$%X", BROWSEDIR_ID, parentID, objectID);
 		snprintf(id_buf, sizeof(id_buf), "%s%s$%X", base, parentID, objectID);
@@ -658,7 +658,7 @@ insert_file(char *name, const char *path, const char *parentID, int object, medi
 	}
 	else if( (types & TYPE_VIDEO) && is_video(name) )
 	{
- 		orig_name = strdup(name);
+		orig_name = strdup(name);
 		strcpy(base, VIDEO_DIR_ID);
 		strcpy(class, "item.videoItem");
 		detailID = GetVideoMetadata(path, name);
@@ -1222,22 +1222,19 @@ _notify_stop(void)
 static int
 cb_orphans(void *args, int argc, char **argv, char **azColName)
 {
-	struct stat file;
-	char *path = argv[0], *mime = argv[1];
+	const char *path = argv[0];
+	const char *mime = argv[1];
 
-	/* If we can't stat path, remove it */
-	if (stat(path, &file) != 0)
+	/* If we can't access the path, remove it */
+	if (access(path, R_OK) != 0)
 	{
-		DPRINTF(E_DEBUG, L_SCANNER, "Removing %s [%s]!\n", path, (mime) ? "file" : "dir");
+		DPRINTF(E_DEBUG, L_SCANNER, "Removing %s [%s]\n", path, mime ? "file" : "dir");
 		if (mime)
-		{
-			inotify_remove_file(path);
-		}
+			monitor_remove_file(path);
 		else
-		{
-			inotify_remove_directory(0, path);
-		}
+			monitor_remove_directory(0, path);
 	}
+
 	return 0;
 }
 
@@ -1273,7 +1270,7 @@ start_rescan()
 		strncpyt(path, media_path->path, sizeof(path));
 		strncpyt(buf, media_path->path, sizeof(buf));
 		esc_name = escape_tag(basename(buf), 1);
-		inotify_insert_directory(0, esc_name, path);
+		monitor_insert_directory(0, esc_name, path);
 		free(esc_name);
 	}
 	DPRINTF(E_INFO, L_SCANNER, "Rescan completed\n");
