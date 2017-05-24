@@ -487,7 +487,8 @@ add_option (char *p[], int line, int unit)
 	}
 	else if (streq (p[0], "verb") && p[1])
 	{
-		nvram_set("vpn_loglevel", p[1]);
+		sprintf(buf, "vpn_client%d_verb", unit);
+		nvram_set(buf, p[1]);
 	}
 	else if  (streq (p[0], "ca") && p[1])
 	{
