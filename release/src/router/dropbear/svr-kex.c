@@ -87,29 +87,9 @@ void recv_msg_kexdh_init() {
 
 #ifdef DROPBEAR_DELAY_HOSTKEY
 
-static void fsync_parent_dir(const char* fn) {
-#ifdef HAVE_LIBGEN_H
-	char *fn_dir = m_strdup(fn);
-	char *dir = dirname(fn_dir);
-	int dirfd = open(dir, O_RDONLY);
-
-	if (dirfd != -1) {
-		if (fsync(dirfd) != 0) {
-			TRACE(("fsync of directory %s failed: %s", dir, strerror(errno)))
-		}
-		m_close(dirfd);
-	} else {
-		TRACE(("error opening directory %s for fsync: %s", dir, strerror(errno)))
-	}
-
-	free(fn_dir);
-#endif
-}
-
 static void svr_ensure_hostkey() {
 
 	const char* fn = NULL;
-	char *fn_temp = NULL;
 	enum signkey_type type = ses.newkeys->algo_hostkey;
 	void **hostkey = signkey_key_ptr(svr_opts.hostkey, type);
 	int ret = DROPBEAR_FAILURE;
@@ -145,28 +125,10 @@ static void svr_ensure_hostkey() {
 		return;
 	}
 
-	fn_temp = m_malloc(strlen(fn) + 20);
-	snprintf(fn_temp, strlen(fn)+20, "%s.tmp%d", fn, getpid());
-
-	if (signkey_generate(type, 0, fn_temp) == DROPBEAR_FAILURE) {
+	if (signkey_generate(type, 0, fn, 1) == DROPBEAR_FAILURE) {
 		goto out;
 	}
-
-	if (link(fn_temp, fn) < 0) {
-		/* It's OK to get EEXIST - we probably just lost a race
-		with another connection to generate the key */
-		if (errno != EEXIST) {
-			dropbear_log(LOG_ERR, "Failed moving key file to %s: %s", fn,
-				strerror(errno));
-			/* XXX fallback to non-atomic copy for some filesystems? */
-			goto out;
-		}
-	}
-
-	/* ensure directory update is flushed to disk, otherwise we can end up
-	with zero-byte hostkey files if the power goes off */
-	fsync_parent_dir(fn);
-
+	
 	ret = readhostkey(fn, svr_opts.hostkey, &type);
 
 	if (ret == DROPBEAR_SUCCESS) {
@@ -184,11 +146,6 @@ static void svr_ensure_hostkey() {
 	}
 
 out:
-	if (fn_temp) {
-		unlink(fn_temp);
-		m_free(fn_temp);
-	}
-
 	if (ret == DROPBEAR_FAILURE)
 	{
 		dropbear_exit("Couldn't read or generate hostkey %s", fn);

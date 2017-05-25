@@ -241,7 +241,7 @@ int main(int argc, char ** argv) {
 	}
 
 	fprintf(stderr, "Generating key, this may take a while...\n");
-	if (signkey_generate(keytype, bits, filename) == DROPBEAR_FAILURE)
+	if (signkey_generate(keytype, bits, filename, 0) == DROPBEAR_FAILURE)
 	{
 		dropbear_exit("Failed to generate key.\n");
 	}

@@ -3,6 +3,6 @@
 
 #include "signkey.h"
 
-int signkey_generate(enum signkey_type type, int bits, const char* filename);
+int signkey_generate(enum signkey_type type, int bits, const char* filename, int skip_exist);
 
 #endif
