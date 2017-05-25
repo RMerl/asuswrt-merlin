@@ -6,8 +6,8 @@
 
 @smallbook
 @set EDITION 0.4
-@set VERSION 2.8.1
-@set UPDATED April 2017
+@set VERSION 2.8.4
+@set UPDATED May 2017
 
 @dircategory Editors
 @direntry
@@ -21,7 +21,7 @@
 @titlepage
 @title GNU @code{nano}
 @subtitle a small and friendly text editor
-@subtitle version 2.8.1
+@subtitle version 2.8.4
 
 @author Chris Allegretta
 @page
@@ -600,11 +600,11 @@ nanorc.  See @xref{Syntax Highlighting}, for more info.
 @item Suspension Toggle (Meta-Z)
 toggles the @code{-z} (@code{--suspend}) command-line option.
 
-@item Soft Wrapping Toggle (Meta-$)
-toggles the @code{-$} (@code{--softwrap}) command-line option.
-
 @item Line Numbers Toggle (Meta-#)
 toggles the @code{-l} (@code{--linenumbers}) command-line option.
+
+@item Soft Wrapping Toggle (Meta-$)
+toggles the @code{-$} (@code{--softwrap}) command-line option.
 
 @end table
 
@@ -672,8 +672,9 @@ Do backwards searches by default.
 
 @item set boldtext
 Use bold instead of reverse video for the titlebar, statusbar, key combos,
-and selected text.  This can be overridden for the first three by setting
-the options @code{titlecolor}, @code{statuscolor}, and @code{keycolor}.
+line numbers, and selected text.  This can be overridden for the first four
+by setting the options @code{titlecolor}, @code{statuscolor}, @code{keycolor},
+and @code{numbercolor}.
 
 @item set brackets "@var{string}"
 Set the characters treated as closing brackets when justifying
@@ -892,12 +893,12 @@ via the following commands in a nanorc file:
 
 @table @code
 
-@item syntax "str" ["fileregex" @dots{}]
-Defines a syntax named "str" which can be activated via the @code{-Y/--syntax}
+@item syntax "name" ["fileregex" @dots{}]
+Defines a syntax named "name" which can be activated via the @code{-Y/--syntax}
 command-line option, or will be automatically activated if the current
 filename matches the extended regular expression "fileregex".  All
 subsequent @code{color}, @code{icolor}, @code{header} and other such
-statements will apply to this "str" syntax until a new @code{syntax}
+statements will apply to this "name" syntax until a new @code{syntax}
 command is encountered.
 
 The "none" syntax is reserved; specifying it on the command line is the
@@ -946,26 +947,26 @@ terminal supports transparency, not specifying a "bgcolor" tells @code{nano}
 to attempt to use a transparent background.
 
 @item icolor fgcolor,bgcolor "regex" @dots{}
-Same as above, except that the text matching is case insensitive.
+Same as above, except that the matching is case insensitive.
 
-@item color fgcolor,bgcolor start="sr" end="er"
+@item color fgcolor,bgcolor start="fromrx" end="torx"
 Display all pieces of text whose start matches extended regular expression
-"sr" and whose end matches extended regular expression "er" with foreground
-color "fgcolor" and background color "bgcolor", at least one of which
-must be specified.  This means that, after an initial instance of "sr",
-all text will be highlighted until the first instance of "er".
+"fromrx" and whose end matches extended regular expression "torx" with
+foreground color "fgcolor" and background color "bgcolor", at least one of
+which must be specified.  This means that, after an initial instance of
+"fromrx", all text until the first instance of "torx" will be colored.
 This allows syntax highlighting to span multiple lines.
 
-@item icolor fgcolor,bgcolor start="sr" end="er"
-Same as above, except that the text matching is case insensitive.
+@item icolor fgcolor,bgcolor start="fromrx" end="torx"
+Same as above, except that the matching is case insensitive.
 
 @item include "syntaxfile"
 Read in self-contained color syntaxes from "syntaxfile".  Note that
 "syntaxfile" may contain only the above commands, from @code{syntax}
 to @code{icolor}.
 
-@item extendsyntax str directive [arg @dots{}]
-Extend the syntax previously defined as str to include new information.
+@item extendsyntax name directive [arg @dots{}]
+Extend the syntax previously defined as "name" to include new information.
 This allows you to add a new @code{color}, @code{icolor}, @code{header},
 @code{magic}, @code{comment}, @code{linter}, or @code{formatter} directive to an already
 defined syntax --- useful when you want to slightly improve a syntax defined
@@ -1418,6 +1419,16 @@ the .nanorc file), @code{nano} will store the position of the cursor
 when you close a file, and will place the cursor in that position
 again when you later reopen the file.
 
+@item Current Cursor Position
+The output of the "Display Cursor Position" command (^C) displays
+not only the current line and character position of the cursor,
+but also (between the two) the current column position.
+
+@item Spell Checking
+In the internal spell checker misspelled words are sorted alphabetically
+and trimmed for uniqueness, such that the words 'apple' and 'Apple' will
+be prompted for correction separately.
+
 @item Writing Selected Text to Files
 When using the Write-Out key (^O), text that has been selected using the
 marking key (^^) can not just be written out to a new (or existing) file,
@@ -1446,16 +1457,6 @@ not have to be restarted to turn a particular feature on or off.
 See the internal help function (^G) for a list of features that
 can be toggled.  Or see @xref{Feature Toggles} instead.
 
-@item Current Cursor Position
-The output of the "Display Cursor Position" command (^C) displays
-not only the current line and character position of the cursor,
-but also (between the two) the current column position.
-
-@item Spell Checking
-In the internal spell checker misspelled words are sorted alphabetically
-and trimmed for uniqueness, such that the words 'apple' and 'Apple' will
-be prompted for correction separately.
-
 @end table
 
 
@@ -1479,15 +1480,18 @@ The possible options to @code{./configure} are:
 @table @code
 
 @item --disable-browser
-Disable the mini file browser when reading or writing files.
+Disable the mini file browser that can be called with ^T when reading
+or writing files.
 
 @item --disable-color
 Disable support for the syntax coloring of files.  This also eliminates
 the @code{-Y} command-line option, which chooses a specific syntax.
 
+@item --disable-comment
+Disable the single-keystroke comment/uncomment function (M-3).
+
 @item --disable-extra
-Disable extra features.  At the moment, this is just easter-egg-type
-stuff.
+Disable the Easter egg: a crawl of major contributors.
 
 @item --disable-help
 Disable the help function.  Doing this makes the binary much smaller,
@@ -1508,6 +1512,10 @@ Disable the justify and unjustify functions.
 Disable the use of the library of magic-number tests (for determining
 the file type and thus which syntax to use for colouring --- often the
 tests on filename extension and header line will be enough).
+
+@item --disable-linenumbers
+Disable the line-numbering function (M-#).  This also eliminates the
+@code{-l} command-line option, which turns line numbering on.
 
 @item --disable-mouse
 Disable all mouse functionality.  This also eliminates the @code{-m}
@@ -1539,7 +1547,7 @@ command-line option, which allows specifying an alternate spell checker.
 Disable tab completion (when nano asks for a filename or a search string).
 
 @item --disable-wordcomp
-Disable word completion.
+Disable word completion (^]).
 
 @item --disable-wrapping
 Disable all hard-wrapping of overlong lines.  This also eliminates the

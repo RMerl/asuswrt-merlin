@@ -152,14 +152,16 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/00gnulib.m4 \
 	$(top_srcdir)/m4/limits-h.m4 $(top_srcdir)/m4/localcharset.m4 \
 	$(top_srcdir)/m4/locale-fr.m4 $(top_srcdir)/m4/locale-ja.m4 \
 	$(top_srcdir)/m4/locale-zh.m4 $(top_srcdir)/m4/locale_h.m4 \
-	$(top_srcdir)/m4/localeconv.m4 $(top_srcdir)/m4/lock.m4 \
+	$(top_srcdir)/m4/localeconv.m4 \
+	$(top_srcdir)/m4/localtime-buffer.m4 $(top_srcdir)/m4/lock.m4 \
 	$(top_srcdir)/m4/longlong.m4 $(top_srcdir)/m4/lstat.m4 \
-	$(top_srcdir)/m4/malloc.m4 $(top_srcdir)/m4/math_h.m4 \
-	$(top_srcdir)/m4/mbrtowc.m4 $(top_srcdir)/m4/mbsinit.m4 \
-	$(top_srcdir)/m4/mbsrtowcs.m4 $(top_srcdir)/m4/mbstate_t.m4 \
-	$(top_srcdir)/m4/mbtowc.m4 $(top_srcdir)/m4/memchr.m4 \
-	$(top_srcdir)/m4/mempcpy.m4 $(top_srcdir)/m4/mmap-anon.m4 \
-	$(top_srcdir)/m4/msvc-inval.m4 $(top_srcdir)/m4/multiarch.m4 \
+	$(top_srcdir)/m4/malloc.m4 $(top_srcdir)/m4/malloca.m4 \
+	$(top_srcdir)/m4/math_h.m4 $(top_srcdir)/m4/mbrtowc.m4 \
+	$(top_srcdir)/m4/mbsinit.m4 $(top_srcdir)/m4/mbsrtowcs.m4 \
+	$(top_srcdir)/m4/mbstate_t.m4 $(top_srcdir)/m4/mbtowc.m4 \
+	$(top_srcdir)/m4/memchr.m4 $(top_srcdir)/m4/mempcpy.m4 \
+	$(top_srcdir)/m4/mmap-anon.m4 $(top_srcdir)/m4/msvc-inval.m4 \
+	$(top_srcdir)/m4/msvc-nothrow.m4 $(top_srcdir)/m4/multiarch.m4 \
 	$(top_srcdir)/m4/nl_langinfo.m4 $(top_srcdir)/m4/nls.m4 \
 	$(top_srcdir)/m4/nocrash.m4 $(top_srcdir)/m4/off_t.m4 \
 	$(top_srcdir)/m4/opendir.m4 $(top_srcdir)/m4/pathmax.m4 \
@@ -186,8 +188,9 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/00gnulib.m4 \
 	$(top_srcdir)/m4/sys_types_h.m4 $(top_srcdir)/m4/sys_wait_h.m4 \
 	$(top_srcdir)/m4/threadlib.m4 $(top_srcdir)/m4/time_h.m4 \
 	$(top_srcdir)/m4/timespec.m4 $(top_srcdir)/m4/unistd_h.m4 \
-	$(top_srcdir)/m4/utimbuf.m4 $(top_srcdir)/m4/utimens.m4 \
-	$(top_srcdir)/m4/utimes.m4 $(top_srcdir)/m4/vasnprintf.m4 \
+	$(top_srcdir)/m4/utime.m4 $(top_srcdir)/m4/utime_h.m4 \
+	$(top_srcdir)/m4/utimens.m4 $(top_srcdir)/m4/utimes.m4 \
+	$(top_srcdir)/m4/vasnprintf.m4 \
 	$(top_srcdir)/m4/vsnprintf-posix.m4 \
 	$(top_srcdir)/m4/vsnprintf.m4 $(top_srcdir)/m4/warn-on-use.m4 \
 	$(top_srcdir)/m4/wchar_h.m4 $(top_srcdir)/m4/wchar_t.m4 \
@@ -211,16 +214,17 @@ libgnu_a_AR = $(AR) $(ARFLAGS)
 am__DEPENDENCIES_1 =
 am__libgnu_a_SOURCES_DIST = gettext.h gettime.c hard-locale.c \
 	localcharset.h localcharset.c glthread/lock.h glthread/lock.c \
-	math.c printf-frexp.c printf-frexpl.c sig-handler.c size_max.h \
-	stat-time.c strnlen1.h strnlen1.c glthread/threadlib.c \
-	timespec.c unistd.c uniwidth/width.c utimens.c wctype-h.c \
-	xsize.h xsize.c
+	malloca.c math.c printf-frexp.c printf-frexpl.c sig-handler.c \
+	size_max.h stat-time.c strnlen1.h strnlen1.c \
+	glthread/threadlib.c timespec.c unistd.c uniwidth/width.c \
+	utimens.c wctype-h.c xsize.h xsize.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @LIBUNISTRING_COMPILE_UNIWIDTH_WIDTH_TRUE@am__objects_1 = uniwidth/width.$(OBJEXT)
 am_libgnu_a_OBJECTS = gettime.$(OBJEXT) hard-locale.$(OBJEXT) \
-	localcharset.$(OBJEXT) glthread/lock.$(OBJEXT) math.$(OBJEXT) \
-	printf-frexp.$(OBJEXT) printf-frexpl.$(OBJEXT) \
-	sig-handler.$(OBJEXT) stat-time.$(OBJEXT) strnlen1.$(OBJEXT) \
+	localcharset.$(OBJEXT) glthread/lock.$(OBJEXT) \
+	malloca.$(OBJEXT) math.$(OBJEXT) printf-frexp.$(OBJEXT) \
+	printf-frexpl.$(OBJEXT) sig-handler.$(OBJEXT) \
+	stat-time.$(OBJEXT) strnlen1.$(OBJEXT) \
 	glthread/threadlib.$(OBJEXT) timespec.$(OBJEXT) \
 	unistd.$(OBJEXT) $(am__objects_1) utimens.$(OBJEXT) \
 	wctype-h.$(OBJEXT) xsize.$(OBJEXT)
@@ -367,6 +371,7 @@ ERRNO_H = @ERRNO_H@
 EXEEXT = @EXEEXT@
 FLOAT_H = @FLOAT_H@
 FNMATCH_H = @FNMATCH_H@
+GETOPT_CDEFS_H = @GETOPT_CDEFS_H@
 GETOPT_H = @GETOPT_H@
 GETTEXT_MACRO_VERSION = @GETTEXT_MACRO_VERSION@
 GLIBC21 = @GLIBC21@
@@ -401,6 +406,7 @@ GNULIB_COPYSIGNL = @GNULIB_COPYSIGNL@
 GNULIB_COSF = @GNULIB_COSF@
 GNULIB_COSHF = @GNULIB_COSHF@
 GNULIB_COSL = @GNULIB_COSL@
+GNULIB_CTIME = @GNULIB_CTIME@
 GNULIB_DIRFD = @GNULIB_DIRFD@
 GNULIB_DPRINTF = @GNULIB_DPRINTF@
 GNULIB_DUP = @GNULIB_DUP@
@@ -507,6 +513,7 @@ GNULIB_LDEXPL = @GNULIB_LDEXPL@
 GNULIB_LINK = @GNULIB_LINK@
 GNULIB_LINKAT = @GNULIB_LINKAT@
 GNULIB_LOCALECONV = @GNULIB_LOCALECONV@
+GNULIB_LOCALTIME = @GNULIB_LOCALTIME@
 GNULIB_LOG = @GNULIB_LOG@
 GNULIB_LOG10 = @GNULIB_LOG10@
 GNULIB_LOG10F = @GNULIB_LOG10F@
@@ -571,6 +578,7 @@ GNULIB_OBSTACK_PRINTF_POSIX = @GNULIB_OBSTACK_PRINTF_POSIX@
 GNULIB_OPEN = @GNULIB_OPEN@
 GNULIB_OPENAT = @GNULIB_OPENAT@
 GNULIB_OPENDIR = @GNULIB_OPENDIR@
+GNULIB_OVERRIDES_STRUCT_STAT = @GNULIB_OVERRIDES_STRUCT_STAT@
 GNULIB_OVERRIDES_WINT_T = @GNULIB_OVERRIDES_WINT_T@
 GNULIB_PCLOSE = @GNULIB_PCLOSE@
 GNULIB_PERROR = @GNULIB_PERROR@
@@ -644,6 +652,7 @@ GNULIB_STRCHRNUL = @GNULIB_STRCHRNUL@
 GNULIB_STRDUP = @GNULIB_STRDUP@
 GNULIB_STRERROR = @GNULIB_STRERROR@
 GNULIB_STRERROR_R = @GNULIB_STRERROR_R@
+GNULIB_STRFTIME = @GNULIB_STRFTIME@
 GNULIB_STRNCAT = @GNULIB_STRNCAT@
 GNULIB_STRNDUP = @GNULIB_STRNDUP@
 GNULIB_STRNLEN = @GNULIB_STRNLEN@
@@ -669,9 +678,11 @@ GNULIB_TIME_RZ = @GNULIB_TIME_RZ@
 GNULIB_TMPFILE = @GNULIB_TMPFILE@
 GNULIB_TOWCTRANS = @GNULIB_TOWCTRANS@
 GNULIB_TRUNC = @GNULIB_TRUNC@
+GNULIB_TRUNCATE = @GNULIB_TRUNCATE@
 GNULIB_TRUNCF = @GNULIB_TRUNCF@
 GNULIB_TRUNCL = @GNULIB_TRUNCL@
 GNULIB_TTYNAME_R = @GNULIB_TTYNAME_R@
+GNULIB_TZSET = @GNULIB_TZSET@
 GNULIB_UNISTD_H_NONBLOCKING = @GNULIB_UNISTD_H_NONBLOCKING@
 GNULIB_UNISTD_H_SIGPIPE = @GNULIB_UNISTD_H_SIGPIPE@
 GNULIB_UNLINK = @GNULIB_UNLINK@
@@ -679,6 +690,7 @@ GNULIB_UNLINKAT = @GNULIB_UNLINKAT@
 GNULIB_UNLOCKPT = @GNULIB_UNLOCKPT@
 GNULIB_UNSETENV = @GNULIB_UNSETENV@
 GNULIB_USLEEP = @GNULIB_USLEEP@
+GNULIB_UTIME = @GNULIB_UTIME@
 GNULIB_UTIMENSAT = @GNULIB_UTIMENSAT@
 GNULIB_VASPRINTF = @GNULIB_VASPRINTF@
 GNULIB_VDPRINTF = @GNULIB_VDPRINTF@
@@ -702,6 +714,7 @@ GNULIB_WCSCOLL = @GNULIB_WCSCOLL@
 GNULIB_WCSCPY = @GNULIB_WCSCPY@
 GNULIB_WCSCSPN = @GNULIB_WCSCSPN@
 GNULIB_WCSDUP = @GNULIB_WCSDUP@
+GNULIB_WCSFTIME = @GNULIB_WCSFTIME@
 GNULIB_WCSLEN = @GNULIB_WCSLEN@
 GNULIB_WCSNCASECMP = @GNULIB_WCSNCASECMP@
 GNULIB_WCSNCAT = @GNULIB_WCSNCAT@
@@ -752,6 +765,7 @@ HAVE_COPYSIGNL = @HAVE_COPYSIGNL@
 HAVE_COSF = @HAVE_COSF@
 HAVE_COSHF = @HAVE_COSHF@
 HAVE_COSL = @HAVE_COSL@
+HAVE_CRTDEFS_H = @HAVE_CRTDEFS_H@
 HAVE_DECL_ACOSL = @HAVE_DECL_ACOSL@
 HAVE_DECL_ASINL = @HAVE_DECL_ASINL@
 HAVE_DECL_ATANL = @HAVE_DECL_ATANL@
@@ -1006,13 +1020,17 @@ HAVE_TANHF = @HAVE_TANHF@
 HAVE_TANL = @HAVE_TANL@
 HAVE_TIMEGM = @HAVE_TIMEGM@
 HAVE_TIMEZONE_T = @HAVE_TIMEZONE_T@
+HAVE_TRUNCATE = @HAVE_TRUNCATE@
 HAVE_TYPE_VOLATILE_SIG_ATOMIC_T = @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+HAVE_TZSET = @HAVE_TZSET@
 HAVE_UNISTD_H = @HAVE_UNISTD_H@
 HAVE_UNLINKAT = @HAVE_UNLINKAT@
 HAVE_UNLOCKPT = @HAVE_UNLOCKPT@
 HAVE_UNSIGNED_LONG_LONG_INT = @HAVE_UNSIGNED_LONG_LONG_INT@
 HAVE_USLEEP = @HAVE_USLEEP@
+HAVE_UTIME = @HAVE_UTIME@
 HAVE_UTIMENSAT = @HAVE_UTIMENSAT@
+HAVE_UTIME_H = @HAVE_UTIME_H@
 HAVE_VASPRINTF = @HAVE_VASPRINTF@
 HAVE_VDPRINTF = @HAVE_VDPRINTF@
 HAVE_WCHAR_H = @HAVE_WCHAR_H@
@@ -1028,6 +1046,7 @@ HAVE_WCSCOLL = @HAVE_WCSCOLL@
 HAVE_WCSCPY = @HAVE_WCSCPY@
 HAVE_WCSCSPN = @HAVE_WCSCSPN@
 HAVE_WCSDUP = @HAVE_WCSDUP@
+HAVE_WCSFTIME = @HAVE_WCSFTIME@
 HAVE_WCSLEN = @HAVE_WCSLEN@
 HAVE_WCSNCASECMP = @HAVE_WCSNCASECMP@
 HAVE_WCSNCAT = @HAVE_WCSNCAT@
@@ -1127,6 +1146,7 @@ NEXT_AS_FIRST_DIRECTIVE_SYS_TYPES_H = @NEXT_AS_FIRST_DIRECTIVE_SYS_TYPES_H@
 NEXT_AS_FIRST_DIRECTIVE_SYS_WAIT_H = @NEXT_AS_FIRST_DIRECTIVE_SYS_WAIT_H@
 NEXT_AS_FIRST_DIRECTIVE_TIME_H = @NEXT_AS_FIRST_DIRECTIVE_TIME_H@
 NEXT_AS_FIRST_DIRECTIVE_UNISTD_H = @NEXT_AS_FIRST_DIRECTIVE_UNISTD_H@
+NEXT_AS_FIRST_DIRECTIVE_UTIME_H = @NEXT_AS_FIRST_DIRECTIVE_UTIME_H@
 NEXT_AS_FIRST_DIRECTIVE_WCHAR_H = @NEXT_AS_FIRST_DIRECTIVE_WCHAR_H@
 NEXT_AS_FIRST_DIRECTIVE_WCTYPE_H = @NEXT_AS_FIRST_DIRECTIVE_WCTYPE_H@
 NEXT_CTYPE_H = @NEXT_CTYPE_H@
@@ -1153,6 +1173,7 @@ NEXT_SYS_TYPES_H = @NEXT_SYS_TYPES_H@
 NEXT_SYS_WAIT_H = @NEXT_SYS_WAIT_H@
 NEXT_TIME_H = @NEXT_TIME_H@
 NEXT_UNISTD_H = @NEXT_UNISTD_H@
+NEXT_UTIME_H = @NEXT_UTIME_H@
 NEXT_WCHAR_H = @NEXT_WCHAR_H@
 NEXT_WCTYPE_H = @NEXT_WCTYPE_H@
 OBJEXT = @OBJEXT@
@@ -1191,6 +1212,7 @@ REPLACE_CLOSE = @REPLACE_CLOSE@
 REPLACE_CLOSEDIR = @REPLACE_CLOSEDIR@
 REPLACE_COSF = @REPLACE_COSF@
 REPLACE_COSHF = @REPLACE_COSHF@
+REPLACE_CTIME = @REPLACE_CTIME@
 REPLACE_DIRFD = @REPLACE_DIRFD@
 REPLACE_DPRINTF = @REPLACE_DPRINTF@
 REPLACE_DUP = @REPLACE_DUP@
@@ -1352,6 +1374,7 @@ REPLACE_STRCHRNUL = @REPLACE_STRCHRNUL@
 REPLACE_STRDUP = @REPLACE_STRDUP@
 REPLACE_STRERROR = @REPLACE_STRERROR@
 REPLACE_STRERROR_R = @REPLACE_STRERROR_R@
+REPLACE_STRFTIME = @REPLACE_STRFTIME@
 REPLACE_STRNCAT = @REPLACE_STRNCAT@
 REPLACE_STRNDUP = @REPLACE_STRNDUP@
 REPLACE_STRNLEN = @REPLACE_STRNLEN@
@@ -1369,13 +1392,16 @@ REPLACE_TIMEGM = @REPLACE_TIMEGM@
 REPLACE_TMPFILE = @REPLACE_TMPFILE@
 REPLACE_TOWLOWER = @REPLACE_TOWLOWER@
 REPLACE_TRUNC = @REPLACE_TRUNC@
+REPLACE_TRUNCATE = @REPLACE_TRUNCATE@
 REPLACE_TRUNCF = @REPLACE_TRUNCF@
 REPLACE_TRUNCL = @REPLACE_TRUNCL@
 REPLACE_TTYNAME_R = @REPLACE_TTYNAME_R@
+REPLACE_TZSET = @REPLACE_TZSET@
 REPLACE_UNLINK = @REPLACE_UNLINK@
 REPLACE_UNLINKAT = @REPLACE_UNLINKAT@
 REPLACE_UNSETENV = @REPLACE_UNSETENV@
 REPLACE_USLEEP = @REPLACE_USLEEP@
+REPLACE_UTIME = @REPLACE_UTIME@
 REPLACE_UTIMENSAT = @REPLACE_UTIMENSAT@
 REPLACE_VASPRINTF = @REPLACE_VASPRINTF@
 REPLACE_VDPRINTF = @REPLACE_VDPRINTF@
@@ -1384,6 +1410,7 @@ REPLACE_VPRINTF = @REPLACE_VPRINTF@
 REPLACE_VSNPRINTF = @REPLACE_VSNPRINTF@
 REPLACE_VSPRINTF = @REPLACE_VSPRINTF@
 REPLACE_WCRTOMB = @REPLACE_WCRTOMB@
+REPLACE_WCSFTIME = @REPLACE_WCSFTIME@
 REPLACE_WCSNRTOMBS = @REPLACE_WCSNRTOMBS@
 REPLACE_WCSRTOMBS = @REPLACE_WCSRTOMBS@
 REPLACE_WCSWIDTH = @REPLACE_WCSWIDTH@
@@ -1408,10 +1435,13 @@ UNISTD_H_DEFINES_STRUCT_TIMESPEC = @UNISTD_H_DEFINES_STRUCT_TIMESPEC@
 UNISTD_H_HAVE_WINSOCK2_H = @UNISTD_H_HAVE_WINSOCK2_H@
 UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS = @UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
 USE_NLS = @USE_NLS@
+UTIME_H = @UTIME_H@
 VERSION = @VERSION@
 WCHAR_T_SUFFIX = @WCHAR_T_SUFFIX@
 WINDOWS_64_BIT_OFF_T = @WINDOWS_64_BIT_OFF_T@
 WINDOWS_64_BIT_ST_SIZE = @WINDOWS_64_BIT_ST_SIZE@
+WINDOWS_STAT_INODES = @WINDOWS_STAT_INODES@
+WINDOWS_STAT_TIMESPEC = @WINDOWS_STAT_TIMESPEC@
 WINT_T_SUFFIX = @WINT_T_SUFFIX@
 XGETTEXT = @XGETTEXT@
 XGETTEXT_015 = @XGETTEXT_015@
@@ -1482,52 +1512,59 @@ EXTRA_DIST = alloca.c alloca.in.h btowc.c closedir.c dirent-private.h \
 	ctype.in.h dirent.in.h dirfd.c dosname.h errno.in.h fcntl.in.h \
 	filename.h flexmember.h float.c float.in.h itold.c fnmatch.c \
 	fnmatch.in.h fnmatch_loop.c fpucw.h frexp.c frexp.c frexpl.c \
-	fstat.c futimens.c getdelim.c getline.c getlogin_r.c getopt.c \
-	getopt.in.h getopt1.c getopt_int.h gettimeofday.c glob-libc.h \
-	glob.c glob.in.h hard-locale.h $(top_srcdir)/./config.rpath \
+	fstat.c stat-w32.c stat-w32.h futimens.c getdelim.c getline.c \
+	getlogin_r.c getopt-cdefs.in.h getopt-core.h getopt-ext.h \
+	getopt-pfx-core.h getopt-pfx-ext.h getopt.c getopt.in.h \
+	getopt1.c getopt_int.h gettimeofday.c glob-libc.h glob.c \
+	glob.in.h hard-locale.h $(top_srcdir)/./config.rpath \
 	intprops.h isblank.c float+.h isnan.c isnand-nolibm.h isnand.c \
 	float+.h isnan.c isnanf-nolibm.h isnanf.c float+.h isnan.c \
 	isnanl-nolibm.h isnanl.c iswblank.c langinfo.in.h limits.in.h \
 	config.charset ref-add.sin ref-del.sin locale.in.h \
-	localeconv.c lstat.c malloc.c math.in.h mbrtowc.c mbsinit.c \
-	mbsrtowcs-impl.h mbsrtowcs-state.c mbsrtowcs.c mbtowc-impl.h \
-	mbtowc.c memchr.c memchr.valgrind mempcpy.c msvc-inval.c \
-	msvc-inval.h nl_langinfo.c dirent-private.h opendir.c \
-	pathmax.h printf-frexp.h printf-frexp.c printf-frexpl.h \
-	raise.c dirent-private.h readdir.c regcomp.c regex.c regex.h \
+	localeconv.c localtime-buffer.c localtime-buffer.h lstat.c \
+	malloc.c malloca.h malloca.valgrind math.in.h mbrtowc.c \
+	mbsinit.c mbsrtowcs-impl.h mbsrtowcs-state.c mbsrtowcs.c \
+	mbtowc-impl.h mbtowc.c memchr.c memchr.valgrind mempcpy.c \
+	msvc-inval.c msvc-inval.h msvc-nothrow.c msvc-nothrow.h \
+	nl_langinfo.c dirent-private.h opendir.c pathmax.h \
+	printf-frexp.h printf-frexp.c printf-frexpl.h raise.c \
+	dirent-private.h readdir.c regcomp.c regex.c regex.h \
 	regex_internal.c regex_internal.h regexec.c sig-handler.h \
 	sigaction.c signal.in.h float+.h signbitd.c signbitf.c \
 	signbitl.c sigprocmask.c _Noreturn.h arg-nonnull.h c++defs.h \
-	warn-on-use.h snprintf.c stat.c stat-time.h stdarg.in.h \
-	stdbool.in.h stddef.in.h stdint.in.h stdio.in.h stdlib.in.h \
-	strcasecmp.c strncasecmp.c str-two-way.h strcasestr.c streq.h \
-	string.in.h strings.in.h strnlen.c sys_stat.in.h sys_time.in.h \
-	sys_types.in.h sys_wait.in.h $(top_srcdir)/./config.rpath \
-	time.in.h timespec.h unistd.in.h unitypes.in.h localcharset.h \
-	uniwidth.in.h uniwidth/cjk.h utimens.h asnprintf.c float+.h \
-	printf-args.c printf-args.h printf-parse.c printf-parse.h \
-	vasnprintf.c vasnprintf.h verify.h vsnprintf.c wchar.in.h \
-	wcrtomb.c wctype.in.h wcwidth.c
+	warn-on-use.h snprintf.c stat-w32.c stat-w32.h stat.c \
+	stat-time.h stdarg.in.h stdbool.in.h stddef.in.h stdint.in.h \
+	stdio.in.h stdlib.in.h strcasecmp.c strncasecmp.c \
+	str-two-way.h strcasestr.c streq.h string.in.h strings.in.h \
+	strnlen.c sys_stat.in.h sys_time.in.h sys_types.in.h \
+	sys_wait.in.h $(top_srcdir)/./config.rpath time.in.h \
+	timespec.h unistd.in.h unitypes.in.h localcharset.h \
+	uniwidth.in.h uniwidth/cjk.h utime.c utime.in.h utimens.h \
+	asnprintf.c float+.h printf-args.c printf-args.h \
+	printf-parse.c printf-parse.h vasnprintf.c vasnprintf.h \
+	verify.h vsnprintf.c wchar.in.h wcrtomb.c wctype.in.h \
+	wcwidth.c xalloc-oversized.h
 BUILT_SOURCES = $(ALLOCA_H) configmake.h ctype.h dirent.h $(ERRNO_H) \
-	fcntl.h $(FLOAT_H) $(FNMATCH_H) $(GETOPT_H) $(GLOB_H) \
-	langinfo.h $(LIMITS_H) locale.h math.h signal.h $(STDARG_H) \
-	$(STDBOOL_H) $(STDDEF_H) $(STDINT_H) stdio.h stdlib.h string.h \
-	strings.h sys/stat.h sys/time.h sys/types.h sys/wait.h time.h \
-	unistd.h $(LIBUNISTRING_UNITYPES_H) $(LIBUNISTRING_UNIWIDTH_H) \
-	wchar.h wctype.h
+	fcntl.h $(FLOAT_H) $(FNMATCH_H) $(GETOPT_H) $(GETOPT_CDEFS_H) \
+	$(GLOB_H) langinfo.h $(LIMITS_H) locale.h math.h signal.h \
+	$(STDARG_H) $(STDBOOL_H) $(STDDEF_H) $(STDINT_H) stdio.h \
+	stdlib.h string.h strings.h sys/stat.h sys/time.h sys/types.h \
+	sys/wait.h time.h unistd.h $(LIBUNISTRING_UNITYPES_H) \
+	$(LIBUNISTRING_UNIWIDTH_H) $(UTIME_H) wchar.h wctype.h
 SUFFIXES = .sed .sin
 MOSTLYCLEANFILES = core *.stackdump alloca.h alloca.h-t ctype.h \
 	ctype.h-t dirent.h dirent.h-t errno.h errno.h-t fcntl.h \
 	fcntl.h-t float.h float.h-t fnmatch.h fnmatch.h-t getopt.h \
-	getopt.h-t glob.h glob.h-t langinfo.h langinfo.h-t limits.h \
-	limits.h-t locale.h locale.h-t math.h math.h-t signal.h \
-	signal.h-t stdarg.h stdarg.h-t stdbool.h stdbool.h-t stddef.h \
-	stddef.h-t stdint.h stdint.h-t stdio.h stdio.h-t stdlib.h \
-	stdlib.h-t string.h string.h-t strings.h strings.h-t \
-	sys/stat.h sys/stat.h-t sys/time.h sys/time.h-t sys/types.h \
-	sys/types.h-t sys/wait.h sys/wait.h-t time.h time.h-t unistd.h \
-	unistd.h-t unitypes.h unitypes.h-t uniwidth.h uniwidth.h-t \
-	wchar.h wchar.h-t wctype.h wctype.h-t
+	getopt.h-t getopt-cdefs.h getopt-cdefs.h-t glob.h glob.h-t \
+	langinfo.h langinfo.h-t limits.h limits.h-t locale.h \
+	locale.h-t math.h math.h-t signal.h signal.h-t stdarg.h \
+	stdarg.h-t stdbool.h stdbool.h-t stddef.h stddef.h-t stdint.h \
+	stdint.h-t stdio.h stdio.h-t stdlib.h stdlib.h-t string.h \
+	string.h-t strings.h strings.h-t sys/stat.h sys/stat.h-t \
+	sys/time.h sys/time.h-t sys/types.h sys/types.h-t sys/wait.h \
+	sys/wait.h-t time.h time.h-t unistd.h unistd.h-t unitypes.h \
+	unitypes.h-t uniwidth.h uniwidth.h-t utime.h utime.h-t wchar.h \
+	wchar.h-t wctype.h wctype.h-t
 MOSTLYCLEANDIRS = sys sys
 CLEANFILES = configmake.h configmake.h-t charset.alias ref-add.sed \
 	ref-del.sed
@@ -1537,8 +1574,8 @@ MAINTAINERCLEANFILES =
 AM_CPPFLAGS = 
 AM_CFLAGS = 
 libgnu_a_SOURCES = gettext.h gettime.c hard-locale.c localcharset.h \
-	localcharset.c glthread/lock.h glthread/lock.c math.c \
-	printf-frexp.c printf-frexpl.c sig-handler.c size_max.h \
+	localcharset.c glthread/lock.h glthread/lock.c malloca.c \
+	math.c printf-frexp.c printf-frexpl.c sig-handler.c size_max.h \
 	stat-time.c strnlen1.h strnlen1.c glthread/threadlib.c \
 	timespec.c unistd.c $(am__append_1) utimens.c wctype-h.c \
 	xsize.h xsize.c
@@ -1546,15 +1583,16 @@ libgnu_a_LIBADD = $(gl_LIBOBJS) @ALLOCA@
 libgnu_a_DEPENDENCIES = $(gl_LIBOBJS) @ALLOCA@
 EXTRA_libgnu_a_SOURCES = alloca.c btowc.c closedir.c dirfd.c float.c \
 	itold.c fnmatch.c fnmatch_loop.c frexp.c frexp.c frexpl.c \
-	fstat.c futimens.c getdelim.c getline.c getlogin_r.c getopt.c \
-	getopt1.c gettimeofday.c glob.c isblank.c isnan.c isnand.c \
-	isnan.c isnanf.c isnan.c isnanl.c iswblank.c localeconv.c \
-	lstat.c malloc.c mbrtowc.c mbsinit.c mbsrtowcs-state.c \
-	mbsrtowcs.c mbtowc.c memchr.c mempcpy.c msvc-inval.c \
-	nl_langinfo.c opendir.c printf-frexp.c raise.c readdir.c \
-	regcomp.c regex.c regex_internal.c regexec.c sigaction.c \
-	signbitd.c signbitf.c signbitl.c sigprocmask.c snprintf.c \
-	stat.c strcasecmp.c strncasecmp.c strcasestr.c strnlen.c \
+	fstat.c stat-w32.c futimens.c getdelim.c getline.c \
+	getlogin_r.c getopt.c getopt1.c gettimeofday.c glob.c \
+	isblank.c isnan.c isnand.c isnan.c isnanf.c isnan.c isnanl.c \
+	iswblank.c localeconv.c localtime-buffer.c lstat.c malloc.c \
+	mbrtowc.c mbsinit.c mbsrtowcs-state.c mbsrtowcs.c mbtowc.c \
+	memchr.c mempcpy.c msvc-inval.c msvc-nothrow.c nl_langinfo.c \
+	opendir.c printf-frexp.c raise.c readdir.c regcomp.c regex.c \
+	regex_internal.c regexec.c sigaction.c signbitd.c signbitf.c \
+	signbitl.c sigprocmask.c snprintf.c stat-w32.c stat.c \
+	strcasecmp.c strncasecmp.c strcasestr.c strnlen.c utime.c \
 	asnprintf.c printf-args.c printf-parse.c vasnprintf.c \
 	vsnprintf.c wcrtomb.c wcwidth.c
 
@@ -1695,8 +1733,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/itold.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/localcharset.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/localeconv.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/localtime-buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lstat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/malloc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/malloca.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/math.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbrtowc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbsinit.Po@am__quote@
@@ -1706,6 +1746,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memchr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mempcpy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msvc-inval.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msvc-nothrow.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nl_langinfo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/opendir.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/printf-args.Po@am__quote@
@@ -1726,6 +1767,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sigprocmask.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snprintf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stat-time.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stat-w32.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strcasecmp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strcasestr.Po@am__quote@
@@ -1734,6 +1776,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strnlen1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timespec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/unistd.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utime.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utimens.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vasnprintf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vsnprintf.Po@am__quote@
@@ -2238,7 +2281,7 @@ fcntl.h: fcntl.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(ARG_NONNULL_H) 
 
 # We need the following in order to create <getopt.h> when the system
 # doesn't have one that works with the given compiler.
-getopt.h: getopt.in.h $(top_builddir)/config.status $(ARG_NONNULL_H)
+getopt.h: getopt.in.h $(top_builddir)/config.status
 	$(AM_V_GEN)rm -f $@-t $@ && \
 	{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */'; \
 	  sed -e 's|@''GUARD_PREFIX''@|GL|g' \
@@ -2249,6 +2292,14 @@ getopt.h: getopt.in.h $(top_builddir)/config.status $(ARG_NONNULL_H)
 	      -e 's|@''NEXT_GETOPT_H''@|$(NEXT_GETOPT_H)|g' \
 	      -e '/definition of _GL_ARG_NONNULL/r $(ARG_NONNULL_H)' \
 	      < $(srcdir)/getopt.in.h; \
+	} > $@-t && \
+	mv -f $@-t $@
+
+getopt-cdefs.h: getopt-cdefs.in.h $(top_builddir)/config.status
+	$(AM_V_GEN)rm -f $@-t $@ && \
+	{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */'; \
+          sed -e 's|@''HAVE_SYS_CDEFS_H''@|$(HAVE_SYS_CDEFS_H)|g' \
+	      < $(srcdir)/getopt-cdefs.in.h; \
 	} > $@-t && \
 	mv -f $@-t $@
 
@@ -3138,6 +3189,7 @@ sys/stat.h: sys_stat.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(ARG_NONNU
 	      -e 's|@''PRAGMA_COLUMNS''@|@PRAGMA_COLUMNS@|g' \
 	      -e 's|@''NEXT_SYS_STAT_H''@|$(NEXT_SYS_STAT_H)|g' \
 	      -e 's|@''WINDOWS_64_BIT_ST_SIZE''@|$(WINDOWS_64_BIT_ST_SIZE)|g' \
+	      -e 's|@''WINDOWS_STAT_TIMESPEC''@|$(WINDOWS_STAT_TIMESPEC)|g' \
 	      -e 's/@''GNULIB_FCHMODAT''@/$(GNULIB_FCHMODAT)/g' \
 	      -e 's/@''GNULIB_FSTAT''@/$(GNULIB_FSTAT)/g' \
 	      -e 's/@''GNULIB_FSTATAT''@/$(GNULIB_FSTATAT)/g' \
@@ -3151,6 +3203,7 @@ sys/stat.h: sys_stat.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(ARG_NONNU
 	      -e 's/@''GNULIB_MKNODAT''@/$(GNULIB_MKNODAT)/g' \
 	      -e 's/@''GNULIB_STAT''@/$(GNULIB_STAT)/g' \
 	      -e 's/@''GNULIB_UTIMENSAT''@/$(GNULIB_UTIMENSAT)/g' \
+	      -e 's/@''GNULIB_OVERRIDES_STRUCT_STAT''@/$(GNULIB_OVERRIDES_STRUCT_STAT)/g' \
 	      -e 's|@''HAVE_FCHMODAT''@|$(HAVE_FCHMODAT)|g' \
 	      -e 's|@''HAVE_FSTATAT''@|$(HAVE_FSTATAT)|g' \
 	      -e 's|@''HAVE_FUTIMENS''@|$(HAVE_FUTIMENS)|g' \
@@ -3215,6 +3268,7 @@ sys/types.h: sys_types.in.h $(top_builddir)/config.status
 	      -e 's|@''PRAGMA_COLUMNS''@|@PRAGMA_COLUMNS@|g' \
 	      -e 's|@''NEXT_SYS_TYPES_H''@|$(NEXT_SYS_TYPES_H)|g' \
 	      -e 's|@''WINDOWS_64_BIT_OFF_T''@|$(WINDOWS_64_BIT_OFF_T)|g' \
+	      -e 's|@''WINDOWS_STAT_INODES''@|$(WINDOWS_STAT_INODES)|g' \
 	      < $(srcdir)/sys_types.in.h; \
 	} > $@-t && \
 	mv $@-t $@
@@ -3247,24 +3301,31 @@ time.h: time.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(ARG_NONNULL_H) $(
 	      -e 's|@''PRAGMA_SYSTEM_HEADER''@|@PRAGMA_SYSTEM_HEADER@|g' \
 	      -e 's|@''PRAGMA_COLUMNS''@|@PRAGMA_COLUMNS@|g' \
 	      -e 's|@''NEXT_TIME_H''@|$(NEXT_TIME_H)|g' \
-	      -e 's/@''GNULIB_GETTIMEOFDAY''@/$(GNULIB_GETTIMEOFDAY)/g' \
+	      -e 's/@''GNULIB_CTIME''@/$(GNULIB_CTIME)/g' \
+	      -e 's/@''GNULIB_LOCALTIME''@/$(GNULIB_LOCALTIME)/g' \
 	      -e 's/@''GNULIB_MKTIME''@/$(GNULIB_MKTIME)/g' \
 	      -e 's/@''GNULIB_NANOSLEEP''@/$(GNULIB_NANOSLEEP)/g' \
+	      -e 's/@''GNULIB_STRFTIME''@/$(GNULIB_STRFTIME)/g' \
 	      -e 's/@''GNULIB_STRPTIME''@/$(GNULIB_STRPTIME)/g' \
 	      -e 's/@''GNULIB_TIMEGM''@/$(GNULIB_TIMEGM)/g' \
 	      -e 's/@''GNULIB_TIME_R''@/$(GNULIB_TIME_R)/g' \
 	      -e 's/@''GNULIB_TIME_RZ''@/$(GNULIB_TIME_RZ)/g' \
+	      -e 's/@''GNULIB_TZSET''@/$(GNULIB_TZSET)/g' \
 	      -e 's|@''HAVE_DECL_LOCALTIME_R''@|$(HAVE_DECL_LOCALTIME_R)|g' \
 	      -e 's|@''HAVE_NANOSLEEP''@|$(HAVE_NANOSLEEP)|g' \
 	      -e 's|@''HAVE_STRPTIME''@|$(HAVE_STRPTIME)|g' \
 	      -e 's|@''HAVE_TIMEGM''@|$(HAVE_TIMEGM)|g' \
 	      -e 's|@''HAVE_TIMEZONE_T''@|$(HAVE_TIMEZONE_T)|g' \
+	      -e 's|@''HAVE_TZSET''@|$(HAVE_TZSET)|g' \
+	      -e 's|@''REPLACE_CTIME''@|$(REPLACE_CTIME)|g' \
 	      -e 's|@''REPLACE_GMTIME''@|$(REPLACE_GMTIME)|g' \
 	      -e 's|@''REPLACE_LOCALTIME''@|$(REPLACE_LOCALTIME)|g' \
 	      -e 's|@''REPLACE_LOCALTIME_R''@|$(REPLACE_LOCALTIME_R)|g' \
 	      -e 's|@''REPLACE_MKTIME''@|$(REPLACE_MKTIME)|g' \
 	      -e 's|@''REPLACE_NANOSLEEP''@|$(REPLACE_NANOSLEEP)|g' \
+	      -e 's|@''REPLACE_STRFTIME''@|$(REPLACE_STRFTIME)|g' \
 	      -e 's|@''REPLACE_TIMEGM''@|$(REPLACE_TIMEGM)|g' \
+	      -e 's|@''REPLACE_TZSET''@|$(REPLACE_TZSET)|g' \
 	      -e 's|@''PTHREAD_H_DEFINES_STRUCT_TIMESPEC''@|$(PTHREAD_H_DEFINES_STRUCT_TIMESPEC)|g' \
 	      -e 's|@''SYS_TIME_H_DEFINES_STRUCT_TIMESPEC''@|$(SYS_TIME_H_DEFINES_STRUCT_TIMESPEC)|g' \
 	      -e 's|@''TIME_H_DEFINES_STRUCT_TIMESPEC''@|$(TIME_H_DEFINES_STRUCT_TIMESPEC)|g' \
@@ -3329,6 +3390,7 @@ unistd.h: unistd.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(ARG_NONNULL_H
 	      -e 's/@''GNULIB_SLEEP''@/$(GNULIB_SLEEP)/g' \
 	      -e 's/@''GNULIB_SYMLINK''@/$(GNULIB_SYMLINK)/g' \
 	      -e 's/@''GNULIB_SYMLINKAT''@/$(GNULIB_SYMLINKAT)/g' \
+	      -e 's/@''GNULIB_TRUNCATE''@/$(GNULIB_TRUNCATE)/g' \
 	      -e 's/@''GNULIB_TTYNAME_R''@/$(GNULIB_TTYNAME_R)/g' \
 	      -e 's/@''GNULIB_UNISTD_H_GETOPT''@/0$(GNULIB_GL_UNISTD_H_GETOPT)/g' \
 	      -e 's/@''GNULIB_UNISTD_H_NONBLOCKING''@/$(GNULIB_UNISTD_H_NONBLOCKING)/g' \
@@ -3366,6 +3428,7 @@ unistd.h: unistd.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(ARG_NONNULL_H
 	      -e 's|@''HAVE_SLEEP''@|$(HAVE_SLEEP)|g' \
 	      -e 's|@''HAVE_SYMLINK''@|$(HAVE_SYMLINK)|g' \
 	      -e 's|@''HAVE_SYMLINKAT''@|$(HAVE_SYMLINKAT)|g' \
+	      -e 's|@''HAVE_TRUNCATE''@|$(HAVE_TRUNCATE)|g' \
 	      -e 's|@''HAVE_UNLINKAT''@|$(HAVE_UNLINKAT)|g' \
 	      -e 's|@''HAVE_USLEEP''@|$(HAVE_USLEEP)|g' \
 	      -e 's|@''HAVE_DECL_ENVIRON''@|$(HAVE_DECL_ENVIRON)|g' \
@@ -3407,6 +3470,7 @@ unistd.h: unistd.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(ARG_NONNULL_H
 	      -e 's|@''REPLACE_SLEEP''@|$(REPLACE_SLEEP)|g' \
 	      -e 's|@''REPLACE_SYMLINK''@|$(REPLACE_SYMLINK)|g' \
 	      -e 's|@''REPLACE_SYMLINKAT''@|$(REPLACE_SYMLINKAT)|g' \
+	      -e 's|@''REPLACE_TRUNCATE''@|$(REPLACE_TRUNCATE)|g' \
 	      -e 's|@''REPLACE_TTYNAME_R''@|$(REPLACE_TTYNAME_R)|g' \
 	      -e 's|@''REPLACE_UNLINK''@|$(REPLACE_UNLINK)|g' \
 	      -e 's|@''REPLACE_UNLINKAT''@|$(REPLACE_UNLINKAT)|g' \
@@ -3434,6 +3498,29 @@ uniwidth.h: uniwidth.in.h
 	} > $@-t && \
 	mv -f $@-t $@
 
+# We need the following in order to create <utime.h> when the system
+# doesn't have one that works with the given compiler.
+@GL_GENERATE_UTIME_H_TRUE@utime.h: utime.in.h $(top_builddir)/config.status
+@GL_GENERATE_UTIME_H_TRUE@	$(AM_V_GEN)rm -f $@-t $@ && \
+@GL_GENERATE_UTIME_H_TRUE@	{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */' && \
+@GL_GENERATE_UTIME_H_TRUE@	  sed -e 's|@''GUARD_PREFIX''@|GL|g' \
+@GL_GENERATE_UTIME_H_TRUE@	      -e 's/@''HAVE_UTIME_H''@/$(HAVE_UTIME_H)/g' \
+@GL_GENERATE_UTIME_H_TRUE@	      -e 's|@''INCLUDE_NEXT''@|$(INCLUDE_NEXT)|g' \
+@GL_GENERATE_UTIME_H_TRUE@	      -e 's|@''PRAGMA_SYSTEM_HEADER''@|@PRAGMA_SYSTEM_HEADER@|g' \
+@GL_GENERATE_UTIME_H_TRUE@	      -e 's|@''PRAGMA_COLUMNS''@|@PRAGMA_COLUMNS@|g' \
+@GL_GENERATE_UTIME_H_TRUE@	      -e 's|@''NEXT_UTIME_H''@|$(NEXT_UTIME_H)|g' \
+@GL_GENERATE_UTIME_H_TRUE@	      -e 's/@''GNULIB_UTIME''@/$(GNULIB_UTIME)/g' \
+@GL_GENERATE_UTIME_H_TRUE@	      -e 's|@''HAVE_UTIME''@|$(HAVE_UTIME)|g' \
+@GL_GENERATE_UTIME_H_TRUE@	      -e 's|@''REPLACE_UTIME''@|$(REPLACE_UTIME)|g' \
+@GL_GENERATE_UTIME_H_TRUE@	      -e '/definitions of _GL_FUNCDECL_RPL/r $(CXXDEFS_H)' \
+@GL_GENERATE_UTIME_H_TRUE@	      -e '/definition of _GL_ARG_NONNULL/r $(ARG_NONNULL_H)' \
+@GL_GENERATE_UTIME_H_TRUE@	      -e '/definition of _GL_WARN_ON_USE/r $(WARN_ON_USE_H)' \
+@GL_GENERATE_UTIME_H_TRUE@	      < $(srcdir)/utime.in.h; \
+@GL_GENERATE_UTIME_H_TRUE@	} > $@-t && \
+@GL_GENERATE_UTIME_H_TRUE@	mv $@-t $@
+@GL_GENERATE_UTIME_H_FALSE@utime.h: $(top_builddir)/config.status
+@GL_GENERATE_UTIME_H_FALSE@	rm -f $@
+
 # We need the following in order to create <wchar.h> when the system
 # version does not work standalone.
 wchar.h: wchar.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(ARG_NONNULL_H) $(WARN_ON_USE_H)
@@ -3446,6 +3533,7 @@ wchar.h: wchar.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(ARG_NONNULL_H) 
 	      -e 's|@''HAVE_FEATURES_H''@|$(HAVE_FEATURES_H)|g' \
 	      -e 's|@''NEXT_WCHAR_H''@|$(NEXT_WCHAR_H)|g' \
 	      -e 's|@''HAVE_WCHAR_H''@|$(HAVE_WCHAR_H)|g' \
+	      -e 's/@''HAVE_CRTDEFS_H''@/$(HAVE_CRTDEFS_H)/g' \
 	      -e 's/@''GNULIB_OVERRIDES_WINT_T''@/$(GNULIB_OVERRIDES_WINT_T)/g' \
 	      -e 's/@''GNULIB_BTOWC''@/$(GNULIB_BTOWC)/g' \
 	      -e 's/@''GNULIB_WCTOB''@/$(GNULIB_WCTOB)/g' \
@@ -3486,6 +3574,7 @@ wchar.h: wchar.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(ARG_NONNULL_H) 
 	      -e 's/@''GNULIB_WCSSTR''@/$(GNULIB_WCSSTR)/g' \
 	      -e 's/@''GNULIB_WCSTOK''@/$(GNULIB_WCSTOK)/g' \
 	      -e 's/@''GNULIB_WCSWIDTH''@/$(GNULIB_WCSWIDTH)/g' \
+	      -e 's/@''GNULIB_WCSFTIME''@/$(GNULIB_WCSFTIME)/g' \
 	      < $(srcdir)/wchar.in.h | \
 	  sed -e 's|@''HAVE_WINT_T''@|$(HAVE_WINT_T)|g' \
 	      -e 's|@''HAVE_BTOWC''@|$(HAVE_BTOWC)|g' \
@@ -3525,6 +3614,7 @@ wchar.h: wchar.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(ARG_NONNULL_H) 
 	      -e 's|@''HAVE_WCSSTR''@|$(HAVE_WCSSTR)|g' \
 	      -e 's|@''HAVE_WCSTOK''@|$(HAVE_WCSTOK)|g' \
 	      -e 's|@''HAVE_WCSWIDTH''@|$(HAVE_WCSWIDTH)|g' \
+	      -e 's|@''HAVE_WCSFTIME''@|$(HAVE_WCSFTIME)|g' \
 	      -e 's|@''HAVE_DECL_WCTOB''@|$(HAVE_DECL_WCTOB)|g' \
 	      -e 's|@''HAVE_DECL_WCWIDTH''@|$(HAVE_DECL_WCWIDTH)|g' \
 	  | \
@@ -3541,6 +3631,7 @@ wchar.h: wchar.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(ARG_NONNULL_H) 
 	      -e 's|@''REPLACE_WCSNRTOMBS''@|$(REPLACE_WCSNRTOMBS)|g' \
 	      -e 's|@''REPLACE_WCWIDTH''@|$(REPLACE_WCWIDTH)|g' \
 	      -e 's|@''REPLACE_WCSWIDTH''@|$(REPLACE_WCSWIDTH)|g' \
+	      -e 's|@''REPLACE_WCSFTIME''@|$(REPLACE_WCSFTIME)|g' \
 	      -e '/definitions of _GL_FUNCDECL_RPL/r $(CXXDEFS_H)' \
 	      -e '/definition of _GL_ARG_NONNULL/r $(ARG_NONNULL_H)' \
 	      -e '/definition of _GL_WARN_ON_USE/r $(WARN_ON_USE_H)'; \
@@ -3558,6 +3649,7 @@ wctype.h: wctype.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(WARN_ON_USE_H
 	      -e 's|@''PRAGMA_SYSTEM_HEADER''@|@PRAGMA_SYSTEM_HEADER@|g' \
 	      -e 's|@''PRAGMA_COLUMNS''@|@PRAGMA_COLUMNS@|g' \
 	      -e 's|@''NEXT_WCTYPE_H''@|$(NEXT_WCTYPE_H)|g' \
+	      -e 's/@''HAVE_CRTDEFS_H''@/$(HAVE_CRTDEFS_H)/g' \
 	      -e 's/@''GNULIB_OVERRIDES_WINT_T''@/$(GNULIB_OVERRIDES_WINT_T)/g' \
 	      -e 's/@''GNULIB_ISWBLANK''@/$(GNULIB_ISWBLANK)/g' \
 	      -e 's/@''GNULIB_WCTYPE''@/$(GNULIB_WCTYPE)/g' \

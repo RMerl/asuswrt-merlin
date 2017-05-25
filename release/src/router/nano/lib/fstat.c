@@ -23,19 +23,21 @@
 /* Get the original definition of fstat.  It might be defined as a macro.  */
 #include <sys/types.h>
 #include <sys/stat.h>
-#if _GL_WINDOWS_64_BIT_ST_SIZE
-# undef stat /* avoid warning on mingw64 with _FILE_OFFSET_BITS=64 */
-# define stat _stati64
-# undef fstat /* avoid warning on mingw64 with _FILE_OFFSET_BITS=64 */
-# define fstat _fstati64
-#endif
 #undef __need_system_sys_stat_h
+
+#if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+# define WINDOWS_NATIVE
+#endif
+
+#if !defined WINDOWS_NATIVE
 
 static int
 orig_fstat (int fd, struct stat *buf)
 {
   return fstat (fd, buf);
 }
+
+#endif
 
 /* Specification.  */
 /* Write "sys/stat.h" here, not <sys/stat.h>, otherwise OSF/1 5.1 DTK cc
@@ -45,32 +47,15 @@ orig_fstat (int fd, struct stat *buf)
 
 #include <errno.h>
 #include <unistd.h>
-
-#if HAVE_MSVC_INVALID_PARAMETER_HANDLER
-# include "msvc-inval.h"
-#endif
-
-#if HAVE_MSVC_INVALID_PARAMETER_HANDLER
-static int
-fstat_nothrow (int fd, struct stat *buf)
-{
-  int result;
-
-  TRY_MSVC_INVAL
-    {
-      result = orig_fstat (fd, buf);
-    }
-  CATCH_MSVC_INVAL
-    {
-      result = -1;
-      errno = EBADF;
-    }
-  DONE_MSVC_INVAL;
-
-  return result;
-}
-#else
-# define fstat_nothrow orig_fstat
+#ifdef WINDOWS_NATIVE
+# define WIN32_LEAN_AND_MEAN
+# include <windows.h>
+# if GNULIB_MSVC_NOTHROW
+#  include "msvc-nothrow.h"
+# else
+#  include <io.h>
+# endif
+# include "stat-w32.h"
 #endif
 
 int
@@ -84,5 +69,20 @@ rpl_fstat (int fd, struct stat *buf)
     return stat (name, buf);
 #endif
 
-  return fstat_nothrow (fd, buf);
+#ifdef WINDOWS_NATIVE
+  /* Fill the fields ourselves, because the original fstat function returns
+     values for st_atime, st_mtime, st_ctime that depend on the current time
+     zone.  See
+     <https://lists.gnu.org/archive/html/bug-gnulib/2017-04/msg00134.html>  */
+  HANDLE h = (HANDLE) _get_osfhandle (fd);
+
+  if (h == INVALID_HANDLE_VALUE)
+    {
+      errno = EBADF;
+      return -1;
+    }
+  return _gl_fstat_by_handle (h, NULL, buf);
+#else
+  return orig_fstat (fd, buf);
+#endif
 }

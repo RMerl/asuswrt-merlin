@@ -1,4 +1,4 @@
-# include_next.m4 serial 23
+# include_next.m4 serial 24
 dnl Copyright (C) 2006-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -6,7 +6,8 @@ dnl with or without modifications, as long as this notice is preserved.
 
 dnl From Paul Eggert and Derek Price.
 
-dnl Sets INCLUDE_NEXT and PRAGMA_SYSTEM_HEADER.
+dnl Sets INCLUDE_NEXT, INCLUDE_NEXT_AS_FIRST_DIRECTIVE, PRAGMA_SYSTEM_HEADER,
+dnl and PRAGMA_COLUMNS.
 dnl
 dnl INCLUDE_NEXT expands to 'include_next' if the compiler supports it, or to
 dnl 'include' otherwise.

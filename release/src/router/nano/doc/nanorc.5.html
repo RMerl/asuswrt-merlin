@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Wed Apr 12 10:16:57 2017 -->
+<!-- CreationDate: Sun May 21 10:39:03 2017 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -123,10 +123,11 @@ default.</p>
 <p style="margin-left:11%;"><b>set boldtext</b></p>
 
 <p style="margin-left:15%;">Use bold instead of reverse
-video for the titlebar, statusbar, key combos, and selected
-text. This can be overridden for the first three by setting
-the options <b>titlecolor</b>, <b>statuscolor</b>, and
-<b>keycolor</b>.</p>
+video for the titlebar, statusbar, key combos, line numbers,
+and selected text. This can be overridden for the first four
+by setting the options <b>titlecolor</b>,
+<b>statuscolor</b>, <b>keycolor</b>, and
+<b>numbercolor</b>.</p>
 
 <p style="margin-left:11%;"><b>set brackets</b>
 <i>string</i></p>
@@ -460,17 +461,17 @@ good fit for a small editor like <b>nano</b>.</p>
 <p style="margin-left:11%; margin-top: 1em">A separate
 syntax can be defined for each kind of file via the
 following commands: <b><br>
-syntax</b> &quot;<i>str</i>&quot;
+syntax</b> &quot;<i>name</i>&quot;
 [&quot;<i>fileregex</i>&quot; ...]</p>
 
 <p style="margin-left:22%;">Defines a syntax named
-<i>str</i> which can be activated via the
+<i>name</i> which can be activated via the
 <b>&minus;Y</b>/<b>&minus;&minus;syntax</b> command-line
 option, or will be automatically activated if the current
 filename matches the extended regular expression
 <i>fileregex</i>. All subsequent <b>color</b>,
 <b>icolor</b>, <b>header</b> and other such statements will
-apply to this <i>str</i> syntax until a new <b>syntax</b>
+apply to this <i>name</i> syntax until a new <b>syntax</b>
 command is encountered.</p>
 
 <p style="margin-left:22%; margin-top: 1em">The <b>none</b>
@@ -549,30 +550,30 @@ transparency, not specifying a <i>bgcolor</i> tells
 ...</p>
 
 <p style="margin-left:22%;">Same as above, except that the
-text matching is case insensitive.</p>
+matching is case insensitive.</p>
 
 <p style="margin-left:11%;"><b>color</b>
 <i>fgcolor</i>,<i>bgcolor</i>
-<b>start=</b>&quot;<i>sr</i>&quot;
-<b>end=</b>&quot;<i>er</i>&quot;</p>
+<b>start=</b>&quot;<i>fromrx</i>&quot;
+<b>end=</b>&quot;<i>torx</i>&quot;</p>
 
 <p style="margin-left:22%;">Display all pieces of text
-whose start matches extended regular expression <i>sr</i>
-and whose end matches extended regular expression <i>er</i>
-with foreground color <i>fgcolor</i> and background color
-<i>bgcolor</i>, at least one of which must be specified.
-This means that, after an initial instance of <i>sr</i>, all
-text will be highlighted until the first instance of
-<i>er</i>. This allows syntax highlighting to span multiple
-lines.</p>
+whose start matches extended regular expression
+<i>fromrx</i> and whose end matches extended regular
+expression <i>torx</i> with foreground color <i>fgcolor</i>
+and background color <i>bgcolor</i>, at least one of which
+must be specified. This means that, after an initial
+instance of <i>fromrx</i>, all text until the first instance
+of <i>torx</i> will be colored. This allows syntax
+highlighting to span multiple lines.</p>
 
 <p style="margin-left:11%;"><b>icolor</b>
 <i>fgcolor</i>,<i>bgcolor</i>
-<b>start=</b>&quot;<i>sr</i>&quot;
-<b>end=</b>&quot;<i>er</i>&quot;</p>
+<b>start=</b>&quot;<i>fromrx</i>&quot;
+<b>end=</b>&quot;<i>torx</i>&quot;</p>
 
 <p style="margin-left:22%;">Same as above, except that the
-text matching is case insensitive.</p>
+matching is case insensitive.</p>
 
 <p style="margin-left:11%;"><b>include</b>
 &quot;<i>syntaxfile</i>&quot;</p>
@@ -582,17 +583,17 @@ syntaxes from <i>syntaxfile</i>. Note that <i>syntaxfile</i>
 may contain only the above commands, from <b>syntax</b> to
 <b>icolor</b>.</p>
 
-<p style="margin-left:11%;"><b>extendsyntax</b> <i>str
+<p style="margin-left:11%;"><b>extendsyntax</b> <i>name
 directive</i> [<i>arg</i> ...]</p>
 
 <p style="margin-left:22%;">Extend the syntax previously
-defined as <i>str</i> to include new information. This
-allows you to add a new <b>color</b>, <b>icolor</b>,
+defined as <i>name</i> to include new information. This
+allows adding a new <b>color</b>, <b>icolor</b>,
 <b>header</b>, <b>magic</b>, <b>comment</b>, <b>linter</b>,
 or <b>formatter</b> directive to an already defined syntax
 -- useful when you want to slightly improve a syntax defined
 in one of the system-installed files (which are normally not
-writable)</p>
+writable).</p>
 
 <h2>REBINDING KEYS
 <a name="REBINDING KEYS"></a>

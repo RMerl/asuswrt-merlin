@@ -22,17 +22,7 @@
 
 #include "verify.h"
 
-#if (defined _WIN32 || defined __WIN32__) && !defined __CYGWIN__
-
-/* On native Windows, 'mbstate_t' is defined as 'int'.  */
-
-int
-mbsinit (const mbstate_t *ps)
-{
-  return ps == NULL || *ps == 0;
-}
-
-#else
+#if GNULIB_defined_mbstate_t
 
 /* Platforms that lack mbsinit() also lack mbrlen(), mbrtowc(), mbsrtowcs()
    and wcrtomb(), wcsrtombs().
@@ -45,6 +35,7 @@ mbsinit (const mbstate_t *ps)
    We define the meaning of mbstate_t as follows:
      - In mb -> wc direction, mbstate_t's first byte contains the number of
        buffered bytes (in the range 0..3), followed by up to 3 buffered bytes.
+       See mbrtowc.c.
      - In wc -> mb direction, mbstate_t contains no information. In other
        words, it is always in the initial state.  */
 
@@ -56,6 +47,27 @@ mbsinit (const mbstate_t *ps)
   const char *pstate = (const char *)ps;
 
   return pstate == NULL || pstate[0] == 0;
+}
+
+#else
+
+int
+mbsinit (const mbstate_t *ps)
+{
+# if (defined _WIN32 || defined __WIN32__) && !defined __CYGWIN__
+  /* Native Windows.  */
+#  ifdef __MINGW32__
+  /* On mingw, 'mbstate_t' is defined as 'int'.  */
+  return ps == NULL || *ps == 0;
+#  else
+  /* MSVC defines 'mbstate_t' as an 8-byte struct; the first 4-bytes matter.  */
+  return ps == NULL || *(const unsigned int *)ps == 0;
+#  endif
+# else
+  /* Minix, HP-UX 11.00, Solaris 2.6, Interix, ...  */
+  /* Maybe this definition works, maybe not...  */
+  return ps == NULL || *(const char *)ps == 0;
+# endif
 }
 
 #endif

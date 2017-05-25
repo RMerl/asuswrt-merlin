@@ -35,6 +35,13 @@
 # include "streq.h"
 # include "verify.h"
 
+#ifndef FALLTHROUGH
+# if __GNUC__ < 7
+#  define FALLTHROUGH ((void) 0)
+# else
+#  define FALLTHROUGH __attribute__ ((__fallthrough__))
+# endif
+#endif
 
 verify (sizeof (mbstate_t) >= 4);
 
@@ -74,10 +81,10 @@ mbrtowc (wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
         break;
       case 3:
         buf[2] = pstate[3];
-        /*FALLTHROUGH*/
+        FALLTHROUGH;
       case 2:
         buf[1] = pstate[2];
-        /*FALLTHROUGH*/
+        FALLTHROUGH;
       case 1:
         buf[0] = pstate[1];
         p = buf;

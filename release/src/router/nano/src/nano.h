@@ -124,10 +124,10 @@
 #include <signal.h>
 #include <assert.h>
 
-/* If we aren't using ncurses with mouse support, turn the mouse support
- * off, as it's useless then. */
+/* If we aren't using an ncurses with mouse support, exclude any
+ * mouse routines, as they are useless then. */
 #ifndef NCURSES_MOUSE_VERSION
-#define DISABLE_MOUSE 1
+#undef ENABLE_MOUSE
 #endif
 
 #if defined(DISABLE_WRAPPING) && defined(DISABLE_JUSTIFY)
@@ -404,7 +404,7 @@ typedef struct openfilestruct {
 	/* The preceding open file, if any. */
 } openfilestruct;
 
-#ifndef DISABLE_NANORC
+#ifdef ENABLE_NANORC
 typedef struct rcoption {
     const char *name;
 	/* The name of the rcfile option. */
@@ -442,7 +442,7 @@ typedef struct subnfunc {
 	/* In what menus this function applies. */
     const char *desc;
 	/* The function's short description, for example "Where Is". */
-#ifndef DISABLE_HELP
+#ifdef ENABLE_HELP
     const char *help;
 	/* The help-screen text for this function. */
     bool blank_after;
@@ -480,7 +480,7 @@ enum
 {
     DONTUSE,
     CASE_SENSITIVE,
-    CONST_UPDATE,
+    CONSTANT_SHOW,
     NO_HELP,
     SUSPEND,
     NO_WRAP,
@@ -538,9 +538,10 @@ enum
 #define MGOTODIR		(1<<12)
 #define MYESNO			(1<<13)
 #define MLINTER			(1<<14)
+#define MFINDINHELP		(1<<15)
 /* This is an abbreviation for all menus except Help and YesNo. */
 #define MMOST  (MMAIN|MWHEREIS|MREPLACE|MREPLACEWITH|MGOTOLINE|MWRITEFILE|MINSERTFILE|\
-		MEXTCMD|MBROWSER|MWHEREISFILE|MGOTODIR|MSPELL|MLINTER)
+		MEXTCMD|MBROWSER|MWHEREISFILE|MGOTODIR|MFINDINHELP|MSPELL|MLINTER)
 
 /* Basic control codes. */
 #define TAB_CODE  0x09

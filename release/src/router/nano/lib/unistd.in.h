@@ -127,11 +127,18 @@
 # include <sys/types.h>
 #endif
 
+/* The definitions of _GL_FUNCDECL_RPL etc. are copied here.  */
+
+/* The definition of _GL_ARG_NONNULL is copied here.  */
+
+/* The definition of _GL_WARN_ON_USE is copied here.  */
+
+
 /* Get getopt(), optarg, optind, opterr, optopt.
    But avoid namespace pollution on glibc systems.  */
 #if @GNULIB_UNISTD_H_GETOPT@ && !defined __GLIBC__ && !defined _GL_SYSTEM_GETOPT
-# define __need_getopt
-# include <getopt.h>
+# include <getopt-cdefs.h>
+# include <getopt-pfx-core.h>
 #endif
 
 #ifndef _GL_INLINE_HEADER_BEGIN
@@ -141,13 +148,6 @@ _GL_INLINE_HEADER_BEGIN
 #ifndef _GL_UNISTD_INLINE
 # define _GL_UNISTD_INLINE _GL_INLINE
 #endif
-
-/* The definitions of _GL_FUNCDECL_RPL etc. are copied here.  */
-
-/* The definition of _GL_ARG_NONNULL is copied here.  */
-
-/* The definition of _GL_WARN_ON_USE is copied here.  */
-
 
 /* Hide some function declarations from <winsock2.h>.  */
 
@@ -1453,6 +1453,36 @@ _GL_CXXALIASWARN (symlinkat);
 # if HAVE_RAW_DECL_SYMLINKAT
 _GL_WARN_ON_USE (symlinkat, "symlinkat is not portable - "
                  "use gnulib module symlinkat for portability");
+# endif
+#endif
+
+
+#if @GNULIB_TRUNCATE@
+/* Change the size of the file designated by FILENAME to become equal to LENGTH.
+   Return 0 if successful, otherwise -1 and errno set.
+   See the POSIX:2008 specification
+   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/truncate.html>.  */
+# if @REPLACE_TRUNCATE@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef truncate
+#   define truncate rpl_truncate
+#  endif
+_GL_FUNCDECL_RPL (truncate, int, (const char *filename, off_t length)
+                                 _GL_ARG_NONNULL ((1)));
+_GL_CXXALIAS_RPL (truncate, int, (const char *filename, off_t length));
+# else
+#  if !@HAVE_TRUNCATE@
+_GL_FUNCDECL_SYS (truncate, int, (const char *filename, off_t length)
+                                 _GL_ARG_NONNULL ((1)));
+#  endif
+_GL_CXXALIAS_SYS (truncate, int, (const char *filename, off_t length));
+# endif
+_GL_CXXALIASWARN (truncate);
+#elif defined GNULIB_POSIXCHECK
+# undef truncate
+# if HAVE_RAW_DECL_TRUNCATE
+_GL_WARN_ON_USE (truncate, "truncate is unportable - "
+                 "use gnulib module truncate for portability");
 # endif
 #endif
 

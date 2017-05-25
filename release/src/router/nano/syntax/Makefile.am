@@ -22,6 +22,7 @@ pkgdata_DATA =	asm.nanorc \
 		man.nanorc \
 		mgp.nanorc \
 		mutt.nanorc \
+		nanohelp.nanorc \
 		nanorc.nanorc \
 		nftables.nanorc \
 		objc.nanorc \

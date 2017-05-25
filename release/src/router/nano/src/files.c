@@ -62,32 +62,29 @@ bool has_valid_path(const char *filename)
     return validity;
 }
 
-/* Add an entry to the circular list of openfile structs. */
+/* Add an item to the circular list of openfile structs. */
 void make_new_buffer(void)
 {
+    openfilestruct *newnode = make_new_opennode();
+
     if (openfile == NULL) {
-	openfile = make_new_opennode();
-
 	/* Make the first open file the only element in the list. */
-	openfile->prev = openfile;
-	openfile->next = openfile;
+	newnode->prev = newnode;
+	newnode->next = newnode;
     } else {
-	openfilestruct *newnode = make_new_opennode();
-
 	/* Add the new open file after the current one in the list. */
 	newnode->prev = openfile;
 	newnode->next = openfile->next;
 	openfile->next->prev = newnode;
 	openfile->next = newnode;
 
-	/* Make the new file the current one. */
-	openfile = newnode;
-
-	/* There is more than one file open: show Close in help lines. */
+	/* There is more than one file open: show "Close" in help lines. */
 	exitfunc->desc = close_tag;
     }
 
-    /* Start initializing the new buffer. */
+    /* Make the new buffer the current one, and start initializing it. */
+    openfile = newnode;
+
     openfile->filename = mallocstrcpy(NULL, "");
 
     initialize_buffer_text();
@@ -117,11 +114,9 @@ void make_new_buffer(void)
 #endif
 }
 
-/* Initialize the text of the current openfile struct. */
+/* Initialize the text and pointers of the current openfile struct. */
 void initialize_buffer_text(void)
 {
-    assert(openfile != NULL);
-
     openfile->fileage = make_new_node(NULL);
     openfile->fileage->data = mallocstrcpy(NULL, "");
 
@@ -470,12 +465,12 @@ bool open_buffer(const char *filename, bool undoable)
     if (new_buffer) {
 	make_new_buffer();
 
-	if (has_valid_path(realname)) {
+	if (!inhelp && has_valid_path(realname)) {
 #ifndef NANO_TINY
 	    if (ISSET(LOCKING) && filename[0] != '\0') {
 		/* When not overriding an existing lock, discard the buffer. */
 		if (do_lockfile(realname) < 0) {
-#ifndef DISABLE_MULTIBUFFER
+#ifdef ENABLE_MULTIBUFFER
 		    close_buffer();
 #endif
 		    free(realname);
@@ -489,7 +484,7 @@ bool open_buffer(const char *filename, bool undoable)
     /* If the filename isn't blank, and we are not in NOREAD_MODE,
      * open the file.  Otherwise, treat it as a new file. */
     rc = (filename[0] != '\0' && !ISSET(NOREAD_MODE)) ?
-		open_file(realname, new_buffer, FALSE, &f) : -2;
+		open_file(realname, new_buffer, inhelp, &f) : -2;
 
     /* If we have a file, and we're loading into a new buffer, update
      * the filename. */
@@ -583,31 +578,29 @@ void replace_marked_buffer(const char *filename, filestruct *top, size_t top_x,
     if (!old_no_newlines)
 	UNSET(NO_NEWLINES);
 }
-#endif /* !ENABLE_TINY */
+#endif /* !NANO_TINY */
 #endif /* !DISABLE_SPELLER */
 
-/* Update the screen to account for the current buffer. */
-void display_buffer(void)
+/* Update the titlebar and the multiline cache to match the current buffer. */
+void prepare_for_display(void)
 {
     /* Update the titlebar, since the filename may have changed. */
-    titlebar(NULL);
+    if (!inhelp)
+	titlebar(NULL);
 
 #ifndef DISABLE_COLOR
-    /* Make sure we're using the buffer's associated colors. */
-    color_init();
-
     /* If there are multiline coloring regexes, and there is no
      * multiline cache data yet, precalculate it now. */
     if (openfile->syntax && openfile->syntax->nmultis > 0 &&
 		openfile->fileage->multidata == NULL)
 	precalc_multicolorinfo();
-#endif
 
-    /* Update the content of the edit window straightaway. */
-    edit_refresh();
+    have_palette = FALSE;
+#endif
+    refresh_needed = TRUE;
 }
 
-#ifndef DISABLE_MULTIBUFFER
+#ifdef ENABLE_MULTIBUFFER
 /* Switch to a neighbouring file buffer; to the next if to_next is TRUE;
  * otherwise, to the previous one. */
 void switch_to_prevnext_buffer(bool to_next)
@@ -615,7 +608,7 @@ void switch_to_prevnext_buffer(bool to_next)
     assert(openfile != NULL);
 
     /* If only one file buffer is open, say so and get out. */
-    if (openfile == openfile->next) {
+    if (openfile == openfile->next && !inhelp) {
 	statusbar(_("No more open file buffers"));
 	return;
     }
@@ -635,13 +628,14 @@ void switch_to_prevnext_buffer(bool to_next)
 	openfile->firstcolumn = 0;
 #endif
 
-    /* Update the screen to account for the current buffer. */
-    display_buffer();
+    /* Update titlebar and multiline info to match the current buffer. */
+    prepare_for_display();
 
     /* Indicate the switch on the statusbar. */
-    statusline(HUSH, _("Switched to %s"),
-		((openfile->filename[0] == '\0') ?
-		_("New Buffer") : openfile->filename));
+    if (!inhelp)
+	statusline(HUSH, _("Switched to %s"),
+			((openfile->filename[0] == '\0') ?
+			_("New Buffer") : openfile->filename));
 
 #ifdef DEBUG
     dump_filestruct(openfile->current);
@@ -689,7 +683,7 @@ bool close_buffer(void)
 
     return TRUE;
 }
-#endif /* !DISABLE_MULTIBUFFER */
+#endif /* ENABLE_MULTIBUFFER */
 
 /* Do a quick permissions check by verifying whether the file is appendable.
  * Err on the side of permissiveness (reporting TRUE when it might be wrong)
@@ -908,6 +902,10 @@ void read_file(FILE *f, int fd, const char *filename, bool undoable,
     /* Set the desired x position at the end of what was inserted. */
     openfile->placewewant = xplustabs();
 
+    /* If we've read a help file, don't give any feedback. */
+    if (inhelp)
+	return;
+
     if (!writable)
 	statusline(ALERT, _("File '%s' is unwritable"), filename);
 #ifndef NANO_TINY
@@ -1001,7 +999,7 @@ int open_file(const char *filename, bool newfie, bool quiet, FILE **f)
 	if (*f == NULL) {
 	    statusline(ALERT, _("Error reading %s: %s"), filename, strerror(errno));
 	    close(fd);
-	} else
+	} else if (!inhelp)
 	    statusbar(_("Reading File"));
     }
 
@@ -1066,7 +1064,7 @@ void do_insertfile(void)
     while (TRUE) {
 #ifndef NANO_TINY
 	if (execute) {
-#ifndef DISABLE_MULTIBUFFER
+#ifdef ENABLE_MULTIBUFFER
 	    if (ISSET(MULTIBUFFER))
 		/* TRANSLATORS: The next four messages are prompts. */
 		msg = _("Command to execute in new buffer");
@@ -1076,7 +1074,7 @@ void do_insertfile(void)
 	} else
 #endif /* NANO_TINY */
 	{
-#ifndef DISABLE_MULTIBUFFER
+#ifdef ENABLE_MULTIBUFFER
 	    if (ISSET(MULTIBUFFER))
 		msg = _("File to insert into new buffer [from %s]");
 	    else
@@ -1108,14 +1106,13 @@ void do_insertfile(void)
 	} else {
 	    ssize_t was_current_lineno = openfile->current->lineno;
 	    size_t was_current_x = openfile->current_x;
-#if !defined(NANO_TINY) || !defined(DISABLE_BROWSER)
+#if !defined(NANO_TINY) || defined(ENABLE_BROWSER) || defined(ENABLE_MULTIBUFFER)
 	    functionptrtype func = func_from_key(&i);
 #endif
 	    given = mallocstrcpy(given, answer);
 
-#ifndef NANO_TINY
-#ifndef DISABLE_MULTIBUFFER
-	    if (func == new_buffer_void) {
+#ifdef ENABLE_MULTIBUFFER
+	    if (func == flip_newbuffer) {
 		/* Don't allow toggling when in view mode. */
 		if (!ISSET(VIEW_MODE))
 		    TOGGLE(MULTIBUFFER);
@@ -1124,13 +1121,13 @@ void do_insertfile(void)
 		continue;
 	    }
 #endif
-	    if (func == flip_execute_void) {
+#ifndef NANO_TINY
+	    if (func == flip_execute) {
 		execute = !execute;
 		continue;
 	    }
-#endif /* !NANO_TINY */
-
-#ifndef DISABLE_BROWSER
+#endif
+#ifdef ENABLE_BROWSER
 	    if (func == to_files_void) {
 		char *chosen = do_browse_from(answer);
 
@@ -1149,7 +1146,7 @@ void do_insertfile(void)
 
 #ifndef NANO_TINY
 	    if (execute) {
-#ifndef DISABLE_MULTIBUFFER
+#ifdef ENABLE_MULTIBUFFER
 		/* When in multibuffer mode, first open a blank buffer. */
 		if (ISSET(MULTIBUFFER))
 		    open_buffer("", FALSE);
@@ -1157,7 +1154,7 @@ void do_insertfile(void)
 		/* Save the command's output in the current buffer. */
 		execute_command(answer);
 
-#ifndef DISABLE_MULTIBUFFER
+#ifdef ENABLE_MULTIBUFFER
 		/* If this is a new buffer, put the cursor at the top. */
 		if (ISSET(MULTIBUFFER)) {
 		    openfile->current = openfile->fileage;
@@ -1178,7 +1175,7 @@ void do_insertfile(void)
 		open_buffer(answer, TRUE);
 	    }
 
-#ifndef DISABLE_MULTIBUFFER
+#ifdef ENABLE_MULTIBUFFER
 	    if (ISSET(MULTIBUFFER)) {
 #ifndef DISABLE_HISTORIES
 		if (ISSET(POS_HISTORY)) {
@@ -1191,17 +1188,17 @@ void do_insertfile(void)
 		}
 #endif /* !DISABLE_HISTORIES */
 		/* Update stuff to account for the current buffer. */
-		display_buffer();
+		prepare_for_display();
 	    } else
-#endif /* !DISABLE_MULTIBUFFER */
+#endif /* ENABLE_MULTIBUFFER */
 	    {
 		/* Mark the file as modified if it changed. */
 		if (openfile->current->lineno != was_current_lineno ||
 			openfile->current_x != was_current_x)
 		    set_modified();
 
-		/* Update the cursor position to account for inserted lines. */
-		reset_cursor();
+		/* Update current_y to account for inserted lines. */
+		place_the_cursor(TRUE);
 
 		refresh_needed = TRUE;
 	    }
@@ -1218,7 +1215,7 @@ void do_insertfile_void(void)
 {
     if (ISSET(RESTRICTED))
 	show_restricted_warning();
-#ifndef DISABLE_MULTIBUFFER
+#ifdef ENABLE_MULTIBUFFER
     else if (ISSET(VIEW_MODE) && !ISSET(MULTIBUFFER))
 	statusbar(_("Key invalid in non-multibuffer mode"));
 #endif
@@ -2049,7 +2046,7 @@ bool write_marked_file(const char *name, FILE *f_open, bool tmp,
     filestruct *top, *bot;
     size_t top_x, bot_x;
 
-    /* Partition the filestruct so that it contains only the marked text. */
+    /* Partition the buffer so that it contains only the marked text. */
     mark_order((const filestruct **)&top, &top_x,
 		(const filestruct **)&bot, &bot_x, NULL);
     filepart = partition_filestruct(top, top_x, bot, bot_x);
@@ -2067,7 +2064,7 @@ bool write_marked_file(const char *name, FILE *f_open, bool tmp,
     if (added_magicline)
 	remove_magicline();
 
-    /* Unpartition the filestruct so that it contains all the text again. */
+    /* Unpartition the buffer so that it contains all the text again. */
     unpartition_filestruct(&filepart);
 
     if (old_modified)
@@ -2130,11 +2127,12 @@ int do_writeout(bool exiting)
 	    msg = (method == PREPEND) ? _("Prepend Selection to File") :
 			(method == APPEND) ? _("Append Selection to File") :
 			_("Write Selection to File");
+	else if (method != OVERWRITE)
+	    msg = (method == PREPEND) ? _("File Name to Prepend to") :
+					_("File Name to Append to");
 	else
 #endif /* !NANO_TINY */
-	    msg = (method == PREPEND) ? _("File Name to Prepend to") :
-			(method == APPEND) ? _("File Name to Append to") :
-			_("File Name to Write");
+	    msg = _("File Name to Write");
 
 	present_path = mallocstrcpy(present_path, "./");
 
@@ -2159,24 +2157,15 @@ int do_writeout(bool exiting)
 	} else {
 	    functionptrtype func = func_from_key(&i);
 
-	    /* Upon request, abandon the buffer, if user is sure. */
+	    /* Upon request, abandon the buffer. */
 	    if (func == discard_buffer) {
-		if (openfile->modified)
-		    i = do_yesno_prompt(FALSE,
-				_("Save modified buffer anyway? "));
-		else
-		    i = 0;
-
-		if (i == 0) {
-		    free(given);
-		    return 2;	/* Yes, discard the buffer. */
-		} else
-		    continue;	/* Go back to the filename prompt. */
+		free(given);
+		return 2;
 	    }
 
 	    given = mallocstrcpy(given, answer);
 
-#ifndef DISABLE_BROWSER
+#ifdef ENABLE_BROWSER
 	    if (func == to_files_void) {
 		char *chosen = do_browse_from(answer);
 
@@ -2187,7 +2176,7 @@ int do_writeout(bool exiting)
 		free(answer);
 		answer = chosen;
 	    } else
-#endif /* !DISABLE_BROWSER */
+#endif
 #ifndef NANO_TINY
 	    if (func == dos_format_void) {
 		openfile->fmt = (openfile->fmt == DOS_FILE) ? NIX_FILE :
@@ -2200,15 +2189,15 @@ int do_writeout(bool exiting)
 	    } else if (func == backup_file_void) {
 		TOGGLE(BACKUP_FILE);
 		continue;
-	    } else
-#endif /* !NANO_TINY */
-	    if (func == prepend_void) {
+	    } else if (func == prepend_void) {
 		method = (method == PREPEND) ? OVERWRITE : PREPEND;
 		continue;
 	    } else if (func == append_void) {
 		method = (method == APPEND) ? OVERWRITE : APPEND;
 		continue;
-	    } else if (func == do_help_void) {
+	    } else
+#endif /* !NANO_TINY */
+	    if (func == do_help_void) {
 		continue;
 	    }
 
@@ -2388,7 +2377,7 @@ char *real_dir_from_tilde(const char *buf)
     return retval;
 }
 
-#if !defined(DISABLE_TABCOMP) || !defined(DISABLE_BROWSER)
+#if defined(ENABLE_TABCOMP) || defined(ENABLE_BROWSER)
 /* Our sort routine for file listings.  Sort alphabetically and
  * case-insensitively, and sort directories before filenames. */
 int diralphasort(const void *va, const void *vb)
@@ -2425,7 +2414,7 @@ void free_chararray(char **array, size_t len)
 }
 #endif
 
-#ifndef DISABLE_TABCOMP
+#ifdef ENABLE_TABCOMP
 /* Is the given path a directory? */
 bool is_dir(const char *buf)
 {
@@ -2749,7 +2738,7 @@ char *input_tab(char *buf, bool allow_files, size_t *place,
 
     return buf;
 }
-#endif /* !DISABLE_TABCOMP */
+#endif /* ENABLE_TABCOMP */
 
 /* Return the filename part of the given path. */
 const char *tail(const char *path)
@@ -3005,7 +2994,7 @@ void update_poshistory(char *filename, ssize_t lineno, ssize_t xpos)
     poshiststruct *posptr, *theone, *posprev = NULL;
     char *fullpath = get_full_path(filename);
 
-    if (fullpath == NULL || fullpath[strlen(fullpath) - 1] == '/') {
+    if (fullpath == NULL || fullpath[strlen(fullpath) - 1] == '/' || inhelp) {
 	free(fullpath);
 	return;
     }
@@ -3077,7 +3066,7 @@ bool has_old_position(const char *file, ssize_t *line, ssize_t *column)
     free(fullpath);
 
     if (posptr == NULL)
-        return FALSE;
+	return FALSE;
 
     *line = posptr->lineno;
     *column = posptr->xno;

@@ -1,4 +1,4 @@
-# serial 21
+# serial 23
 
 # Copyright (C) 2001-2003, 2005, 2007, 2009-2017 Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
@@ -9,9 +9,10 @@ dnl From Jim Meyering.
 
 AC_DEFUN([gl_FUNC_GETTIMEOFDAY],
 [
-  AC_REQUIRE([AC_C_RESTRICT])
-  AC_REQUIRE([gl_HEADER_SYS_TIME_H])
   AC_REQUIRE([gl_HEADER_SYS_TIME_H_DEFAULTS])
+  AC_REQUIRE([AC_C_RESTRICT])
+  AC_REQUIRE([AC_CANONICAL_HOST])
+  AC_REQUIRE([gl_HEADER_SYS_TIME_H])
   AC_CHECK_FUNCS_ONCE([gettimeofday])
 
   gl_gettimeofday_timezone=void
@@ -54,19 +55,11 @@ int gettimeofday (struct timeval *restrict, struct timezone *restrict);
     if test $REPLACE_STRUCT_TIMEVAL = 1; then
       REPLACE_GETTIMEOFDAY=1
     fi
-    m4_ifdef([gl_FUNC_TZSET_CLOBBER], [
-      gl_FUNC_TZSET_CLOBBER
-      case "$gl_cv_func_tzset_clobber" in
-        *yes)
-          REPLACE_GETTIMEOFDAY=1
-          gl_GETTIMEOFDAY_REPLACE_LOCALTIME
-          AC_DEFINE([tzset], [rpl_tzset],
-            [Define to rpl_tzset if the wrapper function should be used.])
-          AC_DEFINE([TZSET_CLOBBERS_LOCALTIME], [1],
-            [Define if tzset clobbers localtime's static buffer.])
-          ;;
-      esac
-    ])
+    dnl On mingw, the original gettimeofday has only a precision of 15.6
+    dnl milliseconds. So override it.
+    case "$host_os" in
+      mingw*) REPLACE_GETTIMEOFDAY=1 ;;
+    esac
   fi
   AC_DEFINE_UNQUOTED([GETTIMEOFDAY_TIMEZONE], [$gl_gettimeofday_timezone],
     [Define this to 'void' or 'struct timezone' to match the system's
@@ -85,6 +78,7 @@ AC_DEFUN([gl_FUNC_GETTIMEOFDAY_CLOBBER],
 [
  AC_REQUIRE([gl_HEADER_SYS_TIME_H])
  AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
+ AC_REQUIRE([gl_LOCALTIME_BUFFER_DEFAULTS])
 
  AC_CACHE_CHECK([whether gettimeofday clobbers localtime buffer],
   [gl_cv_func_gettimeofday_clobber],
@@ -119,20 +113,12 @@ AC_DEFUN([gl_FUNC_GETTIMEOFDAY_CLOBBER],
  case "$gl_cv_func_gettimeofday_clobber" in
    *yes)
      REPLACE_GETTIMEOFDAY=1
-     gl_GETTIMEOFDAY_REPLACE_LOCALTIME
      AC_DEFINE([GETTIMEOFDAY_CLOBBERS_LOCALTIME], [1],
        [Define if gettimeofday clobbers the localtime buffer.])
+     gl_LOCALTIME_BUFFER_NEEDED
      ;;
  esac
 ])
 
-AC_DEFUN([gl_GETTIMEOFDAY_REPLACE_LOCALTIME], [
-  REPLACE_GMTIME=1
-  REPLACE_LOCALTIME=1
-])
-
 # Prerequisites of lib/gettimeofday.c.
-AC_DEFUN([gl_PREREQ_GETTIMEOFDAY], [
-  AC_CHECK_HEADERS([sys/timeb.h])
-  AC_CHECK_FUNCS([_ftime])
-])
+AC_DEFUN([gl_PREREQ_GETTIMEOFDAY], [:])

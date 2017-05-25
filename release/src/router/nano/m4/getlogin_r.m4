@@ -1,4 +1,4 @@
-#serial 11
+#serial 12
 
 # Copyright (C) 2005-2007, 2009-2017 Free Software Foundation, Inc.
 #
@@ -30,8 +30,8 @@ AC_DEFUN([gl_FUNC_GETLOGIN_R],
     HAVE_GETLOGIN_R=0
   else
     HAVE_GETLOGIN_R=1
-    dnl On OSF/1 5.1, getlogin_r returns a truncated result if the buffer is
-    dnl not large enough.
+    dnl On Mac OS X 10.12 and OSF/1 5.1, getlogin_r returns a truncated result
+    dnl if the buffer is not large enough.
     AC_REQUIRE([AC_CANONICAL_HOST])
     AC_CACHE_CHECK([whether getlogin_r works with small buffers],
       [gl_cv_func_getlogin_r_works],
@@ -39,15 +39,16 @@ AC_DEFUN([gl_FUNC_GETLOGIN_R],
         dnl Initial guess, used when cross-compiling.
 changequote(,)dnl
         case "$host_os" in
-                # Guess no on OSF/1.
-          osf*) gl_cv_func_getlogin_r_works="guessing no" ;;
-                # Guess yes otherwise.
-          *)    gl_cv_func_getlogin_r_works="guessing yes" ;;
+                          # Guess no on Mac OS X, OSF/1.
+          darwin* | osf*) gl_cv_func_getlogin_r_works="guessing no" ;;
+                          # Guess yes otherwise.
+          *)              gl_cv_func_getlogin_r_works="guessing yes" ;;
         esac
 changequote([,])dnl
         AC_RUN_IFELSE(
           [AC_LANG_SOURCE([[
 #include <stddef.h>
+#include <string.h>
 #include <unistd.h>
 #if !HAVE_DECL_GETLOGIN_R
 extern
@@ -63,16 +64,19 @@ main (void)
   char buf[100];
 
   if (getlogin_r (buf, 0) == 0)
-    result |= 16;
+    result |= 1;
   if (getlogin_r (buf, 1) == 0)
-    result |= 17;
+    result |= 2;
+  if (getlogin_r (buf, 100) == 0)
+    {
+      size_t n = strlen (buf);
+      if (getlogin_r (buf, n) == 0)
+        result |= 4;
+    }
   return result;
 }]])],
           [gl_cv_func_getlogin_r_works=yes],
-          [case $? in
-             16 | 17) gl_cv_func_getlogin_r_works=no ;;
-           esac
-          ],
+          [gl_cv_func_getlogin_r_works=no],
           [:])
       ])
     case "$gl_cv_func_getlogin_r_works" in

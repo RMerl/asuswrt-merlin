@@ -46,7 +46,7 @@
 /* Define as the word index where to find the sign of 'double'. */
 #undef DBL_SIGNBIT_WORD
 
-/* Define this to enable debug messages and assert warnings. */
+/* Define this to enable debug messages and abortion on failing asserts. */
 #undef DEBUG
 
 /* the name of the file descriptor member of DIR */
@@ -59,17 +59,11 @@
 #endif
 
 
-/* Define this to disable the built-in file browser. */
-#undef DISABLE_BROWSER
-
 /* Define this to disable syntax highlighting. */
 #undef DISABLE_COLOR
 
 /* Define this to disable extra stuff. */
 #undef DISABLE_EXTRA
-
-/* Define this to disable the help text display. */
-#undef DISABLE_HELP
 
 /* Define this to disable search and position histories. */
 #undef DISABLE_HISTORIES
@@ -77,46 +71,51 @@
 /* Define this to disable the justify routines. */
 #undef DISABLE_JUSTIFY
 
-/* Define this to disable the mouse support. */
-#undef DISABLE_MOUSE
-
-/* Define this to disable multiple file buffers. */
-#undef DISABLE_MULTIBUFFER
-
-/* Define this to disable the use of .nanorc files. */
-#undef DISABLE_NANORC
-
-/* Define this to disable the setting of the operating directory (chroot of
+/* Define this to disable the setting of an operating directory (a chroot of
    sorts). */
 #undef DISABLE_OPERATINGDIR
 
 /* Define this to disable text wrapping as root by default. */
 #undef DISABLE_ROOTWRAPPING
 
-/* Define this to disable the spell checker functions. */
+/* Define this to disable the spell-checker functions. */
 #undef DISABLE_SPELLER
-
-/* Define this to disable the tab completion functions for files and search
-   strings. */
-#undef DISABLE_TABCOMP
 
 /* Define this to disable all text wrapping. */
 #undef DISABLE_WRAPPING
 
+/* Define this to enable the built-in file browser. */
+#undef ENABLE_BROWSER
+
 /* Define this to enable the comment/uncomment function. */
 #undef ENABLE_COMMENT
 
+/* Define this to enable the Ctrl+G help texts. */
+#undef ENABLE_HELP
+
 /* Define this to enable line numbering. */
 #undef ENABLE_LINENUMBERS
+
+/* Define this to enable mouse support. */
+#undef ENABLE_MOUSE
+
+/* Define this to enable multiple file buffers. */
+#undef ENABLE_MULTIBUFFER
+
+/* Define this to enable the use of .nanorc files. */
+#undef ENABLE_NANORC
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
 #undef ENABLE_NLS
 
+/* Define this to have tab completion for filenames and search strings. */
+#undef ENABLE_TABCOMP
+
 /* Define this if your system has sufficient UTF-8 support. */
 #undef ENABLE_UTF8
 
-/* Define this to enable the word completion function. */
+/* Define this to enable the word-completion function. */
 #undef ENABLE_WORDCOMPLETION
 
 /* Define to nothing if C supports flexible array members, and to 1 if it does
@@ -161,6 +160,10 @@
 /* Define to a C preprocessor expression that evaluates to 1 or 0, depending
    whether the gnulib module lock shall be considered present. */
 #undef GNULIB_LOCK
+
+/* Define to a C preprocessor expression that evaluates to 1 or 0, depending
+   whether the gnulib module msvc-nothrow shall be considered present. */
+#undef GNULIB_MSVC_NOTHROW
 
 /* Define to 1 if printf and friends should be labeled with attribute
    "__gnu_printf__" instead of "__printf__" */
@@ -270,6 +273,9 @@
 /* Define to 1 when the gnulib module strnlen should be tested. */
 #undef GNULIB_TEST_STRNLEN
 
+/* Define to 1 when the gnulib module utime should be tested. */
+#undef GNULIB_TEST_UTIME
+
 /* Define to 1 when the gnulib module vsnprintf should be tested. */
 #undef GNULIB_TEST_VSNPRINTF
 
@@ -325,6 +331,9 @@
    libc. */
 #undef HAVE_COPYSIGN_IN_LIBC
 
+/* Define to 1 if you have the <crtdefs.h> header file. */
+#undef HAVE_CRTDEFS_H
+
 /* Define to 1 if you have the <curses.h> header file. */
 #undef HAVE_CURSES_H
 
@@ -359,10 +368,6 @@
 /* Define to 1 if you have the declaration of `getdelim', and to 0 if you
    don't. */
 #undef HAVE_DECL_GETDELIM
-
-/* Define to 1 if you have the declaration of `getenv', and to 0 if you don't.
-   */
-#undef HAVE_DECL_GETENV
 
 /* Define to 1 if you have the declaration of `getline', and to 0 if you
    don't. */
@@ -525,7 +530,7 @@
 /* Define to 1 if you have the `iswpunct' function. */
 #undef HAVE_ISWPUNCT
 
-/* Define this if your curses library has the key_defined() command. */
+/* Define this if your curses library has the key_defined() function. */
 #undef HAVE_KEY_DEFINED
 
 /* Define if you have <langinfo.h> and nl_langinfo(CODESET). */
@@ -1330,6 +1335,9 @@
 /* Define to 1 if trunc is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_TRUNC
 
+/* Define to 1 if truncate is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_TRUNCATE
+
 /* Define to 1 if truncf is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_TRUNCF
 
@@ -1353,6 +1361,9 @@
 
 /* Define to 1 if usleep is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_USLEEP
+
+/* Define to 1 if utime is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_UTIME
 
 /* Define to 1 if utimensat is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_UTIMENSAT
@@ -1398,6 +1409,9 @@
 
 /* Define to 1 if wcsdup is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_WCSDUP
+
+/* Define to 1 if wcsftime is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_WCSFTIME
 
 /* Define to 1 if wcslen is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_WCSLEN
@@ -1574,10 +1588,6 @@
 /* Define to 1 if `st_birthtim.tv_nsec' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_BIRTHTIM_TV_NSEC
 
-/* Define if struct utimbuf is declared -- usually in <utime.h>. Some systems
-   have utime.h but don't declare the struct anywhere. */
-#undef HAVE_STRUCT_UTIMBUF
-
 /* Define to 1 if you have the `symlink' function. */
 #undef HAVE_SYMLINK
 
@@ -1602,9 +1612,6 @@
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
-/* Define to 1 if you have the <sys/timeb.h> header file. */
-#undef HAVE_SYS_TIMEB_H
-
 /* Define to 1 if you have the <sys/time.h> header file. */
 #undef HAVE_SYS_TIME_H
 
@@ -1626,8 +1633,12 @@
 /* Define to 1 if the system has the type 'unsigned long long int'. */
 #undef HAVE_UNSIGNED_LONG_LONG_INT
 
-/* Define this if your curses library has the use_default_colors() command. */
+/* Define this if your curses library has the use_default_colors() function.
+   */
 #undef HAVE_USE_DEFAULT_COLORS
+
+/* Define to 1 if you have the `utime' function. */
+#undef HAVE_UTIME
 
 /* Define to 1 if you have the `utimensat' function. */
 #undef HAVE_UTIMENSAT
@@ -1697,9 +1708,6 @@
 
 /* Define to 1 if the system has the type `_Bool'. */
 #undef HAVE__BOOL
-
-/* Define to 1 if you have the `_ftime' function. */
-#undef HAVE__FTIME
 
 /* Define to 1 if you have the `_set_invalid_parameter_handler' function. */
 #undef HAVE__SET_INVALID_PARAMETER_HANDLER
@@ -1817,7 +1825,7 @@
    large precisions without arbitrary bounds. */
 #undef NEED_PRINTF_UNBOUNDED_PRECISION
 
-/* Define this if you need the _XOPEN_SOURCE_EXTENDED macro for color support
+/* Define this if you need the _XOPEN_SOURCE_EXTENDED macro for color support.
    */
 #undef NEED_XOPEN_SOURCE_EXTENDED
 
@@ -1856,15 +1864,11 @@
 #undef RCFILE_NAME
 
 /* Define this if you know your curses library allows LINES and COLS to be
-   redefined to deal with a resizing bug */
+   redefined to deal with a resizing bug. */
 #undef REDEFINING_MACROS_OK
 
 /* Define to 1 if gnulib's dirfd() replacement is used. */
 #undef REPLACE_DIRFD
-
-/* Define to 1 if stat needs help when passed a directory name with a trailing
-   slash */
-#undef REPLACE_FUNC_STAT_DIR
 
 /* Define to 1 if stat needs help when passed a file name with a trailing
    slash */
@@ -2027,10 +2031,6 @@
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
-
-/* Define to 1 if Gnulib overrides 'struct stat' on Windows so that struct
-   stat.st_size becomes 64-bit. */
-#undef _GL_WINDOWS_64_BIT_ST_SIZE
 
 /* Define for large files, on AIX-style hosts. */
 #undef _LARGE_FILES

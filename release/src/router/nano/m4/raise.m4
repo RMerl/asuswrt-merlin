@@ -1,4 +1,4 @@
-# raise.m4 serial 3
+# raise.m4 serial 4
 dnl Copyright (C) 2011-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -8,14 +8,16 @@ AC_DEFUN([gl_FUNC_RAISE],
 [
   AC_REQUIRE([gl_SIGNAL_H_DEFAULTS])
   AC_REQUIRE([AC_CANONICAL_HOST])
-  AC_REQUIRE([gl_MSVC_INVAL])
   AC_CHECK_FUNCS([raise])
   if test $ac_cv_func_raise = no; then
     HAVE_RAISE=0
   else
-    if test $HAVE_MSVC_INVALID_PARAMETER_HANDLER = 1; then
-      REPLACE_RAISE=1
-    fi
+    m4_ifdef([gl_MSVC_INVAL], [
+      AC_REQUIRE([gl_MSVC_INVAL])
+      if test $HAVE_MSVC_INVALID_PARAMETER_HANDLER = 1; then
+        REPLACE_RAISE=1
+      fi
+    ])
     m4_ifdef([gl_SIGNALBLOCKING], [
       gl_SIGNALBLOCKING
       if test $HAVE_POSIX_SIGNALBLOCKING = 0; then

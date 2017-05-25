@@ -1,4 +1,4 @@
-# sys_stat_h.m4 serial 28   -*- Autoconf -*-
+# sys_stat_h.m4 serial 31   -*- Autoconf -*-
 dnl Copyright (C) 2006-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -19,18 +19,21 @@ AC_DEFUN([gl_HEADER_SYS_STAT_H],
   dnl Ensure the type mode_t gets defined.
   AC_REQUIRE([AC_TYPE_MODE_T])
 
-  dnl Whether to override 'struct stat'.
+  dnl Whether to enable precise timestamps in 'struct stat'.
+  m4_ifdef([gl_WINDOWS_STAT_TIMESPEC], [
+    AC_REQUIRE([gl_WINDOWS_STAT_TIMESPEC])
+  ], [
+    WINDOWS_STAT_TIMESPEC=0
+  ])
+  AC_SUBST([WINDOWS_STAT_TIMESPEC])
+
+  dnl Whether to ensure that struct stat.st_size is 64-bit wide.
   m4_ifdef([gl_LARGEFILE], [
     AC_REQUIRE([gl_LARGEFILE])
   ], [
     WINDOWS_64_BIT_ST_SIZE=0
   ])
   AC_SUBST([WINDOWS_64_BIT_ST_SIZE])
-  if test $WINDOWS_64_BIT_ST_SIZE = 1; then
-    AC_DEFINE([_GL_WINDOWS_64_BIT_ST_SIZE], [1],
-      [Define to 1 if Gnulib overrides 'struct stat' on Windows so that
-       struct stat.st_size becomes 64-bit.])
-  fi
 
   dnl Define types that are supposed to be defined in <sys/types.h> or
   dnl <sys/stat.h>.
@@ -72,6 +75,7 @@ AC_DEFUN([gl_SYS_STAT_H_DEFAULTS],
   GNULIB_MKNODAT=0;     AC_SUBST([GNULIB_MKNODAT])
   GNULIB_STAT=0;        AC_SUBST([GNULIB_STAT])
   GNULIB_UTIMENSAT=0;   AC_SUBST([GNULIB_UTIMENSAT])
+  GNULIB_OVERRIDES_STRUCT_STAT=0; AC_SUBST([GNULIB_OVERRIDES_STRUCT_STAT])
   dnl Assume proper GNU behavior unless another module says otherwise.
   HAVE_FCHMODAT=1;      AC_SUBST([HAVE_FCHMODAT])
   HAVE_FSTATAT=1;       AC_SUBST([HAVE_FSTATAT])

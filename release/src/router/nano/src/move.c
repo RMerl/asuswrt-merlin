@@ -55,7 +55,7 @@ void get_edge_and_target(size_t *leftedge, size_t *target_column)
     if (ISSET(SOFTWRAP)) {
 	size_t realspan = strlenpt(openfile->current->data);
 
-	if (openfile->placewewant < realspan)
+	if (realspan > openfile->placewewant)
 	    realspan = openfile->placewewant;
 
 	*leftedge = (realspan / editwincols) * editwincols;
@@ -133,10 +133,9 @@ void do_page_down(void)
 }
 
 #ifndef DISABLE_JUSTIFY
-/* Move up to the beginning of the last beginning-of-paragraph line
- * before the current line.  If allow_update is TRUE, update the screen
- * afterwards. */
-void do_para_begin(bool allow_update)
+/* Move to the beginning of the last beginning-of-paragraph line before the
+ * current line.  If update_screen is TRUE, update the screen afterwards. */
+void do_para_begin(bool update_screen)
 {
     filestruct *was_current = openfile->current;
 
@@ -148,7 +147,7 @@ void do_para_begin(bool allow_update)
 
     openfile->current_x = 0;
 
-    if (allow_update)
+    if (update_screen)
 	edit_redraw(was_current);
 }
 
@@ -160,11 +159,11 @@ void do_para_begin_void(void)
 
 /* Move down to the beginning of the last line of the current paragraph.
  * Then move down one line farther if there is such a line, or to the
- * end of the current line if not.  If allow_update is TRUE, update the
+ * end of the current line if not.  If update_screen is TRUE, update the
  * screen afterwards.  A line is the last line of a paragraph if it is
  * in a paragraph, and the next line either is the beginning line of a
  * paragraph or isn't in a paragraph. */
-void do_para_end(bool allow_update)
+void do_para_end(bool update_screen)
 {
     filestruct *was_current = openfile->current;
 
@@ -184,7 +183,7 @@ void do_para_end(bool allow_update)
     } else
 	openfile->current_x = strlen(openfile->current->data);
 
-    if (allow_update)
+    if (update_screen)
 	edit_redraw(was_current);
 }
 
@@ -236,9 +235,9 @@ void do_next_block(void)
 }
 
 /* Move to the previous word in the file.  If allow_punct is TRUE, treat
- * punctuation as part of a word.  If allow_update is TRUE, update the
+ * punctuation as part of a word.  If update_screen is TRUE, update the
  * screen afterwards. */
-void do_prev_word(bool allow_punct, bool allow_update)
+void do_prev_word(bool allow_punct, bool update_screen)
 {
     filestruct *was_current = openfile->current;
     bool seen_a_word = FALSE, step_forward = FALSE;
@@ -275,8 +274,7 @@ void do_prev_word(bool allow_punct, bool allow_update)
 	openfile->current_x = move_mbright(openfile->current->data,
 						openfile->current_x);
 
-    /* If allow_update is TRUE, update the screen. */
-    if (allow_update) {
+    if (update_screen) {
 	focusing = FALSE;
 	edit_redraw(was_current);
     }
@@ -290,10 +288,10 @@ void do_prev_word_void(void)
 }
 
 /* Move to the next word in the file.  If allow_punct is TRUE, treat
- * punctuation as part of a word.  If allow_update is TRUE, update the
+ * punctuation as part of a word.  If update_screen is TRUE, update the
  * screen afterwards.  Return TRUE if we started on a word, and FALSE
  * otherwise. */
-bool do_next_word(bool allow_punct, bool allow_update)
+bool do_next_word(bool allow_punct, bool update_screen)
 {
     filestruct *was_current = openfile->current;
     bool started_on_word = is_word_mbchar(openfile->current->data +
@@ -325,8 +323,7 @@ bool do_next_word(bool allow_punct, bool allow_update)
 	    break;
     }
 
-    /* If allow_update is TRUE, update the screen. */
-    if (allow_update) {
+    if (update_screen) {
 	focusing = FALSE;
 	edit_redraw(was_current);
     }

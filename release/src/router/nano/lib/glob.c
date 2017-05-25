@@ -726,6 +726,8 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
                       pwtmpbuf = malloc (pwbuflen);
                       if (pwtmpbuf == NULL)
                         {
+                          if (__glibc_unlikely (malloc_name))
+                            free (name);
                           retval = GLOB_NOSPACE;
                           goto out;
                         }
@@ -754,6 +756,8 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
                           if (newp == NULL)
                             {
                               free (malloc_pwtmpbuf);
+                              if (__glibc_unlikely (malloc_name))
+                                free (name);
                               retval = GLOB_NOSPACE;
                               goto out;
                             }
@@ -801,10 +805,10 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
             }
           if (home_dir == NULL || home_dir[0] == '\0')
             {
+              if (__glibc_unlikely (malloc_home_dir))
+                free (home_dir);
               if (flags & GLOB_TILDE_CHECK)
                 {
-                  if (__glibc_unlikely (malloc_home_dir))
-                    free (home_dir);
                   retval = GLOB_NOMATCH;
                   goto out;
                 }
@@ -1084,9 +1088,14 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
             }
           else
             {
-              pglob->gl_pathv[newcount] = strdup (dirname);
-              if (pglob->gl_pathv[newcount] == NULL)
-                goto nospace;
+              if (__glibc_unlikely (malloc_dirname))
+                pglob->gl_pathv[newcount] = dirname;
+              else
+                {
+                  pglob->gl_pathv[newcount] = strdup (dirname);
+                  if (pglob->gl_pathv[newcount] == NULL)
+                    goto nospace;
+                }
             }
           pglob->gl_pathv[++newcount] = NULL;
           ++pglob->gl_pathc;

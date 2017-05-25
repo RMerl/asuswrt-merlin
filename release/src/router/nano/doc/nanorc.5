@@ -16,7 +16,7 @@
 .\"   Documentation License along with this program.  If not, see
 .\"   <http://www.gnu.org/licenses/>.
 .\"
-.TH NANORC 5 "version 2.8.1" "April 2017"
+.TH NANORC 5 "version 2.8.4" "May 2017"
 .\" Please adjust this date whenever revising the manpage.
 
 .SH NAME
@@ -75,8 +75,9 @@ Do backwards searches by default.
 .TP
 .B set boldtext
 Use bold instead of reverse video for the titlebar, statusbar, key combos,
-and selected text.  This can be overridden for the first three by setting
-the options \fBtitlecolor\fP, \fBstatuscolor\fP, and \fBkeycolor\fP.
+line numbers, and selected text.  This can be overridden for the first four
+by setting the options \fBtitlecolor\fP, \fBstatuscolor\fP, \fBkeycolor\fP,
+and \fBnumbercolor\fP.
 .TP
 .B set brackets "\fIstring\fP"
 Set the characters treated as closing brackets when justifying
@@ -288,14 +289,14 @@ good fit for a small editor like \fBnano\fR.
 A separate syntax can be defined for each kind of file
 via the following commands:
 .TP
-.BR syntax " ""\fIstr\fR"" [""\fIfileregex\fR"" ...]"
-Defines a syntax named \fIstr\fP which can be activated via the
+.BR syntax " ""\fIname\fR"" [""\fIfileregex\fR"" ...]"
+Defines a syntax named \fIname\fP which can be activated via the
 .BR \-Y / \-\-syntax
 command-line option, or will be automatically activated if
 the current filename matches the extended regular expression
 \fIfileregex\fP.  All subsequent \fBcolor\fR, \fBicolor\fR,
 \fBheader\fR and other such statements will apply to this
-\fIstr\fP syntax until a new \fBsyntax\fR command is encountered.
+\fIname\fP syntax until a new \fBsyntax\fR command is encountered.
 
 The \fBnone\fP syntax is reserved; specifying it on the command line is
 the same as not having a syntax at all.  The \fBdefault\fP syntax is
@@ -345,32 +346,33 @@ foreground.  If your terminal supports transparency, not specifying a
 background.
 .TP
 .B icolor \fIfgcolor\fR,\fIbgcolor\fR """\fIregex\fR""" ...
-Same as above, except that the text matching is case insensitive.
+Same as above, except that the matching is case insensitive.
 .TP
-.BR color " \fIfgcolor\fR,\fIbgcolor\fR " start= """\fIsr\fR"" " end= """\fIer\fR""
+.BR color " \fIfgcolor\fR,\fIbgcolor\fR " start= """\fIfromrx\fR"" " end= """\fItorx\fR""
 Display all pieces of text whose start matches extended regular expression
-\fIsr\fP and whose end matches extended regular expression \fIer\fP with
+\fIfromrx\fP and whose end matches extended regular expression \fItorx\fP with
 foreground color \fIfgcolor\fP and background color \fIbgcolor\fP,
 at least one of which must be specified.  This means that, after an
-initial instance of \fIsr\fP, all text will be highlighted until the
-first instance of \fIer\fP.  This allows syntax highlighting to span
+initial instance of \fIfromrx\fP, all text until the first instance of
+\fItorx\fP will be colored.  This allows syntax highlighting to span
 multiple lines.
 .TP
-.BR icolor " \fIfgcolor\fR,\fIbgcolor\fR " start= """\fIsr\fR"" " end= """\fIer\fR""
-Same as above, except that the text matching is case insensitive.
+.BR icolor " \fIfgcolor\fR,\fIbgcolor\fR " start= """\fIfromrx\fR"" " end= """\fItorx\fR""
+Same as above, except that the matching is case insensitive.
 .TP
 .BR include " ""\fIsyntaxfile\fR"""
 Read in self-contained color syntaxes from \fIsyntaxfile\fP.  Note that
 \fIsyntaxfile\fP may contain only the above commands, from \fBsyntax\fP
 to \fBicolor\fP.
 .TP
-.BI extendsyntax " str directive " \fR[ "arg " \fR...]
-Extend the syntax previously defined as \fIstr\fP to include
-new information.  This allows you to add a new \fBcolor\fP, \fBicolor\fP,
-\fBheader\fP, \fBmagic\fP, \fBcomment\fP, \fBlinter\fP, or \fBformatter\fP directive
-to an already defined syntax -- useful when you want to
+.BI extendsyntax " name directive " \fR[ "arg " \fR...]
+Extend the syntax previously defined as \fIname\fP to include
+new information.  This allows adding a new \fBcolor\fP, \fBicolor\fP,
+\fBheader\fP, \fBmagic\fP, \fBcomment\fP, \fBlinter\fP, or \fBformatter\fP
+directive to an already defined syntax -- useful when you want to
 slightly improve a syntax defined in one of the system-installed
-files (which are normally not writable)
+files (which are normally not writable).
+
 .SH REBINDING KEYS
 Key bindings can be changed via the following two commands:
 .TP

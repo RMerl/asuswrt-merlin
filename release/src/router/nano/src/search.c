@@ -143,7 +143,8 @@ int search_init(bool replacing, bool use_answer)
 
     /* This is now one simple call.  It just does a lot. */
     i = do_prompt(FALSE, FALSE,
-		replacing ? MREPLACE : MWHEREIS, backupstring,
+		inhelp ? MFINDINHELP : (replacing ? MREPLACE : MWHEREIS),
+		backupstring,
 #ifndef DISABLE_HISTORIES
 		&search_history,
 #endif
@@ -201,7 +202,7 @@ int search_init(bool replacing, bool use_answer)
 	TOGGLE(USE_REGEXP);
 	backupstring = mallocstrcpy(backupstring, answer);
 	return 1;
-    } else if (func == do_replace || func == flip_replace_void) {
+    } else if (func == flip_replace) {
 	backupstring = mallocstrcpy(backupstring, answer);
 	return -2;	/* Call the opposite search function. */
     } else if (func == do_gotolinecolumn_void) {
@@ -437,7 +438,6 @@ void go_looking(void)
 {
     filestruct *was_current = openfile->current;
     size_t was_current_x = openfile->current_x;
-    int didfind;
 #ifdef DEBUG
     clock_t start = clock();
 #endif
@@ -883,6 +883,12 @@ void do_gotolinecolumn(ssize_t line, ssize_t column, bool use_answer,
     openfile->current_x = actual_x(openfile->current->data, column - 1);
     openfile->placewewant = column - 1;
 
+#ifndef NANO_TINY
+    if (ISSET(SOFTWRAP) && openfile->placewewant / editwincols >
+			strlenpt(openfile->current->data) / editwincols)
+	openfile->placewewant = strlenpt(openfile->current->data);
+#endif
+
     /* When the position was manually given, center the target line. */
     if (interactive) {
 	adjust_viewport(CENTERING);
@@ -1224,7 +1230,7 @@ void get_history_older_void(void)
     ;
 }
 
-#ifndef DISABLE_TABCOMP
+#ifdef ENABLE_TABCOMP
 /* Move h to the next string that's a tab completion of the string s,
  * looking at only the first len characters of s, and return that
  * string.  If there isn't one, or if len is 0, don't move h and return
@@ -1277,5 +1283,5 @@ char *get_history_completion(filestruct **h, char *s, size_t len)
      * match, or len is 0.  Return s. */
     return (char *)s;
 }
-#endif /* !DISABLE_TABCOMP */
+#endif /* ENSABLE_TABCOMP */
 #endif /* !DISABLE_HISTORIES */

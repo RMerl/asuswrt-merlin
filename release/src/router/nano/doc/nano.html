@@ -761,12 +761,12 @@ nanorc.  See See <a href="#Syntax-Highlighting">Syntax Highlighting</a>, for mor
 <dd><p>toggles the <code>-z</code> (<code>--suspend</code>) command-line option.
 </p>
 </dd>
-<dt><code>Soft Wrapping Toggle (Meta-$)</code></dt>
-<dd><p>toggles the <code>-$</code> (<code>--softwrap</code>) command-line option.
-</p>
-</dd>
 <dt><code>Line Numbers Toggle (Meta-#)</code></dt>
 <dd><p>toggles the <code>-l</code> (<code>--linenumbers</code>) command-line option.
+</p>
+</dd>
+<dt><code>Soft Wrapping Toggle (Meta-$)</code></dt>
+<dd><p>toggles the <code>-$</code> (<code>--softwrap</code>) command-line option.
 </p>
 </dd>
 </dl>
@@ -854,8 +854,9 @@ The uniquely numbered files are stored in the specified directory.
 </dd>
 <dt><code>set boldtext</code></dt>
 <dd><p>Use bold instead of reverse video for the titlebar, statusbar, key combos,
-and selected text.  This can be overridden for the first three by setting
-the options <code>titlecolor</code>, <code>statuscolor</code>, and <code>keycolor</code>.
+line numbers, and selected text.  This can be overridden for the first four
+by setting the options <code>titlecolor</code>, <code>statuscolor</code>, <code>keycolor</code>,
+and <code>numbercolor</code>.
 </p>
 </dd>
 <dt><code>set brackets &quot;<var>string</var>&quot;</code></dt>
@@ -1126,12 +1127,12 @@ good fit for a small editor like <code>nano</code>.
 via the following commands in a nanorc file:
 </p>
 <dl compact="compact">
-<dt><code>syntax &quot;str&quot; [&quot;fileregex&quot; &hellip;]</code></dt>
-<dd><p>Defines a syntax named &quot;str&quot; which can be activated via the <code>-Y/--syntax</code>
+<dt><code>syntax &quot;name&quot; [&quot;fileregex&quot; &hellip;]</code></dt>
+<dd><p>Defines a syntax named &quot;name&quot; which can be activated via the <code>-Y/--syntax</code>
 command-line option, or will be automatically activated if the current
 filename matches the extended regular expression &quot;fileregex&quot;.  All
 subsequent <code>color</code>, <code>icolor</code>, <code>header</code> and other such
-statements will apply to this &quot;str&quot; syntax until a new <code>syntax</code>
+statements will apply to this &quot;name&quot; syntax until a new <code>syntax</code>
 command is encountered.
 </p>
 <p>The &quot;none&quot; syntax is reserved; specifying it on the command line is the
@@ -1187,20 +1188,20 @@ to attempt to use a transparent background.
 </p>
 </dd>
 <dt><code>icolor fgcolor,bgcolor &quot;regex&quot; &hellip;</code></dt>
-<dd><p>Same as above, except that the text matching is case insensitive.
+<dd><p>Same as above, except that the matching is case insensitive.
 </p>
 </dd>
-<dt><code>color fgcolor,bgcolor start=&quot;sr&quot; end=&quot;er&quot;</code></dt>
+<dt><code>color fgcolor,bgcolor start=&quot;fromrx&quot; end=&quot;torx&quot;</code></dt>
 <dd><p>Display all pieces of text whose start matches extended regular expression
-&quot;sr&quot; and whose end matches extended regular expression &quot;er&quot; with foreground
-color &quot;fgcolor&quot; and background color &quot;bgcolor&quot;, at least one of which
-must be specified.  This means that, after an initial instance of &quot;sr&quot;,
-all text will be highlighted until the first instance of &quot;er&quot;.
+&quot;fromrx&quot; and whose end matches extended regular expression &quot;torx&quot; with
+foreground color &quot;fgcolor&quot; and background color &quot;bgcolor&quot;, at least one of
+which must be specified.  This means that, after an initial instance of
+&quot;fromrx&quot;, all text until the first instance of &quot;torx&quot; will be colored.
 This allows syntax highlighting to span multiple lines.
 </p>
 </dd>
-<dt><code>icolor fgcolor,bgcolor start=&quot;sr&quot; end=&quot;er&quot;</code></dt>
-<dd><p>Same as above, except that the text matching is case insensitive.
+<dt><code>icolor fgcolor,bgcolor start=&quot;fromrx&quot; end=&quot;torx&quot;</code></dt>
+<dd><p>Same as above, except that the matching is case insensitive.
 </p>
 </dd>
 <dt><code>include &quot;syntaxfile&quot;</code></dt>
@@ -1209,8 +1210,8 @@ This allows syntax highlighting to span multiple lines.
 to <code>icolor</code>.
 </p>
 </dd>
-<dt><code>extendsyntax str directive [arg &hellip;]</code></dt>
-<dd><p>Extend the syntax previously defined as str to include new information.
+<dt><code>extendsyntax name directive [arg &hellip;]</code></dt>
+<dd><p>Extend the syntax previously defined as &quot;name&quot; to include new information.
 This allows you to add a new <code>color</code>, <code>icolor</code>, <code>header</code>,
 <code>magic</code>, <code>comment</code>, <code>linter</code>, or <code>formatter</code> directive to an already
 defined syntax &mdash; useful when you want to slightly improve a syntax defined
@@ -1794,6 +1795,18 @@ when you close a file, and will place the cursor in that position
 again when you later reopen the file.
 </p>
 </dd>
+<dt><code>Current Cursor Position</code></dt>
+<dd><p>The output of the &quot;Display Cursor Position&quot; command (^C) displays
+not only the current line and character position of the cursor,
+but also (between the two) the current column position.
+</p>
+</dd>
+<dt><code>Spell Checking</code></dt>
+<dd><p>In the internal spell checker misspelled words are sorted alphabetically
+and trimmed for uniqueness, such that the words &rsquo;apple&rsquo; and &rsquo;Apple&rsquo; will
+be prompted for correction separately.
+</p>
+</dd>
 <dt><code>Writing Selected Text to Files</code></dt>
 <dd><p>When using the Write-Out key (^O), text that has been selected using the
 marking key (^^) can not just be written out to a new (or existing) file,
@@ -1827,18 +1840,6 @@ See the internal help function (^G) for a list of features that
 can be toggled.  Or see See <a href="#Feature-Toggles">Feature Toggles</a> instead.
 </p>
 </dd>
-<dt><code>Current Cursor Position</code></dt>
-<dd><p>The output of the &quot;Display Cursor Position&quot; command (^C) displays
-not only the current line and character position of the cursor,
-but also (between the two) the current column position.
-</p>
-</dd>
-<dt><code>Spell Checking</code></dt>
-<dd><p>In the internal spell checker misspelled words are sorted alphabetically
-and trimmed for uniqueness, such that the words &rsquo;apple&rsquo; and &rsquo;Apple&rsquo; will
-be prompted for correction separately.
-</p>
-</dd>
 </dl>
 
 
@@ -1867,7 +1868,8 @@ familiar with compiling programs with autoconf support:
 </p>
 <dl compact="compact">
 <dt><code>--disable-browser</code></dt>
-<dd><p>Disable the mini file browser when reading or writing files.
+<dd><p>Disable the mini file browser that can be called with ^T when reading
+or writing files.
 </p>
 </dd>
 <dt><code>--disable-color</code></dt>
@@ -1875,9 +1877,12 @@ familiar with compiling programs with autoconf support:
 the <code>-Y</code> command-line option, which chooses a specific syntax.
 </p>
 </dd>
+<dt><code>--disable-comment</code></dt>
+<dd><p>Disable the single-keystroke comment/uncomment function (M-3).
+</p>
+</dd>
 <dt><code>--disable-extra</code></dt>
-<dd><p>Disable extra features.  At the moment, this is just easter-egg-type
-stuff.
+<dd><p>Disable the Easter egg: a crawl of major contributors.
 </p>
 </dd>
 <dt><code>--disable-help</code></dt>
@@ -1902,6 +1907,11 @@ strings and cursor positions.
 <dd><p>Disable the use of the library of magic-number tests (for determining
 the file type and thus which syntax to use for colouring &mdash; often the
 tests on filename extension and header line will be enough).
+</p>
+</dd>
+<dt><code>--disable-linenumbers</code></dt>
+<dd><p>Disable the line-numbering function (M-#).  This also eliminates the
+<code>-l</code> command-line option, which turns line numbering on.
 </p>
 </dd>
 <dt><code>--disable-mouse</code></dt>
@@ -1940,7 +1950,7 @@ command-line option, which allows specifying an alternate spell checker.
 </p>
 </dd>
 <dt><code>--disable-wordcomp</code></dt>
-<dd><p>Disable word completion.
+<dd><p>Disable word completion (^]).
 </p>
 </dd>
 <dt><code>--disable-wrapping</code></dt>

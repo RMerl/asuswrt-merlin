@@ -3,8 +3,6 @@ A list of desired features
 
 Somewhat urgent:
 - Make undo/redo work also for justifying and indenting.
-- Allow text searches in the help viewer.
-  See https://savannah.gnu.org/bugs/?28994.
 - Detect when text is being pasted, so that we can handle it faster.
   See https://savannah.gnu.org/bugs/?40060.
 - Allow to define and execute a macro: a stored sequence of keystrokes.
@@ -26,6 +24,9 @@ Vague musings:
 - Allow indentation of marked text by spaces as well as tabs?
 - Allow indentation to add just enough columns to reach the nearest
   multiple of tabsize, rather than always adding tabsize columns?
+
+For version 2.8:
+- Allow text searches in the help viewer. [DONE]
 
 For version 2.4:
 - Handle window resizes better.  After we've resized, we should stay

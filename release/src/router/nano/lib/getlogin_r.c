@@ -25,6 +25,8 @@
 #include <errno.h>
 #include <string.h>
 
+#include "malloca.h"
+
 #if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
 # define WIN32_LEAN_AND_MEAN
 # include <windows.h>
@@ -63,9 +65,27 @@ getlogin_r (char *name, size_t size)
   /* Platform with a getlogin_r() function.  */
   int ret = getlogin_r (name, size);
 
-  if (ret == 0 && memchr (name, '\0', size) == NULL)
-    /* name contains a truncated result.  */
-    return ERANGE;
+  if (ret == 0)
+    {
+      const char *nul = memchr (name, '\0', size);
+      if (nul == NULL)
+        /* name contains a truncated result.  */
+        return ERANGE;
+      if (size > 0 && nul == name + size - 1)
+        {
+          /* strlen(name) == size-1.  Determine whether the untruncated result
+             would have had length size-1 or size.  */
+          char *room = (char *) malloca (size + 1);
+          if (room == NULL)
+            return ENOMEM;
+          ret = getlogin_r (room, size + 1);
+          /* The untruncated result should be the same as in the first call.  */
+          if (ret == 0 && memcmp (name, room, size) != 0)
+            /* The untruncated result would have been different.  */
+            ret = ERANGE;
+          freea (room);
+        }
+    }
   return ret;
 #else
   /* Platform with a getlogin() function.  */

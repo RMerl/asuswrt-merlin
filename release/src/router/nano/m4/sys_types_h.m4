@@ -1,4 +1,4 @@
-# sys_types_h.m4 serial 6
+# sys_types_h.m4 serial 7
 dnl Copyright (C) 2011-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -17,6 +17,14 @@ AC_DEFUN_ONCE([gl_SYS_TYPES_H],
 
   dnl Whether to override the 'off_t' type.
   AC_REQUIRE([gl_TYPE_OFF_T])
+
+  dnl Whether to override the 'dev_t' and 'ino_t' types.
+  m4_ifdef([gl_WINDOWS_STAT_INODES], [
+    AC_REQUIRE([gl_WINDOWS_STAT_INODES])
+  ], [
+    WINDOWS_STAT_INODES=0
+  ])
+  AC_SUBST([WINDOWS_STAT_INODES])
 ])
 
 AC_DEFUN([gl_SYS_TYPES_H_DEFAULTS],

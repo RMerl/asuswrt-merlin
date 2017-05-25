@@ -27,7 +27,9 @@
 
 # include <errno.h>
 
-# include "msvc-inval.h"
+# if HAVE_MSVC_INVALID_PARAMETER_HANDLER
+#  include "msvc-inval.h"
+# endif
 
 # undef raise
 

@@ -102,6 +102,7 @@
   __dcgettext (_libc_intl_domainname, msgid, LC_MESSAGES)
 # endif
 #else
+# undef gettext
 # define gettext(msgid) (msgid)
 #endif
 

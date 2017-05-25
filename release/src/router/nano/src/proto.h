@@ -24,6 +24,7 @@
 #include "nano.h"
 
 /* All external variables.  See global.c for their descriptions. */
+
 #ifndef NANO_TINY
 extern volatile sig_atomic_t the_window_resized;
 #endif
@@ -42,9 +43,18 @@ extern bool as_an_at;
 extern int margin;
 extern int editwincols;
 
+#ifndef DISABLE_COLOR
+extern bool have_palette;
+#endif
+
 extern message_type lastmessage;
 
 extern filestruct *pletion_line;
+
+extern bool inhelp;
+extern char *title;
+
+extern int didfind;
 
 extern int controlleft;
 extern int controlright;
@@ -166,7 +176,7 @@ extern char *homedir;
 typedef void (*functionptrtype)(void);
 
 /* Most functions in browser.c. */
-#ifndef DISABLE_BROWSER
+#ifdef ENABLE_BROWSER
 char *do_browse_from(const char *inpath);
 void read_the_list(const char *path, DIR *dir);
 functionptrtype parse_browser_input(int *kbinput);
@@ -202,9 +212,9 @@ int mbstrcasecmp(const char *s1, const char *s2);
 int mbstrncasecmp(const char *s1, const char *s2, size_t n);
 char *mbstrcasestr(const char *haystack, const char *needle);
 char *revstrstr(const char *haystack, const char *needle,
-	const char *pointer);
-char *mbrevstrcasestr(const char *haystack, const char *needle, const
-	char *rev_start);
+	const char *index);
+char *mbrevstrcasestr(const char *haystack, const char *needle,
+	const char *index);
 size_t mbstrlen(const char *s);
 size_t mbstrnlen(const char *s, size_t maxlen);
 #if !defined(NANO_TINY) || !defined(DISABLE_JUSTIFY)
@@ -212,18 +222,16 @@ char *mbstrchr(const char *s, const char *c);
 #endif
 #ifndef NANO_TINY
 char *mbstrpbrk(const char *s, const char *accept);
-char *revstrpbrk(const char *s, const char *accept, const char
-	*rev_start);
-char *mbrevstrpbrk(const char *s, const char *accept, const char
-	*rev_start);
+char *revstrpbrk(const char *head, const char *accept, const char *index);
+char *mbrevstrpbrk(const char *head, const char *accept, const char *index);
 #endif
-#if !defined(DISABLE_NANORC) && (!defined(NANO_TINY) || !defined(DISABLE_JUSTIFY))
+#if defined(ENABLE_NANORC) && (!defined(NANO_TINY) || !defined(DISABLE_JUSTIFY))
 bool has_blank_mbchars(const char *s);
 #endif
 #ifdef ENABLE_UTF8
 bool is_valid_unicode(wchar_t wc);
 #endif
-#ifndef DISABLE_NANORC
+#ifdef ENABLE_NANORC
 bool is_valid_mbstring(const char *s);
 #endif
 
@@ -261,8 +269,8 @@ void replace_marked_buffer(const char *filename, filestruct *top, size_t top_x,
 	filestruct *bot, size_t bot_x);
 #endif
 #endif
-void display_buffer(void);
-#ifndef DISABLE_MULTIBUFFER
+void prepare_for_display(void);
+#ifdef ENABLE_MULTIBUFFER
 void switch_to_prev_buffer_void(void);
 void switch_to_next_buffer_void(void);
 bool close_buffer(void);
@@ -296,11 +304,11 @@ void do_writeout_void(void);
 void do_savefile(void);
 #endif
 char *real_dir_from_tilde(const char *buf);
-#if !defined(DISABLE_TABCOMP) || !defined(DISABLE_BROWSER)
+#if defined(ENABLE_TABCOMP) || defined(ENABLE_BROWSER)
 int diralphasort(const void *va, const void *vb);
 void free_chararray(char **array, size_t len);
 #endif
-#ifndef DISABLE_TABCOMP
+#ifdef ENABLE_TABCOMP
 char *input_tab(char *buf, bool allow_files, size_t *place,
 	bool *lastwastab, void (*refresh_func)(void), bool *listed);
 #endif
@@ -336,7 +344,8 @@ void thanks_for_all_the_fish(void);
 #endif
 
 /* All functions in help.c. */
-#ifndef DISABLE_HELP
+#ifdef ENABLE_HELP
+void wrap_the_help_text(bool redisplaying);
 void do_help(void);
 void help_init(void);
 functionptrtype parse_help_input(int *kbinput);
@@ -350,16 +359,16 @@ void do_last_line(void);
 void do_page_up(void);
 void do_page_down(void);
 #ifndef DISABLE_JUSTIFY
-void do_para_begin(bool allow_update);
+void do_para_begin(bool update_screen);
 void do_para_begin_void(void);
-void do_para_end(bool allow_update);
+void do_para_end(bool update_screen);
 void do_para_end_void(void);
 #endif
 void do_prev_block(void);
 void do_next_block(void);
-void do_prev_word(bool allow_punct, bool allow_update);
+void do_prev_word(bool allow_punct, bool update_screen);
 void do_prev_word_void(void);
-bool do_next_word(bool allow_punct, bool allow_update);
+bool do_next_word(bool allow_punct, bool update_screen);
 void do_next_word_void(void);
 void do_home(bool be_clever);
 void do_home_void(void);
@@ -396,7 +405,7 @@ void unlink_opennode(openfilestruct *fileptr);
 void delete_opennode(openfilestruct *fileptr);
 void print_view_warning(void);
 void show_restricted_warning(void);
-#ifdef DISABLE_HELP
+#ifndef ENABLE_HELP
 void say_there_is_no_help(void);
 #endif
 void finish(void);
@@ -421,13 +430,13 @@ void enable_flow_control(void);
 void terminal_init(void);
 void unbound_key(int code);
 int do_input(bool allow_funcs);
-#ifndef DISABLE_MOUSE
+#ifdef ENABLE_MOUSE
 int do_mouse(void);
 #endif
 void do_output(char *output, size_t output_len, bool allow_cntrls);
 
 /* Most functions in prompt.c. */
-#ifndef DISABLE_MOUSE
+#ifdef ENABLE_MOUSE
 int do_statusbar_mouse(void);
 #endif
 void do_statusbar_output(int *the_input, size_t input_len,
@@ -457,14 +466,14 @@ int do_prompt(bool allow_tabs, bool allow_files,
 int do_yesno_prompt(bool all, const char *msg);
 
 /* Most functions in rcfile.c. */
-#ifndef DISABLE_NANORC
+#ifdef ENABLE_NANORC
 #ifndef DISABLE_COLOR
 bool parse_color_names(char *combostr, short *fg, short *bg, bool *bright);
 void grab_and_store(const char *kind, char *ptr, regexlisttype **storage);
 #endif
 void parse_rcfile(FILE *rcstream, bool syntax_only);
 void do_rcfiles(void);
-#endif /* !DISABLE_NANORC */
+#endif /* ENABLE_NANORC */
 
 /* Most functions in search.c. */
 void not_found_msg(const char *str);
@@ -487,7 +496,7 @@ void do_gotolinecolumn(ssize_t line, ssize_t column, bool use_answer,
 void do_gotolinecolumn_void(void);
 #ifndef NANO_TINY
 void do_find_bracket(void);
-#ifndef DISABLE_TABCOMP
+#ifdef ENABLE_TABCOMP
 char *get_history_completion(filestruct **h, char *s, size_t len);
 #endif
 #endif
@@ -540,7 +549,7 @@ void update_undo(undo_type action);
 void wrap_reset(void);
 bool do_wrap(filestruct *line);
 #endif
-#if !defined(DISABLE_HELP) || !defined(DISABLE_WRAPJUSTIFY)
+#if defined(ENABLE_HELP) || !defined(DISABLE_WRAPJUSTIFY)
 ssize_t break_line(const char *line, ssize_t goal, bool snap_at_nl);
 #endif
 #if !defined(NANO_TINY) || !defined(DISABLE_JUSTIFY)
@@ -596,8 +605,10 @@ size_t actual_x(const char *s, size_t column);
 size_t strnlenpt(const char *s, size_t maxlen);
 size_t strlenpt(const char *s);
 void new_magicline(void);
-#ifndef NANO_TINY
+#if !defined(NANO_TINY) || defined(ENABLE_HELP)
 void remove_magicline(void);
+#endif
+#ifndef NANO_TINY
 void mark_order(const filestruct **top, size_t *top_x, const filestruct
 	**bot, size_t *bot_x, bool *right_side_up);
 #endif
@@ -622,7 +633,7 @@ int get_byte_kbinput(int kbinput);
 int get_control_kbinput(int kbinput);
 int *get_verbatim_kbinput(WINDOW *win, size_t *kbinput_len);
 int *parse_verbatim_kbinput(WINDOW *win, size_t *count);
-#ifndef DISABLE_MOUSE
+#ifdef ENABLE_MOUSE
 int get_mouseinput(int *mouse_x, int *mouse_y, bool allow_shortcuts);
 #endif
 const sc *get_shortcut(int *kbinput);
@@ -631,8 +642,7 @@ void blank_edit(void);
 void blank_statusbar(void);
 void blank_bottombars(void);
 void check_statusblank(void);
-char *display_string(const char *buf, size_t start_col, size_t span,
-	bool dollars);
+char *display_string(const char *buf, size_t column, size_t span, bool isdata);
 void titlebar(const char *path);
 extern void set_modified(void);
 void statusbar(const char *msg);
@@ -640,7 +650,7 @@ void warn_and_shortly_pause(const char *msg);
 void statusline(message_type importance, const char *msg, ...);
 void bottombars(int menu);
 void onekey(const char *keystroke, const char *desc, int length);
-void reset_cursor(void);
+void place_the_cursor(bool forreal);
 void edit_draw(filestruct *fileptr, const char *converted,
 	int line, size_t from_col);
 int update_line(filestruct *fileptr, size_t index);
@@ -652,7 +662,9 @@ int go_back_chunks(int nrows, filestruct **line, size_t *leftedge);
 int go_forward_chunks(int nrows, filestruct **line, size_t *leftedge);
 bool less_than_a_screenful(size_t was_lineno, size_t was_leftedge);
 void edit_scroll(scroll_dir direction, int nrows);
+#ifndef NANO_TINY
 void ensure_firstcolumn_is_aligned(void);
+#endif
 void edit_redraw(filestruct *old_current);
 void edit_refresh(void);
 void adjust_viewport(update_type location);
@@ -671,22 +683,28 @@ void disable_nodelay(void);
 void do_credits(void);
 #endif
 
-/* May as well throw these here, since they are just placeholders. */
+/* These are just name definitions. */
 void do_cancel(void);
 void case_sens_void(void);
 void regexp_void(void);
+void backwards_void(void);
+void flip_replace(void);
 void gototext_void(void);
+#ifdef ENABLE_BROWSER
 void to_files_void(void);
+void goto_dir_void(void);
+#endif
+#ifndef NANO_TINY
 void dos_format_void(void);
 void mac_format_void(void);
 void append_void(void);
 void prepend_void(void);
 void backup_file_void(void);
+void flip_execute(void);
+#endif
+#ifdef ENABLE_MULTIBUFFER
+void flip_newbuffer(void);
+#endif
 void discard_buffer(void);
-void new_buffer_void(void);
-void backwards_void(void);
-void goto_dir_void(void);
-void flip_replace_void(void);
-void flip_execute_void(void);
 
 #endif /* !PROTO_H */

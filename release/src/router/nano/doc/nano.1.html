@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Wed Apr 12 10:16:55 2017 -->
+<!-- CreationDate: Sun May 21 10:39:02 2017 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -59,18 +59,17 @@ Nano&rsquo;s ANOther editor, an enhanced free Pico clone</p>
 
 
 <p style="margin-left:11%; margin-top: 1em"><b>nano</b> is
-a small, free and friendly editor which aims to replace
-Pico, the default editor included in the non-free Pine
-package. On top of copying Pico&rsquo;s look and feel,
-<b>nano</b> also implements some missing (or disabled by
-default) features in Pico, such as &quot;search and
-replace&quot; and &quot;go to line and column
-number&quot;.</p>
+a small and friendly editor. It copies the look and feel of
+Pico, but is free software, and implements several features
+that Pico lacks, such as: opening multiple files, scrolling
+per line, undo/redo, syntax coloring, line numbering, and
+soft-wrapping overlong lines.</p>
 
-<p style="margin-left:11%; margin-top: 1em">When opening a
-file, the cursor can be put on a specific line by adding the
-line number with a plus sign (<b>+</b>) before the filename,
-and even in a specific column by adding it with a comma.</p>
+<p style="margin-left:11%; margin-top: 1em">When giving a
+filename on the command line, the cursor can be put on a
+specific line by adding the line number with a plus sign
+(<b>+</b>) before the filename, and even in a specific
+column by adding it with a comma.</p>
 
 <p style="margin-left:11%; margin-top: 1em">If the first
 file specified is a dash (<b>&minus;</b>), <b>nano</b> will
@@ -107,10 +106,10 @@ moving the cursor with the arrow keys. Holding down the Alt
 key too will increase the stride.</p>
 
 <p style="margin-left:11%; margin-top: 1em">The two lines
-at the bottom of the screen show the most important
-commands; the built-in help (<b>^G</b>) lists all the
-available ones. The default key bindings can be changed via
-the .nanorc file -- see <b>nanorc</b>(5).</p>
+at the bottom of the screen show some important commands;
+the built-in help (<b>^G</b>) lists all the available ones.
+The default key bindings can be changed via the .nanorc file
+-- see <b>nanorc</b>(5).</p>
 
 <h2>OPTIONS
 <a name="OPTIONS"></a>
@@ -141,9 +140,9 @@ with a tilde (<b>~</b>).</p>
 
 <p style="margin-left:22%;">Make and keep not just one
 backup file, but make and keep a uniquely numbered one every
-time a file is saved -- when backups are enabled. The
-uniquely numbered files are stored in the specified
-<i>directory</i>.</p>
+time a file is saved -- when backups are enabled
+(<b>&minus;B</b>). The uniquely numbered files are stored in
+the specified <i>directory</i>.</p>
 
 <p style="margin-left:11%;"><b>&minus;D</b>,
 <b>&minus;&minus;boldtext</b></p>
@@ -160,14 +159,14 @@ spaces.</p>
 <p style="margin-left:11%;"><b>&minus;F</b>,
 <b>&minus;&minus;multibuffer</b></p>
 
-<p style="margin-left:22%;">Enable multiple file buffers
-(if support for them has been compiled in).</p>
+<p style="margin-left:22%;">Read a file into a new buffer
+by default.</p>
 
 <p style="margin-left:11%;"><b>&minus;G</b>,
 <b>&minus;&minus;locking</b></p>
 
-<p style="margin-left:22%;">Enable vim-style file locking
-when editing files.</p>
+<p style="margin-left:22%;">Use vim-style file locking when
+editing files.</p>
 
 <p style="margin-left:11%;"><b>&minus;H</b>,
 <b>&minus;&minus;historylog</b></p>
@@ -244,9 +243,9 @@ invoking <b>nano</b> with any name beginning with
 <p style="margin-left:11%;"><b>&minus;S</b>,
 <b>&minus;&minus;smooth</b></p>
 
-<p style="margin-left:22%;">Enable smooth scrolling. Text
-will scroll line-by-line, instead of the usual
-chunk-by-chunk behavior.</p>
+<p style="margin-left:22%;">Use smooth scrolling: text will
+scroll line-by-line, instead of the usual chunk-by-chunk
+behavior.</p>
 
 
 <p style="margin-left:11%;"><b>&minus;T&nbsp;</b><i>number</i>,
@@ -259,8 +258,8 @@ greater than 0. The default value is 8.</p>
 <p style="margin-left:11%;"><b>&minus;U</b>,
 <b>&minus;&minus;quickblank</b></p>
 
-<p style="margin-left:22%;">Do quick statusbar blanking.
-Statusbar messages will disappear after 1 keystroke instead
+<p style="margin-left:22%;">Do quick statusbar blanking:
+statusbar messages will disappear after 1 keystroke instead
 of 25. Note that <b>&minus;c</b> overrides this.</p>
 
 <p style="margin-left:11%;"><b>&minus;V</b>,
@@ -297,7 +296,8 @@ highlighting to use from among the ones defined in the
 <b>&minus;&minus;constantshow</b></p>
 
 <p style="margin-left:22%;">Constantly show the cursor
-position. Note that this overrides <b>&minus;U</b>.</p>
+position on the statusbar. Note that this overrides
+<b>&minus;U</b>.</p>
 
 <p style="margin-left:11%;"><b>&minus;d</b>,
 <b>&minus;&minus;rebinddelete</b></p>
@@ -538,7 +538,7 @@ https://savannah.gnu.org/bugs/?group=nano</i>.</p>
 
 
 
-<p style="margin-left:11%; margin-top: 1em">https://nano-editor.org/</p>
+<p style="margin-left:11%; margin-top: 1em"><i>https://nano-editor.org/</i></p>
 
 <h2>SEE ALSO
 <a name="SEE ALSO"></a>
@@ -546,7 +546,7 @@ https://savannah.gnu.org/bugs/?group=nano</i>.</p>
 
 
 
-<p style="margin-left:11%; margin-top: 1em"><b>nanorc</b>(5)</p>
+<p style="margin-left:11%; margin-top: 1em"><i><b>nanorc</b></i>(5)</p>
 
 
 <p style="margin-left:11%; margin-top: 1em"><i>/usr/share/doc/nano/</i>

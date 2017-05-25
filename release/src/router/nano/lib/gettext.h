@@ -18,8 +18,9 @@
 #ifndef _LIBGETTEXT_H
 #define _LIBGETTEXT_H 1
 
-/* NLS can be disabled through the configure --disable-nls option.  */
-#if ENABLE_NLS
+/* NLS can be disabled through the configure --disable-nls option
+   or through "#define ENABLE NLS 0" before including this file.  */
+#if defined ENABLE_NLS && ENABLE_NLS
 
 /* Get declarations of GNU message catalog functions.  */
 # include <libintl.h>

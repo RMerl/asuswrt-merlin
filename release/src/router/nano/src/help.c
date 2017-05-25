@@ -2,7 +2,8 @@
  *   help.c  --  This file is part of GNU nano.                           *
  *                                                                        *
  *   Copyright (C) 2000-2011, 2013-2017 Free Software Foundation, Inc.    *
- *   Copyright (C) 2014, 2015, 2016 Benno Schulenberg                     *
+ *   Copyright (C) 2017 Rishabh Dave                                      *
+ *   Copyright (C) 2014-2017 Benno Schulenberg                            *
  *                                                                        *
  *   GNU nano is free software: you can redistribute it and/or modify     *
  *   it under the terms of the GNU General Public License as published    *
@@ -24,165 +25,265 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
-#ifndef DISABLE_HELP
+#ifdef ENABLE_HELP
 
 static char *help_text = NULL;
 	/* The text displayed in the help window. */
 
+static const char *start_of_body = NULL;
+	/* The point in the help text just after the title. */
+
 static char *end_of_intro = NULL;
-	/* The point in the help text where the introductory paragraphs end
-	 * and the shortcut descriptions begin. */
+	/* The point in the help text where the shortcut descriptions begin. */
+
+static size_t location;
+	/* The offset (in bytes) of the topleft of the shown help text. */
+
+char *tempfilename = NULL;
+	/* Name of the temporary file used for wrapping the help text. */
+
+/* Hard-wrap the help text, write it to the existing temporary file, and
+ * read that file into a new buffer. */
+void wrap_the_help_text(bool redisplaying)
+{
+    int sum = 0;
+    const char *ptr = start_of_body;
+    FILE *tempfile = fopen(tempfilename, "w+b");
+
+    /* If re-opening the temporary file failed, give up. */
+    if (tempfile == NULL) {
+	statusline(ALERT, _("Error writing temp file: %s"), strerror(errno));
+	return;
+    }
+
+    /* Write the body of the help_text into the temporary file. */
+    while (*ptr != '\0') {
+	int length = help_line_len(ptr);
+
+	fwrite(ptr, sizeof(char), length, tempfile);
+	ptr += length;
+
+	/* Hard-wrap the lines in the help text. */
+	if (*ptr != '\n')
+	    fwrite("\n", sizeof(char), 1, tempfile);
+	else while (*ptr == '\n')
+	    fwrite(ptr++, sizeof(char), 1, tempfile);
+    }
+
+    fclose(tempfile);
+
+    if (redisplaying)
+	close_buffer();
+
+    open_buffer(tempfilename, FALSE);
+    remove_magicline();
+
+    prepare_for_display();
+
+    /* Move to the position in the file where we were before. */
+    while (TRUE) {
+	sum += strlen(openfile->current->data);
+	if (sum > location)
+	   break;
+	openfile->current = openfile->current->next;
+    }
+
+    openfile->edittop = openfile->current;
+}
 
 /* Our main help-viewer function. */
 void do_help(void)
 {
     int kbinput = ERR;
-    bool old_no_help = ISSET(NO_HELP);
-    size_t line = 0;
-	/* The line number in help_text of the first displayed help
-	 * line.  This variable is zero-based. */
-    size_t last_line = 0;
-	/* The line number in help_text of the last help line.  This
-	 * variable is zero-based. */
-    int oldmenu = currmenu;
-	/* The menu we were called from. */
-    const char *ptr;
-	/* The current line of the help text. */
-    size_t old_line = (size_t)-1;
-	/* The line we were on before the current line. */
     functionptrtype func;
 	/* The function of the key the user typed in. */
+    int oldmenu = currmenu;
+	/* The menu we were called from. */
+#ifdef ENABLE_LINENUMBERS
+    int was_margin = margin;
+#endif
+    ssize_t was_tabsize = tabsize;
+#ifndef DISABLE_COLOR
+    char *was_syntax = syntaxstr;
+#endif
+    char *saved_answer = (answer != NULL) ? strdup(answer) : NULL;
+	/* The current answer when the user invokes help at the prompt. */
+    unsigned stash[sizeof(flags) / sizeof(flags[0])];
+	/* A storage place for the current flag settings. */
+    filestruct *line;
+    int length;
+    FILE *fp;
 
-    /* Don't show a cursor in the help screen. */
-    curs_set(0);
-    blank_edit();
     blank_statusbar();
 
-    /* Set help_text as the string to display. */
-    help_init();
+    /* Get a temporary file for the help text.  If it fails, give up. */
+    tempfilename = safe_tempfile(&fp);
+    if (tempfilename == NULL) {
+	statusline(ALERT, _("Error writing temp file: %s"), strerror(errno));
+	free(saved_answer);
+	return;
+    }
 
-    assert(help_text != NULL);
+    fclose(fp);
 
-    if (ISSET(NO_HELP)) {
-	/* Make sure that the help screen's shortcut list will actually
-	 * be displayed. */
+    /* Save the settings of all flags. */
+    memcpy(stash, flags, sizeof(flags));
+
+    /* Ensure that the help screen's shortcut list can be displayed. */
+    if (ISSET(NO_HELP) && LINES > 4) {
 	UNSET(NO_HELP);
 	window_init();
     }
 
+    /* When searching, do it forward, case insensitive, and without regexes. */
+    UNSET(BACKWARDS_SEARCH);
+    UNSET(CASE_SENSITIVE);
+    UNSET(USE_REGEXP);
+
+    UNSET(WHITESPACE_DISPLAY);
+    UNSET(NOREAD_MODE);
+    SET(MULTIBUFFER);
+
+#ifdef ENABLE_LINENUMBERS
+    UNSET(LINE_NUMBERS);
+    margin = 0;
+#endif
+    tabsize = 8;
+#ifndef DISABLE_COLOR
+    syntaxstr = "nanohelp";
+#endif
+    curs_set(0);
+
+    /* Compose the help text from all the pieces. */
+    help_init();
+    inhelp = TRUE;
+    location = 0;
+
     bottombars(MHELP);
     wnoutrefresh(bottomwin);
 
+    /* Extract the title from the head of the help text. */
+    length = break_line(help_text, MAX_BUF_SIZE, TRUE);
+    title = charalloc(length * sizeof(char) + 1);
+    strncpy(title, help_text, length);
+    title[length] = '\0';
+
+    titlebar(title);
+
+    /* Skip over the title to point at the start of the body text. */
+    start_of_body = help_text + length;
+    while (*start_of_body == '\n')
+	start_of_body++;
+
+    wrap_the_help_text(FALSE);
+    edit_refresh();
+
     while (TRUE) {
-	size_t i;
-
-	ptr = help_text;
-
-	/* Find the line number of the last line of the help text. */
-	for (last_line = 0; *ptr != '\0'; last_line++) {
-	    ptr += help_line_len(ptr);
-	    if (*ptr == '\n')
-		ptr++;
-	}
-
-	if (last_line > 0)
-	    last_line--;
-
-	/* Redisplay if the text was scrolled or an invalid key was pressed. */
-	if (line != old_line || kbinput == ERR) {
-	    blank_edit();
-
-	    ptr = help_text;
-
-	    /* Advance in the text to the first line to be displayed. */
-	    for (i = 0; i < line; i++) {
-		ptr += help_line_len(ptr);
-		if (*ptr == '\n')
-		    ptr++;
-	    }
-
-	    /* Now display as many lines as the window will hold. */
-	    for (i = 0; i < editwinrows && *ptr != '\0'; i++) {
-		size_t j = help_line_len(ptr);
-
-		mvwaddnstr(edit, i, 0, ptr, j);
-		ptr += j;
-		if (*ptr == '\n')
-		    ptr++;
-	    }
-	}
-
-	wnoutrefresh(edit);
-
-	old_line = line;
-
 	lastmessage = HUSH;
+	focusing = TRUE;
+	didfind = 0;
 
 	kbinput = get_kbinput(edit);
-
-#ifndef NANO_TINY
-	if (kbinput == KEY_WINCH) {
-	    kbinput = ERR;
-	    continue;    /* Redraw the screen. */
-	}
-#endif
-
-#ifndef DISABLE_MOUSE
-	if (kbinput == KEY_MOUSE) {
-	    int mouse_x, mouse_y;
-	    get_mouseinput(&mouse_x, &mouse_y, TRUE);
-	    continue;    /* Redraw the screen. */
-	}
-#endif
 
 	func = parse_help_input(&kbinput);
 
 	if (func == total_refresh) {
 	    total_redraw();
 	} else if (func == do_up_void) {
-	    if (line > 0)
-		line--;
+	    do_up(TRUE);
 	} else if (func == do_down_void) {
-	    if (line + (editwinrows - 1) < last_line)
-		line++;
+	    if (openfile->edittop->lineno + editwinrows - 1 <
+				openfile->filebot->lineno)
+		do_down(TRUE);
 	} else if (func == do_page_up) {
-	    if (line > editwinrows - 2)
-		line -= editwinrows - 2;
-	    else
-		line = 0;
+	    do_page_up();
 	} else if (func == do_page_down) {
-	    if (line + (editwinrows - 1) < last_line)
-		line += editwinrows - 2;
+	    do_page_down();
 	} else if (func == do_first_line) {
-	    line = 0;
+	    do_first_line();
 	} else if (func == do_last_line) {
-	    if (line + (editwinrows - 1) < last_line)
-		line = last_line - (editwinrows - 1);
+	    do_last_line();
+	} else if (func == do_search) {
+	    do_search();
+	    bottombars(MHELP);
+	} else if (func == do_research) {
+	    do_research();
+	    currmenu = MHELP;
+#ifndef NANO_TINY
+	} else if (kbinput == KEY_WINCH) {
+	    ; /* Nothing to do. */
+#endif
+#ifdef ENABLE_MOUSE
+	} else if (kbinput == KEY_MOUSE) {
+	    int dummy_x, dummy_y;
+	    get_mouseinput(&dummy_x, &dummy_y, TRUE);
+#endif
 	} else if (func == do_exit) {
 	    /* Exit from the help viewer. */
+	    close_buffer();
 	    break;
 	} else
 	    unbound_key(kbinput);
+
+	/* If we searched and found something, let the cursor show it. */
+	if (didfind == 1)
+	    curs_set(1);
+	else
+	    curs_set(0);
+
+	edit_refresh();
+
+	location = 0;
+	line = openfile->fileage;
+
+	/* Count how far (in bytes) edittop is into the file. */
+	while (line != openfile->edittop) {
+	    location += strlen(line->data);
+	    line = line->next;
+	}
     }
 
-    if (old_no_help) {
+    /* Restore the settings of all flags. */
+    memcpy(flags, stash, sizeof(flags));
+
+#ifdef ENABLE_LINENUMBERS
+    margin = was_margin;
+#endif
+    tabsize = was_tabsize;
+#ifndef DISABLE_COLOR
+    syntaxstr = was_syntax;
+#endif
+
+    /* Switch back to the buffer we were invoked from. */
+    switch_to_prev_buffer_void();
+
+    if (ISSET(NO_HELP)) {
 	blank_bottombars();
 	wnoutrefresh(bottomwin);
 	currmenu = oldmenu;
-	SET(NO_HELP);
 	window_init();
     } else
 	bottombars(oldmenu);
 
-#ifndef DISABLE_BROWSER
+    free(title);
+    title = NULL;
+    inhelp = FALSE;
+
+#ifdef ENABLE_BROWSER
     if (oldmenu == MBROWSER || oldmenu == MWHEREISFILE || oldmenu == MGOTODIR)
 	browser_refresh();
     else
 #endif
-	edit_refresh();
+	total_refresh();
 
-    /* We're exiting from the help screen. */
+    free(answer);
+    answer = saved_answer;
+
+    remove(tempfilename);
+    free(tempfilename);
+
     free(help_text);
 }
 
@@ -198,12 +299,6 @@ void help_init(void)
     char *ptr;
     const subnfunc *f;
     const sc *s;
-
-#ifndef NANO_TINY
-    bool old_whitespace = ISSET(WHITESPACE_DISPLAY);
-
-    UNSET(WHITESPACE_DISPLAY);
-#endif
 
     /* First, set up the initial help text for the current function. */
     if (currmenu == MWHEREIS || currmenu == MREPLACE || currmenu == MREPLACEWITH) {
@@ -258,7 +353,7 @@ void help_init(void)
 	htx[1] = NULL;
 	htx[2] = NULL;
     }
-#ifndef DISABLE_BROWSER
+#ifdef ENABLE_BROWSER
     else if (currmenu == MBROWSER) {
 	htx[0] = N_("File Browser Help Text\n\n "
 		"The file browser is used to visually browse the "
@@ -296,7 +391,7 @@ void help_init(void)
 	htx[1] = NULL;
 	htx[2] = NULL;
     }
-#endif /* !DISABLE_BROWSER */
+#endif /* ENABLE_BROWSER */
 #ifndef DISABLE_SPELLER
     else if (currmenu == MSPELL) {
 	htx[0] = N_("Spell Check Help Text\n\n "
@@ -369,7 +464,7 @@ void help_init(void)
      * plus one or two \n's. */
     for (f = allfuncs; f != NULL; f = f->next)
 	if (f->menus & currmenu)
-	    allocsize += (16 * MAXCHARLEN) + strlen(f->help) + 2;
+	    allocsize += (16 * MAXCHARLEN) + strlen(_(f->help)) + 2;
 
 #ifndef NANO_TINY
     /* If we're on the main list, we also count the toggle help text.
@@ -384,7 +479,7 @@ void help_init(void)
     }
 #endif
 
-    /* Allocate space for the help text. */
+    /* Allocate memory for the help text. */
     help_text = charalloc(allocsize + 1);
 
     /* Now add the text we want. */
@@ -464,13 +559,10 @@ void help_init(void)
 		}
 	}
     }
-
-    if (old_whitespace)
-	SET(WHITESPACE_DISPLAY);
 #endif /* !NANO_TINY */
 
-    /* If all went well, we didn't overwrite the allocated space. */
-    assert(strlen(help_text) <= allocsize + 1);
+    if (strlen(help_text) > allocsize)
+	statusline(ALERT, "Help text spilled over -- please report a bug");
 }
 
 /* Return the function that is bound to the given key, accepting certain
@@ -483,6 +575,13 @@ functionptrtype parse_help_input(int *kbinput)
 		return do_page_down;
 	    case '-':
 		return do_page_up;
+	    case 'W':
+	    case 'w':
+	    case '/':
+		return do_search;
+	    case 'N':
+	    case 'n':
+		return do_research;
 	    case 'E':
 	    case 'e':
 	    case 'Q':
@@ -524,17 +623,17 @@ size_t help_line_len(const char *ptr)
 	return 0;
 }
 
-#endif /* !DISABLE_HELP */
+#endif /* ENABLE_HELP */
 
 /* Start the help viewer. */
 void do_help_void(void)
 {
-#ifndef DISABLE_HELP
+#ifdef ENABLE_HELP
     do_help();
 #else
     if (currmenu == MMAIN)
 	say_there_is_no_help();
     else
 	beep();
-#endif /* !DISABLE_HELP */
+#endif
 }

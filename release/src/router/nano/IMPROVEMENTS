@@ -2,6 +2,7 @@ Improvements in GNU nano
 ========================
 
 Since 2.8.0:
+  - The ^G help texts have become searchable (with ^W and M-W).
   - Ctrl+Home and Ctrl+End jump to start and end of file.
   - In softwrap mode the cursor now moves per visual row instead of per
     logical line, and the screen will scroll per row.

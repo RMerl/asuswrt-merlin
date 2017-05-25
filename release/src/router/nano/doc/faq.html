@@ -38,10 +38,11 @@
   <a href="#4.2">4.2. Ack! My Backspace/Delete/Enter/Meta/double bucky key doesn't seem to work! What can I do?</a><br>
   <a href="#4.3">4.3. Ack! My numeric keypad's keys don't work properly when NumLock is off! What can I do?</a><br>
   <a href="#4.4">4.4. Ack! When I hold down a Meta key combination for a while, the character of the held key gets inserted now and then. What gives?</a><br>
-  <a href="#4.5">4.5. How do I type the F13-F16 keys shown in the help browser? My keyboard only has F1-F12!</a><br>
+  <a href="#4.5">4.5. How do I type the F13-F16 keys listed in the help viewer? My keyboard only has F1-F12!</a><br>
   <a href="#4.6">4.6. nano crashes when I type &lt;insert keystroke here&gt;!</a><br>
   <a href="#4.7">4.7. nano crashes when I resize my window. How can I fix that?</a><br>
-  <a href="#4.8">4.8. When I paste text into a document, each line gets indented further than the last. Why does nano do this, and how can I avoid it?</a><br>
+  <a href="#4.8a">4.8a. When I paste text into a document, each line gets indented further than the last. Why does nano do this, and how can I avoid it?</a><br>
+  <a href="#4.8b">4.8b. When I paste from Windows into a remote nano, nano rewraps the lines. What gives?<a><br>
   <a href="#4.9">4.9. I've compiled nano with color support, but I don't see any color when I run it!</a><br>
   <a href="#4.10">4.10. How do I make nano my default editor (in Pine, mutt, etc.)?</a><br>
   <a href="#4.11">4.11. How do I select text for or paste text from the clipboard in an X terminal when I'm running nano in one and nano's mouse support is turned on?</a><br>
@@ -82,7 +83,7 @@
 <h2><a name="1.3"></a>1.3. Why the name change from TIP?</h2>
 <blockquote><p>On January 10, 2000, TIP was officially renamed to nano because of a namespace conflict with another program called 'tip'. The original 'tip' program &quot;establishes a full duplex terminal connection to a remote host&quot;, and was included with many older Unix systems (and newer ones like Solaris). The conflict was not noticed at first because there is no 'tip' utility included with most GNU/Linux distributions (where nano was developed).</p></blockquote>
 <h2><a name="1.4"></a>1.4. What is the current version of nano?</h2>
-<blockquote><p>The current version of nano <i>should</i> be <b>2.8.1</b>.  Of course, you should always check the <a href="https://nano-editor.org/">nano homepage</a> to see what the latest and greatest version is.</p></blockquote>
+<blockquote><p>The current version of nano <i>should</i> be <b>2.8.4</b>.  Of course, you should always check the <a href="https://nano-editor.org/">nano homepage</a> to see what the latest and greatest version is.</p></blockquote>
 <h2><a name="1.5"></a>1.5. I want to read the man page without having to download the program!</h2>
 <blockquote><p>Jeez, demanding, aren't we? Okay, look <a href="https://nano-editor.org/dist/latest/nano.1.html">here</a>.</p></blockquote>
 <hr width="100%">
@@ -138,24 +139,26 @@
   <pre>
   <b>--disable-browser</b>       Disable the built-in file browser
   <b>--disable-color</b>         Disable color and syntax highlighting
-  <b>--disable-extra</b>         Disable extra features (currently only an easter egg)
-  <b>--disable-help</b>          Disable help functions
+  <b>--disable-comment</b>       Disable the comment/uncomment function
+  <b>--disable-extra</b>         Disable the easter egg
+  <b>--disable-help</b>          Disable the built-in help texts
   <b>--disable-histories</b>     Disable the saving of search strings and cursor positions
-  <b>--disable-justify</b>       Disable justify/unjustify functions
+  <b>--disable-justify</b>       Disable the justify/unjustify functions
   <b>--disable-libmagic</b>      Disable the use of libmagic for determining a file's syntax
+  <b>--disable-linenumbers</b>   Disable line numbering
   <b>--disable-mouse</b>         Disable mouse support
-  <b>--disable-multibuffer</b>   Disable having multiple file buffers open
+  <b>--disable-multibuffer</b>   Disable the opening of multiple file buffers
   <b>--disable-nanorc</b>        Disable the use of .nanorc files
   <b>--disable-operatingdir</b>  Disable the setting of an operating directory
-  <b>--disable-speller</b>       Disable spell checker functions
-  <b>--disable-tabcomp</b>       Disable tab completion functions
-  <b>--disable-wordcomp</b>      Disable the word completion function
+  <b>--disable-speller</b>       Disable the spell-checker functions
+  <b>--disable-tabcomp</b>       Disable the tab-completion functions
+  <b>--disable-wordcomp</b>      Disable the word-completion function
   <b>--disable-wrapping</b>      Disable all hard-wrapping of text</pre>
   <p>There's also the <b>--enable-tiny</b> option which disables everything above, as well as some larger chunks of the program (like the marker code that you use with Control-^ to select text). Also, if you know you aren't going to be using other languages, you can use <b>--disable-nls</b> to disable internationalization and save a few K to a few dozen K depending on whether you have locale support on your system. And finally, there's always good old <b>strip</b> to strip all debugging code and code that exists in libraries on your system.</p>
   <p>With <b>--disable-wrapping-as-root</b> you can disable any hard-wrapping by default when the user is root, useful to prevent accidentally changing long lines in system configuration files.</p>
 </blockquote>
 <h2><a name="3.7"></a>3.7. Tell me more about this multibuffer stuff!</h2>
-<blockquote><p>To use multiple file buffers, you must not have configured nano with <b>--disable-multibuffer</b> nor with <b>--enable-tiny</b> (use <b>nano -V</b> to check the compilation options). Then when you want to insert a file into its own buffer instead of into the current file, just hit <b>Meta-F</b>, then insert the file as normal with <b>^R</b>. If you always want files to be loaded into their own buffers, use the <b>--multibuffer</b> or <b>-F</b> flag when you invoke nano.</p>
+<blockquote><p>To use multiple file buffers, you must not have configured nano with <b>--disable-multibuffer</b> nor with <b>--enable-tiny</b> (use <b>nano -V</b> to check the compilation options). Then when you want to insert a file into its own buffer instead of into the current file, just hit <b>Meta-F</b> after typing <b>^R</b>. If you always want files to be loaded into their own buffers, use the <b>--multibuffer</b> or <b>-F</b> flag when you invoke nano.</p>
   <p>You can move between the buffers you have open with the <b>Meta-&lt;</b> and <b>Meta-&gt;</b> keys, or more easily without holding Shift: <b>Meta-,</b> and <b>Meta-.</b> (clear as mud, right? =-). When you have more than one file buffer open, the ^X shortcut will say &quot;Close&quot;, instead of the normal &quot;Exit&quot; when only one buffer is open.</p></blockquote>
 <h2><a name="3.8"></a>3.8. Tell me more about this verbatim input stuff!</h2>
 <blockquote><p>When you want to insert a literal character into the file you're editing, such as a control character that nano usually treats as a command, first press <b>Meta-V</b> (if you're not at a prompt, you'll get the message &quot;Verbatim Input&quot; on the statusbar), then press the key(s) that generate the character you want.</p>
@@ -184,16 +187,18 @@
 <blockquote><p>You can use the <b>-K</b> or <b>--rebindkeypad</b> option on the command line, or add the line <b>set rebindkeypad</b> to your .nanorc. However, nano's mouse support won't work properly if you do any of these things.</p></blockquote>
 <h2><a name="4.4"></a>4.4. Ack! When I hold down a Meta key combination for a while, the character of the held key gets inserted now and then. What gives?</h2>
 <blockquote><p>This was a bug in how nano handled consecutive escape sequences. It should be fixed since version 2.6.0.</p></blockquote>
-<h2><a name="4.5"></a>4.5. How do I type the F13-F16 keys shown in the help browser? My keyboard only has F1-F12!</h2>
+<h2><a name="4.5"></a>4.5. How do I type the F13-F16 keys listed in the help viewer? My keyboard only has F1-F12!</h2>
 <blockquote><p>It depends on the terminal type you're using. On some terminals, such as the FreeBSD console, xterm, konsole, and gnome-terminal, Shift-F1 to Shift-F4 will generate F13 to F16. On other terminals, such as the Linux console, rxvt, and Eterm, Shift-F3 to Shift-F6 will generate F13 to F16.</p></blockquote>
 <h2><a name="4.6"></a>4.6. nano crashes when I type &lt;insert keystroke here&gt;!</h2>
 <blockquote><p>If you aren't trying some bizarre keystroke combination with some bizarre $TERM entry, chances are you have found a bug. You are welcome to submit it to the <a href="mailto:nano-devel@gnu.org">nano-devel</a> list or in the <a href="https://savannah.gnu.org/bugs/?group=nano">bug tracker</a> on Savannah.</p></blockquote>
 <h2><a name="4.7"></a>4.7. nano crashes when I resize my window. How can I fix that?</h2>
 <blockquote><p>Older versions of nano had this problem.  Please upgrade to version 2.7.0 or newer.</p></blockquote>
-<h2><a name="4.8"></a>4.8. When I paste text into a document, each line gets indented further than the last. Why does nano do this, and how can I avoid it?</h2>
+<h2><a name="4.8a"></a>4.8a. When I paste text into a document, each line gets indented further than the last. Why does nano do this, and how can I avoid it?</h2>
 <blockquote><p>You have the autoindent feature turned on. Hit Meta-I to turn it off, paste your text, and then hit Meta-I again to turn it back on.</p></blockquote>
+<h2><a name="4.8b"></a>4.8b. When I paste from Windows into a remote nano, nano rewraps the lines. What gives?</h2>
+<blockquote><p>When pasting from Windows, in some situations linefeeds are sent instead of carriage returns (Enters). And linefeeds are <b>^J</b>s, which make nano justify (rewrap) the current paragraph. To prevent these linefeeds from causing these unwanted justifications, add this line to your .nanorc on the remote Linux box: <b>unbind ^J main</b> or <b>bind ^J enter main</b>, depending on whether the paste contains CR + LF or only LF.</p></blockquote>
 <h2><a name="4.9"></a>4.9. I've compiled nano with color support, but I don't see any color when I run it!</h2>
-<blockquote><p>If you want nano to actually use color, you have to specify the color configurations you want it to use in your .nanorc. Several example configurations are in the <b>doc/syntax</b> subdirectory of the nano source, which are normally installed to <b>/usr/local/share/nano</b>. To enable all of them, uncomment the line <b># include "/usr/local/share/nano/*.nanorc"</b> in your nanorc. See also section <a href="#3.9a">3.9a</a>.</p></blockquote>
+<blockquote><p>If you want nano to actually use color, you have to specify the color configurations you want it to use in your .nanorc. Several example configurations are in the <b>syntax/</b> subdirectory of the nano source, which are normally installed to <b>/usr/local/share/nano/</b>. To enable all of them, uncomment the line <b># include "/usr/local/share/nano/*.nanorc"</b> in your nanorc. See also section <a href="#3.9a">3.9a</a>.</p></blockquote>
 <h2><a name="4.10"></a>4.10. How do I make nano my default editor (in Pine, mutt, etc.)?</h2>
 <blockquote><p>You need to make nano your $EDITOR. If you want this to be saved, you should put a line like this in your <b>.bashrc</b> if you use bash (or <b>.zshrc</b> if you believe in zsh):</p>
   <p><b>export EDITOR=/usr/local/bin/nano</b></p>

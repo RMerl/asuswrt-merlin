@@ -108,8 +108,8 @@ void cut_to_eof(void)
 }
 #endif /* !NANO_TINY */
 
-/* Move text from the current filestruct into the cutbuffer.  If
- * copy_text is TRUE, copy the text back into the filestruct afterward.
+/* Move text from the current buffer into the cutbuffer.  If
+ * copy_text is TRUE, copy the text back into the buffer afterward.
  * If cut_till_eof is TRUE, move all text from the current cursor
  * position to the end of the file into the cutbuffer. */
 void do_cut_text(bool copy_text, bool cut_till_eof)
@@ -201,7 +201,7 @@ void do_cut_text(bool copy_text, bool cut_till_eof)
 #endif
 }
 
-/* Move text from the current filestruct into the cutbuffer. */
+/* Move text from the current buffer into the cutbuffer. */
 void do_cut_text_void(void)
 {
 #ifndef NANO_TINY
@@ -214,8 +214,8 @@ void do_cut_text_void(void)
 }
 
 #ifndef NANO_TINY
-/* Move text from the current filestruct into the cutbuffer, and copy it
- * back into the filestruct afterward.  If the mark is set or the cursor
+/* Move text from the current buffer into the cutbuffer, and copy it
+ * back into the buffer afterward.  If the mark is set or the cursor
  * was moved, blow away previous contents of the cutbuffer. */
 void do_copy_text(void)
 {
@@ -254,7 +254,7 @@ void do_cut_till_eof(void)
 }
 #endif /* !NANO_TINY */
 
-/* Copy text from the cutbuffer into the current filestruct. */
+/* Copy text from the cutbuffer into the current buffer. */
 void do_uncut_text(void)
 {
     ssize_t was_lineno = openfile->current->lineno;
@@ -273,7 +273,7 @@ void do_uncut_text(void)
 	was_leftedge = (xplustabs() / editwincols) * editwincols;
 #endif
 
-    /* Add a copy of the text in the cutbuffer to the current filestruct
+    /* Add a copy of the text in the cutbuffer to the current buffer
      * at the current cursor position. */
     copy_from_buffer(cutbuffer);
 
@@ -291,8 +291,8 @@ void do_uncut_text(void)
     /* Mark the file as modified. */
     set_modified();
 
-    /* Update the cursor position to account for the inserted lines. */
-    reset_cursor();
+    /* Update current_y to account for the inserted lines. */
+    place_the_cursor(TRUE);
 
     refresh_needed = TRUE;
 

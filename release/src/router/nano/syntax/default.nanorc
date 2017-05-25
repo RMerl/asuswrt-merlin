@@ -1,11 +1,17 @@
-## A default syntax, which is used
-## for files that do not match any other syntax.
+## An example of a default syntax.  The default syntax is used for
+## files that do not match any other syntax.
 
 syntax "default"
 comment "#"
+
+# Comments.
+color cyan "^#.*"
 
 # Spaces in front of tabs.
 color ,red " +	+"
 
 # Nano's name, including version.
 color brightred "(GNU )?nano [1-9]\.[0-9]\.[^[:space:][:punct:]]+"
+
+# Email addresses.
+color yellow "<[[:alnum:].%_+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}>"

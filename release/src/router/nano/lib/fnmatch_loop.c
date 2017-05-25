@@ -960,7 +960,7 @@ FCT (const CHAR *pattern, const CHAR *string, const CHAR *string_end,
               new_no_leading_period = true;
               break;
             }
-          /* FALLTHROUGH */
+          FALLTHROUGH;
         default:
         normal_match:
           if (n == string_end || c != FOLD ((UCHAR) *n))
@@ -1114,8 +1114,7 @@ EXT (INT opt, const CHAR *pattern, const CHAR *string, const CHAR *string_end,
     case L_('*'):
       if (FCT (p, string, string_end, no_leading_period, flags) == 0)
         return 0;
-      /* FALLTHROUGH */
-
+      FALLTHROUGH;
     case L_('+'):
       do
         {
@@ -1151,8 +1150,7 @@ EXT (INT opt, const CHAR *pattern, const CHAR *string, const CHAR *string_end,
     case L_('?'):
       if (FCT (p, string, string_end, no_leading_period, flags) == 0)
         return 0;
-      /* FALLTHROUGH */
-
+      FALLTHROUGH;
     case L_('@'):
       do
         /* I cannot believe it but 'strcat' is actually acceptable

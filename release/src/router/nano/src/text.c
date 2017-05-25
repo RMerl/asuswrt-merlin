@@ -983,11 +983,9 @@ void do_enter(void)
 {
     filestruct *newnode = make_new_node(openfile->current);
     size_t extra = 0;
+#ifndef NANO_TINY
     bool allblanks = FALSE;
 
-    assert(openfile->current != NULL && openfile->current->data != NULL);
-
-#ifndef NANO_TINY
     if (ISSET(AUTOINDENT)) {
 	extra = indent_length(openfile->current->data);
 
@@ -1142,7 +1140,9 @@ bool execute_command(const char *command)
 void discard_until(const undo *thisitem, openfilestruct *thefile)
 {
     undo *dropit = thefile->undotop;
+#ifdef ENABLE_COMMENT
     undo_group *group;
+#endif
 
     while (dropit != NULL && dropit != thisitem) {
 	thefile->undotop = dropit->next;
@@ -1610,7 +1610,7 @@ bool do_wrap(filestruct *line)
 }
 #endif /* !DISABLE_WRAPPING */
 
-#if !defined(DISABLE_HELP) || !defined(DISABLE_WRAPJUSTIFY)
+#if defined(ENABLE_HELP) || !defined(DISABLE_WRAPJUSTIFY)
 /* We are trying to break a chunk off line.  We find the last blank such
  * that the display length to there is at most (goal + 1).  If there is
  * no such blank, then we find the first blank.  We then take the last
@@ -1645,7 +1645,7 @@ ssize_t break_line(const char *line, ssize_t goal, bool snap_at_nl)
     if (column <= goal)
 	return index;
 
-#ifndef DISABLE_HELP
+#ifdef ENABLE_HELP
     /* If we're wrapping a help text and no blank was found, or was
      * found only as the first character, force a line break. */
     if (snap_at_nl && lastblank < 1)
@@ -1682,7 +1682,7 @@ ssize_t break_line(const char *line, ssize_t goal, bool snap_at_nl)
 
     return lastblank;
 }
-#endif /* !DISABLE_HELP || !DISABLE_WRAPJUSTIFY */
+#endif /* ENABLE_HELP || !DISABLE_WRAPJUSTIFY */
 
 #if !defined(NANO_TINY) || !defined(DISABLE_JUSTIFY)
 /* The "indentation" of a line is the whitespace between the quote part
@@ -2011,13 +2011,11 @@ void backup_lines(filestruct *first_line, size_t par_len)
     for (i = par_len; i > 0 && bot != openfile->filebot; i--)
 	bot = bot->next;
 
-    /* Move the paragraph from the current buffer's filestruct to the
-     * justify buffer. */
+    /* Move the paragraph from the current buffer to the justify buffer. */
     extract_buffer(&jusbuffer, &jusbottom, top, 0, bot,
 		(i == 1 && bot == openfile->filebot) ? strlen(bot->data) : 0);
 
-    /* Copy the paragraph back to the current buffer's filestruct from
-     * the justify buffer. */
+    /* Copy the paragraph back to the current buffer. */
     copy_from_buffer(jusbuffer);
 
     /* Move upward from the last line of the paragraph to the first
@@ -2443,7 +2441,7 @@ void do_justify(bool full_justify)
     do {
 #endif
 	statusbar(_("Can now UnJustify!"));
-	reset_cursor();
+	place_the_cursor(TRUE);
 	curs_set(1);
 	kbinput = do_input(FALSE);
 #ifndef NANO_TINY
@@ -2452,7 +2450,7 @@ void do_justify(bool full_justify)
 
     /* If needed, unset the cursor-position suppression flag, so the cursor
      * position /will/ be displayed upon a return to the main loop. */
-    if (ISSET(CONST_UPDATE))
+    if (ISSET(CONSTANT_SHOW))
 	do_cursorpos(FALSE);
 
     func = func_from_key(&kbinput);
@@ -3315,7 +3313,7 @@ void do_linter(void)
 	}
 
 	/* Place and show the cursor to indicate the affected line. */
-	reset_cursor();
+	place_the_cursor(TRUE);
 	wnoutrefresh(edit);
 	curs_set(1);
 
@@ -3390,8 +3388,10 @@ void do_formatter(void)
 	return;
     }
 
+#ifndef NANO_TINY
     /* We're not supporting partial formatting, oi vey. */
     openfile->mark_set = FALSE;
+#endif
     status = write_file(temp, temp_file, TRUE, OVERWRITE, FALSE);
 
     if (!status) {
@@ -3457,10 +3457,11 @@ void do_formatter(void)
 
 	set_modified();
 
+#ifndef NANO_TINY
 	/* Flush the undo stack, to avoid a mess or crash when
 	 * the user tries to undo things in reformatted lines. */
 	discard_until(NULL, openfile);
-
+#endif
 	finalstatus = _("Finished formatting");
     }
 
@@ -3498,7 +3499,7 @@ void do_wordlinechar_count(void)
     filestruct *top, *bot;
     size_t top_x, bot_x;
 
-    /* If the mark is on, partition the filestruct so that it
+    /* If the mark is on, partition the buffer so that it
      * contains only the marked text, and turn the mark off. */
     if (old_mark_set) {
 	mark_order((const filestruct **)&top, &top_x,
@@ -3528,7 +3529,7 @@ void do_wordlinechar_count(void)
 	nlines = openfile->filebot->lineno - openfile->fileage->lineno + 1;
 	chars = get_totsize(openfile->fileage, openfile->filebot);
 
-	/* Unpartition the filestruct so that it contains all the text
+	/* Unpartition the buffer so that it contains all the text
 	 * again, and turn the mark back on. */
 	unpartition_filestruct(&filepart);
 	openfile->mark_set = TRUE;
@@ -3559,14 +3560,14 @@ void do_verbatim_input(void)
     /* TRANSLATORS: This is displayed when the next keystroke will be
      * inserted verbatim. */
     statusbar(_("Verbatim Input"));
-    reset_cursor();
+    place_the_cursor(TRUE);
     curs_set(1);
 
     /* Read in all the verbatim characters. */
     kbinput = get_verbatim_kbinput(edit, &kbinput_len);
 
     /* Unsuppress cursor-position display or blank the statusbar. */
-    if (ISSET(CONST_UPDATE))
+    if (ISSET(CONSTANT_SHOW))
 	do_cursorpos(FALSE);
     else {
 	blank_statusbar();

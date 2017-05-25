@@ -24,93 +24,95 @@
 
 #include <time.h>
 
-#if HAVE_SYS_TIMEB_H
-# include <sys/timeb.h>
+#if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+# define WINDOWS_NATIVE
+# include <windows.h>
 #endif
 
-#if GETTIMEOFDAY_CLOBBERS_LOCALTIME || TZSET_CLOBBERS_LOCALTIME
+#include "localtime-buffer.h"
 
-/* Work around the bug in some systems whereby gettimeofday clobbers
-   the static buffer that localtime uses for its return value.  The
-   gettimeofday function from Mac OS X 10.0.4 (i.e., Darwin 1.3.7) has
-   this problem.  The tzset replacement is necessary for at least
-   Solaris 2.5, 2.5.1, and 2.6.  */
+#ifdef WINDOWS_NATIVE
 
-static struct tm tm_zero_buffer;
-static struct tm *localtime_buffer_addr = &tm_zero_buffer;
+/* GetSystemTimePreciseAsFileTime was introduced only in Windows 8.  */
+typedef void (WINAPI * GetSystemTimePreciseAsFileTimeFuncType) (FILETIME *lpTime);
+static GetSystemTimePreciseAsFileTimeFuncType GetSystemTimePreciseAsFileTimeFunc = NULL;
+static BOOL initialized = FALSE;
 
-# undef localtime
-extern struct tm *localtime (time_t const *);
-
-# undef gmtime
-extern struct tm *gmtime (time_t const *);
-
-/* This is a wrapper for localtime.  It is used only on systems for which
-   gettimeofday clobbers the static buffer used for localtime's result.
-
-   On the first call, record the address of the static buffer that
-   localtime uses for its result.  */
-
-struct tm *
-rpl_localtime (time_t const *timep)
+static void
+initialize (void)
 {
-  struct tm *tm = localtime (timep);
-
-  if (localtime_buffer_addr == &tm_zero_buffer)
-    localtime_buffer_addr = tm;
-
-  return tm;
+  HMODULE kernel32 = LoadLibrary ("kernel32.dll");
+  if (kernel32 != NULL)
+    {
+      GetSystemTimePreciseAsFileTimeFunc =
+	(GetSystemTimePreciseAsFileTimeFuncType) GetProcAddress (kernel32, "GetSystemTimePreciseAsFileTime");
+    }
+  initialized = TRUE;
 }
 
-/* Same as above, since gmtime and localtime use the same buffer.  */
-struct tm *
-rpl_gmtime (time_t const *timep)
-{
-  struct tm *tm = gmtime (timep);
-
-  if (localtime_buffer_addr == &tm_zero_buffer)
-    localtime_buffer_addr = tm;
-
-  return tm;
-}
-
-#endif /* GETTIMEOFDAY_CLOBBERS_LOCALTIME || TZSET_CLOBBERS_LOCALTIME */
-
-#if TZSET_CLOBBERS_LOCALTIME
-
-# undef tzset
-extern void tzset (void);
-
-/* This is a wrapper for tzset, for systems on which tzset may clobber
-   the static buffer used for localtime's result.  */
-void
-rpl_tzset (void)
-{
-  /* Save and restore the contents of the buffer used for localtime's
-     result around the call to tzset.  */
-  struct tm save = *localtime_buffer_addr;
-  tzset ();
-  *localtime_buffer_addr = save;
-}
 #endif
 
 /* This is a wrapper for gettimeofday.  It is used only on systems
    that lack this function, or whose implementation of this function
-   causes problems.  */
+   causes problems.
+   Work around the bug in some systems whereby gettimeofday clobbers
+   the static buffer that localtime uses for its return value.  The
+   gettimeofday function from Mac OS X 10.0.4 (i.e., Darwin 1.3.7) has
+   this problem.  */
 
 int
 gettimeofday (struct timeval *restrict tv, void *restrict tz)
 {
 #undef gettimeofday
-#if HAVE_GETTIMEOFDAY
-# if GETTIMEOFDAY_CLOBBERS_LOCALTIME
+#ifdef WINDOWS_NATIVE
+
+  /* On native Windows, there are two ways to get the current time:
+     GetSystemTimeAsFileTime
+     <https://msdn.microsoft.com/en-us/library/ms724397.aspx>
+     or
+     GetSystemTimePreciseAsFileTime
+     <https://msdn.microsoft.com/en-us/library/hh706895.aspx>.
+     GetSystemTimeAsFileTime produces values that jump by increments of
+     15.627 milliseconds (!) on average.
+     Whereas GetSystemTimePreciseAsFileTime values usually jump by 1 or 2
+     microseconds.
+     More discussion on this topic:
+     <http://www.windowstimestamp.com/description>.  */
+  FILETIME current_time;
+
+  if (!initialized)
+    initialize ();
+  if (GetSystemTimePreciseAsFileTimeFunc != NULL)
+    GetSystemTimePreciseAsFileTimeFunc (&current_time);
+  else
+    GetSystemTimeAsFileTime (&current_time);
+
+  /* Convert from FILETIME to 'struct timeval'.  */
+  /* FILETIME: <https://msdn.microsoft.com/en-us/library/ms724284.aspx> */
+  ULONGLONG since_1601 =
+    ((ULONGLONG) current_time.dwHighDateTime << 32)
+    | (ULONGLONG) current_time.dwLowDateTime;
+  /* Between 1601-01-01 and 1970-01-01 there were 280 normal years and 89 leap
+     years, in total 134774 days.  */
+  ULONGLONG since_1970 =
+    since_1601 - (ULONGLONG) 134774 * (ULONGLONG) 86400 * (ULONGLONG) 10000000;
+  ULONGLONG microseconds_since_1970 = since_1970 / (ULONGLONG) 10;
+  tv->tv_sec = microseconds_since_1970 / (ULONGLONG) 1000000;
+  tv->tv_usec = microseconds_since_1970 % (ULONGLONG) 1000000;
+
+  return 0;
+
+#else
+
+# if HAVE_GETTIMEOFDAY
+#  if GETTIMEOFDAY_CLOBBERS_LOCALTIME
   /* Save and restore the contents of the buffer used for localtime's
      result around the call to gettimeofday.  */
   struct tm save = *localtime_buffer_addr;
-# endif
+#  endif
 
-# if defined timeval /* 'struct timeval' overridden by gnulib?  */
-#  undef timeval
+#  if defined timeval /* 'struct timeval' overridden by gnulib?  */
+#   undef timeval
   struct timeval otv;
   int result = gettimeofday (&otv, (struct timezone *) tz);
   if (result == 0)
@@ -118,24 +120,15 @@ gettimeofday (struct timeval *restrict tv, void *restrict tz)
       tv->tv_sec = otv.tv_sec;
       tv->tv_usec = otv.tv_usec;
     }
-# else
+#  else
   int result = gettimeofday (tv, (struct timezone *) tz);
-# endif
+#  endif
 
-# if GETTIMEOFDAY_CLOBBERS_LOCALTIME
+#  if GETTIMEOFDAY_CLOBBERS_LOCALTIME
   *localtime_buffer_addr = save;
-# endif
+#  endif
 
   return result;
-
-#else
-
-# if HAVE__FTIME
-
-  struct _timeb timebuf;
-  _ftime (&timebuf);
-  tv->tv_sec = timebuf.time;
-  tv->tv_usec = timebuf.millitm * 1000;
 
 # else
 
@@ -146,9 +139,8 @@ gettimeofday (struct timeval *restrict tv, void *restrict tz)
   tv->tv_sec = time (NULL);
   tv->tv_usec = 0;
 
-# endif
-
   return 0;
 
+# endif
 #endif
 }

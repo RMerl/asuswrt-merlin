@@ -113,12 +113,16 @@
 #  define WEOF -1
 # endif
 #else
-/* mingw and MSVC define wint_t as 'unsigned short' in <crtdefs.h>.
-   This is too small: ISO C 99 section 7.24.1.(2) says that wint_t must be
-   "unchanged by default argument promotions".  Override it.  */
+/* mingw and MSVC define wint_t as 'unsigned short' in <crtdefs.h> or
+   <stddef.h>.  This is too small: ISO C 99 section 7.24.1.(2) says that
+   wint_t must be "unchanged by default argument promotions".  Override it.  */
 # if @GNULIB_OVERRIDES_WINT_T@
 #  if !GNULIB_defined_wint_t
-#   include <crtdefs.h>
+#   if @HAVE_CRTDEFS_H@
+#    include <crtdefs.h>
+#   else
+#    include <stddef.h>
+#   endif
 typedef unsigned int rpl_wint_t;
 #   undef wint_t
 #   define wint_t rpl_wint_t
@@ -1032,6 +1036,38 @@ _GL_CXXALIASWARN (wcswidth);
 # if HAVE_RAW_DECL_WCSWIDTH
 _GL_WARN_ON_USE (wcswidth, "wcswidth is unportable - "
                  "use gnulib module wcswidth for portability");
+# endif
+#endif
+
+
+/* Convert *TP to a date and time wide string.  See
+   <http://pubs.opengroup.org/onlinepubs/9699919799/functions/wcsftime.html>.  */
+#if @GNULIB_WCSFTIME@
+# if @REPLACE_WCSFTIME@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef wcsftime
+#   define wcsftime rpl_wcsftime
+#  endif
+_GL_FUNCDECL_RPL (wcsftime, size_t, (wchar_t *__buf, size_t __bufsize,
+                                     const wchar_t *__fmt, const struct tm *__tp)
+                                    _GL_ARG_NONNULL ((1, 3, 4)));
+_GL_CXXALIAS_RPL (wcsftime, size_t, (wchar_t *__buf, size_t __bufsize,
+                                     const wchar_t *__fmt, const struct tm *__tp));
+# else
+#  if !@HAVE_WCSFTIME@
+_GL_FUNCDECL_SYS (wcsftime, size_t, (wchar_t *__buf, size_t __bufsize,
+                                     const wchar_t *__fmt, const struct tm *__tp)
+                                    _GL_ARG_NONNULL ((1, 3, 4)));
+#  endif
+_GL_CXXALIAS_SYS (wcsftime, size_t, (wchar_t *__buf, size_t __bufsize,
+                                     const wchar_t *__fmt, const struct tm *__tp));
+# endif
+_GL_CXXALIASWARN (wcsftime);
+#elif defined GNULIB_POSIXCHECK
+# undef wcsftime
+# if HAVE_RAW_DECL_WCSFTIME
+_GL_WARN_ON_USE (wcsftime, "wcsftime is unportable - "
+                 "use gnulib module wcsftime for portability");
 # endif
 #endif
 

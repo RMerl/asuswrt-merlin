@@ -16,7 +16,7 @@
 .\"   Documentation License along with this program.  If not, see
 .\"   <http://www.gnu.org/licenses/>.
 .\"
-.TH NANO 1 "version 2.8.1" "April 2017"
+.TH NANO 1 "version 2.8.4" "May 2017"
 .\" Please adjust this date whenever revising the manpage.
 
 .SH NAME
@@ -27,15 +27,14 @@ nano \- Nano's ANOther editor, an enhanced free Pico clone
 .RI [ options "] [[+" line [, column "]]\ " file "]..."
 
 .SH DESCRIPTION
-\fBnano\fP is a small, free and friendly editor which aims to replace
-Pico, the default editor included in the non-free Pine package.  On
-top of copying Pico's look and feel, \fBnano\fP also implements some
-missing (or disabled by default) features in Pico, such as "search and
-replace" and "go to line and column number".
+\fBnano\fP is a small and friendly editor.  It copies the look and feel
+of Pico, but is free software, and implements several features that Pico
+lacks, such as: opening multiple files, scrolling per line, undo/redo,
+syntax coloring, line numbering, and soft-wrapping overlong lines.
 
-When opening a file, the cursor can be put on a specific line by adding
-the line number with a plus sign (\fB+\fR) before the filename, and even
-in a specific column by adding it with a comma.
+When giving a filename on the command line, the cursor can be put on a
+specific line by adding the line number with a plus sign (\fB+\fR) before
+the filename, and even in a specific column by adding it with a comma.
 
 If the first file specified is a dash (\fB\-\fR), \fBnano\fR will read
 data from standard input.
@@ -60,7 +59,7 @@ Since nano-2.7.0, text can also be selected by holding Shift and moving the
 cursor with the arrow keys.  Holding down the Alt key too will increase the
 stride.
 .PP
-The two lines at the bottom of the screen show the most important commands;
+The two lines at the bottom of the screen show some important commands;
 the built-in help (\fB^G\fR) lists all the available ones.
 The default key bindings can be changed via the .nanorc file -- see
 .BR nanorc (5).
@@ -80,7 +79,7 @@ filename suffixed with a tilde (\fB~\fP).
 .TP
 .BR \-C\ \fIdirectory\fR ", " \-\-backupdir= \fIdirectory
 Make and keep not just one backup file, but make and keep a uniquely
-numbered one every time a file is saved -- when backups are enabled.
+numbered one every time a file is saved -- when backups are enabled (\fB\-B\fR).
 The uniquely numbered files are stored in the specified \fIdirectory\fR.
 .TP
 .BR \-D ", " \-\-boldtext
@@ -90,10 +89,10 @@ Use bold text instead of reverse video text.
 Convert typed tabs to spaces.
 .TP
 .BR \-F ", " \-\-multibuffer
-Enable multiple file buffers (if support for them has been compiled in).
+Read a file into a new buffer by default.
 .TP
 .BR \-G ", " \-\-locking
-Enable vim-style file locking when editing files.
+Use vim-style file locking when editing files.
 .TP
 .BR \-H ", " \-\-historylog
 Log search and replace strings to \fI~/.nano/search_history\fP, so they can be
@@ -137,7 +136,7 @@ This restricted mode is also accessible by invoking \fBnano\fP
 with any name beginning with 'r' (e.g. "rnano").
 .TP
 .BR \-S ", " \-\-smooth
-Enable smooth scrolling.  Text will scroll line-by-line, instead of the
+Use smooth scrolling: text will scroll line-by-line, instead of the
 usual chunk-by-chunk behavior.
 .TP
 .BR \-T\ \fInumber\fR ", " \-\-tabsize= \fInumber
@@ -145,7 +144,7 @@ Set the size (width) of a tab to \fInumber\fP columns.  The value of
 \fInumber\fP must be greater than 0.  The default value is 8.
 .TP
 .BR \-U ", " \-\-quickblank
-Do quick statusbar blanking.  Statusbar messages will disappear after 1
+Do quick statusbar blanking: statusbar messages will disappear after 1
 keystroke instead of 25.  Note that \fB\-c\fP overrides this.
 .TP
 .BR \-V ", " \-\-version
@@ -165,7 +164,8 @@ Specify the name of the syntax highlighting to use from among the ones
 defined in the \fInanorc\fP files.
 .TP
 .BR \-c ", " \-\-constantshow
-Constantly show the cursor position.  Note that this overrides \fB\-U\fP.
+Constantly show the cursor position on the statusbar.
+Note that this overrides \fB\-U\fP.
 .TP
 .BR \-d ", " \-\-rebinddelete
 Interpret the Delete key differently so that both Backspace and Delete
@@ -300,7 +300,7 @@ Please report any other bugs that you encounter via:
 \fIhttps://savannah.gnu.org/bugs/?group=nano\fR.
 
 .SH HOMEPAGE
-https://nano-editor.org/
+\fIhttps://nano-editor.org/\fR
 
 .SH SEE ALSO
 .BR nanorc (5)

@@ -1,4 +1,4 @@
-/* Provide a more complete sys/stat header file.
+/* Provide a more complete sys/stat.h header file.
    Copyright (C) 2005-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -70,6 +70,75 @@
 /* Large File Support on native Windows.  */
 #if @WINDOWS_64_BIT_ST_SIZE@
 # define stat _stati64
+#endif
+
+/* Optionally, override 'struct stat' on native Windows.  */
+#if @GNULIB_OVERRIDES_STRUCT_STAT@
+
+# undef stat
+# if @GNULIB_STAT@
+#  define stat rpl_stat
+# else
+   /* Provoke a clear link error if stat() is used as a function and
+      module 'stat' is not in use.  */
+#  define stat stat_used_without_requesting_gnulib_module_stat
+# endif
+
+# if !GNULIB_defined_struct_stat
+struct stat
+{
+  dev_t st_dev;
+  ino_t st_ino;
+  mode_t st_mode;
+  nlink_t st_nlink;
+#  if 0
+  uid_t st_uid;
+#  else /* uid_t is not defined by default on native Windows.  */
+  short st_uid;
+#  endif
+#  if 0
+  gid_t st_gid;
+#  else /* gid_t is not defined by default on native Windows.  */
+  short st_gid;
+#  endif
+  dev_t st_rdev;
+  off_t st_size;
+#  if 0
+  blksize_t st_blksize;
+  blkcnt_t st_blocks;
+#  endif
+
+#  if @WINDOWS_STAT_TIMESPEC@
+  struct timespec st_atim;
+  struct timespec st_mtim;
+  struct timespec st_ctim;
+#  else
+  time_t st_atime;
+  time_t st_mtime;
+  time_t st_ctime;
+#  endif
+};
+#  if @WINDOWS_STAT_TIMESPEC@
+#   define st_atime st_atim.tv_sec
+#   define st_mtime st_mtim.tv_sec
+#   define st_ctime st_ctim.tv_sec
+    /* Indicator, for gnulib internal purposes.  */
+#   define _GL_WINDOWS_STAT_TIMESPEC 1
+#  endif
+#  define GNULIB_defined_struct_stat 1
+# endif
+
+/* Other possible values of st_mode.  */
+# if 0
+#  define _S_IFBLK  0x6000
+# endif
+# if 0
+#  define _S_IFLNK  0xA000
+# endif
+# if 0
+#  define _S_IFSOCK 0xC000
+# endif
+
 #endif
 
 #ifndef S_IFIFO
@@ -345,6 +414,9 @@ _GL_CXXALIAS_RPL (fstat, int, (int fd, struct stat *buf));
 _GL_CXXALIAS_SYS (fstat, int, (int fd, struct stat *buf));
 # endif
 _GL_CXXALIASWARN (fstat);
+#elif @GNULIB_OVERRIDES_STRUCT_STAT@
+# undef fstat
+# define fstat fstat_used_without_requesting_gnulib_module_fstat
 #elif @WINDOWS_64_BIT_ST_SIZE@
 /* Above, we define stat to _stati64.  */
 # define fstat _fstati64
@@ -378,6 +450,9 @@ _GL_CXXALIAS_SYS (fstatat, int,
                   (int fd, char const *name, struct stat *st, int flags));
 # endif
 _GL_CXXALIASWARN (fstatat);
+#elif @GNULIB_OVERRIDES_STRUCT_STAT@
+# undef fstatat
+# define fstatat fstatat_used_without_requesting_gnulib_module_fstatat
 #elif defined GNULIB_POSIXCHECK
 # undef fstatat
 # if HAVE_RAW_DECL_FSTATAT
@@ -476,6 +551,9 @@ _GL_CXXALIAS_SYS (lstat, int, (const char *name, struct stat *buf));
 # if @HAVE_LSTAT@
 _GL_CXXALIASWARN (lstat);
 # endif
+#elif @GNULIB_OVERRIDES_STRUCT_STAT@
+# undef lstat
+# define lstat lstat_used_without_requesting_gnulib_module_lstat
 #elif defined GNULIB_POSIXCHECK
 # undef lstat
 # if HAVE_RAW_DECL_LSTAT
@@ -625,63 +703,69 @@ _GL_WARN_ON_USE (mknodat, "mknodat is not portable - "
 
 #if @GNULIB_STAT@
 # if @REPLACE_STAT@
-/* We can't use the object-like #define stat rpl_stat, because of
-   struct stat.  This means that rpl_stat will not be used if the user
-   does (stat)(a,b).  Oh well.  */
-#  if defined _AIX && defined stat && defined _LARGE_FILES
-    /* With _LARGE_FILES defined, AIX (only) defines stat to stat64,
-       so we have to replace stat64() instead of stat(). */
-#   undef stat64
-#   define stat64(name, st) rpl_stat (name, st)
-#  elif @WINDOWS_64_BIT_ST_SIZE@
-    /* Above, we define stat to _stati64.  */
-#   if defined __MINGW32__ && defined _stati64
-#    ifndef _USE_32BIT_TIME_T
-      /* The system headers define _stati64 to _stat64.  */
-#     undef _stat64
-#     define _stat64(name, st) rpl_stat (name, st)
+#  if !@GNULIB_OVERRIDES_STRUCT_STAT@
+    /* We can't use the object-like #define stat rpl_stat, because of
+       struct stat.  This means that rpl_stat will not be used if the user
+       does (stat)(a,b).  Oh well.  */
+#   if defined _AIX && defined stat && defined _LARGE_FILES
+     /* With _LARGE_FILES defined, AIX (only) defines stat to stat64,
+        so we have to replace stat64() instead of stat(). */
+#    undef stat64
+#    define stat64(name, st) rpl_stat (name, st)
+#   elif @WINDOWS_64_BIT_ST_SIZE@
+     /* Above, we define stat to _stati64.  */
+#    if defined __MINGW32__ && defined _stati64
+#     ifndef _USE_32BIT_TIME_T
+       /* The system headers define _stati64 to _stat64.  */
+#      undef _stat64
+#      define _stat64(name, st) rpl_stat (name, st)
+#     endif
+#    elif defined _MSC_VER && defined _stati64
+#     ifdef _USE_32BIT_TIME_T
+       /* The system headers define _stati64 to _stat32i64.  */
+#      undef _stat32i64
+#      define _stat32i64(name, st) rpl_stat (name, st)
+#     else
+       /* The system headers define _stati64 to _stat64.  */
+#      undef _stat64
+#      define _stat64(name, st) rpl_stat (name, st)
+#     endif
+#    else
+#     undef _stati64
+#     define _stati64(name, st) rpl_stat (name, st)
 #    endif
-#   elif defined _MSC_VER && defined _stati64
+#   elif defined __MINGW32__ && defined stat
 #    ifdef _USE_32BIT_TIME_T
-      /* The system headers define _stati64 to _stat32i64.  */
+      /* The system headers define stat to _stat32i64.  */
 #     undef _stat32i64
 #     define _stat32i64(name, st) rpl_stat (name, st)
 #    else
-      /* The system headers define _stati64 to _stat64.  */
+      /* The system headers define stat to _stat64.  */
 #     undef _stat64
 #     define _stat64(name, st) rpl_stat (name, st)
 #    endif
-#   else
-#    undef _stati64
-#    define _stati64(name, st) rpl_stat (name, st)
-#   endif
-#  elif defined __MINGW32__ && defined stat
-#   ifdef _USE_32BIT_TIME_T
-     /* The system headers define stat to _stat32i64.  */
-#    undef _stat32i64
-#    define _stat32i64(name, st) rpl_stat (name, st)
-#   else
-     /* The system headers define stat to _stat64.  */
-#    undef _stat64
-#    define _stat64(name, st) rpl_stat (name, st)
-#   endif
-#  elif defined _MSC_VER && defined stat
-#   ifdef _USE_32BIT_TIME_T
-     /* The system headers define stat to _stat32.  */
-#    undef _stat32
-#    define _stat32(name, st) rpl_stat (name, st)
-#   else
-     /* The system headers define stat to _stat64i32.  */
-#    undef _stat64i32
-#    define _stat64i32(name, st) rpl_stat (name, st)
-#   endif
-#  else /* !(_AIX ||__MINGW32__ ||  _MSC_VER) */
-#   undef stat
-#   define stat(name, st) rpl_stat (name, st)
-#  endif /* !_LARGE_FILES */
+#   elif defined _MSC_VER && defined stat
+#    ifdef _USE_32BIT_TIME_T
+      /* The system headers define stat to _stat32.  */
+#     undef _stat32
+#     define _stat32(name, st) rpl_stat (name, st)
+#    else
+      /* The system headers define stat to _stat64i32.  */
+#     undef _stat64i32
+#     define _stat64i32(name, st) rpl_stat (name, st)
+#    endif
+#   else /* !(_AIX || __MINGW32__ || _MSC_VER) */
+#    undef stat
+#    define stat(name, st) rpl_stat (name, st)
+#   endif /* !_LARGE_FILES */
+#  endif /* !@GNULIB_OVERRIDES_STRUCT_STAT@ */
 _GL_EXTERN_C int stat (const char *name, struct stat *buf)
                       _GL_ARG_NONNULL ((1, 2));
 # endif
+#elif @GNULIB_OVERRIDES_STRUCT_STAT@
+/* see above:
+  #define stat stat_used_without_requesting_gnulib_module_stat
+ */
 #elif defined GNULIB_POSIXCHECK
 # undef stat
 # if HAVE_RAW_DECL_STAT

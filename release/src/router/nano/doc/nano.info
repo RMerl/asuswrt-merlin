@@ -580,11 +580,11 @@ The following global toggles are available:
 'Suspension Toggle (Meta-Z)'
      toggles the '-z' ('--suspend') command-line option.
 
-'Soft Wrapping Toggle (Meta-$)'
-     toggles the '-$' ('--softwrap') command-line option.
-
 'Line Numbers Toggle (Meta-#)'
      toggles the '-l' ('--linenumbers') command-line option.
+
+'Soft Wrapping Toggle (Meta-$)'
+     toggles the '-$' ('--softwrap') command-line option.
 
 
 File: nano.info,  Node: Nanorc Files,  Next: The File Browser,  Prev: Feature Toggles,  Up: Top
@@ -653,9 +653,9 @@ The supported settings in a nanorc file are:
 
 'set boldtext'
      Use bold instead of reverse video for the titlebar, statusbar, key
-     combos, and selected text.  This can be overridden for the first
-     three by setting the options 'titlecolor', 'statuscolor', and
-     'keycolor'.
+     combos, line numbers, and selected text.  This can be overridden
+     for the first four by setting the options 'titlecolor',
+     'statuscolor', 'keycolor', and 'numbercolor'.
 
 'set brackets "STRING"'
      Set the characters treated as closing brackets when justifying
@@ -874,12 +874,12 @@ easy to make, so they are a good fit for a small editor like 'nano'.
    A separate syntax can be defined for each kind of file via the
 following commands in a nanorc file:
 
-'syntax "str" ["fileregex" ...]'
-     Defines a syntax named "str" which can be activated via the
+'syntax "name" ["fileregex" ...]'
+     Defines a syntax named "name" which can be activated via the
      '-Y/--syntax' command-line option, or will be automatically
      activated if the current filename matches the extended regular
      expression "fileregex".  All subsequent 'color', 'icolor', 'header'
-     and other such statements will apply to this "str" syntax until a
+     and other such statements will apply to this "name" syntax until a
      new 'syntax' command is encountered.
 
      The "none" syntax is reserved; specifying it on the command line is
@@ -930,27 +930,27 @@ following commands in a nanorc file:
      'nano' to attempt to use a transparent background.
 
 'icolor fgcolor,bgcolor "regex" ...'
-     Same as above, except that the text matching is case insensitive.
+     Same as above, except that the matching is case insensitive.
 
-'color fgcolor,bgcolor start="sr" end="er"'
+'color fgcolor,bgcolor start="fromrx" end="torx"'
      Display all pieces of text whose start matches extended regular
-     expression "sr" and whose end matches extended regular expression
-     "er" with foreground color "fgcolor" and background color
-     "bgcolor", at least one of which must be specified.  This means
-     that, after an initial instance of "sr", all text will be
-     highlighted until the first instance of "er".  This allows syntax
+     expression "fromrx" and whose end matches extended regular
+     expression "torx" with foreground color "fgcolor" and background
+     color "bgcolor", at least one of which must be specified.  This
+     means that, after an initial instance of "fromrx", all text until
+     the first instance of "torx" will be colored.  This allows syntax
      highlighting to span multiple lines.
 
-'icolor fgcolor,bgcolor start="sr" end="er"'
-     Same as above, except that the text matching is case insensitive.
+'icolor fgcolor,bgcolor start="fromrx" end="torx"'
+     Same as above, except that the matching is case insensitive.
 
 'include "syntaxfile"'
      Read in self-contained color syntaxes from "syntaxfile".  Note that
      "syntaxfile" may contain only the above commands, from 'syntax' to
      'icolor'.
 
-'extendsyntax str directive [arg ...]'
-     Extend the syntax previously defined as str to include new
+'extendsyntax name directive [arg ...]'
+     Extend the syntax previously defined as "name" to include new
      information.  This allows you to add a new 'color', 'icolor',
      'header', 'magic', 'comment', 'linter', or 'formatter' directive to
      an already defined syntax -- useful when you want to slightly
@@ -1404,6 +1404,16 @@ some differences between the editors:
      you close a file, and will place the cursor in that position again
      when you later reopen the file.
 
+'Current Cursor Position'
+     The output of the "Display Cursor Position" command (^C) displays
+     not only the current line and character position of the cursor, but
+     also (between the two) the current column position.
+
+'Spell Checking'
+     In the internal spell checker misspelled words are sorted
+     alphabetically and trimmed for uniqueness, such that the words
+     'apple' and 'Apple' will be prompted for correction separately.
+
 'Writing Selected Text to Files'
      When using the Write-Out key (^O), text that has been selected
      using the marking key (^^) can not just be written out to a new (or
@@ -1433,16 +1443,6 @@ some differences between the editors:
      off.  See the internal help function (^G) for a list of features
      that can be toggled.  Or see *Note Feature Toggles:: instead.
 
-'Current Cursor Position'
-     The output of the "Display Cursor Position" command (^C) displays
-     not only the current line and character position of the cursor, but
-     also (between the two) the current column position.
-
-'Spell Checking'
-     In the internal spell checker misspelled words are sorted
-     alphabetically and trimmed for uniqueness, such that the words
-     'apple' and 'Apple' will be prompted for correction separately.
-
 
 File: nano.info,  Node: Building and Configure Options,  Prev: Pico Compatibility,  Up: Top
 
@@ -1461,16 +1461,19 @@ familiar with compiling programs with autoconf support:
    The possible options to './configure' are:
 
 '--disable-browser'
-     Disable the mini file browser when reading or writing files.
+     Disable the mini file browser that can be called with ^T when
+     reading or writing files.
 
 '--disable-color'
      Disable support for the syntax coloring of files.  This also
      eliminates the '-Y' command-line option, which chooses a specific
      syntax.
 
+'--disable-comment'
+     Disable the single-keystroke comment/uncomment function (M-3).
+
 '--disable-extra'
-     Disable extra features.  At the moment, this is just
-     easter-egg-type stuff.
+     Disable the Easter egg: a crawl of major contributors.
 
 '--disable-help'
      Disable the help function.  Doing this makes the binary much
@@ -1492,6 +1495,10 @@ familiar with compiling programs with autoconf support:
      determining the file type and thus which syntax to use for
      colouring -- often the tests on filename extension and header line
      will be enough).
+
+'--disable-linenumbers'
+     Disable the line-numbering function (M-#).  This also eliminates
+     the '-l' command-line option, which turns line numbering on.
 
 '--disable-mouse'
      Disable all mouse functionality.  This also eliminates the '-m'
@@ -1527,7 +1534,7 @@ familiar with compiling programs with autoconf support:
      string).
 
 '--disable-wordcomp'
-     Disable word completion.
+     Disable word completion (^]).
 
 '--disable-wrapping'
      Disable all hard-wrapping of overlong lines.  This also eliminates
@@ -1595,11 +1602,11 @@ Node: Built-in Help17117
 Node: Feature Toggles17508
 Node: Nanorc Files19716
 Node: Settings21148
-Ref: Whitespace28973
-Node: Syntax Highlighting29513
-Node: Rebinding Keys34223
-Node: The File Browser44211
-Node: Pico Compatibility45033
-Node: Building and Configure Options48150
+Ref: Whitespace29001
+Node: Syntax Highlighting29541
+Node: Rebinding Keys34268
+Node: The File Browser44256
+Node: Pico Compatibility45078
+Node: Building and Configure Options48195
 
 End Tag Table

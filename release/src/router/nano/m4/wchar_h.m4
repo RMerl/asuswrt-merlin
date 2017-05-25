@@ -7,7 +7,7 @@ dnl with or without modifications, as long as this notice is preserved.
 
 dnl Written by Eric Blake.
 
-# wchar_h.m4 serial 40
+# wchar_h.m4 serial 42
 
 AC_DEFUN([gl_WCHAR_H],
 [
@@ -35,6 +35,8 @@ AC_DEFUN([gl_WCHAR_H],
   fi
   AC_SUBST([HAVE_WINT_T])
 
+  AC_REQUIRE([gl_TYPE_WINT_T_PREREQ])
+
   dnl Check for declarations of anything we want to poison if the
   dnl corresponding gnulib module is not in use.
   gl_WARN_ON_USE_PREPARE([[
@@ -53,7 +55,7 @@ AC_DEFUN([gl_WCHAR_H],
      wcsrtombs wcsnrtombs wcwidth wmemchr wmemcmp wmemcpy wmemmove wmemset
      wcslen wcsnlen wcscpy wcpcpy wcsncpy wcpncpy wcscat wcsncat wcscmp
      wcsncmp wcscasecmp wcsncasecmp wcscoll wcsxfrm wcsdup wcschr wcsrchr
-     wcscspn wcsspn wcspbrk wcsstr wcstok wcswidth
+     wcscspn wcsspn wcspbrk wcsstr wcstok wcswidth wcsftime
     ])
 ])
 
@@ -177,6 +179,7 @@ AC_DEFUN([gl_WCHAR_H_DEFAULTS],
   GNULIB_WCSSTR=0;      AC_SUBST([GNULIB_WCSSTR])
   GNULIB_WCSTOK=0;      AC_SUBST([GNULIB_WCSTOK])
   GNULIB_WCSWIDTH=0;    AC_SUBST([GNULIB_WCSWIDTH])
+  GNULIB_WCSFTIME=0;    AC_SUBST([GNULIB_WCSFTIME])
   dnl Assume proper GNU behavior unless another module says otherwise.
   HAVE_BTOWC=1;         AC_SUBST([HAVE_BTOWC])
   HAVE_MBSINIT=1;       AC_SUBST([HAVE_MBSINIT])
@@ -215,6 +218,7 @@ AC_DEFUN([gl_WCHAR_H_DEFAULTS],
   HAVE_WCSSTR=1;        AC_SUBST([HAVE_WCSSTR])
   HAVE_WCSTOK=1;        AC_SUBST([HAVE_WCSTOK])
   HAVE_WCSWIDTH=1;      AC_SUBST([HAVE_WCSWIDTH])
+  HAVE_WCSFTIME=1;      AC_SUBST([HAVE_WCSFTIME])
   HAVE_DECL_WCTOB=1;    AC_SUBST([HAVE_DECL_WCTOB])
   HAVE_DECL_WCWIDTH=1;  AC_SUBST([HAVE_DECL_WCWIDTH])
   REPLACE_MBSTATE_T=0;  AC_SUBST([REPLACE_MBSTATE_T])
@@ -230,4 +234,5 @@ AC_DEFUN([gl_WCHAR_H_DEFAULTS],
   REPLACE_WCSNRTOMBS=0; AC_SUBST([REPLACE_WCSNRTOMBS])
   REPLACE_WCWIDTH=0;    AC_SUBST([REPLACE_WCWIDTH])
   REPLACE_WCSWIDTH=0;   AC_SUBST([REPLACE_WCSWIDTH])
+  REPLACE_WCSFTIME=0;   AC_SUBST([REPLACE_WCSFTIME])
 ])

@@ -1,4 +1,4 @@
-# unistd_h.m4 serial 69
+# unistd_h.m4 serial 70
 dnl Copyright (C) 2006-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -46,8 +46,8 @@ AC_DEFUN([gl_UNISTD_H],
     gethostname getlogin getlogin_r getpagesize
     getusershell setusershell endusershell
     group_member isatty lchown link linkat lseek pipe pipe2 pread pwrite
-    readlink readlinkat rmdir sethostname sleep symlink symlinkat ttyname_r
-    unlink unlinkat usleep])
+    readlink readlinkat rmdir sethostname sleep symlink symlinkat
+    truncate ttyname_r unlink unlinkat usleep])
 ])
 
 AC_DEFUN([gl_UNISTD_MODULE_INDICATOR],
@@ -102,6 +102,7 @@ AC_DEFUN([gl_UNISTD_H_DEFAULTS],
   GNULIB_SLEEP=0;                AC_SUBST([GNULIB_SLEEP])
   GNULIB_SYMLINK=0;              AC_SUBST([GNULIB_SYMLINK])
   GNULIB_SYMLINKAT=0;            AC_SUBST([GNULIB_SYMLINKAT])
+  GNULIB_TRUNCATE=0;             AC_SUBST([GNULIB_TRUNCATE])
   GNULIB_TTYNAME_R=0;            AC_SUBST([GNULIB_TTYNAME_R])
   GNULIB_UNISTD_H_NONBLOCKING=0; AC_SUBST([GNULIB_UNISTD_H_NONBLOCKING])
   GNULIB_UNISTD_H_SIGPIPE=0;     AC_SUBST([GNULIB_UNISTD_H_SIGPIPE])
@@ -139,6 +140,7 @@ AC_DEFUN([gl_UNISTD_H_DEFAULTS],
   HAVE_SLEEP=1;           AC_SUBST([HAVE_SLEEP])
   HAVE_SYMLINK=1;         AC_SUBST([HAVE_SYMLINK])
   HAVE_SYMLINKAT=1;       AC_SUBST([HAVE_SYMLINKAT])
+  HAVE_TRUNCATE=1;        AC_SUBST([HAVE_TRUNCATE])
   HAVE_UNLINKAT=1;        AC_SUBST([HAVE_UNLINKAT])
   HAVE_USLEEP=1;          AC_SUBST([HAVE_USLEEP])
   HAVE_DECL_ENVIRON=1;    AC_SUBST([HAVE_DECL_ENVIRON])
@@ -179,6 +181,7 @@ AC_DEFUN([gl_UNISTD_H_DEFAULTS],
   REPLACE_SLEEP=0;        AC_SUBST([REPLACE_SLEEP])
   REPLACE_SYMLINK=0;      AC_SUBST([REPLACE_SYMLINK])
   REPLACE_SYMLINKAT=0;    AC_SUBST([REPLACE_SYMLINKAT])
+  REPLACE_TRUNCATE=0;     AC_SUBST([REPLACE_TRUNCATE])
   REPLACE_TTYNAME_R=0;    AC_SUBST([REPLACE_TTYNAME_R])
   REPLACE_UNLINK=0;       AC_SUBST([REPLACE_UNLINK])
   REPLACE_UNLINKAT=0;     AC_SUBST([REPLACE_UNLINKAT])

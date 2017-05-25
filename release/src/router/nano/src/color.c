@@ -132,6 +132,8 @@ void color_init(void)
 	fprintf(stderr, "init_pair(): fg = %hd, bg = %hd\n", foreground, background);
 #endif
     }
+
+    have_palette = TRUE;
 }
 
 /* Try to match the given shibboleth string with one of the regexes in

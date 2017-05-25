@@ -3,14 +3,13 @@ dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
-dnl serial 7
+dnl serial 8
 
 AC_DEFUN([gl_UTIMENS],
 [
   dnl Prerequisites of lib/utimens.c.
   AC_REQUIRE([gl_FUNC_UTIMES])
   AC_REQUIRE([gl_CHECK_TYPE_STRUCT_TIMESPEC])
-  AC_REQUIRE([gl_CHECK_TYPE_STRUCT_UTIMBUF])
   AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
   AC_CHECK_FUNCS_ONCE([futimes futimesat futimens utimensat lutimes])
 

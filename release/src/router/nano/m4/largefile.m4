@@ -126,9 +126,24 @@ AC_DEFUN([gl_LARGEFILE],
       else
         WINDOWS_64_BIT_OFF_T=0
       fi
-      dnl But all native Windows platforms (including mingw64) have a 32-bit
-      dnl st_size member in 'struct stat'.
-      WINDOWS_64_BIT_ST_SIZE=1
+      dnl Some mingw versions define, if _FILE_OFFSET_BITS=64, 'struct stat'
+      dnl to 'struct _stat32i64' or 'struct _stat64' (depending on
+      dnl _USE_32BIT_TIME_T), which has a 32-bit st_size member.
+      AC_CACHE_CHECK([for 64-bit st_size], [gl_cv_member_st_size_64],
+        [AC_COMPILE_IFELSE(
+           [AC_LANG_PROGRAM(
+              [[#include <sys/types.h>
+                struct stat buf;
+                int verify_st_size_size[sizeof (buf.st_size) >= 8 ? 1 : -1];
+              ]],
+              [[]])],
+           [gl_cv_member_st_size_64=yes], [gl_cv_member_st_size_64=no])
+        ])
+      if test $gl_cv_member_st_size_64 = no; then
+        WINDOWS_64_BIT_ST_SIZE=1
+      else
+        WINDOWS_64_BIT_ST_SIZE=0
+      fi
       ;;
     *)
       dnl Nothing to do on gnulib's side.

@@ -1235,7 +1235,7 @@ int parse_escape_sequence(WINDOW *win, int kbinput)
 	    suppress_cursorpos = FALSE;
 	    lastmessage = HUSH;
 	    if (currmenu == MMAIN) {
-		reset_cursor();
+		place_the_cursor(TRUE);
 		curs_set(1);
 	    }
 	}
@@ -1463,7 +1463,8 @@ int *get_verbatim_kbinput(WINDOW *win, size_t *kbinput_len)
     retval = parse_verbatim_kbinput(win, kbinput_len);
 
     /* If the code is invalid in the current mode, discard it. */
-    if ((*retval == '\n' && as_an_at) || (*retval == '\0' && !as_an_at)) {
+    if (retval != NULL && ((*retval == '\n' && as_an_at) ||
+				(*retval == '\0' && !as_an_at))) {
 	*kbinput_len = 0;
 	beep();
     }
@@ -1552,7 +1553,7 @@ int *parse_verbatim_kbinput(WINDOW *win, size_t *count)
     return get_input(NULL, *count);
 }
 
-#ifndef DISABLE_MOUSE
+#ifdef ENABLE_MOUSE
 /* Handle any mouse event that may have occurred.  We currently handle
  * releases/clicks of the first mouse button.  If allow_shortcuts is
  * TRUE, releasing/clicking on a visible shortcut will put back the
@@ -1706,7 +1707,7 @@ int get_mouseinput(int *mouse_x, int *mouse_y, bool allow_shortcuts)
     /* Ignore all other mouse events. */
     return 2;
 }
-#endif /* !DISABLE_MOUSE */
+#endif /* ENABLE_MOUSE */
 
 /* Return the shortcut that corresponds to the values of kbinput (the
  * key itself) and meta_key (whether the key is a meta sequence).  The
@@ -1791,14 +1792,12 @@ void check_statusblank(void)
     statusblank--;
 
     /* When editing and 'constantshow' is active, skip the blanking. */
-    if (currmenu == MMAIN && ISSET(CONST_UPDATE))
+    if (currmenu == MMAIN && ISSET(CONSTANT_SHOW))
 	return;
 
     if (statusblank == 0) {
 	blank_statusbar();
 	wnoutrefresh(bottomwin);
-	reset_cursor();
-	wnoutrefresh(edit);
     }
 
     /* If the subwindows overlap, make sure to show the edit window now. */
@@ -1806,33 +1805,25 @@ void check_statusblank(void)
 	edit_refresh();
 }
 
-/* Convert buf into a string that can be displayed on screen.  The
- * caller wants to display buf starting with column start_col, and
- * extending for at most span columns.  start_col is zero-based.  span
- * is one-based, so span == 0 means you get "" returned.  The returned
- * string is dynamically allocated, and should be freed.  If isdata is
- * TRUE, the caller might put "$" at the beginning or end of the line if
- * it's too long. */
-char *display_string(const char *buf, size_t start_col, size_t span,
-	bool isdata)
+/* Convert buf into a string that can be displayed on screen.  The caller
+ * wants to display buf starting with the given column, and extending for
+ * at most span columns.  column is zero-based, and span is one-based, so
+ * span == 0 means you get "" returned.  The returned string is dynamically
+ * allocated, and should be freed.  If isdata is TRUE, the caller might put
+ * "$" at the beginning or end of the line if it's too long. */
+char *display_string(const char *buf, size_t column, size_t span, bool isdata)
 {
-    size_t start_index;
-	/* Index in buf of the first character shown. */
-    size_t column;
-	/* Screen column that start_index corresponds to. */
+    size_t start_index = actual_x(buf, column);
+	/* The index of the first character that the caller wishes to show. */
+    size_t start_col = strnlenpt(buf, start_index);
+	/* The actual column where that first character starts. */
     char *converted;
-	/* The string we return. */
-    size_t index;
+	/* The expanded string we will return. */
+    size_t index = 0;
 	/* Current position in converted. */
-    size_t beyond = start_col + span;
+    size_t beyond = column + span;
 	/* The column number just beyond the last shown character. */
 
-    start_index = actual_x(buf, start_col);
-    column = strnlenpt(buf, start_index);
-
-    assert(column <= start_col);
-
-    index = 0;
 #ifdef USING_OLD_NCURSES
     seen_wide = FALSE;
 #endif
@@ -1843,32 +1834,31 @@ char *display_string(const char *buf, size_t start_col, size_t span,
 
     /* If the first character starts before the left edge, or would be
      * overwritten by a "$" token, then show placeholders instead. */
-    if (*buf != '\0' && *buf != '\t' && (column < start_col ||
-				(column > 0 && isdata && !ISSET(SOFTWRAP)))) {
+    if (*buf != '\0' && *buf != '\t' && (start_col < column ||
+			(start_col > 0 && isdata && !ISSET(SOFTWRAP)))) {
 	if (is_cntrl_mbchar(buf)) {
-	    if (column < start_col) {
+	    if (start_col < column) {
 		converted[index++] = control_mbrep(buf, isdata);
-		start_col++;
+		column++;
 		buf += parse_mbchar(buf, NULL, NULL);
 	    }
 	}
 #ifdef ENABLE_UTF8
-	else if (using_utf8() && mbwidth(buf) == 2) {
-	    if (column >= start_col) {
+	else if (mbwidth(buf) == 2) {
+	    if (start_col == column) {
 		converted[index++] = ' ';
-		start_col++;
+		column++;
 	    }
 
 	    /* Display the right half of a two-column character as '<'. */
 	    converted[index++] = '<';
-	    start_col++;
-
+	    column++;
 	    buf += parse_mbchar(buf, NULL, NULL);
 	}
 #endif
     }
 
-    while (*buf != '\0' && start_col < beyond) {
+    while (*buf != '\0' && column < beyond) {
 	int charlength, charwidth = 1;
 
 	if (*buf == ' ') {
@@ -1882,7 +1872,7 @@ char *display_string(const char *buf, size_t start_col, size_t span,
 	    } else
 #endif
 		converted[index++] = ' ';
-	    start_col++;
+	    column++;
 	    buf++;
 	    continue;
 	} else if (*buf == '\t') {
@@ -1896,11 +1886,11 @@ char *display_string(const char *buf, size_t start_col, size_t span,
 	    } else
 #endif
 		converted[index++] = ' ';
-	    start_col++;
+	    column++;
 	    /* Fill the tab up with the required number of spaces. */
-	    while (start_col % tabsize != 0) {
+	    while (column % tabsize != 0) {
 		converted[index++] = ' ';
-		start_col++;
+		column++;
 	    }
 	    buf++;
 	    continue;
@@ -1912,7 +1902,7 @@ char *display_string(const char *buf, size_t start_col, size_t span,
 	if (is_cntrl_mbchar(buf)) {
 	    converted[index++] = '^';
 	    converted[index++] = control_mbrep(buf, isdata);
-	    start_col += 2;
+	    column += 2;
 	    buf += charlength;
 	    continue;
 	}
@@ -1922,7 +1912,7 @@ char *display_string(const char *buf, size_t start_col, size_t span,
 	    for (; charlength > 0; charlength--)
 		converted[index++] = *(buf++);
 
-	    start_col += charwidth;
+	    column += charwidth;
 #ifdef USING_OLD_NCURSES
 	    if (charwidth > 1)
 		seen_wide = TRUE;
@@ -1934,8 +1924,7 @@ char *display_string(const char *buf, size_t start_col, size_t span,
 	converted[index++] = '\xEF';
 	converted[index++] = '\xBF';
 	converted[index++] = '\xBD';
-
-	start_col += 1;
+	column++;
 	buf++;
 
 	/* For invalid codepoints, skip extra bytes. */
@@ -1944,7 +1933,7 @@ char *display_string(const char *buf, size_t start_col, size_t span,
     }
 
     /* If there is more text than can be shown, make room for the $ or >. */
-    if (*buf != '\0' && (start_col > beyond || (isdata && !ISSET(SOFTWRAP)))) {
+    if (*buf != '\0' && (column > beyond || (isdata && !ISSET(SOFTWRAP)))) {
 	index = move_mbleft(converted, index);
 
 #ifdef ENABLE_UTF8
@@ -1962,10 +1951,9 @@ char *display_string(const char *buf, size_t start_col, size_t span,
 
 /* If path is NULL, we're in normal editing mode, so display the current
  * version of nano, the current filename, and whether the current file
- * has been modified on the titlebar.  If path isn't NULL, we're in the
- * file browser, and path contains the directory to start the file
- * browser in, so display the current version of nano and the contents
- * of path on the titlebar. */
+ * has been modified on the titlebar.  If path isn't NULL, we're either
+ * in the file browser or the help viewer, so show either the current
+ * directory or the title of help text, that is: whatever is in path. */
 void titlebar(const char *path)
 {
     size_t verlen, prefixlen, pathlen, statelen;
@@ -1974,6 +1962,8 @@ void titlebar(const char *path)
 	/* The width that "Modified" would take up. */
     size_t offset = 0;
 	/* The position at which the center part of the titlebar starts. */
+    const char *branding = BRANDING;
+	/* What is shown in the top left corner. */
     const char *prefix = "";
 	/* What is shown before the path -- "File:", "DIR:", or "". */
     const char *state = "";
@@ -1997,12 +1987,13 @@ void titlebar(const char *path)
      * then sacrifice the prefix, and only then start dottifying. */
 
     /* Figure out the path, prefix and state strings. */
-#ifndef DISABLE_BROWSER
-    if (path != NULL)
+    if (inhelp)
+	branding = "";
+#ifdef ENABLE_BROWSER
+    else if (path != NULL)
 	prefix = _("DIR:");
-    else
 #endif
-    {
+    else {
 	if (openfile->filename[0] == '\0')
 	    path = _("New Buffer");
 	else {
@@ -2019,11 +2010,11 @@ void titlebar(const char *path)
     }
 
     /* Determine the widths of the four elements, including their padding. */
-    verlen = strlenpt(BRANDING) + 3;
+    verlen = strlenpt(branding) + 3;
     prefixlen = strlenpt(prefix);
     if (prefixlen > 0)
 	prefixlen++;
-    pathlen= strlenpt(path);
+    pathlen = strlenpt(path);
     statelen = strlenpt(state) + 2;
     if (statelen > 2) {
 	pathlen++;
@@ -2032,7 +2023,7 @@ void titlebar(const char *path)
 
     /* Only print the version message when there is room for it. */
     if (verlen + prefixlen + pathlen + pluglen + statelen <= COLS)
-	mvwaddstr(topwin, 0, 2, BRANDING);
+	mvwaddstr(topwin, 0, 2, branding);
     else {
 	verlen = 2;
 	/* If things don't fit yet, give up the placeholder. */
@@ -2079,9 +2070,7 @@ void titlebar(const char *path)
 
     wattroff(topwin, interface_color_pair[TITLE_BAR]);
 
-    wnoutrefresh(topwin);
-    reset_cursor();
-    wnoutrefresh(edit);
+    wrefresh(topwin);
 }
 
 /* Display a normal message on the statusbar, quietly. */
@@ -2173,21 +2162,20 @@ void statusline(message_type importance, const char *msg, ...)
     wattroff(bottomwin, interface_color_pair[STATUS_BAR]);
 
     /* Push the message to the screen straightaway. */
-    wnoutrefresh(bottomwin);
-    doupdate();
+    wrefresh(bottomwin);
 
     suppress_cursorpos = TRUE;
 
 #ifndef NANO_TINY
     if (old_whitespace)
 	SET(WHITESPACE_DISPLAY);
+#endif
 
     /* If doing quick blanking, blank the statusbar after just one keystroke.
      * Otherwise, blank it after twenty-six keystrokes, as Pico does. */
     if (ISSET(QUICK_BLANK))
 	statusblank = 1;
     else
-#endif
 	statusblank = 26;
 }
 
@@ -2252,11 +2240,7 @@ void bottombars(int menu)
 
     /* Defeat a VTE bug by moving the cursor and forcing a screen update. */
     wmove(bottomwin, 0, 0);
-    wnoutrefresh(bottomwin);
-    doupdate();
-
-    reset_cursor();
-    wnoutrefresh(edit);
+    wrefresh(bottomwin);
 }
 
 /* Write a shortcut key to the help area at the bottom of the window.
@@ -2284,7 +2268,7 @@ void onekey(const char *keystroke, const char *desc, int length)
 
 /* Redetermine current_y from the position of current relative to edittop,
  * and put the cursor in the edit window at (current_y, "current_x"). */
-void reset_cursor(void)
+void place_the_cursor(bool forreal)
 {
     ssize_t row = 0;
     size_t col, xpt = xplustabs();
@@ -2306,7 +2290,7 @@ void reset_cursor(void)
 	col = xpt % editwincols;
 
 	/* If the cursor ought to be in column zero, nudge it there. */
-	if (openfile->placewewant % editwincols == 0 && col != 0) {
+	if (forreal && openfile->placewewant % editwincols == 0 && col != 0) {
 	    row++;
 	    col = 0;
 	}
@@ -2320,7 +2304,8 @@ void reset_cursor(void)
     if (row < editwinrows)
 	wmove(edit, row, margin + col);
 
-    openfile->current_y = row;
+    if (forreal)
+	openfile->current_y = row;
 }
 
 /* edit_draw() takes care of the job of actually painting a line into
@@ -2699,8 +2684,10 @@ int update_line(filestruct *fileptr, size_t index)
 
     /* If the line is offscreen, don't even try to display it. */
     if (row < 0 || row >= editwinrows) {
+#ifndef NANO_TINY
 	statusline(ALERT, "Badness: tried to display a line on row %i"
 				" -- please report a bug", row);
+#endif
 	return 0;
     }
 
@@ -2914,9 +2901,17 @@ void edit_scroll(scroll_dir direction, int nrows)
 	nrows -= go_forward_chunks(nrows, &openfile->edittop, &openfile->firstcolumn);
 
     /* Don't bother scrolling zero rows, nor more than the window can hold. */
-    if (nrows == 0)
+    if (nrows == 0) {
+#ifndef NANO_TINY
+	statusline(ALERT, "Underscrolling -- please report a bug");
+#endif
 	return;
+    }
     if (nrows >= editwinrows) {
+#ifndef NANO_TINY
+	if (editwinrows > 1)
+	    statusline(ALERT, "Overscrolling -- please report a bug");
+#endif
 	refresh_needed = TRUE;
 	return;
     }
@@ -2960,16 +2955,19 @@ void edit_scroll(scroll_dir direction, int nrows)
     }
 }
 
+#ifndef NANO_TINY
 /* Ensure that firstcolumn is at the starting column of the softwrapped chunk
  * it's on.  We need to do this when the number of columns of the edit window
  * has changed, because then the width of softwrapped chunks has changed. */
 void ensure_firstcolumn_is_aligned(void)
 {
-#ifndef NANO_TINY
     if (openfile->firstcolumn % editwincols != 0)
 	openfile->firstcolumn -= (openfile->firstcolumn % editwincols);
-#endif
+
+    /* If smooth scrolling is on, make sure the viewport doesn't center. */
+    focusing = FALSE;
 }
+#endif
 
 /* Return TRUE if current[current_x] is above the top of the screen, and FALSE
  * otherwise. */
@@ -3063,6 +3061,12 @@ void edit_refresh(void)
     filestruct *line;
     int row = 0;
 
+#ifndef DISABLE_COLOR
+    /* When needed, initialize the colors for the current syntax. */
+    if (!have_palette)
+	color_init();
+#endif
+
     /* If the current line is out of view, get it back on screen. */
     if (current_is_offscreen()) {
 #ifdef DEBUG
@@ -3089,44 +3093,29 @@ void edit_refresh(void)
     while (row < editwinrows)
 	blank_row(edit, row++, 0, COLS);
 
-    reset_cursor();
+    place_the_cursor(TRUE);
     wnoutrefresh(edit);
 
     refresh_needed = FALSE;
 }
 
-/* Move edittop so that current is on the screen.  manner says how it
- * should be moved: CENTERING means that current should end up in the
- * middle of the screen, STATIONARY means that it should stay at the
- * same vertical position, and FLOWING means that it should scroll no
- * more than needed to bring current into view. */
+/* Move edittop so that current is on the screen.  manner says how:
+ * STATIONARY means that the cursor should stay on the same screen row,
+ * CENTERING means that current should end up in the middle of the screen,
+ * and FLOWING means that it should scroll no more than needed to bring
+ * current into view. */
 void adjust_viewport(update_type manner)
 {
     int goal = 0;
 
-    /* If manner is CENTERING, move edittop half the number of window rows
-     * back from current.  If manner is FLOWING, move edittop back 0 rows
-     * or (editwinrows - 1) rows, depending on where current has moved.
-     * This puts the cursor on the first or the last row.  If manner is
-     * STATIONARY, move edittop back current_y rows if current_y is in range
-     * of the screen, 0 rows if current_y is below zero, or (editwinrows - 1)
-     * rows if current_y is too big.  This puts current at the same place on
-     * the screen as before, or... at some undefined place. */
-    if (manner == CENTERING)
-	goal = editwinrows / 2;
-    else if (manner == FLOWING) {
-	if (!current_is_above_screen())
-	    goal = editwinrows - 1;
-    } else {
+    if (manner == STATIONARY)
 	goal = openfile->current_y;
-
-	/* Limit goal to (editwinrows - 1) rows maximum. */
-	if (goal > editwinrows - 1)
-	    goal = editwinrows - 1;
-    }
+    else if (manner == CENTERING)
+	goal = editwinrows / 2;
+    else if (!current_is_above_screen())
+	goal = editwinrows - 1;
 
     openfile->edittop = openfile->current;
-
 #ifndef NANO_TINY
     if (ISSET(SOFTWRAP))
 	openfile->firstcolumn = (xplustabs() / editwincols) * editwincols;
@@ -3158,8 +3147,13 @@ void total_redraw(void)
 void total_refresh(void)
 {
     total_redraw();
-    titlebar(NULL);
-    edit_refresh();
+    titlebar(title);
+#ifdef ENABLE_HELP
+    if (inhelp)
+	wrap_the_help_text(TRUE);
+    else
+#endif
+	edit_refresh();
     bottombars(currmenu);
 }
 
@@ -3258,7 +3252,7 @@ void spotlight(bool active, const char *word)
 	    room--;
     }
 
-    reset_cursor();
+    place_the_cursor(FALSE);
 
     if (active)
 	wattron(edit, hilite_attribute);
@@ -3337,7 +3331,7 @@ void do_credits(void)
 	"",
 	"",
 	"",
-	"(C) 1999 - 2016",
+	"(C) 2017",
 	"Free Software Foundation, Inc.",
 	"",
 	"",
@@ -3384,12 +3378,9 @@ void do_credits(void)
 	    const char *what;
 	    size_t start_col;
 
-	    if (credits[crpos] == NULL) {
-		assert(0 <= xlpos && xlpos < XLCREDIT_LEN);
-
-		what = _(xlcredits[xlpos]);
-		xlpos++;
-	    } else
+	    if (credits[crpos] == NULL)
+		what = _(xlcredits[xlpos++]);
+	    else
 		what = credits[crpos];
 
 	    start_col = COLS / 2 - strlenpt(what) / 2 - 1;
