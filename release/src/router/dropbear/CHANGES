@@ -1,3 +1,28 @@
+2017.75 - 18 May 2017
+
+- Security: Fix double-free in server TCP listener cleanup
+  A double-free in the server could be triggered by an authenticated user if
+  dropbear is running with -a (Allow connections to forwarded ports from any host)
+  This could potentially allow arbitrary code execution as root by an authenticated user.
+  Affects versions 2013.56 to 2016.74. Thanks to Mark Shepard for reporting the crash.
+
+- Security: Fix information disclosure with ~/.ssh/authorized_keys symlink.
+  Dropbear parsed authorized_keys as root, even if it were a symlink. The fix
+  is to switch to user permissions when opening authorized_keys
+
+  A user could symlink their ~/.ssh/authorized_keys to a root-owned file they
+  couldn't normally read. If they managed to get that file to contain valid
+  authorized_keys with command= options it might be possible to read other
+  contents of that file.
+  This information disclosure is to an already authenticated user.
+  Thanks to Jann Horn of Google Project Zero for reporting this.
+
+- Generate hostkeys with dropbearkey atomically and flush to disk with fsync
+  Thanks to Andrei Gherzan for a patch
+
+- Fix out of tree builds with bundled libtom
+  Thanks to Henrik Nordström and Peter Krefting for patches.
+
 2016.74 - 21 July 2016
 
 - Security: Message printout was vulnerable to format string injection.
@@ -9,16 +34,24 @@
   A dbclient user who can control username or host arguments could potentially
   run arbitrary code as the dbclient user. This could be a problem if scripts
   or webpages pass untrusted input to the dbclient program.
+  CVE-2016-7406
+  https://secure.ucc.asn.au/hg/dropbear/rev/b66a483f3dcb
 
 - Security: dropbearconvert import of OpenSSH keys could run arbitrary code as
   the local dropbearconvert user when parsing malicious key files
+  CVE-2016-7407
+  https://secure.ucc.asn.au/hg/dropbear/rev/34e6127ef02e
 
 - Security: dbclient could run arbitrary code as the local dbclient user if
   particular -m or -c arguments are provided. This could be an issue where
   dbclient is used in scripts.
+  CVE-2016-7408
+  https://secure.ucc.asn.au/hg/dropbear/rev/eed9376a4ad6
 
 - Security: dbclient or dropbear server could expose process memory to the
   running user if compiled with DEBUG_TRACE and running with -v
+  CVE-2016-7409
+  https://secure.ucc.asn.au/hg/dropbear/rev/6a14b1f6dc04
 
   The security issues were reported by an anonymous researcher working with
   Beyond Security's SecuriTeam Secure Disclosure www.beyondsecurity.com/ssd.html
@@ -64,6 +97,7 @@
 
 - Validate X11 forwarding input. Could allow bypass of authorized_keys command= restrictions,
   found by github.com/tintinweb. Thanks for Damien Miller for a patch. CVE-2016-3116
+  https://secure.ucc.asn.au/hg/dropbear/rev/a3e8389e01ff
 
 2015.71 - 3 December 2015
 
@@ -342,9 +376,11 @@ kernels, from Steve Dover
 - Limit the size of decompressed payloads, avoids memory exhaustion denial
   of service 
   Thanks to Logan Lamb for reporting and investigating it. CVE-2013-4421
+  https://secure.ucc.asn.au/hg/dropbear/rev/0bf76f54de6f
 
 - Avoid disclosing existence of valid users through inconsistent delays
   Thanks to Logan Lamb for reporting. CVE-2013-4434
+  https://secure.ucc.asn.au/hg/dropbear/rev/d7784616409a
 
 - Update config.guess and config.sub for newer architectures
 
@@ -447,6 +483,7 @@ though probably will be soon
   This bug affects releases 0.52 onwards. Ref CVE-2012-0920.
   Thanks to Danny Fullerton of Mantor Organization for reporting
   the bug.
+  https://secure.ucc.asn.au/hg/dropbear/rev/818108bf7749
 
 - Compile fix, only apply IPV6 socket options if they are available in headers
   Thanks to Gustavo Zacarias for the patch

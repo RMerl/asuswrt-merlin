@@ -199,7 +199,7 @@ static int svr_remotetcpreq() {
 	}
 	else
 	{
-		tcpinfo->listenaddr = request_addr;
+		tcpinfo->listenaddr = m_strdup(request_addr);
 	}
 
 	ret = listen_tcpfwd(tcpinfo);

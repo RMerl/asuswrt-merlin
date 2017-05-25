@@ -681,4 +681,21 @@ time_t monotonic_now() {
 	return time(NULL);
 }
 
+void fsync_parent_dir(const char* fn) {
+#ifdef HAVE_LIBGEN_H
+	char *fn_dir = m_strdup(fn);
+	char *dir = dirname(fn_dir);
+	int dirfd = open(dir, O_RDONLY);
 
+	if (dirfd != -1) {
+		if (fsync(dirfd) != 0) {
+			TRACE(("fsync of directory %s failed: %s", dir, strerror(errno)))
+		}
+		m_close(dirfd);
+	} else {
+		TRACE(("error opening directory %s for fsync: %s", dir, strerror(errno)))
+	}
+
+	free(fn_dir);
+#endif
+}
