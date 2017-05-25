@@ -1,17 +1,36 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.67 Beta (xx-xxx-2017)
+  - NEW: Merged with GPL 380_7627 (only SDK 7114 models for now).
+  - CHANGED: Remember chosen sort method on DHCP static reservations
+             page.
+  - CHANGED: Updated minidlna to 1.2.0.
+  - CHANGED: Updated dropbear to 2017.75.
+  - CHANGED: Updated nano to 2.8.4.
+  - FIXED: OpenVPN client would be shown as having failed to connect
+           if a reconnect attempt initially failed to authenticate,
+           but succesfully connected afterward.
+  - FIXED: Security issue CVE-2017-7494 in Samba.
+
+
+380.66_2 (16-May-2017)
+  - FIXED: AiCloud fail to start on RT-N66U and RT-AC66U.
+  - FIXED: The generated key/cert for httpds and AiCloud could
+           sometimes be invalid due to a timing probblem.
+
+
 380.66 (12-May-2017)
-   - NEW: Merged with GPL 380_7378
-          Notable changes:
-             * Port forwards can select a specific source IP
-             * Security fixes for CVE-2017-5891, CVE-2017-5892
-               and CVE-2017-6547
-          Note:
-             * If you are experiencing new wifi stability
-               issues, try disabling Airtime Fairness on
-               the Wireless -> Professional page (on all
-               bands).
+  - NEW: Merged with GPL 380_7378
+         Notable changes:
+            * Port forwards can select a specific source IP
+            * Security fixes for CVE-2017-5891, CVE-2017-5892
+              and CVE-2017-6547
+         Note:
+            * If you are experiencing new wifi stability
+              issues, try disabling Airtime Fairness on
+              the Wireless -> Professional page (on all
+              bands).
 
   - NEW: Option to disable Wanduck's constant DNS probing
          for WAN state (Tools -> Other Settings)
