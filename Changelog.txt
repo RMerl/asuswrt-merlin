@@ -6,11 +6,15 @@ Asuswrt-Merlin Changelog
   - CHANGED: Remember chosen sort method on DHCP static reservations
              page.
   - CHANGED: Updated minidlna to 1.2.0.
-  - CHANGED: Updated dropbear to 2017.75.
   - CHANGED: Updated nano to 2.8.4.
+  - CHANGED: Updated openssl to 1.0.2l
   - FIXED: OpenVPN client would be shown as having failed to connect
            if a reconnect attempt initially failed to authenticate,
            but succesfully connected afterward.
+
+
+380.66_4 (26-May-2017)
+  - CHANGED: Updated dropbear to 2017.75
   - FIXED: Security issue CVE-2017-7494 in Samba.
 
 
