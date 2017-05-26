@@ -1,6 +1,11 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.66_4 (26-May-2017)
+  - CHANGED: Updated dropbear to 2017.75
+  - FIXED: Security issue CVE-2017-7494 in Samba.
+
+
 380.66_2 (16_May-2017)
   - FIXED: AiCloud fail to start on RT-N66U and RT-AC66U.
   - FIXED: The generated key/cert for httpds and AiCloud could
