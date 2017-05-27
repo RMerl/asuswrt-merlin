@@ -503,7 +503,7 @@ fprintf(stderr, "3. NET_CMD_ID_MANU_CMD:\n");
 #endif
 		     {
 			sprintf(cmdstr, "%s > /tmp/syscmd.out", syscmd->cmd);
-			system(cmdstr);
+//			system(cmdstr);	//CVE-2014-9583
 
 			fprintf(stderr,"rund: %s\n", cmdstr);
 			fp = fopen("/tmp/syscmd.out", "r");
