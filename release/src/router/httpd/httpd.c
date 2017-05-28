@@ -2296,7 +2296,7 @@ void erase_cert(void)
 
 void start_ssl(void)
 {
-	int ok;
+	int ok=0;
 	int save;
 	int retry;
 	unsigned long long sn;
@@ -2313,17 +2313,19 @@ void start_ssl(void)
 	while (1) {
 		save = nvram_match("https_crt_save", "1");
 
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
+		if (save && f_exists(JFFSCERT) && f_exists(JFFSKEY)) {
+			eval("cp", "-p", JFFSKEY, JFFSCERT, "/etc/");
+			system("cat /etc/key.pem /etc/cert.pem > /etc/server.pem");
+			ok = 1;
+		}
+#endif
+
 		if ((!f_exists("/etc/cert.pem")) || (!f_exists("/etc/key.pem"))) {
 			ok = 0;
+#if !defined(RTCONFIG_JFFS2) && !defined(RTCONFIG_BRCM_NAND_JFFS2) && !defined(RTCONFIG_UBIFS)
 			if (save) {
 				fprintf(stderr, "Save SSL certificate...\n"); // tmp test
-#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
-				if (f_exists(JFFSCERT) && f_exists(JFFSKEY)) {
-					eval("cp", "-p", JFFSKEY, JFFSCERT, "/etc/");
-					system("cat /etc/key.pem /etc/cert.pem > /etc/server.pem");
-					ok = 1;
-				}
-#else
 				if (nvram_get_file("https_crt_file", "/tmp/cert.tgz", 8192)) {
 					if (eval("tar", "-xzf", "/tmp/cert.tgz", "-C", "/", "etc/cert.pem", "etc/key.pem") == 0){
 						system("cat /etc/key.pem /etc/cert.pem > /etc/server.pem");
@@ -2337,8 +2339,8 @@ void start_ssl(void)
 
 					unlink("/tmp/cert.tgz");
 				}
-#endif
 			}
+#endif
 			if (!ok) {
 				erase_cert();
 				syslog(LOG_NOTICE, "Generating SSL certificate...");
@@ -2351,7 +2353,7 @@ void start_ssl(void)
 			}
 		}
 
-		if ((save)
+		if ((save && !ok)
 #if !defined(RTCONFIG_JFFS2) && !defined(RTCONFIG_BRCM_NAND_JFFS2) && !defined(RTCONFIG_UBIFS)
 		    && (*nvram_safe_get("https_crt_file")) == 0
 #endif
