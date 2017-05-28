@@ -139,6 +139,7 @@ function initial(){
 	else{
 		hide_https_lanport(document.form.http_enable.value);
 		hide_https_wanport(document.form.http_enable.value);
+		hide_https_crt();
 	}	
 	
 	if(wifi_tog_btn_support || wifi_hw_sw_support || sw_mode == 2 || sw_mode == 4){		// wifi_tog_btn && wifi_hw_sw && hide WPS button behavior under repeater mode
@@ -317,8 +318,13 @@ function applyRule(){
 				|| document.form.http_enable.value != '<% nvram_get("http_enable"); %>'
 				|| document.form.misc_httpport_x.value != '<% nvram_get("misc_httpport_x"); %>'
 				|| document.form.misc_httpsport_x.value != '<% nvram_get("misc_httpsport_x"); %>'
+				|| getRadioItemCheck(document.form.https_crt_gen) == "1"
+				|| document.form.https_crt_cn.value != '<% nvram_get("https_crt_cn"); %>'
 			){
 			restart_httpd_flag = true;
+			if(document.form.https_crt_cn.value != '<% nvram_get("https_crt_cn"); %>'){
+				document.form.https_crt_gen.value = "1";
+			}
 			if(document.form.http_enable.value == "0"){	//HTTP
 				if(isFromWAN)
 					document.form.flag.value = "http://" + location.hostname + ":" + document.form.misc_httpport_x.value;
@@ -558,7 +564,7 @@ function validForm(){
 
 	if(document.form.http_passwd2.value.length > 0)	//password setting changed
 		alert("<#File_Pop_content_alert_desc10#>");
-		
+
 	return true;
 }
 
@@ -863,6 +869,15 @@ function hide_https_lanport(_value){
 function hide_https_wanport(_value){
 	document.getElementById("http_port").style.display = (_value == "1") ? "none" : "";	
 	document.getElementById("https_port").style.display = (_value == "0") ? "none" : "";	
+}
+
+function hide_https_crt(){
+	var protos = document.form.http_enable.value;
+	var savecrt = getRadioValue(document.form.https_crt_save);
+
+	document.getElementById("https_crt_save").style.display = (protos == "0" ? "none" : "");
+	document.getElementById("https_crt_san").style.display = (protos == "0" ? "none" : "");
+	document.getElementById("https_crt_gen").style.display = (protos != "0" && savecrt == "1" ? "" : "none");
 }
 
 // show clientlist
@@ -1530,7 +1545,7 @@ function control_all_rule_status(obj) {
 				<tr id="https_tr">
 					<th><#WLANConfig11b_AuthenticationMethod_itemname#></th>
 					<td>
-						<select name="http_enable" class="input_option" onchange="hide_https_lanport(this.value);hide_https_wanport(this.value);">
+						<select name="http_enable" class="input_option" onchange="hide_https_lanport(this.value);hide_https_wanport(this.value);hide_https_crt();">
 							<option value="0" <% nvram_match("http_enable", "0", "selected"); %>>HTTP</option>
 							<option value="1" <% nvram_match("http_enable", "1", "selected"); %>>HTTPS</option>
 							<option value="2" <% nvram_match("http_enable", "2", "selected"); %>>BOTH</option>
@@ -1545,7 +1560,26 @@ function control_all_rule_status(obj) {
 						<span id="https_access_page"></span>
 					</td>
 				</tr>
-				
+				<tr id="https_crt_save">
+					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,21)">Use persistent certificate</a></th>
+					<td>
+						<input type="radio" name="https_crt_save" class="input" value="1" onClick="hide_https_crt();" <% nvram_match_x("", "https_crt_save", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="https_crt_save" class="input" value="0" onClick="hide_https_crt();" <% nvram_match_x("", "https_crt_save", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
+                                <tr id="https_crt_gen">
+                                        <th>Generate a new certificate</th>
+                                        <td>
+						<input type="radio" name="https_crt_gen" class="input" value="1" onClick="hide_https_crt();" <% nvram_match_x("", "https_crt_gen", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="https_crt_gen" class="input" value="0" onClick="hide_https_crt();" <% nvram_match_x("", "https_crt_gen", "0", "checked"); %>><#checkbox_No#>
+                                        </td>
+                                </tr>
+				<tr id="https_crt_san">
+					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,22)">Certificate Subject Alternative Names</a></th>
+					<td>
+						<input type="text" name="https_crt_cn" value="<% nvram_get("https_crt_cn"); %>" autocomplete="off" class="input_32_table" maxlength="64" autocorrect="off" autocapitalize="off">
+					</td>
+				</tr>
 				<tr id="misc_http_x_tr">
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,2);"><#FirewallConfig_x_WanWebEnable_itemname#></a></th>
 					<td>
