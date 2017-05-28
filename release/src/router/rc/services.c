@@ -6379,7 +6379,10 @@ int start_quagga(void)
 		fprintf(fp, "password %s\n", zebra_passwd);
 		fprintf(fp, "enable password %s\n", zebra_enpasswd);
 		fprintf(fp, "log file /etc/zebra.log informational\n");
+		append_custom_config("zebra.conf",fp);
 		fclose(fp);
+		use_custom_config("zebra.conf","/etc/zebra.conf");
+		run_postconf("zebra","/etc/zebra.conf");
 		eval("zebra", "-d", "-f", "/etc/zebra.conf");
 	}
 	if ((fp2 = fopen("/etc/ripd.conf", "w"))){
@@ -6395,7 +6398,11 @@ int start_quagga(void)
 		fprintf(fp2, " passive-interface vlan3\n");
 		fprintf(fp2, "log file /etc/ripd.log informational\n");
 		fprintf(fp2, "log stdout\n");
+
+		append_custom_config("ripd.conf",fp2);
 		fclose(fp2);
+		use_custom_config("ripd.conf","/etc/ripd.conf");
+		run_postconf("ripd","/etc/ripd.conf");
 		eval("ripd", "-d", "-f", "/etc/ripd.conf");
 	}
 	return 0;
