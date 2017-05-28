@@ -49,10 +49,10 @@ I=$(($I + 1))
 echo "DNS.$I = router.asus.com" >> openssl.config
 I=$(($I + 1))
 
-# User-defined CN (if we have any - legacy Tomato code?)
-if [ "$NVCN" != "" ]
+# User-defined CN (if we have any)
+if [ "$LANCN" != "" ]
 then
-	for CN in $NVCN; do
+	for CN in $LANCN; do
 		echo "DNS.$I = $CN" >> openssl.config
 		I=$(($I + 1))
 	done
