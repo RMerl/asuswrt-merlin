@@ -580,7 +580,7 @@ function gen_vts_ruleTable_Block(_tableID) {
 
 	html += '<tr>';
 	html += '<th width="20%"><#BM_UserList1#></th>';
-	html += '<th width="20%"><a class="hintstyle" href="javascript:void(0);" onClick="">Source Target</a></th>';
+	html += '<th width="20%"><a class="hintstyle" href="javascript:void(0);" onClick="">Source IP</a></th>';
 	html += '<th width="16%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,24);"><#FirewallConfig_LanWanSrcPort_itemname#></a></th>';
 	html += '<th width="18%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,25);"><#IPConnection_VServerIP_itemname#></a></th>';
 	html += '<th width="10%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,26);"><#IPConnection_VServerLPort_itemname#></a></th>';
