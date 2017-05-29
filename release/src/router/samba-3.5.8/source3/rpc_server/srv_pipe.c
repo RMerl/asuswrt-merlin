@@ -1102,6 +1102,11 @@ bool is_known_pipename(const char *cli_filename, struct ndr_syntax_id *syntax)
 		pipename += 1;
 	}
 
+	if (strchr(pipename, '/')) {
+		 DEBUG(1, ("Refusing open on pipe %s\n", pipename));
+		return false;
+	}
+
 	if (lp_disable_spoolss() && strequal(pipename, "spoolss")) {
 		DEBUG(10, ("refusing spoolss access\n"));
 		return false;
