@@ -23,6 +23,37 @@
 <script language-"JavaScript" type="text/javascript" src="/merlin.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <style>
+.contentM_qis{
+	width:740px;
+	margin-top:1200px;
+	margin-left:380px;
+	position:absolute;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	z-index:200;
+	background-color:#2B373B;
+	display:none;
+	/*behavior: url(/PIE.htc);*/
+}
+.QISform_wireless thead{
+	font-size:15px;
+	line-height:20px;
+	color:#FFFFFF;
+}
+
+.QISform_wireless th{
+	padding-left:10px;
+	*padding-left:30px;
+	font-size:12px;
+	font-weight:bolder;
+	color: #FFFFFF;
+	text-align:left;
+}
+
+.QISform_wireless li{
+	margin-top:10px;
+}
 .cancel{
 	border: 2px solid #898989;
 	border-radius:50%;
@@ -1232,10 +1263,62 @@ function control_all_rule_status(obj) {
 
 	show_http_clientlist();
 }
+
+function cal_panel_block(){
+	var blockmarginLeft;
+	if (window.innerWidth)
+		winWidth = window.innerWidth;
+	else if ((document.body) && (document.body.clientWidth))
+		winWidth = document.body.clientWidth;
+
+	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
+		winWidth = document.documentElement.clientWidth;
+	}
+
+	if(winWidth >1050){
+		winPadding = (winWidth-1050)/2;
+		winWidth = 1105;
+		blockmarginLeft= (winWidth*0.15)+winPadding;
+	}
+	else if(winWidth <=1050){
+		blockmarginLeft= (winWidth)*0.15+document.body.scrollLeft;
+	}
+
+	document.getElementById("ssl_panel").style.marginLeft = blockmarginLeft+"px";
+}
+
+function show_cert() {
+        cal_panel_block();
+        $("#ssl_panel").fadeIn(300);
+}
+
+function hide_cert() {
+        this.FromObject ="0";
+        $("#ssl_panel").fadeOut(300);
+}
+
 </script>
 </head>
 
 <body onload="initial();" onunLoad="return unload_body();">
+	<div id="ssl_panel" class="contentM_qis" style="box-shadow: 3px 3px 10px #000;">
+		<table class="QISform_wireless" border=0 align="center" cellpadding="5" cellspacing="0">
+			<tr>
+				<div class="description_down" style="margin-left:10px;margin-top:10px;">Current certificate details</div>
+			</tr>
+			<tr>
+				<div style="margin-top:8px">
+					<textarea cols="63" rows="22" wrap="off" readonly="readonly" id="textarea" style="width:99%; font-family:'Courier New', Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("sslcert",""); %></textarea>
+				</div>
+			</tr>
+			<tr>
+				<div style="margin-top:5px;width:100%;text-align:center;">
+					<input class="button_gen" style="margin-top:10px;margin-bottom:10px;" type="button" onclick="hide_cert();" value="Close">
+				</div>
+			</tr>
+		</table>
+	</div>
+
 <div id="TopBanner"></div>
 
 <div id="Loading" class="popup_bg"></div>
@@ -1572,6 +1655,7 @@ function control_all_rule_status(obj) {
                                         <td>
 						<input type="radio" name="https_crt_gen" class="input" value="1" onClick="hide_https_crt();" <% nvram_match_x("", "https_crt_gen", "1", "checked"); %>><#checkbox_Yes#>
 						<input type="radio" name="https_crt_gen" class="input" value="0" onClick="hide_https_crt();" <% nvram_match_x("", "https_crt_gen", "0", "checked"); %>><#checkbox_No#>
+						<span id="https_crt_view" onclick="show_cert();" style="padding-left:25px;text-decoration:underline;cursor:pointer;">View current certificate</span>
                                         </td>
                                 </tr>
 				<tr id="https_crt_san">

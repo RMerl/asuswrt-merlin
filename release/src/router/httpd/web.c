@@ -1265,6 +1265,17 @@ ej_dump(int eid, webs_t wp, int argc, char_t **argv)
 		ret += dump_file(wp, filename);
 	}
 #endif
+#ifdef RTCONFIG_HTTPS
+	else if(!strcmp(file, "sslcert")){
+		if(check_if_file_exist("/etc/cert.pem")) {
+			doSystem("openssl x509 -noout -in /etc/cert.pem -text -certopt ca_default,no_sigdump,no_serial -nameopt multiline > /tmp/cert.output");
+			ret += dump_file(wp, "/tmp/cert.output");
+			unlink("/tmp/cert.output");
+		} else {
+			ret += websWrite(wp, "No certificate currently in use.");
+		}
+	}
+#endif
 #ifdef RTCONFIG_PUSH_EMAIL
 #ifdef RTCONFIG_DSL
 	else if(!strcmp(file, "fb_fail_content")){
