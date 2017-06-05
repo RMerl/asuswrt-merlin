@@ -487,7 +487,7 @@ function disable_button(val){
 			</div>
 			<div id="password_title_ie" style="display:none;margin:20px 0 -20px 78px;" class="p1 title_gap"><#HSDPAConfig_Password_itemname#></div>
 			<div class="password_gap">
-				<input type="password" name="login_passwd" tabindex="2" class="form_input" maxlength="16" placeholder="<#HSDPAConfig_Password_itemname#>" autocapitalize="off" autocomplete="off">
+				<input type="password" name="login_passwd" tabindex="2" class="form_input" placeholder="<#HSDPAConfig_Password_itemname#>" autocapitalize="off" autocomplete="off">
 			</div>
 			<div class="error_hint" style="display:none;" id="error_status_field"></div>
 				<div class="button" onclick="login();"><#CTL_signin#></div>
