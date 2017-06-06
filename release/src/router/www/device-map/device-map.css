@@ -268,6 +268,31 @@ Desktop			34
 .type34{
 	background-position:100% 50%;
 }
+/* Extra Devices */
+.type40{ /* Generic Notebook */
+	background-position: 100.2% 0%;
+}
+.type41{ /* Generic Tablet */
+	background-position: 83% 100%;
+}
+.type42{ /* Windows Notebook */
+	background-position: 16.5% 33%;
+}
+.type43{ /* Windows Tablet */
+	background-position: 16.5% 67%;
+}
+.type44{ /* Linux Notebook */
+	background-position: 0% 33%;
+}
+.type45{ /* Smart Watch */
+	background-position: 83% 67%;
+}
+.type46{ /* Wireless Speaker */
+	background-position: 31.9% 67%;
+}
+.type47{ /* Linux */
+	background-position: 0% 0%;
+}
 
 .type0:hover{
 	background-color: #FFFFFF;
