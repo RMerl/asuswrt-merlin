@@ -131,11 +131,7 @@ static int _get_interfaces(TALLOC_CTX *mem_ctx, struct iface_struct **pifaces)
 	int count;
 	int total = 0;
 	size_t copy_size;
-#ifndef HAVE_GETIFADDRS
-	if (getifaddrs_local(&iflist) < 0) {
-#else
 	if (getifaddrs(&iflist) < 0) {
-#endif
 		return -1;
 	}
 
@@ -200,11 +196,7 @@ static int _get_interfaces(TALLOC_CTX *mem_ctx, struct iface_struct **pifaces)
 			sizeof(ifaces[total].name));
 		total++;
 	}
-#ifndef HAVE_GETIFADDRS
-	freeifaddrs_local(iflist);
-#else
 	freeifaddrs(iflist);
-#endif
 
 	*pifaces = ifaces;
 	return total;

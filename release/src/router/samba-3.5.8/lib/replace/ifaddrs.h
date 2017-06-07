@@ -41,6 +41,7 @@ struct ifaddrs {
 	} ifa_ifu;
 	void		*ifa_data;
 };
+#define HAVE_STRUCT_IFADDRS 1
 
 /*
  * This may have been defined in <net/if.h>.  Note that if <net/if.h> is
@@ -56,8 +57,8 @@ struct ifaddrs {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-extern int getifaddrs_local __P((struct ifaddrs **));
-extern void freeifaddrs_local __P((struct ifaddrs *));
+extern int rep_getifaddrs __P((struct ifaddrs **));
+extern void rep_freeifaddrs __P((struct ifaddrs *));
 __END_DECLS
 
 #endif	/* _IFADDRS_H */

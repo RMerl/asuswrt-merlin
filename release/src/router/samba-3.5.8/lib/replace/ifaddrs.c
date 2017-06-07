@@ -424,7 +424,7 @@ nl_open (pid_t *pid)
 
 /* ====================================================================== */
 int
-getifaddrs_local (struct ifaddrs **ifap)
+rep_getifaddrs (struct ifaddrs **ifap)
 {
   int sd;
   struct nlmsg_list *nlmsg_list, *nlmsg_end, *nlm;
@@ -859,7 +859,7 @@ getifaddrs_local (struct ifaddrs **ifap)
 
 /* ---------------------------------------------------------------------- */
 void
-freeifaddrs_local (struct ifaddrs *ifa)
+rep_freeifaddrs (struct ifaddrs *ifa)
 {
   free (ifa);
 }

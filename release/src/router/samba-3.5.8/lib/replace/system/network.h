@@ -127,9 +127,7 @@ struct hostent *rep_gethostbyname(const char *name);
 #endif
 
 #ifdef HAVE_IFADDRS_H
-#ifndef BCMARM
 #include <ifaddrs.h>
-#endif
 #endif
 
 #ifndef HAVE_STRUCT_IFADDRS
