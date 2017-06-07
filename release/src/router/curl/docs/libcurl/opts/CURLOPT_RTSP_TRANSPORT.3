@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_RTSP_TRANSPORT 3 "19 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_RTSP_TRANSPORT 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_RTSP_TRANSPORT \- set RTSP Transport: header
 .SH SYNOPSIS
@@ -34,6 +35,9 @@ Pass a char * to tell libcurl what to pass for the Transport: header for this
 RTSP session. This is mainly a convenience method to avoid needing to set a
 custom Transport: header for every SETUP request. The application must set a
 Transport: header before issuing a SETUP request.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 NULL
 .SH PROTOCOLS

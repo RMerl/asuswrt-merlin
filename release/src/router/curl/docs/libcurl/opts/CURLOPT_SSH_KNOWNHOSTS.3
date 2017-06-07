@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_SSH_KNOWNHOSTS 3 "19 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_SSH_KNOWNHOSTS 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_SSH_KNOWNHOSTS \- file name holding the SSH known hosts
 .SH SYNOPSIS
@@ -34,6 +35,9 @@ format as supported by libssh2. If this file is specified, libcurl will only
 accept connections with hosts that are known and present in that file, with a
 matching public key. Use \fICURLOPT_SSH_KEYFUNCTION(3)\fP to alter the default
 behavior on host and key (mis)matching.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 NULL
 .SH PROTOCOLS

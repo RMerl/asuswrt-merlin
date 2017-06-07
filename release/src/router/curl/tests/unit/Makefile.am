@@ -54,7 +54,7 @@ AM_CPPFLAGS = -I$(top_builddir)/include/curl \
               -I$(top_srcdir)/tests/libtest
 endif
 
-EXTRA_DIST = Makefile.inc
+EXTRA_DIST = Makefile.inc CMakeLists.txt
 
 # Prevent LIBS from being used for all link targets
 LIBS = $(BLANK_AT_MAKETIME)
@@ -62,9 +62,6 @@ LIBS = $(BLANK_AT_MAKETIME)
 LDADD = $(top_builddir)/src/libcurltool.la   \
         $(top_builddir)/lib/libcurlu.la      \
         @LDFLAGS@ @LIBCURL_LIBS@
-
-DEPENDENCIES = $(top_builddir)/src/libcurltool.la \
-               $(top_builddir)/lib/libcurlu.la
 
 AM_CPPFLAGS += -DCURL_STATICLIB -DUNITTESTS
 

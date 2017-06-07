@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_INTERFACE 3 "17 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_INTERFACE 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_INTERFACE \- source interface for outgoing traffic
 .SH SYNOPSIS
@@ -40,6 +41,9 @@ synchronously.  Using the if! format is highly recommended when using the
 multi interfaces to avoid allowing the code to block.  If "if!" is specified
 but the parameter does not match an existing interface, CURLE_INTERFACE_FAILED
 is returned from the libcurl function used to perform the transfer.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 NULL, use whatever the TCP stack finds suitable
 .SH PROTOCOLS

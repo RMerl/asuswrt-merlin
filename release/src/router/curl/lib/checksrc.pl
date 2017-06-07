@@ -55,7 +55,10 @@ my %warnings = (
     'COPYRIGHT'        => 'file missing a copyright statement',
     'BADCOMMAND'       => 'bad !checksrc! instruction',
     'UNUSEDIGNORE'     => 'a warning ignore was not used',
-    'OPENCOMMENT'      => 'file ended with a /* comment still "open"'
+    'OPENCOMMENT'      => 'file ended with a /* comment still "open"',
+    'ASTERISKSPACE'    => 'pointer declared with space after asterisk',
+    'ASTERISKNOSPACE'  => 'pointer declared without space before asterisk',
+    'ASSIGNWITHINCONDITION'  => 'assignment within conditional expression'
     );
 
 sub readwhitelist {
@@ -241,6 +244,12 @@ sub checksrc {
     }
 }
 
+sub nostrings {
+    my ($str) = @_;
+    $str =~ s/\".*\"//g;
+    return $str;
+}
+
 sub scanfile {
     my ($file) = @_;
 
@@ -327,10 +336,20 @@ sub scanfile {
                       $line, length($1), $file, $l, "\/\/ comment");
         }
 
-        # check spaces after for/if/while
-        if($l =~ /^(.*)(for|if|while) \(/) {
+        my $nostr = nostrings($l);
+        # check spaces after for/if/while/function call
+        if($nostr =~ /^(.*)(for|if|while| ([a-zA-Z0-9_]+)) \((.)/) {
             if($1 =~ / *\#/) {
                 # this is a #if, treat it differently
+            }
+            elsif($3 eq "return") {
+                # return must have a space
+            }
+            elsif($4 eq "*") {
+                # (* beginning makes the space OK!
+            }
+            elsif($1 =~ / *typedef/) {
+                # typedefs can use space-paren
             }
             else {
                 checkwarn("SPACEBEFOREPAREN", $line, length($1)+length($2), $file, $l,
@@ -338,6 +357,14 @@ sub scanfile {
             }
         }
 
+        if($nostr =~ /^((.*)(if) *\()(.*)\)/) {
+            my $pos = length($1);
+            if($4 =~ / = /) {
+                checkwarn("ASSIGNWITHINCONDITION",
+                          $line, $pos+1, $file, $l,
+                          "assignment within conditional expression");
+            }
+        }
         # check spaces after open parentheses
         if($l =~ /^(.*[a-z])\( /i) {
             checkwarn("SPACEAFTERPAREN",
@@ -471,6 +498,31 @@ sub scanfile {
             }
         }
 
+        # check for 'char * name'
+        if(($l =~ /(^.*(char|int|long|void|curl_slist|CURL|CURLM|CURLMsg|curl_httppost) *(\*+)) (\w+)/) && ($4 ne "const")) {
+            checkwarn("ASTERISKNOSPACE",
+                      $line, length($1), $file, $ol,
+                      "no space after declarative asterisk");
+        }
+        # check for 'char*'
+        if(($l =~ /(^.*(char|int|long|void|curl_slist|CURL|CURLM|CURLMsg|curl_httppost|sockaddr_in|FILE)\*)/)) {
+            checkwarn("ASTERISKNOSPACE",
+                      $line, length($1)-1, $file, $ol,
+                      "no space before asterisk");
+        }
+
+        # check for 'void func() {', but avoid false positives by requiring
+        # both an open and closed parentheses before the open brace
+        if($l =~ /^((\w).*){\z/) {
+            my $k = $1;
+            $k =~ s/const *//;
+            $k =~ s/static *//;
+            if($k =~ /\(.*\)/) {
+                checkwarn("BRACEPOS",
+                          $line, length($l)-1, $file, $ol,
+                          "wrongly placed open brace");
+            }
+        }
         $line++;
         $prevl = $ol;
     }

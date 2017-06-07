@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_SSLVERSION 3 "17 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_SSLVERSION 3 "December 13, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_SSLVERSION \- set preferred TLS/SSL version
 .SH SYNOPSIS
@@ -48,6 +49,25 @@ TLSv1.0 (Added in 7.34.0)
 TLSv1.1 (Added in 7.34.0)
 .IP CURL_SSLVERSION_TLSv1_2
 TLSv1.2 (Added in 7.34.0)
+.IP CURL_SSLVERSION_TLSv1_3
+TLSv1.3 (Added in 7.52.0)
+.IP CURL_SSLVERSION_MAX_DEFAULT
+The flag defines maximum supported TLS version as TLSv1.2 or default
+value from SSL library. Only library NSS currently allows to get
+maximum supported TLS version.
+(Added in 7.54.0)
+.IP CURL_SSLVERSION_MAX_TLSv1_0
+The flag defines maximum supported TLS version as TLSv1.0.
+(Added in 7.54.0)
+.IP CURL_SSLVERSION_MAX_TLSv1_1
+The flag defines maximum supported TLS version as TLSv1.1.
+(Added in 7.54.0)
+.IP CURL_SSLVERSION_MAX_TLSv1_2
+The flag defines maximum supported TLS version as TLSv1.2.
+(Added in 7.54.0)
+.IP CURL_SSLVERSION_MAX_TLSv1_3
+The flag defines maximum supported TLS version as TLSv1.3.
+(Added in 7.54.0)
 .RE
 .SH DEFAULT
 CURL_SSLVERSION_DEFAULT
@@ -59,8 +79,9 @@ CURL *curl = curl_easy_init();
 if(curl) {
   curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
 
-  /* ask libcurl to use TLS version 1.0 or later */
-  curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1);
+  /* ask libcurl to use TLS version 1.1 or later */
+  curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1.1 |
+                   CURL_SSLVERSION_MAX_DEFAULT);
 
   /* Perform the request */
   curl_easy_perform(curl);

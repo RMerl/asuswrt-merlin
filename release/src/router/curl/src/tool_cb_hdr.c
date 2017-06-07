@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -40,14 +40,14 @@ static char *parse_filename(const char *ptr, size_t len);
 ** callback for CURLOPT_HEADERFUNCTION
 */
 
-size_t tool_header_cb(void *ptr, size_t size, size_t nmemb, void *userdata)
+size_t tool_header_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
   struct HdrCbData *hdrcbdata = userdata;
   struct OutStruct *outs = hdrcbdata->outs;
   struct OutStruct *heads = hdrcbdata->heads;
   const char *str = ptr;
   const size_t cb = size * nmemb;
-  const char *end = (char*)ptr + cb;
+  const char *end = (char *)ptr + cb;
   char *url = NULL;
 
   /*
@@ -56,7 +56,7 @@ size_t tool_header_cb(void *ptr, size_t size, size_t nmemb, void *userdata)
    * it does not match then it fails with CURLE_WRITE_ERROR. So at this
    * point returning a value different from sz*nmemb indicates failure.
    */
-  size_t failure = (size * nmemb) ? 0 : 1;
+  size_t failure = (size && nmemb) ? 0 : 1;
 
   if(!heads->config)
     return failure;
@@ -128,8 +128,7 @@ size_t tool_header_cb(void *ptr, size_t size, size_t nmemb, void *userdata)
         hdrcbdata->honor_cd_filename = FALSE;
         break;
       }
-      else
-        return failure;
+      return failure;
     }
   }
 
@@ -215,7 +214,7 @@ static char *parse_filename(const char *ptr, size_t len)
   }
 #endif /* MSDOS || WIN32 */
 
-  /* in case we built debug enabled, we allow an evironment variable
+  /* in case we built debug enabled, we allow an environment variable
    * named CURL_TESTDIR to prefix the given file name to put it into a
    * specific directory
    */

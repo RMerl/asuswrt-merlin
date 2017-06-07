@@ -6,7 +6,7 @@
 
                 Things that could be nice to do in the future
 
- Things to do in project cURL. Please tell us what you think, contribute and
+ Things to do in project curl. Please tell us what you think, contribute and
  send us patches that improve things!
 
  Be aware that these are things that we could do, or have once been considered
@@ -23,9 +23,9 @@
  1.5 get rid of PATH_MAX
  1.6 Modified buffer size approach
  1.7 Detect when called from within callbacks
- 1.8 Allow SSL (HTTPS) to proxy
+ 1.8 CURLOPT_RESOLVE for any port number
  1.9 Cache negative name resolves
- 1.11 minimize dependencies with dynamicly loaded modules
+ 1.11 minimize dependencies with dynamically loaded modules
  1.12 have form functions use CURL handle argument
  1.14 Typesafe curl_easy_setopt()
  1.15 Monitor connections in the connection pool
@@ -47,7 +47,6 @@
  2.5 Edge-triggered sockets should work
 
  3. Documentation
- 3.1 Update date and version in man pages
  3.2 Provide cmake config-file
 
  4. FTP
@@ -63,13 +62,15 @@
  5.1 Better persistency for HTTP 1.0
  5.2 support FF3 sqlite cookie files
  5.3 Rearrange request header order
- 5.4 Use huge HTTP/2 windows
+ 5.4 HTTP Digest using SHA-256
  5.5 auth= in URLs
  5.6 Refuse "downgrade" redirects
  5.7 Brotli compression
  5.8 QUIC
- 5.9 Add easy argument to formpost functions
+ 5.9 Improve formpost API
  5.10 Leave secure cookies alone
+ 5.11 Chunked transfer multipart formpost
+ 5.12 OPTIONS *
 
  6. TELNET
  6.1 ditch stdin
@@ -105,12 +106,11 @@
  13.1 Disable specific versions
  13.2 Provide mutex locking API
  13.3 Evaluate SSL patches
- 13.4 Cache OpenSSL contexts
+ 13.4 Cache/share OpenSSL contexts
  13.5 Export session ids
  13.6 Provide callback for cert verification
  13.7 improve configure --with-ssl
  13.8 Support DANE
- 13.9 Support TLS v1.3
  13.10 Support SSLKEYLOGFILE
  13.11 Support intermediate & root pinning for PINNEDPUBLICKEY
  13.12 Support HSTS
@@ -150,8 +150,9 @@
  18.12 keep running, read instructions from pipe/socket
  18.13 support metalink in http headers
  18.14 --fail without --location should treat 3xx as a failure
- 18.15 Introduce --fail-fast to exit on first transfer fail
- 18.16 --retry should resume
+ 18.15 --retry should resume
+ 18.16 send only part of --data
+ 18.17 consider file name from the redirected URL with -O ?
 
  19. Build
  19.1 roffit
@@ -244,22 +245,20 @@
  subsequently can add code within libcurl that returns error if called within
  callbacks for when that's not supported.
 
-1.8 Allow SSL (HTTPS) to proxy
+1.8 CURLOPT_RESOLVE for any port number
 
- To prevent local users from snooping on your traffic to the proxy. Supported
- by Firefox and Chrome already:
- https://www.chromium.org/developers/design-documents/secure-web-proxy
+ This option allows applications to set a replacement IP address for a given
+ host + port pair. Consider making support for providing a replacement address
+ for the host name on all port numbers.
 
- See this stale work in progress branch:
- https://github.com/curl/curl/tree/HTTPS-proxy based on this PR:
- https://github.com/curl/curl/pull/305
+ See https://github.com/curl/curl/issues/1264
 
 1.9 Cache negative name resolves
 
  A name resolve that has failed is likely to fail when made again within a
  short period of time. Currently we only cache positive responses.
 
-1.11 minimize dependencies with dynamicly loaded modules
+1.11 minimize dependencies with dynamically loaded modules
 
  We can create a system with loadable modules/plug-ins, where these modules
  would be the ones that link to 3rd party libs. That would allow us to avoid
@@ -405,8 +404,7 @@
  Make sure we don't ever loop because of non-blocking sockets returning
  EWOULDBLOCK or similar. Blocking cases include:
 
- - Name resolves on non-windows unless c-ares is used
- - NSS SSL connections
+ - Name resolves on non-windows unless c-ares or the threaded resolver is used
  - HTTP proxy CONNECT operations
  - SOCKS proxy handshakes
  - file:// transfers
@@ -444,12 +442,6 @@
  the 'maxloops' handling in transfer.c:readwrite_data().
 
 3. Documentation
-
-3.1 Update date and version in man pages
-
- 'maketgz' or another suitable script could update the .TH sections of the man
- pages at release time to use the current date and curl/libcurl version
- number.
 
 3.2 Provide cmake config-file
 
@@ -528,12 +520,14 @@ This is not detailed in any FTP specification.
  headers use a default value so only headers that need to be moved have to be
  specified.
 
-5.4 Use huge HTTP/2 windows
+5.4 HTTP Digest using SHA-256
 
- We're currently using nghttp2's default window size which is terribly small
- (64K). This becomes a bottle neck over high bandwidth networks. We should
- instead make the window size to be very big (512MB?) as we really don't do
- much flow control anyway.
+ RFC 7616 introduces an update to the HTTP Digest authentication
+ specification, which amongst other thing defines how new digest algorithms
+ can be used instead of MD5 which is considered old and not recommended.
+
+ See https://tools.ietf.org/html/rfc7616 and
+ https://github.com/curl/curl/issues/1018
 
 5.5 auth= in URLs
 
@@ -556,11 +550,9 @@ This is not detailed in any FTP specification.
 
 5.7 Brotli compression
 
- Compression algorithms that perform better than gzip are being considered for
- use and inclusion in existing browsers. For example 'brotli'. If servers
- follow along it is a good reason for us to also allow users to take advantage
- of this. The algorithm: https://github.com/google/brotli The Firefox bug:
- https://bugzilla.mozilla.org/show_bug.cgi?id=366559
+ Brotli compression performs better than gzip and is being implemented by
+ browsers and servers widely. The algorithm: https://github.com/google/brotli
+ The Firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=366559
 
 5.8 QUIC
 
@@ -572,12 +564,12 @@ This is not detailed in any FTP specification.
  implemented. This, to allow other projects to benefit from the work and to
  thus broaden the interest and chance of others to participate.
 
-5.9 Add easy argument to formpost functions
+5.9 Improve formpost API
 
- Make sure there's an easy handle passed in to `curl_formadd()`,
- `curl_formget()` and `curl_formfree()` by adding replacement functions and
- deprecating the old ones. Allows better error messages and is generally good
- API hygiene.
+ Revamp the formpost API and making something that is easier to use and
+ understand:
+
+ https://github.com/curl/curl/wiki/formpost-API-redesigned
 
 5.10 Leave secure cookies alone
 
@@ -585,6 +577,32 @@ This is not detailed in any FTP specification.
  cookies with the 'secure' property:
 
  https://tools.ietf.org/html/draft-ietf-httpbis-cookie-alone-01
+
+5.11 Chunked transfer multipart formpost
+
+ For a case where the file is being made during the upload is progressing
+ (like passed on stdin to the curl tool), we cannot know the size before-hand
+ and we rather not read the entire thing into memory before it can start the
+ upload.
+
+ https://github.com/curl/curl/issues/1139
+
+5.12 OPTIONS *
+
+ HTTP defines an OPTIONS method that can be sent with an asterisk option like
+ "OPTIONS *" to ask about options from the server and not a specific URL
+ resource. https://tools.ietf.org/html/rfc7230#section-5.3.4
+
+ libcurl as it currently works will always sent HTTP methods with a path that
+ starts with a slash so there's no way for an application to send a proper
+ "OPTIONS *" using libcurl. This should be fixed.
+
+ I can't think of any other non-slash paths we should support so it will
+ probably make sense to add a new boolean option for issuign an "OPTIONS *"
+ request. CURLOPT_OPTIONSASTERISK perhaps (and a corresponding command line
+ option)?
+
+ See https://github.com/curl/curl/issues/1280
 
 
 6. TELNET
@@ -706,7 +724,7 @@ that doesn't exist on the server, just like --ftp-create-dirs.
  Evaluate/apply Gertjan van Wingerde's SSL patches:
  https://curl.haxx.se/mail/lib-2004-03/0087.html
 
-13.4 Cache OpenSSL contexts
+13.4 Cache/share OpenSSL contexts
 
  "Look at SSL cafile - quick traces look to me like these are done on every
  request as well, when they should only be necessary once per SSL context (or
@@ -715,6 +733,12 @@ that doesn't exist on the server, just like --ftp-create-dirs.
  instead make one for every connection and re-use that SSL context in the same
  style connections are re-used. It will make us use slightly more memory but
  it will libcurl do less creations and deletions of SSL contexts.
+
+ Technically, the "caching" is probably best implemented by getting added to
+ the share interface so that easy handles who want to and can reuse the
+ context specify that by sharing with the right properties set.
+
+ https://github.com/curl/curl/issues/1110
 
 13.5 Export session ids
 
@@ -749,14 +773,6 @@ that doesn't exist on the server, just like --ftp-create-dirs.
 
  Björn Stenberg wrote a separate initial take on DANE that was never
  completed.
-
-13.9 Support TLS v1.3
-
- TLS version 1.3 is about to ship and is getting implemented by TLS libraries
- as we speak. We should start to support the symbol and make sure all backends
- handle it accordingly, then gradually add support as the TLS libraries add
- the corresponding support. There may be a need to add some additional options
- to allow libcurl to take advantage of the new features in 1.3.
 
 13.10 Support SSLKEYLOGFILE
 
@@ -1020,23 +1036,42 @@ that doesn't exist on the server, just like --ftp-create-dirs.
  way to implement this is probably to add that new logic in the command line
  tool only and not in the underlying CURLOPT_FAILONERROR logic.
 
-18.15 Introduce --fail-fast to exit on first transfer fail
-
- curl will transfer all URLs given on the command line one by one but only
- returns the error code for the last transfer. Transfer failures on the first
- ones will not be returned as error code etc to the shell. A --fail-fast
- option would make curl exit and return an error for the first transfer that
- fails.
-
-18.16 --retry should resume
+18.15 --retry should resume
 
  When --retry is used and curl actually retries transfer, it should use the
- already transfered data and do a resumed transfer for the rest (when
+ already transferred data and do a resumed transfer for the rest (when
  possible) so that it doesn't have to transfer the same data again that was
- already tranfered before the retry.
+ already transferred before the retry.
 
  See https://github.com/curl/curl/issues/1084
 
+18.16 send only part of --data
+
+ When the user only wants to send a small piece of the data provided with
+ --data or --data-binary, like when that data is a huge file, consider a way
+ to specify that curl should only send a piece of that. One suggested syntax
+ would be: "--data-binary @largefile.zip!1073741823-2147483647".
+
+ See https://github.com/curl/curl/issues/1200
+
+18.17 consider file name from the redirected URL with -O ?
+
+ When a user gives a URL and uses -O, and curl follows a redirect to a new
+ URL, the file name is not extracted and used from the newly redirected-to URL
+ even if the new URL may have a much more sensible file name.
+
+ This is clearly documented and helps for security since there's no surprise
+ to users which file name that might get overwritten. But maybe a new option
+ could allow for this or maybe -J should imply such a treatment as well as -J
+ already allows for the server to decide what file name to use so it already
+ provides the "may overwrite any file" risk.
+
+ This is extra tricky if the original URL has no file name part at all since
+ then the current code path will error out with an error message, and we can't
+ *know* already at that point if curl will be redirected to a URL that has a
+ file name...
+
+ See https://github.com/curl/curl/issues/1241
 
 19. Build
 

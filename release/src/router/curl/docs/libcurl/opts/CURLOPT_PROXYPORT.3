@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_PROXYPORT 3 "17 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_PROXYPORT 3 "November 24, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_PROXYPORT \- port number the proxy listens on
 .SH SYNOPSIS
@@ -29,7 +30,8 @@ CURLOPT_PROXYPORT \- port number the proxy listens on
 CURLcode curl_easy_setopt(CURL *handle, CURLOPT_PROXYPORT, long port);
 .SH DESCRIPTION
 Pass a long with this option to set the proxy port to connect to unless it is
-specified in the proxy string \fICURLOPT_PROXY(3)\fP or uses the default one.
+specified in the proxy string \fICURLOPT_PROXY(3)\fP or uses 443 for https
+proxies and 1080 for all others as default.
 
 While this accepts a 'long', the port number is 16 bit so it can't be larger
 than 65535.

@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -133,7 +133,7 @@ int my_trace(CURL *handle, curl_infotype type,
   snprintf(timebuf, sizeof(timebuf), "%02d:%02d:%02d.%06ld",
            now->tm_hour, now->tm_min, now->tm_sec, (long)tv.tv_usec);
 
-  switch (type) {
+  switch(type) {
   case CURLINFO_TEXT:
     fprintf(stderr, "%s [%d] Info: %s", timebuf, num, data);
   default: /* in case a new one is introduced to shock us */
@@ -215,7 +215,7 @@ static void setup(CURL *hnd, int num, const char *upload)
   /* upload please */
   curl_easy_setopt(hnd, CURLOPT_UPLOAD, 1L);
 
-  /* send it verbose for max debuggaility */
+  /* please be verbose */
   curl_easy_setopt(hnd, CURLOPT_VERBOSE, 1L);
   curl_easy_setopt(hnd, CURLOPT_DEBUGFUNCTION, my_trace);
 

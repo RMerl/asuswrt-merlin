@@ -3901,6 +3901,10 @@
 			>
 			</File>
 			<File
+				RelativePath="..\..\..\..\lib\rand.c"
+			>
+			</File>
+			<File
 				RelativePath="..\..\..\..\lib\rtsp.c"
 			>
 			</File>
@@ -4298,6 +4302,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\lib\progress.h"
+			>
+			</File>
+			<File
+				RelativePath="..\..\..\..\lib\rand.h"
 			>
 			</File>
 			<File

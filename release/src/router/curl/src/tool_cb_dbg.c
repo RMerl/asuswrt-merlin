@@ -41,7 +41,7 @@ static void dump(const char *timebuf, const char *text,
 */
 
 int tool_debug_cb(CURL *handle, curl_infotype type,
-                  unsigned char *data, size_t size,
+                  char *data, size_t size,
                   void *userdata)
 {
   struct OperationConfig *operation = userdata;
@@ -182,9 +182,10 @@ int tool_debug_cb(CURL *handle, curl_infotype type,
   }
 #endif /* CURL_DOES_CONVERSIONS */
 
-  switch (type) {
+  switch(type) {
   case CURLINFO_TEXT:
     fprintf(output, "%s== Info: %s", timebuf, data);
+    /* FALLTHROUGH */
   default: /* in case a new one is introduced to shock us */
     return 0;
 
@@ -208,7 +209,8 @@ int tool_debug_cb(CURL *handle, curl_infotype type,
     break;
   }
 
-  dump(timebuf, text, output, data, size, config->tracetype, type);
+  dump(timebuf, text, output, (unsigned char *) data, size, config->tracetype,
+       type);
   return 0;
 }
 

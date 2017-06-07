@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_FTP_ALTERNATIVE_TO_USER 3 "19 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_FTP_ALTERNATIVE_TO_USER 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_FTP_ALTERNATIVE_TO_USER \- command to use instead of USER with FTP
 .SH SYNOPSIS
@@ -35,6 +36,9 @@ authenticate if the usual FTP "USER user" and "PASS password" negotiation
 fails. This is currently only known to be required when connecting to
 Tumbleweed's Secure Transport FTPS server using client certificates for
 authentication.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 NULL
 .SH PROTOCOLS

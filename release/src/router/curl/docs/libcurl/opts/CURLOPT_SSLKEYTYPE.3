@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_SSLKEYTYPE 3 "17 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_SSLKEYTYPE 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_SSLKEYTYPE \- set type of the private key file
 .SH SYNOPSIS
@@ -35,6 +36,9 @@ The format "ENG" enables you to load the private key from a crypto engine. In
 this case \fICURLOPT_SSLKEY(3)\fP is used as an identifier passed to the
 engine. You have to set the crypto engine with \fICURLOPT_SSLENGINE(3)\fP.
 \&"DER" format key file currently does not work because of a bug in OpenSSL.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 "PEM"
 .SH PROTOCOLS

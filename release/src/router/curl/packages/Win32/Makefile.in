@@ -400,9 +400,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign packages/Win32/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu packages/Win32/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign packages/Win32/Makefile
+	  $(AUTOMAKE) --gnu packages/Win32/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \

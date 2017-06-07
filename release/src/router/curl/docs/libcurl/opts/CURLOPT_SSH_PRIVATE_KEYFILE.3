@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_SSH_PRIVATE_KEYFILE 3 "19 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_SSH_PRIVATE_KEYFILE 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_SSH_PRIVATE_KEYFILE \- set private key file for SSH auth
 .SH SYNOPSIS
@@ -36,6 +37,9 @@ is set, and just "id_dsa" in the current directory if HOME is not set.
 
 If the file is password-protected, set the password with
 \fICURLOPT_KEYPASSWD(3)\fP.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 As explained above
 .SH PROTOCOLS

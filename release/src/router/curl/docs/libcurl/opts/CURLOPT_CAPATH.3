@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_CAPATH 3 "17 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_CAPATH 3 "February 21, 2017" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_CAPATH \- specify directory holding CA certificates
 .SH SYNOPSIS
@@ -36,6 +37,9 @@ This makes sense only when used in combination with the
 
 The \fICURLOPT_CAPATH(3)\fP function apparently does not work in Windows due
 to some limitation in openssl.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 NULL
 .SH PROTOCOLS
@@ -46,8 +50,13 @@ TODO
 This option is supported by the OpenSSL, GnuTLS and PolarSSL backends. The NSS
 backend provides the option only for backward compatibility.
 .SH RETURN VALUE
-Returns CURLE_OK if TLS enabled, and CURLE_UNKNOWN_OPTION if not, or
-CURLE_OUT_OF_MEMORY if there was insufficient heap space.
+CURLE_OK if supported; or an error such as:
+
+CURLE_NOT_BUILT_IN - Not supported by the SSL backend
+
+CURLE_UNKNOWN_OPTION
+
+CURLE_OUT_OF_MEMORY
 .SH "SEE ALSO"
 .BR CURLOPT_CAINFO "(3), "
 .BR CURLOPT_STDERR "(3), " CURLOPT_DEBUGFUNCTION "(3), "

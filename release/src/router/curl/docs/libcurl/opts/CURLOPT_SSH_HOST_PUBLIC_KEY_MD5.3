@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_SSH_HOST_PUBLIC_KEY_MD5 3 "19 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_SSH_HOST_PUBLIC_KEY_MD5 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_SSH_HOST_PUBLIC_KEY_MD5 \- checksum of SSH server public key
 .SH SYNOPSIS
@@ -33,6 +34,9 @@ CURLcode curl_easy_setopt(CURL *handle, CURLOPT_SSH_HOST_PUBLIC_KEY_MD5,
 Pass a char * pointing to a string containing 32 hexadecimal digits. The
 string should be the 128 bit MD5 checksum of the remote host's public key, and
 libcurl will reject the connection to the host unless the md5sums match.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 NULL
 .SH PROTOCOLS

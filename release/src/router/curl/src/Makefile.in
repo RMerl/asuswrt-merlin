@@ -219,6 +219,10 @@ am__objects_7 = ../lib/curl-strtoofft.$(OBJEXT) \
 am__objects_8 = $(am__objects_6) $(am__objects_7) $(am__objects_3)
 am_curl_OBJECTS = $(am__objects_8)
 curl_OBJECTS = $(am_curl_OBJECTS)
+@USE_EXPLICIT_LIB_DEPS_FALSE@curl_DEPENDENCIES =  \
+@USE_EXPLICIT_LIB_DEPS_FALSE@	$(top_builddir)/lib/libcurl.la
+@USE_EXPLICIT_LIB_DEPS_TRUE@curl_DEPENDENCIES =  \
+@USE_EXPLICIT_LIB_DEPS_TRUE@	$(top_builddir)/lib/libcurl.la
 curl_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(curl_LDFLAGS) $(LDFLAGS) -o $@
@@ -489,7 +493,7 @@ top_srcdir = @top_srcdir@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -633,7 +637,6 @@ curl_SOURCES = $(CURL_FILES)
 @USE_EXPLICIT_LIB_DEPS_TRUE@curl_LDADD = $(top_builddir)/lib/libcurl.la @LIBMETALINK_LIBS@ @LIBCURL_LIBS@
 curl_LDFLAGS = @LIBMETALINK_LDFLAGS@
 curl_CPPFLAGS = $(AM_CPPFLAGS) $(LIBMETALINK_CPPFLAGS)
-curl_DEPENDENCIES = $(top_builddir)/lib/libcurl.la
 
 # if unit tests are enabled, build a static library to link them with
 @BUILD_UNITTESTS_TRUE@noinst_LTLIBRARIES = libcurltool.la
@@ -645,12 +648,12 @@ curl_DEPENDENCIES = $(top_builddir)/lib/libcurl.la
 @BUILD_UNITTESTS_TRUE@libcurltool_la_SOURCES = $(curl_SOURCES)
 BUILT_SOURCES = tool_hugehelp.c
 CLEANFILES = tool_hugehelp.c
-EXTRA_DIST = mkhelp.pl makefile.dj Makefile.vc6 Makefile.b32		\
+EXTRA_DIST = mkhelp.pl makefile.dj Makefile.b32		\
  Makefile.m32 macos/curl.mcp.xml.sit.hqx macos/MACINSTALL.TXT		\
  macos/src/curl_GUSIConfig.cpp macos/src/macos_main.cpp makefile.amiga	\
  curl.rc Makefile.netware Makefile.inc Makefile.Watcom CMakeLists.txt
 
-MANPAGE = $(top_srcdir)/docs/curl.1
+MANPAGE = $(top_builddir)/docs/curl.1
 README = $(top_srcdir)/docs/MANUAL
 MKHELP = $(top_srcdir)/src/mkhelp.pl
 HUGE = tool_hugehelp.c
@@ -2026,19 +2029,24 @@ uninstall-am: uninstall-binPROGRAMS
 
 # Here are the stuff to create a built-in manual
 
+@USE_MANUAL_TRUE@$(MANPAGE):
+@USE_MANUAL_TRUE@	cd $(top_builddir)/docs && $(MAKE) curl.1
+
 # This generates the tool_hugehelp.c file in both uncompressed and
-# compressed formats
-@HAVE_LIBZ_TRUE@@USE_MANUAL_TRUE@$(HUGE): $(README) $(MANPAGE)  mkhelp.pl
+# compressed formats. $(MANPAGE) must be the first dependency so it
+# can be referenced with $< which points to the correct location in
+# the VPATH.
+@HAVE_LIBZ_TRUE@@USE_MANUAL_TRUE@$(HUGE): $(MANPAGE) $(README) $(MKHELP)
 @HAVE_LIBZ_TRUE@@USE_MANUAL_TRUE@	echo '#include "tool_setup.h"' > $(HUGE)
 @HAVE_LIBZ_TRUE@@USE_MANUAL_TRUE@	echo '#ifndef HAVE_LIBZ' >> $(HUGE)
-@HAVE_LIBZ_TRUE@@USE_MANUAL_TRUE@	$(NROFF) $(MANPAGE) | $(PERL) $(MKHELP) $(README) >> $(HUGE)
+@HAVE_LIBZ_TRUE@@USE_MANUAL_TRUE@	$(NROFF) $< | $(PERL) $(MKHELP) $(README) >> $(HUGE)
 @HAVE_LIBZ_TRUE@@USE_MANUAL_TRUE@	echo '#else' >> $(HUGE)
-@HAVE_LIBZ_TRUE@@USE_MANUAL_TRUE@	$(NROFF) $(MANPAGE) | $(PERL) $(MKHELP) -c $(README) >> $(HUGE)
+@HAVE_LIBZ_TRUE@@USE_MANUAL_TRUE@	$(NROFF) $< | $(PERL) $(MKHELP) -c $(README) >> $(HUGE)
 @HAVE_LIBZ_TRUE@@USE_MANUAL_TRUE@	echo '#endif /* HAVE_LIBZ */' >> $(HUGE)
 # This generates the tool_hugehelp.c file uncompressed only
-@HAVE_LIBZ_FALSE@@USE_MANUAL_TRUE@$(HUGE): $(README) $(MANPAGE)  mkhelp.pl
+@HAVE_LIBZ_FALSE@@USE_MANUAL_TRUE@$(HUGE): $(MANPAGE) $(README) mkhelp.pl
 @HAVE_LIBZ_FALSE@@USE_MANUAL_TRUE@	echo '#include "tool_setup.h"' > $(HUGE)
-@HAVE_LIBZ_FALSE@@USE_MANUAL_TRUE@	$(NROFF) $(MANPAGE) | $(PERL) $(MKHELP) $(README) >> $(HUGE)
+@HAVE_LIBZ_FALSE@@USE_MANUAL_TRUE@	$(NROFF) $< | $(PERL) $(MKHELP) $(README) >> $(HUGE)
 
 # built-in manual has been disabled, make a blank file
 @USE_MANUAL_FALSE@$(HUGE):

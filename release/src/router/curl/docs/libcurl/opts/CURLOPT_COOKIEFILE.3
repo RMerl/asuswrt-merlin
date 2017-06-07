@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_COOKIEFILE 3 "17 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_COOKIEFILE 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_COOKIEFILE \- file name to read cookies from
 .SH SYNOPSIS
@@ -53,6 +54,9 @@ sub-domains) or use the Netscape format.
 
 If you use this option multiple times, you just add more files to read.
 Subsequent files will add more cookies.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 NULL
 .SH PROTOCOLS

@@ -113,7 +113,7 @@ test_cleanup:
 
 int test(char *URL)
 {
-  CURLM* multi = NULL;
+  CURLM *multi = NULL;
   int res = 0;
   char *address = libtest_arg2;
   char *port = libtest_arg3;
@@ -136,7 +136,8 @@ int test(char *URL)
              "http://testserver.example.com:%s/%s%04d", port, path, i);
 
     /* second request must succeed like the first one */
-    if((res = do_one_request(multi, target_url, dns_entry)))
+    res = do_one_request(multi, target_url, dns_entry);
+    if(res)
       goto test_cleanup;
 
     if(i < count)

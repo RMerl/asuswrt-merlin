@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_RTSP_STREAM_URI 3 "19 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_RTSP_STREAM_URI 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_RTSP_STREAM_URI \- set RTSP stream URI
 .SH SYNOPSIS
@@ -38,6 +39,9 @@ with RTSP, the \fICURLOPT_RTSP_STREAM_URI(3)\fP indicates what URL to send to
 the server in the request header while the \fICURLOPT_URL(3)\fP indicates
 where to make the connection to.  (e.g. the \fICURLOPT_URL(3)\fP for the above
 examples might be set to \fIrtsp://foo/twister\fP
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 '*'
 .SH PROTOCOLS

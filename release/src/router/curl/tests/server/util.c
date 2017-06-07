@@ -34,10 +34,13 @@
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
-#ifdef HAVE_SYS_POLL_H
-#include <sys/poll.h>
-#elif defined(HAVE_POLL_H)
+#ifdef HAVE_POLL_H
 #include <poll.h>
+#elif defined(HAVE_SYS_POLL_H)
+#include <sys/poll.h>
+#endif
+#ifdef __MINGW32__
+#include <w32api.h>
 #endif
 
 #define ENABLE_CURLX_PRINTF
@@ -55,9 +58,14 @@
 #define EINVAL  22 /* errno.h value */
 #endif
 
+/* MinGW with w32api version < 3.6 declared in6addr_any as extern,
+   but lacked the definition */
 #if defined(ENABLE_IPV6) && defined(__MINGW32__)
+#if (__W32API_MAJOR_VERSION < 3) || \
+    ((__W32API_MAJOR_VERSION == 3) && (__W32API_MINOR_VERSION < 6))
 const struct in6_addr in6addr_any = {{ IN6ADDR_ANY_INIT }};
-#endif
+#endif /* w32api < 3.6 */
+#endif /* ENABLE_IPV6 && __MINGW32__*/
 
 /* This function returns a pointer to STATIC memory. It converts the given
  * binary lump to a hex formatted string usable for output in logs or
@@ -135,7 +143,7 @@ void logmsg(const char *msg, ...)
 
 #ifdef WIN32
 /* use instead of perror() on generic windows */
-void win32_perror (const char *msg)
+void win32_perror(const char *msg)
 {
   char buf[512];
   DWORD err = SOCKERRNO;
@@ -315,7 +323,7 @@ static char raw_toupper(char in)
   if(in >= 'a' && in <= 'z')
     return (char)('A' + in - 'a');
 #else
-  switch (in) {
+  switch(in) {
   case 'a':
     return 'A';
   case 'b':

@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2015, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -33,7 +33,7 @@
 
 static const struct
 {
-  const char * name;
+  const char *name;
   CURLINFO id;
   enum {
     writeenv_NONE,
@@ -59,7 +59,7 @@ static const struct
   {NULL, 0, writeenv_NONE}
  };
 
-static void internalSetEnv(const char * name, char * value)
+static void internalSetEnv(const char *name, char *value)
 {
   /* Add your OS-specific code here. */
 #ifdef __riscos__
@@ -78,7 +78,7 @@ void ourWriteEnv(CURL *curl)
   double doubleinfo;
 
   for(i=0; variables[i].name; i++) {
-    switch (variables[i].type) {
+    switch(variables[i].type) {
     case writeenv_STRING:
       if(curl_easy_getinfo(curl, variables[i].id, &string) == CURLE_OK)
         internalSetEnv(variables[i].name, string);

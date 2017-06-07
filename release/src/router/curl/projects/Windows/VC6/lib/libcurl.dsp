@@ -1014,6 +1014,10 @@ SOURCE=..\..\..\..\lib\progress.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\lib\rand.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\lib\rtsp.c
 # End Source File
 # Begin Source File
@@ -1507,6 +1511,10 @@ SOURCE=..\..\..\..\lib\pop3.h
 # Begin Source File
 
 SOURCE=..\..\..\..\lib\progress.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\lib\rand.h
 # End Source File
 # Begin Source File
 

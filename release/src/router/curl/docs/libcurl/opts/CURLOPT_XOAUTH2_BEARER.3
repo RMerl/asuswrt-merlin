@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_XOAUTH2_BEARER 3 "19 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_XOAUTH2_BEARER 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_XOAUTH2_BEARER \- specify OAuth 2.0 access token
 .SH SYNOPSIS
@@ -34,6 +35,9 @@ the OAuth 2.0 Authorization Framework.
 
 Note: The user name used to generate the Bearer Token should be supplied via
 the \fICURLOPT_USERNAME(3)\fP option.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 NULL
 .SH PROTOCOLS

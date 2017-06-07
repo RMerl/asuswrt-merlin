@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_UNIX_SOCKET_PATH 3 "09 Oct 2014" "libcurl 7.40.0" "curl_easy_setopt options"
+.TH CURLOPT_UNIX_SOCKET_PATH 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_UNIX_SOCKET_PATH \- set Unix domain socket
 .SH SYNOPSIS
@@ -46,6 +47,9 @@ are not supported. Proxy options such as
 .BR CURLOPT_PROXY "(3)
 have no effect either as these are TCP-oriented, and asking a proxy server to
 connect to a certain Unix domain socket is not possible.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 Default is NULL, meaning that no Unix domain sockets are used.
 .SH PROTOCOLS

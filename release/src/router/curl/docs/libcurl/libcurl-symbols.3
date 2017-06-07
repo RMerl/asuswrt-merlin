@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -19,7 +19,7 @@
 .\" * KIND, either express or implied.
 .\" *
 .\" **************************************************************************
-.TH libcurl-symbols 3 "nov  2, 2016" "libcurl 7.41.0" "libcurl symbols"
+.TH libcurl-symbols 3 "apr 18, 2017" "libcurl 7.41.0" "libcurl symbols"
 .SH NAME
 libcurl-symbols \- libcurl symbol version information
 .SH "libcurl symbols"
@@ -522,8 +522,12 @@ Introduced in 7.19.0
 Introduced in 7.21.0
 .IP CURLINFO_PRIVATE
 Introduced in 7.10.3
+.IP CURLINFO_PROTOCOL
+Introduced in 7.52.0
 .IP CURLINFO_PROXYAUTH_AVAIL
 Introduced in 7.10.8
+.IP CURLINFO_PROXY_SSL_VERIFYRESULT
+Introduced in 7.52.0
 .IP CURLINFO_REDIRECT_COUNT
 Introduced in 7.9.7
 .IP CURLINFO_REDIRECT_TIME
@@ -542,6 +546,8 @@ Introduced in 7.20.0
 Introduced in 7.20.0
 .IP CURLINFO_RTSP_SESSION_ID
 Introduced in 7.20.0
+.IP CURLINFO_SCHEME
+Introduced in 7.52.0
 .IP CURLINFO_SIZE_DOWNLOAD
 Introduced in 7.4.1
 .IP CURLINFO_SIZE_UPLOAD
@@ -673,6 +679,8 @@ Introduced in 7.1
 Introduced in 7.11.0
 .IP CURLOPTTYPE_STRINGPOINT
 Introduced in 7.46.0
+.IP CURLOPT_ABSTRACT_UNIX_SOCKET
+Introduced in 7.53.0
 .IP CURLOPT_ACCEPTTIMEOUT_MS
 Introduced in 7.24.0
 .IP CURLOPT_ACCEPT_ENCODING
@@ -980,6 +988,8 @@ Introduced in 7.1
 Introduced in 7.19.1
 .IP CURLOPT_PREQUOTE
 Introduced in 7.9.5
+.IP CURLOPT_PRE_PROXY
+Introduced in 7.52.0
 .IP CURLOPT_PRIVATE
 Introduced in 7.10.3
 .IP CURLOPT_PROGRESSDATA
@@ -1005,8 +1015,42 @@ Introduced in 7.10
 Introduced in 7.19.1
 .IP CURLOPT_PROXYUSERPWD
 Introduced in 7.1
+.IP CURLOPT_PROXY_CAINFO
+Introduced in 7.52.0
+.IP CURLOPT_PROXY_CAPATH
+Introduced in 7.52.0
+.IP CURLOPT_PROXY_CRLFILE
+Introduced in 7.52.0
+.IP CURLOPT_PROXY_KEYPASSWD
+Introduced in 7.52.0
+.IP CURLOPT_PROXY_PINNEDPUBLICKEY
+Introduced in 7.52.0
 .IP CURLOPT_PROXY_SERVICE_NAME
 Introduced in 7.43.0
+.IP CURLOPT_PROXY_SSLCERT
+Introduced in 7.52.0
+.IP CURLOPT_PROXY_SSLCERTTYPE
+Introduced in 7.52.0
+.IP CURLOPT_PROXY_SSLKEY
+Introduced in 7.52.0
+.IP CURLOPT_PROXY_SSLKEYTYPE
+Introduced in 7.52.0
+.IP CURLOPT_PROXY_SSLVERSION
+Introduced in 7.52.0
+.IP CURLOPT_PROXY_SSL_CIPHER_LIST
+Introduced in 7.52.0
+.IP CURLOPT_PROXY_SSL_OPTIONS
+Introduced in 7.52.0
+.IP CURLOPT_PROXY_SSL_VERIFYHOST
+Introduced in 7.52.0
+.IP CURLOPT_PROXY_SSL_VERIFYPEER
+Introduced in 7.52.0
+.IP CURLOPT_PROXY_TLSAUTH_PASSWORD
+Introduced in 7.52.0
+.IP CURLOPT_PROXY_TLSAUTH_TYPE
+Introduced in 7.52.0
+.IP CURLOPT_PROXY_TLSAUTH_USERNAME
+Introduced in 7.52.0
 .IP CURLOPT_PROXY_TRANSFER_MODE
 Introduced in 7.18.0
 .IP CURLOPT_PUT
@@ -1146,6 +1190,8 @@ Introduced in 7.46.0
 Introduced in 7.46.0
 .IP CURLOPT_STREAM_WEIGHT
 Introduced in 7.46.0
+.IP CURLOPT_SUPPRESS_CONNECT_HEADERS
+Introduced in 7.54.0
 .IP CURLOPT_TCP_KEEPALIVE
 Introduced in 7.25.0
 .IP CURLOPT_TCP_KEEPIDLE
@@ -1294,6 +1340,8 @@ Introduced in 7.19.4
 Introduced in 7.10
 .IP CURLPROXY_HTTP_1_0
 Introduced in 7.19.4
+.IP CURLPROXY_HTTPS
+Introduced in 7.52.0
 .IP CURLPROXY_SOCKS4
 Introduced in 7.10
 .IP CURLPROXY_SOCKS4A
@@ -1522,6 +1570,8 @@ Introduced in 7.10
 Introduced in 7.10
 .IP CURL_MAX_HTTP_HEADER
 Introduced in 7.19.7
+.IP CURL_MAX_READ_SIZE
+Introduced in 7.53.0
 .IP CURL_MAX_WRITE_SIZE
 Introduced in 7.9.7
 .IP CURL_NETRC_IGNORED
@@ -1618,6 +1668,20 @@ Introduced in
 Introduced in 
 .IP CURL_SSLVERSION_TLS
 Introduced in 
+.IP CURL_SSLVERSION_TLS
+Introduced in 
+.IP CURL_SSLVERSION_MAX_NONE
+Introduced in 7.54.0
+.IP CURL_SSLVERSION_MAX_DEFAULT
+Introduced in 7.54.0
+.IP CURL_SSLVERSION_MAX_TLS
+Introduced in 
+.IP CURL_SSLVERSION_MAX_TLS
+Introduced in 
+.IP CURL_SSLVERSION_MAX_TLS
+Introduced in 
+.IP CURL_SSLVERSION_MAX_TLS
+Introduced in 
 .IP CURL_TIMECOND_IFMODSINCE
 Introduced in 7.9.7
 .IP CURL_TIMECOND_IFUNMODSINCE
@@ -1645,6 +1709,8 @@ Introduced in 7.10.6
 Deprecated since 7.38.0
 .IP CURL_VERSION_HTTP2
 Introduced in 7.33.0
+.IP CURL_VERSION_HTTPS_PROXY
+Introduced in 7.52.0
 .IP CURL_VERSION_IDN
 Introduced in 7.12.0
 .IP CURL_VERSION_IPV6

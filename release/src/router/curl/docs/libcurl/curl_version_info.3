@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH curl_version_info 3 "2 Nov 2014" "libcurl 7.40.0" "libcurl Manual"
+.TH curl_version_info 3 "November 25, 2016" "libcurl 7.54.0" "libcurl Manual"
+
 .SH NAME
 curl_version_info - returns run-time libcurl version info
 .SH SYNOPSIS
@@ -153,6 +154,9 @@ libcurl was built with support for Unix domain sockets.
 libcurl was built with support for Mozilla's Public Suffix List. This makes
 libcurl ignore cookies with a domain that's on the list.
 (Added in 7.47.0)
+.IP CURL_VERSION_HTTPS_PROXY
+libcurl was built with support for HTTPS-proxy.
+(Added in 7.52.0)
 .RE
 \fIssl_version\fP is an ASCII string for the OpenSSL version used. If libcurl
 has no SSL support, this is NULL.

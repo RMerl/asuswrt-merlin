@@ -126,7 +126,7 @@ if test -f ${srcdir}/include/curl/curlbuild.h; then
 fi
 
 dnl figure out the libcurl version
-CURLVERSION=`$SED -ne 's/^#define LIBCURL_VERSION "\(.*\)"/\1/p' ${srcdir}/include/curl/curlver.h`
+CURLVERSION=`$SED -ne 's/^#define LIBCURL_VERSION "\(.*\)".*/\1/p' ${srcdir}/include/curl/curlver.h`
 XC_CHECK_PROG_CC
 XC_AUTOMAKE
 AC_MSG_CHECKING([curl version])
@@ -136,7 +136,7 @@ AC_SUBST(CURLVERSION)
 
 dnl
 dnl we extract the numerical version for curl-config only
-VERSIONNUM=`$SED -ne 's/^#define LIBCURL_VERSION_NUM 0x\(.*\)/\1/p' ${srcdir}/include/curl/curlver.h`
+VERSIONNUM=`$SED -ne 's/^#define LIBCURL_VERSION_NUM 0x\([0-9A-Fa-f]*\).*/\1/p' ${srcdir}/include/curl/curlver.h`
 AC_SUBST(VERSIONNUM)
 
 dnl Solaris pkgadd support definitions
@@ -893,17 +893,16 @@ else
     OPT_ZLIB=""
   fi
 
-  CURL_CHECK_PKGCONFIG(zlib)
-
-  if test "$PKGCONFIG" != "no" ; then
-    LIBS="`$PKGCONFIG --libs-only-l zlib` $LIBS"
-    LDFLAGS="`$PKGCONFIG --libs-only-L zlib` $LDFLAGS"
-    CPPFLAGS="`$PKGCONFIG --cflags-only-I zlib` $CPPFLAGS"
-    OPT_ZLIB=""
-    HAVE_LIBZ="1"
-  fi
-
   if test -z "$OPT_ZLIB" ; then
+    CURL_CHECK_PKGCONFIG(zlib)
+
+    if test "$PKGCONFIG" != "no" ; then
+      LIBS="`$PKGCONFIG --libs-only-l zlib` $LIBS"
+      LDFLAGS="`$PKGCONFIG --libs-only-L zlib` $LDFLAGS"
+      CPPFLAGS="`$PKGCONFIG --cflags-only-I zlib` $CPPFLAGS"
+      OPT_ZLIB=""
+      HAVE_LIBZ="1"
+    fi
 
     if test -z "$HAVE_LIBZ"; then
 
@@ -1637,9 +1636,7 @@ if test "$curl_ssl_msg" = "$init_ssl_msg" && test X"$OPT_SSL" != Xno; then
     dnl SSL_get_shutdown (but this check won't actually detect it there
     dnl as it's a macro that needs the header files be included)
 
-    AC_CHECK_FUNCS( RAND_status \
-                    RAND_screen \
-                    RAND_egd \
+    AC_CHECK_FUNCS( RAND_egd \
                     ENGINE_cleanup \
                     SSL_get_shutdown \
                     SSLv2_client_method )
@@ -1849,7 +1846,7 @@ if test "$curl_ssl_msg" = "$init_ssl_msg"; then
             AC_MSG_NOTICE([Added $gtlslib to LD_LIBRARY_PATH])
           fi
         fi
-        AC_CHECK_FUNCS(gnutls_certificate_set_x509_key_file2)
+        AC_CHECK_FUNCS([gnutls_certificate_set_x509_key_file2 gnutls_alpn_set_protocols gnutls_ocsp_req_init])
       fi
 
     fi
@@ -2832,7 +2829,7 @@ dnl **********************************************************************
 
 AC_MSG_CHECKING([whether to build with libidn2])
 OPT_IDN="default"
-AC_ARG_WITH(libidn,
+AC_ARG_WITH(libidn2,
 AC_HELP_STRING([--with-libidn2=PATH],[Enable libidn2 usage])
 AC_HELP_STRING([--without-libidn2],[Disable libidn2 usage]),
   [OPT_IDN=$withval])
@@ -3409,7 +3406,48 @@ if test "x$want_thres" = xyes && test "x$want_ares" = xyes; then
 [Options --enable-threaded-resolver and --enable-ares are mutually exclusive])
 fi
 
-if test "$want_thres" = "yes" && test "$dontwant_rt" = "no"; then
+dnl ************************************************************
+dnl disable POSIX threads
+dnl
+AC_MSG_CHECKING([whether to use POSIX threads for threaded resolver])
+AC_ARG_ENABLE(pthreads,
+AC_HELP_STRING([--enable-pthreads],
+               [Enable POSIX threads (default for threaded resolver)])
+AC_HELP_STRING([--disable-pthreads],[Disable POSIX threads]),
+[ case "$enableval" in
+  no)  AC_MSG_RESULT(no)
+       want_pthreads=no
+       ;;
+  *)   AC_MSG_RESULT(yes)
+       want_pthreads=yes
+       ;;
+  esac ], [
+       AC_MSG_RESULT(auto)
+       want_pthreads=auto
+       ]
+)
+
+dnl turn off pthreads if rt is disabled
+if test "$want_pthreads" != "no"; then
+  if test "$want_pthreads" = "yes" && test "$dontwant_rt" = "yes"; then
+    AC_MSG_ERROR([options --enable-pthreads and --disable-rt are mutually exclusive])
+  fi
+  if test "$dontwant_rt" != "no"; then
+    dnl if --enable-pthreads was explicit then warn it's being ignored
+    if test "$want_pthreads" = "yes"; then
+      AC_MSG_WARN([--enable-pthreads Ignored since librt is disabled.])
+    fi
+    want_pthreads=no
+  fi
+fi
+
+dnl turn off pthreads if no threaded resolver
+if test "$want_pthreads" != "no" && test "$want_thres" != "yes"; then
+  want_pthreads=no
+fi
+
+dnl detect pthreads
+if test "$want_pthreads" != "no"; then
   AC_CHECK_HEADER(pthread.h,
     [ AC_DEFINE(HAVE_PTHREAD_H, 1, [if you have <pthread.h>])
       save_CFLAGS="$CFLAGS"
@@ -3431,9 +3469,22 @@ if test "$want_thres" = "yes" && test "$dontwant_rt" = "no"; then
         AC_DEFINE(USE_THREADS_POSIX, 1, [if you want POSIX threaded DNS lookup])
         curl_res_msg="POSIX threaded"
       fi
-
-
   ])
+fi
+
+dnl threaded resolver check
+if test "$want_thres" = "yes" && test "x$USE_THREADS_POSIX" != "x1"; then
+  if test "$want_pthreads" = "yes"; then
+    AC_MSG_ERROR([--enable-pthreads but pthreads was not found])
+  fi
+  dnl If native Windows fallback on Win32 threads since no POSIX threads
+  if test "$curl_cv_native_windows" = "yes"; then
+    USE_THREADS_WIN32=1
+    AC_DEFINE(USE_THREADS_WIN32, 1, [if you want Win32 threaded DNS lookup])
+    curl_res_msg="Win32 threaded"
+  else
+    AC_MSG_ERROR([Threaded resolver enabled but no thread library found])
+  fi
 fi
 
 dnl ************************************************************
@@ -3663,7 +3714,8 @@ fi
 if test "x$HAVE_LIBZ" = "x1"; then
   SUPPORT_FEATURES="$SUPPORT_FEATURES libz"
 fi
-if test "x$USE_ARES" = "x1" -o "x$USE_THREADS_POSIX" = "x1"; then
+if test "x$USE_ARES" = "x1" -o "x$USE_THREADS_POSIX" = "x1" \
+                            -o "x$USE_THREADS_WIN32" = "x1"; then
   SUPPORT_FEATURES="$SUPPORT_FEATURES AsynchDNS"
 fi
 if test "x$IDN_ENABLED" = "x1"; then
@@ -3710,6 +3762,11 @@ fi
 
 if test "x$USE_NGHTTP2" = "x1"; then
   SUPPORT_FEATURES="$SUPPORT_FEATURES HTTP2"
+fi
+
+if test "x$OPENSSL_ENABLED" = "x1" -o "x$GNUTLS_ENABLED" = "x1" \
+    -o "x$NSS_ENABLED" = "x1"; then
+  SUPPORT_FEATURES="$SUPPORT_FEATURES HTTPS-proxy"
 fi
 
 AC_SUBST(SUPPORT_FEATURES)
@@ -3824,6 +3881,7 @@ AC_CONFIG_FILES([Makefile \
            docs/examples/Makefile \
            docs/libcurl/Makefile \
            docs/libcurl/opts/Makefile \
+           docs/cmdline-opts/Makefile \
            include/Makefile \
            include/curl/Makefile \
            src/Makefile \

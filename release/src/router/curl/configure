@@ -1168,10 +1168,11 @@ with_libssh2
 with_librtmp
 enable_versioned_symbols
 with_winidn
-with_libidn
+with_libidn2
 with_nghttp2
 with_zsh_functions_dir
 enable_threaded_resolver
+enable_pthreads
 enable_verbose
 enable_sspi
 enable_crypto_auth
@@ -1899,6 +1900,8 @@ Optional Features:
                           Enable threaded resolver
   --disable-threaded-resolver
                           Disable threaded resolver
+  --enable-pthreads       Enable POSIX threads (default for threaded resolver)
+  --disable-pthreads      Disable POSIX threads
   --enable-verbose        Enable verbose strings
   --disable-verbose       Disable verbose strings
   --enable-sspi           Enable SSPI
@@ -3368,9 +3371,6 @@ $as_echo "(assumed no)" >&6; }
 $as_echo "no" >&6; }
       ;;
   esac
-    if test "$dontwant_rt" = "yes" && test "$want_thres" = "yes" ; then
-    as_fn_error $? "options --disable-rt and --enable-thread-resolver are mutually exclusive, at most one can be selected." "$LINENO" 5
-  fi
 
 
 #
@@ -3684,7 +3684,7 @@ if test -f ${srcdir}/include/curl/curlbuild.h; then
   rm -f ${srcdir}/include/curl/curlbuild.h
 fi
 
-CURLVERSION=`$SED -ne 's/^#define LIBCURL_VERSION "\(.*\)"/\1/p' ${srcdir}/include/curl/curlver.h`
+CURLVERSION=`$SED -ne 's/^#define LIBCURL_VERSION "\(.*\)".*/\1/p' ${srcdir}/include/curl/curlver.h`
 
   xc_prog_cc_prev_IFS=$IFS
   xc_prog_cc_prev_LIBS=$LIBS
@@ -5623,7 +5623,7 @@ $as_echo "$CURLVERSION" >&6; }
 
 
 
-VERSIONNUM=`$SED -ne 's/^#define LIBCURL_VERSION_NUM 0x\(.*\)/\1/p' ${srcdir}/include/curl/curlver.h`
+VERSIONNUM=`$SED -ne 's/^#define LIBCURL_VERSION_NUM 0x\([0-9A-Fa-f]*\).*/\1/p' ${srcdir}/include/curl/curlver.h`
 
 
 PKGADD_PKG="HAXXcurl"
@@ -11213,7 +11213,7 @@ esac
 # of non-PIC compiled objects will fail with following linker error
 # "relocation R_X86_64_32 can not be used when making a shared object"
 # is to build PIC objects even for static libraries. This behavior may
-# be overriden using 'configure --disable-shared --without-pic'.
+# be overridden using 'configure --disable-shared --without-pic'.
 #
 
 if test "x$xc_lt_want_with_pic" = 'xdefault'; then
@@ -15921,7 +15921,7 @@ esac
 $as_echo "$xc_lt_shlib_use_mimpure_text" >&6; }
 
 #
-# Find out wether libtool libraries would be built wit PIC
+# Find out whether libtool libraries would be built wit PIC
 #
 
 case "x$pic_mode" in # ((((
@@ -17254,7 +17254,7 @@ $as_echo "no" >&6; }
 ***
 *** Whatever settings are present in CFLAGS will be used for this run.
 ***
-*** If you wish to help the cURL project to better support your compiler
+*** If you wish to help the curl project to better support your compiler
 *** you can report this and the required info on the libcurl development
 *** mailing list: https://cool.haxx.se/mailman/listinfo/curl-library/
 ***
@@ -17341,7 +17341,9 @@ squeeze() {
         #
       GNU_C)
         #
-                tmp_CFLAGS="$tmp_CFLAGS"
+                        if test "$compiler_num" -ge "295"; then
+          tmp_CFLAGS="$tmp_CFLAGS -Werror-implicit-function-declaration"
+        fi
         ;;
         #
       HP_UX_C)
@@ -19233,7 +19235,30 @@ $as_echo "set by user" >&6; }
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $min set" >&5
 $as_echo "$min set" >&6; }
     fi
+
+    old_CFLAGS=$CFLAGS
     CFLAGS="$CFLAGS -Werror=partial-availability"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC accepts -Werror=partial-availability" >&5
+$as_echo_n "checking whether $CC accepts -Werror=partial-availability... " >&6; }
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int main (void)
+{
+
+ ;
+ return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+      CFLAGS=$old_CFLAGS
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   fi
 
 
@@ -20702,6 +20727,7 @@ else
     OPT_ZLIB=""
   fi
 
+  if test -z "$OPT_ZLIB" ; then
 
     if test -n "$PKG_CONFIG"; then
       PKGCONFIG="$PKG_CONFIG"
@@ -20829,15 +20855,13 @@ $as_echo "found" >&6; }
     fi
 
 
-  if test "$PKGCONFIG" != "no" ; then
-    LIBS="`$PKGCONFIG --libs-only-l zlib` $LIBS"
-    LDFLAGS="`$PKGCONFIG --libs-only-L zlib` $LDFLAGS"
-    CPPFLAGS="`$PKGCONFIG --cflags-only-I zlib` $CPPFLAGS"
-    OPT_ZLIB=""
-    HAVE_LIBZ="1"
-  fi
-
-  if test -z "$OPT_ZLIB" ; then
+    if test "$PKGCONFIG" != "no" ; then
+      LIBS="`$PKGCONFIG --libs-only-l zlib` $LIBS"
+      LDFLAGS="`$PKGCONFIG --libs-only-L zlib` $LDFLAGS"
+      CPPFLAGS="`$PKGCONFIG --cflags-only-I zlib` $CPPFLAGS"
+      OPT_ZLIB=""
+      HAVE_LIBZ="1"
+    fi
 
     if test -z "$HAVE_LIBZ"; then
 
@@ -22144,8 +22168,7 @@ $as_echo "$as_me: PKG_CONFIG_LIBDIR will be set to \"$OPENSSL_PCDIR\"" >&6;}
       PKGTEST="yes"
     fi
 
-            #LIB_OPENSSL="$PREFIX_OPENSSL/lib$libsuff"
-            LIB_OPENSSL="$PREFIX_OPENSSL"
+            LIB_OPENSSL="$PREFIX_OPENSSL/lib$libsuff"
     if test "$PREFIX_OPENSSL" != "/usr" ; then
       SSL_LDFLAGS="-L$LIB_OPENSSL"
       SSL_CPPFLAGS="-I$PREFIX_OPENSSL/include"
@@ -22686,9 +22709,7 @@ fi
 
 
 
-    for ac_func in RAND_status \
-                    RAND_screen \
-                    RAND_egd \
+    for ac_func in RAND_egd \
                     ENGINE_cleanup \
                     SSL_get_shutdown \
                     SSLv2_client_method
@@ -23784,12 +23805,13 @@ $as_echo "$as_me: detected GnuTLS version $version" >&6;}
 $as_echo "$as_me: Added $gtlslib to LD_LIBRARY_PATH" >&6;}
           fi
         fi
-        for ac_func in gnutls_certificate_set_x509_key_file2
+        for ac_func in gnutls_certificate_set_x509_key_file2 gnutls_alpn_set_protocols gnutls_ocsp_req_init
 do :
-  ac_fn_c_check_func "$LINENO" "gnutls_certificate_set_x509_key_file2" "ac_cv_func_gnutls_certificate_set_x509_key_file2"
-if test "x$ac_cv_func_gnutls_certificate_set_x509_key_file2" = xyes; then :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_GNUTLS_CERTIFICATE_SET_X509_KEY_FILE2 1
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
 
 fi
@@ -26484,9 +26506,9 @@ fi
 $as_echo_n "checking whether to build with libidn2... " >&6; }
 OPT_IDN="default"
 
-# Check whether --with-libidn was given.
-if test "${with_libidn+set}" = set; then :
-  withval=$with_libidn; OPT_IDN=$withval
+# Check whether --with-libidn2 was given.
+if test "${with_libidn2+set}" = set; then :
+  withval=$with_libidn2; OPT_IDN=$withval
 fi
 
 case "$OPT_IDN" in
@@ -40174,7 +40196,48 @@ if test "x$want_thres" = xyes && test "x$want_ares" = xyes; then
   as_fn_error $? "Options --enable-threaded-resolver and --enable-ares are mutually exclusive" "$LINENO" 5
 fi
 
-if test "$want_thres" = "yes" && test "$dontwant_rt" = "no"; then
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use POSIX threads for threaded resolver" >&5
+$as_echo_n "checking whether to use POSIX threads for threaded resolver... " >&6; }
+# Check whether --enable-pthreads was given.
+if test "${enable_pthreads+set}" = set; then :
+  enableval=$enable_pthreads;  case "$enableval" in
+  no)  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+       want_pthreads=no
+       ;;
+  *)   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+       want_pthreads=yes
+       ;;
+  esac
+else
+
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: auto" >&5
+$as_echo "auto" >&6; }
+       want_pthreads=auto
+
+
+fi
+
+
+if test "$want_pthreads" != "no"; then
+  if test "$want_pthreads" = "yes" && test "$dontwant_rt" = "yes"; then
+    as_fn_error $? "options --enable-pthreads and --disable-rt are mutually exclusive" "$LINENO" 5
+  fi
+  if test "$dontwant_rt" != "no"; then
+        if test "$want_pthreads" = "yes"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --enable-pthreads Ignored since librt is disabled." >&5
+$as_echo "$as_me: WARNING: --enable-pthreads Ignored since librt is disabled." >&2;}
+    fi
+    want_pthreads=no
+  fi
+fi
+
+if test "$want_pthreads" != "no" && test "$want_thres" != "yes"; then
+  want_pthreads=no
+fi
+
+if test "$want_pthreads" != "no"; then
   ac_fn_c_check_header_mongrel "$LINENO" "pthread.h" "ac_cv_header_pthread_h" "$ac_includes_default"
 if test "x$ac_cv_header_pthread_h" = xyes; then :
 
@@ -40240,11 +40303,24 @@ $as_echo "#define USE_THREADS_POSIX 1" >>confdefs.h
         curl_res_msg="POSIX threaded"
       fi
 
+fi
 
 
 fi
 
+if test "$want_thres" = "yes" && test "x$USE_THREADS_POSIX" != "x1"; then
+  if test "$want_pthreads" = "yes"; then
+    as_fn_error $? "--enable-pthreads but pthreads was not found" "$LINENO" 5
+  fi
+    if test "$curl_cv_native_windows" = "yes"; then
+    USE_THREADS_WIN32=1
 
+$as_echo "#define USE_THREADS_WIN32 1" >>confdefs.h
+
+    curl_res_msg="Win32 threaded"
+  else
+    as_fn_error $? "Threaded resolver enabled but no thread library found" "$LINENO" 5
+  fi
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable verbose strings" >&5
@@ -40594,7 +40670,8 @@ fi
 if test "x$HAVE_LIBZ" = "x1"; then
   SUPPORT_FEATURES="$SUPPORT_FEATURES libz"
 fi
-if test "x$USE_ARES" = "x1" -o "x$USE_THREADS_POSIX" = "x1"; then
+if test "x$USE_ARES" = "x1" -o "x$USE_THREADS_POSIX" = "x1" \
+                            -o "x$USE_THREADS_WIN32" = "x1"; then
   SUPPORT_FEATURES="$SUPPORT_FEATURES AsynchDNS"
 fi
 if test "x$IDN_ENABLED" = "x1"; then
@@ -40641,6 +40718,11 @@ fi
 
 if test "x$USE_NGHTTP2" = "x1"; then
   SUPPORT_FEATURES="$SUPPORT_FEATURES HTTP2"
+fi
+
+if test "x$OPENSSL_ENABLED" = "x1" -o "x$GNUTLS_ENABLED" = "x1" \
+    -o "x$NSS_ENABLED" = "x1"; then
+  SUPPORT_FEATURES="$SUPPORT_FEATURES HTTPS-proxy"
 fi
 
 
@@ -40911,7 +40993,7 @@ if test "x$want_curldebug_assumed" = "xyes" &&
   ac_configure_args="$ac_configure_args --enable-curldebug"
 fi
 
-ac_config_files="$ac_config_files Makefile docs/Makefile docs/examples/Makefile docs/libcurl/Makefile docs/libcurl/opts/Makefile include/Makefile include/curl/Makefile src/Makefile lib/Makefile scripts/Makefile lib/libcurl.vers tests/Makefile tests/certs/Makefile tests/certs/scripts/Makefile tests/data/Makefile tests/server/Makefile tests/libtest/Makefile tests/unit/Makefile packages/Makefile packages/Win32/Makefile packages/Win32/cygwin/Makefile packages/Linux/Makefile packages/Linux/RPM/Makefile packages/Linux/RPM/curl.spec packages/Linux/RPM/curl-ssl.spec packages/Solaris/Makefile packages/EPM/curl.list packages/EPM/Makefile packages/vms/Makefile packages/AIX/Makefile packages/AIX/RPM/Makefile packages/AIX/RPM/curl.spec curl-config libcurl.pc"
+ac_config_files="$ac_config_files Makefile docs/Makefile docs/examples/Makefile docs/libcurl/Makefile docs/libcurl/opts/Makefile docs/cmdline-opts/Makefile include/Makefile include/curl/Makefile src/Makefile lib/Makefile scripts/Makefile lib/libcurl.vers tests/Makefile tests/certs/Makefile tests/certs/scripts/Makefile tests/data/Makefile tests/server/Makefile tests/libtest/Makefile tests/unit/Makefile packages/Makefile packages/Win32/Makefile packages/Win32/cygwin/Makefile packages/Linux/Makefile packages/Linux/RPM/Makefile packages/Linux/RPM/curl.spec packages/Linux/RPM/curl-ssl.spec packages/Solaris/Makefile packages/EPM/curl.list packages/EPM/Makefile packages/vms/Makefile packages/AIX/Makefile packages/AIX/RPM/Makefile packages/AIX/RPM/curl.spec curl-config libcurl.pc"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -41996,6 +42078,7 @@ do
     "docs/examples/Makefile") CONFIG_FILES="$CONFIG_FILES docs/examples/Makefile" ;;
     "docs/libcurl/Makefile") CONFIG_FILES="$CONFIG_FILES docs/libcurl/Makefile" ;;
     "docs/libcurl/opts/Makefile") CONFIG_FILES="$CONFIG_FILES docs/libcurl/opts/Makefile" ;;
+    "docs/cmdline-opts/Makefile") CONFIG_FILES="$CONFIG_FILES docs/cmdline-opts/Makefile" ;;
     "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
     "include/curl/Makefile") CONFIG_FILES="$CONFIG_FILES include/curl/Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;

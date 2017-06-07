@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_KEYPASSWD 3 "17 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_KEYPASSWD 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_KEYPASSWD \- set passphrase to private key
 .SH SYNOPSIS
@@ -32,6 +33,9 @@ Pass a pointer to a zero terminated string as parameter. It will be used as
 the password required to use the \fICURLOPT_SSLKEY(3)\fP or
 \fICURLOPT_SSH_PRIVATE_KEYFILE(3)\fP private key.  You never needed a pass
 phrase to load a certificate but you need one to load your private key.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 NULL
 .SH PROTOCOLS

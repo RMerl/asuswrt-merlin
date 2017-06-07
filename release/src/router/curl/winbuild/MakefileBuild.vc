@@ -114,17 +114,39 @@ LFLAGS         = $(LFLAGS) "/LIBPATH:$(DEVEL_LIB)"
 
 
 !IF "$(WITH_SSL)"=="dll"
+!IF EXISTS("$(DEVEL_LIB)\libssl.lib")
+SSL_LIBS     = libssl.lib libcrypto.lib
+!ELSE
 SSL_LIBS     = libeay32.lib ssleay32.lib
+!ENDIF
 USE_SSL      = true
 SSL          = dll
 !ELSEIF "$(WITH_SSL)"=="static"
+!IF EXISTS("$(DEVEL_LIB)\libssl.lib")
+SSL_LIBS     = libssl.lib libcrypto.lib gdi32.lib user32.lib crypt32.lib
+!ELSE
 SSL_LIBS     = libeay32.lib ssleay32.lib gdi32.lib user32.lib crypt32.lib
+!ENDIF
 USE_SSL      = true
 SSL          = static
 !ENDIF
 
+!IFNDEF USE_NGHTTP2
+USE_NGHTTP2  = false
+!ENDIF
+
 !IFDEF USE_SSL
 SSL_CFLAGS   = /DUSE_OPENSSL /I"$(DEVEL_INCLUDE)/openssl"
+
+!IF "$(USE_NGHTTP2)"=="yes"
+USE_NGHTTP2  = true
+!ENDIF
+
+!IF "$(USE_NGHTTP2)"=="true"
+SSL_CFLAGS   = $(SSL_CFLAGS) /DUSE_NGHTTP2
+SSL_LIBS     = $(SSL_LIBS) nghttp2.lib
+!ENDIF
+
 !ENDIF
 
 !IF "$(WITH_MBEDTLS)"=="dll" || "$(WITH_MBEDTLS)"=="static"
@@ -416,6 +438,7 @@ package: $(TARGET)
 
 $(TARGET): $(LIB_OBJS) $(LIB_DIROBJ) $(DISTDIR)
 	@echo Using SSL: $(USE_SSL)
+	@echo Using NGHTTP2: $(USE_NGHTTP2)
 	@echo Using c-ares: $(USE_CARES)
 	@echo Using SSH2: $(USE_SSH2)
 	@echo Using ZLIB: $(USE_ZLIB)
@@ -494,7 +517,6 @@ CURL_LIBCURL_LIBNAME=$(LIB_NAME_IMP)
 
 CURL_FROM_LIBCURL=$(CURL_DIROBJ)\tool_hugehelp.obj \
  $(CURL_DIROBJ)\nonblock.obj \
- $(CURL_DIROBJ)\strcase.obj \
  $(CURL_DIROBJ)\strtoofft.obj \
  $(CURL_DIROBJ)\warnless.obj
  
@@ -509,8 +531,6 @@ $(CURL_DIROBJ)\tool_hugehelp.obj: $(CURL_SRC_DIR)\tool_hugehelp.c
 	$(CURL_CC) $(CURL_CFLAGS) /Zm200 /Fo"$@" $(CURL_SRC_DIR)\tool_hugehelp.c
 $(CURL_DIROBJ)\nonblock.obj: ../lib/nonblock.c
 	$(CURL_CC) $(CURL_CFLAGS) /Fo"$@" ../lib/nonblock.c
-$(CURL_DIROBJ)\strcase.obj: ../lib/strcase.c
-	$(CURL_CC) $(CURL_CFLAGS) /Fo"$@" ../lib/strcase.c
 $(CURL_DIROBJ)\strtoofft.obj: ../lib/strtoofft.c
 	$(CURL_CC) $(CURL_CFLAGS) /Fo"$@" ../lib/strtoofft.c
 $(CURL_DIROBJ)\warnless.obj: ../lib/warnless.c

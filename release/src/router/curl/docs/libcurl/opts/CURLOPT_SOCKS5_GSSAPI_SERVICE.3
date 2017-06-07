@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_SOCKS5_GSSAPI_SERVICE 3 "19 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_SOCKS5_GSSAPI_SERVICE 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_SOCKS5_GSSAPI_SERVICE \- SOCKS5 proxy authentication service name
 .SH SYNOPSIS
@@ -33,6 +34,9 @@ Deprecated since 7.49.0. Use \fICURLOPT_PROXY_SERVICE_NAME(3)\fP instead.
 Pass a char * as parameter to a string holding the \fIname\fP of the service.
 The default service name for a SOCKS5 server is "rcmd". This option allows you
 to change it.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 See above
 .SH PROTOCOLS

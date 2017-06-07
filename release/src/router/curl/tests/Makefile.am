@@ -5,7 +5,7 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -22,6 +22,7 @@
 
 HTMLPAGES = testcurl.html runtests.html
 PDFPAGES = testcurl.pdf runtests.pdf
+MANDISTPAGES = runtests.1.dist testcurl.1.dist
 
 EXTRA_DIST = ftpserver.pl httpserver.pl secureserver.pl runtests.pl getpart.pm \
  FILEFORMAT README stunnel.pem memanalyze.pl testcurl.pl valgrind.pm ftp.pm   \
@@ -49,7 +50,7 @@ DIST_SUBDIRS = $(SUBDIRS) $(DIST_UNIT)
 
 PERLFLAGS = -I$(srcdir)
 
-CLEANFILES = .http.pid .https.pid .ftp.pid .ftps.pid
+CLEANFILES = .http.pid .https.pid .ftp.pid .ftps.pid $(MANDISTPAGES)
 
 MAN2HTML= roffit $< >$@
 
@@ -64,6 +65,9 @@ TEST_Q = -a -s
 TEST_AM = -a -am
 TEST_F = -a -p -r
 TEST_T = -a -t
+
+# !flaky means that it'll skip all tests using the flaky keyword
+TEST_NF = -a -p -r !flaky
 endif
 
 # make sure that PERL is pointing to an executable
@@ -82,6 +86,9 @@ am-test: perlcheck all
 full-test: perlcheck all
 	$(TEST) $(TEST_F)
 
+nonflaky-test: perlcheck all
+	$(TEST) $(TEST_NF)
+
 torture-test: perlcheck all
 	$(TEST) $(TEST_T)
 
@@ -99,3 +106,8 @@ checksrc:
 	cd libtest && $(MAKE) checksrc
 	cd unit && $(MAKE) checksrc
 	cd server && $(MAKE) checksrc
+
+if CURLDEBUG
+# for debug builds, we scan the sources on all regular make invokes
+all-local: checksrc
+endif

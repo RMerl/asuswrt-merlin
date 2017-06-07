@@ -20,13 +20,15 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_PREQUOTE 3 "17 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_PREQUOTE 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_PREQUOTE \- commands to run before FTP or SFTP transfer
 .SH SYNOPSIS
 #include <curl/curl.h>
 
-CURLcode curl_easy_setopt(CURL *handle, CURLOPT_PREQUOTE, char *cmds);
+CURLcode curl_easy_setopt(CURL *handle, CURLOPT_PREQUOTE,
+                          struct curl_slist *cmds);
 .SH DESCRIPTION
 Pass a pointer to a linked list of FTP or SFTP commands to pass to the server
 after the transfer type is set. The linked list should be a fully valid list

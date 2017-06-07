@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_FTP_ACCOUNT 3 "19 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_FTP_ACCOUNT 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_FTP_ACCOUNT \- set account info for FTP
 .SH SYNOPSIS
@@ -31,6 +32,9 @@ CURLcode curl_easy_setopt(CURL *handle, CURLOPT_FTP_ACCOUNT, char *account);
 Pass a pointer to a zero terminated string (or NULL to disable). When an FTP
 server asks for "account data" after user name and password has been provided,
 this data is sent off using the ACCT command.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 NULL
 .SH PROTOCOLS

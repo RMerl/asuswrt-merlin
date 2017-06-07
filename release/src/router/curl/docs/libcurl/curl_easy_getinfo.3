@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH curl_easy_getinfo 3 "11 Feb 2009" "libcurl 7.19.4" "libcurl Manual"
+.TH curl_easy_getinfo 3 "November 23, 2016" "libcurl 7.54.0" "libcurl Manual"
+
 .SH NAME
 curl_easy_getinfo - extract information from a curl handle
 .SH SYNOPSIS
@@ -104,6 +105,9 @@ See \fICURLINFO_REQUEST_SIZE(3)\fP
 .IP CURLINFO_SSL_VERIFYRESULT
 Certificate verification result.
 See \fICURLINFO_SSL_VERIFYRESULT(3)\fP
+.IP CURLINFO_PROXY_SSL_VERIFYRESULT
+Proxy certificate verification result.
+See \fICURLINFO_PROXY_SSL_VERIFYRESULT(3)\fP
 .IP CURLINFO_SSL_ENGINES
 A list of OpenSSL crypto engines.
 See \fICURLINFO_SSL_ENGINES(3)\fP
@@ -180,6 +184,12 @@ See \fICURLINFO_RTSP_SERVER_CSEQ(3)\fP
 .IP CURLINFO_RTSP_CSEQ_RECV
 RTSP CSeq last received.
 See \fICURLINFO_RTSP_CSEQ_RECV(3)\fP
+.IP CURLINFO_PROTOCOL
+The protocol used for the connection. (Added in 7.52.0)
+See \fICURLINFO_PROTOCOL(3)\fP
+.IP CURLINFO_SCHEME
+The scheme used for the connection. (Added in 7.52.0)
+See \fICURLINFO_SCHEME(3)\fP
 .SH TIMES
 .nf
 An overview of the six time values available from curl_easy_getinfo()

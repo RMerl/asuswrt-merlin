@@ -124,18 +124,7 @@
 /*  please, do it beyond the point further indicated in this file.  */
 /* ================================================================ */
 
-/*
- * libcurl's external interface definitions are also used internally,
- * and might also include required system header files to define them.
- */
-
-#include <curl/curlbuild.h>
-
-/*
- * Compile time sanity checks must also be done when building the library.
- */
-
-#include <curl/curlrules.h>
+#include <curl/curl.h>
 
 /*
  * Ensure that no one is using the old SIZEOF_CURL_OFF_T macro
@@ -467,8 +456,8 @@
 
 #  ifdef __minix
      /* Minix 3 versions up to at least 3.1.3 are missing these prototypes */
-     extern char * strtok_r(char *s, const char *delim, char **last);
-     extern struct tm * gmtime_r(const time_t * const timep, struct tm *tmp);
+     extern char *strtok_r(char *s, const char *delim, char **last);
+     extern struct tm *gmtime_r(const time_t * const timep, struct tm *tmp);
 #  endif
 
 #  define DIR_CHAR      "/"

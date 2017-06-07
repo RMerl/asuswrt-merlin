@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_USERPWD 3 "17 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_USERPWD 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_USERPWD \- user name and password to use in authentication
 .SH SYNOPSIS
@@ -61,6 +62,9 @@ SMTP options.
 The user and password strings are not URL decoded, so there's no way to send
 in a user name containing a colon using this option. Use
 \fICURLOPT_USERNAME(3)\fP for that, or include it in the URL.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 NULL
 .SH PROTOCOLS

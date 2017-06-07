@@ -21,7 +21,7 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -409,6 +409,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 HTMLPAGES = testcurl.html runtests.html
 PDFPAGES = testcurl.pdf runtests.pdf
+MANDISTPAGES = runtests.1.dist testcurl.1.dist
 EXTRA_DIST = ftpserver.pl httpserver.pl secureserver.pl runtests.pl getpart.pm \
  FILEFORMAT README stunnel.pem memanalyze.pl testcurl.pl valgrind.pm ftp.pm   \
  sshserver.pl sshhelp.pm pathhelp.pm testcurl.1 runtests.1 \
@@ -429,7 +430,7 @@ DISTCLEANFILES = configurehelp.pm
 SUBDIRS = certs data server libtest $(BUILD_UNIT)
 DIST_SUBDIRS = $(SUBDIRS) $(DIST_UNIT)
 PERLFLAGS = -I$(srcdir)
-CLEANFILES = .http.pid .https.pid .ftp.pid .ftps.pid
+CLEANFILES = .http.pid .https.pid .ftp.pid .ftps.pid $(MANDISTPAGES)
 MAN2HTML = roffit $< >$@
 @CROSSCOMPILING_FALSE@TEST = srcdir=$(srcdir) $(PERL) $(PERLFLAGS) $(srcdir)/runtests.pl
 @CROSSCOMPILING_TRUE@TEST = @echo "NOTICE: we can't run the tests when cross-compiling!"
@@ -437,6 +438,9 @@ MAN2HTML = roffit $< >$@
 @CROSSCOMPILING_FALSE@TEST_AM = -a -am
 @CROSSCOMPILING_FALSE@TEST_F = -a -p -r
 @CROSSCOMPILING_FALSE@TEST_T = -a -t
+
+# !flaky means that it'll skip all tests using the flaky keyword
+@CROSSCOMPILING_FALSE@TEST_NF = -a -p -r !flaky
 all: all-recursive
 
 .SUFFIXES:
@@ -450,9 +454,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign tests/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu tests/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign tests/Makefile
+	  $(AUTOMAKE) --gnu tests/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -633,7 +637,8 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-recursive
-all-am: Makefile
+@CURLDEBUG_FALSE@all-local:
+all-am: Makefile all-local
 installdirs: installdirs-recursive
 installdirs-am:
 install: install-recursive
@@ -736,9 +741,9 @@ uninstall-am:
 
 .MAKE: $(am__recursive_targets) install-am install-strip
 
-.PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am check \
-	check-am clean clean-generic clean-libtool cscopelist-am ctags \
-	ctags-am distclean distclean-generic distclean-libtool \
+.PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am all-local \
+	check check-am clean clean-generic clean-libtool cscopelist-am \
+	ctags ctags-am distclean distclean-generic distclean-libtool \
 	distclean-tags distdir dvi dvi-am html html-am info info-am \
 	install install-am install-data install-data-am install-dvi \
 	install-dvi-am install-exec install-exec-am install-html \
@@ -771,6 +776,9 @@ am-test: perlcheck all
 full-test: perlcheck all
 	$(TEST) $(TEST_F)
 
+nonflaky-test: perlcheck all
+	$(TEST) $(TEST_NF)
+
 torture-test: perlcheck all
 	$(TEST) $(TEST_T)
 
@@ -788,6 +796,9 @@ checksrc:
 	cd libtest && $(MAKE) checksrc
 	cd unit && $(MAKE) checksrc
 	cd server && $(MAKE) checksrc
+
+# for debug builds, we scan the sources on all regular make invokes
+@CURLDEBUG_TRUE@all-local: checksrc
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -86,7 +86,7 @@ typedef struct _GlobalInfo
   struct ev_timer timer_event;
   CURLM *multi;
   int still_running;
-  FILE* input;
+  FILE *input;
 } GlobalInfo;
 
 
@@ -134,7 +134,7 @@ static void mcode_or_die(const char *where, CURLMcode code)
 {
   if(CURLM_OK != code) {
     const char *s;
-    switch (code) {
+    switch(code) {
     case CURLM_BAD_HANDLE:
       s="CURLM_BAD_HANDLE";
       break;
@@ -243,7 +243,8 @@ static void remsock(SockInfo *f, GlobalInfo *g)
 
 
 /* Assign information to a SockInfo structure */
-static void setsock(SockInfo*f, curl_socket_t s, CURL*e, int act, GlobalInfo*g)
+static void setsock(SockInfo *f, curl_socket_t s, CURL *e, int act,
+                    GlobalInfo *g)
 {
   printf("%s  \n", __PRETTY_FUNCTION__);
 
@@ -316,8 +317,8 @@ static size_t write_cb(void *ptr, size_t size, size_t nmemb, void *data)
 
 
 /* CURLOPT_PROGRESSFUNCTION */
-static int prog_cb (void *p, double dltotal, double dlnow, double ult,
-                    double uln)
+static int prog_cb(void *p, double dltotal, double dlnow, double ult,
+                   double uln)
 {
   ConnInfo *conn = (ConnInfo *)p;
   (void)ult;
@@ -387,7 +388,7 @@ static void fifo_cb(EV_P_ struct ev_io *w, int revents)
 }
 
 /* Create a named pipe and tell libevent to monitor it */
-static int init_fifo (GlobalInfo *g)
+static int init_fifo(GlobalInfo *g)
 {
   struct stat st;
   static const char *fifo = "hiper.fifo";
@@ -398,18 +399,18 @@ static int init_fifo (GlobalInfo *g)
     if((st.st_mode & S_IFMT) == S_IFREG) {
       errno = EEXIST;
       perror("lstat");
-      exit (1);
+      exit(1);
     }
   }
   unlink(fifo);
   if(mkfifo (fifo, 0600) == -1) {
     perror("mkfifo");
-    exit (1);
+    exit(1);
   }
   sockfd = open(fifo, O_RDWR | O_NONBLOCK, 0);
   if(sockfd == -1) {
     perror("open");
-    exit (1);
+    exit(1);
   }
   g->input = fdopen(sockfd, "r");
 

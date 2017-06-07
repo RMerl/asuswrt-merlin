@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -37,7 +37,7 @@ struct userdata {
   int counter;
 };
 
-int lock[3];
+static int locks[3];
 
 /* lock callback */
 static void my_lock(CURL *handle, curl_lock_data data,
@@ -50,7 +50,7 @@ static void my_lock(CURL *handle, curl_lock_data data,
   (void)handle;
   (void)laccess;
 
-  switch (data) {
+  switch(data) {
     case CURL_LOCK_DATA_SHARE:
       what = "share";
       locknum = 0;
@@ -69,11 +69,11 @@ static void my_lock(CURL *handle, curl_lock_data data,
   }
 
   /* detect locking of locked locks */
-  if(lock[locknum]) {
+  if(locks[locknum]) {
     printf("lock: double locked %s\n", what);
     return;
   }
-  lock[locknum]++;
+  locks[locknum]++;
 
   printf("lock:   %-6s [%s]: %d\n", what, user->text, user->counter);
   user->counter++;
@@ -86,7 +86,7 @@ static void my_unlock(CURL *handle, curl_lock_data data, void *useptr)
   struct userdata *user = (struct userdata *)useptr;
   int locknum;
   (void)handle;
-  switch (data) {
+  switch(data) {
     case CURL_LOCK_DATA_SHARE:
       what = "share";
       locknum = 0;
@@ -105,11 +105,11 @@ static void my_unlock(CURL *handle, curl_lock_data data, void *useptr)
   }
 
   /* detect unlocking of unlocked locks */
-  if(!lock[locknum]) {
+  if(!locks[locknum]) {
     printf("unlock: double unlocked %s\n", what);
     return;
   }
-  lock[locknum]--;
+  locks[locknum]--;
 
   printf("unlock: %-6s [%s]: %d\n", what, user->text, user->counter);
   user->counter++;
@@ -195,7 +195,8 @@ int test(char *URL)
 
   /* prepare share */
   printf("SHARE_INIT\n");
-  if((share = curl_share_init()) == NULL) {
+  share = curl_share_init();
+  if(!share) {
     fprintf(stderr, "curl_share_init() failed\n");
     curl_global_cleanup();
     return TEST_ERR_MAJOR_BAD;
@@ -230,7 +231,8 @@ int test(char *URL)
   }
 
   /* initial cookie manipulation */
-  if((curl = curl_easy_init()) == NULL) {
+  curl = curl_easy_init();
+  if(!curl) {
     fprintf(stderr, "curl_easy_init() failed\n");
     curl_share_cleanup(share);
     curl_global_cleanup();
@@ -275,7 +277,8 @@ int test(char *URL)
 
   /* fetch a another one and save cookies */
   printf("*** run %d\n", i);
-  if((curl = curl_easy_init()) == NULL) {
+  curl = curl_easy_init();
+  if(!curl) {
     fprintf(stderr, "curl_easy_init() failed\n");
     curl_share_cleanup(share);
     curl_global_cleanup();
@@ -302,7 +305,8 @@ int test(char *URL)
   curl_slist_free_all(headers);
 
   /* load cookies */
-  if((curl = curl_easy_init()) == NULL) {
+  curl = curl_easy_init();
+  if(!curl) {
     fprintf(stderr, "curl_easy_init() failed\n");
     curl_share_cleanup(share);
     curl_global_cleanup();

@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_PROXYUSERPWD 3 "17 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_PROXYUSERPWD 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_PROXYUSERPWD \- user name and password to use for proxy authentication
 .SH SYNOPSIS
@@ -35,6 +36,9 @@ should encode it as %3A. (This is different to how \fICURLOPT_USERPWD(3)\fP is
 used - beware.)
 
 Use \fICURLOPT_PROXYAUTH(3)\fP to specify the authentication method.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 This is NULL by default.
 .SH PROTOCOLS

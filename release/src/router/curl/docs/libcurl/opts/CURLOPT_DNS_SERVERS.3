@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_DNS_SERVERS 3 "19 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_DNS_SERVERS 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_DNS_SERVERS \- set preferred DNS servers
 .SH SYNOPSIS
@@ -36,6 +37,9 @@ host[:port][,host[:port]]...
 For example:
 
 192.168.1.100,192.168.1.101,3.4.5.6
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 NULL - use system default
 .SH PROTOCOLS

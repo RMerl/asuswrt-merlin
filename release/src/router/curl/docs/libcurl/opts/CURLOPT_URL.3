@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_URL 3 "17 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_URL 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_URL \- provide the URL to use in the request
 .SH SYNOPSIS
@@ -283,6 +284,9 @@ user wants to pass in a '#' (hash) character it will be treated as a fragment
 and get cut off by libcurl if provided literally. You will instead have to
 escape it by providing it as backslash and its ASCII value in hexadecimal:
 "\\23".
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 There is no default URL. If this option isn't set, no transfer can be
 performed.

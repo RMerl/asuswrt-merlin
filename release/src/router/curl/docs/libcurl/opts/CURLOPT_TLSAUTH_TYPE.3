@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_TLSAUTH_TYPE 3 "19 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_TLSAUTH_TYPE 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_TLSAUTH_TYPE \- set TLS authentication methods
 .SH SYNOPSIS
@@ -37,6 +38,9 @@ defined in RFC5054 and provides mutual authentication if both sides have a
 shared secret. To use TLS-SRP, you must also set the
 \fICURLOPT_TLSAUTH_USERNAME(3)\fP and \fICURLOPT_TLSAUTH_PASSWORD(3)\fP
 options.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 blank
 .SH PROTOCOLS

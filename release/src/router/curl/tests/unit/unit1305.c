@@ -78,17 +78,20 @@ static Curl_addrinfo *fake_ai(void)
   static Curl_addrinfo *ai;
   int ss_size;
 
-  ss_size = sizeof (struct sockaddr_in);
+  ss_size = sizeof(struct sockaddr_in);
 
-  if((ai = calloc(1, sizeof(Curl_addrinfo))) == NULL)
+  ai = calloc(1, sizeof(Curl_addrinfo));
+  if(!ai)
     return NULL;
 
-  if((ai->ai_canonname = strdup("dummy")) == NULL) {
+  ai->ai_canonname = strdup("dummy");
+  if(!ai->ai_canonname) {
     free(ai);
     return NULL;
   }
 
-  if((ai->ai_addr = calloc(1, ss_size)) == NULL) {
+  ai->ai_addr = calloc(1, ss_size);
+  if(!ai->ai_addr) {
     free(ai->ai_canonname);
     free(ai);
     return NULL;

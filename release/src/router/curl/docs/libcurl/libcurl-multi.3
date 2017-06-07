@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH libcurl-multi 3 "19 Sep 2014" "libcurl" "libcurl multi interface"
+.TH libcurl-multi 3 "January 19, 2017" "libcurl 7.54.0" "libcurl multi interface"
+
 .SH NAME
 libcurl-multi \- how to use the multi interface
 .SH DESCRIPTION
@@ -42,7 +43,7 @@ and when to ask libcurl to get/send data.
 complicated for the application.
 
 3. Enable the application to wait for action on its own file descriptors and
-curl's file descriptors simultaneous easily.
+curl's file descriptors simultaneously.
 
 4. Enable event-based handling and scaling transfers up to and beyond
 thousands of parallel connections.
@@ -173,7 +174,6 @@ the future, you should be aware of the following current restrictions:
 
 .nf
  - Name resolves unless the c-ares or threaded-resolver backends are used
- - NSS SSL connections
  - HTTP proxy CONNECT operations
  - SOCKS proxy handshakes
  - file:// transfers

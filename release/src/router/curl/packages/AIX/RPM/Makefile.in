@@ -339,9 +339,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign packages/AIX/RPM/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu packages/AIX/RPM/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign packages/AIX/RPM/Makefile
+	  $(AUTOMAKE) --gnu packages/AIX/RPM/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \

@@ -2394,6 +2394,7 @@
     <ClCompile Include="..\..\..\..\lib\pipeline.c" />
     <ClCompile Include="..\..\..\..\lib\pop3.c" />
     <ClCompile Include="..\..\..\..\lib\progress.c" />
+    <ClCompile Include="..\..\..\..\lib\rand.c" />
     <ClCompile Include="..\..\..\..\lib\rtsp.c" />
     <ClCompile Include="..\..\..\..\lib\security.c" />
     <ClCompile Include="..\..\..\..\lib\select.c" />
@@ -2519,6 +2520,7 @@
     <ClInclude Include="..\..\..\..\lib\pipeline.h" />
     <ClInclude Include="..\..\..\..\lib\pop3.h" />
     <ClInclude Include="..\..\..\..\lib\progress.h" />
+    <ClInclude Include="..\..\..\..\lib\rand.h" />
     <ClInclude Include="..\..\..\..\lib\rtsp.h" />
     <ClInclude Include="..\..\..\..\lib\select.h" />
     <ClInclude Include="..\..\..\..\lib\sendf.h" />

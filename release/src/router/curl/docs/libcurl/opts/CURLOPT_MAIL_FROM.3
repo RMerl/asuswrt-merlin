@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_MAIL_FROM 3 "19 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_MAIL_FROM 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_MAIL_FROM \- SMTP sender address
 .SH SYNOPSIS
@@ -36,6 +37,9 @@ around it, which if not specified will be added automatically.
 
 If this parameter is not specified then an empty address will be sent to the
 mail server which may cause the email to be rejected.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 blank
 .SH PROTOCOLS

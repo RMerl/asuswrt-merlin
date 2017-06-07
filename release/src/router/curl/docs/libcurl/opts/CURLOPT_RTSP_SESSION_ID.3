@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_RTSP_SESSION_ID 3 "19 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_RTSP_SESSION_ID 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_RTSP_SESSION_ID \- set RTSP session ID
 .SH SYNOPSIS
@@ -34,6 +35,9 @@ set to any non-NULL value, libcurl will return \fICURLE_RTSP_SESSION_ERROR\fP
 if ID received from the server does not match. If unset (or set to NULL),
 libcurl will automatically set the ID the first time the server sets it in a
 response.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 NULL
 .SH PROTOCOLS

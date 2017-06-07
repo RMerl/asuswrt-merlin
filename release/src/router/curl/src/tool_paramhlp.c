@@ -66,12 +66,15 @@ ParameterError file2string(char **bufp, FILE *file)
 
   if(file) {
     while(fgets(buffer, sizeof(buffer), file)) {
-      if((ptr = strchr(buffer, '\r')) != NULL)
+      ptr = strchr(buffer, '\r');
+      if(ptr)
         *ptr = '\0';
-      if((ptr = strchr(buffer, '\n')) != NULL)
+      ptr = strchr(buffer, '\n');
+      if(ptr)
         *ptr = '\0';
       buflen = strlen(buffer);
-      if((ptr = realloc(string, stringlen+buflen+1)) == NULL) {
+      ptr = realloc(string, stringlen+buflen+1);
+      if(!ptr) {
         Curl_safefree(string);
         return PARAM_NO_MEM;
       }
@@ -102,7 +105,8 @@ ParameterError file2memory(char **bufp, size_t *size, FILE *file)
         }
         alloc *= 2;
         /* allocate an extra char, reserved space, for null termination */
-        if((newbuf = realloc(buffer, alloc+1)) == NULL) {
+        newbuf = realloc(buffer, alloc+1);
+        if(!newbuf) {
           Curl_safefree(buffer);
           return PARAM_NO_MEM;
         }
@@ -115,7 +119,8 @@ ParameterError file2memory(char **bufp, size_t *size, FILE *file)
     buffer[nused] = '\0';
     /* free trailing slack space, if possible */
     if(alloc != nused) {
-      if((newbuf = realloc(buffer, nused+1)) == NULL) {
+      newbuf = realloc(buffer, nused+1);
+      if(!newbuf) {
         Curl_safefree(buffer);
         return PARAM_NO_MEM;
       }
@@ -313,7 +318,7 @@ long proto2num(struct OperationConfig *config, long *val, const char *str)
 
     for(pp=protos; pp->name; pp++) {
       if(curl_strequal(token, pp->name)) {
-        switch (action) {
+        switch(action) {
         case deny:
           *val &= ~(pp->bit);
           break;
@@ -544,4 +549,37 @@ CURLcode get_args(struct OperationConfig *config, const size_t i)
   }
 
   return result;
+}
+
+/*
+ * Parse the string and modify ssl_version in the val argument. Return PARAM_OK
+ * on success, otherwise a parameter error enum. ONLY ACCEPTS POSITIVE NUMBERS!
+ *
+ * Since this function gets called with the 'nextarg' pointer from within the
+ * getparameter a lot, we must check it for NULL before accessing the str
+ * data.
+ */
+
+ParameterError str2tls_max(long *val, const char *str)
+{
+   static struct s_tls_max {
+    const char *tls_max_str;
+    long tls_max;
+  } const tls_max_array[] = {
+    { "default", CURL_SSLVERSION_MAX_DEFAULT },
+    { "1.0",     CURL_SSLVERSION_MAX_TLSv1_0 },
+    { "1.1",     CURL_SSLVERSION_MAX_TLSv1_1 },
+    { "1.2",     CURL_SSLVERSION_MAX_TLSv1_2 },
+    { "1.3",     CURL_SSLVERSION_MAX_TLSv1_3 }
+  };
+  size_t i = 0;
+  if(!str)
+    return PARAM_REQUIRES_PARAMETER;
+  for(i = 0; i < sizeof(tls_max_array)/sizeof(tls_max_array[0]); i++) {
+    if(!strcmp(str, tls_max_array[i].tls_max_str)) {
+      *val = tls_max_array[i].tls_max;
+      return PARAM_OK;
+    }
+  }
+  return PARAM_BAD_USE;
 }

@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2015, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -79,7 +79,7 @@ int parseconfig(const char *filename, struct GlobalConfig *global)
            * already declared via inclusions done in setup header file.
            * We assume that we are using the ASCII version here.
            */
-          int n = GetModuleFileName(0, filebuffer, sizeof(filebuffer));
+          int n = GetModuleFileNameA(0, filebuffer, sizeof(filebuffer));
           if(n > 0 && n < (int)sizeof(filebuffer)) {
             /* We got a valid filename - get the directory part */
             char *lastdirchar = strrchr(filebuffer, '\\');
@@ -209,14 +209,10 @@ int parseconfig(const char *filename, struct GlobalConfig *global)
                   filename, lineno, option);
           }
         }
-      }
-
-      if(!*param) {
-        /* do this so getparameter can check for required parameters.
-           Otherwise it always thinks there's a parameter. */
-        if(alloced_param)
-          Curl_safefree(param);
-        param = NULL;
+        if(!*param)
+          /* do this so getparameter can check for required parameters.
+             Otherwise it always thinks there's a parameter. */
+          param = NULL;
       }
 
 #ifdef DEBUG_CONFIG

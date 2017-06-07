@@ -1227,6 +1227,7 @@ sub runhttp2server {
 
     $flags .= "--pidfile \"$pidfile\" --logfile \"$logfile\" ";
     $flags .= "--port $HTTP2PORT ";
+    $flags .= "--connect $HOSTIP:$HTTPPORT ";
     $flags .= $verbose_flag if($debugprotocol);
 
     my $cmd = "$exe $flags";
@@ -2653,7 +2654,7 @@ sub checksystem {
     logmsg sprintf("* Servers: %s", $stunnel?"SSL ":"");
     logmsg sprintf("%s", $http_ipv6?"HTTP-IPv6 ":"");
     logmsg sprintf("%s", $http_unix?"HTTP-unix ":"");
-    logmsg sprintf("%s\n", $ftp_ipv6?"FTP-IPv6 ":"OFF");
+    logmsg sprintf("%s\n", $ftp_ipv6?"FTP-IPv6 ":"");
 
     logmsg sprintf("* Env: %s%s", $valgrind?"Valgrind ":"",
                    $run_event_based?"event-based ":"");
@@ -2683,7 +2684,7 @@ sub checksystem {
         }
         logmsg sprintf("\n*   GOPHER/%d ", $GOPHERPORT);
         if($gopher_ipv6) {
-            logmsg sprintf("GOPHER-IPv6/%d", $GOPHERPORT);
+            logmsg sprintf("GOPHER-IPv6/%d", $GOPHER6PORT);
         }
         logmsg sprintf("\n*   SSH/%d ", $SSHPORT);
         logmsg sprintf("SOCKS/%d ", $SOCKSPORT);
@@ -3594,7 +3595,7 @@ sub singletest {
             $usevalgrind = 1;
             my $valgrindcmd = "$valgrind ";
             $valgrindcmd .= "$valgrind_tool " if($valgrind_tool);
-            $valgrindcmd .= "--leak-check=yes ";
+            $valgrindcmd .= "--quiet --leak-check=yes ";
             $valgrindcmd .= "--suppressions=$srcdir/valgrind.supp ";
            # $valgrindcmd .= "--gen-suppressions=all ";
             $valgrindcmd .= "--num-callers=16 ";

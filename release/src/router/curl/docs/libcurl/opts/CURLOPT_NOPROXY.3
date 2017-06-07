@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_NOPROXY 3 "19 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_NOPROXY 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_NOPROXY \- disable proxy use for specific hosts
 .SH SYNOPSIS
@@ -36,6 +37,9 @@ list is matched as either a domain which contains the hostname, or the
 hostname itself. For example, example.com would match example.com,
 example.com:80, and www.example.com, but not www.notanexample.com or
 example.com.othertld.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 NULL
 .SH PROTOCOLS

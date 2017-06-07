@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_PINNEDPUBLICKEY 3 "27 Aug 2014" "libcurl 7.38.0" "curl_easy_setopt options"
+.TH CURLOPT_PINNEDPUBLICKEY 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_PINNEDPUBLICKEY \- set pinned public key
 .SH SYNOPSIS
@@ -39,6 +40,9 @@ if it does not exactly match the public key provided to this option, curl will
 abort the connection before sending or receiving any data.
 
 On mismatch, \fICURLE_SSL_PINNEDPUBKEYNOTMATCH\fP is returned.
+
+The application does not have to keep the string around after setting this
+option.
 .SH DEFAULT
 NULL
 .SH PROTOCOLS

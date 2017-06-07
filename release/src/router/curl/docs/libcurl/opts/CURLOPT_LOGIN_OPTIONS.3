@@ -20,7 +20,8 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_LOGIN_OPTIONS 3 "19 Jun 2014" "libcurl 7.37.0" "curl_easy_setopt options"
+.TH CURLOPT_LOGIN_OPTIONS 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+
 .SH NAME
 CURLOPT_LOGIN_OPTIONS \- set login options
 .SH SYNOPSIS
@@ -37,6 +38,9 @@ IETF draft draft-earhart-url-smtp-00.txt
 \fICURLOPT_LOGIN_OPTIONS(3)\fP can be used to set protocol specific login
 options, such as the preferred authentication mechanism via "AUTH=NTLM" or
 "AUTH=*", and should be used in conjunction with the \fICURLOPT_USERNAME(3)\fP
+option.
+
+The application does not have to keep the string around after setting this
 option.
 .SH DEFAULT
 NULL

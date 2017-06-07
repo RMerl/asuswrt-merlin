@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -140,7 +140,7 @@ static void storerequest(char *reqbuf, size_t totalsize);
 
 const char *serverlogfile = DEFAULT_LOGFILE;
 
-#define SWSVERSION "cURL test suite HTTP server/0.1"
+#define SWSVERSION "curl test suite HTTP server/0.1"
 
 #define REQUEST_DUMP  "log/server.input"
 #define RESPONSE_DUMP "log/server.response"
@@ -265,36 +265,42 @@ static void install_signal_handlers(void)
 {
 #ifdef SIGHUP
   /* ignore SIGHUP signal */
-  if((old_sighup_handler = signal(SIGHUP, SIG_IGN)) == SIG_ERR)
+  old_sighup_handler = signal(SIGHUP, SIG_IGN);
+  if(old_sighup_handler == SIG_ERR)
     logmsg("cannot install SIGHUP handler: %s", strerror(errno));
 #endif
 #ifdef SIGPIPE
   /* ignore SIGPIPE signal */
-  if((old_sigpipe_handler = signal(SIGPIPE, SIG_IGN)) == SIG_ERR)
+  old_sigpipe_handler = signal(SIGPIPE, SIG_IGN);
+  if(old_sigpipe_handler == SIG_ERR)
     logmsg("cannot install SIGPIPE handler: %s", strerror(errno));
 #endif
 #ifdef SIGALRM
   /* ignore SIGALRM signal */
-  if((old_sigalrm_handler = signal(SIGALRM, SIG_IGN)) == SIG_ERR)
+  old_sigalrm_handler = signal(SIGALRM, SIG_IGN);
+  if(old_sigalrm_handler == SIG_ERR)
     logmsg("cannot install SIGALRM handler: %s", strerror(errno));
 #endif
 #ifdef SIGINT
   /* handle SIGINT signal with our exit_signal_handler */
-  if((old_sigint_handler = signal(SIGINT, exit_signal_handler)) == SIG_ERR)
+  old_sigint_handler = signal(SIGINT, exit_signal_handler);
+  if(old_sigint_handler == SIG_ERR)
     logmsg("cannot install SIGINT handler: %s", strerror(errno));
   else
     siginterrupt(SIGINT, 1);
 #endif
 #ifdef SIGTERM
   /* handle SIGTERM signal with our exit_signal_handler */
-  if((old_sigterm_handler = signal(SIGTERM, exit_signal_handler)) == SIG_ERR)
+  old_sigterm_handler = signal(SIGTERM, exit_signal_handler);
+  if(old_sigterm_handler == SIG_ERR)
     logmsg("cannot install SIGTERM handler: %s", strerror(errno));
   else
     siginterrupt(SIGTERM, 1);
 #endif
 #if defined(SIGBREAK) && defined(WIN32)
   /* handle SIGBREAK signal with our exit_signal_handler */
-  if((old_sigbreak_handler = signal(SIGBREAK, exit_signal_handler)) == SIG_ERR)
+  old_sigbreak_handler = signal(SIGBREAK, exit_signal_handler);
+  if(old_sigbreak_handler == SIG_ERR)
     logmsg("cannot install SIGBREAK handler: %s", strerror(errno));
   else
     siginterrupt(SIGBREAK, 1);
@@ -1194,14 +1200,21 @@ static int send_doc(curl_socket_t sock, struct httprequest *req)
     size_t num = count;
     if(num > 200)
       num = 200;
+
+    retry:
     written = swrite(sock, buffer, num);
     if(written < 0) {
+      if((EWOULDBLOCK == SOCKERRNO) || (EAGAIN == SOCKERRNO)) {
+        wait_ms(10);
+        goto retry;
+      }
       sendfailure = TRUE;
       break;
     }
     else {
       logmsg("Sent off %zd bytes", written);
     }
+
     /* write to file as well */
     fwrite(buffer, 1, (size_t)written, dump);
 
@@ -1476,7 +1489,7 @@ static void http_connect(curl_socket_t *infdp,
             maxfd = clientfd[i];
         }
         if(poll_client_wr[i] && toc[i]) {
-          /* unless told not to do so, monitor writeability
+          /* unless told not to do so, monitor writability
              if there is data ready to be sent to client */
           FD_SET(clientfd[i], &output);
           if(clientfd[i] > maxfd)
@@ -1492,7 +1505,7 @@ static void http_connect(curl_socket_t *infdp,
             maxfd = serverfd[i];
         }
         if(poll_server_wr[i] && tos[i]) {
-          /* unless told not to do so, monitor writeability
+          /* unless told not to do so, monitor writability
              if there is data ready to be sent to server */
           FD_SET(serverfd[i], &output);
           if(serverfd[i] > maxfd)
@@ -1585,7 +1598,7 @@ static void http_connect(curl_socket_t *infdp,
 
       /* ---------------------------------------------------------- */
 
-      /* react to tunnel endpoint readable/writeable notifications */
+      /* react to tunnel endpoint readable/writable notifications */
       for(i = 0; i <= max_tunnel_idx; i++) {
         size_t len;
         if(clientfd[i] != CURL_SOCKET_BAD) {
@@ -1881,7 +1894,7 @@ static int service_connection(curl_socket_t msgsock, struct httprequest *req,
   while(!req->done_processing) {
     int rc = get_request(msgsock, req);
     if(rc <= 0) {
-      /* Nothing further to read now (possibly because the socket was closed */
+      /* Nothing further to read now, possibly because the socket was closed */
       return rc;
     }
   }
@@ -2231,9 +2244,9 @@ int main(int argc, char *argv[])
     /* Clear out closed sockets */
     for(socket_idx = num_sockets - 1; socket_idx >= 1; --socket_idx) {
       if(CURL_SOCKET_BAD == all_sockets[socket_idx]) {
-        char* dst = (char *) (all_sockets + socket_idx);
-        char* src = (char *) (all_sockets + socket_idx + 1);
-        char* end = (char *) (all_sockets + num_sockets);
+        char *dst = (char *) (all_sockets + socket_idx);
+        char *src = (char *) (all_sockets + socket_idx + 1);
+        char *end = (char *) (all_sockets + num_sockets);
         memmove(dst, src, end - src);
         num_sockets -= 1;
       }
@@ -2242,7 +2255,7 @@ int main(int argc, char *argv[])
     if(got_exit_signal)
       goto sws_cleanup;
 
-    /* Set up for select*/
+    /* Set up for select */
     FD_ZERO(&input);
     FD_ZERO(&output);
 
@@ -2268,7 +2281,7 @@ int main(int argc, char *argv[])
       goto sws_cleanup;
 
     if(rc == 0) {
-      /* Timed out - try again*/
+      /* Timed out - try again */
       continue;
     }
 
