@@ -785,7 +785,6 @@ obj-$(RTCONFIG_TCPDUMP) += libpcap
 obj-$(RTCONFIG_TCPDUMP) += tcpdump-4.4.0
 
 # Merlin addons
-obj-n += wol
 ifneq ($(or $(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINUXDIR))),)
 obj-y += ipset_arm
 obj-y += libmnl
@@ -4320,25 +4319,6 @@ ufsd: kernel_header kernel
 
 ufsd-install: ufsd
 	@$(MAKE) -C ufsd install INSTALLDIR=$(INSTALLDIR)/ufsd
-
-wol/stamp-h1:
-	cd $(TOP)/wol && jm_cv_func_working_malloc=yes \
-	CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
-	$(CONFIGURE) --host=mips --prefix=$(INSTALLDIR)/wol CC=mipsel-uclibc-gcc STRIP=mipsel-uclibc-strip \
-	AR=mipsel-uclibc-ar LD=mipsel-uclibc-ld NM=mipsel-uclibc-nm RANLIB=mipsel-uclibc-ranlib
-	@touch $@
-
-wol: wol/stamp-h1
-	@$(SEP)
-	jm_cv_func_working_malloc=yes $(MAKE) -C $@
-
-wol-clean:
-	-@$(MAKE) -C wol distclean
-	@rm -f wol/stamp-h1
-
-wol-install: wol
-	install -D wol/src/wol $(INSTALLDIR)/wol/usr/sbin/wol
-	$(STRIP) $(INSTALLDIR)/wol/usr/sbin/wol
 
 netstat-nat-clean:
 	-@$(MAKE) -C netstat-nat clean
