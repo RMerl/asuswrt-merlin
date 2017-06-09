@@ -2005,6 +2005,9 @@ void write_ftpd_conf()
 #if (!defined(LINUX30) && LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36))
 	fprintf(fp, "use_sendfile=NO\n");
 #endif
+#ifndef RTCONFIG_BCMARM
+	fprintf(fp, "isolate=NO\n");	// 3.x: Broken for MIPS
+#endif
 
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled()) {
