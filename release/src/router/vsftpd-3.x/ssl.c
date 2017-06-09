@@ -120,6 +120,15 @@ ssl_init(struct vsf_session* p_sess)
     {
       die("SSL: RNG is not seeded");
     }
+    {
+      EC_KEY* key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+      if (key == NULL)
+      {
+        die("SSL: failed to get curve p256");
+      }
+      SSL_CTX_set_tmp_ecdh(p_ctx, key);
+      EC_KEY_free(key);
+    }
     if (tunable_ssl_request_cert)
     {
       verify_option |= SSL_VERIFY_PEER;
@@ -275,8 +284,20 @@ ssl_read_common(struct vsf_session* p_sess,
    */
   if (retval == 0 && SSL_get_shutdown(p_ssl) != SSL_RECEIVED_SHUTDOWN)
   {
-    str_alloc_text(&debug_str, "Connection terminated without SSL shutdown "
-                               "- buggy client?");
+    if (p_ssl == p_sess->p_control_ssl)
+    {
+      str_alloc_text(&debug_str, "Control");
+    }
+    else
+    {
+      str_alloc_text(&debug_str, "DATA");
+    }
+    str_append_text(&debug_str, " connection terminated without SSL shutdown.");
+    if (p_ssl != p_sess->p_control_ssl)
+    {
+      str_append_text(&debug_str,
+                      " Buggy client! Integrity of upload cannot be asserted.");
+    }
     vsf_log_line(p_sess, kVSFLogEntryDebug, &debug_str);
     if (tunable_strict_ssl_read_eof)
     {
@@ -380,6 +401,12 @@ ssl_data_close(struct vsf_session* p_sess)
   {
     int ret;
     maybe_log_shutdown_state(p_sess);
+
+    /* Disable Nagle algorithm. We want the shutdown packet to be sent
+     * immediately, there's nothing coming after.
+     */
+    vsf_sysutil_set_nodelay(SSL_get_fd(p_ssl));
+
     /* This is a mess. Ideally, when we're the sender, we'd like to get to the
      * SSL_RECEIVED_SHUTDOWN state to get a cryptographic guarantee that the
      * peer received all the data and shut the connection down cleanly. It

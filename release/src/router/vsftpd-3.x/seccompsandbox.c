@@ -20,6 +20,7 @@
 #include <errno.h>
 
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 
 #include <sys/fcntl.h>
 #include <sys/mman.h>
@@ -300,6 +301,7 @@ seccomp_sandbox_setup_base()
   reject_nr(__NR_mremap, ENOSYS);
 
   /* Misc simple low-risk calls. */
+  allow_nr(__NR_gettimeofday); /* Used by logging. */
   allow_nr(__NR_rt_sigreturn); /* Used to handle SIGPIPE. */
   allow_nr(__NR_restart_syscall);
   allow_nr(__NR_close);
@@ -352,6 +354,11 @@ seccomp_sandbox_setup_prelogin(const struct vsf_session* p_sess)
   if (tunable_ssl_enable)
   {
     allow_nr_1_arg_match(__NR_recvmsg, 3, 0);
+    allow_nr_2_arg_match(__NR_setsockopt, 2, IPPROTO_TCP, 3, TCP_NODELAY);
+  }
+  if (tunable_syslog_enable)
+  {
+    reject_nr(__NR_socket, EACCES);
   }
 }
 
@@ -439,6 +446,16 @@ seccomp_sandbox_setup_postlogin(const struct vsf_session* p_sess)
       /* Need to send file descriptors to privileged broker. */
       allow_nr_1_arg_match(__NR_sendmsg, 3, 0);
     }
+  }
+
+  if (tunable_syslog_enable)
+  {
+    /* The ability to pass an address spec isn't needed so disable it. We ensure
+     * the 6th arg (socklen) is 0. We could have checked the 5th arg (sockptr)
+     * but I don't know if 64-bit compares work in the kernel filter, so we're
+     * happy to check the socklen arg, which is 32 bits.
+     */
+    allow_nr_1_arg_match(__NR_sendto, 6, 0);
   }
 
   if (tunable_text_userdb_names)
@@ -667,6 +684,11 @@ seccomp_sandbox_lockdown()
   ret = prctl(PR_SET_SECCOMP, 2, &prog, 0, 0);
   if (ret != 0)
   {
+    if (errno == EINVAL)
+    {
+      /* Kernel isn't good enough. */
+      return;
+    }
     die("prctl PR_SET_SECCOMP failed");
   }
 }

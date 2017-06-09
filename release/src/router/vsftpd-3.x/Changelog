@@ -1343,3 +1343,35 @@ At this point: v3.0.1 released!
 
 At this point: v3.0.2 released!
 ===============================
+
+- Increase VSFTP_AS_LIMIT to 200MB; various reports.
+- Make the PWD response more RFC compliant; report from Barry Kelly
+<barry@modeltwozero.com>.
+- Remove the trailing period from EPSV response to work around BT Internet
+issues; report from Tim Bishop <tdb@mirrorservice.org>.
+- Fix syslog_enable issues vs. seccomp filtering. Report from Michal Vyskocil
+<mvyskocil@suse.cz>. At least, syslogging seems to work on my Fedora now.
+- Allow gettimeofday() in the seccomp sandbox. I can't repro failures, but I
+probably have a different distro / libc / etc. and there are multiple reports.
+- Some kernels support PR_SET_NO_NEW_PRIVS but not PR_SET_SECCOMP, so handle
+this case gracefully. Report from Vasily Averin <vvs@odin.com>.
+- List the TLS1.2 cipher AES128-GCM-SHA256 as first preference by default.
+- Make some compile-time SSL defaults (such as correct client shutdown
+handling) stricter.
+- Disable Nagle algorithm during SSL data connection shutdown, to avoid 200ms
+delays. From Tim Kosse <tim.kosse@filezilla-project.org>.
+- Kill the FTP session if we see HTTP protocol commands, to avoid
+cross-protocol attacks. A report from Jann Horn <jann@thejh.net>.
+- Kill the FTP session if we see session re-use failure. A report from
+Tim Kosse <tim.kosse@filezilla-project.org>.
+(vsftpd-3.0.3pre1)
+- Enable ECDHE, Tim Kosse <tim.kosse@filezilla-project.org>.
+- Default cipher list is now just ECDHE-RSA-AES256-GCM-SHA384.
+- Minor SSL logging improvements.
+- Un-default tunable_strict_ssl_write_shutdown again. We still have
+tunable_strict_ssl_read_eof defaulted now, which is the important one to prove
+upload integrity.
+(vsftpd-3.0.3pre2)
+
+At this point: v3.0.3 released!
+===============================

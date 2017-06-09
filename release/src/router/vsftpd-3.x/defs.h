@@ -18,7 +18,7 @@
 /* Must be at least the size of VSFTP_MAX_COMMAND_LINE, VSFTP_DIR_BUFSIZE and
    VSFTP_DATA_BUFSIZE*2 */
 #define VSFTP_PRIVSOCK_MAXSTR   VSFTP_DATA_BUFSIZE * 2
-#define VSFTP_AS_LIMIT          100UL * 1024 * 1024
+#define VSFTP_AS_LIMIT          200UL * 1024 * 1024
 
 #endif /* VSF_DEFS_H */
 
