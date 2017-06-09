@@ -87,8 +87,7 @@ ssl_init(struct vsf_session* p_sess)
       {
         p_key = tunable_rsa_cert_file;
       }
-      if (SSL_CTX_use_certificate_file(
-        p_ctx, tunable_rsa_cert_file, X509_FILETYPE_PEM) != 1)
+      if (SSL_CTX_use_certificate_chain_file(p_ctx, tunable_rsa_cert_file) != 1)
       {
         die("SSL: cannot load RSA certificate");
       }
@@ -104,8 +103,7 @@ ssl_init(struct vsf_session* p_sess)
       {
         p_key = tunable_dsa_cert_file;
       }
-      if (SSL_CTX_use_certificate_file(
-        p_ctx, tunable_dsa_cert_file, X509_FILETYPE_PEM) != 1)
+      if (SSL_CTX_use_certificate_chain_file(p_ctx, tunable_dsa_cert_file) != 1)
       {
         die("SSL: cannot load DSA certificate");
       }

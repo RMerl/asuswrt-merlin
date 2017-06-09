@@ -334,6 +334,24 @@ vsf_sysdep_check_auth(const struct mystr* p_user_str,
     return 0;
   }
 #endif
+#ifdef PAM_TTY
+  retval = pam_set_item(s_pamh, PAM_TTY, "ftp");
+  if (retval != PAM_SUCCESS)
+  {
+    (void) pam_end(s_pamh, 0);
+    s_pamh = 0;
+    return 0;
+  }
+#endif
+#ifdef PAM_RUSER
+  retval = pam_set_item(s_pamh, PAM_RUSER, str_getbuf(p_user_str));
+  if (retval != PAM_SUCCESS)
+  {
+    (void) pam_end(s_pamh, 0);
+    s_pamh = 0;
+    return 0;
+  }
+#endif
   retval = pam_authenticate(s_pamh, 0);
   if (retval != PAM_SUCCESS)
   {
@@ -648,6 +666,7 @@ static int do_sendfile(const int out_fd, const int in_fd,
   int retval;
   enum EVSFSysUtilError error;
   (void) start_pos;
+  (void) error;
 #if defined(VSF_SYSDEP_HAVE_LINUX_SENDFILE) || \
     defined(VSF_SYSDEP_HAVE_FREEBSD_SENDFILE) || \
     defined(VSF_SYSDEP_HAVE_HPUX_SENDFILE) || \
@@ -1131,7 +1150,7 @@ vsf_remove_uwtmp(void)
 static int s_uwtmp_inserted;
 static struct utmpx s_utent;
 
-static void
+void
 vsf_insert_uwtmp(const struct mystr* p_user_str,
                  const struct mystr* p_host_str)
 {
@@ -1171,7 +1190,7 @@ vsf_insert_uwtmp(const struct mystr* p_user_str,
   updwtmpx(WTMPX_FILE, &s_utent);
 }
 
-static void
+void
 vsf_remove_uwtmp(void)
 {
   if (!s_uwtmp_inserted)

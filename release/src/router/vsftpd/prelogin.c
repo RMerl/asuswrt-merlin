@@ -180,11 +180,6 @@ handle_user_command(struct vsf_session* p_sess)
     str_empty(&p_sess->user_str);
     return;
   }
-  if (!tunable_anonymous_enable && is_anon)
-  {
-    vsf_cmdio_write(
-      p_sess, FTP_LOGINERR, "This FTP server does not allow anonymous logins.");
-  }
   if (is_anon && p_sess->control_use_ssl && !tunable_allow_anon_ssl &&
       !tunable_force_anon_logins_ssl)
   {
@@ -258,6 +253,10 @@ handle_pass_command(struct vsf_session* p_sess)
     vsf_two_process_login(p_sess, &p_sess->ftp_arg_str);
   }
   vsf_cmdio_write(p_sess, FTP_LOGINERR, "Login incorrect.");
+  if (++p_sess->login_fails >= tunable_max_login_fails)
+  {
+    vsf_sysutil_exit(0);
+  }
   str_empty(&p_sess->user_str);
   /* FALLTHRU if login fails */
 }

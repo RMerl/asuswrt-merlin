@@ -37,10 +37,19 @@ handle_feat(struct vsf_session* p_sess)
     vsf_cmdio_write_raw(p_sess, " AUTH SSL\r\n");
     vsf_cmdio_write_raw(p_sess, " AUTH TLS\r\n");
   }
-  vsf_cmdio_write_raw(p_sess, " EPRT\r\n");
-  vsf_cmdio_write_raw(p_sess, " EPSV\r\n");
+  if (tunable_port_enable)
+  {
+    vsf_cmdio_write_raw(p_sess, " EPRT\r\n");
+  }
+  if (tunable_pasv_enable)
+  {
+    vsf_cmdio_write_raw(p_sess, " EPSV\r\n");
+  }
   vsf_cmdio_write_raw(p_sess, " MDTM\r\n");
-  vsf_cmdio_write_raw(p_sess, " PASV\r\n");
+  if (tunable_pasv_enable)
+  {
+    vsf_cmdio_write_raw(p_sess, " PASV\r\n");
+  }
   vsf_cmdio_write_raw(p_sess, " ICNV\r\n");	// Jiahao
   if (tunable_ssl_enable)
   {

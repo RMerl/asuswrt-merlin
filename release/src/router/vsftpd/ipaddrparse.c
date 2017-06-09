@@ -71,7 +71,7 @@ vsf_sysutil_parse_ipv6(const struct mystr* p_str)
     }
     str_append_str(&s_ret, &s_rhs_ret);
   }
-  return (unsigned char*)str_getbuf(&s_ret);
+  return (const unsigned char*)str_getbuf(&s_ret);
 }
 
 const unsigned char*

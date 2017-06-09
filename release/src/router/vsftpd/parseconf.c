@@ -142,6 +142,9 @@ parseconf_uint_array[] =
   { "file_open_mode", &tunable_file_open_mode },
   { "max_per_ip", &tunable_max_per_ip },
   { "trans_chunk_size", &tunable_trans_chunk_size },
+  { "delay_failed_login", &tunable_delay_failed_login },
+  { "delay_successful_login", &tunable_delay_successful_login },
+  { "max_login_fails", &tunable_max_login_fails },
   { 0, 0 }
 };
 
