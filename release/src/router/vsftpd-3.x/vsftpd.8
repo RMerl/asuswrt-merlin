@@ -1,0 +1,60 @@
+.\" Copyright (c) 2001 Daniel Jacobowitz <dan@debian.org>
+.Dd March 8, 2001
+.Dt VSFTPD 8
+.Sh NAME
+.Nm vsftpd
+.Nd Very Secure FTP Daemon
+.Sh SYNOPSIS
+.Nm vsftpd
+.Op Ar configuration file and / or options
+.Sh DESCRIPTION
+.Nm vsftpd
+is the Very Secure File Transfer Protocol Daemon. The server can be launched
+via a
+.Dq super-server
+such as
+.Xr inetd 8
+or
+.Xr xinetd 8 .
+Alternatively, vsftpd can be launched in standalone mode, in which case vsftpd
+itself will listen on the network. This latter mode is easier to use, and
+recommended. It is activated by setting
+.Pa listen=YES
+in
+.Pa /etc/vsftpd.conf .
+Direct execution of the
+.Nm vsftpd
+binary will then launch the FTP service ready for immediate client connections.
+.Sh OPTIONS
+An optional
+configuration file or files
+may be given on the command line. These files must be owned as root if running
+as root. Any command line option not starting with a "-" character is treated
+as a config file that will be loaded. Note that config files are loaded in the
+strict order that they are encountered on the command line.
+If no config files are specified, the default configuration file of
+.Pa /etc/vsftpd.conf
+will be loaded, after all other command line options are processed.
+.Pp
+Supported options are:
+.Bl -tag -width Ds
+.It Fl v
+Print the version information and exit, even if other options are encountered.
+.It Fl ooption=value
+Set a single option, value pair as per the format in the config file. Multiple
+-o options are supported, and they are applied in strict order relative to
+their appearance on the command line, including intermingling with loading of
+config files.
+.El
+.Sh EXAMPLES
+vsftpd -olisten=NO /etc/vsftpd.conf -oftpd_banner=blah
+.Pp
+That example overrides vsftpd's built-in default for the "listen" option to be
+NO, but then loads /etc/vsftpd.conf which may override that setting. Finally,
+the "ftpd_banner" setting is set to "blah", which overrides any default vsftpd
+setting and any identical setting that was in the config file.
+.Sh FILES
+.Pa /etc/vsftpd.conf
+.Sh SEE ALSO
+.Xr vsftpd.conf 5
+.end
