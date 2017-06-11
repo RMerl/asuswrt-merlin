@@ -113,6 +113,7 @@ function initial() {
 	if (machine_name.search("arm") != -1) {
 		document.getElementById("ct_established_default").innerHTML = "Default: 2400";
 		showhide("memory_mgmt_tr" ,1);
+		showhide("brsnoop_tr", 1);
 	}
 
 	if (document.form.dns_probe_content.value == "")
@@ -972,7 +973,7 @@ function done_validating(action){
 							<input type="radio" name="dns_probe" class="input" value="0"><#checkbox_No#>
 						</td>
 					</tr>
-					<tr>
+					<tr id="brsnoop_tr" style="display:none;">
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,20);">LAN: Bridge multicast snooping (default: No)</a></th>
 						<td>
 							<input type="radio" name="lan_brsnoop" class="input" value="1" <% nvram_match_x("", "lan_brsnoop", "1", "checked"); %>><#checkbox_Yes#>
