@@ -119,6 +119,7 @@ apps: .conf
 		--disable-developer \
 		--disable-debug \
 		--enable-largefile \
+		--with-codepagedir=/usr/share/samba/codepages \
 		--without-ads \
 		--without-krb5 \
 		--without-pam \
@@ -163,6 +164,8 @@ else
 	@install -D $(srcdir)/bin/nmbd $(INSTALLDIR)/usr/sbin/nmbd
 	@install -D $(srcdir)/bin/smbpasswd $(INSTALLDIR)/usr/bin/smbpasswd
 endif
+	install -D codepages/lowcase.dat $(INSTALLDIR)/usr/share/samba/codepages/lowcase.dat
+	install -D codepages/upcase.dat $(INSTALLDIR)/usr/share/samba/codepages/upcase.dat
 
 #	@install -D $(srcdir)/bin/libsmbclient.so.0 $(INSTALLDIR)/usr/lib/libsmbclient.so.0
 #	@ln -sf libsmbclient.so.0 $(INSTALLDIR)/usr/lib/libsmbclient.so
