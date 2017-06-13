@@ -1674,7 +1674,14 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	{
 		/* call UPNP chain */
 		fprintf(fp, "-A VSERVER -j VUPNP\n");
-		fprintf(fp, "-A POSTROUTING -o %s -j PUPNP\n", wan_if);
+		for (unit = WAN_UNIT_FIRST; unit < wan_max_unit; unit++) {
+			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+			if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
+				continue;
+
+			wan_if = get_wan_ifname(unit);
+			fprintf(fp, "-A POSTROUTING -o %s -j PUPNP\n", wan_if);
+		}
 	}
 
 	/* Trigger port setting */
@@ -3786,9 +3793,19 @@ TRACE_PT("writing Parental Control\n");
 #endif
 		//Add for snmp daemon
 		if (nvram_match("snmpd_enable", "1") && nvram_match("snmpd_wan", "1")) {
-			fprintf(fp, "-A INPUT -p udp -s 0/0 --sport 1024:65535 -d %s --dport 161:162 -m state --state NEW,ESTABLISHED -j %s\n", wan_ip, logaccept);
-			fprintf(fp, "-A OUTPUT -p udp -s %s --sport 161:162 -d 0/0 --dport 1024:65535 -m state --state ESTABLISHED -j %s\n", wan_ip, logaccept);
-		}
+
+			for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
+				snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+				if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
+					continue;
+				wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
+				wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
+
+				fprintf(fp, "-A INPUT -p udp -s 0/0 --sport 1024:65535 -d %s --dport 161:162 -m state --state NEW,ESTABLISHED -j %s\n", wan_ip, logaccept);
+				fprintf(fp, "-A OUTPUT -p udp -s %s --sport 161:162 -d 0/0 --dport 1024:65535 -m state --state ESTABLISHED -j %s\n", wan_ip, logaccept);
+
+                        }
+                }
 
 #ifdef RTCONFIG_IPV6
 		switch (get_ipv6_service()) {
