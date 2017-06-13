@@ -428,6 +428,7 @@ extern int pidof(const char *name);
 extern int killall(const char *name, int sig);
 extern int process_exists(pid_t pid);
 extern int module_loaded(const char *module);
+extern int ppid(int pid);
 
 // files.c
 extern int check_if_dir_empty(const char *dirpath);

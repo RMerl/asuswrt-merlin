@@ -9480,7 +9480,7 @@ int start_nat_rules(void)
 {
 	char *fn = NAT_RULES, ln[PATH_MAX];
 	struct stat s;
-	int i, len, retry, nat_state;
+	int len, retry, nat_state;
 
 	// all rules applied directly according to currently status, wanduck help to triger those not cover by normal flow
  	if (nvram_match("x_Setting", "0")) {
@@ -9561,7 +9561,7 @@ int stop_nat_rules(void)
 	dump_nat_table("start_nat_rules");
 #endif
 
-	return;
+	return NAT_STATE_REDIRECT;;
 }
 
 #ifdef RTCONFIG_TOAD

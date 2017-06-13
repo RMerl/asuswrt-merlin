@@ -3469,8 +3469,7 @@ static void Tor_microdes_check() {
 
 	FILE *f;
 	char buf[256];
-	char *ifname, *p;
-	unsigned long counter1, counter2;
+	char *p;
 	struct stat tmp_db_stat, jffs_db_stat;
 	int tmp_stat, jffs_stat;
 
@@ -3487,7 +3486,7 @@ static void Tor_microdes_check() {
 			return;
 		}
 
-		if ((f = fopen("/tmp/torlog", "r")) == NULL) return -1;
+		if ((f = fopen("/tmp/torlog", "r")) == NULL) return;
 
 		while (fgets(buf, sizeof(buf), f)) {
 			if ((p=strstr(buf, "now have enough directory")) == NULL) continue;

@@ -1320,7 +1320,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 #ifdef RTCONFIG_TOR
 	char addr_new[32];
 	int addr_type;
-	char *nv, *nvp, *b;
+	char *nv, *b;
 #endif
 	
 	sprintf(name, "%s_%s_%s", NAT_RULES, wan_if, wanx_if);
@@ -1553,7 +1553,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 #ifdef RTCONFIG_TOR
 	char addr_new[32];
 	int addr_type;
-	char *nv, *nvp, *b;
+	char *nv, *b;
 #endif
 
 	ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
@@ -4928,7 +4928,6 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	int unit;
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char *wan_if;
-	char *wan_ip;
 	int wan_max_unit = WAN_UNIT_MAX;
 #ifdef CONFIG_BCMWL5 /* the only use so far */
 	char lan_class[32];
@@ -4994,12 +4993,11 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 		if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 			continue;
 
-		wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
 		wan_if = get_wan_ifname(unit);
 
 		if (nvram_match("fw_nat_loopback", "2"))
 			eval("iptables", "-t", "mangle", "-A", "PREROUTING", "!", "-i", wan_if,
-			     "-d", wan_ip, "-j", "MARK", "--set-mark", "0x8000/0x8000");
+			     "-d", nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)), "-j", "MARK", "--set-mark", "0x8000/0x8000");
 	}
 #endif
 

@@ -619,8 +619,8 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
 	char pid[sizeof("/var/run/udhcpcXXXXXXXXXX.pid")];
 	char clientid[sizeof("61:") + (128*2) + 1];
-	char vendorid[32+32+sizeof(" dslforum.org")];
 #ifdef RTCONFIG_TR069
+	char vendorid[32+32+sizeof(" dslforum.org")];
 #ifdef RTCONFIG_TR181
 	unsigned char optbuf[sizeof(struct viopt_hdr) + 128];
 	unsigned char hwaddr[6];

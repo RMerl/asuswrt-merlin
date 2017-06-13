@@ -965,6 +965,7 @@ extern int check_ovpn_server_enabled(int unit);
 extern int check_ovpn_client_enabled(int unit);
 extern void update_vpnrouting(int unit);
 extern void reset_vpn_settings(int type, int unit);
+extern void stop_vpn_all();
 #endif
 
 // wanduck.c
@@ -1031,6 +1032,8 @@ extern void dsl_defaults(void);
 #endif
 
 //services.c
+void start_Tor_proxy(void);
+void stop_Tor_proxy(void);
 extern void write_static_leases(char *file);
 #ifdef RTCONFIG_DHCP_OVERRIDE
 extern int restart_dnsmasq(int need_link_DownUp);
