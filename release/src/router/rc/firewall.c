@@ -3798,7 +3798,6 @@ TRACE_PT("writing Parental Control\n");
 				snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 				if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 					continue;
-				wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
 				wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
 
 				fprintf(fp, "-A INPUT -p udp -s 0/0 --sport 1024:65535 -d %s --dport 161:162 -m state --state NEW,ESTABLISHED -j %s\n", wan_ip, logaccept);
@@ -5003,8 +5002,6 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 
 
 /* For NAT loopback */
-/* Untested yet */
-#if 0
 	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 		if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
@@ -5016,7 +5013,6 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 			eval("iptables", "-t", "mangle", "-A", "PREROUTING", "!", "-i", wan_if,
 			     "-d", nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)), "-j", "MARK", "--set-mark", "0x8000/0x8000");
 	}
-#endif
 
 /* Workaround for neighbour solicitation flood from Comcast */
 #ifdef RTCONFIG_IPV6
