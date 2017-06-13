@@ -19,6 +19,7 @@ Asuswrt-Merlin Changelog
              revise any custom configuration you have done (if any).
   - CHANGED: Moved SMB2 support switch to the main samba page.
   - CHANGED: Optimized all webui images for size
+  - CHANGED: Tor now runs as a limited user instead of as root
   - FIXED: OpenVPN client would be shown as having failed to connect
            if a reconnect attempt initially failed to authenticate,
            but succesfully connected afterward.
@@ -27,6 +28,11 @@ Asuswrt-Merlin Changelog
   - FIXED: NFS sometimes failing to start properly (patch by john9527)
   - FIXED: Layout issue of the status bar under Chrome when window
            is larger than 1800px (patch by Cyrus Dargahi)
+  - FIXED: Corrupted firewall rules if enabling SSHD brute-force
+           protection and Respond to WAN Ping at the same time
+           while in Dual WAN mode.
+  - FIXED: UPNP and SNMP issues in Dual WAN mode.
+  - FIXED: NAT Loopback (merlin mode) in Dual WAN mode wasn't supported.
 
 
 380.66_4 (26-May-2017)
