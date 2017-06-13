@@ -568,6 +568,9 @@ void create_passwd(void)
 		p = crypt(p, salt);
 		fprintf(f, "%s:%s:0:0:99999:7:0:0:\n"
 			   "nobody:*:0:0:99999:7:0:0:\n", http_user, p);
+#ifdef RTCONFIG_TOR
+		fprintf(f, "tor:*:0:0:99999:7:0:0:\n");
+#endif
 #ifdef RTCONFIG_SAMBASRV	//!!TB
 		fprintf(f, "%s:*:0:0:99999:7:0:0:\n", smbd_user);
 #endif
@@ -590,15 +593,21 @@ void create_passwd(void)
 	sprintf(s,
 		"%s:x:0:0:%s:/root:/bin/sh\n"
 		"%s:x:100:100:nas:/dev/null:/dev/null\n"
-		"nobody:x:65534:65534:nobody:/dev/null:/dev/null\n",
-		http_user,
+		"nobody:x:65534:65534:nobody:/dev/null:/dev/null\n"
+#ifdef RTCONFIG_TOR
+		"tor:x:65533:65533:tor:/dev/null:/dev/null\n"
+#endif
+		,http_user,
 		http_user,
 		smbd_user);
 #else	//!!TB
 	sprintf(s,
 		"%s:x:0:0:%s:/root:/bin/sh\n"
-		"nobody:x:65534:65534:nobody:/dev/null:/dev/null\n",
-		http_user,
+		"nobody:x:65534:65534:nobody:/dev/null:/dev/null\n"
+#ifdef RTCONFIG_TOR
+                "tor:x:65533:65533:tor:/dev/null:/dev/null\n"
+#endif
+		,http_user,
 		http_user);
 #endif	//!!TB
 	f_write_string("/etc/passwd", s, 0, 0644);
@@ -614,20 +623,25 @@ void create_passwd(void)
 #ifdef RTCONFIG_SAMBASRV	//!!TB
 		"nas:*:100:\n"
 #endif
-		"nobody:*:65534:\n",
-		http_user);
+		"nobody:*:65534:\n"
+#ifdef RTCONFIG_TOR
+		"tor:*:65533:\n"
+#endif
+		, http_user);
 	f_write_string("/etc/gshadow", s, 0, 0644);
 	fappend_file("/etc/gshadow", "/etc/gshadow.custom");
         fappend_file("/etc/gshadow", "/jffs/configs/gshadow.add");
 	run_postconf("gshadow","/etc/gshadow");
-
 	f_write_string("/etc/group",
 		"root:x:0:\n"
 #ifdef RTCONFIG_SAMBASRV	//!!TB
 		"nas:x:100:\n"
 #endif
-		"nobody:x:65534:\n",
-		0, 0644);
+		"nobody:x:65534:\n"
+#ifdef RTCONFIG_TOR
+		"tor:x:65533:\n"
+#endif
+		, 0, 0644);
 	fappend_file("/etc/group", "/etc/group.custom");
 #ifdef RTCONFIG_OPENVPN
 	fappend_file("/etc/group", "/etc/group.openvpn");
@@ -9965,6 +9979,7 @@ void start_Tor_proxy(void)
 	fprintf(fp, "RunAsDaemon 1\n");
 	fprintf(fp, "DataDirectory /tmp/.tordb\n");
 	fprintf(fp, "AvoidDiskWrites 1\n");
+	fprintf(fp, "User tor\n");
 
 	append_custom_config("torrc", fp);
 	fclose(fp);
