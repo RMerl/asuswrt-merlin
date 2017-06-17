@@ -8,7 +8,7 @@ WARNING="$BOLD * Warning: $NORM"
 INPUT="$BOLD => $NORM"
 
 i=1 # Will count available partitions (+ 1)
-cd /tmp
+cd /tmp || exit
 
 echo -e "$INFO This script will guide you through the Entware installation."
 echo -e "$INFO Script modifies \"entware\" folder only on the chosen drive,"
@@ -33,50 +33,49 @@ case $(uname -m) in
 esac
 
 echo -e "$INFO Looking for available partitions..."
-for mounted in `/bin/mount | grep -E "$PART_TYPES" | cut -d" " -f3` ; do
-  isPartitionFound="true"
+for mounted in $(/bin/mount | grep -E "$PART_TYPES" | cut -d" " -f3) ; do
   echo "[$i] --> $mounted"
-  eval mounts$i=$mounted
-  i=`expr $i + 1`
+  eval mounts$i="$mounted"
+  i=$((i + 1))
 done
 
-if [ $i == "1" ] ; then
+if [ $i = "1" ] ; then
   echo -e "$ERROR No $PART_TYPES partitions available. Exiting..."
   exit 1
 fi
 
-echo -en "$INPUT Please enter partition number or 0 to exit\n$BOLD[0-`expr $i - 1`]$NORM: "
-read partitionNumber
-if [ "$partitionNumber" == "0" ] ; then
-  echo -e $INFO Exiting...
+echo -en "$INPUT Please enter partition number or 0 to exit\n$BOLD[0-$((i - 1))]$NORM: "
+read -r partitionNumber
+if [ "$partitionNumber" = "0" ] ; then
+  echo -e "$INFO" Exiting...
   exit 0
 fi
 
-if [ "$partitionNumber" -gt `expr $i - 1` ] ; then
+if [ "$partitionNumber" -gt $((i - 1)) ] ; then
   echo -e "$ERROR Invalid partition number! Exiting..."
   exit 1
 fi
 
-eval entPartition=\$mounts$partitionNumber
+eval entPartition=\$mounts"$partitionNumber"
 echo -e "$INFO $entPartition selected.\n"
 entFolder=$entPartition/entware
 
-if [ -d $entFolder ] ; then
+if [ -d "$entFolder" ] ; then
   echo -e "$WARNING Found previous installation, saving..."
-  mv $entFolder $entFolder-old_`date +\%F_\%H-\%M`
+  mv "$entFolder" "$entFolder-old_$(date +%F_%H-%M)"
 fi
 echo -e "$INFO Creating $entFolder folder..."
-mkdir $entFolder
+mkdir "$entFolder"
 
 if [ -d /tmp/opt ] ; then
   echo -e "$WARNING Deleting old /tmp/opt symlink..."
   rm /tmp/opt
 fi
 echo -e "$INFO Creating /tmp/opt symlink..."
-ln -s $entFolder /tmp/opt
+ln -s "$entFolder" /tmp/opt
 
 echo -e "$INFO Creating /jffs scripts backup..."
-tar -czf $entPartition/jffs_scripts_backup_`date +\%F_\%H-\%M`.tgz /jffs/scripts/* >/dev/nul
+tar -czf "$entPartition/jffs_scripts_backup_$(date +%F_%H-%M).tgz" /jffs/scripts/* >/dev/nul
 
 echo -e "$INFO Modifying start scripts..."
 cat > /jffs/scripts/services-start << EOF
