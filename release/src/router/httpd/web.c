@@ -10513,6 +10513,53 @@ struct except_mime_handler except_mime_handlers[] = {
 	{ NULL, 0 }
 };
 
+#ifdef MISSING_HOOKS
+
+/* No idea what that function does,
+   so make it do nothing */
+
+int useful_redirect_page(char *next_page){
+	return 0;
+}
+
+
+
+// some should be referer
+struct mime_referer mime_referers[] = {
+	{ "start_apply.htm", CHECK_REFERER},
+	{ "start_apply2.htm", CHECK_REFERER},
+	{ "api.asp", CHECK_REFERER},
+	{ "applyapp.cgi", CHECK_REFERER},
+	{ "apply.cgi", CHECK_REFERER},
+	{ "upgrade.cgi", CHECK_REFERER},
+	{ "upload.cgi", CHECK_REFERER},
+	{ "dsllog.cgi", CHECK_REFERER},
+	{ "update.cgi", CHECK_REFERER},
+	{ "vpnupload.cgi", CHECK_REFERER},
+	{ "jffsupload.cgi", CHECK_REFERER},
+	{ "findasus.cgi", CHECK_REFERER},
+	{ "ftpServerTree.cgi", CHECK_REFERER},
+	{ "aidisk/create_account.asp", CHECK_REFERER},
+#if defined(RTCONFIG_WIRELESSREPEATER) || defined(RTCONFIG_CONCURRENTREPEATER)
+	{ "apscan.asp", CHECK_REFERER},
+#endif
+#ifdef RTCONFIG_QCA_PLC_UTILS
+	{ "plc.cgi", CHECK_REFERER},
+#endif
+	{ "status.asp", CHECK_REFERER},
+	{ "wds_aplist_2g.asp", CHECK_REFERER},
+	{ "wds_aplist_5g.asp", CHECK_REFERER},
+	{ "update_networkmapd.asp", CHECK_REFERER},
+	{ "get_real_ip.asp", CHECK_REFERER},
+	{ "WPS_info.xml", CHECK_REFERER},
+	{ "login.cgi", CHECK_REFERER},
+	{ "get_webdavInfo.asp", CHECK_REFERER},
+	{ "update_clients.asp", CHECK_REFERER},
+	{ "**.CFG", CHECK_REFERER},
+	{ NULL, 0 }
+};
+#endif
+
 #ifdef RTCONFIG_USB
 int ej_get_AiDisk_status(int eid, webs_t wp, int argc, char **argv){
 	disk_info_t *disks_info, *follow_disk;
@@ -15000,6 +15047,23 @@ ej_check_asus_model(int eid, webs_t wp, int argc, char **argv)
 static int
 ej_chdom(int eid, webs_t wp, int argc, char **argv)
 {
+#ifdef MISSING_HOOKS
+	struct json_object *item = json_object_new_object();
+
+	/* check alive */
+	json_object_object_add(item,"alive", json_object_new_int(1));
+
+	/* check isdomain */
+	char *hostname = websGetVar(wp, "hostname", "");
+	if(hostname != NULL && !strcmp(nvram_safe_get("lan_ipaddr"), hostname)){
+		json_object_object_add(item,"isdomain", json_object_new_int(1));
+	}else{
+		json_object_object_add(item,"isdomain", json_object_new_int(0));
+	}
+	websWrite(wp, "%s", json_object_to_json_string(item));
+	json_object_put(item);
+	return 0;
+#else
 	char str[32];
 	memset(str, 0, sizeof(str));
 	char *hostname = websGetVar(wp, "hostname", "");
@@ -15009,6 +15073,7 @@ ej_chdom(int eid, webs_t wp, int argc, char **argv)
 	websWrite(wp, "%s", str);
 
 	return 0;
+#endif
 }
 
 #ifdef RTCONFIG_CONCURRENTREPEATER

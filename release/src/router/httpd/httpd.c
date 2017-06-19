@@ -432,6 +432,78 @@ char
 	return auth_referer;
 }
 
+/* That code is now closed source.  Until we get binary blobs for
+   all model, reuse the original code. */
+
+#ifdef MISSING_HOOKS
+int
+check_noauth_referrer(char* referer, int fromapp_flag)
+{
+	char *auth_referer=NULL;
+
+	if(fromapp_flag != 0)
+		return 0;
+
+	if(!referer || !strlen(host_name)){
+		return NOREFERER;
+	}else{
+		auth_referer = get_referrer(referer);
+	}
+
+	if(!strcmp(host_name, auth_referer))
+		return 0;
+	else
+		return REFERERFAIL;
+}
+
+int
+referer_check(char* referer, int fromapp_flag)
+{
+	char *auth_referer=NULL;
+	const int d_len = strlen(DUT_DOMAIN_NAME);
+	int port = 0;
+	int referer_from_https = 0;
+	int referer_host_check = 0;
+
+	if(fromapp_flag != 0)
+		return 0;
+	if(!referer){
+		return NOREFERER;
+	}else{
+		auth_referer = get_referrer(referer);
+	}
+
+	if(referer_host[0] == 0){
+		return WEB_NOREFERER;
+	}
+
+	if(!strcmp(host_name, auth_referer)) referer_host_check = 1;
+
+	if (*(auth_referer + d_len) == ':' && (port = atoi(auth_referer + d_len + 1)) > 0 && port < 65536)
+		referer_from_https = 1;
+
+	if (((strlen(auth_referer) == d_len) || (*(auth_referer + d_len) == ':' && atoi(auth_referer + d_len + 1) > 0))
+	   && strncmp(DUT_DOMAIN_NAME, auth_referer, d_len)==0){
+		if(referer_from_https)
+			snprintf(auth_referer,sizeof(referer_host),"%s:%d",nvram_safe_get("lan_ipaddr"), port);
+		else
+			snprintf(auth_referer,sizeof(referer_host),"%s",nvram_safe_get("lan_ipaddr"));
+	}
+
+	/* form based referer info? */
+	if(referer_host_check && (strlen(auth_referer) == strlen(referer_host)) && strncmp( auth_referer, referer_host, strlen(referer_host) ) == 0){
+		//_dprintf("asus token referer_check: the right user and password\n");
+		return 0;
+	}else{
+		//_dprintf("asus token referer_check: the wrong user and password\n");
+		return REFERERFAIL;
+	}
+	return REFERERFAIL;
+}
+
+#endif	// temporary code
+
+
 #define	HEAD_HTTP_LOGIN	"HTTP login"	// copy from push_log/push_log.h
 
 static int
