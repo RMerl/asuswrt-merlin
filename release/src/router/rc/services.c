@@ -2796,7 +2796,7 @@ _dprintf("%s:\n", __FUNCTION__);
 	start_klogd();
 
 #if defined(DUMP_PREV_OOPS_MSG) && defined(RTCONFIG_BCMARM)
-#if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)|| defined(RTAC5300R)
+#if defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)|| defined(RTAC5300R) || defined(RTCONFIG_BCM9)
 	eval("et", "dump", "oops");
 #else
 	eval("et", "dump_oops");
@@ -3025,9 +3025,6 @@ int
 _start_telnetd(int force)
 {
 	char *telnetd_argv[] = { "telnetd",
-#ifdef RTCONFIG_PROTECTION_SERVER
-		NULL,	/* -z: enable send failed login */
-#endif
 		NULL, NULL,	/* -b address */
 		NULL };
 	int index = 1;
@@ -3049,9 +3046,6 @@ _start_telnetd(int force)
 	setup_passwd();
 	//chpass(nvram_safe_get("http_username"), nvram_safe_get("http_passwd"));	// vsftpd also needs
 
-#ifdef RTCONFIG_PROTECTION_SERVER
-	telnetd_argv[index++] = "-z";
-#endif
 	if (is_routing_enabled()) {
 		telnetd_argv[index++] = "-b";
 		telnetd_argv[index++] = nvram_safe_get("lan_ipaddr");

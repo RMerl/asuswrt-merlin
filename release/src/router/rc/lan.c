@@ -1741,22 +1741,20 @@ void start_lan(void)
 				if (vlan_enable() && check_if_exist_vlan_ifnames(ifname))
 					match = 1;
 #endif
-				if (!match)
-				{
+				if (!match
 #if defined(RTCONFIG_CHILLISPOT) || defined(RTCONFIG_COOVACHILLI)
-                                       if(is_add_if(ifname))
-                                           eval("brctl", "addif", lan_ifname, ifname);
-#else
+					&& is_add_if(ifname)
+#endif
+				) {
 					eval("brctl", "addif", lan_ifname, ifname);
-#endif
-#ifdef RTCONFIG_GMAC3
-gmac3_no_swbr:
-#endif
 #ifdef RTCONFIG_EMF
 					if (nvram_get_int("emf_enable"))
 						eval("emf", "add", "iface", lan_ifname, ifname);
 #endif
 				}
+#ifdef RTCONFIG_GMAC3
+gmac3_no_swbr:
+#endif
 				enable_wifi_bled(ifname);
 			}
 
@@ -2070,12 +2068,12 @@ void stop_lan(void)
 					goto gmac3_no_swbr;
 #endif
 				eval("brctl", "delif", lan_ifname, ifname);
-#ifdef RTCONFIG_GMAC3
-gmac3_no_swbr:
-#endif
 #ifdef RTCONFIG_EMF
 				if (nvram_get_int("emf_enable"))
 					eval("emf", "del", "iface", lan_ifname, ifname);
+#endif
+#ifdef RTCONFIG_GMAC3
+gmac3_no_swbr:
 #endif
 #if defined (RTCONFIG_WLMODULE_RT3352_INIC_MII)
 				{ // remove interface for iNIC packets
@@ -3153,14 +3151,13 @@ void stop_lan_wl(void)
 				goto gmac3_no_swbr;
 #endif
 			eval("brctl", "delif", lan_ifname, ifname);
-#ifdef RTCONFIG_GMAC3
-gmac3_no_swbr:
-#endif
 #ifdef RTCONFIG_EMF
 			if (nvram_get_int("emf_enable"))
 				eval("emf", "del", "iface", lan_ifname, ifname);
 #endif
-
+#ifdef RTCONFIG_GMAC3
+gmac3_no_swbr:
+#endif
 #if defined (RTCONFIG_WLMODULE_RT3352_INIC_MII)
 			{ // remove interface for iNIC packets
 				char *nic_if, *nic_ifs, *nic_lan_ifnames;
@@ -3472,22 +3469,20 @@ void start_lan_wl(void)
 				if (vlan_enable() && check_if_exist_vlan_ifnames(ifname))
 					match = 1;
 #endif
-				if (!match)
-				{
+				if (!match
 #if defined(RTCONFIG_CHILLISPOT) || defined(RTCONFIG_COOVACHILLI)
-                                       if(is_add_if(ifname))
-                                           eval("brctl", "addif", lan_ifname, ifname);
-#else
+					&& is_add_if(ifname)
+#endif
+				) {
 					eval("brctl", "addif", lan_ifname, ifname);
-#endif
-#ifdef RTCONFIG_GMAC3
-gmac3_no_swbr:
-#endif
 #ifdef RTCONFIG_EMF
 					if (nvram_get_int("emf_enable"))
 						eval("emf", "add", "iface", lan_ifname, ifname);
 #endif
 				}
+#ifdef RTCONFIG_GMAC3
+gmac3_no_swbr:
+#endif
 				enable_wifi_bled(ifname);
 			}
 			free(wl_ifnames);

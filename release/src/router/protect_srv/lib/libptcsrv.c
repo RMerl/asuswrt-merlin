@@ -12,7 +12,6 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <stdarg.h>
-#include <math.h>
 #include <netinet/in.h>
 #include <sys/ioctl.h>
 #include <net/if.h>

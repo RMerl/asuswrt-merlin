@@ -52,6 +52,8 @@ in_addr_t ifaddr;
 static int init_socket(char *ifname, int rcvsize)
 {
 	static const struct sock_filter filter[] = {
+		BPF_STMT(BPF_LD|BPF_W|BPF_ABS, SKF_AD_OFF + SKF_AD_PROTOCOL),
+		BPF_JUMP(BPF_JMP|BPF_JEQ|BPF_K, ETHERTYPE_IP, 0, 3),
 		BPF_STMT(BPF_LD|BPF_B|BPF_ABS, 9),
 		BPF_JUMP(BPF_JMP|BPF_JEQ|BPF_K, IPPROTO_IGMP, 0, 1),
 		BPF_STMT(BPF_RET|BPF_K, 0x7fffffff),
@@ -313,7 +315,8 @@ int main(int argc, char *argv[])
 	} else if (ifbridge && strcmp(ifbridge, ifswitch) == 0)
 		ifbridge = NULL;
 
-	openlog(name, 0, LOG_USER);
+	if (service)
+		openlog(name, LOG_PID, LOG_DAEMON);
 	log_info("started on %s%s%s", ifswitch, ifbridge ? "@" : "", ifbridge ? : "");
 
 	if (init_socket(ifbridge ? : ifswitch, sizeof(packet) * 16) < 0)

@@ -90,7 +90,7 @@ void purge_timers(void);
 int init_cache(void);
 int get_port(unsigned char *haddr);
 int add_member(unsigned char *maddr, in_addr_t addr, int port, int timeout);
-int del_member(unsigned char *maddr, in_addr_t addr, int port);
+int del_member(unsigned char *maddr, in_addr_t addr, int port, int timeout);
 int add_router(in_addr_t addr, int port, int timeout);
 int expire_members(unsigned char *maddr, int timeout);
 int purge_cache(void);

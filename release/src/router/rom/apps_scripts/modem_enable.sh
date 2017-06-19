@@ -458,7 +458,7 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 			# WDS set the autoconnect & roaming
 			# autoconnect: 0, disable; 1, enable; 2, pause.
 			# roaming: 0, allow; 1, disable. Only be activated when autoconnect is enabled.
-			gobi_api $qcqmi SetEnhancedAutoconnect 2 1
+			gobi_api $qcqmi SetEnhancedAutoconnect 0 1
 
 			echo "Gobi: set +COPS=2."
 			wait_time1=`expr $wandog_interval + $wandog_interval`

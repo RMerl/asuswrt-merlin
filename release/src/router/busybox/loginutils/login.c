@@ -128,6 +128,10 @@ static const struct pam_conv conv = {
 };
 #endif
 
+#if ENABLE_FEATURE_TELNETD_CLIENT_TO_ENV && defined(SECURITY_NOTIFY)
+#include <libptcsrv.h>
+#endif
+
 enum {
 	TIMEOUT = 60,
 	EMPTY_USERNAME_COUNT = 10,
@@ -333,9 +337,6 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 		LOGIN_OPT_f = (1<<0),
 		LOGIN_OPT_h = (1<<1),
 		LOGIN_OPT_p = (1<<2),
-#ifdef SECURITY_NOTIFY
-		LOGIN_OPT_x = (1<<3),
-#endif
 	};
 	char *fromhost;
 	char username[USERNAME_SIZE];
@@ -344,9 +345,6 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 	int count = 0;
 	struct passwd *pw;
 	char *opt_host = NULL;
-#ifdef SECURITY_NOTIFY
-	char *ip = NULL;
-#endif
 	char *opt_user = opt_user; /* for compiler */
 	char *full_tty;
 	char *short_tty;
@@ -363,6 +361,10 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 #if ENABLE_LOGIN_SESSION_AS_CHILD
 	pid_t child_pid;
 #endif
+#if ENABLE_FEATURE_TELNETD_CLIENT_TO_ENV
+	char *telnet_addr;
+	char *telnet_port;
+#endif
 
 	INIT_G();
 
@@ -377,11 +379,7 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 	bb_daemonize_or_rexec(DAEMON_ONLY_SANITIZE | DAEMON_CLOSE_EXTRA_FDS, NULL);
 
 	username[0] = '\0';
-#ifdef SECURITY_NOTIFY
-	opt = getopt32(argv, "f:h:px:", &opt_user, &opt_host, &ip);
-#else
 	opt = getopt32(argv, "f:h:p", &opt_user, &opt_host);
-#endif
 	if (opt & LOGIN_OPT_f) {
 		if (!run_by_root)
 			bb_error_msg_and_die("-f is for root only");
@@ -414,6 +412,16 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 	} else {
 		fromhost = xasprintf(" on '%s'", short_tty);
 	}
+
+#if ENABLE_FEATURE_TELNETD_CLIENT_TO_ENV
+	telnet_addr = xstrdup(getenv("TELNET_ADDR"));
+	telnet_port = xstrdup(getenv("TELNET_PORT"));
+	/* telnetd can't use login with -p, so why bother?
+	if (opt & LOGIN_OPT_p) {
+		unsetenv("TELNET_ADDR");
+		unsetenv("TELNET_PORT");
+	} */
+#endif
 
 	/* Was breaking "login <username>" from shell command line: */
 	/*bb_setpgrp();*/
@@ -492,12 +500,11 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 			failed_msg = "setcred";
 			goto pam_auth_failed;
 		}
-#ifdef SECURITY_NOTIFY
-		char CMD[128];
-		if (opt & LOGIN_OPT_x) {
-			snprintf(CMD, sizeof(CMD), "/usr/sbin/Send_Event2ptcsrv 1 \"1\" \"%s\" \"%s\"",
-					ip, "(PAM) From busybox telnet , LOGIN SUCCESS");
-			system(CMD);
+#if ENABLE_FEATURE_TELNETD_CLIENT_TO_ENV && defined(SECURITY_NOTIFY)
+		if (telnet_addr) {
+			SEND_PTCSRV_EVENT(PROTECTION_SERVICE_TELNET,
+				RPT_SUCCESS, telnet_addr,
+				"(PAM) From busybox telnet , LOGIN SUCCESS");
 		}
 #endif
 		break; /* success, continue login process */
@@ -532,20 +539,16 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 		 * Note that reads (in no-echo mode) trash tty attributes.
 		 * If we get interrupted by SIGALRM, we need to restore attrs.
 		 */
-#ifdef SECURITY_NOTIFY
 		if (ask_and_check_password(pw) > 0) {
-			char CMD[128];
-			if (opt & LOGIN_OPT_x) {
-				snprintf(CMD, sizeof(CMD), "/usr/sbin/Send_Event2ptcsrv 1 \"1\" \"%s\" \"%s\"",
-						ip, "(NOT PAM) From busybox telnet , LOGIN SUCCESS");
-				system(CMD);
+#if ENABLE_FEATURE_TELNETD_CLIENT_TO_ENV && defined(SECURITY_NOTIFY)
+			if (telnet_addr) {
+				SEND_PTCSRV_EVENT(PROTECTION_SERVICE_TELNET,
+					RPT_SUCCESS, telnet_addr,
+					"(NOT PAM) From busybox telnet , LOGIN SUCCESS");
 			}
+#endif
 			break;
 		}
-#else
-		if (ask_and_check_password(pw) > 0)
-			break;
-#endif
 #endif /* ENABLE_PAM */
  auth_failed:
 		opt &= ~LOGIN_OPT_f;
@@ -553,12 +556,11 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 		/* TODO: doesn't sound like correct English phrase to me */
 		puts("Login incorrect");
 
-#ifdef SECURITY_NOTIFY
-		char CMD[128];
-		if (opt & LOGIN_OPT_x) {
-			snprintf(CMD, sizeof(CMD), "/usr/sbin/Send_Event2ptcsrv 1 \"0\" \"%s\" \"%s\"",
-					ip, "From busybox telnet , LOGIN FAIL");
-			system(CMD);
+#if ENABLE_FEATURE_TELNETD_CLIENT_TO_ENV && defined(SECURITY_NOTIFY)
+		if (telnet_addr) {
+			SEND_PTCSRV_EVENT(PROTECTION_SERVICE_TELNET,
+				RPT_FAIL, telnet_addr,
+				"From busybox telnet , LOGIN FAIL");
 		}
 #endif
 		if (++count == 3) {
@@ -611,6 +613,10 @@ int login_main(int argc UNUSED_PARAM, char **argv)
 	setup_environment(pw->pw_shell,
 			(!(opt & LOGIN_OPT_p) * SETUP_ENV_CLEARENV) + SETUP_ENV_CHANGEENV,
 			pw);
+	if (ENABLE_FEATURE_TELNETD_CLIENT_TO_ENV) {
+		char *env = xasprintf("%s=%s %s", "TELNET_CLIENT", telnet_addr, telnet_port);
+		putenv(env);
+	}
 
 #if ENABLE_PAM
 	/* Modules such as pam_env will setup the PAM environment,

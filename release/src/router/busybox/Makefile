@@ -610,7 +610,7 @@ quiet_cmd_busybox__ ?= LINK    $@
       "$(LDFLAGS) $(EXTRA_LDFLAGS)" \
       "$(core-y)" \
       "$(libs-y)" \
-      "$(LDLIBS)" \
+      "$(LDLIBS) $(EXTRA_LDLIBS)" \
       && $(srctree)/scripts/generate_BUFSIZ.sh --post include/common_bufsiz.h
 
 # Generate System.map

@@ -363,8 +363,8 @@ function addWANOption(obj, wanscapItem){
 			}
 		}
 	}
-	
-	if(wans_dualwan_array[1] == "none" && obj.name == "wans_primary" && curState == "0"){
+
+	if(wanscapItem.indexOf("wan") >= 0 && wans_dualwan_array[1] == "none" && obj.name == "wans_primary" && curState == "0"){
 		for(i=0; i<wanscapItem.length; i++){
 			if(wanscapItem[i] == "lan"){
 				wanscapItem.splice(i,1);
@@ -1043,23 +1043,22 @@ function remain_origins(){
 															form_show(wans_flag);
 														 },
 														 function() {
-														 	if(wans_dualwan_array[0] == "lan"){
-														 		var cur_parimary_wan = wans_dualwan_array[0].toUpperCase() + " Port " + wans_lanport_orig;
-														 		var confirm_str = "The current primary wan is \"" + cur_parimary_wan + "\". Disable dual wan will change primary wan to \"Ethernet WAN\", are you sure to do it?"; //untranslated
-															 	if(!confirm(confirm_str)){
-															 		curState = "1";
+															if(wans_caps_primary.indexOf("wan") >= 0 && wans_dualwan_array[0] == "lan"){
+																var cur_parimary_wan = wans_dualwan_array[0].toUpperCase() + " Port " + wans_lanport_orig;
+																var confirm_str = "The current primary wan is \"" + cur_parimary_wan + "\". Disable dual wan will change primary wan to \"Ethernet WAN\", are you sure to do it?"; //untranslated
+																if(!confirm(confirm_str)){
+																	curState = "1";
 																	$('#ad_radio_dualwan_enable').find('.iphone_switch').animate({backgroundPosition: 0}, "slow");
 																	return false;
 																}
 																else{
-																	document.form.wans_dualwan.value = 'wan none';
 																	wans_dualwan_array[0] = "wan";
 																}
 															}
 															curState = "0";
 															wans_flag = 0;
 															wans_dualwan_array[1] = "none"
-															document.form.wans_dualwan.value = wans_dualwan_array[0]+ " none";
+															document.form.wans_dualwan.value = wans_dualwan_array.join(" ");
 															document.form.wans_mode.value = "fo";
 															addWANOption(document.form.wans_primary, wans_caps_primary.split(" "));
 															form_show(wans_flag);

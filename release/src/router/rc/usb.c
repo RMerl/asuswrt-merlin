@@ -3051,7 +3051,7 @@ void start_cloudsync(int fromUI)
 
 	cloud_setting = nvram_safe_get("cloud_sync");
 
-	nv = nvp = strdup(nvram_safe_get("cloud_sync"));
+	nv = nvp = strdup(cloud_setting);
 	if(nv){
 		while((b = strsep(&nvp, "<")) != NULL){
 			count = 0;

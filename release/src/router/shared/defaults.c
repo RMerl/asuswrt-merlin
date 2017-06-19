@@ -1160,6 +1160,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "wan_pppoe_mtu", "1492" },	/* Negotiate MTU to the smaller of this value or the peer MRU */
 	{ "wan_pppoe_service", "" },	/* PPPoE service name */
 	{ "wan_pppoe_ac", "" },		/* PPPoE access concentrator name */
+	{ "wan_pppoe_hostuniq", ""},	/* PPPoE host-uniq */
 	{ "wan_pppoe_options_x", "" },	// oleg patch
 	{ "wan_pptp_options_x", "" },	// oleg patch
 #ifdef RTCONFIG_DSL
@@ -1302,6 +1303,7 @@ struct nvram_tuple router_defaults[] = {
 //	{ "dslx_pppoe_mru", "" },
 	{ "dslx_pppoe_service", "" },
 	{ "dslx_pppoe_ac", "" },
+	{ "dslx_pppoe_hostuniq", "" },
 	{ "dslx_pppoe_options", "" },
 	{ "dslx_hwaddr", "" },
 //
@@ -1644,17 +1646,13 @@ struct nvram_tuple router_defaults[] = {
 
 	// UrlList
 	{ "url_enable_x", "0" },
-	{ "url_date_x", "1111111" },
-	{ "url_time_x", "00002359" },
-	{ "url_enable_x_1", "0" },
-	{ "url_time_x_1", "00002359" },
 	{ "url_rulelist", "" },
+	{ "url_sched", "000000"},
 
 	// KeywordList
 	{ "keyword_enable_x", "0" },
-	{ "keyword_date_x", "1111111" },
-	{ "keyword_time_x", "00002359" },
 	{ "keyword_rulelist", "" },
+	{ "keyword_sched", "000000"},
 
 	// LWFilterListi
 	{ "fw_lw_enable_x", "0" },
@@ -2033,6 +2031,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "telnetd_enable", "0" },
 #ifdef RTCONFIG_SSH
 	{ "sshd_enable", "0" },		/* 0: disabled 1: enabled 2: enabled for LAN only */
+	{ "sshd_timeout", "20" },
 	{ "sshd_port", "22" },
 	{ "sshd_pass", "1" },
 	{ "sshd_authkeys", "" },
@@ -3281,6 +3280,9 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "dsllog_latnup", "" },
 	{ "dsllog_satndown", "" },
 	{ "dsllog_satnup", "" },
+	{ "dsllog_sysvid", "2605443544e00" },
+	{ "dsllog_sysvmid", "00000000000000000000000000000000" },
+	{ "dsllog_modemvid", "26005443434E5A01" },
 #endif
 
 #endif

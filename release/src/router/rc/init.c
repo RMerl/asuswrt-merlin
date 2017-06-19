@@ -6667,7 +6667,7 @@ static void sysinit(void)
 		model==MODEL_RTN10U ||
 		model==MODEL_RTN12B1 || model==MODEL_RTN12C1 ||
 		model==MODEL_RTN12D1 || model==MODEL_RTN12VP || model==MODEL_RTN12HP || model==MODEL_RTN12HP_B1 ||
-		model==MODEL_RTN15U || model==MODEL_RTN14UHP) {
+		model==MODEL_RTN15U || model==MODEL_RTN14UHP || model==MODEL_RTAC1200G || model==MODEL_RTAC1200GP) {
 
 		f_write_string("/proc/sys/vm/panic_on_oom", "1", 0, 0);
 		f_write_string("/proc/sys/vm/overcommit_ratio", "100", 0, 0);
@@ -7102,7 +7102,11 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 				}
 			}
 #ifdef RTCONFIG_BCM_7114
-			check_4366_dummy();
+			if(!factory_debug()) {
+				check_4366_dummy();
+				sleep(1);
+				check_4366_fabid();
+			}
 #endif
 
 			//For 66U normal boot & check device

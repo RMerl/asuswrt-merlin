@@ -2707,11 +2707,7 @@ void generate_wl_para(char *ifname, int unit, int subunit)
 		}
 #endif
 
-		if (nvram_match("wps_enable", "1") &&
-			((unit == nvram_get_int("wps_band_x") || nvram_match("w_Setting", "0"))))
-			nvram_set(strcat_r(prefix, "wps_mode", tmp), "enabled");
-		else
-			nvram_set(strcat_r(prefix, "wps_mode", tmp), "disabled");
+		nvram_set(strcat_r(prefix, "wps_mode", tmp), nvram_match("wps_enable", "1") ? "enabled" : "disabled");
 
 #ifdef BCM_BSD
 		if (((unit == 0) && nvram_get_int("smart_connect_x") == 1) ||

@@ -1,7 +1,7 @@
 include ../Makefile.config
 
 ifeq ($(ASUSWRT_SDK),y)
-include $(SRCBASE)/router/.config
+-include $(SRCBASE)/router/.config
 
 CFLAGS = -Os -Wall $(EXTRACFLAGS) -fPIC
 CFLAGS += -I. -I$(TOP)/protect_srv/include
@@ -11,7 +11,6 @@ ifeq ($(RTCONFIG_QCA),y)
 LDFLAGS += -L$(LIBDIR)
 EXTRACC += -ldl
 endif
-LDFLAGS += -lm
 
 LD_BINARY  += $(LDFLAGS) $(EXTRACC)
 LD_LIBRARY += $(LDFLAGS) $(EXTRALD)
@@ -60,8 +59,6 @@ else # DSL_ASUSWRT_SDK
 CFLAGS = -Os -Wall $(EXTRACFLAGS) -fPIC
 CFLAGS += -I. $(TC_CFLAGS)
 CFLAGS += -I$(APP_PROTECTION_SERVER_DIR)/include
-
-LDFLAGS += -lm
 
 OBJS = libptcsrv.o
 

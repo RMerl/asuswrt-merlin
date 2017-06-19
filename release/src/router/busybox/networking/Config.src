@@ -804,6 +804,13 @@ config FEATURE_TELNETD_STANDALONE
 	help
 	  Selecting this will make telnetd able to run standalone.
 
+config FEATURE_TELNETD_CLIENT_TO_ENV
+	bool "Set TELNET_CLIENT environment variable"
+	default n
+	depends on FEATURE_TELNETD_STANDALONE
+	help
+	  Set TELNET_CLIENT environment variable.
+
 config FEATURE_TELNETD_INETD_WAIT
 	bool "Support -w SEC option (inetd wait mode)"
 	default y

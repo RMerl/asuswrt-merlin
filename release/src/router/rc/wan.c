@@ -511,7 +511,6 @@ if(debug) printf("test 25. cmd2=%s.\n", cmd2);
 if(debug) printf("test 26. route flush cache.\n");
 	system("ip route flush cache");
 
-	logmessage("wan", "finish adding multi routes");
 	file_unlock(lock);
 	return 0;
 }

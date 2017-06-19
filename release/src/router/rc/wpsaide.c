@@ -24,9 +24,6 @@
 
 static void wps_pbc(int sig)
 {
-#ifdef CONFIG_BCMWL5
-	stop_wps_method();
-#endif
 	start_wps_pbc(0);
 }
 

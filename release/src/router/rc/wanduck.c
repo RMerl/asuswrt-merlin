@@ -252,12 +252,9 @@ static void safe_leave(int signo){
 
 	rule_setup = 0;
 	conn_changed_state[current_wan_unit] = CONNED; // for cleaning the redirect rules.
-#if 0
-	handle_wan_line(current_wan_unit, rule_setup);
-#else // or
+
 	nvram_set_int("nat_state", NAT_STATE_INITIALIZING);
 	nat_state = start_nat_rules();
-#endif
 
 	remove(WANDUCK_PID_FILE);
 
@@ -775,12 +772,24 @@ int detect_internet(int wan_unit)
 #endif
 	int link_internet;
 	int dns_ret;
+	char tmp[100], prefix[16];
+	char wan_proto[16];
 
 #ifdef DETECT_INTERNET_MORE
 	snprintf(wan_ifname, sizeof(wan_ifname), "%s", get_wan_ifname(wan_unit));
 #endif
 
 	dns_ret = delay_dns_response(wan_unit);
+
+	snprintf(prefix, sizeof(prefix), "wan%d_", wan_unit);
+	snprintf(wan_proto, sizeof(wan_proto), "%s", nvram_safe_get(strcat_r(prefix, "proto", tmp)));
+
+	if(!(dualwan_unit__nonusbif(wan_unit) &&
+			(!strcmp(wan_proto, "pppoe") ||
+					!strcmp(wan_proto, "pptp") ||
+					!strcmp(wan_proto, "l2tp")) &&
+			nvram_get_int(strcat_r(prefix, "ppp_echo", tmp)) == 2))
+		dns_ret = 1;
 
 	if(
 #ifdef RTCONFIG_DUALWAN
@@ -801,8 +810,13 @@ int detect_internet(int wan_unit)
 #endif
 #ifdef RTCONFIG_DUALWAN
 	else if((!strcmp(dualwan_mode, "fo") || !strcmp(dualwan_mode, "fb"))
-			&& wandog_enable == 1 && !isFirstUse && !do_ping_detect(wan_unit))
+			&& wandog_enable == 1 && !isFirstUse && !do_ping_detect(wan_unit)){
 		link_internet = DISCONN;
+
+		// avoid the nat rules had be applied by wan_up before wanduck.
+		if(nvram_get_int("nat_state") == NAT_STATE_NORMAL)
+			stop_nat_rules();
+	}
 #endif
 	else if(!dns_ret)
 		link_internet = DISCONN;
@@ -1447,12 +1461,17 @@ _dprintf("# wanduck: if_wan_phyconnected: x_Setting=%d, link_modem=%d, sim_state
 					eval("/usr/sbin/modem_status.sh", "simauth");
 
 				if(sim_state == 1){
+					char act_ip[32];
+
 					eval("/usr/sbin/modem_status.sh", "ip");
+					snprintf(act_ip, sizeof(act_ip), "%s", nvram_safe_get("usb_modem_act_ip"));
 
 					snprintf(buf, sizeof(buf), "%s", nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)));
-					if(strcmp(buf, "") && strcmp(buf, "0.0.0.0") && strcmp(buf, nvram_safe_get("usb_modem_act_ip"))){
-						_dprintf("wanduck: renew IP...\n");
-						logmessage("wanduck", "renew IP...\n");
+					if(strcmp(buf, "") && strcmp(buf, "0.0.0.0")
+							&& strcmp(act_ip, "") && strcmp(act_ip, "0.0.0.0")
+							&& strcmp(buf, act_ip)){
+						_dprintf("wanduck: renew IP...(%s)\n", act_ip);
+						logmessage("wanduck", "renew IP...(%s)\n", act_ip);
 						nvram_set(tmp, "0.0.0.0");
 						snprintf(tmp, sizeof(tmp), "/var/run/udhcpc%d.pid", wan_unit);
 						kill_pidfile_s(tmp, SIGUSR1);
@@ -1708,30 +1727,14 @@ _dprintf("# wanduck(%d): if_wan_phyconnected: x_Setting=%d, link_modem=%d, sim_s
 }
 
 int if_wan_connected(int wan_unit){
-	char tmp[100], prefix[16];
-	char wan_proto[16];
-	int link_internet;
-
 	if(chk_proto(wan_unit) != CONNED)
 		return DISCONN;
 	else if(wan_unit == wan_primary_ifunit()
 #ifdef RTCONFIG_DUALWAN
 			|| !strcmp(dualwan_mode, "lb")
 #endif
-			){
-		link_internet = detect_internet(wan_unit);
-
-		snprintf(prefix, sizeof(prefix), "wan%d_", wan_unit);
-		snprintf(wan_proto, sizeof(wan_proto), "%s", nvram_safe_get(strcat_r(prefix, "proto", tmp)));
-
-		if(dualwan_unit__nonusbif(wan_unit) &&
-			(!strcmp(wan_proto, "pppoe") ||
-			 !strcmp(wan_proto, "pptp") ||
-			 !strcmp(wan_proto, "l2tp")) &&
-			nvram_get_int(strcat_r(prefix, "ppp_echo", tmp)) == 2){
-			return link_internet;
-		}
-	}
+			)
+		return detect_internet(wan_unit);
 
 	return CONNED;
 }
@@ -1770,6 +1773,8 @@ _dprintf("nat_rule: start_nat_rules 3.\n");
 #endif
 	}
 	else{ // conn_changed_state[wan_unit] == PHY_RECONN
+		nat_state = stop_nat_rules();
+
 		_dprintf("\n# wanduck(%d): Try to restart_wan_if.\n", action);
 		snprintf(cmd, sizeof(cmd), "restart_wan_if %d", wan_unit);
 		notify_rc_and_wait(cmd);
@@ -3539,19 +3544,24 @@ _dprintf("wanduck(%d)(all   end): state %d, state_old %d, changed %d, wan_state 
 				led_control(LED_WAN, LED_OFF);
 			}
 #endif
-			if(!rule_setup && (cross_state == DISCONN || isFirstUse)){
-				if(isFirstUse)
-					_dprintf("\n# LB: Enable direct rule(isFirstUse)\n");
-				else
-					_dprintf("\n# LB: Enable direct rule\n");
-				rule_setup = 1;
+			if(cross_state == DISCONN || isFirstUse){
+				if(!rule_setup){
+					if(isFirstUse)
+						_dprintf("\n# LB: Enable direct rule(isFirstUse)\n");
+					else
+						_dprintf("\n# LB: Enable direct rule\n");
+					rule_setup = 1;
 _dprintf("nat_rule: stop_nat_rules 5.\n");
+				}
 				nat_state = stop_nat_rules();
 			}
-			else if(rule_setup && cross_state == CONNED && !isFirstUse){
-				_dprintf("\n# LB: Disable direct rule\n");
-				rule_setup = 0;
+			//else if(cross_state == CONNED && !isFirstUse){
+			else{
+				if(rule_setup){
+					_dprintf("\n# LB: Disable direct rule\n");
+					rule_setup = 0;
 _dprintf("nat_rule: start_nat_rules 5.\n");
+				}
 				nat_state = start_nat_rules();
 			}
 		}
@@ -3567,7 +3577,7 @@ _dprintf("nat_rule: start_nat_rules 5.\n");
 			if(!got_notify)
 				; // do nothing.
 			else if(conn_changed_state[current_wan_unit] == DISCONN || conn_changed_state[current_wan_unit] == C2D || isFirstUse){
-				//if(rule_setup == 0){
+				//if(!rule_setup){
 					if(conn_changed_state[current_wan_unit] == DISCONN)
 						_dprintf("\n# mode(%d): Enable direct rule(DISCONN)\n", sw_mode);
 					else if(conn_changed_state[current_wan_unit] == C2D)
@@ -3601,7 +3611,7 @@ _dprintf("nat_rule: stop_nat_rules 6.\n");
 				got_notify = 0;
 			}
 			else{
-				//if(rule_setup == 1 && !isFirstUse)
+				//if(rule_setup && !isFirstUse)
 				if(!isFirstUse)
 				{
 					_dprintf("\n# mode(%d): Disable direct rule(CONNED)\n", sw_mode);
@@ -3679,7 +3689,7 @@ _dprintf("nat_rule: start_nat_rules 6.\n");
 #endif
 		}
 		else if(conn_changed_state[current_wan_unit] == C2D || (conn_changed_state[current_wan_unit] == CONNED && isFirstUse)){
-			if(rule_setup == 0){
+			if(!rule_setup){
 				if(conn_changed_state[current_wan_unit] == C2D){
 					if (nvram_match("led_disable", "0")) {
 #if defined(RTCONFIG_WPS_ALLLED_BTN) || defined(RTCONFIG_DSL)
@@ -3713,15 +3723,9 @@ _dprintf("nat_rule: start_nat_rules 6.\n");
 
 				rule_setup = 1;
 
-				handle_wan_line(current_wan_unit, rule_setup);
-
-				if((conn_changed_state[current_wan_unit] == C2D)
-#ifdef RTCONFIG_DUALWAN
-						&& strcmp(dualwan_mode, "off")
-#endif
-						){
+				if(conn_changed_state[current_wan_unit] == C2D){
 #ifdef RTCONFIG_USB_MODEM
-					// the current line is USB and be plugged off.
+					// the current line is USB and have been plugged off.
 					if(!link_wan[current_wan_unit] && dualwan_unit__usbif(current_wan_unit)){
 						_dprintf("%s: wanduck clean_modem_state!\n", __FUNCTION__);
 						clean_modem_state(2);
@@ -3758,9 +3762,11 @@ _dprintf("nat_rule: start_nat_rules 6.\n");
 #endif
 				}
 			}
+
+			handle_wan_line(current_wan_unit, rule_setup);
 		}
 		else if(conn_changed_state[current_wan_unit] == D2C || conn_changed_state[current_wan_unit] == CONNED){
-                        if(rule_setup == 1 && !isFirstUse){
+			if(rule_setup && !isFirstUse){
 				if (nvram_match("led_disable", "0")) {
 #if defined(RTCONFIG_WPS_ALLLED_BTN)
 					if(nvram_match("AllLED", "1"))
@@ -3782,6 +3788,7 @@ _dprintf("nat_rule: start_nat_rules 6.\n");
 				}
 				_dprintf("\n# Disable direct rule(D2C)......\n");
 				rule_setup = 0;
+
 				handle_wan_line(current_wan_unit, rule_setup);
 			}
 		}
@@ -3835,8 +3842,9 @@ _dprintf("nat_rule: start_nat_rules 6.\n");
 #endif
 #endif
 			/* recover redirect rules if overwritten by ppp+dhcp/zeroconf/etc */
-			if(disconn_case[current_wan_unit] == CASE_PPPFAIL && nat_state == NAT_STATE_REDIRECT &&
-				nvram_get_int("nat_state") == NAT_STATE_NORMAL) {
+			//if(disconn_case[current_wan_unit] == CASE_PPPFAIL && nat_state == NAT_STATE_REDIRECT &&
+			//	nvram_get_int("nat_state") == NAT_STATE_NORMAL) {
+			if(disconn_case[current_wan_unit] == CASE_PPPFAIL){
 _dprintf("nat_rule: stop_nat_rules 7.\n");
 				nat_state = stop_nat_rules();
 			}
@@ -3848,12 +3856,6 @@ _dprintf("nat_rule: stop_nat_rules 7.\n");
 				if(current_state[current_wan_unit] == WAN_STATE_INITIALIZING){
 					snprintf(modem_type, sizeof(modem_type), "%s", nvram_safe_get("usb_modem_act_type"));
 
-#if 0 // Already wait 3 seconds for QMI modems.
-					if(!strcmp(modem_type, "qmi")){
-						_dprintf("wanduck(%d): Sleep 1 seconds to wait QMI modem nodes.\n", current_wan_unit);
-						sleep(1);
-					}
-#endif
 					handle_wan_line(current_wan_unit, 0);
 				}
 				else
@@ -3872,6 +3874,7 @@ _dprintf("nat_rule: stop_nat_rules 7.\n");
 				){
 			_dprintf("# wanduck: returning to the primary WAN line(%d)...\n", other_wan_unit);
 			rule_setup = 1;
+
 			handle_wan_line(other_wan_unit, rule_setup);
 			switch_wan_line(other_wan_unit, 0);
 		}

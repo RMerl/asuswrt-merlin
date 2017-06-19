@@ -255,7 +255,7 @@ function change_lan_subnet(){
 	setTimeout(detect_router, 5000);
 }
 
-function iAmAlive(json){
+function repage(json){
 	top.location.href = location_org.replace(header_info[0].host, new_lan_ip) 
 		+ "/QIS_wizard.htm?flag=" 
 		+ (function(){return (('<% nvram_get("x_Setting"); %>' === '0')?"welcome":"detect")})();
@@ -263,7 +263,7 @@ function iAmAlive(json){
 
 function detect_router(){
 	$.ajax({
-		url: location_org.replace(header_info[0].host, new_lan_ip) + "/httpd_check.json",
+		url: location_org.replace(header_info[0].host, new_lan_ip) + "/repage.json",
 		dataType: 'jsonp',
 		timeout: 2000,
 		error: function(xhr){

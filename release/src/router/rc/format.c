@@ -49,7 +49,7 @@ void adjust_merlin_config(void)
 
 void adjust_url_urlelist(void)
 {
-	char *nv, *nvp, *b, *chk;
+	char *nv, *nvp, *b, *chk, *chkp = NULL;
 	char *url;
 	char  replacebox[2048], rerule[256];
 	int   cnt = 0;
@@ -63,7 +63,7 @@ void adjust_url_urlelist(void)
 	*/
 	memset(replacebox, 0, sizeof(replacebox));
 	while (nvp && (b = strsep(&nvp, "<")) != NULL) {
-		chk = strdup(b);
+		chkp = chk = strdup(b);
 		//dbg("[%s(%d)] %s\n", __FUNCTION__, __LINE__, chk);
 		while( *chk != '\0') {
 			if(*chk == '>') cnt++;
@@ -83,7 +83,8 @@ void adjust_url_urlelist(void)
 	}
 	if (RESAVE) 
 		nvram_set("url_rulelist", replacebox);
-	free(nv);
+	if(nv) free(nv);
+	if(chkp) free(chkp);
 }
 
 void adjust_ddns_config(void)
@@ -100,7 +101,7 @@ void adjust_ddns_config(void)
 
 void adjust_access_restrict_config(void)
 {
-	char *nv, *nvp, *b, *chk;
+	char *nv, *nvp, *b, *chk, *chkp = NULL;
 	char *ipAddr;
 	char *http_list;
 	char *restrict_list;
@@ -125,7 +126,7 @@ void adjust_access_restrict_config(void)
 		*/
 		memset(replacebox, 0, sizeof(replacebox));
 		while (nvp && (b = strsep(&nvp, "<")) != NULL) {
-			chk = strdup(b);
+			chkp = chk = strdup(b);
 			//dbg("[%s(%d)] %s\n", __FUNCTION__, __LINE__, chk);
 			while( *chk != '\0') {
 				if(*chk == '>') cnt++;
@@ -146,7 +147,8 @@ void adjust_access_restrict_config(void)
 		}
 		if (RESAVE) 
 			nvram_set("restrict_rulelist", replacebox);
-		free(nv);
+		if(nv) free(nv);
+		if(chkp) free(chkp);
 	}
 }
 

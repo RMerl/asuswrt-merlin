@@ -408,6 +408,8 @@ extern void reset_psr_hwaddr();
 extern void ldo_patch();
 extern int wl_channel_valid(char *wif, int channel);
 extern int wl_subband(char *wif, int idx);
+extern void check_4366_dummy(void);
+extern void check_4366_fabid(void);
 #endif
 extern void wl_dfs_radarthrs_config(char *ifname, int unit);
 #ifdef RTCONFIG_BCM_7114

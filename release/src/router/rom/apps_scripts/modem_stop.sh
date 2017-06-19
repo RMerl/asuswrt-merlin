@@ -61,7 +61,7 @@ if [ "$modem_type" == "gobi" ]; then
 		qcqmi=`_get_qcqmi_by_usbnet $modem_dev`
 		echo "Got qcqmi: $qcqmi."
 
-		gobi_api $qcqmi SetEnhancedAutoconnect 2 1
+		gobi_api $qcqmi SetEnhancedAutoconnect 0 1
 
 		wait_time1=`expr $wandog_interval + $wandog_interval`
 		wait_time=`expr $wait_time1 + $modem_reg_time`

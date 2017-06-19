@@ -517,7 +517,7 @@ int gen_ath_config(int band, int is_iNIC,int subnet)
 	char *uuid = nvram_safe_get("uuid");
 #if defined(RTCONFIG_WIFI_QCA9990_QCA9990) || defined(RTCONFIG_WIFI_QCA9994_QCA9994) || defined(RTCONFIG_SOC_IPQ40XX)
 	int fc_buf_min = 1000;
-	int txbf, mumimo, ldpc = 1, tqam, tqam_intop;
+	int txbf, mumimo, ldpc = 3, tqam, tqam_intop;
 	unsigned int maxsta = 511;
 #else
 	unsigned int maxsta = 127;
@@ -1726,12 +1726,6 @@ next_mrate:
 		}
 		fprintf(fp2, "iwpriv %s commitatf 1\n", wif);
 	}
-#endif
-
-#if defined(RTAC58U)
-	/* improve Tx throughput */
-	if (band)
-		fprintf(fp2, "iwpriv %s ampdu 52\n", wif);
 #endif
 
 #if defined(RTCONFIG_SOC_IPQ40XX)

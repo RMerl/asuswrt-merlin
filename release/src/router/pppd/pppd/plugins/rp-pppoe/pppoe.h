@@ -25,6 +25,8 @@ extern int IsSetID;
 
 #include <stdio.h>		/* For FILE */
 #include <sys/types.h>		/* For pid_t */
+#include <ctype.h>
+#include <string.h>
 
 /* How do we access raw Ethernet devices? */
 #undef USE_LINUX_PACKET
@@ -290,7 +292,7 @@ typedef struct PPPoEConnectionStruct {
     char *serviceName;		/* Desired service name, if any */
     char *acName;		/* Desired AC name, if any */
     int synchronous;		/* Use synchronous PPP */
-    int useHostUniq;		/* Use Host-Uniq tag */
+    PPPoETag hostUniq;		/* Use Host-Uniq tag */
     int printACNames;		/* Just print AC names */
     int skipDiscovery;		/* Skip discovery */
     int noDiscoverySocket;	/* Don't even open discovery socket */
@@ -351,6 +353,33 @@ UINT16_t pppFCS16(UINT16_t fcs, unsigned char *cp, int len);
 void discovery(PPPoEConnection *conn);
 unsigned char *findTag(PPPoEPacket *packet, UINT16_t tagType,
 		       PPPoETag *tag);
+
+static inline int parseHostUniq(const char *uniq, PPPoETag *tag)
+{
+    int i, len = strlen(uniq);
+
+#define hex(x) \
+    (((x) <= '9') ? ((x) - '0') : \
+        (((x) <= 'F') ? ((x) - 'A' + 10) : \
+            ((x) - 'a' + 10)))
+
+    if (len % 2)
+        return 0;
+
+    for (i = 0; i < len; i += 2)
+    {
+        if (!isxdigit(uniq[i]) || !isxdigit(uniq[i+1]))
+            return 0;
+
+        tag->payload[i / 2] = (char)(16 * hex(uniq[i]) + hex(uniq[i+1]));
+    }
+
+#undef hex
+
+    tag->type = htons(TAG_HOST_UNIQ);
+    tag->length = htons(len / 2);
+    return 1;
+}
 
 #define SET_STRING(var, val) do { if (var) free(var); var = strDup(val); } while(0);
 

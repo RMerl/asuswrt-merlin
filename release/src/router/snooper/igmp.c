@@ -284,7 +284,7 @@ static int accept_leave(in_addr_t group, in_addr_t host, unsigned char *shost, i
 	port = get_port(shost);
 	if (port < 0)
 		return 0;
-	del_member(ea, host, port);
+	del_member(ea, host, port, LASTMEMBER_QUERY_CNT * LASTMEMBER_QUERY_INT * TIMER_HZ);
 
 	return 1;
 }

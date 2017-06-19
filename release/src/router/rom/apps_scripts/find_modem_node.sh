@@ -247,7 +247,8 @@ echo "io_devs=$io_devs."
 
 is_gobi=`_get_gobi_device $modem_vid $modem_pid`
 
-if [ "$modem_type" == "tty" ] && [ "$modem_vid" == "6610" -o "$modem_vid" == "1032" ]; then # e.q. ZTE MF637U, ROYAL Q110.
+if [ "$modem_type" == "tty" ] && [ "$modem_vid" == "6610" -o "$modem_vid" == "1032" -o "$modem_vid" == "6797" ]; then
+	# e.q. ZTE MF637U, ROYAL Q110, Bandluxe C120.
 	first_int_dev=`_find_first_int_dev "$io_devs"`
 	echo "first_int_dev=$first_int_dev."
 

@@ -223,24 +223,14 @@ var redirect_page = login_info.page;
 if ('<% nvram_get("http_dut_redir"); %>' == '1') {
 var isRouterMode = ('<% nvram_get("sw_mode"); %>' == '1') ? true : false;
 
-var header_info = [<% get_header_info(); %>];
-var ROUTERHOSTNAME = header_info[0].host;
-var get_protocol = function() {
-	var protocol = "http:";
-	if(window.location.protocol == "http:" || window.location.protocol == "https:") {
-		protocol = window.location.protocol;
-		return protocol;
-	}
-
-	return protocol;
-};
-
-var iAmAlive = function(ret){if(ret.isdomain) top.location.href=top.location.href.replace(location.hostname, ROUTERHOSTNAME)};
+var header_info = [<% get_header_info(); %>][0];
+var ROUTERHOSTNAME = '<% nvram_get("local_domain"); %>';
+var domainNameUrl = ((header_info.host.split(":").length==2)?"https":"http")+"://"+header_info.host.replace(header_info.host.split(":")[0], ROUTERHOSTNAME);
+var chdom = function(){window.location.href=domainNameUrl};
 (function(){
-	var locationOrigin = get_protocol() + "//" + ROUTERHOSTNAME + (window.location.port ? ':' + window.location.port : '');
-	if(location.hostname !== ROUTERHOSTNAME && ROUTERHOSTNAME != "" && isRouterMode){
+	if(ROUTERHOSTNAME !== header_info.host && ROUTERHOSTNAME != "" && isRouterMode){
 		setTimeout(function(){
-			var s=document.createElement("script");s.type="text/javascript";s.src=locationOrigin+"/httpd_check.json?hostname="+location.hostname;;var h=document.getElementsByTagName("script")[0];h.parentNode.insertBefore(s,h);
+			var s=document.createElement("script");s.type="text/javascript";s.src=domainNameUrl+"/chdom.json?hostname="+header_info.host.split(":")[0];var h=document.getElementsByTagName("script")[0];h.parentNode.insertBefore(s,h);
 		}, 1);
 	}
 })();

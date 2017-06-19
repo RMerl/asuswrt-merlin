@@ -1307,9 +1307,6 @@ void btn_check(void)
 				led_control_normal();
 
 				alarmtimer(NORMAL_PERIOD, 0);
-#if (!defined(W7_LOGO) && !defined(WIFI_LOGO))
-				stop_wps_method();
-#endif
 #ifdef RTCONFIG_WIFI_CLONE
 				if (nvram_match("wps_e_success", "1")) {
 #if (defined(PLN12) || defined(PLAC56))
