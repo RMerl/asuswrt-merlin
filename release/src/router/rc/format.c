@@ -37,6 +37,14 @@ void adjust_merlin_config(void)
 	if (nvram_match("dev_fail_reboot", "3")) {
 		nvram_set("dev_fail_reboot", "1");
 	}
+
+/* We no longer support OpenVPN client units > 2 on RT-AC3200 */
+#if defined(RTAC3200)
+	if (nvram_get_int("vpn_client_unit") > 2) {
+		nvram_set_int("vpn_client_unit", 2);
+	}
+#endif
+
 }
 
 void adjust_url_urlelist(void)

@@ -2391,6 +2391,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_client2_clientlist",	""		},
 	{ "vpn_client2_enforce",	"0"		},
 
+#if !defined(RTAC3200)
 	{ "vpn_client3_poll",		"0"		},
 	{ "vpn_client3_if",		"tun"		},
 	{ "vpn_client3_bridge",		"1"		},
@@ -2516,6 +2517,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_client5_errno",		"0"		},
 	{ "vpn_client5_clientlist",	""		},
 	{ "vpn_client5_enforce",	"0"		},
+#endif	// !RTAC3200
 
 	{ "vpn_client_poll",		"0"		},
 	{ "vpn_client_if",		"tun"		},

@@ -229,6 +229,11 @@ function initial()
 	showclientlist();
 	showLANIPList();
 
+	// Unit list
+	for(var i = 1; i <= (based_modelid == "RT-AC3200" ? 2 : 5); i++){
+		add_option(document.form.vpn_client_unit, "Client "+i, i, openvpn_unit == i);
+	}
+
 	// Cipher list
 	free_options(document.form.vpn_client_cipher);
 	currentcipher = "<% nvram_get("vpn_client_cipher"); %>";
@@ -1026,12 +1031,7 @@ function defaultSettings() {
 					<tr id="client_unit">
 						<th>Select client instance</th>
 						<td>
-							<select name="vpn_client_unit" class="input_option" onChange="change_vpn_unit(this.value);">
-								<option value="1" <% nvram_match("vpn_client_unit","1","selected"); %> >Client 1</option>
-								<option value="2" <% nvram_match("vpn_client_unit","2","selected"); %> >Client 2</option>
-								<option value="3" <% nvram_match("vpn_client_unit","3","selected"); %> >Client 3</option>
-								<option value="4" <% nvram_match("vpn_client_unit","4","selected"); %> >Client 4</option>
-								<option value="5" <% nvram_match("vpn_client_unit","5","selected"); %> >Client 5</option>
+							<select name="vpn_client_unit" id="vpn_client_unit" class="input_option" onChange="change_vpn_unit(this.value);">
 							</select>
 						</td>
 					</tr>

@@ -33,6 +33,11 @@ function initial(){
 
 	if (openvpnd_support) {
 		setTimeout("refreshState()",1000);
+		if (based_modelid == "RT-AC3200") {
+			showhide("client3", 0);
+			showhide("client4", 0);
+			showhide("client5", 0);
+		}
 	} else {
 		showhide("server1", 0);
 		showhide("server2", 0);
@@ -63,7 +68,7 @@ function refreshState(){
 	else
 		document.getElementById("server2_Block_Running").innerHTML = state_srv_stop;
 
-	for (var unit = 1; unit < 6; unit++) {
+	for (var unit = 1; unit < (based_modelid == "RT-AC3200" ? 3 : 6); unit++) {
 		switch (unit) {
 			case 1:
 				client_state = vpnc_state_t1;
@@ -127,9 +132,11 @@ function refreshState(){
 	parseStatus(document.form.status_server2.value, "server2_Block");
 	parseStatus(document.form.status_client1.value, "client1_Block");
 	parseStatus(document.form.status_client2.value, "client2_Block");
-	parseStatus(document.form.status_client3.value, "client3_Block");
-	parseStatus(document.form.status_client4.value, "client4_Block");
-	parseStatus(document.form.status_client5.value, "client5_Block");
+	if (based_modelid != "RT-AC3200") {
+		parseStatus(document.form.status_client3.value, "client3_Block");
+		parseStatus(document.form.status_client4.value, "client4_Block");
+		parseStatus(document.form.status_client5.value, "client5_Block");
+	}
 
 	if (pptpd_support) {
 		if (pptpdpid > 0)

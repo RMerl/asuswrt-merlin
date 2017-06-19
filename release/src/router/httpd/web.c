@@ -2135,7 +2135,7 @@ int validate_instance(webs_t wp, char *name, json_object *root)
 		}
 	}
 	else if(strncmp(name, "vpn_client_", 11)==0) {
-		for(i=1;i<6;i++) {
+		for(i=1;i<MAX_OVPN_CLIENT+1;i++) {
 			sprintf(prefix, "vpn_client%d_", i);
 			value = get_cgi_json(strcat_r(prefix, name+11, tmp),root);
 			if(value && strcmp(nvram_safe_get(tmp), value)) {

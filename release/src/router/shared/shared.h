@@ -1006,10 +1006,14 @@ extern const char *ipv6_gateway_address(void);
 #ifdef RTCONFIG_OPENVPN
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
 #define OVPN_FS_PATH	"/jffs/openvpn"
+#if defined(RTAC3200)
+#define MAX_OVPN_CLIENT	2
+#else
 #define MAX_OVPN_CLIENT	5
+#endif	//RTAC3200
 #else
 #define MAX_OVPN_CLIENT	1
-#endif
+#endif	//JFFS
 extern char *get_parsed_crt(const char *name, char *buf, size_t buf_len);
 extern int set_crt_parsed(const char *name, char *file_path);
 extern int ovpn_crt_is_empty(const char *name);
