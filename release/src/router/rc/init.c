@@ -7104,8 +7104,10 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 #ifdef RTCONFIG_BCM_7114
 			if(!factory_debug()) {
 				check_4366_dummy();
+#if 0	// Need new binary blobs
 				sleep(1);
 				check_4366_fabid();
+#endif
 			}
 #endif
 
