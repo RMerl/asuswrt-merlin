@@ -2,7 +2,10 @@ Asuswrt-Merlin Changelog
 ========================
 
 380.67 Beta (xx-xxx-2017)
-  - NEW: Merged with GPL 380_7627 (only SDK 7114 models for now).
+  - NEW: Merged with GPL 380_7743 code , with binary blobs from:
+           * 7378 for N66U, AC66U, AC87U, AC3200
+           * 7627 for AC88U, AC3100, AC5300
+           * 7743 for AC56U, AC68U
   - NEW: Custom config support for quagga/ripd.
   - NEW: Webui SSL certificate can now be saved so it gets reused
          instead of a new one being constantly generated.  It will
@@ -20,6 +23,11 @@ Asuswrt-Merlin Changelog
   - CHANGED: Moved SMB2 support switch to the main samba page.
   - CHANGED: Optimized all webui images for size
   - CHANGED: Tor now runs as a limited user instead of as root
+  - CHANGED: Limited number of supported OpenVPN clients to 2 on
+             the RT-AC3200, to save on nvram.
+  - CHANGED: Removed tweak that allowed to disable/enable bridge
+             multicast snooping, as Asus now disables it upstream
+             at the kernel level.
   - FIXED: OpenVPN client would be shown as having failed to connect
            if a reconnect attempt initially failed to authenticate,
            but succesfully connected afterward.
