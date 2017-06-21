@@ -15,10 +15,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -86,13 +85,13 @@ static void
 gen_hmac_md5(const char *data, int data_len, const char *key, int key_len,char *result)
 {
     const md_kt_t *md5_kt = md_kt_get("MD5");
-    hmac_ctx_t hmac_ctx;
-    CLEAR(hmac_ctx);
+    hmac_ctx_t *hmac_ctx = hmac_ctx_new();
 
-    hmac_ctx_init(&hmac_ctx, key, key_len, md5_kt);
-    hmac_ctx_update(&hmac_ctx, (const unsigned char *)data, data_len);
-    hmac_ctx_final(&hmac_ctx, (unsigned char *)result);
-    hmac_ctx_cleanup(&hmac_ctx);
+    hmac_ctx_init(hmac_ctx, key, key_len, md5_kt);
+    hmac_ctx_update(hmac_ctx, (const unsigned char *)data, data_len);
+    hmac_ctx_final(hmac_ctx, (unsigned char *)result);
+    hmac_ctx_cleanup(hmac_ctx);
+    hmac_ctx_free(hmac_ctx);
 }
 
 static void
@@ -130,17 +129,16 @@ gen_nonce(unsigned char *nonce)
     }
 }
 
-unsigned char *
+void
 my_strupr(unsigned char *str)
 {
     /* converts string to uppercase in place */
-    unsigned char *tmp = str;
 
-    do
+    while (*str)
     {
         *str = toupper(*str);
-    } while (*(++str));
-    return tmp;
+        str++;
+    }
 }
 
 static int
@@ -197,7 +195,7 @@ ntlm_phase_3(const struct http_proxy_info *p, const char *phase_2, struct gc_are
      */
 
     char pwbuf[sizeof(p->up.password) * 2]; /* for unicode password */
-    char buf2[128]; /* decoded reply from proxy */
+    unsigned char buf2[128]; /* decoded reply from proxy */
     unsigned char phase3[464];
 
     char md4_hash[MD4_DIGEST_LENGTH+5];
@@ -303,7 +301,13 @@ ntlm_phase_3(const struct http_proxy_info *p, const char *phase_2, struct gc_are
                 tib_len = 96;
             }
             {
-                char *tib_ptr = buf2 + buf2[0x2c];           /* Get Target Information block pointer */
+                char *tib_ptr;
+                int tib_pos = buf2[0x2c];
+                if (tib_pos + tib_len > sizeof(buf2))
+                {
+                    return NULL;
+                }
+                tib_ptr = buf2 + tib_pos;                               /* Get Target Information block pointer */
                 memcpy(&ntlmv2_blob[0x1c], tib_ptr, tib_len);           /* Copy Target Information block into the blob */
             }
         }

@@ -18,10 +18,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -1388,7 +1387,7 @@ get_user_pass_auto_userid(struct user_pass *up, const char *tag)
     static const uint8_t hashprefix[] = "AUTO_USERID_DIGEST";
 
     const md_kt_t *md5_kt = md_kt_get("MD5");
-    md_ctx_t ctx;
+    md_ctx_t *ctx;
 
     CLEAR(*up);
     buf_set_write(&buf, (uint8_t *)up->username, USER_PASS_LEN);
@@ -1396,11 +1395,13 @@ get_user_pass_auto_userid(struct user_pass *up, const char *tag)
     if (get_default_gateway_mac_addr(macaddr))
     {
         dmsg(D_AUTO_USERID, "GUPAU: macaddr=%s", format_hex_ex(macaddr, sizeof(macaddr), 0, 1, ":", &gc));
-        md_ctx_init(&ctx, md5_kt);
-        md_ctx_update(&ctx, hashprefix, sizeof(hashprefix) - 1);
-        md_ctx_update(&ctx, macaddr, sizeof(macaddr));
-        md_ctx_final(&ctx, digest);
-        md_ctx_cleanup(&ctx)
+        ctx = md_ctx_new();
+        md_ctx_init(ctx, md5_kt);
+        md_ctx_update(ctx, hashprefix, sizeof(hashprefix) - 1);
+        md_ctx_update(ctx, macaddr, sizeof(macaddr));
+        md_ctx_final(ctx, digest);
+        md_ctx_cleanup(ctx);
+        md_ctx_free(ctx);
         buf_printf(&buf, "%s", format_hex_ex(digest, sizeof(digest), 0, 256, " ", &gc));
     }
     else
@@ -1429,7 +1430,11 @@ purge_user_pass(struct user_pass *up, const bool force)
         secure_memzero(up, sizeof(*up));
         up->nocache = nocache;
     }
-    else if (!warn_shown)
+    /*
+     * don't show warning if the pass has been replaced by a token: this is an
+     * artificial "auth-nocache"
+     */
+    else if (!warn_shown && (!up->tokenized))
     {
         msg(M_WARN, "WARNING: this configuration may cache passwords in memory -- use the auth-nocache option to prevent this");
         warn_shown = true;
@@ -1443,6 +1448,7 @@ set_auth_token(struct user_pass *up, const char *token)
     {
         CLEAR(up->password);
         strncpynt(up->password, token, USER_PASS_LEN);
+        up->tokenized = true;
     }
 }
 

@@ -17,10 +17,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /**
@@ -718,8 +717,31 @@ verify_cert(struct tls_session *session, openvpn_x509_cert_t *cert, int cert_dep
     /* verify level 1 cert, i.e. the CA that signed our leaf cert */
     if (cert_depth == 1 && opt->verify_hash)
     {
-        struct buffer sha1_hash = x509_get_sha1_fingerprint(cert, &gc);
-        if (memcmp(BPTR(&sha1_hash), opt->verify_hash, BLEN(&sha1_hash)))
+        struct buffer ca_hash = {0};
+
+        switch (opt->verify_hash_algo)
+        {
+        case MD_SHA1:
+            ca_hash = x509_get_sha1_fingerprint(cert, &gc);
+            break;
+
+        case MD_SHA256:
+            ca_hash = x509_get_sha256_fingerprint(cert, &gc);
+            break;
+
+        default:
+            /* This should normally not happen at all; the algorithm used
+             * is parsed by add_option() [options.c] and set to a predefined
+             * value in an enumerated type.  So if this unlikely scenario
+             * happens, consider this a failure
+             */
+            msg(M_WARN, "Unexpected invalid algorithm used with "
+                "--verify-hash (%i)", opt->verify_hash_algo);
+            ret = FAILURE;
+            goto cleanup;
+        }
+
+        if (memcmp(BPTR(&ca_hash), opt->verify_hash, BLEN(&ca_hash)))
         {
             msg(D_TLS_ERRORS, "TLS Error: level-1 certificate hash verification failed");
             goto cleanup;

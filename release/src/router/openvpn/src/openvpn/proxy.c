@@ -16,10 +16,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -318,6 +317,7 @@ get_proxy_authenticate(socket_descriptor_t sd,
     {
         if (!recv_line(sd, buf, sizeof(buf), timeout, true, NULL, signal_received))
         {
+            free(*data);
             *data = NULL;
             return HTTP_AUTH_NONE;
         }
@@ -875,6 +875,13 @@ establish_http_proxy_passthru(struct http_proxy_info *p,
                 const char *algor = get_pa_var("algorithm", pa, &gc);
                 const char *opaque = get_pa_var("opaque", pa, &gc);
 
+                if ( !realm || !nonce )
+                {
+                    msg(D_LINK_ERRORS, "HTTP proxy: digest auth failed, malformed response "
+                            "from server: realm= or nonce= missing" );
+                    goto error;
+                }
+
                 /* generate a client nonce */
                 ASSERT(rand_bytes(cnonce_raw, sizeof(cnonce_raw)));
                 cnonce = make_base64_string2(cnonce_raw, sizeof(cnonce_raw), &gc);
@@ -991,6 +998,7 @@ establish_http_proxy_passthru(struct http_proxy_info *p,
                 if (p->options.auth_retry == PAR_NCT && method == HTTP_AUTH_BASIC)
                 {
                     msg(D_PROXY, "HTTP proxy: support for basic auth and other cleartext proxy auth methods is disabled");
+                    free(pa);
                     goto error;
                 }
                 p->auth_method = method;

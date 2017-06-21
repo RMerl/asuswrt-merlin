@@ -17,10 +17,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /*
@@ -592,7 +591,8 @@ static const char usage_message[] =
     "--x509-username-field : Field in x509 certificate containing the username.\n"
     "                        Default is CN in the Subject field.\n"
 #endif
-    "--verify-hash   : Specify SHA1 fingerprint for level-1 cert.\n"
+    "--verify-hash hash [algo] : Specify fingerprint for level-1 certificate.\n"
+    "                            Valid algo flags are SHA1 and SHA256. \n"
 #ifdef _WIN32
     "--cryptoapicert select-string : Load the certificate and private key from the\n"
     "                  Windows Certificate System Store.\n"
@@ -4546,7 +4546,7 @@ read_config_file(struct options *options,
     FILE *fp;
     int line_num;
     char line[OPTION_LINE_SIZE+1];
-    char *p[MAX_PARMS];
+    char *p[MAX_PARMS+1];
 
     ++level;
     if (level <= max_recursive_levels)
@@ -4578,7 +4578,7 @@ read_config_file(struct options *options,
                 {
                     offset = 3;
                 }
-                if (parse_line(line + offset, p, SIZE(p), file, line_num, msglevel, &options->gc))
+                if (parse_line(line + offset, p, SIZE(p)-1, file, line_num, msglevel, &options->gc))
                 {
                     bypass_doubledash(&p[0]);
                     check_inline_file_via_fp(fp, p, &options->gc);
@@ -4620,10 +4620,10 @@ read_config_string(const char *prefix,
 
     while (buf_parse(&multiline, '\n', line, sizeof(line)))
     {
-        char *p[MAX_PARMS];
+        char *p[MAX_PARMS+1];
         CLEAR(p);
         ++line_num;
-        if (parse_line(line, p, SIZE(p), prefix, line_num, msglevel, &options->gc))
+        if (parse_line(line, p, SIZE(p)-1, prefix, line_num, msglevel, &options->gc))
         {
             bypass_doubledash(&p[0]);
             check_inline_file_via_buf(&multiline, p, &options->gc);
@@ -4754,14 +4754,14 @@ apply_push_options(struct options *options,
 
     while (buf_parse(buf, ',', line, sizeof(line)))
     {
-        char *p[MAX_PARMS];
+        char *p[MAX_PARMS+1];
         CLEAR(p);
         ++line_num;
         if (!apply_pull_filter(options, line))
         {
             return false; /* Cause push/pull error and stop push processing */
         }
-        if (parse_line(line, p, SIZE(p), file, line_num, msglevel, &options->gc))
+        if (parse_line(line, p, SIZE(p)-1, file, line_num, msglevel, &options->gc))
         {
             add_option(options, p, file, line_num, 0, msglevel, permission_mask, option_types_found, es);
         }
@@ -5167,7 +5167,7 @@ add_option(struct options *options,
     }
 #endif /* ifdef ENABLE_MANAGEMENT */
 #ifdef ENABLE_PLUGIN
-    else if (streq(p[0], "plugin") && p[1] && !p[3])
+    else if (streq(p[0], "plugin") && p[1])
     {
         VERIFY_PERMISSION(OPT_P_PLUGIN);
         if (!options->plugin_list)
@@ -5317,12 +5317,14 @@ add_option(struct options *options,
             if (!sub.ce.remote)
             {
                 msg(msglevel, "Each 'connection' block must contain exactly one 'remote' directive");
+                uninit_options(&sub);
                 goto err;
             }
 
             e = alloc_connection_entry(options, msglevel);
             if (!e)
             {
+                uninit_options(&sub);
                 goto err;
             }
             *e = sub.ce;
@@ -7703,10 +7705,25 @@ add_option(struct options *options,
             options->extra_certs_file_inline = p[2];
         }
     }
-    else if (streq(p[0], "verify-hash") && p[1] && !p[2])
+    else if (streq(p[0], "verify-hash") && p[1] && !p[3])
     {
         VERIFY_PERMISSION(OPT_P_GENERAL);
-        options->verify_hash = parse_hash_fingerprint(p[1], SHA_DIGEST_LENGTH, msglevel, &options->gc);
+
+        if (!p[2] || (p[2] && streq(p[2], "SHA1")))
+        {
+            options->verify_hash = parse_hash_fingerprint(p[1], SHA_DIGEST_LENGTH, msglevel, &options->gc);
+            options->verify_hash_algo = MD_SHA1;
+        }
+        else if (p[2] && streq(p[2], "SHA256"))
+        {
+            options->verify_hash = parse_hash_fingerprint(p[1], SHA256_DIGEST_LENGTH, msglevel, &options->gc);
+            options->verify_hash_algo = MD_SHA256;
+        }
+        else
+        {
+            msg(msglevel, "invalid or unsupported hashing algorithm: %s  (only SHA1 and SHA256 are valid)", p[2]);
+            goto err;
+        }
     }
 #ifdef ENABLE_CRYPTOAPI
     else if (streq(p[0], "cryptoapicert") && p[1] && !p[2])
@@ -8081,6 +8098,10 @@ add_option(struct options *options,
                     "--x509-username-field parameter to '%s'; please update your"
                     "configuration", p[1]);
             }
+        }
+        else if (!x509_username_field_ext_supported(s+4))
+        {
+            msg(msglevel, "Unsupported x509-username-field extension: %s", s);
         }
         options->x509_username_field = p[1];
     }

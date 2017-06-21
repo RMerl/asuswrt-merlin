@@ -17,10 +17,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /**
@@ -42,6 +41,7 @@
 #include "integer.h"
 #include "crypto.h"
 #include "crypto_backend.h"
+#include "openssl_compat.h"
 
 #include <openssl/des.h>
 #include <openssl/err.h>
@@ -650,14 +650,25 @@ cipher_kt_mode_aead(const cipher_kt_t *cipher)
  *
  */
 
+cipher_ctx_t *
+cipher_ctx_new(void)
+{
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    check_malloc_return(ctx);
+    return ctx;
+}
+
+void
+cipher_ctx_free(EVP_CIPHER_CTX *ctx)
+{
+    EVP_CIPHER_CTX_free(ctx);
+}
 
 void
 cipher_ctx_init(EVP_CIPHER_CTX *ctx, uint8_t *key, int key_len,
                 const EVP_CIPHER *kt, int enc)
 {
     ASSERT(NULL != kt && NULL != ctx);
-
-    CLEAR(*ctx);
 
     EVP_CIPHER_CTX_init(ctx);
     if (!EVP_CipherInit(ctx, kt, NULL, NULL, enc))
@@ -844,12 +855,23 @@ md_full(const EVP_MD *kt, const uint8_t *src, int src_len, uint8_t *dst)
     return EVP_Digest(src, src_len, dst, &in_md_len, kt, NULL);
 }
 
+EVP_MD_CTX *
+md_ctx_new(void)
+{
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    check_malloc_return(ctx);
+    return ctx;
+}
+
+void md_ctx_free(EVP_MD_CTX *ctx)
+{
+    EVP_MD_CTX_free(ctx);
+}
+
 void
 md_ctx_init(EVP_MD_CTX *ctx, const EVP_MD *kt)
 {
     ASSERT(NULL != ctx && NULL != kt);
-
-    CLEAR(*ctx);
 
     EVP_MD_CTX_init(ctx);
     EVP_DigestInit(ctx, kt);
@@ -858,7 +880,7 @@ md_ctx_init(EVP_MD_CTX *ctx, const EVP_MD *kt)
 void
 md_ctx_cleanup(EVP_MD_CTX *ctx)
 {
-    EVP_MD_CTX_cleanup(ctx);
+    EVP_MD_CTX_reset(ctx);
 }
 
 int
@@ -888,14 +910,25 @@ md_ctx_final(EVP_MD_CTX *ctx, uint8_t *dst)
  *
  */
 
+HMAC_CTX *
+hmac_ctx_new(void)
+{
+    HMAC_CTX *ctx = HMAC_CTX_new();
+    check_malloc_return(ctx);
+    return ctx;
+}
+
+void
+hmac_ctx_free(HMAC_CTX *ctx)
+{
+    HMAC_CTX_free(ctx);
+}
 
 void
 hmac_ctx_init(HMAC_CTX *ctx, const uint8_t *key, int key_len,
               const EVP_MD *kt)
 {
     ASSERT(NULL != kt && NULL != ctx);
-
-    CLEAR(*ctx);
 
     HMAC_CTX_init(ctx);
     HMAC_Init_ex(ctx, key, key_len, kt, NULL);
@@ -907,7 +940,7 @@ hmac_ctx_init(HMAC_CTX *ctx, const uint8_t *key, int key_len,
 void
 hmac_ctx_cleanup(HMAC_CTX *ctx)
 {
-    HMAC_CTX_cleanup(ctx);
+    HMAC_CTX_reset(ctx);
 }
 
 int

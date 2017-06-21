@@ -16,10 +16,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -376,15 +375,17 @@ prepare_push_reply(struct context *c, struct gc_arena *gc,
     /* Push cipher if client supports Negotiable Crypto Parameters */
     if (tls_peer_info_ncp_ver(peer_info) >= 2 && o->ncp_enabled)
     {
-        /* if we have already created our key, we cannot change our own
-         * cipher, so disable NCP and warn = explain why
+        /* if we have already created our key, we cannot *change* our own
+         * cipher -> so log the fact and push the "what we have now" cipher
+         * (so the client is always told what we expect it to use)
          */
         const struct tls_session *session = &tls_multi->session[TM_ACTIVE];
         if (session->key[KS_PRIMARY].crypto_options.key_ctx_bi.initialized)
         {
             msg( M_INFO, "PUSH: client wants to negotiate cipher (NCP), but "
                  "server has already generated data channel keys, "
-                 "ignoring client request" );
+                 "re-sending previously negotiated cipher '%s'",
+                 o->ciphername );
         }
         else
         {
@@ -392,8 +393,8 @@ prepare_push_reply(struct context *c, struct gc_arena *gc,
              * TODO: actual negotiation, instead of server dictatorship. */
             char *push_cipher = string_alloc(o->ncp_ciphers, &o->gc);
             o->ciphername = strtok(push_cipher, ":");
-            push_option_fmt(gc, push_list, M_USAGE, "cipher %s", o->ciphername);
         }
+        push_option_fmt(gc, push_list, M_USAGE, "cipher %s", o->ciphername);
     }
     else if (o->ncp_enabled)
     {
@@ -726,7 +727,8 @@ process_incoming_push_msg(struct context *c,
             struct buffer buf_orig = buf;
             if (!c->c2.pulled_options_digest_init_done)
             {
-                md_ctx_init(&c->c2.pulled_options_state, md_kt_get("SHA256"));
+                c->c2.pulled_options_state = md_ctx_new();
+                md_ctx_init(c->c2.pulled_options_state, md_kt_get("SHA256"));
                 c->c2.pulled_options_digest_init_done = true;
             }
             if (!c->c2.did_pre_pull_restore)
@@ -740,14 +742,16 @@ process_incoming_push_msg(struct context *c,
                                    option_types_found,
                                    c->c2.es))
             {
-                push_update_digest(&c->c2.pulled_options_state, &buf_orig,
+                push_update_digest(c->c2.pulled_options_state, &buf_orig,
                                    &c->options);
                 switch (c->options.push_continuation)
                 {
                     case 0:
                     case 1:
-                        md_ctx_final(&c->c2.pulled_options_state, c->c2.pulled_options_digest.digest);
-                        md_ctx_cleanup(&c->c2.pulled_options_state);
+                        md_ctx_final(c->c2.pulled_options_state, c->c2.pulled_options_digest.digest);
+                        md_ctx_cleanup(c->c2.pulled_options_state);
+                        md_ctx_free(c->c2.pulled_options_state);
+                        c->c2.pulled_options_state = NULL;
                         c->c2.pulled_options_digest_init_done = false;
                         ret = PUSH_MSG_REPLY;
                         break;

@@ -17,10 +17,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /**
@@ -355,7 +354,8 @@ tls_ctx_restrict_ciphers(struct tls_root_ctx *ctx, const char *ciphers)
         }
 
         /* Make sure new cipher name fits in cipher string */
-        if (((sizeof(openssl_ciphers)-1) - openssl_ciphers_len) < current_cipher_len)
+        if ((SIZE_MAX - openssl_ciphers_len) < current_cipher_len
+            || ((sizeof(openssl_ciphers)-1) < openssl_ciphers_len + current_cipher_len))
         {
             msg(M_FATAL,
                 "Failed to set restricted TLS cipher list, too long (>%d).",
@@ -976,10 +976,13 @@ rsa_priv_dec(int flen, const unsigned char *from, unsigned char *to, RSA *rsa, i
 
 /* called at RSA_free */
 static int
-rsa_finish(RSA *rsa)
+openvpn_extkey_rsa_finish(RSA *rsa)
 {
-    RSA_meth_free(rsa->meth);
-    rsa->meth = NULL;
+    /* meth was allocated in tls_ctx_use_external_private_key() ; since
+     * this function is called when the parent RSA object is destroyed,
+     * it is no longer used after this point so kill it. */
+    const RSA_METHOD *meth = RSA_get_method(rsa);
+    RSA_meth_free((RSA_METHOD *)meth);
     return 1;
 }
 
@@ -1061,7 +1064,7 @@ tls_ctx_use_external_private_key(struct tls_root_ctx *ctx,
     RSA_meth_set_priv_enc(rsa_meth, rsa_priv_enc);
     RSA_meth_set_priv_dec(rsa_meth, rsa_priv_dec);
     RSA_meth_set_init(rsa_meth, NULL);
-    RSA_meth_set_finish(rsa_meth, rsa_finish);
+    RSA_meth_set_finish(rsa_meth, openvpn_extkey_rsa_finish);
     RSA_meth_set0_app_data(rsa_meth, NULL);
 
     /* allocate RSA object */
@@ -1073,12 +1076,16 @@ tls_ctx_use_external_private_key(struct tls_root_ctx *ctx,
     }
 
     /* get the public key */
-    ASSERT(cert->cert_info->key->pkey); /* NULL before SSL_CTX_use_certificate() is called */
-    pub_rsa = cert->cert_info->key->pkey->pkey.rsa;
+    EVP_PKEY *pkey = X509_get0_pubkey(cert);
+    ASSERT(pkey); /* NULL before SSL_CTX_use_certificate() is called */
+    pub_rsa = EVP_PKEY_get0_RSA(pkey);
 
     /* initialize RSA object */
-    rsa->n = BN_dup(pub_rsa->n);
-    rsa->flags |= RSA_FLAG_EXT_PKEY;
+    const BIGNUM *n = NULL;
+    const BIGNUM *e = NULL;
+    RSA_get0_key(pub_rsa, &n, &e, NULL);
+    RSA_set0_key(rsa, BN_dup(n), BN_dup(e), NULL);
+    RSA_set_flags(rsa, RSA_flags(rsa) | RSA_FLAG_EXT_PKEY);
     if (!RSA_set_method(rsa, rsa_meth))
     {
         goto err;
@@ -1679,17 +1686,17 @@ print_details(struct key_state_ssl *ks_ssl, const char *prefix)
         EVP_PKEY *pkey = X509_get_pubkey(cert);
         if (pkey != NULL)
         {
-            if (pkey->type == EVP_PKEY_RSA && pkey->pkey.rsa != NULL
-                && pkey->pkey.rsa->n != NULL)
+            if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA && EVP_PKEY_get0_RSA(pkey) != NULL)
             {
+                RSA *rsa = EVP_PKEY_get0_RSA(pkey);
                 openvpn_snprintf(s2, sizeof(s2), ", %d bit RSA",
-                                 BN_num_bits(pkey->pkey.rsa->n));
+                                 RSA_bits(rsa));
             }
-            else if (pkey->type == EVP_PKEY_DSA && pkey->pkey.dsa != NULL
-                     && pkey->pkey.dsa->p != NULL)
+            else if (EVP_PKEY_id(pkey) == EVP_PKEY_DSA && EVP_PKEY_get0_DSA(pkey) != NULL)
             {
+                DSA *dsa = EVP_PKEY_get0_DSA(pkey);
                 openvpn_snprintf(s2, sizeof(s2), ", %d bit DSA",
-                                 BN_num_bits(pkey->pkey.dsa->p));
+                                 DSA_bits(dsa));
             }
             EVP_PKEY_free(pkey);
         }

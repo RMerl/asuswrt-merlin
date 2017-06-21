@@ -17,10 +17,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /**
@@ -509,6 +508,19 @@ cipher_kt_mode_aead(const cipher_kt_t *cipher)
  *
  */
 
+mbedtls_cipher_context_t *
+cipher_ctx_new(void)
+{
+    mbedtls_cipher_context_t *ctx;
+    ALLOC_OBJ(ctx, mbedtls_cipher_context_t);
+    return ctx;
+}
+
+void
+cipher_ctx_free(mbedtls_cipher_context_t *ctx)
+{
+    free(ctx);
+}
 
 void
 cipher_ctx_init(mbedtls_cipher_context_t *ctx, uint8_t *key, int key_len,
@@ -766,6 +778,18 @@ md_full(const md_kt_t *kt, const uint8_t *src, int src_len, uint8_t *dst)
     return 0 == mbedtls_md(kt, src, src_len, dst);
 }
 
+mbedtls_md_context_t *
+md_ctx_new(void)
+{
+    mbedtls_md_context_t *ctx;
+    ALLOC_OBJ_CLEAR(ctx, mbedtls_md_context_t);
+    return ctx;
+}
+
+void md_ctx_free(mbedtls_md_context_t *ctx)
+{
+    free(ctx);
+}
 
 void
 md_ctx_init(mbedtls_md_context_t *ctx, const mbedtls_md_info_t *kt)
@@ -816,6 +840,21 @@ md_ctx_final(mbedtls_md_context_t *ctx, uint8_t *dst)
 /*
  * TODO: re-enable dmsg for crypto debug
  */
+
+mbedtls_md_context_t *
+hmac_ctx_new(void)
+{
+    mbedtls_md_context_t *ctx;
+    ALLOC_OBJ(ctx, mbedtls_md_context_t);
+    return ctx;
+}
+
+void
+hmac_ctx_free(mbedtls_md_context_t *ctx)
+{
+    free(ctx);
+}
+
 void
 hmac_ctx_init(mbedtls_md_context_t *ctx, const uint8_t *key, int key_len,
               const mbedtls_md_info_t *kt)

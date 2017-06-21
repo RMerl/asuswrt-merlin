@@ -17,10 +17,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /**
@@ -114,16 +113,29 @@ cleanup:
 }
 
 #ifdef ENABLE_X509ALTUSERNAME
+bool x509_username_field_ext_supported(const char *fieldname)
+{
+    int nid = OBJ_txt2nid(fieldname);
+    return nid == NID_subject_alt_name || nid == NID_issuer_alt_name;
+}
+
 static
 bool
 extract_x509_extension(X509 *cert, char *fieldname, char *out, int size)
 {
     bool retval = false;
     char *buf = 0;
-    GENERAL_NAMES *extensions;
-    int nid = OBJ_txt2nid(fieldname);
 
-    extensions = (GENERAL_NAMES *)X509_get_ext_d2i(cert, nid, NULL, NULL);
+    if (!x509_username_field_ext_supported(fieldname))
+    {
+        msg(D_TLS_ERRORS,
+            "ERROR: --x509-alt-username field 'ext:%s' not supported",
+            fieldname);
+        return false;
+    }
+
+    int nid = OBJ_txt2nid(fieldname);
+    GENERAL_NAMES *extensions = X509_get_ext_d2i(cert, nid, NULL, NULL);
     if (extensions)
     {
         int numalts;
@@ -144,7 +156,10 @@ extract_x509_extension(X509 *cert, char *fieldname, char *out, int size)
             switch (name->type)
             {
                 case GEN_EMAIL:
-                    ASN1_STRING_to_UTF8((unsigned char **)&buf, name->d.ia5);
+                    if (ASN1_STRING_to_UTF8((unsigned char **)&buf, name->d.ia5) < 0)
+                    {
+                        continue;
+                    }
                     if (strlen(buf) != name->d.ia5->length)
                     {
                         msg(D_TLS_ERRORS, "ASN1 ERROR: string contained terminating zero");
@@ -164,7 +179,7 @@ extract_x509_extension(X509 *cert, char *fieldname, char *out, int size)
                     break;
             }
         }
-        sk_GENERAL_NAME_free(extensions);
+        GENERAL_NAMES_free(extensions);
     }
     return retval;
 }
@@ -226,8 +241,7 @@ extract_x509_field_ssl(X509_NAME *x509, const char *field_name, char *out,
     {
         return FAILURE;
     }
-    tmp = ASN1_STRING_to_UTF8(&buf, asn1);
-    if (tmp <= 0)
+    if (ASN1_STRING_to_UTF8(&buf, asn1) < 0)
     {
         return FAILURE;
     }
@@ -294,18 +308,20 @@ backend_x509_get_serial_hex(openvpn_x509_cert_t *cert, struct gc_arena *gc)
 struct buffer
 x509_get_sha1_fingerprint(X509 *cert, struct gc_arena *gc)
 {
-    struct buffer hash = alloc_buf_gc(sizeof(cert->sha1_hash), gc);
-    memcpy(BPTR(&hash), cert->sha1_hash, sizeof(cert->sha1_hash));
-    ASSERT(buf_inc_len(&hash, sizeof(cert->sha1_hash)));
+    const EVP_MD *sha1 = EVP_sha1();
+    struct buffer hash = alloc_buf_gc(EVP_MD_size(sha1), gc);
+    X509_digest(cert, EVP_sha1(), BPTR(&hash), NULL);
+    ASSERT(buf_inc_len(&hash, EVP_MD_size(sha1)));
     return hash;
 }
 
 struct buffer
 x509_get_sha256_fingerprint(X509 *cert, struct gc_arena *gc)
 {
-    struct buffer hash = alloc_buf_gc((EVP_sha256())->md_size, gc);
+    const EVP_MD *sha256 = EVP_sha256();
+    struct buffer hash = alloc_buf_gc(EVP_MD_size(sha256), gc);
     X509_digest(cert, EVP_sha256(), BPTR(&hash), NULL);
-    ASSERT(buf_inc_len(&hash, (EVP_sha256())->md_size));
+    ASSERT(buf_inc_len(&hash, EVP_MD_size(sha256)));
     return hash;
 }
 
@@ -315,7 +331,6 @@ x509_get_subject(X509 *cert, struct gc_arena *gc)
     BIO *subject_bio = NULL;
     BUF_MEM *subject_mem;
     char *subject = NULL;
-    int maxlen = 0;
 
     /*
      * Generate the subject string in OpenSSL proprietary format,
@@ -346,11 +361,10 @@ x509_get_subject(X509 *cert, struct gc_arena *gc)
 
     BIO_get_mem_ptr(subject_bio, &subject_mem);
 
-    maxlen = subject_mem->length + 1;
-    subject = gc_malloc(maxlen, false, gc);
+    subject = gc_malloc(subject_mem->length + 1, false, gc);
 
-    memcpy(subject, subject_mem->data, maxlen);
-    subject[maxlen - 1] = '\0';
+    memcpy(subject, subject_mem->data, subject_mem->length);
+    subject[subject_mem->length] = '\0';
 
 err:
     if (subject_bio)
@@ -468,7 +482,7 @@ x509_setenv_track(const struct x509_track *xt, struct env_set *es, const int dep
                             ASN1_STRING *val = X509_NAME_ENTRY_get_data(ent);
                             unsigned char *buf;
                             buf = (unsigned char *)1; /* bug in OpenSSL 0.9.6b ASN1_STRING_to_UTF8 requires this workaround */
-                            if (ASN1_STRING_to_UTF8(&buf, val) > 0)
+                            if (ASN1_STRING_to_UTF8(&buf, val) >= 0)
                             {
                                 do_setenv_x509(es, xt->name, (char *)buf, depth);
                                 OPENSSL_free(buf);
@@ -556,7 +570,7 @@ x509_setenv(struct env_set *es, int cert_depth, openvpn_x509_cert_t *peer_cert)
             continue;
         }
         buf = (unsigned char *)1; /* bug in OpenSSL 0.9.6b ASN1_STRING_to_UTF8 requires this workaround */
-        if (ASN1_STRING_to_UTF8(&buf, val) <= 0)
+        if (ASN1_STRING_to_UTF8(&buf, val) < 0)
         {
             continue;
         }
@@ -574,7 +588,7 @@ x509_setenv(struct env_set *es, int cert_depth, openvpn_x509_cert_t *peer_cert)
 }
 
 result_t
-x509_verify_ns_cert_type(const openvpn_x509_cert_t *peer_cert, const int usage)
+x509_verify_ns_cert_type(openvpn_x509_cert_t *peer_cert, const int usage)
 {
     if (usage == NS_CERT_CHECK_NONE)
     {
@@ -582,13 +596,59 @@ x509_verify_ns_cert_type(const openvpn_x509_cert_t *peer_cert, const int usage)
     }
     if (usage == NS_CERT_CHECK_CLIENT)
     {
-        return ((peer_cert->ex_flags & EXFLAG_NSCERT)
-                && (peer_cert->ex_nscert & NS_SSL_CLIENT)) ? SUCCESS : FAILURE;
+        /*
+         * Unfortunately, X509_check_purpose() does some weird thing that
+         * prevent it to take a const argument
+         */
+        result_t result = X509_check_purpose(peer_cert, X509_PURPOSE_SSL_CLIENT, 0) ?
+	       SUCCESS : FAILURE;
+
+        /*
+         * old versions of OpenSSL allow us to make the less strict check we used to
+         * do. If this less strict check pass, warn user that this might not be the
+         * case when its distribution will update to OpenSSL 1.1
+         */
+        if (result == FAILURE)
+        {
+            ASN1_BIT_STRING *ns;
+            ns = X509_get_ext_d2i(peer_cert, NID_netscape_cert_type, NULL, NULL);
+            result = (ns && ns->length > 0 && (ns->data[0] & NS_SSL_CLIENT)) ? SUCCESS : FAILURE;
+            if (result == SUCCESS)
+            {
+                msg(M_WARN, "X509: Certificate is a client certificate yet it's purpose "
+                    "cannot be verified (check may fail in the future)");
+            }
+            ASN1_BIT_STRING_free(ns);
+        }
+        return result;
     }
     if (usage == NS_CERT_CHECK_SERVER)
     {
-        return ((peer_cert->ex_flags & EXFLAG_NSCERT)
-                && (peer_cert->ex_nscert & NS_SSL_SERVER))  ? SUCCESS : FAILURE;
+        /*
+         * Unfortunately, X509_check_purpose() does some weird thing that
+         * prevent it to take a const argument
+         */
+        result_t result = X509_check_purpose(peer_cert, X509_PURPOSE_SSL_SERVER, 0) ?
+	       SUCCESS : FAILURE;
+
+        /*
+         * old versions of OpenSSL allow us to make the less strict check we used to
+         * do. If this less strict check pass, warn user that this might not be the
+         * case when its distribution will update to OpenSSL 1.1
+         */
+        if (result == FAILURE)
+        {
+            ASN1_BIT_STRING *ns;
+            ns = X509_get_ext_d2i(peer_cert, NID_netscape_cert_type, NULL, NULL);
+            result = (ns && ns->length > 0 && (ns->data[0] & NS_SSL_SERVER)) ? SUCCESS : FAILURE;
+            if (result == SUCCESS)
+            {
+                msg(M_WARN, "X509: Certificate is a server certificate yet it's purpose "
+                    "cannot be verified (check may fail in the future)");
+            }
+            ASN1_BIT_STRING_free(ns);
+        }
+        return result;
     }
 
     return FAILURE;

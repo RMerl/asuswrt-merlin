@@ -17,10 +17,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifndef OPENVPN_PLUGIN_H_
@@ -45,6 +44,7 @@ typedef X509 openvpn_x509_cert_t;
 #endif
 
 #include <stdarg.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,7 +55,7 @@ extern "C" {
  */
 #define OPENVPN_VERSION_MAJOR 2
 #define OPENVPN_VERSION_MINOR 4
-#define OPENVPN_VERSION_PATCH ".2"
+#define OPENVPN_VERSION_PATCH ".3"
 
 /*
  * Plug-in types.  These types correspond to the set of script callbacks
