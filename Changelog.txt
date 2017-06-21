@@ -3,7 +3,9 @@ Asuswrt-Merlin Changelog
 
 380.66_6 (22-June-2017)
   - CHANGED: Updated OpenVPN to 2.4.3
-
+  - FIXED: Corrupted firewall rules if enabling SSHD brute-force
+           protection and Respond to WAN Ping at the same time
+           while in Dual WAN mode.
 
 380.66_4 (26-May-2017)
   - CHANGED: Updated dropbear to 2017.75
