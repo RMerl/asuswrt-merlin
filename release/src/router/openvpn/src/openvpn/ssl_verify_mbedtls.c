@@ -17,10 +17,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /**
@@ -209,7 +208,7 @@ x509_get_fingerprint(const mbedtls_md_info_t *md_info, mbedtls_x509_crt *cert,
 {
     const size_t md_size = mbedtls_md_get_size(md_info);
     struct buffer fingerprint = alloc_buf_gc(md_size, gc);
-    mbedtls_md(md_info, cert->raw.p, cert->tbs.len, BPTR(&fingerprint));
+    mbedtls_md(md_info, cert->raw.p, cert->raw.len, BPTR(&fingerprint));
     ASSERT(buf_inc_len(&fingerprint, md_size));
     return fingerprint;
 }
@@ -268,11 +267,19 @@ asn1_buf_to_c_string(const mbedtls_asn1_buf *orig, struct gc_arena *gc)
     size_t i;
     char *val;
 
+    if (!(orig->tag == MBEDTLS_ASN1_UTF8_STRING
+          || orig->tag == MBEDTLS_ASN1_PRINTABLE_STRING
+          || orig->tag == MBEDTLS_ASN1_IA5_STRING))
+    {
+        /* Only support C-string compatible types */
+        return string_alloc("ERROR: unsupported ASN.1 string type", gc);
+    }
+
     for (i = 0; i < orig->len; ++i)
     {
         if (orig->p[i] == '\0')
         {
-            return "ERROR: embedded null value";
+            return string_alloc("ERROR: embedded null value", gc);
         }
     }
     val = gc_malloc(orig->len+1, false, gc);
@@ -411,7 +418,7 @@ x509_setenv(struct env_set *es, int cert_depth, mbedtls_x509_crt *cert)
 }
 
 result_t
-x509_verify_ns_cert_type(const mbedtls_x509_crt *cert, const int usage)
+x509_verify_ns_cert_type(mbedtls_x509_crt *cert, const int usage)
 {
     if (usage == NS_CERT_CHECK_NONE)
     {

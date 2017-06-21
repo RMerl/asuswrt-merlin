@@ -16,10 +16,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /*
@@ -42,6 +41,10 @@
 #include "comp.h"
 #include "pushlist.h"
 #include "clinat.h"
+#ifdef ENABLE_CRYPTO
+#include "crypto_backend.h"
+#endif
+
 
 /*
  * Maximum number of parameters associated with an option,
@@ -519,6 +522,7 @@ struct options
     unsigned remote_cert_ku[MAX_PARMS];
     const char *remote_cert_eku;
     uint8_t *verify_hash;
+    hash_algo_type verify_hash_algo;
     unsigned int ssl_flags; /* set to SSLF_x flags from ssl.h */
 
 #ifdef ENABLE_PKCS11

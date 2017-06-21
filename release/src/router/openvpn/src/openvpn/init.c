@@ -16,10 +16,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -1384,6 +1383,21 @@ initialization_sequence_completed(struct context *c, const unsigned int flags)
     /* If we delayed UID/GID downgrade or chroot, do it now */
     do_uid_gid_chroot(c, true);
 
+
+#ifdef ENABLE_CRYPTO
+    /*
+     * In some cases (i.e. when receiving auth-token via
+     * push-reply) the auth-nocache option configured on the
+     * client is overridden; for this reason we have to wait
+     * for the push-reply message before attempting to wipe
+     * the user/pass entered by the user
+     */
+    if (c->options.mode == MODE_POINT_TO_POINT)
+    {
+        delayed_auth_pass_purge();
+    }
+#endif /* ENABLE_CRYPTO */
+
     /* Test if errors */
     if (flags & ISC_ERRORS)
     {
@@ -1929,7 +1943,7 @@ do_up(struct context *c, bool pulled_options, unsigned int option_types_found)
     {
         reset_coarse_timers(c);
 
-        if (pulled_options && option_types_found)
+        if (pulled_options)
         {
             if (!do_deferred_options(c, option_types_found))
             {
@@ -2635,6 +2649,7 @@ do_init_crypto_tls(struct context *c, const unsigned int flags)
     memmove(to.remote_cert_ku, options->remote_cert_ku, sizeof(to.remote_cert_ku));
     to.remote_cert_eku = options->remote_cert_eku;
     to.verify_hash = options->verify_hash;
+    to.verify_hash_algo = options->verify_hash_algo;
 #ifdef ENABLE_X509ALTUSERNAME
     to.x509_username_field = (char *) options->x509_username_field;
 #else

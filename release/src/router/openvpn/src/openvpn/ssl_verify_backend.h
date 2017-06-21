@@ -17,10 +17,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /**
@@ -125,6 +124,14 @@ struct buffer x509_get_sha256_fingerprint(openvpn_x509_cert_t *cert,
 result_t backend_x509_get_username(char *common_name, int cn_len,
                                    char *x509_username_field, openvpn_x509_cert_t *peer_cert);
 
+#ifdef ENABLE_X509ALTUSERNAME
+/**
+ * Return true iff the supplied extension field is supported by the
+ * --x509-username-field option.
+ */
+bool x509_username_field_ext_supported(const char *extname);
+#endif
+
 /*
  * Return the certificate's serial number in decimal string representation.
  *
@@ -211,7 +218,7 @@ void x509_setenv_track(const struct x509_track *xt, struct env_set *es,
  *                      the expected bit set. \c FAILURE if the certificate does
  *                      not have NS cert type verification or the wrong bit set.
  */
-result_t x509_verify_ns_cert_type(const openvpn_x509_cert_t *cert, const int usage);
+result_t x509_verify_ns_cert_type(openvpn_x509_cert_t *cert, const int usage);
 
 /*
  * Verify X.509 key usage extension field.

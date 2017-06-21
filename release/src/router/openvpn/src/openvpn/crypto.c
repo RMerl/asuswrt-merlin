@@ -17,10 +17,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -852,7 +851,7 @@ init_key_ctx(struct key_ctx *ctx, struct key *key,
     if (kt->cipher && kt->cipher_length > 0)
     {
 
-        ALLOC_OBJ(ctx->cipher, cipher_ctx_t);
+        ctx->cipher = cipher_ctx_new();
         cipher_ctx_init(ctx->cipher, key->cipher, kt->cipher_length,
                         kt->cipher, enc);
 
@@ -876,7 +875,7 @@ init_key_ctx(struct key_ctx *ctx, struct key *key,
     }
     if (kt->digest && kt->hmac_length > 0)
     {
-        ALLOC_OBJ(ctx->hmac, hmac_ctx_t);
+        ctx->hmac = hmac_ctx_new();
         hmac_ctx_init(ctx->hmac, key->hmac, kt->hmac_length, kt->digest);
 
         msg(D_HANDSHAKE,
@@ -901,13 +900,13 @@ free_key_ctx(struct key_ctx *ctx)
     if (ctx->cipher)
     {
         cipher_ctx_cleanup(ctx->cipher);
-        free(ctx->cipher);
+        cipher_ctx_free(ctx->cipher);
         ctx->cipher = NULL;
     }
     if (ctx->hmac)
     {
         hmac_ctx_cleanup(ctx->hmac);
-        free(ctx->hmac);
+        hmac_ctx_free(ctx->hmac);
         ctx->hmac = NULL;
     }
     ctx->implicit_iv_len = 0;

@@ -16,10 +16,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /*
@@ -1667,11 +1666,11 @@ write_tun_header(struct tuntap *tt, uint8_t *buf, int len)
     {
         u_int32_t type;
         struct iovec iv[2];
-        struct ip *iph;
+        struct openvpn_iphdr *iph;
 
-        iph = (struct ip *) buf;
+        iph = (struct openvpn_iphdr *) buf;
 
-        if (iph->ip_v == 6)
+        if (OPENVPN_IPH_GET_VER(iph->version_len) == 6)
         {
             type = htonl(AF_INET6);
         }

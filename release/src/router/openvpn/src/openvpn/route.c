@@ -16,10 +16,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /*
@@ -3606,6 +3605,9 @@ get_default_gateway(struct route_gateway_info *rgi)
     rtm.rtm_flags = RTF_UP | RTF_GATEWAY;
     rtm.rtm_version = RTM_VERSION;
     rtm.rtm_seq = ++seq;
+#ifdef TARGET_OPENBSD
+    rtm.rtm_tableid = getrtable();
+#endif
     rtm.rtm_addrs = rtm_addrs;
 
     so_dst.sa_family = AF_INET;
@@ -3821,6 +3823,9 @@ get_default_gateway_ipv6(struct route_ipv6_gateway_info *rgi6,
     rtm.rtm_flags = RTF_UP;
     rtm.rtm_version = RTM_VERSION;
     rtm.rtm_seq = ++seq;
+#ifdef TARGET_OPENBSD
+    rtm.rtm_tableid = getrtable();
+#endif
 
     so_dst.sin6_family = AF_INET6;
     so_mask.sin6_family = AF_INET6;

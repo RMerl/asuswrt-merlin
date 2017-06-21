@@ -17,10 +17,9 @@ dnl  but WITHOUT ANY WARRANTY; without even the implied warranty of
 dnl  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 dnl  GNU General Public License for more details.
 dnl
-dnl  You should have received a copy of the GNU General Public License
-dnl  along with this program (see the file COPYING included with this
-dnl  distribution); if not, write to the Free Software Foundation, Inc.,
-dnl  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+dnl  You should have received a copy of the GNU General Public License along
+dnl  with this program; if not, write to the Free Software Foundation, Inc.,
+dnl  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 dnl Process this file with autoconf to produce a configure script.
 
@@ -900,11 +899,30 @@ if test "${enable_crypto}" = "yes" -a "${with_crypto_library}" = "openssl"; then
 
 	AC_CHECK_FUNCS(
 		[ \
+			EVP_CIPHER_CTX_new \
+			EVP_CIPHER_CTX_free \
+			HMAC_CTX_new \
+			HMAC_CTX_free \
+			HMAC_CTX_reset \
+			HMAC_CTX_init \
+			EVP_MD_CTX_new \
+			EVP_MD_CTX_free \
+			EVP_MD_CTX_reset \
 			SSL_CTX_get_default_passwd_cb \
 			SSL_CTX_get_default_passwd_cb_userdata \
+			X509_get0_pubkey \
 			X509_STORE_get0_objects \
 			X509_OBJECT_free \
 			X509_OBJECT_get_type \
+			EVP_PKEY_id \
+			EVP_PKEY_get0_RSA \
+			EVP_PKEY_get0_DSA \
+			RSA_set_flags \
+			RSA_bits \
+			RSA_get0_key \
+			RSA_set0_key \
+			DSA_get0_pqg \
+			DSA_bits \
 			RSA_meth_new \
 			RSA_meth_free \
 			RSA_meth_set_pub_enc \

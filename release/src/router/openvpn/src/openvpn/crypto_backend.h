@@ -17,10 +17,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /**
@@ -46,6 +45,12 @@
 
 /* Maximum HMAC digest size (bytes) */
 #define OPENVPN_MAX_HMAC_SIZE   64
+
+/** Types referencing specific message digest hashing algorithms */
+typedef enum {
+    MD_SHA1,
+    MD_SHA256
+} hash_algo_type ;
 
 /** Struct used in cipher name translation table */
 typedef struct {
@@ -295,6 +300,20 @@ bool cipher_kt_mode_aead(const cipher_kt_t *cipher);
  */
 
 /**
+ * Allocate a new cipher context
+ *
+ * @return              a new cipher context
+ */
+cipher_ctx_t *cipher_ctx_new(void);
+
+/**
+ * Free a cipher context
+ *
+ * @param ctx           Cipher context.
+ */
+void cipher_ctx_free(cipher_ctx_t *ctx);
+
+/**
  * Initialise a cipher context, based on the given key and key type.
  *
  * @param ctx           Cipher context. May not be NULL
@@ -502,6 +521,20 @@ int md_kt_size(const md_kt_t *kt);
 int md_full(const md_kt_t *kt, const uint8_t *src, int src_len, uint8_t *dst);
 
 /*
+ * Allocate a new message digest context
+ *
+ * @return              a new zeroed MD context
+ */
+md_ctx_t *md_ctx_new(void);
+
+/*
+ * Free an existing, non-null message digest context
+ *
+ * @param ctx           Message digest context
+ */
+void md_ctx_free(md_ctx_t *ctx);
+
+/*
  * Initialises the given message digest context.
  *
  * @param ctx           Message digest context
@@ -548,6 +581,20 @@ void md_ctx_final(md_ctx_t *ctx, uint8_t *dst);
  * Generic HMAC functions
  *
  */
+
+/*
+ * Create a new HMAC context
+ *
+ * @return              A new HMAC context
+ */
+hmac_ctx_t *hmac_ctx_new(void);
+
+/*
+ * Free an existing HMAC context
+ *
+ * @param  ctx           HMAC context to free
+ */
+void hmac_ctx_free(hmac_ctx_t *ctx);
 
 /*
  * Initialises the given HMAC context, using the given digest
