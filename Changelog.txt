@@ -1,6 +1,10 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.66_6 (22-June-2017)
+  - CHANGED: Updated OpenVPN to 2.4.3
+
+
 380.66_4 (26-May-2017)
   - CHANGED: Updated dropbear to 2017.75
   - FIXED: Security issue CVE-2017-7494 in Samba.
