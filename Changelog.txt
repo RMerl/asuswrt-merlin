@@ -35,11 +35,15 @@ Asuswrt-Merlin Changelog
   - FIXED: NFS sometimes failing to start properly (patch by john9527)
   - FIXED: Layout issue of the status bar under Chrome when window
            is larger than 1800px (patch by Cyrus Dargahi)
+  - FIXED: UPNP and SNMP issues in Dual WAN mode.
+  - FIXED: NAT Loopback (merlin mode) in Dual WAN mode wasn't supported.
+
+
+380.66_6 (22-June-2017)
+  - CHANGED: Updated OpenVPN to 2.4.3
   - FIXED: Corrupted firewall rules if enabling SSHD brute-force
            protection and Respond to WAN Ping at the same time
            while in Dual WAN mode.
-  - FIXED: UPNP and SNMP issues in Dual WAN mode.
-  - FIXED: NAT Loopback (merlin mode) in Dual WAN mode wasn't supported.
 
 
 380.66_4 (26-May-2017)
