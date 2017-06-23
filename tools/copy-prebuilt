@@ -19,6 +19,7 @@ then
 	cp release/src/router/ctf_arm/bcm_7114_gmac3/* $REPO/release/src/router/ctf_arm/bcm_7114_gmac3/
 	cp release/src/router/wl_arm_7114/prebuilt/* $REPO/release/src/router/wl_arm_7114/prebuilt/$MODEL/
 	cp release/src/router/envram_bin/* $REPO/release/src/router/envram_bin/
+	cp release/src-rt-7.14.114.x/src/wl/exe/prebuilt/* $REPO/release/src-rt-7.14.114.x/src/wl/exe/prebuilt/
 
 elif [ "$MODEL" == "RT-AC3200" ]
 then
@@ -28,6 +29,7 @@ then
 	cp release/src/router/bwdpi_bin/bwdpi_bcm7/* $REPO/release/src/router/bwdpi_bin/bwdpi_bcm7/
 	cp release/src/router/ctf_arm/bcm7/* $REPO/release/src/router/ctf_arm/bcm7/
 	cp release/src/router/wl_arm_7/prebuilt/* $REPO/release/src/router/wl_arm_7/prebuilt/
+	cp release/src-rt-7.x.main/src/wl/exe/prebuilt/* $REPO/release/src-rt-7.x.main/src/wl/exe/prebuilt/
 
 elif [ "$MODEL" == "RT-AC56U" ] || [ "$MODEL" == "RT-AC68U" ] || [ "$MODEL" == "RT-AC87U" ]
 then
@@ -37,6 +39,7 @@ then
         cp release/src/router/bwdpi_bin/bwdpi_bcm6_smp/* $REPO/release/src/router/bwdpi_bin/bwdpi_bcm6_smp/
         cp release/src/router/ctf_arm/bcm6/* $REPO/release/src/router/ctf_arm/bcm6/
         cp release/src/router/wl_arm/prebuilt/* $REPO/release/src/router/wl_arm/$MODEL/prebuilt/
+	cp release/src-rt-6.x.4708/wl/exe/prebuilt/* $REPO/release/src-rt-6.x.4708/wl/exe/prebuilt/
 
 elif [ "$MODEL" == "RT-N66U" ] || [ "$MODEL" == "RT-AC66U" ]
 then
