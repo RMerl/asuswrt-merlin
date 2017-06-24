@@ -225,6 +225,8 @@ function show_etherstate(){
 			}
 			if (tmpPort == "0") {
 				port = "WAN";
+			} else if (tmpPort > 4) {
+				continue;	// Internal port
 			} else {
 				if ((based_modelid == "RT-N16") || (based_modelid == "RT-AC87U")
 				    || (based_modelid == "RT-AC3200") || (based_modelid == "RT-AC88U") 
