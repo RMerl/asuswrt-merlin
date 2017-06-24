@@ -113,7 +113,6 @@ function initial() {
 	if (machine_name.search("arm") != -1) {
 		document.getElementById("ct_established_default").innerHTML = "Default: 2400";
 		showhide("memory_mgmt_tr" ,1);
-		showhide("brsnoop_tr", 1);
 	}
 
 	if (document.form.dns_probe_content.value == "")
@@ -973,7 +972,6 @@ function done_validating(action){
 							<input type="radio" name="dns_probe" class="input" value="0"><#checkbox_No#>
 						</td>
 					</tr>
-
 				</table>
 				<div class="apply_gen">
 					<input name="button" type="button" class="button_gen" onclick="validate();" value="<#CTL_apply#>"/>
