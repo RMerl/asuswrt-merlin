@@ -1,3 +1,19 @@
+6.32
+  - Fix possible truncated output in ipset output buffer handling
+    (Reported by Omri Bahumi and Yoni Lavi).
+  - Missing prototype added in ipset_hash_ipmac.c (debugging)
+
+6.31
+  - Update manpage about the size parameter of list:set types.
+  - New test to verify that only the intended entries are deleted at hash
+    types.
+
+6.30
+  - Drop extra comma from error message (Neutron Soutmun)
+  - Fix the incorrect dynamic/static modules list (Neutron Soutmun)
+  - Correct tests to check the number of entries too
+  - hash:ipmac type support added to ipset, userspace part (Tomasz Chilinski)
+
 6.29
   - Suppress unnecessary stderr in command loop for resize and list
   - Correction in comment test

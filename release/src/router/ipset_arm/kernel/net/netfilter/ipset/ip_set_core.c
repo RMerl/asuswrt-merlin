@@ -546,8 +546,7 @@ int
 ip_set_test(ip_set_id_t index, const struct sk_buff *skb,
 	    const struct xt_action_param *par, struct ip_set_adt_opt *opt)
 {
-	struct ip_set *set = ip_set_rcu_get(
-			dev_net(par->in ? par->in : par->out), index);
+	struct ip_set *set = ip_set_rcu_get(IPSET_DEV_NET(par), index);
 	int ret = 0;
 
 	BUG_ON(!set);
@@ -585,8 +584,7 @@ int
 ip_set_add(ip_set_id_t index, const struct sk_buff *skb,
 	   const struct xt_action_param *par, struct ip_set_adt_opt *opt)
 {
-	struct ip_set *set = ip_set_rcu_get(
-			dev_net(par->in ? par->in : par->out), index);
+	struct ip_set *set = ip_set_rcu_get(IPSET_DEV_NET(par), index);
 	int ret;
 
 	BUG_ON(!set);
@@ -608,8 +606,7 @@ int
 ip_set_del(ip_set_id_t index, const struct sk_buff *skb,
 	   const struct xt_action_param *par, struct ip_set_adt_opt *opt)
 {
-	struct ip_set *set = ip_set_rcu_get(
-			dev_net(par->in ? par->in : par->out), index);
+	struct ip_set *set = ip_set_rcu_get(IPSET_DEV_NET(par), index);
 	int ret = 0;
 
 	BUG_ON(!set);

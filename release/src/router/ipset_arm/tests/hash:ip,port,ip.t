@@ -1,5 +1,5 @@
 # Create a set with timeout
-0 ipset create test hash:ip,port,ip timeout 5
+0 ipset create test hash:ip,port,ip timeout 4
 # Add partly zero valued element
 0 ipset add test 2.0.0.1,0,0.0.0.0
 # Test partly zero valued element

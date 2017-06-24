@@ -10,6 +10,7 @@
 #@HAVE_ETHER_ADDR_EQUAL@ HAVE_ETHER_ADDR_EQUAL
 #@HAVE_NLA_PUT_BE16@ HAVE_NLA_PUT_BE16
 #@HAVE_NLA_PUT_BE64@ HAVE_NLA_PUT_BE64
+#@HAVE_NLA_PUT_64BIT@ HAVE_NLA_PUT_64BIT
 #@HAVE_NL_INFO_PORTID@ HAVE_NL_INFO_PORTID
 #define HAVE_NETLINK_DUMP_START_ARGS	@HAVE_NETLINK_DUMP_START_ARGS@
 #@HAVE_NS_CAPABLE@ HAVE_NS_CAPABLE
@@ -32,6 +33,8 @@
 #@HAVE_NLA_PUT_IN_ADDR@ HAVE_NLA_PUT_IN_ADDR
 #@HAVE_NET_IN_NFNL_CALLBACK_FN@ HAVE_NET_IN_NFNL_CALLBACK_FN
 #@HAVE_EXPORT_SYMBOL_GPL_IN_MODULE_H@ HAVE_EXPORT_SYMBOL_GPL_IN_MODULE_H
+#@HAVE_TC_SKB_PROTOCOL@ HAVE_TC_SKB_PROTOCOL
+#@HAVE_NET_IN_XT_ACTION_PARAM@ HAVE_NET_IN_XT_ACTION_PARAM
 
 #ifdef HAVE_EXPORT_SYMBOL_GPL_IN_MODULE_H
 #include <linux/module.h>
@@ -160,6 +163,12 @@ static inline int nla_put_net64(struct sk_buff *skb, int attrtype, __be64 value)
 }
 #endif
 
+#ifdef HAVE_NLA_PUT_64BIT
+#define IPSET_NLA_PUT_NET64(skb, t, v, pa) nla_put_net64(skb, t, v, pa)
+#else
+#define IPSET_NLA_PUT_NET64(skb, t, v, pa) nla_put_net64(skb, t, v)
+#endif
+
 #ifdef HAVE_NL_INFO_PORTID
 #define NETLINK_PORTID(skb)	NETLINK_CB(skb).portid
 #else
@@ -264,6 +273,22 @@ static inline int nla_put_in6_addr(struct sk_buff *skb, int attrtype,
 #else
 #define IPSET_CBFN(fn, net, nl, skb, nlh, cda)	fn(nl, skb, nlh, cda)
 #define IPSET_SOCK_NET(net, ctnl)		sock_net(ctnl)
+#endif
+
+#ifndef HAVE_TC_SKB_PROTOCOL
+#include <linux/if_vlan.h>
+static inline __be16 tc_skb_protocol(const struct sk_buff *skb)
+{
+	if (vlan_tx_tag_present(skb))
+		return skb->vlan_proto;
+	return skb->protocol;
+}
+#endif
+
+#ifdef HAVE_NET_IN_XT_ACTION_PARAM
+#define IPSET_DEV_NET(par)	(par)->net
+#else
+#define IPSET_DEV_NET(par)	dev_net((par)->in ? (par)->in : (par)->out)
 #endif
 
 #ifndef smp_mb__before_atomic

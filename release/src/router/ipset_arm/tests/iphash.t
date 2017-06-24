@@ -50,6 +50,8 @@
 0 ipset save test | sort > .foo.1
 # IP: Compare save and restore
 0 (sort iphash.t.large > .foo.2) && (cmp .foo.1 .foo.2)
+# IP: Delete all elements, one by one
+0 ipset list test | sed '1,/Members/d' | xargs -n1 ipset del test
 # IP: Delete test set
 0 ipset x test
 # Network: Create a set

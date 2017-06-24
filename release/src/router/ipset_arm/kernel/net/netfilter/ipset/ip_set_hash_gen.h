@@ -17,9 +17,7 @@
 #define ipset_dereference_protected(p, set) \
 	__ipset_dereference_protected(p, spin_is_locked(&(set)->lock))
 
-#ifndef rcu_dereference_bh_nfnl
-#define rcu_dereference_bh_nfnl(p, ss)	rcu_dereference_bh_check(p, 1)
-#endif
+#define rcu_dereference_bh_nfnl(p)	rcu_dereference_bh_check(p, 1)
 
 /* Hashing which uses arrays to resolve clashing. The hash table is resized
  * (doubled) when searching becomes too long.
@@ -435,11 +433,8 @@ mtype_gc_init(struct ip_set *set, void (*gc)(unsigned long ul_set))
 {
 	struct htype *h = set->data;
 
-	init_timer(&h->gc);
-	h->gc.data = (unsigned long)set;
-	h->gc.function = gc;
-	h->gc.expires = jiffies + IPSET_GC_PERIOD(set->timeout) * HZ;
-	add_timer(&h->gc);
+	setup_timer(&h->gc, gc, (unsigned long)set);
+	mod_timer(&h->gc, jiffies + IPSET_GC_PERIOD(set->timeout) * HZ);
 	pr_debug("gc initialized, run in every %u\n",
 		 IPSET_GC_PERIOD(set->timeout));
 }
@@ -573,7 +568,7 @@ mtype_resize(struct ip_set *set, bool retried)
 		return -ENOMEM;
 #endif
 	rcu_read_lock_bh();
-	orig = rcu_dereference_bh_nfnl(h->table, NFNL_SUBSYS_IPSET);
+	orig = rcu_dereference_bh_nfnl(h->table);
 	htable_bits = orig->htable_bits;
 	rcu_read_unlock_bh();
 
@@ -903,7 +898,7 @@ mtype_del(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 					continue;
 				data = ahash_data(n, j, dsize);
 				memcpy(tmp->value + k * dsize, data, dsize);
-				set_bit(j, tmp->used);
+				set_bit(k, tmp->used);
 				k++;
 			}
 			tmp->pos = k;
@@ -1054,7 +1049,7 @@ mtype_head(struct ip_set *set, struct sk_buff *skb)
 	u8 htable_bits;
 
 	rcu_read_lock_bh();
-	t = rcu_dereference_bh_nfnl(h->table, NFNL_SUBSYS_IPSET);
+	t = rcu_dereference_bh_nfnl(h->table);
 	memsize = mtype_ahash_memsize(h, t) + set->ext_size;
 	htable_bits = t->htable_bits;
 	rcu_read_unlock_bh();
@@ -1097,7 +1092,7 @@ mtype_uref(struct ip_set *set, struct netlink_callback *cb, bool start)
 
 	if (start) {
 		rcu_read_lock_bh();
-		t = rcu_dereference_bh_nfnl(h->table, NFNL_SUBSYS_IPSET);
+		t = rcu_dereference_bh_nfnl(h->table);
 		atomic_inc(&t->uref);
 		cb->args[IPSET_CB_PRIVATE] = (unsigned long)t;
 		rcu_read_unlock_bh();

@@ -1,11 +1,11 @@
 # MAC: Create a set with timeout
-0 ipset -N test machash --hashsize 128 timeout 5
+0 ipset -N test machash --hashsize 128 timeout 4
 # Range: Add zero valued element
 1 ipset -A test 0:0:0:0:0:0
 # Range: Test zero valued element
 1 ipset -T test 0:0:0:0:0:0
 # MAC: Add first random value
-0 ipset -A test 0:0:0:0:2:0 timeout 5
+0 ipset -A test 0:0:0:0:2:0 timeout 4
 # MAC: Add second random value
 0 ipset -A test 0:a:0:0:0:0 timeout 0
 # MAC: Test first random value

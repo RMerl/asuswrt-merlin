@@ -1,7 +1,7 @@
 #ifndef _IP_SET_COUNTER_H
 #define _IP_SET_COUNTER_H
 
-/* Copyright (C) 2015 Sergey Popovich <popovich_sergei@mail.ua>
+/* Copyright (C) 2015 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -53,10 +53,12 @@ ip_set_update_counter(struct ip_set_counter *counter,
 static inline bool
 ip_set_put_counter(struct sk_buff *skb, const struct ip_set_counter *counter)
 {
-	return nla_put_net64(skb, IPSET_ATTR_BYTES,
-			     cpu_to_be64(ip_set_get_bytes(counter))) ||
-	       nla_put_net64(skb, IPSET_ATTR_PACKETS,
-			     cpu_to_be64(ip_set_get_packets(counter)));
+	return IPSET_NLA_PUT_NET64(skb, IPSET_ATTR_BYTES,
+				   cpu_to_be64(ip_set_get_bytes(counter)),
+				   IPSET_ATTR_PAD) ||
+	       IPSET_NLA_PUT_NET64(skb, IPSET_ATTR_PACKETS,
+				   cpu_to_be64(ip_set_get_packets(counter)),
+				   IPSET_ATTR_PAD);
 }
 
 static inline void

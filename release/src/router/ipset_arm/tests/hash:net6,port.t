@@ -1,5 +1,5 @@
 # Create a set with timeout
-0 ipset create test hash:net,port family inet6 hashsize 128 timeout 5
+0 ipset create test hash:net,port family inet6 hashsize 128 timeout 4
 # Add zero valued element
 1 ipset add test ::/0,tcp:8
 # Test zero valued element

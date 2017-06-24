@@ -1,9 +1,9 @@
 Name: test
 Type: hash:ip
 Header: family inet hashsize 1024 maxelem 65536 timeout x comment
-Size in memory: 98256
+Size in memory: 57634
 References: 0
-Number of entries: 512
+Number of entries: 256
 Members:
 2.0.1.0 timeout x comment "text message 0"
 2.0.1.1 timeout x comment "text message 1"

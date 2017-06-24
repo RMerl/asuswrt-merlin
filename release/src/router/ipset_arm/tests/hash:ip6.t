@@ -1,5 +1,5 @@
 # IP: Create a set with timeout
-0 ipset -N test iphash -6 --hashsize 128 timeout 5
+0 ipset -N test iphash -6 --hashsize 128 timeout 4
 # IP: Add zero valued element
 1 ipset -A test ::
 # IP: Test zero valued element
@@ -7,7 +7,7 @@
 # IP: Delete zero valued element
 1 ipset -D test ::
 # IP: Add first random value
-0 ipset -A test 2:0:0::1 timeout 5
+0 ipset -A test 2:0:0::1 timeout 4
 # IP: Add second random value
 0 ipset -A test 192:168:68::69 timeout 0
 # IP: Test first random value
@@ -47,7 +47,7 @@
 # IP: Delete test set
 0 ipset -X test
 # Network: Create a set with timeout
-0 ipset -N test iphash -6 --hashsize 128 --netmask 64 timeout 5
+0 ipset -N test iphash -6 --hashsize 128 --netmask 64 timeout 4
 # Network: Add zero valued element
 1 ipset -A test ::
 # Network: Test zero valued element

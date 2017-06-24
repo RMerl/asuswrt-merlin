@@ -551,6 +551,28 @@ ipset add foo 01:02:03:04:05:06
 .IP
 ipset test foo 01:02:03:04:05:06
 
+.SS hash:ip,mac
+The \fBhash:ip,mac\fR set type uses a hash to store IP and a MAC address pairs. Zero valued MAC addresses cannot be stored in a \fBhash:ip,mac\fR
+type of set.
+.PP
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ] [ \fBcomment\fP ] [ \fBskbinfo\fP ]
+.PP
+\fIADD\-ENTRY\fR := \fIipaddr\fR,\fImacaddr\fR
+.PP
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ] [ \fBcomment\fR \fIstring\fR ] [ \fBskbmark\fR \fIvalue\fR ] [ \fBskbprio\fR \fIvalue\fR ] [ \fBskbqueue\fR \fIvalue\fR ]
+.PP
+\fIDEL\-ENTRY\fR := \fIipaddr\fR,\fImacaddr\fR
+.PP
+\fITEST\-ENTRY\fR := \fIipaddr\fR,\fImacaddr\fR
+.PP
+Examples:
+.IP
+ipset create foo hash:ip,mac
+.IP
+ipset add foo 1.1.1.1,01:02:03:04:05:06
+.IP
+ipset test foo 1.1.1.1,01:02:03:04:05:06
+
 .SS hash:net
 The \fBhash:net\fR set type uses a hash to store different sized IP network addresses.
 Network address with zero prefix size cannot be stored in this type of sets.
@@ -998,7 +1020,8 @@ set names.
 Optional \fBcreate\fR options:
 .TP 
 \fBsize\fR \fIvalue\fR
-The size of the list, the default is 8.
+The size of the list, the default is 8. The parameter is ignored since ipset
+version 6.24.
 .PP
 By the \fBipset\fR command you  can add, delete and test set names in a
 \fBlist:set\fR type of set.

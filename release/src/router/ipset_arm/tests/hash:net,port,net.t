@@ -1,5 +1,5 @@
 # Create a set with timeout
-0 ipset create test hash:net,port,net timeout 5
+0 ipset create test hash:net,port,net timeout 4
 # Add partly zero valued element
 0 ipset add test 2.0.0.1/24,0,192.168.0.0/24
 # Test partly zero valued element

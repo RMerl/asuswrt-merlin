@@ -452,7 +452,7 @@ ipset_type_check(struct ipset_session *session)
 	if (!match)
 		return ipset_errptr(session,
 			     "Kernel and userspace incompatible: "
-			     "settype %s with revision %u not supported ",
+			     "settype %s with revision %u not supported "
 			     "by userspace.", typename, revision);
 
 	set_family_and_type(data, match, family);

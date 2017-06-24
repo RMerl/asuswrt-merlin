@@ -1,5 +1,5 @@
 # Create a set with timeout
-0 ipset create test nethash hashsize 128 timeout 5
+0 ipset create test nethash hashsize 128 timeout 4
 # Add zero valued element
 1 ipset add test 0.0.0.0/0
 # Test zero valued element

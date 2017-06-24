@@ -1,8 +1,8 @@
 Name: test
 Type: hash:ip
-Header: family inet6 hashsize 128 maxelem 65536 timeout 5
-Size in memory: 512
+Header: family inet6 hashsize 128 maxelem 65536 timeout 4
+Size in memory: 416
 References: 0
-Number of entries: 2
+Number of entries: 1
 Members:
 192:168:68::69 timeout 0

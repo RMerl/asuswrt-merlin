@@ -199,10 +199,10 @@ static bool
 set_match_v3(const struct sk_buff *skb, CONST struct xt_action_param *par)
 {
 	const struct xt_set_info_match_v3 *info = par->matchinfo;
+	int ret;
 
 	ADT_OPT(opt, par->family, info->match_set.dim,
 		info->match_set.flags, info->flags, UINT_MAX);
-	int ret;
 
 	if (info->packets.op != IPSET_COUNTER_NONE ||
 	    info->bytes.op != IPSET_COUNTER_NONE)
@@ -246,10 +246,10 @@ static bool
 set_match_v4(const struct sk_buff *skb, CONST struct xt_action_param *par)
 {
 	const struct xt_set_info_match_v4 *info = par->matchinfo;
+	int ret;
 
 	ADT_OPT(opt, par->family, info->match_set.dim,
 		info->match_set.flags, info->flags, UINT_MAX);
-	int ret;
 
 	if (info->packets.op != IPSET_COUNTER_NONE ||
 	    info->bytes.op != IPSET_COUNTER_NONE)
@@ -466,6 +466,7 @@ static unsigned int
 set_target_v3(struct sk_buff *skb, const struct xt_action_param *par)
 {
 	const struct xt_set_info_target_v3 *info = par->targinfo;
+	int ret;
 
 	ADT_OPT(add_opt, par->family, info->add_set.dim,
 		info->add_set.flags, info->flags, info->timeout);
@@ -473,8 +474,6 @@ set_target_v3(struct sk_buff *skb, const struct xt_action_param *par)
 		info->del_set.flags, 0, UINT_MAX);
 	ADT_OPT(map_opt, par->family, info->map_set.dim,
 		info->map_set.flags, 0, UINT_MAX);
-
-	int ret;
 
 	/* Normalize to fit into jiffies */
 	if (add_opt.ext.timeout != IPSET_NO_TIMEOUT &&

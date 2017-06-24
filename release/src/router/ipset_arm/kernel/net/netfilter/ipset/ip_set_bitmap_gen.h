@@ -41,11 +41,8 @@ mtype_gc_init(struct ip_set *set, void (*gc)(unsigned long ul_set))
 {
 	struct mtype *map = set->data;
 
-	init_timer(&map->gc);
-	map->gc.data = (unsigned long)set;
-	map->gc.function = gc;
-	map->gc.expires = jiffies + IPSET_GC_PERIOD(set->timeout) * HZ;
-	add_timer(&map->gc);
+	setup_timer(&map->gc, gc, (unsigned long)set);
+	mod_timer(&map->gc, jiffies + IPSET_GC_PERIOD(set->timeout) * HZ);
 }
 
 static void
@@ -89,9 +86,12 @@ mtype_flush(struct ip_set *set)
 
 /* Calculate the actual memory size of the set data */
 static size_t
-mtype_memsize(const struct mtype *map)
+mtype_memsize(const struct mtype *map, size_t dsize)
 {
-	return sizeof(*map) + map->memsize;
+	size_t memsize = sizeof(*map) +
+			 map->memsize +
+			 map->elements * dsize;
+	return memsize;
 }
 
 static int
@@ -99,7 +99,7 @@ mtype_head(struct ip_set *set, struct sk_buff *skb)
 {
 	const struct mtype *map = set->data;
 	struct nlattr *nested;
-	size_t memsize = mtype_memsize(map) + set->ext_size;
+	size_t memsize = mtype_memsize(map, set->dsize) + set->ext_size;
 
 	nested = ipset_nest_start(skb, IPSET_ATTR_DATA);
 	if (!nested)

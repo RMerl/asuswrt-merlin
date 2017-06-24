@@ -1,5 +1,5 @@
 dnl Boilerplate
-AC_INIT([ipset], [6.29], [kadlec@blackhole.kfki.hu])
+AC_INIT([ipset], [6.32], [kadlec@blackhole.kfki.hu])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
@@ -250,6 +250,16 @@ else
 	AC_SUBST(HAVE_NLA_PUT_BE64, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for nla_put_64bit])
+if test -f $ksourcedir/include/net/netlink.h && \
+   $GREP -q 'nla_put_64bit' $ksourcedir/include/net/netlink.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_NLA_PUT_64BIT, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_NLA_PUT_64BIT, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for portid in nl_info])
 if test -f $ksourcedir/include/linux/netlink.h && \
    $AWK '/^struct netlink_skb_parms/ {for(i=1; i<=5; i++) {getline; print}}' $ksourcedir/include/linux/netlink.h | $GREP -q 'portid;'; then
@@ -477,6 +487,27 @@ else
 	AC_SUBST(HAVE_EXPORT_SYMBOL_GPL_IN_MODULE_H, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for tc_skb_protocol in pkt_sched.h])
+if test -f $ksourcedir/include/net/pkt_sched.h && \
+   $GREP -q 'tc_skb_protocol' $ksourcedir/include/net/pkt_sched.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_TC_SKB_PROTOCOL, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_TC_SKB_PROTOCOL, undef)
+fi
+
+AC_MSG_CHECKING([kernel source for struct net in struct xt_action_param])
+if test -f $ksourcedir/include/linux/netfilter/x_tables.h && \
+   $AWK '/^struct xt_action_param / {for(i=1; i<=8; i++) {getline; print}}' $ksourcedir/include/linux/netfilter/x_tables.h | \
+   $GREP -q 'struct net '; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_NET_IN_XT_ACTION_PARAM, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_NET_IN_XT_ACTION_PARAM, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for struct net_generic])
 if test -f $ksourcedir/include/net/netns/generic.h && \
    $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then
@@ -560,7 +591,7 @@ elif echo $SETTYPE_MODLIST | grep "all" >/dev/null; then
 	done
 else
 	for mod in $IPSET_ALL_MODULES; do
-		if echo $SETTYPE_MODLIST | grep $mod >/dev/null; then
+		if echo $SETTYPE_MODLIST | grep -w "$mod" >/dev/null; then
 			:
 		else
 			AC_MSG_RESULT([        ${mod}])
@@ -568,7 +599,7 @@ else
 	done
 	AC_MSG_RESULT([    Dynamic modules:])
 	for mod in $IPSET_ALL_MODULES; do
-		if echo $SETTYPE_MODLIST | grep $mod >/dev/null; then
+		if echo $SETTYPE_MODLIST | grep -w "$mod" >/dev/null; then
 			AC_MSG_RESULT([        ${mod}])
 		fi
 	done

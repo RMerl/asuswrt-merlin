@@ -1,7 +1,7 @@
 #ifndef _IP_SET_SKBINFO_H
 #define _IP_SET_SKBINFO_H
 
-/* Copyright (C) 2015 Sergey Popovich <popovich_sergei@mail.ua>
+/* Copyright (C) 2015 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -23,9 +23,10 @@ ip_set_put_skbinfo(struct sk_buff *skb, const struct ip_set_skbinfo *skbinfo)
 {
 	/* Send nonzero parameters only */
 	return ((skbinfo->skbmark || skbinfo->skbmarkmask) &&
-		nla_put_net64(skb, IPSET_ATTR_SKBMARK,
-			      cpu_to_be64((u64)skbinfo->skbmark << 32 |
-					  skbinfo->skbmarkmask))) ||
+		IPSET_NLA_PUT_NET64(skb, IPSET_ATTR_SKBMARK,
+				    cpu_to_be64((u64)skbinfo->skbmark << 32 |
+						skbinfo->skbmarkmask),
+				    IPSET_ATTR_PAD)) ||
 	       (skbinfo->skbprio &&
 		nla_put_net32(skb, IPSET_ATTR_SKBPRIO,
 			      cpu_to_be32(skbinfo->skbprio))) ||

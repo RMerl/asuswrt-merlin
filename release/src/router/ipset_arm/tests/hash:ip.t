@@ -1,11 +1,11 @@
 # IP: Create a set with timeout
-0 ipset -N test iphash --hashsize 128 timeout 5
+0 ipset -N test iphash --hashsize 128 timeout 4
 # Range: Add zero valued element
 1 ipset -A test 0.0.0.0
 # Range: Test zero valued element
 1 ipset -T test 0.0.0.0
 # IP: Add first random value
-0 ipset -A test 2.0.0.1 timeout 5
+0 ipset -A test 2.0.0.1 timeout 4
 # IP: Add second random value
 0 ipset -A test 192.168.68.69 timeout 0
 # IP: Test first random value
@@ -41,7 +41,7 @@
 # IP: Delete test set
 0 ipset -X test
 # IP: Restore values so that rehashing is triggered
-0 sed 's/hashsize 128/hashsize 128 timeout 5/' iphash.t.restore | ipset -R
+0 sed 's/hashsize 128/hashsize 128 timeout 4/' iphash.t.restore | ipset -R
 # IP: Check that the values are restored
 0 test `ipset -S test| grep add| wc -l` -eq 129
 # Sleep 5s so that elements can time out
@@ -73,7 +73,7 @@
 # IP: Destroy sets
 0 ipset -X
 # Network: Create a set with timeout
-0 ipset -N test iphash --hashsize 128 --netmask 24 timeout 5
+0 ipset -N test iphash --hashsize 128 --netmask 24 timeout 4
 # Network: Add zero valued element
 1 ipset -A test 0.0.0.0
 # Network: Test zero valued element

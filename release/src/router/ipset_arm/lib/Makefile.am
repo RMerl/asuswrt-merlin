@@ -14,6 +14,7 @@ IPSET_SETTYPE_LIST = \
 	ipset_hash_netportnet.c \
 	ipset_hash_netport.c \
 	ipset_hash_netiface.c \
+	ipset_hash_ipmac.c \
 	ipset_hash_mac.c \
 	ipset_list_set.c
 

@@ -31,7 +31,7 @@
 #define SNPRINTF_FAILURE(size, len, offset)			\
 do {								\
 	if (size < 0 || (unsigned int) size >= len)		\
-		return size;					\
+		return offset + size;				\
 	offset += size;						\
 	len -= size;						\
 } while (0)

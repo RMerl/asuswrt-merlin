@@ -81,7 +81,7 @@
 # Check listing
 0 diff -u -I 'Size in memory.*' .foo setlist.t.list3
 # List all sets
-0 ipset list | grep -v Revision: > .foo
+0 sleep .1s; ipset list | grep -v Revision: > .foo
 # Check listing
 0 diff -u -I 'Size in memory.*' .foo setlist.t.list4
 # Flush sets
@@ -103,7 +103,7 @@
 # Delete set from the set
 0 ipset del test a
 # Check reference number of deleted set
-0 ref=`ipset list a | grep References | sed 's/References: //'` && test $ref -eq 0
+0 ref=`sleep .1s; ipset list a | grep References | sed 's/References: //'` && test $ref -eq 0
 # Add element to set a
 0 ipset add a 1.1.1.1
 # Swap sets

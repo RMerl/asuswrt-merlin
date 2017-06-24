@@ -142,6 +142,13 @@ hash_netportnet4_data_next(struct hash_netportnet4_elem *next,
 #define HOST_MASK	32
 #include "ip_set_hash_gen.h"
 
+static void
+hash_netportnet4_init(struct hash_netportnet4_elem *e)
+{
+	e->cidr[0] = HOST_MASK;
+	e->cidr[1] = HOST_MASK;
+}
+
 static int
 hash_netportnet4_kadt(struct ip_set *set, const struct sk_buff *skb,
 		      const struct xt_action_param *par,
@@ -182,12 +189,10 @@ hash_netportnet4_uadt(struct ip_set *set, struct nlattr *tb[],
 	bool with_ports = false;
 	int ret;
 
-	e.cidr[0] = HOST_MASK;		/* gcc-4.4.4 has initializer issues */
-	e.cidr[1] = HOST_MASK;
-
 	if (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
+	hash_netportnet4_init(&e);
 	if (unlikely(!tb[IPSET_ATTR_IP] || !tb[IPSET_ATTR_IP2] ||
 		     !ip_set_attr_netorder(tb, IPSET_ATTR_PORT) ||
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_PORT_TO) ||
@@ -415,6 +420,13 @@ hash_netportnet6_data_next(struct hash_netportnet6_elem *next,
 #define IP_SET_EMIT_CREATE
 #include "ip_set_hash_gen.h"
 
+static void
+hash_netportnet6_init(struct hash_netportnet6_elem *e)
+{
+	e->cidr[0] = HOST_MASK;
+	e->cidr[1] = HOST_MASK;
+}
+
 static int
 hash_netportnet6_kadt(struct ip_set *set, const struct sk_buff *skb,
 		      const struct xt_action_param *par,
@@ -454,12 +466,10 @@ hash_netportnet6_uadt(struct ip_set *set, struct nlattr *tb[],
 	bool with_ports = false;
 	int ret;
 
-	e.cidr[0] = HOST_MASK;		/* gcc-4.4.4 has initializer issues */
-	e.cidr[1] = HOST_MASK;
-
 	if (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
+	hash_netportnet6_init(&e);
 	if (unlikely(!tb[IPSET_ATTR_IP] || !tb[IPSET_ATTR_IP2] ||
 		     !ip_set_attr_netorder(tb, IPSET_ATTR_PORT) ||
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_PORT_TO) ||
