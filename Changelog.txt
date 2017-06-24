@@ -16,7 +16,8 @@ Asuswrt-Merlin Changelog
              page.
   - CHANGED: Updated minidlna to 1.2.0.
   - CHANGED: Updated nano to 2.8.4.
-  - CHANGED: Updated openssl to 1.0.2l
+  - CHANGED: Updated openssl to 1.0.2l.
+  - CHANGED: Updated ipset (ARM) to 6.32.
   - CHANGED: Upgraded from vsftpd 2.0.4 to 3.0.3.  You might need to
              revise any custom configuration you have done (if any).
   - CHANGED: Moved SMB2 support switch to the main samba page.
