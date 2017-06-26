@@ -66,7 +66,6 @@ start_wpa_supplicant(int unit, int restart)
 		"fast_reauth=1\n"
 		"network={\n"
 		"	key_mgmt=IEEE8021X\n"
-		"	eap=MD5\n"
 		"	identity=\"%s\"\n"
 		"	password=\"%s\"\n"
 		"	eapol_flags=0\n"

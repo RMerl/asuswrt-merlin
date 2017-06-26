@@ -2622,7 +2622,8 @@ gctwimax-0.0.3rc4-clean:
 	@rm -f gctwimax-0.0.3rc4/stamp-h1
 
 wpa_supplicant:
-	$(MAKE) -C $@/wpa_supplicant EXTRACFLAGS="-Os $(EXTRACFLAGS)"
+	$(MAKE) -C $@/wpa_supplicant EXTRACFLAGS="-Os -I$(TOP)/openssl/include -L$(TOP)/openssl $(EXTRACFLAGS)" \
+	LDFLAGS="-L$(TOP)/openssl"
 
 wpa_supplicant-install: wpa_supplicant
 	install -D wpa_supplicant/wpa_supplicant/wpa_supplicant $(INSTALLDIR)/wpa_supplicant/usr/sbin/wpa_supplicant
