@@ -3,8 +3,8 @@ Asuswrt-Merlin Changelog
 
 380.67 Beta (xx-xxx-2017)
   - NEW: Merged with GPL 380_7743 code , with binary blobs from:
-           * 7378 for N66U, AC66U, AC87U, AC3200
-           * 7743 for AC56U, AC68U, AC88U, AC3100, AC5300
+           * 7378 for N66U, AC87U
+           * 7743 for all others
   - NEW: Custom config support for quagga/ripd.
   - NEW: Webui SSL certificate can now be saved so it gets reused
          instead of a new one being constantly generated.  It will
@@ -12,6 +12,8 @@ Asuswrt-Merlin Changelog
          your own by storing cert.pem and key.pem in that location.
          Settings to control this can be found under
          Administration -> System.
+  - NEW: PEAP/MSCHAPv2 support via 802.1x on WAN interface, in
+         addition to existing MD5 support (patch by Rafi Khardalian)
   - CHANGED: Remember chosen sort method on DHCP static reservations
              page.
   - CHANGED: Updated minidlna to 1.2.0.
@@ -38,6 +40,8 @@ Asuswrt-Merlin Changelog
            is larger than 1800px (patch by Cyrus Dargahi)
   - FIXED: UPNP and SNMP issues in Dual WAN mode.
   - FIXED: NAT Loopback (merlin mode) in Dual WAN mode wasn't supported.
+  - FIXED: Internal and external port specifications were swapped in
+           miniupnpd's config file (Asus/Tomato bug)
 
 
 380.66_6 (22-June-2017)
