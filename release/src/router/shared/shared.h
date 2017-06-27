@@ -317,7 +317,7 @@ enum {
 	MODEL_RTAC55UHP,
 	MODEL_RT4GAC55U,
 // Need binary blobs from 76xx or newer
-#if defined(RTAC56U) || defined(RTAC68U) || defined(RTAC88U) || defined(RTAC3100) || defined(RTAC5300)
+#if !defined(RTN66U) && !defined(RTAC87U)
 	MODEL_PLN11,
 #endif
 	MODEL_PLN12,
