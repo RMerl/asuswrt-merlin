@@ -45,6 +45,7 @@
 #include <linux/stddef.h>
 #include <linux/device.h>
 #include <linux/mutex.h>
+#include <asm/unaligned.h>
 #include <net/slhc_vj.h>
 #include <asm/atomic.h>
 
@@ -70,6 +71,12 @@
 #define MPHDRLEN	6	/* multilink protocol header length */
 #define MPHDRLEN_SSN	4	/* ditto with short sequence numbers */
 #define MIN_FRAG_SIZE	64
+
+#define LCP_ECHO_DEBUG
+#define LCP_CONF_ACK	2	/* PPP LCP configure acknowledge */
+#define LCP_ECHO_REQ	9	/* PPP LCP echo request */
+#define LCP_ECHO_REPLY	10	/* PPP LCP echo reply */
+#define LCP_OPT_MAGIC	5	/* magic number */
 
 /*
  * An instance of /dev/ppp can be associated with either a ppp
@@ -176,6 +183,7 @@ struct channel {
 	u8		had_frag;	/* >= 1 fragments have been sent */
 	u32		lastseq;	/* MP: last sequence # received */
 #endif /* CONFIG_PPP_MULTILINK */
+	__be32		magic;		/* channel magic number */
 };
 
 /*
@@ -1546,6 +1554,72 @@ ppp_input(struct ppp_channel *chan, struct sk_buff *skb)
 	}
 
 	proto = PPP_PROTO(skb);
+
+	/* lcp echo snooping */
+	if (proto == PPP_LCP && pskb_may_pull(skb, 6)) {
+		unsigned char *opt, *lcp = skb->data + 2;
+		int len;
+		__be32 magic;
+
+		switch (lcp[0]) {
+		case LCP_ECHO_REQ:
+			len = get_unaligned_be16(lcp + 2) - 4;
+			if (len < sizeof(__be32) || !pskb_may_pull(skb, 6 + len))
+				break;
+			magic = get_unaligned((__be32 *)(lcp + 4));
+#ifdef LCP_ECHO_DEBUG
+			if (!pch->ppp || pch->ppp->debug & 1) {
+				printk(KERN_DEBUG "PPP: rcvd "
+				       "[LCP EchoReq id=0x%d <magic 0x%x>]\n",
+				       lcp[1], be32_to_cpu(magic));
+			}
+#endif
+			if (pch->magic && pch->magic == magic)
+				break;
+			spin_lock_bh(&pch->downl);
+			if (!pch->chan || !pch->ppp) {
+				spin_unlock_bh(&pch->downl);
+				break;
+			}
+			lcp[0] = LCP_ECHO_REPLY;
+			put_unaligned(pch->magic, (__be32 *)(lcp + 4));
+			if (!pch->chan->ops->start_xmit(pch->chan, skb))
+				skb_queue_head(&pch->file.xq, skb);
+			spin_unlock_bh(&pch->downl);
+#ifdef LCP_ECHO_DEBUG
+			if (!pch->ppp || pch->ppp->debug & 1) {
+				printk(KERN_DEBUG "PPP: sent "
+				       "[LCP EchoRep id=0x%d <magic 0x%x>]\n",
+				       lcp[1], be32_to_cpu(pch->magic));
+			}
+#endif
+			goto done;
+
+		case LCP_CONF_ACK:
+			len = get_unaligned_be16(lcp + 2) - 4;
+			if (len < 2 + sizeof(__be32) || !pskb_may_pull(skb, 6 + len))
+				break;
+			opt = lcp + 4;
+			while (len >= 2 && opt[1] <= len) {
+				if (opt[0] == LCP_OPT_MAGIC &&
+				    opt[1] >= 2 + sizeof(__be32)) {
+					pch->magic = get_unaligned((__be32 *)(opt + 2));
+#ifdef LCP_ECHO_DEBUG
+					if (!pch->ppp || pch->ppp->debug & 1) {
+						printk(KERN_DEBUG "PPP: rcvd "
+						       "[LCP ConfAck id=0x%d <magic 0x%x>]\n",
+						       lcp[1], be32_to_cpu(pch->magic));
+					}
+#endif
+					break;
+				}
+				len -= opt[1];
+				opt += opt[1];
+			}
+			break;
+		}
+	}
+
 	if (pch->ppp == 0 || proto >= 0xc000 || proto == PPP_CCPFRAG) {
 		/* put it on the channel queue */
 		skb_queue_tail(&pch->file.rq, skb);
