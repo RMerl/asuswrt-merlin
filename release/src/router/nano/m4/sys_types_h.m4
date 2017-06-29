@@ -1,4 +1,4 @@
-# sys_types_h.m4 serial 7
+# sys_types_h.m4 serial 8
 dnl Copyright (C) 2011-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -6,6 +6,9 @@ dnl with or without modifications, as long as this notice is preserved.
 
 AC_DEFUN_ONCE([gl_SYS_TYPES_H],
 [
+  dnl Use sane struct stat types in OpenVMS 8.2 and later.
+  AC_DEFINE([_USE_STD_STAT], 1, [For standard stat data types on VMS.])
+
   AC_REQUIRE([gl_SYS_TYPES_H_DEFAULTS])
   gl_NEXT_HEADERS([sys/types.h])
 

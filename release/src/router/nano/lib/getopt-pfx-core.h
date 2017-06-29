@@ -47,6 +47,11 @@
 # define opterr __GETOPT_ID (opterr)
 # define optind __GETOPT_ID (optind)
 # define optopt __GETOPT_ID (optopt)
+
+/* The system's getopt.h may have already included getopt-core.h to
+   declare the unprefixed identifiers.  Undef _GETOPT_CORE_H so that
+   getopt-core.h declares them with prefixes.  */
+# undef _GETOPT_CORE_H
 #endif
 
 #include <getopt-core.h>

@@ -1,3 +1,44 @@
+Changes between v2.8.4 and v2.8.5:
+----------------------------------
+
+Benno Schulenberg (35):
+      bindings: in the tiny version exclude word jumping from the prompts
+      bump version numbers and add a news item for the 2.8.5 release
+      display: don't let a SIGCONT write anything to the screen
+      display: don't show the cursor while we are busy calculating its position
+      display: redraw title bar and edit window only when needed
+      display: show the cursor position also when searching took a while
+      docs: avoid a double "see" for cross references in the HTML manual
+      docs: spell "title bar" and "status bar" correctly
+      gnulib: update to its current state
+      input: give an appropriate message when there are too many errors
+      startup: allow negative line and column numbers on the command line
+      startup: allow positioning the cursor also when reading standard input
+      startup: always open with the file that was mentioned first
+      startup: don't crash when opening standard input would fail
+      startup: don't mark the buffer as modified when in view mode
+      startup: don't mark the buffer as modified when nothing was read
+      startup: don't try placing the cursor when reading standard input failed
+      startup: don't use position history when reading from standard input
+      suspension: fake a SIGWINCH when coming back out of the background
+      suspension: remove a duplicate setting of the HUP and TERM handler
+      syntax: default: allow leading whitespace before a hash comment
+      tweaks: adjust indentation after preceding changes
+      tweaks: avoid compiler warning about implicit type
+      tweaks: be consistent in the spelling of title bar and status bar
+      tweaks: don't bother calculating the position when we won't show it
+      tweaks: elide a function that should not be a separate one
+      tweaks: elide a variable
+      tweaks: frob a few comments, and elide and #ifndef
+      tweaks: reduce the scope of three variables, and rename them besides
+      tweaks: reduce the scope of two variables, and rename them too
+      tweaks: rename a function and a variable, to better match what they do
+      tweaks: rename a variable, and frob a couple of comments
+      tweaks: rename two functions and a variable, and invert its logic
+      tweaks: reshuffle some stuff, to put related things closer together
+      tweaks: unglobalize the nodelay_mode variable
+
+
 Changes between v2.8.3 and v2.8.4:
 ----------------------------------
 

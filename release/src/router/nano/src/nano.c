@@ -59,6 +59,9 @@ static struct termios oldterm;
 static struct sigaction act;
 	/* Used to set up all our fun signal handlers. */
 
+static bool input_was_aborted = FALSE;
+	/* Whether reading from standard input was aborted via ^C. */
+
 /* Create a new linestruct node.  Note that we do not set prevnode->next
  * to the new line. */
 filestruct *make_new_node(filestruct *prevnode)
@@ -1100,54 +1103,26 @@ void do_cancel(void)
     ;
 }
 
-static struct sigaction pager_oldaction, pager_newaction;
+/* Make a note that reading from stdin was concluded with ^C. */
+RETSIGTYPE make_a_note(int signal)
+{
+    input_was_aborted = TRUE;
+}
+
+/* Read whatever comes from standard input into a new buffer. */
+bool scoop_stdin(void)
+{
+    struct sigaction oldaction, newaction;
 	/* Original and temporary handlers for SIGINT. */
-static bool pager_sig_failed = FALSE;
-	/* Did sigaction() fail without changing the signal handlers? */
-static bool pager_input_aborted = FALSE;
-	/* Did someone invoke the pager and abort it via ^C? */
+    bool setup_failed = FALSE;
+	/* Whether setting up the SIGINT handler failed. */
+    FILE *stream;
+    int thetty;
 
-/* Things which need to be run regardless of whether
- * we finished the stdin pipe correctly or not. */
-void finish_stdin_pager(void)
-{
-    FILE *f;
-    int ttystdin;
-
-    /* Read whatever we did get from stdin. */
-    f = fopen("/dev/stdin", "rb");
-    if (f == NULL)
-	nperror("fopen");
-
-    read_file(f, 0, "stdin", TRUE, FALSE);
-    openfile->edittop = openfile->fileage;
-
-    ttystdin = open("/dev/tty", O_RDONLY);
-    if (!ttystdin)
-	die(_("Couldn't reopen stdin from keyboard, sorry\n"));
-
-    dup2(ttystdin,0);
-    close(ttystdin);
-    if (!pager_input_aborted)
-	tcgetattr(0, &oldterm);
-    if (!pager_sig_failed && sigaction(SIGINT, &pager_oldaction, NULL) == -1)
-	nperror("sigaction");
-    terminal_init();
-    doupdate();
-}
-
-/* Cancel reading from stdin like a pager. */
-RETSIGTYPE cancel_stdin_pager(int signal)
-{
-    pager_input_aborted = TRUE;
-}
-
-/* Let nano read stdin for the first file at least. */
-void stdin_pager(void)
-{
+    /* Exit from curses mode and put the terminal into its original state. */
     endwin();
-    if (!pager_input_aborted)
-	tcsetattr(0, TCSANOW, &oldterm);
+    tcsetattr(0, TCSANOW, &oldterm);
+
     fprintf(stderr, _("Reading from stdin, ^C to abort\n"));
 
 #ifndef NANO_TINY
@@ -1156,23 +1131,59 @@ void stdin_pager(void)
     enable_signals();
 #endif
 
-    /* Set things up so that SIGINT will cancel the new process. */
-    if (sigaction(SIGINT, NULL, &pager_newaction) == -1) {
-	pager_sig_failed = TRUE;
+    /* Set things up so that SIGINT will cancel the reading. */
+    if (sigaction(SIGINT, NULL, &newaction) == -1) {
+	setup_failed = TRUE;
 	nperror("sigaction");
     } else {
-	pager_newaction.sa_handler = cancel_stdin_pager;
-	if (sigaction(SIGINT, &pager_newaction, &pager_oldaction) == -1) {
-	    pager_sig_failed = TRUE;
+	newaction.sa_handler = make_a_note;
+	if (sigaction(SIGINT, &newaction, &oldaction) == -1) {
+	    setup_failed = TRUE;
 	    nperror("sigaction");
 	}
     }
 
+    /* Open standard input. */
+    stream = fopen("/dev/stdin", "rb");
+    if (stream == NULL) {
+	int errnumber = errno;
+
+	terminal_init();
+	doupdate();
+	statusline(ALERT, _("Failed to open stdin: %s"), strerror(errnumber));
+	return FALSE;
+    }
+
+    /* Read the input into a new buffer. */
     open_buffer("", FALSE);
-    finish_stdin_pager();
+    read_file(stream, 0, "stdin", TRUE, FALSE);
+    openfile->edittop = openfile->fileage;
+
+    /* Reconnect the tty as the input source. */
+    thetty = open("/dev/tty", O_RDONLY);
+    if (!thetty)
+	die(_("Couldn't reopen stdin from keyboard, sorry\n"));
+    dup2(thetty, 0);
+    close(thetty);
+
+    /* If things went well, store the current state of the terminal. */
+    if (!input_was_aborted)
+	tcgetattr(0, &oldterm);
+
+    /* If it was changed, restore the handler for SIGINT. */
+    if (!setup_failed && sigaction(SIGINT, &oldaction, NULL) == -1)
+	nperror("sigaction");
+
+    terminal_init();
+    doupdate();
+
+    if (!ISSET(VIEW_MODE) && openfile->totsize > 0)
+	set_modified();
+
+    return TRUE;
 }
 
-/* Initialize the signal handlers. */
+/* Register half a dozen signal handlers. */
 void signal_init(void)
 {
     /* Trap SIGINT and SIGQUIT because we want them to do useful things. */
@@ -1196,25 +1207,23 @@ void signal_init(void)
     sigaction(SIGWINCH, &act, NULL);
 #endif
 
-    /* Trap normal suspend (^Z) so we can handle it ourselves. */
-    if (!ISSET(SUSPEND)) {
-	act.sa_handler = SIG_IGN;
-#ifdef SIGTSTP
-	sigaction(SIGTSTP, &act, NULL);
-#endif
-    } else {
+    if (ISSET(SUSPEND)) {
 	/* Block all other signals in the suspend and continue handlers.
 	 * If we don't do this, other stuff interrupts them! */
 	sigfillset(&act.sa_mask);
-
-	act.sa_handler = do_suspend;
 #ifdef SIGTSTP
+	/* Trap a normal suspend (^Z) so we can handle it ourselves. */
+	act.sa_handler = do_suspend;
 	sigaction(SIGTSTP, &act, NULL);
 #endif
-
-	act.sa_handler = do_continue;
 #ifdef SIGCONT
+	act.sa_handler = do_continue;
 	sigaction(SIGCONT, &act, NULL);
+#endif
+    } else {
+#ifdef SIGTSTP
+	act.sa_handler = SIG_IGN;
+	sigaction(SIGTSTP, &act, NULL);
 #endif
     }
 }
@@ -1243,21 +1252,13 @@ RETSIGTYPE do_suspend(int signal)
     /* Restore the old terminal settings. */
     tcsetattr(0, TCSANOW, &oldterm);
 
-    /* Trap SIGHUP and SIGTERM so we can properly deal with them while
-     * suspended. */
-    act.sa_handler = handle_hupterm;
-#ifdef SIGHUP
-    sigaction(SIGHUP, &act, NULL);
-#endif
-    sigaction(SIGTERM, &act, NULL);
-
-    /* Do what mutt does: send ourselves a SIGSTOP. */
 #ifdef SIGSTOP
+    /* Do what mutt does: send ourselves a SIGSTOP. */
     kill(0, SIGSTOP);
 #endif
 }
 
-/* The version of above function that is bound to a key. */
+/* Put nano to sleep (if suspension is enabled). */
 void do_suspend_void(void)
 {
     if (ISSET(SUSPEND))
@@ -1277,14 +1278,14 @@ RETSIGTYPE do_continue(int signal)
 #endif
 
 #ifndef NANO_TINY
-    /* Perhaps the user resized the window while we slept.  So act as if,
-     * and restore the terminal to its previous state in the process. */
-    regenerate_screen();
+    /* Perhaps the user resized the window while we slept. */
+    the_window_resized = TRUE;
 #else
-    /* Restore the state of the terminal and redraw the whole screen. */
+    /* Put the terminal in the desired state again. */
     terminal_init();
-    total_refresh();
 #endif
+    /* Tickle the input routine so it will update the screen. */
+    ungetch(KEY_F0);
 }
 
 #ifndef NANO_TINY
@@ -1336,21 +1337,16 @@ void regenerate_screen(void)
     SLsmg_reset_smg();
     SLsmg_init_smg();
 #else
-    /* Do the equivalent of what Minimum Profit does: Leave and
-     * immediately reenter curses mode. */
+    /* Do the equivalent of what Minimum Profit does: leave and immediately
+     * reenter curses mode. */
     endwin();
     doupdate();
 #endif
 
-    /* Restore the terminal to its previous state. */
+    /* Put the terminal in the desired state again, recreate the subwindows
+     * with their (new) sizes, and redraw the contents of these windows. */
     terminal_init();
-
-    /* Do the equivalent of what both mutt and Minimum Profit do:
-     * Reinitialize all the windows based on the new screen
-     * dimensions. */
     window_init();
-
-    /* Redraw the contents of the windows that need it. */
     total_refresh();
 }
 
@@ -1364,9 +1360,7 @@ void allow_sigwinch(bool allow)
     sigaddset(&winch, SIGWINCH);
     sigprocmask(allow ? SIG_UNBLOCK : SIG_BLOCK, &winch, NULL);
 }
-#endif /* !NANO_TINY */
 
-#ifndef NANO_TINY
 /* Handle the global toggle specified in flag. */
 void do_toggle(int flag)
 {
@@ -1900,8 +1894,6 @@ void do_output(char *output, size_t output_len, bool allow_cntrls)
 int main(int argc, char **argv)
 {
     int optchr;
-    ssize_t startline = 0, startcol = 0;
-	/* Target line and column when specified on the command line. */
 #ifndef DISABLE_WRAPJUSTIFY
     bool fill_used = FALSE;
 	/* Was the fill option used on the command line? */
@@ -1911,9 +1903,9 @@ int main(int argc, char **argv)
 #endif
 #endif
 #ifdef ENABLE_MULTIBUFFER
-    bool old_multibuffer;
-	/* The old value of the multibuffer option, restored after we
-	 * load all files on the command line. */
+    bool is_multibuffer;
+	/* The actual value of the multibuffer option, restored after
+	 * we've loaded all files given on the command line. */
 #endif
     const struct option long_options[] = {
 	{"boldtext", 0, NULL, 'D'},
@@ -2436,13 +2428,12 @@ int main(int argc, char **argv)
     if (matchbrackets == NULL)
 	matchbrackets = mallocstrcpy(NULL, "(<[{)>]}");
 
-    /* If whitespace wasn't specified, set its default value.  If we're
-     * using UTF-8, it's Unicode 00BB (Right-Pointing Double Angle
-     * Quotation Mark) and Unicode 00B7 (Middle Dot).  Otherwise, it's
-     * ">" and ".". */
+    /* If the whitespace option wasn't specified, set its default value. */
     if (whitespace == NULL) {
 #ifdef ENABLE_UTF8
 	if (using_utf8()) {
+	    /* A tab is shown as a Right-Pointing Double Angle Quotation Mark
+	     * (U+00BB), and a space as a Middle Dot (U+00B7). */
 	    whitespace = mallocstrcpy(NULL, "\xC2\xBB\xC2\xB7");
 	    whitespace_len[0] = 2;
 	    whitespace_len[1] = 2;
@@ -2479,8 +2470,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "Main: set up windows\n");
 #endif
 
-    /* Initialize all the windows based on the current screen
-     * dimensions. */
+    /* Create the three subwindows, based on the current screen dimensions. */
     window_init();
 
     editwincols = COLS;
@@ -2536,90 +2526,58 @@ int main(int argc, char **argv)
     fprintf(stderr, "Main: open file\n");
 #endif
 
-    /* If there's a +LINE or +LINE,COLUMN flag here, it is the first
-     * non-option argument, and it is followed by at least one other
-     * argument, the filename it applies to. */
-    if (0 < optind && optind < argc - 1 && argv[optind][0] == '+') {
-	if (!parse_line_column(&argv[optind][1], &startline, &startcol))
-	    statusline(ALERT, _("Invalid line or column number"));
-	optind++;
-    }
-
-    /* If one of the arguments is a dash, read text from standard input. */
-    if (optind < argc && !strcmp(argv[optind], "-")) {
-	stdin_pager();
-	set_modified();
-	optind++;
-    }
-
 #ifdef ENABLE_MULTIBUFFER
-    old_multibuffer = ISSET(MULTIBUFFER);
+    is_multibuffer = ISSET(MULTIBUFFER);
     SET(MULTIBUFFER);
-
-    /* Read all the files after the first one on the command line into
-     * new buffers. */
-    {
-	int i = optind + 1;
-	ssize_t iline = 0, icol = 0;
-
-	for (; i < argc; i++) {
-	    /* If there's a +LINE or +LINE,COLUMN flag here, it is followed
-	     * by at least one other argument: the filename it applies to. */
-	    if (i < argc - 1 && argv[i][0] == '+') {
-		if (!parse_line_column(&argv[i][1], &iline, &icol))
-		    statusline(ALERT, _("Invalid line or column number"));
-	    } else {
-		/* If opening fails, don't try to position the cursor. */
-		if (!open_buffer(argv[i], FALSE))
-		    continue;
-
-		/* If a position was given on the command line, go there. */
-		if (iline > 0 || icol > 0) {
-		    do_gotolinecolumn(iline, icol, FALSE, FALSE);
-		    iline = 0;
-		    icol = 0;
-		}
-#ifndef DISABLE_HISTORIES
-		else if (ISSET(POS_HISTORY)) {
-		    ssize_t savedposline, savedposcol;
-		    /* If edited before, restore the last cursor position. */
-		    if (has_old_position(argv[i], &savedposline, &savedposcol))
-			do_gotolinecolumn(savedposline, savedposcol,
-						FALSE, FALSE);
-		}
 #endif
-	    }
+
+    /* Read the files mentioned on the command line into new buffers. */
+    while (optind < argc && (!openfile || ISSET(MULTIBUFFER))) {
+	ssize_t givenline = 0, givencol = 0;
+	bool dash = FALSE;
+
+	/* If there's a +LINE[,COLUMN] argument here, eat it up. */
+	if (optind < argc - 1 && argv[optind][0] == '+') {
+	    if (!parse_line_column(&argv[optind++][1], &givenline, &givencol))
+		statusline(ALERT, _("Invalid line or column number"));
 	}
+
+	/* If the filename is a dash, read from standard input; otherwise,
+	 * open the file; skip positioning the cursor if either failed. */
+	if (strcmp(argv[optind], "-") == 0) {
+	    if (!scoop_stdin())
+		continue;
+	    dash = TRUE;
+	    optind++;
+	} else if (!open_buffer(argv[optind++], FALSE))
+	    continue;
+
+	/* If a position was given on the command line, go there. */
+	if (givenline != 0 || givencol != 0)
+	    do_gotolinecolumn(givenline, givencol, FALSE, FALSE);
+#ifndef DISABLE_HISTORIES
+	else if (ISSET(POS_HISTORY) && !dash) {
+	    ssize_t savedline, savedcol;
+	    /* If edited before, restore the last cursor position. */
+	    if (has_old_position(argv[optind - 1], &savedline, &savedcol))
+		do_gotolinecolumn(savedline, savedcol, FALSE, FALSE);
+	}
+#endif
     }
-#endif /* ENABLE_MULTIBUFFER */
 
-    /* Now read the first file on the command line into a new buffer. */
-    if (optind < argc)
-	open_buffer(argv[optind], FALSE);
-
-    /* If all the command-line arguments were invalid files like directories,
-     * or if there were no filenames given, we didn't open any file.  In this
-     * case, load a blank buffer.  Also, unset view mode to allow editing. */
+    /* If no filenames were given, or all of them were invalid things like
+     * directories, then open a blank buffer and allow editing.  Otherwise,
+     * switch from the last opened file to the next, that is: the first. */
     if (openfile == NULL) {
 	open_buffer("", FALSE);
 	UNSET(VIEW_MODE);
     }
-
 #ifdef ENABLE_MULTIBUFFER
-    if (!old_multibuffer)
-	UNSET(MULTIBUFFER);
-#endif
+    else
+	openfile = openfile->next;
 
-    /* If a starting position was given on the command line, go there. */
-    if (startline > 0 || startcol > 0)
-	do_gotolinecolumn(startline, startcol, FALSE, FALSE);
-#ifndef DISABLE_HISTORIES
-    else if (ISSET(POS_HISTORY)) {
-	ssize_t savedposline, savedposcol;
-	/* If the file was edited before, restore the last cursor position. */
-	if (has_old_position(argv[optind], &savedposline, &savedposcol))
-	    do_gotolinecolumn(savedposline, savedposcol, FALSE, FALSE);
-    }
+    if (!is_multibuffer)
+	UNSET(MULTIBUFFER);
 #endif
 
 #ifdef DEBUG
@@ -2632,7 +2590,7 @@ int main(int argc, char **argv)
 #ifdef ENABLE_LINENUMBERS
 	int needed_margin = digits(openfile->filebot->lineno) + 1;
 
-	/* Only enable line numbers when there is enough room for them. */
+	/* Suppress line numbers when there is not enough room for them. */
 	if (!ISSET(LINE_NUMBERS) || needed_margin > COLS - 4)
 	    needed_margin = 0;
 

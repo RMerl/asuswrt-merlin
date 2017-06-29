@@ -1,4 +1,4 @@
-# signbit.m4 serial 13
+# signbit.m4 serial 14
 dnl Copyright (C) 2007-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -272,6 +272,7 @@ int main ()
         {
           /* More than one bit difference.  */
           fprintf (fp, "unknown");
+          fclose (fp);
           return 2;
         }
       if (x)
@@ -284,6 +285,7 @@ int main ()
     {
       /* No difference.  */
       fprintf (fp, "unknown");
+      fclose (fp);
       return 3;
     }
   /* Now m = plus.word[k] ^ ~minus.word[k].  */
@@ -292,6 +294,7 @@ int main ()
       /* Oh? The sign bit is set in the positive and cleared in the negative
          numbers?  */
       fprintf (fp, "unknown");
+      fclose (fp);
       return 4;
     }
   for (i = 0; ; i++)

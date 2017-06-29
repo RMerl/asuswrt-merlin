@@ -2072,6 +2072,9 @@
 /* Define if you want regoff_t to be at least as wide POSIX requires. */
 #undef _REGEX_LARGE_OFFSETS
 
+/* For standard stat data types on VMS. */
+#undef _USE_STD_STAT
+
 /* Define to rpl_ if the getopt replacement functions and variables should be
    used. */
 #undef __GETOPT_PREFIX

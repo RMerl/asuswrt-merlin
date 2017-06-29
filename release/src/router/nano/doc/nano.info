@@ -40,8 +40,8 @@ locking, backup files, and internationalization support.
 
    The original goal for 'nano' was to be a complete bug-for-bug
 emulation of Pico.  But currently the goal is to be as compatible as
-possible while offering a superset of Pico's functionality.  See *Note
-Pico Compatibility::, for more info.
+possible while offering a superset of Pico's functionality.  *Note Pico
+Compatibility:: for more details on how 'nano' and Pico differ.
 
    Please report bugs via <https://savannah.gnu.org/bugs/?group=nano>.
 
@@ -64,9 +64,9 @@ it with a comma.  So a more complete command synopsis is:
      'nano [OPTION]... [[+LINE[,COLUMN]|+,COLUMN] FILE]...'
 
    Normally, however, you set your preferred options in a '.nanorc' file
-(see *Note Nanorc Files::).  And when using 'set positionlog' (making
-'nano' remember the cursor position when you close a file), you will
-rarely need to specify a line number.
+(*note Nanorc Files::).  And when using 'set positionlog' (making 'nano'
+remember the cursor position when you close a file), you will rarely
+need to specify a line number.
 
    As a special case: when the first file specified is a dash, 'nano'
 will read data from standard input.  Which means you can pipe the output
@@ -142,7 +142,7 @@ File: nano.info,  Node: Command-line Options,  Next: Editor Basics,  Prev: Invok
 
 '-O'
 '--morespace'
-     Use the blank line below the titlebar as extra editing space.
+     Use the blank line below the title bar as extra editing space.
 
 '-P'
 '--positionlog'
@@ -179,7 +179,7 @@ File: nano.info,  Node: Command-line Options,  Next: Editor Basics,  Prev: Invok
 
 '-U'
 '--quickblank'
-     Do quick statusbar blanking.  Statusbar messages will disappear
+     Do quick status-bar blanking: status-bar messages will disappear
      after 1 keystroke instead of 25.  Note that option '-c'
      ('--constantshow') overrides this.
 
@@ -200,13 +200,14 @@ File: nano.info,  Node: Command-line Options,  Next: Editor Basics,  Prev: Invok
 
 '-Y NAME'
 '--syntax=NAME'
-     Specify a specific syntax from the nanorc files to use for
-     highlighting.  See *Note Syntax Highlighting::, for more info.
+     Specify the syntax to be used for highlighting.  *Note Syntax
+     Highlighting:: for more info.
 
 '-c'
 '--constantshow'
-     Constantly display the cursor position and line number on the
-     statusbar.  Note that this overrides option '-U' ('--quickblank').
+     Constantly display the cursor position (line number, column number,
+     and character number) on the status bar.  Note that this overrides
+     option '-U' ('--quickblank').
 
 '-d'
 '--rebinddelete'
@@ -312,7 +313,7 @@ File: nano.info,  Node: Command-line Options,  Next: Editor Basics,  Prev: Invok
 '-x'
 '--nohelp'
      Expert Mode: don't show the Shortcut List at the bottom of the
-     screen.  This affects the location of the statusbar as well, as in
+     screen.  This affects the location of the status bar as well, as in
      Expert Mode it is located at the very bottom of the editor.
 
      Note: When accessing the help system, Expert Mode is temporarily
@@ -444,21 +445,22 @@ File: nano.info,  Node: Screen Layout,  Next: Search and Replace,  Prev: The Mar
 =================
 
 The default screen of nano consists of five areas.  From top to bottom
-these are: the titlebar, a blank line, the edit window, the statusbar,
+these are: the title bar, a blank line, the edit window, the status bar,
 and two help lines.
 
-   The titlebar consists of three sections: left, center and right.  The
-section on the left displays the version of 'nano' being used.  The
+   The title bar consists of three sections: left, center and right.
+The section on the left displays the version of 'nano' being used.  The
 center section displays the current filename, or "New Buffer" if the
 file has not yet been named.  The section on the right displays
 "Modified" if the file has been modified since it was last saved or
 opened.
 
-   The statusbar is the third line from the bottom of the screen.  It
+   The status bar is the third line from the bottom of the screen.  It
 shows important and informational messages.  Any error messages that
-occur from using the editor will appear on the statusbar.  Any questions
-that are asked of the user will be asked on the statusbar, and any user
-input (search strings, filenames, etc.)  will be input on the statusbar.
+occur from using the editor will appear on the status bar.  Any
+questions that are asked of the user will be asked on the status bar,
+and any user input (search strings, filenames, etc.)  will be input on
+the status bar.
 
    The two help lines at the bottom of the screen show some of the most
 essential functions of the editor.  These two lines are called the
@@ -527,8 +529,8 @@ File: nano.info,  Node: Feature Toggles,  Next: Nanorc Files,  Prev: Built-in He
 
 Toggles allow you to change on-the-fly certain aspects of the editor
 which would normally be specified via command-line options.  They are
-invoked via Meta-key sequences (see *Note Commands::, for more info).
-The following global toggles are available:
+invoked via Meta-key sequences (*note Commands:: for more info).  The
+following global toggles are available:
 
 'Backup Files Toggle (Meta-B)'
      toggles the '-B' ('--backup') command-line option.
@@ -561,8 +563,7 @@ The following global toggles are available:
      toggles the '-O' ('--morespace') command-line option.
 
 'Whitespace Display Toggle (Meta-P)'
-     toggles the whitespace-display mode.  See *Note Whitespace::, for
-     more info.
+     toggles the whitespace-display mode (*note Whitespace::).
 
 'Tabs to Spaces Toggle (Meta-Q)'
      toggles the '-E' ('--tabstospaces') command-line option.
@@ -574,8 +575,8 @@ The following global toggles are available:
      toggles the '-x' ('--nohelp') command-line option.
 
 'Color Syntax Highlighting Toggle (Meta-Y)'
-     toggles color syntax highlighting if you have color syntaxes in
-     your nanorc.  See *Note Syntax Highlighting::, for more info.
+     toggles color syntax highlighting (if your nanorc defines syntaxes
+     -- *note Syntax Highlighting::).
 
 'Suspension Toggle (Meta-Z)'
      toggles the '-z' ('--suspend') command-line option.
@@ -601,8 +602,8 @@ path might be different), and then the user-specific settings, from
    A nanorc file accepts a series of "set" and "unset" commands, which
 can be used to configure 'nano' on startup without using command-line
 options.  Additionally, there are some commands to define syntax
-highlighting and to rebind keys -- *Note Syntax Highlighting::, and
-*Note Rebinding Keys::.  'nano' will read one command per line.
+highlighting and to rebind keys -- *note Syntax Highlighting:: and *note
+Rebinding Keys::.  'nano' will read one command per line.
 
    Options in nanorc files take precedence over 'nano''s defaults, and
 command-line options override nanorc settings.  Also, options that do
@@ -652,9 +653,9 @@ The supported settings in a nanorc file are:
      Do backwards searches by default.
 
 'set boldtext'
-     Use bold instead of reverse video for the titlebar, statusbar, key
-     combos, line numbers, and selected text.  This can be overridden
-     for the first four by setting the options 'titlecolor',
+     Use bold instead of reverse video for the title bar, status bar,
+     key combos, line numbers, and selected text.  This can be
+     overridden for the first four by setting the options 'titlecolor',
      'statuscolor', 'keycolor', and 'numbercolor'.
 
 'set brackets "STRING"'
@@ -667,7 +668,7 @@ The supported settings in a nanorc file are:
      Do case-sensitive searches by default.
 
 'set constantshow'
-     Constantly display the cursor position in the status bar.  (The old
+     Constantly display the cursor position on the status bar.  (The old
      form of this option, 'set const', is deprecated.)
 
 'set cut'
@@ -710,7 +711,7 @@ The supported settings in a nanorc file are:
      same order.  The default value is "(<[{)>]}".
 
 'set morespace'
-     Use the blank line below the titlebar as extra editing space.
+     Use the blank line below the title bar as extra editing space.
 
 'set mouse'
      Enable mouse support, so that mouse clicks can be used to place the
@@ -762,7 +763,7 @@ The supported settings in a nanorc file are:
      value is "!.?".
 
 'set quickblank'
-     Do quick statusbar blanking.  Statusbar messages will disappear
+     Do quick status-bar blanking: status-bar messages will disappear
      after 1 keystroke instead of 25.
 
 'set quiet'
@@ -814,7 +815,7 @@ The supported settings in a nanorc file are:
      calls "spell".
 
 'set statuscolor FGCOLOR,BGCOLOR'
-     Specify the color combination to use for the statusbar.  See 'set
+     Specify the color combination to use for the status bar.  See 'set
      titlecolor' for more details.
 
 'set suspend'
@@ -831,11 +832,11 @@ The supported settings in a nanorc file are:
      Save automatically on exit, don't prompt.
 
 'set titlecolor FGCOLOR,BGCOLOR'
-     Specify the color combination to use for the titlebar.  Valid color
-     names for foreground and background are: white, black, blue, green,
-     red, cyan, yellow, and magenta.  The name of the foreground color
-     may be prefixed with 'bright'.  And either FGCOLOR or ,BGCOLOR may
-     be left out.
+     Specify the color combination to use for the title bar.  Valid
+     color names for foreground and background are: white, black, blue,
+     green, red, cyan, yellow, and magenta.  The name of the foreground
+     color may be prefixed with 'bright'.  And either FGCOLOR or
+     ,BGCOLOR may be left out.
 
 'set unix'
      Save a file by default in Unix format.  This overrides nano's
@@ -1254,8 +1255,8 @@ file:
      character positions.
 
 'morespace'
-     Toggles the presence of the blank line which 'separates' the
-     titlebar from the file text.
+     Toggles the presence of the blank line that 'separates' the title
+     bar from the file text.
 
 'smoothscroll'
      Toggles smooth scrolling (when moving around with the arrow keys).
@@ -1370,7 +1371,7 @@ searching via ^W (or 'w') and changing directories via ^_ (or 'g').  The
 behavior of the Enter (or 's') key varies by what is currently selected.
 If the currently selected object is a directory, the file browser will
 enter and display the contents of the directory.  If the object is a
-file, this filename and path are copied to the statusbar, and the file
+file, this filename and path are copied to the status bar, and the file
 browser exits.
 
 
@@ -1440,8 +1441,9 @@ some differences between the editors:
      Many options which alter the functionality of the program can be
      "toggled" on or off using Meta key sequences, meaning the program
      does not have to be restarted to turn a particular feature on or
-     off.  See the internal help function (^G) for a list of features
-     that can be toggled.  Or see *Note Feature Toggles:: instead.
+     off.  *Note Feature Toggles:: for a list of options that can be
+     toggled.  Or see the list at the end the main internal help text
+     (^G) instead.
 
 
 File: nano.info,  Node: Building and Configure Options,  Prev: Pico Compatibility,  Up: Top
@@ -1514,8 +1516,8 @@ familiar with compiling programs with autoconf support:
      Disable support for reading the nanorc files at startup.  With such
      support, you can store custom settings in a system-wide and a
      per-user nanorc file rather than having to pass command-line
-     options to get the desired behavior.  See *Note Nanorc Files::, for
-     more info.  Disabling this also eliminates the '-I' and '-q'
+     options to get the desired behavior.  *Note Nanorc Files:: for more
+     info.  Disabling this also eliminates the '-I' and '-q'
      command-line options; the first inhibits the reading of
      nanorcfiles, and the second suppresses warnings about errors in
      those files.
@@ -1586,27 +1588,27 @@ familiar with compiling programs with autoconf support:
 Tag Table:
 Node: Top199
 Node: Introduction560
-Node: Invoking1314
-Node: Command-line Options2329
-Ref: Expert Mode9851
-Node: Editor Basics10808
-Node: Entering Text11091
-Node: Commands12030
-Node: The Cutbuffer12815
-Node: The Mark13493
-Node: Screen Layout14231
-Node: Search and Replace15400
-Node: Using the Mouse16098
-Node: Limitation16714
-Node: Built-in Help17117
-Node: Feature Toggles17508
-Node: Nanorc Files19716
-Node: Settings21148
-Ref: Whitespace29001
-Node: Syntax Highlighting29541
-Node: Rebinding Keys34268
-Node: The File Browser44256
-Node: Pico Compatibility45078
-Node: Building and Configure Options48195
+Node: Invoking1342
+Node: Command-line Options2353
+Ref: Expert Mode9888
+Node: Editor Basics10846
+Node: Entering Text11129
+Node: Commands12068
+Node: The Cutbuffer12853
+Node: The Mark13531
+Node: Screen Layout14269
+Node: Search and Replace15444
+Node: Using the Mouse16142
+Node: Limitation16758
+Node: Built-in Help17161
+Node: Feature Toggles17552
+Node: Nanorc Files19706
+Node: Settings21137
+Ref: Whitespace28996
+Node: Syntax Highlighting29536
+Node: Rebinding Keys34263
+Node: The File Browser44251
+Node: Pico Compatibility45074
+Node: Building and Configure Options48212
 
 End Tag Table

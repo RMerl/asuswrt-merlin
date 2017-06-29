@@ -45,6 +45,11 @@
 # define getopt_long_only __GETOPT_ID (getopt_long_only)
 # define option __GETOPT_ID (option)
 # define _getopt_internal __GETOPT_ID (getopt_internal)
+
+/* The system's getopt.h may have already included getopt-ext.h to
+   declare the unprefixed identifiers.  Undef _GETOPT_EXT_H so that
+   getopt-ext.h declares them with prefixes.  */
+# undef _GETOPT_EXT_H
 #endif
 
 /* Standalone applications get correct prototypes for getopt_long and

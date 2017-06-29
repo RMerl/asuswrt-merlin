@@ -219,7 +219,11 @@
    : (max) >> (b) < (a))
 
 /* True if __builtin_add_overflow (A, B, P) works when P is non-null.  */
-#define _GL_HAS_BUILTIN_OVERFLOW (5 <= __GNUC__)
+#if 5 <= __GNUC__ && !defined __ICC
+# define _GL_HAS_BUILTIN_OVERFLOW 1
+#else
+# define _GL_HAS_BUILTIN_OVERFLOW 0
+#endif
 
 /* True if __builtin_add_overflow_p (A, B, C) works.  */
 #define _GL_HAS_BUILTIN_OVERFLOW_P (7 <= __GNUC__)

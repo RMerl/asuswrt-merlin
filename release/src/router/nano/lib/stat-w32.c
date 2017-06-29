@@ -18,13 +18,15 @@
 
 #include <config.h>
 
+/* Include this on all platforms, so that the compilation unit is nonempty.  */
+#include <sys/types.h>
+
 #if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
 
 /* Ensure that <windows.h> defines FILE_ID_INFO.  */
 #undef _WIN32_WINNT
 #define _WIN32_WINNT _WIN32_WINNT_WIN8
 
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <limits.h>

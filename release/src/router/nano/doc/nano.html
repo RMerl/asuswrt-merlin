@@ -102,8 +102,9 @@ file locking, backup files, and internationalization support.
 </p>
 <p>The original goal for <code>nano</code> was to be a complete bug-for-bug
 emulation of Pico.  But currently the goal is to be as compatible
-as possible while offering a superset of Pico&rsquo;s functionality.  See
-See <a href="#Pico-Compatibility">Pico Compatibility</a>, for more info.
+as possible while offering a superset of Pico&rsquo;s functionality.
+See <a href="#Pico-Compatibility">Pico Compatibility</a> for more details on how <code>nano</code> and
+Pico differ.
 </p>
 <p>Please report bugs via <a href="https://savannah.gnu.org/bugs/?group=nano">https://savannah.gnu.org/bugs/?group=nano</a>.
 </p>
@@ -134,7 +135,7 @@ adding it with a comma.  So a more complete command synopsis is:
 </p></blockquote>
 
 <p>Normally, however, you set your preferred options in a <samp>.nanorc</samp>
-file (see See <a href="#Nanorc-Files">Nanorc Files</a>).  And when using <code>set positionlog</code>
+file (see <a href="#Nanorc-Files">Nanorc Files</a>).  And when using <code>set positionlog</code>
 (making <code>nano</code> remember the cursor position when you close a file),
 you will rarely need to specify a line number.
 </p>
@@ -226,7 +227,7 @@ won&rsquo;t work properly with this option enabled.
 </dd>
 <dt><samp>-O</samp></dt>
 <dt><samp>--morespace</samp></dt>
-<dd><p>Use the blank line below the titlebar as extra editing space.
+<dd><p>Use the blank line below the title bar as extra editing space.
 </p>
 </dd>
 <dt><samp>-P</samp></dt>
@@ -269,7 +270,7 @@ usual chunk-by-chunk behavior.
 </dd>
 <dt><samp>-U</samp></dt>
 <dt><samp>--quickblank</samp></dt>
-<dd><p>Do quick statusbar blanking.  Statusbar messages will disappear after 1
+<dd><p>Do quick status-bar blanking: status-bar messages will disappear after 1
 keystroke instead of 25.  Note that option <samp>-c</samp>
 (<samp>--constantshow</samp>) overrides this.
 </p>
@@ -294,13 +295,14 @@ should be considered as parts of words.  This overrides option
 </dd>
 <dt><samp>-Y <var>name</var></samp></dt>
 <dt><samp>--syntax=<var>name</var></samp></dt>
-<dd><p>Specify a specific syntax from the nanorc files to use for highlighting.
-See See <a href="#Syntax-Highlighting">Syntax Highlighting</a>, for more info.
+<dd><p>Specify the syntax to be used for highlighting.
+See <a href="#Syntax-Highlighting">Syntax Highlighting</a> for more info.
 </p>
 </dd>
 <dt><samp>-c</samp></dt>
 <dt><samp>--constantshow</samp></dt>
-<dd><p>Constantly display the cursor position and line number on the statusbar.
+<dd><p>Constantly display the cursor position (line number, column number,
+and character number) on the status bar.
 Note that this overrides option <samp>-U</samp> (<samp>--quickblank</samp>).
 </p>
 </dd>
@@ -423,7 +425,7 @@ implement a read-only file.
 <dt><samp>-x</samp></dt>
 <dt><samp>--nohelp</samp></dt>
 <dd><p>Expert Mode: don&rsquo;t show the Shortcut List at the bottom of the screen.
-This affects the location of the statusbar as well, as in Expert Mode it
+This affects the location of the status bar as well, as in Expert Mode it
 is located at the very bottom of the editor.
 </p>
 <p>Note: When accessing the help system, Expert Mode is temporarily
@@ -591,21 +593,21 @@ Next: <a href="#Search-and-Replace" accesskey="n" rel="next">Search and Replace<
 <h3 class="section">4.5 Screen Layout</h3>
 
 <p>The default screen of nano consists of five areas.  From top to bottom
-these are: the titlebar, a blank line, the edit window, the statusbar,
+these are: the title bar, a blank line, the edit window, the status bar,
 and two help lines.
 </p>
-<p>The titlebar consists of
+<p>The title bar consists of
 three sections: left, center and right.  The section on the left
 displays the version of <code>nano</code> being used.  The center section
 displays the current filename, or &quot;New Buffer&quot; if the file has not yet
 been named.  The section on the right displays &quot;Modified&quot; if the
 file has been modified since it was last saved or opened.
 </p>
-<p>The statusbar is the third line from the bottom of the screen.  It
+<p>The status bar is the third line from the bottom of the screen.  It
 shows important and informational messages.  Any error messages that
-occur from using the editor will appear on the statusbar.  Any questions
-that are asked of the user will be asked on the statusbar, and any user
-input (search strings, filenames, etc.) will be input on the statusbar.
+occur from using the editor will appear on the status bar.  Any questions
+that are asked of the user will be asked on the status bar, and any user
+input (search strings, filenames, etc.) will be input on the status bar.
 </p>
 <p>The two help lines at the bottom of the screen show some of the most
 essential functions of the editor.  These two lines are called the
@@ -691,7 +693,7 @@ Next: <a href="#Nanorc-Files" accesskey="n" rel="next">Nanorc Files</a>, Previou
 
 <p>Toggles allow you to change on-the-fly certain aspects of the editor
 which would normally be specified via command-line options.  They are
-invoked via Meta-key sequences (see See <a href="#Commands">Commands</a>, for more info).
+invoked via Meta-key sequences (see <a href="#Commands">Commands</a> for more info).
 The following global toggles are available:
 </p>
 <dl compact="compact">
@@ -736,8 +738,7 @@ The following global toggles are available:
 </p>
 </dd>
 <dt><code>Whitespace Display Toggle (Meta-P)</code></dt>
-<dd><p>toggles the whitespace-display mode.
-See See <a href="#Whitespace">Whitespace</a>, for more info.
+<dd><p>toggles the whitespace-display mode (see <a href="#Whitespace">Whitespace</a>).
 </p>
 </dd>
 <dt><code>Tabs to Spaces Toggle (Meta-Q)</code></dt>
@@ -753,8 +754,8 @@ See See <a href="#Whitespace">Whitespace</a>, for more info.
 </p>
 </dd>
 <dt><code>Color Syntax Highlighting Toggle (Meta-Y)</code></dt>
-<dd><p>toggles color syntax highlighting if you have color syntaxes in your
-nanorc.  See See <a href="#Syntax-Highlighting">Syntax Highlighting</a>, for more info.
+<dd><p>toggles color syntax highlighting (if your nanorc defines syntaxes
+&mdash; see <a href="#Syntax-Highlighting">Syntax Highlighting</a>).
 </p>
 </dd>
 <dt><code>Suspension Toggle (Meta-Z)</code></dt>
@@ -790,7 +791,7 @@ from <samp>~/.nanorc</samp>.
 <p>A nanorc file accepts a series of &quot;set&quot; and &quot;unset&quot; commands, which can
 be used to configure <code>nano</code> on startup without using command-line
 options.  Additionally, there are some commands to define syntax highlighting
-and to rebind keys &mdash; See <a href="#Syntax-Highlighting">Syntax Highlighting</a>, and See <a href="#Rebinding-Keys">Rebinding Keys</a>.
+and to rebind keys &mdash; see <a href="#Syntax-Highlighting">Syntax Highlighting</a> and <a href="#Rebinding-Keys">Rebinding Keys</a>.
 <code>nano</code> will read one command per line.
 </p>
 <p>Options in nanorc files take precedence over <code>nano</code>&rsquo;s defaults, and
@@ -853,7 +854,7 @@ The uniquely numbered files are stored in the specified directory.
 </p>
 </dd>
 <dt><code>set boldtext</code></dt>
-<dd><p>Use bold instead of reverse video for the titlebar, statusbar, key combos,
+<dd><p>Use bold instead of reverse video for the title bar, status bar, key combos,
 line numbers, and selected text.  This can be overridden for the first four
 by setting the options <code>titlecolor</code>, <code>statuscolor</code>, <code>keycolor</code>,
 and <code>numbercolor</code>.
@@ -872,7 +873,7 @@ closing brackets, can end sentences.  The default value is
 </p>
 </dd>
 <dt><code>set constantshow</code></dt>
-<dd><p>Constantly display the cursor position in the status bar.
+<dd><p>Constantly display the cursor position on the status bar.
 (The old form of this option, <code>set const</code>, is deprecated.)
 </p>
 </dd>
@@ -923,7 +924,7 @@ The default value is <tt>&quot;(&lt;[{)&gt;]}&quot;</tt>.
 </p>
 </dd>
 <dt><code>set morespace</code></dt>
-<dd><p>Use the blank line below the titlebar as extra editing space.
+<dd><p>Use the blank line below the title bar as extra editing space.
 </p>
 </dd>
 <dt><code>set mouse</code></dt>
@@ -987,7 +988,7 @@ The default value is <tt>&quot;!.?&quot;</tt>.
 </p>
 </dd>
 <dt><code>set quickblank</code></dt>
-<dd><p>Do quick statusbar blanking.  Statusbar messages will disappear after 1
+<dd><p>Do quick status-bar blanking: status-bar messages will disappear after 1
 keystroke instead of 25.
 </p>
 </dd>
@@ -1049,7 +1050,7 @@ calls &quot;spell&quot;.
 </p>
 </dd>
 <dt><code>set statuscolor <var>fgcolor</var>,<var>bgcolor</var></code></dt>
-<dd><p>Specify the color combination to use for the statusbar.
+<dd><p>Specify the color combination to use for the status bar.
 See <code>set titlecolor</code> for more details.
 </p>
 </dd>
@@ -1071,7 +1072,7 @@ greater than 0.  The default value is <tt>8</tt>.
 </p>
 </dd>
 <dt><code>set titlecolor <var>fgcolor</var>,<var>bgcolor</var></code></dt>
-<dd><p>Specify the color combination to use for the titlebar.
+<dd><p>Specify the color combination to use for the title bar.
 Valid color names for foreground and background are:
 white, black, blue, green, red, cyan, yellow, and magenta.
 The name of the foreground color may be prefixed with &rsquo;bright&rsquo;.
@@ -1604,7 +1605,7 @@ in the filesystem.
 </p>
 </dd>
 <dt><code>morespace</code></dt>
-<dd><p>Toggles the presence of the blank line which &rsquo;separates&rsquo; the titlebar from the file text.
+<dd><p>Toggles the presence of the blank line that &rsquo;separates&rsquo; the title bar from the file text.
 </p>
 </dd>
 <dt><code>smoothscroll</code></dt>
@@ -1755,7 +1756,7 @@ searching via ^W (or &rsquo;w&rsquo;) and changing directories via ^_ (or &rsquo
 behavior of the Enter (or &rsquo;s&rsquo;) key varies by what is currently selected.
 If the currently selected object is a directory, the file browser will
 enter and display the contents of the directory.  If the object is a
-file, this filename and path are copied to the statusbar, and the file
+file, this filename and path are copied to the status bar, and the file
 browser exits.
 </p>
 
@@ -1836,8 +1837,8 @@ browser is just a file browser, not a file manager.
 <dd><p>Many options which alter the functionality of the program can be
 &quot;toggled&quot; on or off using Meta key sequences, meaning the program does
 not have to be restarted to turn a particular feature on or off.
-See the internal help function (^G) for a list of features that
-can be toggled.  Or see See <a href="#Feature-Toggles">Feature Toggles</a> instead.
+See <a href="#Feature-Toggles">Feature Toggles</a> for a list of options that can be toggled.
+Or see the list at the end the main internal help text (^G) instead.
 </p>
 </dd>
 </dl>
@@ -1929,7 +1930,7 @@ option, which causes a file to be read into a separate buffer by default.
 <dd><p>Disable support for reading the nanorc files at startup.  With such
 support, you can store custom settings in a system-wide and a per-user
 nanorc file rather than having to pass command-line options to get
-the desired behavior.  See See <a href="#Nanorc-Files">Nanorc Files</a>, for more info.
+the desired behavior.  See <a href="#Nanorc-Files">Nanorc Files</a> for more info.
 Disabling this also eliminates the <code>-I</code> and <code>-q</code> command-line
 options; the first inhibits the reading of nanorcfiles, and the second
 suppresses warnings about errors in those files.

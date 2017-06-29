@@ -47,6 +47,8 @@ extern int editwincols;
 extern bool have_palette;
 #endif
 
+extern bool suppress_cursorpos;
+
 extern message_type lastmessage;
 
 extern filestruct *pletion_line;
@@ -118,8 +120,6 @@ extern char *quoteerr;
 #endif /* !DISABLE_JUSTIFY */
 
 extern char *word_chars;
-
-extern bool nodelay_mode;
 
 extern char *answer;
 
@@ -677,8 +677,8 @@ void spotlight(bool active, const char *word);
 void xon_complaint(void);
 void xoff_complaint(void);
 void do_suspend_void(void);
-void enable_nodelay(void);
-void disable_nodelay(void);
+void disable_waiting(void);
+void enable_waiting(void);
 #ifndef DISABLE_EXTRA
 void do_credits(void);
 #endif

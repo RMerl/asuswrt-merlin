@@ -44,7 +44,7 @@
 ## Do case-sensitive searches by default.
 # set casesensitive
 
-## Constantly display the cursor position in the statusbar.  Note that
+## Constantly display the cursor position in the status bar.  Note that
 ## this overrides "quickblank".
 # set constantshow
 ## (The old form, 'const', is deprecated.)
@@ -76,7 +76,7 @@
 ## come before the latter set, and both must be in the same order.
 # set matchbrackets "(<[{)>]}"
 
-## Use the blank line below the titlebar as extra editing space.
+## Use the blank line below the title bar as extra editing space.
 # set morespace
 
 ## Enable mouse support, if available for your system.  When enabled,
@@ -124,7 +124,7 @@
 ## sentences.
 # set punct "!.?"
 
-## Do quick statusbar blanking.  Statusbar messages will disappear after
+## Do quick status-bar blanking.  Status-bar messages will disappear after
 ## 1 keystroke instead of 26.  Note that "const" overrides this.
 # set quickblank
 

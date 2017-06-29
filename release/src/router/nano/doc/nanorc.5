@@ -16,7 +16,7 @@
 .\"   Documentation License along with this program.  If not, see
 .\"   <http://www.gnu.org/licenses/>.
 .\"
-.TH NANORC 5 "version 2.8.4" "May 2017"
+.TH NANORC 5 "version 2.8.5" "June 2017"
 .\" Please adjust this date whenever revising the manpage.
 
 .SH NAME
@@ -74,7 +74,7 @@ The uniquely numbered files are stored in the specified \fIdirectory\fR.
 Do backwards searches by default.
 .TP
 .B set boldtext
-Use bold instead of reverse video for the titlebar, statusbar, key combos,
+Use bold instead of reverse video for the title bar, status bar, key combos,
 line numbers, and selected text.  This can be overridden for the first four
 by setting the options \fBtitlecolor\fP, \fBstatuscolor\fP, \fBkeycolor\fP,
 and \fBnumbercolor\fP.
@@ -130,7 +130,7 @@ come before the closing set, and the two sets must be in the same order.
 The default value is "\fB(<[{)>]}\fP".
 .TP
 .B set morespace
-Use the blank line below the titlebar as extra editing space.
+Use the blank line below the title bar as extra editing space.
 .TP
 .B set mouse
 Enable mouse support, if available for your system.  When enabled, mouse
@@ -183,7 +183,7 @@ specfified closing punctuation, optionally followed by closing brackets
 (see \fBbrackets\fP), can end sentences.  The default value is "\fB!.?\fP".
 .TP
 .B set quickblank
-Do quick statusbar blanking.  Statusbar messages will disappear after 1
+Do quick status-bar blanking: status-bar messages will disappear after 1
 keystroke instead of 25.
 .TP
 .B set quiet
@@ -234,7 +234,7 @@ Use spelling checker \fIspellprog\fP instead of the built-in one, which
 calls \fIspell\fP.
 .TP
 .B set statuscolor \fIfgcolor\fR,\fIbgcolor\fR
-Specify the color combination to use for the statusbar.
+Specify the color combination to use for the status bar.
 See \fBset titlecolor\fR for more details.
 .TP
 .B set suspend
@@ -251,7 +251,7 @@ Convert typed tabs to spaces.
 Save automatically on exit, don't prompt.
 .TP
 .B set titlecolor \fIfgcolor\fR,\fIbgcolor\fR
-Specify the color combination to use for the titlebar.
+Specify the color combination to use for the title bar.
 Valid names for the foreground and background colors are:
 .BR white ", " black ", " blue ", " green ", " red ", " cyan ", " yellow ",  and " magenta .
 The name of the foreground color may be prefixed with \fBbright\fR.
@@ -666,7 +666,7 @@ Toggles the presence of the two-line list of key bindings at the bottom of the s
 Toggles the constant display of the current line, column, and character positions.
 .TP
 .B morespace
-Toggles the presence of the blank line which 'separates' the titlebar from the file text.
+Toggles the presence of the blank line that 'separates' the title bar from the file text.
 .TP
 .B smoothscroll
 Toggles smooth scrolling (when moving around with the arrow keys).

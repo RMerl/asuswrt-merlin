@@ -5,7 +5,7 @@ syntax "default"
 comment "#"
 
 # Comments.
-color cyan "^#.*"
+color cyan "^[[:space:]]*#.*"
 
 # Spaces in front of tabs.
 color ,red " +	+"

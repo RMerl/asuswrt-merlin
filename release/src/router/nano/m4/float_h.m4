@@ -1,4 +1,4 @@
-# float_h.m4 serial 9
+# float_h.m4 serial 10
 dnl Copyright (C) 2007, 2009-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -14,7 +14,7 @@ AC_DEFUN([gl_FLOAT_H],
     aix* | beos* | openbsd* | mirbsd* | irix*)
       FLOAT_H=float.h
       ;;
-    freebsd*)
+    freebsd* | dragonfly*)
       case "$host_cpu" in
 changequote(,)dnl
         i[34567]86 )
@@ -42,7 +42,7 @@ changequote([,])dnl
       ;;
   esac
   case "$host_os" in
-    aix* | freebsd* | linux*)
+    aix* | freebsd* | dragonfly* | linux*)
       if test -n "$FLOAT_H"; then
         REPLACE_FLOAT_LDBL=1
       fi

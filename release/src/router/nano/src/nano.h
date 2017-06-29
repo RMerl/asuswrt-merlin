@@ -542,6 +542,11 @@ enum
 /* This is an abbreviation for all menus except Help and YesNo. */
 #define MMOST  (MMAIN|MWHEREIS|MREPLACE|MREPLACEWITH|MGOTOLINE|MWRITEFILE|MINSERTFILE|\
 		MEXTCMD|MBROWSER|MWHEREISFILE|MGOTODIR|MFINDINHELP|MSPELL|MLINTER)
+#ifndef NANO_TINY
+#define MSOME  MMOST
+#else
+#define MSOME  MMAIN|MBROWSER
+#endif
 
 /* Basic control codes. */
 #define TAB_CODE  0x09

@@ -45,10 +45,10 @@ static size_t key_buffer_len = 0;
 	/* The length of the keystroke buffer. */
 static bool solitary = FALSE;
 	/* Whether an Esc arrived by itself -- not as leader of a sequence. */
+static bool waiting_mode = TRUE;
+	/* Whether getting a character will wait for a key to be pressed. */
 static int statusblank = 0;
 	/* The number of keystrokes left before we blank the statusbar. */
-static bool suppress_cursorpos = FALSE;
-	/* Should we skip constant position display for one keystroke? */
 #ifdef USING_OLD_NCURSES
 static bool seen_wide = FALSE;
 	/* Whether we've seen a multicolumn character in the current line. */
@@ -135,7 +135,7 @@ void get_key_buffer(WINDOW *win)
     }
 #endif
 
-    if (input == ERR && nodelay_mode)
+    if (input == ERR && !waiting_mode)
 	return;
 
     while (input == ERR) {
@@ -144,7 +144,7 @@ void get_key_buffer(WINDOW *win)
 	 * check if errno is set to EIO ("Input/output error") and die in
 	 * that case, but it's not always set properly.  Argh. */
 	if (++errcount == MAX_BUF_SIZE)
-	    handle_hupterm(0);
+	    die(_("Too many errors from stdin"));
 
 #ifndef NANO_TINY
 	if (the_window_resized) {
@@ -188,7 +188,7 @@ void get_key_buffer(WINDOW *win)
     }
 
     /* Restore waiting mode if it was on. */
-    if (!nodelay_mode)
+    if (waiting_mode)
 	nodelay(win, FALSE);
 
 #ifdef DEBUG
@@ -327,7 +327,7 @@ int parse_kbinput(WINDOW *win)
     /* Read in a character. */
     kbinput = get_input(win, 1);
 
-    if (kbinput == NULL && nodelay_mode)
+    if (kbinput == NULL && !waiting_mode)
 	return 0;
 
     while (kbinput == NULL)
@@ -703,8 +703,9 @@ int parse_kbinput(WINDOW *win)
 #ifdef KEY_RESIZE
 	/* Slang and SunOS 5.7-5.9 don't support KEY_RESIZE. */
 	case KEY_RESIZE:
-	    return ERR;
 #endif
+	case KEY_F0:
+	    return ERR;
     }
 
     return retval;
@@ -3142,17 +3143,19 @@ void total_redraw(void)
 #endif
 }
 
-/* Unconditionally redraw the entire screen, and then refresh it using
- * the current file. */
+/* Redraw the entire screen, then refresh the title bar and the content of
+ * the edit window (when not in the file browser), and the bottom bars. */
 void total_refresh(void)
 {
     total_redraw();
-    titlebar(title);
+    if (currmenu != MBROWSER && currmenu != MWHEREISFILE && currmenu != MGOTODIR)
+	titlebar(title);
 #ifdef ENABLE_HELP
     if (inhelp)
 	wrap_the_help_text(TRUE);
     else
 #endif
+    if (currmenu != MBROWSER && currmenu != MWHEREISFILE && currmenu != MGOTODIR)
 	edit_refresh();
     bottombars(currmenu);
 }
@@ -3182,7 +3185,14 @@ void do_cursorpos(bool force)
     size_t cur_lenpt = strlenpt(openfile->current->data) + 1;
     int linepct, colpct, charpct;
 
-    assert(openfile->fileage != NULL && openfile->current != NULL);
+    /* If the showing needs to be suppressed, don't suppress it next time. */
+    if (suppress_cursorpos && !force) {
+	suppress_cursorpos = FALSE;
+	return;
+    }
+
+    /* Hide the cursor while we are calculating. */
+    curs_set(0);
 
     /* Determine the size of the file up to the cursor. */
     saved_byte = openfile->current->data[openfile->current_x];
@@ -3195,12 +3205,6 @@ void do_cursorpos(bool force)
     /* When not at EOF, subtract 1 for an overcounted newline. */
     if (openfile->current != openfile->filebot)
 	sum--;
-
-    /* If the showing needs to be suppressed, don't suppress it next time. */
-    if (suppress_cursorpos && !force) {
-	suppress_cursorpos = FALSE;
-	return;
-    }
 
     /* Display the current cursor position on the statusbar. */
     linepct = 100 * openfile->current->lineno / openfile->filebot->lineno;
@@ -3224,15 +3228,15 @@ void do_cursorpos_void(void)
     do_cursorpos(TRUE);
 }
 
-void enable_nodelay(void)
+void disable_waiting(void)
 {
-    nodelay_mode = TRUE;
+    waiting_mode = FALSE;
     nodelay(edit, TRUE);
 }
 
-void disable_nodelay(void)
+void enable_waiting(void)
 {
-    nodelay_mode = FALSE;
+    waiting_mode = TRUE;
     nodelay(edit, FALSE);
 }
 

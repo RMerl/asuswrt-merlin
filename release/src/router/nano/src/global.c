@@ -57,6 +57,9 @@ bool have_palette = FALSE;
 	/* Whether the colors for the current syntax have been initialized. */
 #endif
 
+bool suppress_cursorpos = FALSE;
+	/* Should we skip constant position display for current keystroke? */
+
 message_type lastmessage = HUSH;
 	/* Messages of type HUSH should not overwrite type MILD nor ALERT. */
 
@@ -145,9 +148,6 @@ char *quoteerr = NULL;
 
 char *word_chars = NULL;
 	/* Nonalphanumeric characters that also form words. */
-
-bool nodelay_mode = FALSE;
-	/* Are we checking for a cancel wile doing something? */
 
 char *answer = NULL;
 	/* The answer string used by the statusbar prompt. */
@@ -1122,15 +1122,15 @@ void shortcut_init(void)
     if (using_utf8()) {
 	add_to_sclist(MMOST, "\xE2\x86\x90", KEY_LEFT, do_left, 0);
 	add_to_sclist(MMOST, "\xE2\x86\x92", KEY_RIGHT, do_right, 0);
-	add_to_sclist(MMOST, "^\xE2\x86\x90", CONTROL_LEFT, do_prev_word_void, 0);
-	add_to_sclist(MMOST, "^\xE2\x86\x92", CONTROL_RIGHT, do_next_word_void, 0);
+	add_to_sclist(MSOME, "^\xE2\x86\x90", CONTROL_LEFT, do_prev_word_void, 0);
+	add_to_sclist(MSOME, "^\xE2\x86\x92", CONTROL_RIGHT, do_next_word_void, 0);
     } else
 #endif
     {
 	add_to_sclist(MMOST, "Left", KEY_LEFT, do_left, 0);
 	add_to_sclist(MMOST, "Right", KEY_RIGHT, do_right, 0);
-	add_to_sclist(MMOST, "^Left", CONTROL_LEFT, do_prev_word_void, 0);
-	add_to_sclist(MMOST, "^Right", CONTROL_RIGHT, do_next_word_void, 0);
+	add_to_sclist(MSOME, "^Left", CONTROL_LEFT, do_prev_word_void, 0);
+	add_to_sclist(MSOME, "^Right", CONTROL_RIGHT, do_next_word_void, 0);
     }
     add_to_sclist(MMOST, "M-Space", 0, do_prev_word_void, 0);
     add_to_sclist(MMOST, "^Space", 0, do_next_word_void, 0);

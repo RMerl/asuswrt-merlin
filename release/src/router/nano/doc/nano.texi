@@ -6,8 +6,8 @@
 
 @smallbook
 @set EDITION 0.4
-@set VERSION 2.8.4
-@set UPDATED May 2017
+@set VERSION 2.8.5
+@set UPDATED June 2017
 
 @dircategory Editors
 @direntry
@@ -21,7 +21,7 @@
 @titlepage
 @title GNU @code{nano}
 @subtitle a small and friendly text editor
-@subtitle version 2.8.4
+@subtitle version 2.8.5
 
 @author Chris Allegretta
 @page
@@ -81,8 +81,9 @@ file locking, backup files, and internationalization support.
 
 The original goal for @code{nano} was to be a complete bug-for-bug
 emulation of Pico.  But currently the goal is to be as compatible
-as possible while offering a superset of Pico's functionality.  See
-@xref{Pico Compatibility}, for more info.
+as possible while offering a superset of Pico's functionality.
+@xref{Pico Compatibility} for more details on how @code{nano} and
+Pico differ.
 
 Please report bugs via @url{https://savannah.gnu.org/bugs/?group=nano}.
 
@@ -107,7 +108,7 @@ adding it with a comma.  So a more complete command synopsis is:
 @end quotation
 
 Normally, however, you set your preferred options in a @file{.nanorc}
-file (see @xref{Nanorc Files}).  And when using @code{set positionlog}
+file (@pxref{Nanorc Files}).  And when using @code{set positionlog}
 (making @code{nano} remember the cursor position when you close a file),
 you will rarely need to specify a line number.
 
@@ -182,7 +183,7 @@ Disable automatic conversion of files from DOS/Mac format.
 
 @item -O
 @itemx --morespace
-Use the blank line below the titlebar as extra editing space.
+Use the blank line below the title bar as extra editing space.
 
 @item -P
 @itemx --positionlog
@@ -219,7 +220,7 @@ Set the displayed tab length to @var{number} columns.  The value of
 
 @item -U
 @itemx --quickblank
-Do quick statusbar blanking.  Statusbar messages will disappear after 1
+Do quick status-bar blanking: status-bar messages will disappear after 1
 keystroke instead of 25.  Note that option @option{-c}
 (@option{--constantshow}) overrides this.
 
@@ -240,12 +241,13 @@ should be considered as parts of words.  This overrides option
 
 @item -Y @var{name}
 @itemx --syntax=@var{name}
-Specify a specific syntax from the nanorc files to use for highlighting.
-See @xref{Syntax Highlighting}, for more info.
+Specify the syntax to be used for highlighting.
+@xref{Syntax Highlighting} for more info.
 
 @item -c
 @itemx --constantshow
-Constantly display the cursor position and line number on the statusbar.
+Constantly display the cursor position (line number, column number,
+and character number) on the status bar.
 Note that this overrides option @option{-U} (@option{--quickblank}).
 
 @item -d
@@ -351,7 +353,7 @@ Don't hard-wrap long lines at any length.  This option conflicts with
 @item -x
 @itemx --nohelp
 Expert Mode: don't show the Shortcut List at the bottom of the screen.
-This affects the location of the statusbar as well, as in Expert Mode it
+This affects the location of the status bar as well, as in Expert Mode it
 is located at the very bottom of the editor.
 
 Note: When accessing the help system, Expert Mode is temporarily
@@ -475,21 +477,21 @@ If necessary, it can be toggled off manually with another ^6 or M-A.
 @section Screen Layout
 
 The default screen of nano consists of five areas.  From top to bottom
-these are: the titlebar, a blank line, the edit window, the statusbar,
+these are: the title bar, a blank line, the edit window, the status bar,
 and two help lines.
 
-The titlebar consists of
+The title bar consists of
 three sections: left, center and right.  The section on the left
 displays the version of @code{nano} being used.  The center section
 displays the current filename, or "New Buffer" if the file has not yet
 been named.  The section on the right displays "Modified" if the
 file has been modified since it was last saved or opened.
 
-The statusbar is the third line from the bottom of the screen.  It
+The status bar is the third line from the bottom of the screen.  It
 shows important and informational messages.  Any error messages that
-occur from using the editor will appear on the statusbar.  Any questions
-that are asked of the user will be asked on the statusbar, and any user
-input (search strings, filenames, etc.) will be input on the statusbar.
+occur from using the editor will appear on the status bar.  Any questions
+that are asked of the user will be asked on the status bar, and any user
+input (search strings, filenames, etc.) will be input on the status bar.
 
 The two help lines at the bottom of the screen show some of the most
 essential functions of the editor.  These two lines are called the
@@ -545,7 +547,7 @@ and ^V (Page Down) keys.  ^X exits the help system.
 
 Toggles allow you to change on-the-fly certain aspects of the editor
 which would normally be specified via command-line options.  They are
-invoked via Meta-key sequences (see @xref{Commands}, for more info).
+invoked via Meta-key sequences (@pxref{Commands} for more info).
 The following global toggles are available:
 
 @table @code
@@ -581,8 +583,7 @@ toggles the @code{-N} (@code{--noconvert}) command-line option.
 toggles the @code{-O} (@code{--morespace}) command-line option.
 
 @item Whitespace Display Toggle (Meta-P)
-toggles the whitespace-display mode.
-See @xref{Whitespace}, for more info.
+toggles the whitespace-display mode (@pxref{Whitespace}).
 
 @item Tabs to Spaces Toggle (Meta-Q)
 toggles the @code{-E} (@code{--tabstospaces}) command-line option.
@@ -594,8 +595,8 @@ toggles the @code{-S} (@code{--smooth}) command-line option.
 toggles the @code{-x} (@code{--nohelp}) command-line option.
 
 @item Color Syntax Highlighting Toggle (Meta-Y)
-toggles color syntax highlighting if you have color syntaxes in your
-nanorc.  See @xref{Syntax Highlighting}, for more info.
+toggles color syntax highlighting (if your nanorc defines syntaxes
+--- @pxref{Syntax Highlighting}).
 
 @item Suspension Toggle (Meta-Z)
 toggles the @code{-z} (@code{--suspend}) command-line option.
@@ -621,7 +622,7 @@ from @file{~/.nanorc}.
 A nanorc file accepts a series of "set" and "unset" commands, which can
 be used to configure @code{nano} on startup without using command-line
 options.  Additionally, there are some commands to define syntax highlighting
-and to rebind keys --- @xref{Syntax Highlighting}, and @xref{Rebinding Keys}.
+and to rebind keys --- @pxref{Syntax Highlighting} and @ref{Rebinding Keys}.
 @code{nano} will read one command per line.
 
 Options in nanorc files take precedence over @code{nano}'s defaults, and
@@ -671,7 +672,7 @@ The uniquely numbered files are stored in the specified directory.
 Do backwards searches by default.
 
 @item set boldtext
-Use bold instead of reverse video for the titlebar, statusbar, key combos,
+Use bold instead of reverse video for the title bar, status bar, key combos,
 line numbers, and selected text.  This can be overridden for the first four
 by setting the options @code{titlecolor}, @code{statuscolor}, @code{keycolor},
 and @code{numbercolor}.
@@ -687,7 +688,7 @@ closing brackets, can end sentences.  The default value is
 Do case-sensitive searches by default.
 
 @item set constantshow
-Constantly display the cursor position in the status bar.
+Constantly display the cursor position on the status bar.
 (The old form of this option, @code{set const}, is deprecated.)
 
 @item set cut
@@ -728,7 +729,7 @@ come before the closing set, and the two sets must be in the same order.
 The default value is @t{"(<[@{)>]@}"}.
 
 @item set morespace
-Use the blank line below the titlebar as extra editing space.
+Use the blank line below the title bar as extra editing space.
 
 @item set mouse
 Enable mouse support, so that mouse clicks can be used to place the
@@ -779,7 +780,7 @@ specified closing punctuation, optionally followed by closing brackets
 The default value is @t{"!.?"}.
 
 @item set quickblank
-Do quick statusbar blanking.  Statusbar messages will disappear after 1
+Do quick status-bar blanking: status-bar messages will disappear after 1
 keystroke instead of 25.
 
 @item set quiet
@@ -830,7 +831,7 @@ Use spelling checker "spellprog" instead of the built-in one, which
 calls "spell".
 
 @item set statuscolor @var{fgcolor},@var{bgcolor}
-Specify the color combination to use for the statusbar.
+Specify the color combination to use for the status bar.
 See @code{set titlecolor} for more details.
 
 @item set suspend
@@ -847,7 +848,7 @@ Convert typed tabs to spaces.
 Save automatically on exit, don't prompt.
 
 @item set titlecolor @var{fgcolor},@var{bgcolor}
-Specify the color combination to use for the titlebar.
+Specify the color combination to use for the title bar.
 Valid color names for foreground and background are:
 white, black, blue, green, red, cyan, yellow, and magenta.
 The name of the foreground color may be prefixed with 'bright'.
@@ -1271,7 +1272,7 @@ Toggles the presence of the two-line list of key bindings at the bottom of the s
 Toggles the constant display of the current line, column, and character positions.
 
 @item morespace
-Toggles the presence of the blank line which 'separates' the titlebar from the file text.
+Toggles the presence of the blank line that 'separates' the title bar from the file text.
 
 @item smoothscroll
 Toggles smooth scrolling (when moving around with the arrow keys).
@@ -1387,7 +1388,7 @@ searching via ^W (or 'w') and changing directories via ^_ (or 'g').  The
 behavior of the Enter (or 's') key varies by what is currently selected.
 If the currently selected object is a directory, the file browser will
 enter and display the contents of the directory.  If the object is a
-file, this filename and path are copied to the statusbar, and the file
+file, this filename and path are copied to the status bar, and the file
 browser exits.
 
 
@@ -1454,8 +1455,8 @@ browser is just a file browser, not a file manager.
 Many options which alter the functionality of the program can be
 "toggled" on or off using Meta key sequences, meaning the program does
 not have to be restarted to turn a particular feature on or off.
-See the internal help function (^G) for a list of features that
-can be toggled.  Or see @xref{Feature Toggles} instead.
+@xref{Feature Toggles} for a list of options that can be toggled.
+Or see the list at the end the main internal help text (^G) instead.
 
 @end table
 
@@ -1530,7 +1531,7 @@ option, which causes a file to be read into a separate buffer by default.
 Disable support for reading the nanorc files at startup.  With such
 support, you can store custom settings in a system-wide and a per-user
 nanorc file rather than having to pass command-line options to get
-the desired behavior.  See @xref{Nanorc Files}, for more info.
+the desired behavior.  @xref{Nanorc Files} for more info.
 Disabling this also eliminates the @code{-I} and @code{-q} command-line
 options; the first inhibits the reading of nanorcfiles, and the second
 suppresses warnings about errors in those files.

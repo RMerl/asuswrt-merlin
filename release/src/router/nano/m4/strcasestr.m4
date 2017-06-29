@@ -1,4 +1,4 @@
-# strcasestr.m4 serial 21
+# strcasestr.m4 serial 22
 dnl Copyright (C) 2005, 2007-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -102,6 +102,9 @@ static void quit (int sig) { _exit (sig + 128); }
         if (!strcasestr (haystack, needle))
           result |= 1;
       }
+    /* Free allocated memory, in case some sanitizer is watching.  */
+    free (haystack);
+    free (needle);
     return result;
     ]])],
         [gl_cv_func_strcasestr_linear=yes], [gl_cv_func_strcasestr_linear=no],

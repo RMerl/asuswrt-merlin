@@ -2448,10 +2448,8 @@ void do_justify(bool full_justify)
     } while (kbinput == KEY_WINCH);
 #endif
 
-    /* If needed, unset the cursor-position suppression flag, so the cursor
-     * position /will/ be displayed upon a return to the main loop. */
-    if (ISSET(CONSTANT_SHOW))
-	do_cursorpos(FALSE);
+    /* Unset the suppression flag after showing the Unjustify message. */
+    suppress_cursorpos = FALSE;
 
     func = func_from_key(&kbinput);
 
@@ -3568,7 +3566,7 @@ void do_verbatim_input(void)
 
     /* Unsuppress cursor-position display or blank the statusbar. */
     if (ISSET(CONSTANT_SHOW))
-	do_cursorpos(FALSE);
+	suppress_cursorpos = FALSE;
     else {
 	blank_statusbar();
 	wnoutrefresh(bottomwin);
