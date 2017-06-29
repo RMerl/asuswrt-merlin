@@ -8,10 +8,13 @@ Asuswrt-Merlin Changelog
   - NEW: Custom config support for quagga/ripd.
   - NEW: Webui SSL certificate can now be saved so it gets reused
          instead of a new one being constantly generated.  It will
-         be stored under /jffs/https/, you can also easily provide
+         be stored under /jffs/ssl/, you can also easily provide
          your own by storing cert.pem and key.pem in that location.
          Settings to control this can be found under
          Administration -> System.
+  - NEW: TLS support in vsftpd.  Key and certs are automatically
+         generated, and can also be replaced by your own, as
+         ftp.key and ftp.crt under /jffs/ssl/
   - NEW: PEAP/MSCHAPv2 support via 802.1x on WAN interface, in
          addition to existing MD5 support (patch by Rafi Khardalian)
   - CHANGED: Remember chosen sort method on DHCP static reservations
@@ -42,6 +45,9 @@ Asuswrt-Merlin Changelog
   - FIXED: NAT Loopback (merlin mode) in Dual WAN mode wasn't supported.
   - FIXED: Internal and external port specifications were swapped in
            miniupnpd's config file (Asus/Tomato bug)
+  - FIXED: Enabling policy-based routing for a client connecting to
+           a server that doesn't push a redirect-gateway would fail
+           to properly route traffic (for instance with StrongVPN)
 
 
 380.66_6 (22-June-2017)
