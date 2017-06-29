@@ -2352,8 +2352,7 @@ void start_ssl(void)
 				// browsers seems to like this when the ip address moves...	-- zzz
 				f_read("/dev/urandom", &sn, sizeof(sn));
 
-				sprintf(t, "%llu", sn & 0x7FFFFFFFFFFFFFFFULL);
-				eval("gencert.sh", t);
+				eval("gencert.sh", "web");
 			}
 		}
 
