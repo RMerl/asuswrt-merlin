@@ -760,6 +760,13 @@ function validForm(){
 					</td>
 				</tr>										
 				<tr>
+					<th>Enable TLS support</th>
+					<td>
+						<input type="radio" name="ftp_tls" class="input" value="1" <% nvram_match_x("", "ftp_tls", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="ftp_tls" class="input" value="0" <% nvram_match_x("", "ftp_tls", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
+				<tr>
 					<th>
 						<a class="hintstyle" href="javascript:void(0);" onClick="openHint(17,1);"><#ShareNode_MaximumLoginUser_itemname#></a>
 					</th>

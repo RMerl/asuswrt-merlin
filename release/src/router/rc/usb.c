@@ -2055,6 +2055,16 @@ void write_ftpd_conf()
 		fprintf(fp, "xferlog_file=/var/log/vsftpd.log\n");
 	}
 
+	if(nvram_get_int("ftp_tls")){
+		fprintf(fp, "ssl_enable=YES\n");
+		fprintf(fp, "rsa_cert_file=/jffs/ssl/ftp.crt\n");
+		fprintf(fp, "rsa_private_key_file=/jffs/ssl/ftp.key\n");
+
+		if(!check_if_file_exist("/jffs/ssl/ftp.key")||!check_if_file_exist("/jffs/ssl/ftp.crt")){
+			eval("gencert.sh", "ftp");
+		}
+	}
+
 	append_custom_config("vsftpd.conf", fp);
 	fclose(fp);
 
