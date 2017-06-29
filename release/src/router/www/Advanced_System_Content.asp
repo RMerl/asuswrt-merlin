@@ -351,6 +351,7 @@ function applyRule(){
 				|| document.form.misc_httpsport_x.value != '<% nvram_get("misc_httpsport_x"); %>'
 				|| getRadioItemCheck(document.form.https_crt_gen) == "1"
 				|| document.form.https_crt_cn.value != '<% nvram_get("https_crt_cn"); %>'
+				|| document.form.https_crt_save.value != '<% nvram_get("https_crt_save"); %>'
 			){
 			restart_httpd_flag = true;
 			if(document.form.https_crt_cn.value != '<% nvram_get("https_crt_cn"); %>'){
