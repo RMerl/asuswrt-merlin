@@ -222,8 +222,13 @@ then
 		then
 			logger -t "openvpn-routing" "Tunnel re-established, restoring WAN access to clients"
 		fi
-		ip route del default table $VPN_TBL
-		ip route add default via $route_vpn_gateway table $VPN_TBL
+		if [ "$route_net_gateway" != "" ]
+		then
+			ip route del default table $VPN_TBL
+			ip route add default via $route_vpn_gateway table $VPN_TBL
+		else
+			logger -t "openvpn-routing" "WARNING: no VPN gateway provided, routing might not work properly!"
+		fi
 	fi
 
 	if [ "$route_net_gateway" != "" ]
