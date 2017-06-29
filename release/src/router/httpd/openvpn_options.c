@@ -484,6 +484,8 @@ add_option (char *p[], int line, int unit)
 	{
 		sprintf(buf, "vpn_client%d_rgw", unit);
 		nvram_set(buf, "1");
+		sprintf(buf, "vpn_client%d_custom", unit);
+		add_custom(buf, p);
 	}
 	else if (streq (p[0], "verb") && p[1])
 	{
