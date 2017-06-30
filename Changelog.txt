@@ -20,7 +20,7 @@ Asuswrt-Merlin Changelog
   - CHANGED: Remember chosen sort method on DHCP static reservations
              page.
   - CHANGED: Updated minidlna to 1.2.0.
-  - CHANGED: Updated nano to 2.8.4.
+  - CHANGED: Updated nano to 2.8.5.
   - CHANGED: Updated openssl to 1.0.2l.
   - CHANGED: Updated ipset (ARM) to 6.32.
   - CHANGED: Upgraded from vsftpd 2.0.4 to 3.0.3.  You might need to
