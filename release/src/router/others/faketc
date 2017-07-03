@@ -1,0 +1,32 @@
+#!/bin/sh
+
+ORIPARMS=$*
+SCHED=$(nvram get qos_sched)
+QOSDEBUG=$(nvram get qos_debug)
+OVERHEAD=$(nvram get qos_overhead)
+
+TYPE=$(echo $ORIPARMS | cut -f 1 -d " ")
+
+if [ "$TYPE" == "class" -a "$OVERHEAD" -gt "0" ]
+then
+	PARMS="${ORIPARMS/htb/htb overhead $OVERHEAD linklayer atm}"
+else
+	PARMS=$ORIPARMS
+fi
+
+if [ "$SCHED" == "1" ]
+then
+	NEWPARMS="${PARMS/sfq/codel}"
+elif [ "$SCHED" == "2" ]
+then
+	NEWPARMS="${PARMS/sfq/fq_codel noecn}"
+else
+	NEWPARMS=$PARMS
+fi
+
+if [ "$QOSDEBUG" == "1" ]
+then
+	echo "$NEWPARMS" >> /tmp/qos.log
+fi
+
+/tmp/qostc/realtc $NEWPARMS

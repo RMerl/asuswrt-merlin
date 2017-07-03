@@ -46,4 +46,10 @@ ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN300)$(RTN54U)$(RTAC1200HP)$(RTN
 # for read/write Ralink PHY registers
         install -D mii_mgr $(INSTALLDIR)/bin/mii_mgr
 endif
+
+# Adaptive QoS tc patch
+ifeq ($(RTCONFIG_BCMARM),y)
+	install -m 0700 -D faketc $(INSTALLDIR)/usr/sbin
+endif
+
 clean:

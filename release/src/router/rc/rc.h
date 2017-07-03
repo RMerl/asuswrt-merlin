@@ -679,6 +679,8 @@ extern void update_wan_state(char *prefix, int state, int reason);
 extern int update_resolvconf(void);
 
 /* qos.c */
+extern void set_codel_patch(void);
+extern void remove_codel_patch(void);
 extern int start_iQos(void);
 extern void stop_iQos(void);
 extern void del_iQosRules(void);

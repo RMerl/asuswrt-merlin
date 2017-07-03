@@ -558,8 +558,8 @@ function change_qos_type(value){
 		document.getElementById('bandwidth_setting_tr').style.display = "";
 		document.getElementById('list_table').style.display = "none";
 		if (codel_support) {
-			document.getElementById('qos_sched_tr').style.display = "none";
-			document.getElementById('qos_overhead_tr').style.display = "none";
+			document.getElementById('qos_sched_tr').style.display = "";
+			document.getElementById('qos_overhead_tr').style.display = "";
 		}
 		document.form.qos_bw_rulelist.disabled = true;
 		if(document.getElementById("auto").checked){
@@ -1155,6 +1155,11 @@ function eula_confirm(){
 function cancel(){
 	refreshpage();
 }
+
+function set_overhead(obj){
+	document.getElementById('qos_overhead').value = obj.value;
+}
+
 </script>
 </head>	
 <body onload="initial();" id="body_id" onunload="unload_body();" onClick="">	
@@ -1398,11 +1403,14 @@ function cancel(){
 										<tr id="qos_overhead_tr" style="display:none">
 											<th>WAN packet overhead</th>
 											<td colspan="2">
-												<select name="qos_overhead" class="input_option" >
-													<option value="0" <% nvram_match("qos_overhead", "0","selected"); %>>0-None</option>
-													<option value="32" <% nvram_match("qos_overhead", "32","selected"); %>>32-PPPoE VC-Mux, RFC2684/RFC1483 Bridged LLC/Snap</option>
-													<option value="40" <% nvram_match("qos_overhead", "40","selected"); %>>40-PPPoE LLC/Snap</option>
+												<select name="qos_overhead_preset" class="input_option" onchange="set_overhead(this);">
+													<option value="0" selected>--- Presets ---</option>
+													<option value="0">None (Cable, Ethernet)</option>
+													<option value="32">RFC2684/RFC1483 Bridged LLC/Snap</option>
+													<option value="32">PPPoE VC/Mux</option>
+													<option value="40">PPPoE LLC/Snap</option>
 												</select>
+												<input type="text" maxlength="4" class="input_6_table" name="qos_overhead" id="qos_overhead" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, -127, 128)" value="<% nvram_get("qos_overhead"); %>" style="margin-left:20px;">
 											</td>
 										</tr>
 										
