@@ -2023,7 +2023,6 @@ void write_ftpd_conf()
 	fprintf(fp, "listen=YES\n");
 #endif
 	fprintf(fp, "pasv_enable=YES\n");
-	fprintf(fp, "ssl_enable=NO\n");
 	fprintf(fp, "tcp_wrappers=NO\n");
 	strcpy(maxuser, nvram_safe_get("st_max_user"));
 	if ((atoi(maxuser)) > 0)
@@ -2063,6 +2062,8 @@ void write_ftpd_conf()
 		if(!check_if_file_exist("/jffs/ssl/ftp.key")||!check_if_file_exist("/jffs/ssl/ftp.crt")){
 			eval("gencert.sh", "ftp");
 		}
+	} else {
+		fprintf(fp, "ssl_enable=NO\n");
 	}
 
 	append_custom_config("vsftpd.conf", fp);
