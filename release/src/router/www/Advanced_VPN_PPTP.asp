@@ -92,7 +92,7 @@ function initial(){
 		
 		var wan_ipaddr = wanlink_ipaddr();
 
-		document.getElementById("wan_ctrl").innerHTML = "<#PPTP_desc2#>" +  wan_ipaddr;
+		document.getElementById("wan_ctrl").innerHTML = "<#PPTP_desc2#> " +  wan_ipaddr;
 
 		//check DUT is belong to private IP.
 		setTimeout("show_warning_message();", 100);
