@@ -1524,7 +1524,8 @@ struct nvram_tuple router_defaults[] = {
 #endif
 #ifdef RTCONFIG_BCMARM
 	{ "qos_sched",			"0"				},
-	{ "qos_overhead",		"0"				}, // ATM overhead
+	{ "qos_overhead",		"0"				}, // Overhead
+	{ "qos_atm",			"0"				}, // 1 = ATM, 0 = Ethernet
 #endif
 	{ "qos_method",			"0"				},
 	{ "qos_sticky",			"1"				},

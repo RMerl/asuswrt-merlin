@@ -889,7 +889,7 @@ static int start_tqos(void)
 #endif
 	char *qsched;
 	int overhead = 0;
-	char overheadstr[sizeof("overhead 64 linklayer atm")];
+	char overheadstr[sizeof("overhead 128 linklayer ethernet")];
 
 	/* If WAN interface changes, generate mangle table again. */
 	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit) {
@@ -1004,7 +1004,8 @@ static int start_tqos(void)
 #endif
 
 		if (overhead > 0)
-			snprintf(overheadstr, sizeof(overheadstr),"overhead %d linklayer atm", overhead);
+			snprintf(overheadstr, sizeof(overheadstr),"overhead %d %s",
+			         overhead, nvram_get_int("qos_atm") ? "linklayer atm" : "linklayer ethernet");
 		else
 			strcpy(overheadstr, "");
 

@@ -4,12 +4,18 @@ ORIPARMS=$*
 SCHED=$(nvram get qos_sched)
 QOSDEBUG=$(nvram get qos_debug)
 OVERHEAD=$(nvram get qos_overhead)
-
+ATM=$(nvram get qos_atm)
 TYPE=$(echo $ORIPARMS | cut -f 1 -d " ")
 
-if [ "$TYPE" == "class" -a "$OVERHEAD" -gt "0" ]
+if [ "$SCHED" -gt "0" -a "$TYPE" == "class" -a "$OVERHEAD" -gt "0" ]
 then
-	PARMS="${ORIPARMS/htb/htb overhead $OVERHEAD linklayer atm}"
+	if [ "$ATM" == "1" ]
+	then
+		LINK="atm"
+	else
+		LINK="ethernet"
+	fi
+	PARMS="${ORIPARMS/htb/htb overhead $OVERHEAD linklayer $LINK}"
 else
 	PARMS=$ORIPARMS
 fi
