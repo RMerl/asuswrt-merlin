@@ -6,6 +6,7 @@ QOSDEBUG=$(nvram get qos_debug)
 OVERHEAD=$(nvram get qos_overhead)
 ATM=$(nvram get qos_atm)
 TYPE=$(echo $ORIPARMS | cut -f 1 -d " ")
+INT=$(echo $ORIPARMS | cut -f 4 -d " ")
 
 if [ "$SCHED" -gt "0" -a "$TYPE" == "class" -a "$OVERHEAD" -gt "0" ]
 then
@@ -20,12 +21,19 @@ else
 	PARMS=$ORIPARMS
 fi
 
+if [ "$INT" == "br0" ]
+then
+	ECN="ecn"
+else
+	ECN="noecn"
+fi
+
 if [ "$SCHED" == "1" ]
 then
-	NEWPARMS="${PARMS/sfq/codel}"
+	NEWPARMS="${PARMS/sfq/codel $ECN}"
 elif [ "$SCHED" == "2" ]
 then
-	NEWPARMS="${PARMS/sfq/fq_codel noecn}"
+	NEWPARMS="${PARMS/sfq/fq_codel $ECN}"
 else
 	NEWPARMS=$PARMS
 fi
