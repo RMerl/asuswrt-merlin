@@ -5,7 +5,7 @@ CFLAGS += -I$(SRCBASE) -I$(SRCBASE)/include -I. -I$(TOP)/shared -I$(TOP)/zlib
 CFLAGS += -I$(TOP)/push_log
 CFLAGS += -DASUS_DDNS -DTRANSLATE_ON_FLY -DFLASH_EMULATOR -DLinux -DWSC 
 
-ifeq ($(RTN66U)$(RTAC87U),y)
+ifeq ($(RTN66U),y)
 CFLAGS += -DMISSING_HOOKS
 endif
 
