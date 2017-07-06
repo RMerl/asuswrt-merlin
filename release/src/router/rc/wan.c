@@ -2891,6 +2891,7 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 				stop_dpi_engine_service(0);
 			}
 			_dprintf("[%s] start dpi engine service\n", __FUNCTION__);
+			set_codel_patch();
 			start_dpi_engine_service();
 			start_firewall(wan_unit, 0);
 		}

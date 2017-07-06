@@ -7,6 +7,9 @@
 	Copyright (C) ASUSTek. Computer Inc.
 
 */
+#include <sys/mount.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "rc.h"
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -288,6 +291,11 @@ void del_iQosRules(void)
 	unlink(mangle_fn_ipv6);
 #endif	/* RTCONFIG_IPV6 */
 	file_unlock(lock);
+
+#ifdef RTCONFIG_BCMARM
+	remove_codel_patch();
+#endif
+
 }
 
 static int add_qos_rules(char *pcWANIF)
@@ -881,7 +889,7 @@ static int start_tqos(void)
 #endif
 	char *qsched;
 	int overhead = 0;
-	char overheadstr[sizeof("overhead 64 linklayer atm")];
+	char overheadstr[sizeof("overhead 128 linklayer ethernet")];
 
 	/* If WAN interface changes, generate mangle table again. */
 	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit) {
@@ -996,7 +1004,8 @@ static int start_tqos(void)
 #endif
 
 		if (overhead > 0)
-			snprintf(overheadstr, sizeof(overheadstr),"overhead %d linklayer atm", overhead);
+			snprintf(overheadstr, sizeof(overheadstr),"overhead %d %s",
+			         overhead, nvram_get_int("qos_atm") ? "linklayer atm" : "linklayer ethernet");
 		else
 			strcpy(overheadstr, "");
 
@@ -1717,6 +1726,9 @@ int add_iQosRules(char *pcWANIF)
 		break;
 	case 1:
 		/* Adaptive QoS */
+#ifdef RTCONFIG_BCMARM
+		set_codel_patch();
+#endif
 		return -1;
 	case 2:
 		/* Bandwidthh limiter */
@@ -1800,3 +1812,34 @@ void ForceDisableWLan_bw(void)
 	}
 	_dprintf("[BWLIT][%s(%d)]: ALL Guest Netwok of Bandwidth Limiter has been Didabled.\n", __FUNCTION__, __LINE__);
 }
+
+#ifdef RTCONFIG_BCMARM
+void set_codel_patch(void)
+{
+	int sched;
+
+	if (nvram_get_int("qos_type") != 1)
+		return;
+
+	sched = nvram_get_int("qos_sched");
+
+	if (!d_exists("/tmp/qostc") &&
+	    ((sched == 1) || (sched == 2))) {
+		mkdir("/tmp/qostc", 0777);
+		eval("cp", "/usr/sbin/tc", "/tmp/qostc/realtc");
+		mount("/usr/sbin/faketc", "/usr/sbin/tc", NULL, MS_BIND, NULL);
+		logmessage("qos", "Applying codel patch");
+	}
+}
+
+void remove_codel_patch(void)
+{
+	if (d_exists("/tmp/qostc")) {
+		umount("/usr/sbin/tc");
+		eval("rm", "-rf", "/tmp/qostc");
+		logmessage("qos", "Removing codel patch");
+	}
+}
+
+#endif
+
