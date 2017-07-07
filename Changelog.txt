@@ -3,7 +3,7 @@ Asuswrt-Merlin Changelog
 
 380.67 Beta (xx-xxx-2017)
   - NEW: Merged with GPL 380_7743 code , with binary blobs from:
-           * 7378 for N66U, AC87U
+           * 7378 for N66U
            * 7743 for all others
   - NEW: Custom config support for quagga/ripd.
   - NEW: Webui SSL certificate can now be saved so it gets reused
@@ -15,6 +15,7 @@ Asuswrt-Merlin Changelog
   - NEW: TLS support in vsftpd.  Key and certs are automatically
          generated, and can also be replaced by your own, as
          ftp.key and ftp.crt under /jffs/ssl/
+  - NEW: fq_codel and configurable overhead support in Adaptive QoS.
   - NEW: PEAP/MSCHAPv2 support via 802.1x on WAN interface, in
          addition to existing MD5 support (patch by Rafi Khardalian)
   - CHANGED: Remember chosen sort method on DHCP static reservations
