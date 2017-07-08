@@ -169,13 +169,20 @@ save(const void *ip, const struct xt_entry_target *target)
 {
 	struct ipt_trigger_info *info = (struct ipt_trigger_info *)target->data;
 
-	printf("--trigger-proto ");
+	printf(" --trigger-type");
+	if (info->type == IPT_TRIGGER_DNAT)
+		printf(" dnat");
+	else if (info->type == IPT_TRIGGER_IN)
+		printf(" in");
+	else if (info->type == IPT_TRIGGER_OUT)
+		printf(" out");
+	printf(" --trigger-proto");
 	if (info->proto == IPPROTO_TCP)
-		printf("tcp ");
+		printf(" tcp");
 	else if (info->proto == IPPROTO_UDP)
-		printf("udp ");
-	printf("--trigger-match %hu-%hu ", info->ports.mport[0], info->ports.mport[1]);
-	printf("--trigger-relate %hu-%hu ", info->ports.rport[0], info->ports.rport[1]);
+		printf(" udp");
+	printf(" --trigger-match %hu-%hu", info->ports.mport[0], info->ports.mport[1]);
+	printf(" --trigger-relate %hu-%hu", info->ports.rport[0], info->ports.rport[1]);
 }
 
 static struct xtables_target trigger = {
