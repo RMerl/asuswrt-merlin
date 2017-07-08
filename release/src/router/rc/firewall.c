@@ -4251,6 +4251,7 @@ write_porttrigger(FILE *fp, char *wan_if, int is_nat)
 	char *nv, *nvp, *b;
 	char *out_proto, *in_proto, *out_port, *in_port, *desc;
 	char out_protoptr[16], in_protoptr[16];
+	char out_range[16], in_range[16];
 	int first = 1;
 #ifdef RTCONFIG_DUALWAN
 	char dualwan_mode[8];
@@ -4291,10 +4292,15 @@ write_porttrigger(FILE *fp, char *wan_if, int is_nat)
 		(void)proto_conv(in_proto, in_protoptr);
 		(void)proto_conv(out_proto, out_protoptr);
 
+		strlcpy(in_range, in_port, sizeof(in_range));
+		replace_char(in_range, ':', '-');
+		strlcpy(out_range, out_port, sizeof(out_range));
+		replace_char(out_range, ':', '-');
+
 		fprintf(fp, "-A triggers -p %s -m %s --dport %s "
 			"-j TRIGGER --trigger-type out --trigger-proto %s --trigger-match %s --trigger-relate %s\n",
 			out_protoptr, out_protoptr, out_port,
-			in_protoptr, out_port, in_port);
+			in_protoptr, out_range, in_range);
 	}
 	free(nv);
 }
