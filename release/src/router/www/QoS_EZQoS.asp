@@ -324,7 +324,7 @@ function initial(){
 				document.getElementById('download_tr').style.display = "none";
 			}
 
-			if((codel_support) && ("<% nvram_get("qos_sched"); %>" != "0")){
+			if((codel_support) && (document.getElementById('qos_sched').value != "0")){
 				document.getElementById('qos_overhead_tr').style.display = "";
 			}
 
@@ -1197,6 +1197,7 @@ function change_scheduler(value){
 			var state = "";
 
 		document.getElementById('qos_overhead_tr').style.display = state;
+		document.getElementById('qos_sched').value = value;
 	}
 }
 
@@ -1303,6 +1304,7 @@ function change_scheduler(value){
 			<input type="hidden" name="bwdpi_app_rulelist" value="<% nvram_get("bwdpi_app_rulelist"); %>" disabled>
 			<input type="hidden" name="qos_bw_rulelist" value="">
 			<input type="hidden" name="qos_atm" id="qos_atm">
+			<input type="hidden" name="qos_sched" id="qos_sched" value="<% nvram_get("qos_sched"); %>">
 
 			<table width="95%" border="0" align="left" cellpadding="0" cellspacing="0" class="FormTitle" id="FormTitle" style="height:820px;">
 				<tr>
@@ -1435,9 +1437,9 @@ function change_scheduler(value){
 										<tr id="qos_sched_tr" style="display:none">
 											<th>Queue Discipline</th>
 											<td colspan="2">
-												<input id="sfq" name="qos_sched" value="0" type="radio" onclick="change_scheduler(this.value);"<% nvram_match("qos_sched", "0","checked"); %>><label for="sfq">sfq</label>
-												<input id="codel" name="qos_sched" value="1" type="radio" onclick="change_scheduler(this.value);" <% nvram_match("qos_sched", "1","checked"); %>><label for="codel">codel</label>
-												<input id="fq_codel" name="qos_sched" value="2" type="radio" onclick="change_scheduler(this.value);" <% nvram_match("qos_sched", "2","checked"); %>><label for="fq_codel">fq_codel</label>
+												<input name="qos_sched_x" value="0" type="radio" onclick="change_scheduler(this.value);"<% nvram_match("qos_sched", "0","checked"); %>><label for="sfq">sfq</label>
+												<input name="qos_sched_x" value="1" type="radio" onclick="change_scheduler(this.value);" <% nvram_match("qos_sched", "1","checked"); %>><label for="codel">codel</label>
+												<input name="qos_sched_x" value="2" type="radio" onclick="change_scheduler(this.value);" <% nvram_match("qos_sched", "2","checked"); %>><label for="fq_codel">fq_codel</label>
 											</td>
 										</tr>
 
