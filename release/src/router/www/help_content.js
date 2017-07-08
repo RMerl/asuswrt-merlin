@@ -341,5 +341,6 @@ helpcontent[50] = new Array("",
 				"You can redirect your Internet traffic through the tunnel.  Select between \"All\" traffic, or only traffic based on your own rules.  Strict mode will take extra steps to ensure that only routes going through the VPN tunnel get used for your tunnelled clients.",
 				"unused",
 				"Save the SSL certificate so it will be reused every time the web server is restarted.  You can also replace it with your own, stored under /jffs/ssl/ .",
-				"You can specify other hostnames to use in addition to the built-in ones, separated by a space");
-// Last: 50,22
+				"You can specify other hostnames to use in addition to the built-in ones, separated by a space",
+				"Restrict this rule to a specific source IP address");
+// Last: 50,23
