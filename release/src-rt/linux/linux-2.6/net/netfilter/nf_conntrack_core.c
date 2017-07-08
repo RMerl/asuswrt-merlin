@@ -333,7 +333,7 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 #endif /* CONFIG_IPV6 */
 	}
 	ipc_entry.tuple.proto = protocol;
-#ifdef CONFIG_IPV6
+#if defined(CONFIG_IPV6) && 0 /* breaks ICMP error forward */
 	if (ipver == 6 && protocol == IPPROTO_UDP) {
 		ipc_entry.tuple.sp = FRAG_IPV6_UDP_DUMMY_PORT;
 		ipc_entry.tuple.dp = FRAG_IPV6_UDP_DUMMY_PORT;
