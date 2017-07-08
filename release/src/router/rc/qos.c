@@ -1823,10 +1823,9 @@ void set_codel_patch(void)
 
 	sched = nvram_get_int("qos_sched");
 
-	if (!d_exists("/tmp/qostc") &&
+	if (!f_exists("/var/lock/qostc") &&
 	    ((sched == 1) || (sched == 2))) {
-		mkdir("/tmp/qostc", 0777);
-		eval("cp", "/usr/sbin/tc", "/tmp/qostc/realtc");
+		eval("touch", "/var/lock/qostc");
 		mount("/usr/sbin/faketc", "/usr/sbin/tc", NULL, MS_BIND, NULL);
 		logmessage("qos", "Applying codel patch");
 	}
@@ -1834,9 +1833,9 @@ void set_codel_patch(void)
 
 void remove_codel_patch(void)
 {
-	if (d_exists("/tmp/qostc")) {
+	if (f_exists("/var/lock/qostc")) {
 		umount("/usr/sbin/tc");
-		eval("rm", "-rf", "/tmp/qostc");
+		unlink("/var/lock/qostc");
 		logmessage("qos", "Removing codel patch");
 	}
 }

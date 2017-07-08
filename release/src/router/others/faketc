@@ -43,4 +43,4 @@ then
 	echo "$NEWPARMS" >> /tmp/qos.log
 fi
 
-/tmp/qostc/realtc $NEWPARMS
+/usr/sbin/realtc $NEWPARMS
