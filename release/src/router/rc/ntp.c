@@ -63,7 +63,7 @@ static void ntp_service()
 #endif
 
 #ifdef RTCONFIG_DNSSEC
-		if (nvram_match("dnssec_enable", "1")) {
+		if (nvram_get_int("dnssec_enable")) {
 			reload_dnsmasq();
 		}
 #endif
