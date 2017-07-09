@@ -765,7 +765,7 @@ function cancel_priority_panel() {
 
 function save_priority(){
 	regen_priority(document.getElementById("category_list"));
-	document.PriorityForm.bwdpi_app_rulelist_edit.value = bwdpi_app_rulelist;	
+	document.getElementById("bwdpi_app_rulelist_edit").value = bwdpi_app_rulelist;
 	$("#priority_panel").fadeOut(300);	
 	setTimeout("change_qos_type(document.form.qos_type.value);", 300);
 }
@@ -1237,7 +1237,7 @@ function change_scheduler(value){
 					<input type="hidden" name="action_wait" value="1">
 					<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 					<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-					<input type="hidden" name="bwdpi_app_rulelist_edit" value="<% nvram_get("bwdpi_app_rulelist"); %>">
+					<input type="hidden" name="bwdpi_app_rulelist_edit" id="bwdpi_app_rulelist_edit" value="<% nvram_get("bwdpi_app_rulelist"); %>">
 					<tr>
 						<div class="description_down"><#Adaptive_QoS#> - <#Adaptive_QoS#></div>
 					</tr>
