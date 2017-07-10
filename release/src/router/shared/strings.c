@@ -153,7 +153,7 @@ int remove_word(char *buffer, const char *word)
 	return 1;
 }
 
-int replace_char(char *str, const char *from, const char *to)
+int replace_char(char *str, const char from, const char to)
 {
 	char *p = str;
 	while (*p) {
