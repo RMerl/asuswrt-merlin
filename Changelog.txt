@@ -2,9 +2,8 @@ Asuswrt-Merlin Changelog
 ========================
 
 380.67 Beta (xx-xxx-2017)
-  - NEW: Merged with GPL 380_7743 code , with binary blobs from:
-           * 7378 for N66U
-           * 7743 for all others
+  - NEW: Merged with GPL 380_7743 code, with binary blobs from
+         7378 for N66U
   - NEW: Custom config support for quagga/ripd.
   - NEW: Webui SSL certificate can now be saved so it gets reused
          instead of a new one being constantly generated.  It will
@@ -49,6 +48,10 @@ Asuswrt-Merlin Changelog
   - FIXED: Enabling policy-based routing for a client connecting to
            a server that doesn't push a redirect-gateway would fail
            to properly route traffic (for instance with StrongVPN)
+  - FIXED: Invalid port trigger rules when specifying a port range
+           (patch by John Bacho)
+  - FIXED: OpenVPN client with a password containing an "&" could get
+           corrupted when re-editing that client's config.
 
 
 380.66_6 (22-June-2017)
