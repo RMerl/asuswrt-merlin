@@ -753,7 +753,7 @@ int get_dhcpd_lmax()
 
 void stop_hour_monitor_service()
 {
-	//logmessage("hour_monitor", "stop_hour_monitor_service");
+	//logmessage("hour monitor", "stop_hour_monitor_service");
 	killall("hour_monitor", SIGTERM);
 }
 

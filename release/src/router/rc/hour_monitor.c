@@ -34,7 +34,7 @@ void hm_traffic_analyzer_save()
 
 	if(!f_exists("/dev/detector") || !f_exists("/dev/idpfw")){
 		_dprintf("%s : dpi engine doesn't exist, not to save any database\n", __FUNCTION__);
-		logmessage("hour_monitor", "dpi engine doesn't exist");
+		logmessage("hour monitor", "dpi engine doesn't exist");
 		return;
 	}
 
@@ -70,7 +70,7 @@ void hm_traffic_analyzer_save()
 	}
 
 	if(debug) {
-		logmessage("hour_monitor", "buf=%s", buf);
+		logmessage("hour monitor", "buf=%s", buf);
 		dbg("%s : db_mode = %d, buf = %s\n", __FUNCTION__, db_mode, buf);
 	}
 
@@ -123,7 +123,7 @@ int hour_monitor_function_check()
 	if(debug)
 	{
 		dbg("%s : value = %d(0x%x)\n", __FUNCTION__, value, value);
-		logmessage("hour_monitor", "value = %d(0x%x)", value, value);
+		logmessage("hour monitor", "value = %d(0x%x)", value, value);
 	}
 
 	return value;
@@ -166,7 +166,7 @@ static void catch_sig(int sig)
 		if (hm_alarm_status == 1)
 			hour_monitor_call_fucntion();
 //		else if (hm_alarm_status == 0)
-//			logmessage("hour_monitor", "ntp sync fail, will retry after 120 sec");
+//			logmessage("hour monitor", "ntp sync fail, will retry after 120 sec");
 	}
 	else if (sig == SIGTERM)
 	{
@@ -185,12 +185,12 @@ int hour_monitor_main(int argc, char **argv)
 
 	/* starting message */
 	if(debug) _dprintf("%s: daemong is starting ... \n", __FUNCTION__);
-	logmessage("hour_monitor", "daemon is starting");
+	logmessage("hour monitor", "daemon is starting");
 
 	/* check need to enable monitor fucntion or not */
 	if(!hour_monitor_function_check()){
 		if(debug) _dprintf("%s: terminate ... \n", __FUNCTION__);
-		logmessage("hour_monitor", "daemon terminates");
+		logmessage("hour monitor", "daemon terminates");
 		exit(0);
 	}
 
@@ -212,7 +212,7 @@ int hour_monitor_main(int argc, char **argv)
 
 	if(debug) {
 		_dprintf("%s: ntp_ready=%d, DST=%s\n", __FUNCTION__, nvram_get_int("ntp_ready"), nvram_safe_get("time_zone_x"));
-		logmessage("hour_monitor", "ntp_ready=%d, DST=%s", nvram_get_int("ntp_ready"), nvram_safe_get("time_zone_x"));
+		logmessage("hour monitor", "ntp_ready=%d, DST=%s", nvram_get_int("ntp_ready"), nvram_safe_get("time_zone_x"));
 	}
 
 	while(1)
@@ -250,7 +250,7 @@ int hour_monitor_main(int argc, char **argv)
 			
 			if(debug) {
 				_dprintf("%s: diff_sec=%d\n", __FUNCTION__, diff_sec);
-				logmessage("hour_monitor", "diff_sec=%d", diff_sec);
+				logmessage("hour monitor", "diff_sec=%d", diff_sec);
 			}
 
 			alarm(diff_sec);
