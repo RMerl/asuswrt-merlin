@@ -1632,6 +1632,7 @@ _dprintf("%s: Finish.\n", __FUNCTION__);
 void logmessage_normal(char *logheader, char *fmt, ...){
   va_list args;
   char buf[512];
+  char logheader2[33];
   int level;
 
   va_start(args, fmt);
@@ -1641,7 +1642,9 @@ void logmessage_normal(char *logheader, char *fmt, ...){
   level = nvram_get_int("message_loglevel");
   if (level > 7) level = 7;
 
-  openlog(logheader, 0, 0);
+  strlcpy(logheader2, logheader, sizeof (logheader2));
+  replace_char(logheader2, ' ', '_');
+  openlog(logheader2, 0, 0);
   syslog(level, buf);
   closelog();
   va_end(args);
