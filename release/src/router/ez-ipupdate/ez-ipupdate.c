@@ -986,7 +986,7 @@ void show_message(char *fmt, ...)
 
   va_start(args, fmt);
   vsnprintf(buf, sizeof(buf), fmt, args);
-  openlog("ddns update", 0, 0);
+  openlog("ddns_update", 0, 0);
   syslog(0, "%s", buf);
   closelog();
   va_end(args);
