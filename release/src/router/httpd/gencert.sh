@@ -1,9 +1,10 @@
 #!/bin/sh
-if [ "$1" == "" ]
+
+if [ "$1" == "web" -o "$1" == "ftp" ]
 then
-	SERVICE="web"
+        SERVICE=$1
 else
-	SERVICE=$1
+        SERVICE="web"
 fi
 
 SECS=1262278080
