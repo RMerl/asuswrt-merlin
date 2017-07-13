@@ -52,6 +52,9 @@ Asuswrt-Merlin Changelog
            (patch by John Bacho)
   - FIXED: OpenVPN client with a password containing an "&" could get
            corrupted when re-editing that client's config.
+  - FIXED: Some remote syslogd would choke on syslog entries sent by
+           the router if there were spaces in the tag parameter.
+           Removed spaces where this was the case.
 
 
 380.66_6 (22-June-2017)
