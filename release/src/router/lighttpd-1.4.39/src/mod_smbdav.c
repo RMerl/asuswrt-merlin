@@ -6171,7 +6171,7 @@ propmatch_cleanup:
         }
         flag_cert=1;
 	#else
-        eval("gencert.sh", t);
+        eval("gencert.sh", "web");
 
 		Cdbg(DBE, "tar -zcvf certification");
         if (eval("tar", "-C", "/", "-czf", "/tmp/cert.tgz", "etc/cert.pem", "etc/key.pem") == 0)
