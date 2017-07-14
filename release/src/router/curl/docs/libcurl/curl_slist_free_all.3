@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -19,7 +19,7 @@
 .\" * KIND, either express or implied.
 .\" *
 .\" **************************************************************************
-.TH curl_slist_free_all 3 "February 03, 2016" "libcurl 7.54.0" "libcurl Manual"
+.TH curl_slist_free_all 3 "May 05, 2017" "libcurl 7.54.1" "libcurl Manual"
 
 .SH NAME
 curl_slist_free_all - free an entire curl_slist list
@@ -33,6 +33,22 @@ curl_slist_free_all() removes all traces of a previously built curl_slist
 linked list.
 .SH RETURN VALUE
 Nothing.
+.SH EXAMPLE
+.nf
+CURL *handle;
+struct curl_slist *slist=NULL;
+
+slist = curl_slist_append(slist, "X-libcurl: coolness");
+
+if (slist == NULL)
+  return -1;
+
+curl_easy_setopt(handle, CURLOPT_HTTPHEADER, slist);
+
+curl_easy_perform(handle);
+
+curl_slist_free_all(slist); /* free the list again */
+.fi
 .SH "SEE ALSO"
 .BR curl_slist_append "(3), "
 

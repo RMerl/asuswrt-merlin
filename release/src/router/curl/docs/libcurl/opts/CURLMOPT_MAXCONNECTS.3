@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2014, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLMOPT_MAXCONNECTS 3 "February 03, 2016" "libcurl 7.54.0" "curl_multi_setopt options"
+.TH CURLMOPT_MAXCONNECTS 3 "May 27, 2017" "libcurl 7.54.1" "curl_multi_setopt options"
 
 .SH NAME
 CURLMOPT_MAXCONNECTS \- set size of connection cache
@@ -52,7 +52,11 @@ See DESCRIPTION
 .SH PROTOCOLS
 All
 .SH EXAMPLE
-TODO
+.nf
+CURLM *m = curl_multi_init();
+/* only keep 10 connections in the cache */
+curl_multi_setopt(m, CURLMOPT_MAXCONNECTS, 10L);
+.fi
 .SH AVAILABILITY
 Added in 7.16.3
 .SH RETURN VALUE

@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2014, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_FTPPORT 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_FTPPORT 3 "May 30, 2017" "libcurl 7.54.1" "curl_easy_setopt options"
 
 .SH NAME
 CURLOPT_FTPPORT \- make FTP transfer active
@@ -66,7 +66,15 @@ NULL
 .SH PROTOCOLS
 FTP
 .SH EXAMPLE
-TODO
+.nf
+CURL *curl = curl_easy_init();
+if(curl) {
+  curl_easy_setopt(curl, CURLOPT_URL, "ftp://example.com/old-server/file.txt");
+  curl_easy_setopt(curl, CURLOPT_FTPPORT, "-");
+  ret = curl_easy_perform(curl);
+  curl_easy_cleanup(curl);
+}
+.fi
 .SH AVAILABILITY
 Port range support was added in 7.19.5
 .SH RETURN VALUE

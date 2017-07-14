@@ -84,7 +84,7 @@ AC_DEFUN([CURL_CHECK_COMPILER_CLANG], [
   if test "$curl_cv_have_def___clang__" = "yes"; then
     AC_MSG_RESULT([yes])
     compiler_id="CLANG"
-    clangver=`$CC -dumpversion`
+    clangver=`$CC -v 2>&1 | grep version | "$SED" 's/.*version \(@<:@0-9@:>@*\.@<:@0-9@:>@*\).*/\1/'`
     clangvhi=`echo $clangver | cut -d . -f1`
     clangvlo=`echo $clangver | cut -d . -f2`
     compiler_num=`(expr $clangvhi "*" 100 + $clangvlo) 2>/dev/null`
@@ -158,7 +158,7 @@ AC_DEFUN([CURL_CHECK_COMPILER_GNU_C], [
     flags_dbg_all="$flags_dbg_all -gvms"
     flags_dbg_yes="-g"
     flags_dbg_off=""
-    flags_opt_all="-O -O0 -O1 -O2 -O3 -Os"
+    flags_opt_all="-O -O0 -O1 -O2 -O3 -Os -Og -Ofast"
     flags_opt_yes="-O2"
     flags_opt_off="-O0"
     CURL_CHECK_DEF([_WIN32], [], [silent])
@@ -880,6 +880,11 @@ AC_DEFUN([CURL_SET_COMPILER_WARNING_OPTS], [
           dnl Only clang 1.1 or later
           if test "$compiler_num" -ge "101"; then
             tmp_CFLAGS="$tmp_CFLAGS -Wunused"
+          fi
+          #
+          dnl Only clang 2.9 or later
+          if test "$compiler_num" -ge "209"; then
+            tmp_CFLAGS="$tmp_CFLAGS -Wshift-sign-overflow"
           fi
         fi
         ;;

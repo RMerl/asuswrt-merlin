@@ -199,8 +199,8 @@ static curl_socklen_t fromlen;
 
 static curl_socket_t peer = CURL_SOCKET_BAD;
 
-static int timeout;
-static int maxtimeout = 5 * TIMEOUT;
+static unsigned int timeout;
+static unsigned int maxtimeout = 5 * TIMEOUT;
 
 #ifdef ENABLE_IPV6
 static bool use_ipv6 = FALSE;
@@ -208,7 +208,7 @@ static bool use_ipv6 = FALSE;
 static const char *ipv_inuse = "IPv4";
 
 const  char *serverlogfile = DEFAULT_LOGFILE;
-static char *pidname= (char *)".tftpd.pid";
+static const char *pidname = ".tftpd.pid";
 static int serverlogslocked = 0;
 static int wrotepidfile = 0;
 
@@ -217,7 +217,7 @@ static sigjmp_buf timeoutbuf;
 #endif
 
 #if defined(HAVE_ALARM) && defined(SIGALRM)
-static int rexmtval = TIMEOUT;
+static const unsigned int rexmtval = TIMEOUT;
 #endif
 
 /* do-nothing macro replacement for systems which lack siginterrupt() */
@@ -960,7 +960,7 @@ static int do_tftp(struct testcase *test, struct tftphdr *tp, ssize_t size)
 #ifdef USE_WINSOCK
   DWORD recvtimeout, recvtimeoutbak;
 #endif
-  char *option = (char *)"mode"; /* mode is implicit */
+  const char *option = "mode"; /* mode is implicit */
   int toggle = 1;
 
   /* Open request dump file. */

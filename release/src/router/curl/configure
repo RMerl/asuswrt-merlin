@@ -11,7 +11,7 @@
 # This configure script is free software; the Free Software Foundation
 # gives unlimited permission to copy, distribute and modify it.
 #
-# Copyright (c) 1998 - 2016 Daniel Stenberg, <daniel@haxx.se>
+# Copyright (c) 1998 - 2017 Daniel Stenberg, <daniel@haxx.se>
 # This configure script may be copied, distributed and modified under the
 # terms of the curl license; see COPYING for more details
 
@@ -1050,9 +1050,18 @@ libext
 AR
 EGREP
 GREP
-SED
 CURL_CFLAG_EXTRAS
 CONFIGURE_OPTIONS
+CODE_COVERAGE_RULES
+CODE_COVERAGE_LDFLAGS
+CODE_COVERAGE_CFLAGS
+GENHTML
+LCOV
+GCOV
+CODE_COVERAGE_ENABLED
+CODE_COVERAGE_ENABLED_FALSE
+CODE_COVERAGE_ENABLED_TRUE
+SED
 AM_BACKSLASH
 AM_DEFAULT_VERBOSITY
 AM_DEFAULT_V
@@ -1113,6 +1122,8 @@ enable_symbol_hiding
 enable_hidden_symbols
 enable_ares
 enable_rt
+with_gcov
+enable_code_coverage
 enable_dependency_tracking
 enable_largefile
 enable_shared
@@ -1844,6 +1855,7 @@ Optional Features:
   --enable-ares[=PATH]    Enable c-ares for DNS lookups
   --disable-ares          Disable c-ares for DNS lookups
   --disable-rt            disable dependency on -lrt
+  --enable-code-coverage  Whether to enable code coverage support
   --enable-dependency-tracking
                           do not reject slow dependency extractors
   --disable-dependency-tracking
@@ -1925,6 +1937,7 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-gcov=GCOV        use given GCOV for coverage (GCOV=gcov).
   --with-pic[=PKGS]       try to use only PIC/non-PIC objects [default=use
                           both]
   --with-aix-soname=aix|svr4|both
@@ -2093,7 +2106,7 @@ Copyright (C) 2012 Free Software Foundation, Inc.
 This configure script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it.
 
-Copyright (c) 1998 - 2016 Daniel Stenberg, <daniel@haxx.se>
+Copyright (c) 1998 - 2017 Daniel Stenberg, <daniel@haxx.se>
 This configure script may be copied, distributed and modified under the
 terms of the curl license; see COPYING for more details
 _ACEOF
@@ -3402,6 +3415,417 @@ $as_echo_n "checking for initial path separator... " >&6; }
 $as_echo "$xc_PATH_SEPARATOR" >&6; }
   as_fn_error $? "path separator mismatch (internal or config.site problem)" "$LINENO" 5
 fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for a sed that does not truncate output" >&5
+$as_echo_n "checking for a sed that does not truncate output... " >&6; }
+if ${ac_cv_path_SED+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+            ac_script=s/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/
+     for ac_i in 1 2 3 4 5 6 7; do
+       ac_script="$ac_script$as_nl$ac_script"
+     done
+     echo "$ac_script" 2>/dev/null | sed 99q >conftest.sed
+     { ac_script=; unset ac_script;}
+     if test -z "$SED"; then
+  ac_path_SED_found=false
+  # Loop through the user's path and test for each of PROGNAME-LIST
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_prog in sed gsed; do
+    for ac_exec_ext in '' $ac_executable_extensions; do
+      ac_path_SED="$as_dir/$ac_prog$ac_exec_ext"
+      as_fn_executable_p "$ac_path_SED" || continue
+# Check for GNU ac_path_SED and select it if it is found.
+  # Check for GNU $ac_path_SED
+case `"$ac_path_SED" --version 2>&1` in
+*GNU*)
+  ac_cv_path_SED="$ac_path_SED" ac_path_SED_found=:;;
+*)
+  ac_count=0
+  $as_echo_n 0123456789 >"conftest.in"
+  while :
+  do
+    cat "conftest.in" "conftest.in" >"conftest.tmp"
+    mv "conftest.tmp" "conftest.in"
+    cp "conftest.in" "conftest.nl"
+    $as_echo '' >> "conftest.nl"
+    "$ac_path_SED" -f conftest.sed < "conftest.nl" >"conftest.out" 2>/dev/null || break
+    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
+    as_fn_arith $ac_count + 1 && ac_count=$as_val
+    if test $ac_count -gt ${ac_path_SED_max-0}; then
+      # Best one so far, save it but keep looking for a better one
+      ac_cv_path_SED="$ac_path_SED"
+      ac_path_SED_max=$ac_count
+    fi
+    # 10*(2^10) chars as input seems more than enough
+    test $ac_count -gt 10 && break
+  done
+  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
+esac
+
+      $ac_path_SED_found && break 3
+    done
+  done
+  done
+IFS=$as_save_IFS
+  if test -z "$ac_cv_path_SED"; then
+    as_fn_error $? "no acceptable sed could be found in \$PATH" "$LINENO" 5
+  fi
+else
+  ac_cv_path_SED=$SED
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_path_SED" >&5
+$as_echo "$ac_cv_path_SED" >&6; }
+ SED="$ac_cv_path_SED"
+  rm -f conftest.sed
+
+
+
+
+	# allow to override gcov location
+
+# Check whether --with-gcov was given.
+if test "${with_gcov+set}" = set; then :
+  withval=$with_gcov; _AX_CODE_COVERAGE_GCOV_PROG_WITH=$with_gcov
+else
+  _AX_CODE_COVERAGE_GCOV_PROG_WITH=gcov
+fi
+
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with code coverage support" >&5
+$as_echo_n "checking whether to build with code coverage support... " >&6; }
+	# Check whether --enable-code-coverage was given.
+if test "${enable_code_coverage+set}" = set; then :
+  enableval=$enable_code_coverage;
+else
+  enable_code_coverage=no
+fi
+
+
+	 if test x$enable_code_coverage = xyes; then
+  CODE_COVERAGE_ENABLED_TRUE=
+  CODE_COVERAGE_ENABLED_FALSE='#'
+else
+  CODE_COVERAGE_ENABLED_TRUE='#'
+  CODE_COVERAGE_ENABLED_FALSE=
+fi
+
+	CODE_COVERAGE_ENABLED=$enable_code_coverage
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_code_coverage" >&5
+$as_echo "$enable_code_coverage" >&6; }
+
+	if  test "$enable_code_coverage" = "yes" ; then :
+
+		# check for gcov
+		if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}$_AX_CODE_COVERAGE_GCOV_PROG_WITH", so it can be a program name with args.
+set dummy ${ac_tool_prefix}$_AX_CODE_COVERAGE_GCOV_PROG_WITH; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_GCOV+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$GCOV"; then
+  ac_cv_prog_GCOV="$GCOV" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_GCOV="${ac_tool_prefix}$_AX_CODE_COVERAGE_GCOV_PROG_WITH"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+GCOV=$ac_cv_prog_GCOV
+if test -n "$GCOV"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $GCOV" >&5
+$as_echo "$GCOV" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_GCOV"; then
+  ac_ct_GCOV=$GCOV
+  # Extract the first word of "$_AX_CODE_COVERAGE_GCOV_PROG_WITH", so it can be a program name with args.
+set dummy $_AX_CODE_COVERAGE_GCOV_PROG_WITH; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_ac_ct_GCOV+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_GCOV"; then
+  ac_cv_prog_ac_ct_GCOV="$ac_ct_GCOV" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_GCOV="$_AX_CODE_COVERAGE_GCOV_PROG_WITH"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_GCOV=$ac_cv_prog_ac_ct_GCOV
+if test -n "$ac_ct_GCOV"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_GCOV" >&5
+$as_echo "$ac_ct_GCOV" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_ct_GCOV" = x; then
+    GCOV=":"
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    GCOV=$ac_ct_GCOV
+  fi
+else
+  GCOV="$ac_cv_prog_GCOV"
+fi
+
+		if test "X$GCOV" = "X:"; then :
+  as_fn_error $? "gcov is needed to do coverage" "$LINENO" 5
+fi
+
+
+				if  test "$GCC" = "no" ; then :
+
+			as_fn_error $? "not compiling with gcc, which is required for gcov code coverage" "$LINENO" 5
+
+fi
+
+		# List of supported lcov versions.
+		lcov_version_list="1.6 1.7 1.8 1.9 1.10 1.11 1.13"
+
+		# Extract the first word of "lcov", so it can be a program name with args.
+set dummy lcov; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_LCOV+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$LCOV"; then
+  ac_cv_prog_LCOV="$LCOV" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_LCOV="lcov"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+LCOV=$ac_cv_prog_LCOV
+if test -n "$LCOV"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $LCOV" >&5
+$as_echo "$LCOV" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+		# Extract the first word of "genhtml", so it can be a program name with args.
+set dummy genhtml; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_GENHTML+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$GENHTML"; then
+  ac_cv_prog_GENHTML="$GENHTML" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_GENHTML="genhtml"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+GENHTML=$ac_cv_prog_GENHTML
+if test -n "$GENHTML"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $GENHTML" >&5
+$as_echo "$GENHTML" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
+		if  test "$LCOV" ; then :
+
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for lcov version" >&5
+$as_echo_n "checking for lcov version... " >&6; }
+if ${ax_cv_lcov_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+				ax_cv_lcov_version=invalid
+				lcov_version=`$LCOV -v 2>/dev/null | $SED -e 's/^.* //'`
+				for lcov_check_version in $lcov_version_list; do
+					if test "$lcov_version" = "$lcov_check_version"; then
+						ax_cv_lcov_version="$lcov_check_version (ok)"
+					fi
+				done
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_lcov_version" >&5
+$as_echo "$ax_cv_lcov_version" >&6; }
+
+else
+
+			lcov_msg="To enable code coverage reporting you must have one of the following lcov versions installed: $lcov_version_list"
+			as_fn_error $? "$lcov_msg" "$LINENO" 5
+
+fi
+
+		case $ax_cv_lcov_version in
+			""|invalid)
+				lcov_msg="You must have one of the following versions of lcov: $lcov_version_list (found: $lcov_version)."
+				as_fn_error $? "$lcov_msg" "$LINENO" 5
+				LCOV="exit 0;"
+			;;
+		esac
+
+		if  test -z "$GENHTML" ; then :
+
+			as_fn_error $? "Could not find genhtml from the lcov package" "$LINENO" 5
+
+fi
+
+				CODE_COVERAGE_CFLAGS="-O0 -g -fprofile-arcs -ftest-coverage"
+		CODE_COVERAGE_LDFLAGS="-lgcov"
+
+
+
+
+CODE_COVERAGE_RULES='
+# Code coverage
+#
+# Optional:
+#  - CODE_COVERAGE_DIRECTORY: Top-level directory for code coverage reporting.
+#    (Default: $(top_builddir))
+#  - CODE_COVERAGE_OUTPUT_FILE: Filename and path for the .info file generated
+#    by lcov for code coverage. (Default:
+#    $(PACKAGE_NAME)-$(PACKAGE_VERSION)-coverage.info)
+#  - CODE_COVERAGE_OUTPUT_DIRECTORY: Directory for generated code coverage
+#    reports to be created. (Default:
+#    $(PACKAGE_NAME)-$(PACKAGE_VERSION)-coverage)
+#  - CODE_COVERAGE_LCOV_OPTIONS_GCOVPATH: --gcov-tool pathtogcov
+#  - CODE_COVERAGE_LCOV_OPTIONS_DEFAULT: Extra options to pass to the lcov instance.
+#    (Default: $CODE_COVERAGE_LCOV_OPTIONS_GCOVPATH)
+#  - CODE_COVERAGE_LCOV_OPTIONS: Extra options to pass to the lcov instance.
+#    (Default: $CODE_COVERAGE_LCOV_OPTIONS_DEFAULT)
+#  - CODE_COVERAGE_GENHTML_OPTIONS: Extra options to pass to the genhtml
+#    instance. (Default: empty)
+#  - CODE_COVERAGE_IGNORE_PATTERN: Extra glob pattern of files to ignore
+#
+# The generated report will be titled using the $(PACKAGE_NAME) and
+# $(PACKAGE_VERSION). In order to add the current git hash to the title,
+# use the git-version-gen script, available online.
+
+# Optional variables
+CODE_COVERAGE_DIRECTORY ?= $(top_builddir)
+CODE_COVERAGE_OUTPUT_FILE ?= $(PACKAGE_NAME)-$(PACKAGE_VERSION)-coverage.info
+CODE_COVERAGE_OUTPUT_DIRECTORY ?= $(PACKAGE_NAME)-$(PACKAGE_VERSION)-coverage
+CODE_COVERAGE_LCOV_OPTIONS_GCOVPATH ?= --gcov-tool "$(GCOV)"
+CODE_COVERAGE_LCOV_OPTIONS_DEFAULT ?= $(CODE_COVERAGE_LCOV_OPTIONS_GCOVPATH)
+CODE_COVERAGE_LCOV_OPTIONS ?= $(CODE_COVERAGE_LCOV_OPTIONS_DEFAULT)
+CODE_COVERAGE_GENHTML_OPTIONS ?=
+CODE_COVERAGE_IGNORE_PATTERN ?=
+
+code_coverage_quiet = $(code_coverage_quiet_$(V))
+code_coverage_quiet_ =
+code_coverage_quiet_0 = --quiet
+
+# Use recursive makes in order to ignore errors during check
+check-code-coverage:
+	-$(MAKE) $(AM_MAKEFLAGS) -k check
+	$(MAKE) $(AM_MAKEFLAGS) code-coverage-capture
+
+# Capture code coverage data
+code-coverage-capture: code-coverage-capture-hook
+	$(LCOV) $(code_coverage_quiet) --directory $(CODE_COVERAGE_DIRECTORY) --capture --output-file "$(CODE_COVERAGE_OUTPUT_FILE).tmp" --test-name "$(PACKAGE_NAME)-$(PACKAGE_VERSION)" --no-checksum --compat-libtool $(CODE_COVERAGE_LCOV_OPTIONS)
+	$(LCOV) $(code_coverage_quiet) --directory $(CODE_COVERAGE_DIRECTORY) --remove "$(CODE_COVERAGE_OUTPUT_FILE).tmp" "/tmp/*" $(CODE_COVERAGE_IGNORE_PATTERN) --output-file "$(CODE_COVERAGE_OUTPUT_FILE)"
+	-@rm -f $(CODE_COVERAGE_OUTPUT_FILE).tmp
+	LANG=C $(GENHTML) $(code_coverage_quiet) --prefix $(CODE_COVERAGE_DIRECTORY) --output-directory "$(CODE_COVERAGE_OUTPUT_DIRECTORY)" --title "$(PACKAGE_NAME)-$(PACKAGE_VERSION) Code Coverage" --legend --show-details "$(CODE_COVERAGE_OUTPUT_FILE)" $(CODE_COVERAGE_GENHTML_OPTIONS)
+	@echo "file://$(abs_builddir)/$(CODE_COVERAGE_OUTPUT_DIRECTORY)/index.html"
+
+# Hook rule executed before code-coverage-capture, overridable by the user
+code-coverage-capture-hook:
+
+clean: code-coverage-clean
+code-coverage-clean:
+	-$(LCOV) --directory $(top_builddir) -z
+	-rm -rf $(CODE_COVERAGE_OUTPUT_FILE) $(CODE_COVERAGE_OUTPUT_FILE).tmp $(CODE_COVERAGE_OUTPUT_DIRECTORY)
+	-find . -name "*.gcda" -o -name "*.gcov" -delete
+
+GITIGNOREFILES ?=
+GITIGNOREFILES += $(CODE_COVERAGE_OUTPUT_FILE) $(CODE_COVERAGE_OUTPUT_DIRECTORY)
+
+DISTCHECK_CONFIGURE_FLAGS ?=
+DISTCHECK_CONFIGURE_FLAGS += --disable-code-coverage
+
+.PHONY: check-code-coverage code-coverage-capture code-coverage-capture-hook code-coverage-clean
+'
+
+
+fi
+
+
 
 
 #
@@ -16542,7 +16966,7 @@ rm -f conftest.err conftest.i conftest.$ac_ext
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
     compiler_id="CLANG"
-    clangver=`$CC -dumpversion`
+    clangver=`$CC -v 2>&1 | grep version | "$SED" 's/.*version \([0-9]*\.[0-9]*\).*/\1/'`
     clangvhi=`echo $clangver | cut -d . -f1`
     clangvlo=`echo $clangver | cut -d . -f2`
     compiler_num=`(expr $clangvhi "*" 100 + $clangvlo) 2>/dev/null`
@@ -16630,7 +17054,7 @@ $as_echo "yes" >&6; }
     flags_dbg_all="$flags_dbg_all -gvms"
     flags_dbg_yes="-g"
     flags_dbg_off=""
-    flags_opt_all="-O -O0 -O1 -O2 -O3 -Os"
+    flags_opt_all="-O -O0 -O1 -O2 -O3 -Os -Og -Ofast"
     flags_opt_yes="-O2"
     flags_opt_off="-O0"
 
@@ -18018,6 +18442,10 @@ $as_echo "$as_me: WARNING: compiler options rejected: $tmp_options" >&2;}
           #
                     if test "$compiler_num" -ge "101"; then
             tmp_CFLAGS="$tmp_CFLAGS -Wunused"
+          fi
+          #
+                    if test "$compiler_num" -ge "209"; then
+            tmp_CFLAGS="$tmp_CFLAGS -Wshift-sign-overflow"
           fi
         fi
         ;;
@@ -20857,8 +21285,8 @@ $as_echo "found" >&6; }
 
     if test "$PKGCONFIG" != "no" ; then
       LIBS="`$PKGCONFIG --libs-only-l zlib` $LIBS"
-      LDFLAGS="`$PKGCONFIG --libs-only-L zlib` $LDFLAGS"
-      CPPFLAGS="`$PKGCONFIG --cflags-only-I zlib` $CPPFLAGS"
+      LDFLAGS="$LDFLAGS `$PKGCONFIG --libs-only-L zlib`"
+      CPPFLAGS="$CPPFLAGS `$PKGCONFIG --cflags-only-I zlib`"
       OPT_ZLIB=""
       HAVE_LIBZ="1"
     fi
@@ -22426,57 +22854,19 @@ if test "x$ac_cv_lib_crypto_HMAC_Init_ex" = xyes; then :
        LIBS="-lcrypto $LIBS"
 else
 
-       LDFLAGS="$CLEANLDFLAGS"
-       CPPFLAGS="$CLEANCPPFLAGS"
-       LIBS="$CLEANLIBS"
 
-fi
-
-
-fi
-
-
-
-  if test X"$HAVECRYPTO" = X"yes"; then
-     { $as_echo "$as_me:${as_lineno-$LINENO}: checking OpenSSL linking without -ldl" >&5
-$as_echo_n "checking OpenSSL linking without -ldl... " >&6; }
-     saved_libs=$LIBS
-     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-          #include <openssl/evp.h>
-
-int main (void)
-{
-
-          SSLeay_add_all_algorithms();
-
- ;
- return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-
-          { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-          LIBS="$saved_libs"
-
-else
-
-          { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-          { $as_echo "$as_me:${as_lineno-$LINENO}: checking OpenSSL linking with -ldl" >&5
+              { $as_echo "$as_me:${as_lineno-$LINENO}: checking OpenSSL linking with -ldl" >&5
 $as_echo_n "checking OpenSSL linking with -ldl... " >&6; }
-          LIBS="-ldl $LIBS"
-          cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+       LIBS="-ldl $LIBS"
+       cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-            #include <openssl/evp.h>
+         #include <openssl/err.h>
 
 int main (void)
 {
 
-            SSLeay_add_all_algorithms();
+         ERR_clear_error();
 
  ;
  return 0;
@@ -22484,15 +22874,45 @@ int main (void)
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
 
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-            LIBS="$saved_libs -ldl"
+         HAVECRYPTO="yes"
 
 else
 
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-            LIBS="$saved_libs"
+
+         { $as_echo "$as_me:${as_lineno-$LINENO}: checking OpenSSL linking with -ldl and -lpthread" >&5
+$as_echo_n "checking OpenSSL linking with -ldl and -lpthread... " >&6; }
+         LIBS="-lpthread $LIBS"
+         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+           #include <openssl/err.h>
+
+int main (void)
+{
+
+           ERR_clear_error();
+
+ ;
+ return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+           { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+           HAVECRYPTO="yes"
+
+else
+
+           { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+           LDFLAGS="$CLEANLDFLAGS"
+           CPPFLAGS="$CLEANCPPFLAGS"
+           LIBS="$CLEANLIBS"
 
 
 fi
@@ -22500,12 +22920,16 @@ rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 
 
-
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 
-  fi
+
+fi
+
+
+fi
+
 
   if test X"$HAVECRYPTO" = X"yes"; then
 
@@ -25768,8 +26192,8 @@ $as_echo "found" >&6; }
     clean_CPPFLAGS="$CPPFLAGS"
     clean_LDFLAGS="$LDFLAGS"
     clean_LIBS="$LIBS"
-    CPPFLAGS="$addcflags $clean_CPPFLAGS"
-    LDFLAGS="$addld $clean_LDFLAGS"
+    CPPFLAGS="$clean_CPPFLAGS $addcflags"
+    LDFLAGS="$clean_LDFLAGS $addld"
     LIBS="$addlib $clean_LIBS"
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking if libmetalink is recent enough" >&5
 $as_echo_n "checking if libmetalink is recent enough... " >&6; }
@@ -25992,7 +26416,7 @@ $as_echo "found" >&6; }
     DIR_SSH2=${PREFIX_SSH2}/lib$libsuff
   fi
 
-  LDFLAGS="$LD_SSH2 $LDFLAGS"
+  LDFLAGS="$LDFLAGS $LD_SSH2"
   CPPFLAGS="$CPPFLAGS $CPP_SSH2"
   LIBS="$LIB_SSH2 $LIBS"
 
@@ -26239,7 +26663,8 @@ $as_echo "found" >&6; }
         LIB_RTMP="-lrtmp"
     ;;
   *)
-        PREFIX_RTMP=$OPT_LIBRTMP
+        LIB_RTMP="-lrtmp"
+    PREFIX_RTMP=$OPT_LIBRTMP
     ;;
   esac
 
@@ -26433,8 +26858,8 @@ if test "$want_winidn" = "yes"; then
     WINIDN_DIR="$want_winidn_path/lib$libsuff"
   fi
   #
-  CPPFLAGS="$WINIDN_CPPFLAGS $CPPFLAGS"
-  LDFLAGS="$WINIDN_LDFLAGS $LDFLAGS"
+  CPPFLAGS="$CPPFLAGS $WINIDN_CPPFLAGS"
+  LDFLAGS="$LDFLAGS $WINIDN_LDFLAGS"
   LIBS="$WINIDN_LIBS $LIBS"
   #
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking if IdnToUnicode can be linked" >&5
@@ -26854,8 +27279,8 @@ $as_echo "$as_me: IDN_CPPFLAGS: \"$IDN_CPPFLAGS\"" >&6;}
 $as_echo "$as_me: IDN_DIR: \"$IDN_DIR\"" >&6;}
   fi
   #
-  CPPFLAGS="$IDN_CPPFLAGS $CPPFLAGS"
-  LDFLAGS="$IDN_LDFLAGS $LDFLAGS"
+  CPPFLAGS="$CPPFLAGS $IDN_CPPFLAGS"
+  LDFLAGS="$LDFLAGS $IDN_LDFLAGS"
   LIBS="$IDN_LIBS $LIBS"
   #
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking if idn2_lookup_ul can be linked" >&5
@@ -39360,7 +39785,8 @@ for ac_func in fork \
   setmode \
   setrlimit \
   uname \
-  utime
+  utime \
+  utimes
 
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
@@ -40085,8 +40511,8 @@ fi
       fi
     fi
     #
-    CPPFLAGS="$ares_CPPFLAGS $clean_CPPFLAGS"
-    LDFLAGS="$ares_LDFLAGS $clean_LDFLAGS"
+    CPPFLAGS="$clean_CPPFLAGS $ares_CPPFLAGS"
+    LDFLAGS="$clean_LDFLAGS $ares_LDFLAGS"
     LIBS="$ares_LIBS $clean_LIBS"
     #
     if test "$embedded_ares" != "yes"; then
@@ -41106,6 +41532,10 @@ LTLIBOBJS=$ac_ltlibobjs
 
 if test -z "${MAINTAINER_MODE_TRUE}" && test -z "${MAINTAINER_MODE_FALSE}"; then
   as_fn_error $? "conditional \"MAINTAINER_MODE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${CODE_COVERAGE_ENABLED_TRUE}" && test -z "${CODE_COVERAGE_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"CODE_COVERAGE_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking that generated files are newer than configure" >&5

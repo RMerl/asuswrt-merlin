@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_SSLVERSION 3 "December 13, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_SSLVERSION 3 "May 25, 2017" "libcurl 7.54.1" "curl_easy_setopt options"
 
 .SH NAME
 CURLOPT_SSLVERSION \- set preferred TLS/SSL version
@@ -80,7 +80,7 @@ if(curl) {
   curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
 
   /* ask libcurl to use TLS version 1.1 or later */
-  curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1.1 |
+  curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_1 |
                    CURL_SSLVERSION_MAX_DEFAULT);
 
   /* Perform the request */

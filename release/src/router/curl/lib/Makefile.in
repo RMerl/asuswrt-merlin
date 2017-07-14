@@ -122,7 +122,8 @@ host_triplet = @host@
 @DOING_CURL_SYMBOL_HIDING_TRUE@am__append_8 = $(CFLAG_CURL_SYMBOL_HIDING)
 subdir = lib
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/curl-compilers.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_code_coverage.m4 \
+	$(top_srcdir)/m4/curl-compilers.m4 \
 	$(top_srcdir)/m4/curl-confopts.m4 \
 	$(top_srcdir)/m4/curl-functions.m4 \
 	$(top_srcdir)/m4/curl-openssl.m4 \
@@ -403,6 +404,9 @@ CCDEPMODE = @CCDEPMODE@
 # This might hold -Werror
 CFLAGS = @CFLAGS@ @CURL_CFLAG_EXTRAS@
 CFLAG_CURL_SYMBOL_HIDING = @CFLAG_CURL_SYMBOL_HIDING@
+CODE_COVERAGE_CFLAGS = @CODE_COVERAGE_CFLAGS@
+CODE_COVERAGE_ENABLED = @CODE_COVERAGE_ENABLED@
+CODE_COVERAGE_LDFLAGS = @CODE_COVERAGE_LDFLAGS@
 CONFIGURE_OPTIONS = @CONFIGURE_OPTIONS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -442,6 +446,8 @@ ENABLE_SHARED = @ENABLE_SHARED@
 ENABLE_STATIC = @ENABLE_STATIC@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
+GCOV = @GCOV@
+GENHTML = @GENHTML@
 GREP = @GREP@
 HAVE_GNUTLS_SRP = @HAVE_GNUTLS_SRP@
 HAVE_LDAP_SSL = @HAVE_LDAP_SSL@
@@ -454,6 +460,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 IPV6_ENABLED = @IPV6_ENABLED@
+LCOV = @LCOV@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBCURL_LIBS = @LIBCURL_LIBS@
@@ -661,9 +668,9 @@ AM_CPPFLAGS = -I$(top_builddir)/include/curl -I$(top_builddir)/include \
 AM_LDFLAGS = 
 AM_CFLAGS = 
 libcurl_la_CPPFLAGS_EXTRA = $(am__append_6) $(am__append_7)
-libcurl_la_LDFLAGS_EXTRA = $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5)
-libcurl_la_CFLAGS_EXTRA = $(am__append_8)
+libcurl_la_LDFLAGS_EXTRA = $(CODE_COVERAGE_LDFLAGS) $(am__append_2) \
+	$(am__append_3) $(am__append_4) $(am__append_5)
+libcurl_la_CFLAGS_EXTRA = $(CODE_COVERAGE_CFLAGS) $(am__append_8)
 libcurl_la_CPPFLAGS = $(AM_CPPFLAGS) $(libcurl_la_CPPFLAGS_EXTRA)
 libcurl_la_LDFLAGS = $(AM_LDFLAGS) $(libcurl_la_LDFLAGS_EXTRA) $(LDFLAGS) $(LIBCURL_LIBS)
 libcurl_la_CFLAGS = $(AM_CFLAGS) $(libcurl_la_CFLAGS_EXTRA)
@@ -3200,6 +3207,8 @@ uninstall-am: uninstall-libLTLIBRARIES
 
 .PRECIOUS: Makefile
 
+
+@CODE_COVERAGE_RULES@
 
 checksrc:
 	@PERL@ $(srcdir)/checksrc.pl -D$(srcdir) -W$(srcdir)/curl_config.h      \

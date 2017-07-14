@@ -1,5 +1,3 @@
-#ifndef HEADER_CURL_TOOL_WRITEENV_H
-#define HEADER_CURL_TOOL_WRITEENV_H
 /***************************************************************************
  *                                  _   _ ____  _
  *  Project                     ___| | | |  _ \| |
@@ -7,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2012, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -21,15 +19,38 @@
  * KIND, either express or implied.
  *
  ***************************************************************************/
-#include "tool_setup.h"
+#include "test.h"
 
-#ifdef USE_ENVIRONMENT
+#include "testtrace.h"
+#include "memdebug.h"
 
-void ourWriteEnv(CURL *curl);
+int test(char *URL)
+{
+  CURLcode res;
+  CURL *curl;
 
-#else
-#  define ourWriteEnv(x)  Curl_nop_stmt
-#endif
+  if(curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK) {
+    fprintf(stderr, "curl_global_init() failed\n");
+    return TEST_ERR_MAJOR_BAD;
+  }
 
-#endif /* HEADER_CURL_TOOL_WRITEENV_H */
+  curl = curl_easy_init();
+  if(!curl) {
+    fprintf(stderr, "curl_easy_init() failed\n");
+    curl_global_cleanup();
+    return TEST_ERR_MAJOR_BAD;
+  }
+
+  test_setopt(curl, CURLOPT_URL, URL);
+  test_setopt(curl, CURLOPT_HEADER, 1L);
+  test_setopt(curl, CURLOPT_BUFFERSIZE, 1L); /* the smallest! */
+
+  res = curl_easy_perform(curl);
+test_cleanup:
+
+  curl_easy_cleanup(curl);
+  curl_global_cleanup();
+
+  return (int)res;
+}
 

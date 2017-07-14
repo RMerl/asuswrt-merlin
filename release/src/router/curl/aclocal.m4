@@ -1186,6 +1186,7 @@ AC_SUBST([am__tar])
 AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
 
+m4_include([m4/ax_code_coverage.m4])
 m4_include([m4/curl-compilers.m4])
 m4_include([m4/curl-confopts.m4])
 m4_include([m4/curl-functions.m4])

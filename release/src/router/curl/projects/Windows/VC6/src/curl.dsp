@@ -839,10 +839,6 @@ SOURCE=..\..\..\..\src\tool_vms.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\tool_writeenv.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\tool_writeout.c
 # End Source File
 # Begin Source File
@@ -1032,10 +1028,6 @@ SOURCE=..\..\..\..\src\tool_version.h
 # Begin Source File
 
 SOURCE=..\..\..\..\src\tool_vms.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\tool_writeenv.h
 # End Source File
 # Begin Source File
 

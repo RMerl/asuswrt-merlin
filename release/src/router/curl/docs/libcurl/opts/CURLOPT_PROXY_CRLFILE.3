@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_PROXY_CRLFILE 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_PROXY_CRLFILE 3 "May 31, 2017" "libcurl 7.54.1" "curl_easy_setopt options"
 
 .SH NAME
 CURLOPT_PROXY_CRLFILE \- specify a proxy Certificate Revocation List file
@@ -56,7 +56,16 @@ NULL
 .SH PROTOCOLS
 Used with HTTPS proxy.
 .SH EXAMPLE
-TODO
+.nf
+CURL *curl = curl_easy_init();
+if(curl) {
+  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/");
+  curl_easy_setopt(curl, CURLOPT_PROXY, "https://localhost:80");
+  curl_easy_setopt(curl, CURLOPT_PROXY_CRLFILE, "/etc/certs/crl.pem");
+  ret = curl_easy_perform(curl);
+  curl_easy_cleanup(curl);
+}
+.fi
 .SH AVAILABILITY
 Added in 7.52.0
 .SH RETURN VALUE
