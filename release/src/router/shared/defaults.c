@@ -109,7 +109,7 @@ struct nvram_tuple router_defaults[] = {
 #elif defined(RTCONFIG_QCA)
 #else
 	{ "wl_phytype", "n", 0 },		/* Current wireless band ("a" (5 GHz),
- 						 * "b" (2.4 GHz), or "g" (2.4 GHz))
+						 * "b" (2.4 GHz), or "g" (2.4 GHz))
 						 */
 	{ "wl_corerev", "", 0 },		/* Current core revision */
 	{ "wl_phytypes", "", 0 },		/* List of supported wireless bands (e.g. "ga") */
@@ -197,6 +197,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_radio", "1", 0 },			/* Enable (1) or disable (0) radio */
 	{ "wl_closed", "0", 0 },		/* Closed (hidden) network */
 	{ "wl_ap_isolate", "0", 0 },		/* AP isolate mode */
+
 	{ "wl_igs", "0" },			/* BCM: wl_wmf_bss_enable
 						 * Ralink: IGMPSnEnable */
 
@@ -250,7 +251,7 @@ struct nvram_tuple router_defaults[] = {
 						 */
 	{ "wl_assoc_retry_max", "3", 0 },	/* Non-zero limit for association retries */
 #ifndef RTCONFIG_BCMWL6
-	{ "wl_channel", "0", 0 },			/* Channel number */
+	{ "wl_channel", "0", 0 },		/* Channel number */
 #else
 	{ "wl_chanspec", "0", 0 },		/* Channel specification */
 #endif
@@ -264,7 +265,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_mrate", "0", 0 },			/* Mcast Rate (bps, 0 for auto) */
 #endif
 #endif
-	{ "wl_mrate_x", "0", 0 },		/* ralink auto rate */
+	{ "wl_mrate_x", "0", 0 },		/* Mcast Auto rate */
 #ifndef RTCONFIG_WIFILOGO
 	{ "wl_frameburst", "on", 0 },		/* BRCM Frambursting mode (off|on) */
 #else
@@ -2059,7 +2060,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "modem_roaming_scanlist", "/tmp/cops.txt" }, // station lists.
 	{ "modem_pincode", "" },
 	{ "modem_country", "" },
-	{ "modem_pdp", "0" },	// 0: PDP-IP(IPv4), 1: PDP-PPP, 2: PDP-IPv6, 3: PDP-IPv4v6
+	{ "modem_pdp", "0" },	// 0: PDP-IP(IPv4), 1: PDP-PPP, 2: PDP-IPv6, 3: PDP-IPv4v6.
 	{ "modem_isp", "" },
 	{ "modem_spn", "" },
 	{ "modem_apn", "internet" },
@@ -2079,8 +2080,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "modem_pincode_opt", "1" },
 #endif
 	{ "modem_sim_num", "10" },
-	{ "modem_limit_unit", "0" }, /* 0: GBytes  1: MBytes*/
-	{ "modem_warning_unit", "0" }, /* 0: GBytes  1: MBytes*/
+	{ "modem_limit_unit", "0" }, /* 0: GBytes, 1: MBytes*/
+	{ "modem_warning_unit", "0" }, /* 0: GBytes, 1: MBytes*/
 	{ "modem_sms_limit", "0" }, // 0: disable, 1: enable.
 	{ "modem_sms_phone", "" },
 	{ "modem_sms_message1", "This is a alert about the data usage is over:" },
@@ -2139,8 +2140,8 @@ struct nvram_tuple router_defaults[] = {
 	{"pptpd_enable", 	"0" },
 	{"pptpd_broadcast",	"0" },
 	{"pptpd_ms_network",	"1" },
-	{"pptpd_chap", 		"0" },	 // 0/1/2(Auto/MS-CHAPv1/MS-CHAPv2)
-	{"pptpd_mppe", 		"13" }, 	 // 1|4|8(MPPE-128|MPPE-40|No Encryption)
+	{"pptpd_chap", 		"0" },	// 0/1/2(Auto/MS-CHAPv1/MS-CHAPv2)
+	{"pptpd_mppe", 		"13" },	// 1|4|8(MPPE-128|MPPE-40|No Encryption)
 	{"pptpd_dns1", 		"" },
 	{"pptpd_dns2", 		"" },
 	{"pptpd_wins1", 	"" },
@@ -2157,7 +2158,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpnc_proto", "disable" },
 	{ "vpnc_pppoe_username", "" },
 	{ "vpnc_pppoe_passwd", "" },
-	{ "vpnc_heartbeat_x", "" },
+	{ "vpnc_heartbeat_x", ""} ,
 	{ "vpnc_dnsenable_x", "1" },
 	{ "vpnc_pppoe_options_x", "" },
 	{ "vpnc_pptp_options_x", "" },
@@ -2776,7 +2777,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "tr_discovery", "1" },
 	{ "tr_inform_enable", "1" },
 	{ "tr_inform_interval", "86400" },
-	{ "tr_acs_url", "" },
+	{ "tr_acs_url", " " },
 	{ "tr_username", "" },
 	{ "tr_passwd", "" },
 	{ "tr_conn_username", "admin" },
@@ -2808,11 +2809,11 @@ struct nvram_tuple router_defaults[] = {
 	{ "ttl_inc_enable",		"0" },		/* enable TTL increment */
 	{ "ttl_spoof_enable",		"0" },		/* enable TTL spoofing */
 #ifdef RTCONFIG_TOR
-	{ "Tor_enable",                 "0" },           /* enable Tor Transparent Proxy */
-	{ "Tor_socksport",              "9050" },
-	{ "Tor_transport",              "9040" },
-	{ "Tor_dnsport",                "9053" },
-	{ "Tor_redir_list",             "" },
+	{ "Tor_enable",			"0" },		/* enable Tor Transparent Proxy	*/
+	{ "Tor_socksport",		"9050" },
+	{ "Tor_transport",		"9040" },
+	{ "Tor_dnsport",		"9053" },
+	{ "Tor_redir_list",		"" },
 #endif
 #ifdef RTCONFIG_JFFS2USERICON
 	{ "custom_usericon",	"" },
@@ -2896,11 +2897,11 @@ struct nvram_tuple router_defaults[] = {
 	{ "captive_portal_enable",		"off" },
 #endif
 #ifdef RTCONFIG_QUAGGA
-       	{ "quagga_enable", "0" },          // 0: Disable, 1: enable quagga(zebra + ripd)
-	{ "zebra_passwd", "zebra" },       // Set password for vty interface. If there is no password, a vty won? accept connections.(default: zebra)
-       	{ "zebra_enpasswd", "zebra" },     // Set enable password for VTY.(default: zebra)
-	{ "rip_hostname", "ripd" },        // Set hostname of the ripd.(default: ripd)
-	{ "rip_passwd", "zebra" },         // Set password for vty interface. If there is no password, a vty won? accept connections.(default: zebra)
+	{ "quagga_enable", "0" },	// 0: Disable, 1: enable quagga(zebra + ripd)
+	{ "zebra_passwd", "zebra" },	// Set password for vty interface. If there is no password, a vty won? accept connections.(default: zebra)
+	{ "zebra_enpasswd", "zebra" },	// Set enable password for VTY.(default: zebra)
+	{ "rip_hostname", "ripd" },	// Set hostname of the ripd.(default: ripd)
+	{ "rip_passwd", "zebra" },	// Set password for vty interface. If there is no password, a vty won? accept connections.(default: zebra)
 #endif
 #ifdef BRTAC828
 	{ "lan_trunk_0", "0"},
@@ -2989,7 +2990,7 @@ struct nvram_tuple router_state_defaults[] = {
 
 #ifdef RTCONFIG_MEDIA_SERVER
 	{ "dms_state", "" },
- 	{ "dms_dbcwd", "" },
+	{ "dms_dbcwd", "" },
 #endif
 
 #ifdef RTCONFIG_USBRESET

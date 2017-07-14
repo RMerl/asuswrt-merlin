@@ -1068,6 +1068,8 @@ extern void traffic_limiter_set_bit(const char *type, int unit);
 extern void traffic_limiter_clear_bit(const char *type, int unit);
 extern double traffic_limiter_get_realtime(int unit);
 #endif
+
+/* scripts.c */
 #define xstart(args...) _xstart(args, NULL)
 extern int _xstart(const char *cmd, ...);
 extern void run_custom_script(char *name, char *args);

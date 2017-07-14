@@ -71,6 +71,7 @@ OBJS += misc.o version.o files.o strings.o process.o
 OBJS += bin_sem_asus.o semaphore.o pids.o $(if $(wildcard notify_rc.c),notify_rc.o,prebuild/notify_rc.o) discover.o
 OBJS += base64.o
 OBJS += nvparse.o
+OBJS += scripts.o
 ifeq ($(RTCONFIG_BCM7),y)
 OBJS += et_linux.o bcmwifi_channels.o
 else ifeq ($(RTCONFIG_HSPOT),y)
@@ -229,11 +230,6 @@ $(notdir $(ID_OBJS)): %.o: %.c .%.depend
 
 $(patsubst %.o,.%.depend,$(notdir $(ID_OBJS))): .%.depend: %.c
 	@$(CC) $(CFLAGS) $(ID_CFLAGS) -M $< > $@
-
-# ld -r --gc-sections is broken, so don't use it for now
-#volume_id.lib.o: $(notdir $(ID_OBJS))
-#	@echo " [shared] LD $@"
-#	@$(LD) -r -e find_label_or_uuid --gc-sections -o $@ $(notdir $(ID_OBJS))
 endif
 
 %.o: %.c .%.depend
