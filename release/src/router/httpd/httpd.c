@@ -2109,7 +2109,7 @@ int main(int argc, char **argv)
 	signal(SIGCHLD, reapchild);	// 0527 add
 
 #ifdef RTCONFIG_HTTPS
-	if (do_ssl)
+	//if (do_ssl)
 		start_ssl();
 #endif
 

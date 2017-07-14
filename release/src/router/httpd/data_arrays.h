@@ -30,3 +30,8 @@ extern int ej_lan_ipv6_network_array(int eid, webs_t wp, int argc, char_t **argv
 extern int ej_tcclass_dump_array(int eid, webs_t wp, int argc, char_t **argv);
 int tcclass_dump(FILE *fp, webs_t wp);
 
+extern int ej_iptmon(int eid, webs_t wp, int argc, char **argv);
+extern int ej_ipt_bandwidth(int eid, webs_t wp, int argc, char **argv);
+extern int ej_iptraffic(int eid, webs_t wp, int argc, char **argv);
+extern void iptraffic_conntrack_init();
+extern void ctvbuf(FILE *f);

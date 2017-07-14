@@ -509,7 +509,7 @@ add_option (char *p[], int line, int unit)
 			}
 			else
 #endif
-			write_encoded_crt(buf, data);
+			nvram_set(buf, strstr(p[2], "-----BEGIN"));
 		}
 		else
 		{
@@ -531,7 +531,7 @@ add_option (char *p[], int line, int unit)
 			}
 			else
 #endif
-			write_encoded_crt(buf, data);
+			nvram_set(buf, strstr(p[2], "-----BEGIN"));
 		}
 		else
 		{
@@ -553,7 +553,7 @@ add_option (char *p[], int line, int unit)
 			}
 			else
 #endif
-			write_encoded_crt(buf, data);
+			nvram_set(buf, strstr(p[2], "-----BEGIN"));
 		}
 		else
 		{
@@ -575,7 +575,7 @@ add_option (char *p[], int line, int unit)
 			}
 			else
 #endif
-			write_encoded_crt(buf, data);
+			nvram_set(buf, strstr(p[2], "-----BEGIN"));
 			//key-direction
 			sprintf(buf, "vpn_client%d_hmac", unit);
 			if(nvram_match(buf, "-1"))	//default, disable
@@ -605,7 +605,7 @@ add_option (char *p[], int line, int unit)
 			}
 			else
 #endif
-			write_encoded_crt(buf, data);
+			nvram_set(buf, strstr(p[2], "-----BEGIN"));
 			sprintf(buf, "vpn_client%d_hmac", unit);
 			nvram_set(buf, "3");	//Enable tls-crypt
 		}
@@ -635,7 +635,7 @@ add_option (char *p[], int line, int unit)
 			}
 			else
 #endif
-			write_encoded_crt(buf, data);
+			nvram_set(buf, strstr(p[2], "-----BEGIN"));
 		}
 		else
 		{
@@ -657,7 +657,7 @@ add_option (char *p[], int line, int unit)
 			}
 			else
 #endif
-			write_encoded_crt(buf, data);
+			nvram_set(buf, strstr(p[2], "-----BEGIN"));
 		}
 		else
 		{

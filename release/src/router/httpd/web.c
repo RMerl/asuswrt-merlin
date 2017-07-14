@@ -64,7 +64,6 @@
 #include <common.h>
 #include <shared.h>
 #include <rtstate.h>
-#include "iptraffic.h"
 #include <sys/sysinfo.h>
 
 #ifdef RTCONFIG_FANCTRL
@@ -134,6 +133,10 @@ typedef unsigned long long u64;
 #ifdef RTCONFIG_QCA_PLC_UTILS
 #include <plc_utils.h>
 #endif
+
+static void do_jffs_file(char *url, FILE *stream);
+static void do_jffsupload_cgi(char *url, FILE *stream);
+static void do_jffsupload_post(char *url, FILE *stream, int len, char *boundary);
 
 #ifdef RTCONFIG_HTTPS
 extern int do_ssl;
@@ -439,7 +442,7 @@ void sys_script(char *name)
      {
 	   if (strcmp(SystemCmd, "")!=0)
 	   {
-		snprintf(SystemCmd, sizeof(SystemCmd), "%s > /tmp/syscmd.log 2>&1 && echo 'XU6J03M6' >> /tmp/syscmd.log &\n", SystemCmd);	// oleg patch
+		snprintf(SystemCmd, sizeof(SystemCmd), "%s > /tmp/syscmd.log 2>&1 && echo 'XU6J03M6' >> /tmp/syscmd.log &\n", SystemCmd);
 		system(SystemCmd);
 		strcpy(SystemCmd,""); // Ensure we don't re-execute it again
 	   }
@@ -4536,7 +4539,7 @@ unsigned int getpeerip(webs_t wp){
 		return (unsigned int)sa->sin_addr.s_addr;
 	}
 	else{
-		printf("error: %d %d \n", ret, errno);
+		csprintf("error: %d %d \n", ret, errno);
 		return 0;
 	}
 }
@@ -4910,7 +4913,7 @@ ej_IP_dhcpLeaseInfo(int eid, webs_t wp, int argc, char_t **argv)
 }
 
 #ifdef RTCONFIG_IPV6
-#define DHCP_LEASE_FILE         "/var/lib/misc/dnsmasq.leases"
+#define DHCP_LEASE_FILE		"/var/lib/misc/dnsmasq.leases"
 #define IPV6_CLIENT_NEIGH	"/tmp/ipv6_neigh"
 #define IPV6_CLIENT_INFO	"/tmp/ipv6_client_info"
 //#define	IPV6_CLIENT_LIST	"/tmp/ipv6_client_list"	// Moved to httpd.h
@@ -7376,6 +7379,49 @@ nga_update(void)
 }
 #endif /* __CONFIG_NORTON__ */
 
+void
+json_unescape(char *s)
+{
+	unsigned int c;
+
+	while ((s = strpbrk(s, "%+"))) {
+		/* Parse %xx */
+		if (*s == '%') {
+			sscanf(s + 1, "%02x", &c);
+			*s++ = (char) c;
+			strlcpy(s, s + 2, strlen(s) + 1);
+		}
+		/* Space is special */
+		else if (*s == '+')
+			*s++ = ' ';
+	}
+}
+
+void
+decode_json_buffer(char *query)
+{
+	int len;
+	char *q, *name, *value;
+
+	/* Clear variables */
+	if (!query) {
+		//hdestroy_r(&htab);
+		return;
+	}
+
+	/* Parse into individual assignments */
+	q = query;
+	len = strlen(query);
+
+	for (q = query; q < (query + len);) {
+		/* Unescape each assignment */
+		json_unescape(name = value = q);
+
+		/* Skip to next assignment */
+		for (q += strlen(q); q < (query + len) && !*q; q++);
+	}
+}
+
 static int
 apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		char_t *url, char_t *path, char_t *query)
@@ -7584,8 +7630,10 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		else goto wps_finish;
 
 		action_para = get_cgi_json("wps_enable",root);
-		if(action_para)
+		if(action_para) {
+			nvram_set("wps_enable", action_para);
 			nvram_set("wps_enable_x", action_para);
+		}
 		else goto wps_finish;
 
 		action_para = get_cgi_json("wps_sta_pin",root);
@@ -7790,10 +7838,10 @@ wps_finish:
         {
 		action_para = get_cgi_json("vpn_client_unit", root);
 
-                if(action_para)
-                        nvram_set("vpn_client_unit", action_para);
+		if(action_para)
+			nvram_set("vpn_client_unit", action_para);
 
-                websRedirect(wp, current_url);
+		websRedirect(wp, current_url);
         }
 #endif
 #ifdef  __CONFIG_NORTON__
@@ -8784,28 +8832,6 @@ err:
 	fcntl(fileno(stream), F_SETOWN, -ret);
 }
 
-#ifdef RTCONFIG_QTN  //RT-AC87U
-static void
-do_qtn_diagnostics(char *url, FILE *stream)
-{
-	char qtn_rpc_client[20] = {0};
-
-	unlink("/tmp/diagnostics_done");
-	nvram_set("qtn_diagnostics", "1");
-	printf("Do diagnostics\n");
-	memset(qtn_rpc_client, 0, sizeof(qtn_rpc_client));
-	snprintf(qtn_rpc_client, sizeof(qtn_rpc_client), "%s", nvram_safe_get("QTN_RPC_CLIENT"));
-	eval("qcsapi_sockrpc", "run_script", "router_command.sh", "diagnostics", qtn_rpc_client);
-	while(access("/tmp/diagnostics_done", R_OK ) == -1 ) {
-		printf("run_script.log does not exist, wait\n");
-		sleep(5);
-	}
-	do_file("/tmp/run_script.log", stream);
-	unlink("/tmp/diagnostics_done");
-	nvram_unset("qtn_diagnostics");
-}
-#endif
-
 static void
 do_vpnupload_cgi(char *url, FILE *stream)
 {
@@ -8938,287 +8964,34 @@ void wo_bwmbackup(char *url, webs_t wp)
 }
 // end Viz ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-#if 0
-void wo_iptbackup(char *url, webs_t wp)
+#ifdef RTCONFIG_QTN  //RT-AC87U
+static void
+do_qtn_diagnostics(char *url, FILE *stream)
 {
-	static const char *ifn = "/var/lib/misc/cstats-history.gz";
-	struct stat st;
-	time_t t;
-	int i;
+	char qtn_rpc_client[20] = {0};
 
-	if (stat(ifn, &st) == 0) {
-		t = st.st_mtime;
-		sleep(1);
+	unlink("/tmp/diagnostics_done");
+	nvram_set("qtn_diagnostics", "1");
+	printf("Do diagnostics\n");
+	memset(qtn_rpc_client, 0, sizeof(qtn_rpc_client));
+	snprintf(qtn_rpc_client, sizeof(qtn_rpc_client), "%s", nvram_safe_get("QTN_RPC_CLIENT"));
+	eval("qcsapi_sockrpc", "run_script", "router_command.sh", "diagnostics", qtn_rpc_client);
+	while(access("/tmp/diagnostics_done", R_OK ) == -1 ) {
+		printf("run_script.log does not exist, wait\n");
+		sleep(5);
 	}
-	else {
-		t = 0;
-	}
-	killall("cstats", SIGHUP);
-	for (i = 20; i > 0; --i) { // may take a long time for gzip to complete
-		if ((stat(ifn, &st) == 0) && (st.st_mtime != t)) break;
-		sleep(1);
-	}
-	if (i == 0) {
-//		send_error(500, NULL, NULL);
-		return;
-	}
-//	send_header(200, NULL, mime_binary, 0);
-	do_f((char *)ifn, wp);
+	do_file("/tmp/run_script.log", stream);
+	unlink("/tmp/diagnostics_done");
+	nvram_unset("qtn_diagnostics");
 }
 #endif
-
-static int ej_iptmon(int eid, webs_t wp, int argc, char **argv) {
-
-	char comma;
-	char sa[256];
-	FILE *a;
-	char *exclude;
-	char *include;
-
-	char ip[INET6_ADDRSTRLEN];
-
-	int64_t tx, rx;
-
-	exclude = nvram_safe_get("cstats_exclude");
-	include = nvram_safe_get("cstats_include");
-
-	websWrite(wp, "\n\niptmon={");
-	comma = ' ';
-
-	char wholenetstatsline = 1;
-
-	if ((a = fopen("/proc/net/ipt_account/lan", "r")) == NULL) return 0;
-
-	if (!wholenetstatsline)
-		fgets(sa, sizeof(sa), a); // network
-
-	while (fgets(sa, sizeof(sa), a)) {
-		if(sscanf(sa, 
-			"ip = %s bytes_src = %llu %*u %*u %*u %*u packets_src = %*u %*u %*u %*u %*u bytes_dst = %llu %*u %*u %*u %*u packets_dst = %*u %*u %*u %*u %*u time = %*u",
-			ip, &tx, &rx) != 3 ) continue;
-		if (find_word(exclude, ip)) {
-			wholenetstatsline = 0;
-			continue;
-		}
-
-		if (((find_word(include, ip)) || (wholenetstatsline == 1)) || ((nvram_get_int("cstats_all")) && ((rx > 0) || (tx > 0)) )) {
-//		if ((find_word(include, ip)) || (wholenetstatsline == 1)) {
-//		if ((tx > 0) || (rx > 0) || (wholenetstatsline == 1)) {
-//		if ((tx > 0) || (rx > 0)) {
-			websWrite(wp,"%c'%s':{rx:0x%llx,tx:0x%llx}", comma, ip, rx, tx);
-			comma = ',';
-		}
-		wholenetstatsline = 0;
-	}
-	fclose(a);
-	websWrite(wp,"};\n");
-
-	return 0;
-}
-
-static int ej_ipt_bandwidth(int eid, webs_t wp, int argc, char **argv)
-{
-	char *name;
-	int sig;
-
-	if ((nvram_get_int("cstats_enable") == 1) && (argc == 1)) {
-		if (strcmp(argv[0], "speed") == 0) {
-			sig = SIGUSR1;
-			name = "/var/spool/cstats-speed.js";
-		}
-		else {
-			sig = SIGUSR2;
-			name = "/var/spool/cstats-history.js";
-		}
-		unlink(name);
-		killall("cstats", sig);
-		f_wait_exists(name, 5);
-		do_f(name, wp);
-		unlink(name);
-	}
-	return 0;
-}
-
-static int ej_iptraffic(int eid, webs_t wp, int argc, char **argv) {
-	char comma;
-	char sa[256];
-	FILE *a;
-	char ip[INET_ADDRSTRLEN];
-
-	char *exclude;
-
-	int64_t tx_bytes, rx_bytes;
-	unsigned long tp_tcp, rp_tcp;
-	unsigned long tp_udp, rp_udp;
-	unsigned long tp_icmp, rp_icmp;
-	unsigned int ct_tcp, ct_udp;
-
-	exclude = nvram_safe_get("cstats_exclude");
-
-	Node tmp;
-	Node *ptr;
-
-	iptraffic_conntrack_init();
-
-	if ((a = fopen("/proc/net/ipt_account/lan", "r")) == NULL) return 0;
-
-        websWrite(wp, "\n\niptraffic=[");
-        comma = ' ';
-
-	fgets(sa, sizeof(sa), a); // network
-	while (fgets(sa, sizeof(sa), a)) {
-		if(sscanf(sa, 
-			"ip = %s bytes_src = %llu %*u %*u %*u %*u packets_src = %*u %lu %lu %lu %*u bytes_dst = %llu %*u %*u %*u %*u packets_dst = %*u %lu %lu %lu %*u time = %*u",
-			ip, &tx_bytes, &tp_tcp, &tp_udp, &tp_icmp, &rx_bytes, &rp_tcp, &rp_udp, &rp_icmp) != 9 ) continue;
-		if (find_word(exclude, ip)) continue ;
-		if ((tx_bytes > 0) || (rx_bytes > 0)){
-			strncpy(tmp.ipaddr, ip, INET_ADDRSTRLEN);
-			ptr = TREE_FIND(&tree, _Node, linkage, &tmp);
-			if (!ptr) {
-				ct_tcp = 0;
-				ct_udp = 0;
-			} else {
-				ct_tcp = ptr->tcp_conn;
-				ct_udp = ptr->udp_conn;
-			}
-			websWrite(wp, "%c['%s', %llu, %llu, %lu, %lu, %lu, %lu, %lu, %lu, %u, %u]", 
-						comma, ip, rx_bytes, tx_bytes, rp_tcp, tp_tcp, rp_udp, tp_udp, rp_icmp, tp_icmp, ct_tcp, ct_udp);
-			comma = ',';
-		}
-	}
-	fclose(a);
-	websWrite(wp, "];\n");
-
-	TREE_FORWARD_APPLY(&tree, _Node, linkage, Node_housekeeping, NULL);
-	TREE_INIT(&tree, Node_compare);
-
-	return 0;
-}
-
-void iptraffic_conntrack_init() {
-	unsigned int a_time, a_proto;
-	char a_src[INET_ADDRSTRLEN];
-	char a_dst[INET_ADDRSTRLEN];
-	char b_src[INET_ADDRSTRLEN];
-	char b_dst[INET_ADDRSTRLEN];
-
-	char sa[256];
-	char sb[256];
-	FILE *a;
-	char *p;
-	int x;
-
-	Node tmp;
-	Node *ptr;
-
-	unsigned long rip;
-	unsigned long lan;
-	unsigned long mask;
-
-	if (strcmp(nvram_safe_get("lan_ifname"), "") != 0) {
-		rip = inet_addr(nvram_safe_get("lan_ipaddr"));
-		mask = inet_addr(nvram_safe_get("lan_netmask"));
-		lan = rip & mask;
-//		_dprintf("rip[%d]=%lu\n", br, rip[br]);
-//		_dprintf("mask[%d]=%lu\n", br, mask[br]);
-//		_dprintf("lan[%d]=%lu\n", br, lan[br]);
-	} else {
-		mask = 0;
-		rip = 0;
-		lan = 0;
-	}
-
-	const char conntrack[] = "/proc/net/ip_conntrack";
-
-	if ((a = fopen(conntrack, "r")) == NULL) return;
-
-//	ctvbuf(a);	// if possible, read in one go
-
-	while (fgets(sa, sizeof(sa), a)) {
-		if (sscanf(sa, "%*s %u %u", &a_proto, &a_time) != 2) continue;
-
-		if ((a_proto != 6) && (a_proto != 17)) continue;
-
-		if ((p = strstr(sa, "src=")) == NULL) continue;
-		if (sscanf(p, "src=%s dst=%s %n", a_src, a_dst, &x) != 2) continue;
-		p += x;
-
-		if ((p = strstr(p, "src=")) == NULL) continue;
-		if (sscanf(p, "src=%s dst=%s", b_src, b_dst) != 2) continue;
-
-		snprintf(sb, sizeof(sb), "%s %s %s %s", a_src, a_dst, b_src, b_dst);
-		remove_dups(sb, sizeof(sb));
-
-		char ipaddr[INET_ADDRSTRLEN], *next = NULL;
-
-		foreach(ipaddr, sb, next) {
-			if ((mask == 0) || ((inet_addr(ipaddr) & mask) != lan)) continue;
-
-			strncpy(tmp.ipaddr, ipaddr, INET_ADDRSTRLEN);
-			ptr = TREE_FIND(&tree, _Node, linkage, &tmp);
-
-			if (!ptr) {
-				_dprintf("%s: new ip: %s\n", __FUNCTION__, ipaddr);
-				TREE_INSERT(&tree, _Node, linkage, Node_new(ipaddr));
-				ptr = TREE_FIND(&tree, _Node, linkage, &tmp);
-			}
-			if (a_proto == 6) ++ptr->tcp_conn;
-			if (a_proto == 17) ++ptr->udp_conn;
-		}
-	}
-	fclose(a);
-//	Tree_info();
-}
-
-void ctvbuf(FILE *f) {
-	int n;
-	struct sysinfo si;
-//	meminfo_t mem;
-
-#if 1
-	const char *p;
-
-	if ((p = nvram_get("ct_max")) != NULL) {
-		n = atoi(p);
-		if (n == 0) n = 2048;
-		else if (n < 1024) n = 1024;
-		else if (n > 10240) n = 10240;
-	}
-	else {
-		n = 2048;
-	}
-#else
-	char s[64];
-
-	if (f_read_string("/proc/sys/net/ipv4/ip_conntrack_max", s, sizeof(s)) > 0) n = atoi(s);
-		else n = 1024;
-	if (n < 1024) n = 1024;
-		else if (n > 10240) n = 10240;
-#endif
-
-	n *= 170;	// avg tested
-
-//	get_memory(&mem);
-//	if (mem.maxfreeram < (n + (64 * 1024))) n = mem.maxfreeram - (64 * 1024);
-
-	sysinfo(&si);
-	if (si.freeram < (n + (64 * 1024))) n = si.freeram - (64 * 1024);
-
-//	cprintf("free: %dK, buffer: %dK\n", si.freeram / 1024, n / 1024);
-
-	if (n > 4096) {
-//		n =
-		setvbuf(f, NULL, _IOFBF, n);
-//		cprintf("setvbuf = %d\n", n);
-	}
-}
 
 static void
 prf_file(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg, char_t *url, char_t *path, char_t *query)
 {
 	char *ddns_flag;
 	char *ddns_mac;
-	char ddns_hostname_tmp[65];
+	char ddns_hostname_tmp[128];
 	char model_name;
 
 	model_name = get_model();
@@ -9239,7 +9012,7 @@ prf_file(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg, char_t *url, cha
 #endif
 	ddns_flag = websGetVar(wp, "path", "");
 	if(strcmp(ddns_flag, "0") == 0){
-		strlcpy(ddns_hostname_tmp, nvram_get("ddns_hostname_x"), sizeof(ddns_hostname_tmp));
+		snprintf(ddns_hostname_tmp, sizeof(ddns_hostname_tmp), "%s", nvram_safe_get("ddns_hostname_x"));
 		nvram_set("ddns_transfer", "");
 		nvram_set("ddns_hostname_x", "");
 	}
@@ -9336,122 +9109,6 @@ do_diag_log_file(char *url, FILE *stream)
 	do_file(path, stream);
 }
 #endif
-
-
-#if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2))
-
-#define JFFS_BACKUP_FILE "/tmp/backup_jffs.tar"
-
-static void
-do_jffs_file(char *url, FILE *stream)
-{
-        system("tar cf /tmp/backup_jffs.tar -C /jffs .");
-        do_file(JFFS_BACKUP_FILE, stream);
-        unlink(JFFS_BACKUP_FILE);
-}
-
-static void
-do_jffsupload_cgi(char *url, FILE *stream)
-{
-	int ret;
-
-#ifdef RTCONFIG_HTTPS
-	if(do_ssl)
-		ret = fcntl(ssl_stream_fd , F_GETOWN, 0);
-	else
-#endif
-	ret = fcntl(fileno(stream), F_GETOWN, 0);
-
-	if (ret == 0)
-	{
-		if (f_size(JFFS_BACKUP_FILE) > 10) {
-			logmessage("httpd", "Restoring JFFS backup...");
-			system("rm -rf /jffs/*"); /* */
-			system("/bin/tar -xf /tmp/backup_jffs.tar -C /jffs");
-			unlink(JFFS_BACKUP_FILE);
-			logmessage("httpd", "JFFS restore completed");
-			websApply(stream, "UploadingJFFS.asp");
-#ifdef RTCONFIG_HTTPS
-			if(do_ssl)
-				shutdown(ssl_stream_fd, SHUT_RDWR);
-			else
-#endif
-				shutdown(fileno(stream), SHUT_RDWR);
-		} else {
-			logmessage("httpd", "Error while restoring JFFS backup - no change made");
-		}
-	}
-	else
-	{
-		websApply(stream, "UploadError.asp");
-	}
-}
-
-static void
-do_jffsupload_post(char *url, FILE *stream, int len, char *boundary)
-{
-	FILE *fifo = NULL;
-	char buf[1024];
-	int count, ret = EINVAL, ch;
-	long filelen = 0;
-
-	/* Look for our part */
-	while (len > 0) {
-		if (!fgets(buf, MIN(len + 1, sizeof(buf)), stream)) {
-			goto err;
-		}
-
-		len -= strlen(buf);
-
-		if (!strncasecmp(buf, "Content-Disposition:", 20)
-				&& strstr(buf, "name=\"file2\""))
-			break;
-	}
-
-	/* Skip boundary and headers */
-	while (len > 0) {
-		if (!fgets(buf, MIN(len + 1, sizeof(buf)), stream)) {
-			goto err;
-		}
-
-		len -= strlen(buf);
-		if (!strcmp(buf, "\n") || !strcmp(buf, "\r\n")) {
-			break;
-		}
-	}
-
-	if (!(fifo = fopen(JFFS_BACKUP_FILE, "w")))
-		goto err;
-
-	while (len > 0) {
-		count = fread(buf, 1, MIN(len, sizeof(buf)), stream);
-		if(count <= 0)
-			goto err;
-
-		len -= count;
-		filelen += count;
-		fwrite(buf, 1, count, fifo);
-	}
-
-	fclose(fifo);
-	fifo = NULL;
-
-	/* Strip boundary from file */
-	if (boundary)
-		truncate(JFFS_BACKUP_FILE, filelen - strlen(boundary) - 8);
-
-err:
-	if (fifo)
-		fclose(fifo);
-
-	/* Slurp anything remaining in the request */
-	while (len-- > 0)
-		if((ch = fgetc(stream)) == EOF)
-			break;
-
-	fcntl(fileno(stream), F_SETOWN, -ret);
-}
-#endif // (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2)
 
 static void
 deleteOfflineClient(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg, char_t *url, char_t *path, char_t *query)
@@ -13492,6 +13149,9 @@ void ej_cgi_get(int eid, webs_t wp, int argc, char **argv)
 	}
 }
 
+#ifdef RTCONFIG_BCM5301X_TRAFFIC_MONITOR
+uint32_t traffic_wanlan(char *ifname, uint32_t *rx, uint32_t *tx);
+#endif
 
 // traffic monitor
 static int ej_netdev(int eid, webs_t wp, int argc, char_t **argv)
@@ -13546,13 +13206,13 @@ static int ej_netdev(int eid, webs_t wp, int argc, char_t **argv)
 #ifdef RTCONFIG_LACP
 					if(nvram_get_int("lacp_enabled") == 1 &&
 							strcmp(ifname, "vlan1") == 0){
-						//traffic_trunk(1, &rx_lacp1, &tx_lacp1);
+						traffic_trunk(1, &rx_lacp1, &tx_lacp1);
 						netdev_calc("lacp1", "LACP1",
 								&rx_lacp1, &tx_lacp1,
 								ifname_desc2_lacp1,
 								&rx2_lacp1, &tx2_lacp1);
 
-						//traffic_trunk(2, &rx_lacp2, &tx_lacp2);
+						traffic_trunk(2, &rx_lacp2, &tx_lacp2);
 						netdev_calc("lacp2", "LACP2",
 								&rx_lacp2, &tx_lacp2,
 								ifname_desc2_lacp2,
@@ -13939,6 +13599,35 @@ ej_radio_status(int eid, webs_t wp, int argc, char_t **argv)
 }
 
 static int
+ej_sysinfo(int eid, webs_t wp, int argc, char_t **argv)
+{
+	char *type;
+	char result[2048];
+	int retval = 0;
+
+	strcpy(result, "-1");
+
+	if (ejArgs(argc, argv, "%s", &type) < 1) {
+		websError(wp, 400, "Insufficient args\n");
+		return retval;
+	}
+	//_dprintf("[sysinfo] type=%s\n", type);
+
+	if(strncmp(type,"pid",3) == 0 ){
+		char service[32];
+		sscanf(type, "pid.%31s", service);
+
+		if (strlen(service))
+			sprintf(result, "%d", pidof(service));
+
+		//_dprintf("[sysinfo] service=%s, result=%d\n", service, result);
+	}
+
+	retval += websWrite(wp, result);
+	return retval;
+}
+
+static int
 ej_memory_usage(int eid, webs_t wp, int argc, char_t **argv){
 	unsigned long total, used, mfree/*, shared, buffers, cached*/;
 	char buf[80];
@@ -14054,7 +13743,7 @@ ej_check_pw(int eid, webs_t wp, int argc, char_t **argv)
 static int
 ej_check_acpw(int eid, webs_t wp, int argc, char_t **argv)
 {
- 	if(!strcmp(nvram_default_get("http_username"), nvram_safe_get("http_username")) && !strcmp(nvram_default_get("http_passwd"), nvram_safe_get("http_passwd")))
+	if(!strcmp(nvram_default_get("http_username"), nvram_safe_get("http_username")) && !strcmp(nvram_default_get("http_passwd"), nvram_safe_get("http_passwd")))
 		return websWrite(wp, "1");
 	else
 		return websWrite(wp, "0");
@@ -14867,49 +14556,6 @@ ej_get_clientlist(int eid, webs_t wp, int argc, char **argv){
 	return 0;
 }
 
-void
-json_unescape(char *s)
-{
-	unsigned int c;
-
-	while ((s = strpbrk(s, "%+"))) {
-		/* Parse %xx */
-		if (*s == '%') {
-			sscanf(s + 1, "%02x", &c);
-			*s++ = (char) c;
-			strlcpy(s, s + 2, strlen(s) + 1);
-		}
-		/* Space is special */
-		else if (*s == '+')
-			*s++ = ' ';
-	}
-}
-
-void
-decode_json_buffer(char *query)
-{
-	int len;
-	char *q, *name, *value;
-
-	/* Clear variables */
-	if (!query) {
-		//hdestroy_r(&htab);
-		return;
-	}
-
-	/* Parse into individual assignments */
-	q = query;
-	len = strlen(query);
-
-	for (q = query; q < (query + len);) {
-		/* Unescape each assignment */
-		json_unescape(name = value = q);
-
-		/* Skip to next assignment */
-		for (q += strlen(q); q < (query + len) && !*q; q++);
-	}
-}
-
 static int
 ej_get_next_lanip(int eid, webs_t wp, int argc, char **argv)
 {
@@ -15466,6 +15112,8 @@ struct ej_handler ej_handlers[] = {
 #ifdef RTCONFIG_BCMWL6
 	{ "get_wl_status", ej_wl_status_2g_array},
 #endif
+	{ "radio_status", ej_radio_status},
+	{ "asus_sysinfo", ej_sysinfo},
 #ifdef RTCONFIG_OPENVPN
 	{ "vpn_server_get_parameter", ej_vpn_server_get_parameter},
 	{ "vpn_client_get_parameter", ej_vpn_client_get_parameter},
@@ -15474,7 +15122,6 @@ struct ej_handler ej_handlers[] = {
 #endif
 	{ "nvram_clean_get", ej_nvram_clean_get},
 	{ "check_pw", ej_check_pw},
-	{ "radio_status", ej_radio_status},
 	{ "check_acpw", ej_check_acpw},
 	{ "check_acorpw", ej_check_acorpw},
 	{ "check_ftp_samba_anonymous", ej_check_ftp_samba_anonymous},
@@ -15718,33 +15365,6 @@ int is_wlif_up(const char *ifname)
 		return 0;
 }
 
-#ifdef RTCONFIG_BCM5301X_TRAFFIC_MONITOR
-//uint32_t
-void traffic_wanlan(char *ifname, uint32_t *rx, uint32_t *tx);
-#endif
-
-// Replace CRLF with ">", as the nvram backup encoder can't handle
-// ASCII values below 32.
-void write_encoded_crt(char *name, char *value){
-	int len, i, j;
-	char tmp[3500];
-
-	if (!value) return;
-
-	len = strlen(value);
-	// Safeguard against buffer overrun
-	if (len > (sizeof(tmp) - 1)) len = sizeof(tmp) - 1;
-
-	i = 0;
-	for (j=0; (j < len); j++) {
-		if (value[j] == '\n') tmp[i++] = '>';
-		else if (value[j] != '\r') tmp[i++] = value[j];
-	}
-
-	tmp[i] = '\0';
-	nvram_set(name, tmp);
-}
-
 int check_xss_blacklist(char* para, int check_www)
 {
 	int i = 0;
@@ -15809,3 +15429,139 @@ int check_xss_blacklist(char* para, int check_www)
 	free(para_t);
 	return 0;
 }
+
+void write_encoded_crt(char *name, char *value){
+	int len, i, j;
+	char tmp[3500];
+
+	if (!value) return;
+
+	len = strlen(value);
+	if (len > (sizeof(tmp) - 1)) len = sizeof(tmp) - 1;
+
+	i = 0;
+	for (j=0; (j < len); j++) {
+		if (value[j] == '\n') tmp[i++] = '>';
+		else if (value[j] != '\r') tmp[i++] = value[j];
+	}
+
+	tmp[i] = '\0';
+	nvram_set(name, tmp);
+}
+
+
+#if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2))
+
+#define JFFS_BACKUP_FILE "/tmp/backup_jffs.tar"
+
+static void
+do_jffs_file(char *url, FILE *stream)
+{
+        system("tar cf /tmp/backup_jffs.tar -C /jffs .");
+        do_file(JFFS_BACKUP_FILE, stream);
+        unlink(JFFS_BACKUP_FILE);
+}
+
+static void
+do_jffsupload_cgi(char *url, FILE *stream)
+{
+	int ret;
+
+#ifdef RTCONFIG_HTTPS
+	if(do_ssl)
+		ret = fcntl(ssl_stream_fd , F_GETOWN, 0);
+	else
+#endif
+	ret = fcntl(fileno(stream), F_GETOWN, 0);
+
+	if (ret == 0)
+	{
+		if (f_size(JFFS_BACKUP_FILE) > 10) {
+			logmessage("httpd", "Restoring JFFS backup...");
+			system("rm -rf /jffs/*"); /* */
+			system("/bin/tar -xf /tmp/backup_jffs.tar -C /jffs");
+			unlink(JFFS_BACKUP_FILE);
+			logmessage("httpd", "JFFS restore completed");
+			websApply(stream, "UploadingJFFS.asp");
+#ifdef RTCONFIG_HTTPS
+			if(do_ssl)
+				shutdown(ssl_stream_fd, SHUT_RDWR);
+			else
+#endif
+				shutdown(fileno(stream), SHUT_RDWR);
+		} else {
+			logmessage("httpd", "Error while restoring JFFS backup - no change made");
+		}
+	}
+	else
+	{
+		websApply(stream, "UploadError.asp");
+	}
+}
+
+static void
+do_jffsupload_post(char *url, FILE *stream, int len, char *boundary)
+{
+	FILE *fifo = NULL;
+	char buf[1024];
+	int count, ret = EINVAL, ch;
+	long filelen = 0;
+
+	/* Look for our part */
+	while (len > 0) {
+		if (!fgets(buf, MIN(len + 1, sizeof(buf)), stream)) {
+			goto err;
+		}
+
+		len -= strlen(buf);
+
+		if (!strncasecmp(buf, "Content-Disposition:", 20)
+				&& strstr(buf, "name=\"file2\""))
+			break;
+	}
+
+	/* Skip boundary and headers */
+	while (len > 0) {
+		if (!fgets(buf, MIN(len + 1, sizeof(buf)), stream)) {
+			goto err;
+		}
+
+		len -= strlen(buf);
+		if (!strcmp(buf, "\n") || !strcmp(buf, "\r\n")) {
+			break;
+		}
+	}
+
+	if (!(fifo = fopen(JFFS_BACKUP_FILE, "w")))
+		goto err;
+
+	while (len > 0) {
+		count = fread(buf, 1, MIN(len, sizeof(buf)), stream);
+		if(count <= 0)
+			goto err;
+
+		len -= count;
+		filelen += count;
+		fwrite(buf, 1, count, fifo);
+	}
+
+	fclose(fifo);
+	fifo = NULL;
+
+	/* Strip boundary from file */
+	if (boundary)
+		truncate(JFFS_BACKUP_FILE, filelen - strlen(boundary) - 8);
+
+err:
+	if (fifo)
+		fclose(fifo);
+
+	/* Slurp anything remaining in the request */
+	while (len-- > 0)
+		if((ch = fgetc(stream)) == EOF)
+			break;
+
+	fcntl(fileno(stream), F_SETOWN, -ret);
+}
+#endif // (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2)
+
