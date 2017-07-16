@@ -76,17 +76,19 @@ Disk sharing:
    - Disk spindown after user-configurable inactivity timeout
    - NFS sharing (through webui)
    - Allow or disable WAN access to the FTP server
-   - Updated Samba version (3.6)
+   - Updated Samba version (3.6), with SMB2.0 support
    - TLS support for the FTP server
 
 
 Networking:
    - Force acting as a Master Browser
    - Act as a WINS server
+   - SSHD support for key-based authentication
    - Allows tweaking TCP/UDP connection tracking timeouts
    - CIFS client support (for mounting remote SMB share on the router)
    - User-defined options for WAN DHCP queries (required by some ISPs)
    - Advanced OpenVPN client and server support
+   - Support for new OpenVPN 2.4 features like NCP and LZ4
    - Netfilter ipset module, for efficient blacklist implementation
    - Configurable min/max UPNP ports
    - IPSec kernel support (N66/AC66 only)
@@ -101,6 +103,7 @@ Networking:
 
 
 Web interface:
+   - Performance improvements
    - Optionally save traffic stats to disk (USB or JFFS partition)
    - Enhanced traffic monitoring, reporting traffic per IP, and
      displaying graphical reports of historical data
