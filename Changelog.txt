@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.67 Beta (xx-xxx-2017)
+380.67 (16-July-2017)
   - NEW: Merged with GPL 380_7743 code, with binary blobs from
          7378 for N66U
   - NEW: Custom config support for quagga/ripd.
