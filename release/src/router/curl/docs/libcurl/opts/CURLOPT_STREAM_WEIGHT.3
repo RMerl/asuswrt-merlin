@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2015, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_STREAM_WEIGHT 3 "February 03, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_STREAM_WEIGHT 3 "May 31, 2017" "libcurl 7.54.1" "curl_easy_setopt options"
 
 .SH NAME
 CURLOPT_STREAM_WEIGHT \- set numerical stream weight
@@ -54,7 +54,20 @@ is 16.
 .SH PROTOCOLS
 HTTP/2
 .SH EXAMPLE
-TODO
+.nf
+CURL *curl = curl_easy_init();
+CURL *curl2 = curl_easy_init(); /* a second handle */
+if(curl) {
+  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/one");
+  curl_easy_setopt(curl, CURLOPT_STREAM_WEIGHT, 10L);
+
+  /* the second has twice the weight */
+  curl_easy_setopt(curl2, CURLOPT_URL, "https://example.com/two");
+  curl_easy_setopt(curl2, CURLOPT_STREAM_WEIGHT, 20L);
+
+  /* then add both to a multi handle and transfer them! */
+}
+.fi
 .SH AVAILABILITY
 Added in 7.46.0
 .SH RETURN VALUE

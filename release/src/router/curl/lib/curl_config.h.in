@@ -723,6 +723,9 @@
 /* Define to 1 if you have the `utime' function. */
 #undef HAVE_UTIME
 
+/* Define to 1 if you have the `utimes' function. */
+#undef HAVE_UTIMES
+
 /* Define to 1 if you have the <utime.h> header file. */
 #undef HAVE_UTIME_H
 

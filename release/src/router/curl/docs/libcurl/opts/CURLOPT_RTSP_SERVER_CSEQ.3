@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2014, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_RTSP_SERVER_CSEQ 3 "February 03, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_RTSP_SERVER_CSEQ 3 "May 31, 2017" "libcurl 7.54.1" "curl_easy_setopt options"
 
 .SH NAME
 CURLOPT_RTSP_SERVER_CSEQ \- set the RTSP server CSEQ number
@@ -37,7 +37,15 @@ unimplemented.
 .SH PROTOCOLS
 RTSP
 .SH EXAMPLE
-TODO
+.nf
+CURL *curl = curl_easy_init();
+if(curl) {
+  curl_easy_setopt(curl, CURLOPT_URL, "rtsp://example.com/");
+  curl_easy_setopt(curl, CURLOPT_RTSP_SERVER_CSEQ, 1234L);
+  ret = curl_easy_perform(curl);
+  curl_easy_cleanup(curl);
+}
+.fi
 .SH AVAILABILITY
 Added in 7.20.0
 .SH RETURN VALUE

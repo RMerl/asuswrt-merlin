@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2015, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLINFO_FTP_ENTRY_PATH 3 "February 03, 2016" "libcurl 7.54.0" "curl_easy_getinfo options"
+.TH CURLINFO_FTP_ENTRY_PATH 3 "May 06, 2017" "libcurl 7.54.1" "curl_easy_getinfo options"
 
 .SH NAME
 CURLINFO_FTP_ENTRY_PATH \- get entry path in FTP server
@@ -40,7 +40,24 @@ corresponding CURL handle.
 .SH PROTOCOLS
 FTP(S) and SFTP
 .SH EXAMPLE
-TODO
+.nf
+CURL *curl = curl_easy_init();
+if(curl) {
+  curl_easy_setopt(curl, CURLOPT_URL, "ftp://example.com");
+
+  res = curl_easy_perform(curl);
+
+  if(!res) {
+    /* extract the entry path */
+    char *ep = NULL;
+    res = curl_easy_getinfo(curl, CURLINFO_FTP_ENTRY_PATH, &ep);
+    if(!res && ep) {
+      printf("Entry path was: %s\\n", ep);
+    }
+  }
+  curl_easy_cleanup(curl);
+}
+.fi
 .SH AVAILABILITY
 Added in 7.15.4. Works for SFTP since 7.21.4
 .SH RETURN VALUE

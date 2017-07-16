@@ -113,7 +113,8 @@ build_triplet = @build@
 host_triplet = @host@
 subdir = docs/cmdline-opts
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/curl-compilers.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_code_coverage.m4 \
+	$(top_srcdir)/m4/curl-compilers.m4 \
 	$(top_srcdir)/m4/curl-confopts.m4 \
 	$(top_srcdir)/m4/curl-functions.m4 \
 	$(top_srcdir)/m4/curl-openssl.m4 \
@@ -176,6 +177,9 @@ CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CFLAG_CURL_SYMBOL_HIDING = @CFLAG_CURL_SYMBOL_HIDING@
+CODE_COVERAGE_CFLAGS = @CODE_COVERAGE_CFLAGS@
+CODE_COVERAGE_ENABLED = @CODE_COVERAGE_ENABLED@
+CODE_COVERAGE_LDFLAGS = @CODE_COVERAGE_LDFLAGS@
 CONFIGURE_OPTIONS = @CONFIGURE_OPTIONS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -215,6 +219,8 @@ ENABLE_SHARED = @ENABLE_SHARED@
 ENABLE_STATIC = @ENABLE_STATIC@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
+GCOV = @GCOV@
+GENHTML = @GENHTML@
 GREP = @GREP@
 HAVE_GNUTLS_SRP = @HAVE_GNUTLS_SRP@
 HAVE_LDAP_SSL = @HAVE_LDAP_SSL@
@@ -227,6 +233,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 IPV6_ENABLED = @IPV6_ENABLED@
+LCOV = @LCOV@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBCURL_LIBS = @LIBCURL_LIBS@
@@ -361,7 +368,7 @@ DPAGES = abstract-unix-socket.d anyauth.d append.d basic.d cacert.d capath.d cer
   data-raw.d data-urlencode.d delegation.d digest.d disable.d           \
   disable-eprt.d disable-epsv.d dns-interface.d dns-ipv4-addr.d         \
   dns-ipv6-addr.d dns-servers.d dump-header.d egd-file.d engine.d       \
-  environment.d expect100-timeout.d fail.d fail-early.d false-start.d   \
+  expect100-timeout.d fail.d fail-early.d false-start.d                 \
   form.d form-string.d ftp-account.d ftp-alternative-to-user.d          \
   ftp-create-dirs.d ftp-method.d ftp-pasv.d ftp-port.d ftp-pret.d       \
   ftp-skip-pasv-ip.d ftp-ssl-ccc.d ftp-ssl-ccc-mode.d ftp-ssl-control.d \
@@ -595,7 +602,7 @@ uninstall-am:
 
 all: $(MANPAGE)
 
-$(MANPAGE): $(DPAGES) $(OTHERPAGES)
+$(MANPAGE): $(DPAGES) $(OTHERPAGES) Makefile.inc
 	@PERL@ $(srcdir)/gen.pl mainpage $(srcdir) > $(MANPAGE)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

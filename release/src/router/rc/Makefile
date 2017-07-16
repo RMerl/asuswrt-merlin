@@ -380,6 +380,10 @@ ifeq ($(RTCONFIG_PORT_BASED_VLAN),y)
 OBJS += vlan.o
 endif
 
+ifeq ($(RTCONFIG_DNSFILTER),y)
+OBJS += dnsfilter.o
+endif
+
 ifeq ($(RTCONFIG_BCMARM),y)
 ifeq ($(RTCONFIG_QTN),y)
 vpath %.c sysdeps sysdeps/broadcom sysdeps/qtn $(TOP)/libqcsapi_client/qcsapi_rpc_common/client $(TOP)/sysdeps/qtn $(SRCBASE)/shared

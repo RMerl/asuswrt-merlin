@@ -1336,9 +1336,6 @@
 				RelativePath="..\..\..\..\src\tool_vms.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\tool_writeenv.c">
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\tool_writeout.c">
 			</File>
 			<File
@@ -1482,9 +1479,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\tool_vms.h">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\tool_writeenv.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\tool_writeout.h">

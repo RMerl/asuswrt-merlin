@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2014, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_CLOSESOCKETDATA 3 "February 03, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_CLOSESOCKETDATA 3 "May 31, 2017" "libcurl 7.54.1" "curl_easy_setopt options"
 
 .SH NAME
 CURLOPT_CLOSESOCKETDATA \- pointer passed to the socket close callback
@@ -37,7 +37,17 @@ The default value of this parameter is NULL.
 .SH PROTOCOLS
 All except file:
 .SH EXAMPLE
-TODO
+.nf
+static int closesocket(void *clientp, curl_socket_t item)
+{
+  printf("libcurl wants to close %d now\n", (int)item);
+  return 0;
+}
+
+/* call this function to close sockets */
+curl_easy_setopt(curl, CURLOPT_CLOSESOCKETFUNCTION, closesocket);
+curl_easy_setopt(curl, CURLOPT_CLOSESOCKETDATA, &sockfd);
+.fi
 .SH AVAILABILITY
 Added in 7.21.7
 .SH RETURN VALUE

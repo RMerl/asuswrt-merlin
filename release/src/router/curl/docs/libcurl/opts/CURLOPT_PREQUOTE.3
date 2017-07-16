@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2014, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_PREQUOTE 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_PREQUOTE 3 "May 05, 2017" "libcurl 7.54.1" "curl_easy_setopt options"
 
 .SH NAME
 CURLOPT_PREQUOTE \- commands to run before FTP or SFTP transfer
@@ -40,7 +40,22 @@ NULL
 .SH PROTOCOLS
 FTP and SFTP
 .SH EXAMPLE
-TODO
+.nf
+struct curl_slist *h = NULL;
+h = curl_slist_append(h, "SYST");
+
+curl = curl_easy_init();
+if(curl) {
+  curl_easy_setopt(curl, CURLOPT_URL, "ftp://example.com/foo.bin");
+
+  /* pass in the FTP commands to run */
+  curl_easy_setopt(curl, CURLOPT_PREQUOTE, headerlist);
+
+  ret = curl_easy_perform(curl);
+
+  curl_easy_cleanup(curl);
+}
+.fi
 .SH AVAILABILITY
 Along with the protocol support
 .SH RETURN VALUE

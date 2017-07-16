@@ -144,7 +144,8 @@ build_triplet = @build@
 host_triplet = @host@
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/curl-compilers.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_code_coverage.m4 \
+	$(top_srcdir)/m4/curl-compilers.m4 \
 	$(top_srcdir)/m4/curl-confopts.m4 \
 	$(top_srcdir)/m4/curl-functions.m4 \
 	$(top_srcdir)/m4/curl-openssl.m4 \
@@ -317,6 +318,9 @@ CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CFLAG_CURL_SYMBOL_HIDING = @CFLAG_CURL_SYMBOL_HIDING@
+CODE_COVERAGE_CFLAGS = @CODE_COVERAGE_CFLAGS@
+CODE_COVERAGE_ENABLED = @CODE_COVERAGE_ENABLED@
+CODE_COVERAGE_LDFLAGS = @CODE_COVERAGE_LDFLAGS@
 CONFIGURE_OPTIONS = @CONFIGURE_OPTIONS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -356,6 +360,8 @@ ENABLE_SHARED = @ENABLE_SHARED@
 ENABLE_STATIC = @ENABLE_STATIC@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
+GCOV = @GCOV@
+GENHTML = @GENHTML@
 GREP = @GREP@
 HAVE_GNUTLS_SRP = @HAVE_GNUTLS_SRP@
 HAVE_LDAP_SSL = @HAVE_LDAP_SSL@
@@ -368,6 +374,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 IPV6_ENABLED = @IPV6_ENABLED@
+LCOV = @LCOV@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBCURL_LIBS = @LIBCURL_LIBS@
@@ -606,7 +613,7 @@ WINBUILD_DIST = winbuild/BUILD.WINDOWS.txt winbuild/gen_resp_file.bat	\
 EXTRA_DIST = CHANGES COPYING maketgz Makefile.dist curl-config.in	\
  RELEASE-NOTES buildconf libcurl.pc.in MacOSX-Framework scripts/zsh.pl	\
  scripts/updatemanpages.pl $(CMAKE_DIST) $(VC_DIST) $(WINBUILD_DIST)	\
- lib/libcurl.vers.in buildconf.bat
+ lib/libcurl.vers.in buildconf.bat scripts/coverage.sh
 
 CLEANFILES = $(VC6_LIBDSP) $(VC6_SRCDSP) $(VC7_LIBVCPROJ) $(VC7_SRCVCPROJ)	\
  $(VC71_LIBVCPROJ) $(VC71_SRCVCPROJ) $(VC8_LIBVCPROJ) $(VC8_SRCVCPROJ)	\
@@ -727,7 +734,6 @@ CURL_CFILES = \
 	tool_urlglob.c \
 	tool_util.c \
 	tool_vms.c \
-	tool_writeenv.c \
 	tool_writeout.c \
 	tool_xattr.c
 
@@ -772,7 +778,6 @@ CURL_HFILES = \
 	tool_util.h \
 	tool_version.h \
 	tool_vms.h \
-	tool_writeenv.h \
 	tool_writeout.h \
 	tool_xattr.h
 
@@ -1352,6 +1357,9 @@ check: test examples check-docs
 
 @CROSSCOMPILING_FALSE@test-torture:
 @CROSSCOMPILING_FALSE@	@(cd tests; $(MAKE) all torture-test)
+
+@CROSSCOMPILING_FALSE@test-event:
+@CROSSCOMPILING_FALSE@	@(cd tests; $(MAKE) all event-test)
 
 @CROSSCOMPILING_FALSE@test-am:
 @CROSSCOMPILING_FALSE@	@(cd tests; $(MAKE) all am-test)

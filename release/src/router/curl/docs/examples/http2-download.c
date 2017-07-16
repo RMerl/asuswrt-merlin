@@ -43,8 +43,8 @@
 
 #define NUM_HANDLES 1000
 
-void *curl_hnd[NUM_HANDLES];
-int num_transfers;
+static void *curl_hnd[NUM_HANDLES];
+static int num_transfers;
 
 /* a handle to number lookup, highly ineffective when we do many
    transfers... */
@@ -117,6 +117,7 @@ int my_trace(CURL *handle, curl_infotype type,
   switch(type) {
   case CURLINFO_TEXT:
     fprintf(stderr, "== %d Info: %s", num, data);
+    /* FALLTHROUGH */
   default: /* in case a new one is introduced to shock us */
     return 0;
 

@@ -89,7 +89,8 @@ build_triplet = @build@
 host_triplet = @host@
 subdir = packages/vms
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/curl-compilers.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_code_coverage.m4 \
+	$(top_srcdir)/m4/curl-compilers.m4 \
 	$(top_srcdir)/m4/curl-confopts.m4 \
 	$(top_srcdir)/m4/curl-functions.m4 \
 	$(top_srcdir)/m4/curl-openssl.m4 \
@@ -150,6 +151,9 @@ CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CFLAG_CURL_SYMBOL_HIDING = @CFLAG_CURL_SYMBOL_HIDING@
+CODE_COVERAGE_CFLAGS = @CODE_COVERAGE_CFLAGS@
+CODE_COVERAGE_ENABLED = @CODE_COVERAGE_ENABLED@
+CODE_COVERAGE_LDFLAGS = @CODE_COVERAGE_LDFLAGS@
 CONFIGURE_OPTIONS = @CONFIGURE_OPTIONS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -189,6 +193,8 @@ ENABLE_SHARED = @ENABLE_SHARED@
 ENABLE_STATIC = @ENABLE_STATIC@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
+GCOV = @GCOV@
+GENHTML = @GENHTML@
 GREP = @GREP@
 HAVE_GNUTLS_SRP = @HAVE_GNUTLS_SRP@
 HAVE_LDAP_SSL = @HAVE_LDAP_SSL@
@@ -201,6 +207,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 IPV6_ENABLED = @IPV6_ENABLED@
+LCOV = @LCOV@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBCURL_LIBS = @LIBCURL_LIBS@
@@ -375,9 +382,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu packages/vms/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign packages/vms/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu packages/vms/Makefile
+	  $(AUTOMAKE) --foreign packages/vms/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \

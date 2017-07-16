@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2014, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_MAX_RECV_SPEED_LARGE 3 "August 16, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_MAX_RECV_SPEED_LARGE 3 "May 30, 2017" "libcurl 7.54.1" "curl_easy_setopt options"
 
 .SH NAME
 CURLOPT_MAX_RECV_SPEED_LARGE \- rate limit data download speed
@@ -41,6 +41,16 @@ This option doesn't affect transfer speeds done with FILE:// URLs.
 .SH PROTOCOLS
 All but file://
 .SH EXAMPLE
+.nf
+CURL *curl = curl_easy_init();
+if(curl) {
+  CURLcode ret;
+  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/");
+  /* cap the download speed to 31415 bytes/sec */
+  curl_easy_setopt(curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t)31415);
+  ret = curl_easy_perform(curl);
+}
+.fi
 .SH AVAILABILITY
 Added in 7.15.5
 .SH RETURN VALUE

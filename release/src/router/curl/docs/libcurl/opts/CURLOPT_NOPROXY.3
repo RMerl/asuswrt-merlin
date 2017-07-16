@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2014, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_NOPROXY 3 "December 21, 2016" "libcurl 7.54.0" "curl_easy_setopt options"
+.TH CURLOPT_NOPROXY 3 "May 30, 2017" "libcurl 7.54.1" "curl_easy_setopt options"
 
 .SH NAME
 CURLOPT_NOPROXY \- disable proxy use for specific hosts
@@ -38,6 +38,10 @@ hostname itself. For example, example.com would match example.com,
 example.com:80, and www.example.com, but not www.notanexample.com or
 example.com.othertld.
 
+If the name in the noproxy list has a leading period, it is a domain match
+against the provided host name. This way ".example.com" will switch off proxy
+use for both "www.example.com" as well as for "foo.example.com".
+
 The application does not have to keep the string around after setting this
 option.
 .SH DEFAULT
@@ -45,7 +49,18 @@ NULL
 .SH PROTOCOLS
 Most
 .SH EXAMPLE
-TODO
+.nf
+CURL *curl = curl_easy_init();
+if(curl) {
+  /* accept various URLs */
+  curl_easy_setopt(curl, CURLOPT_URL, input);
+  /* use this proxy */
+  curl_easy_setopt(curl, CURLOPT_PROXY, "http://proxy:80");
+  /* ... but make sure this host name is not proxied */
+  curl_easy_setopt(curl, CURLOPT_NOPROXY, "www.example.com");
+  curl_easy_perform(curl);
+}
+.fi
 .SH AVAILABILITY
 Added in 7.19.4
 .SH RETURN VALUE

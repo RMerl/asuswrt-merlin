@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2015, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLINFO_RTSP_SERVER_CSEQ 3 "February 03, 2016" "libcurl 7.54.0" "curl_easy_getinfo options"
+.TH CURLINFO_RTSP_SERVER_CSEQ 3 "May 31, 2017" "libcurl 7.54.1" "curl_easy_getinfo options"
 
 .SH NAME
 CURLINFO_RTSP_SERVER_CSEQ \- get the next RTSP server CSeq
@@ -39,7 +39,19 @@ retrieve this info before closing the active connection.
 .SH PROTOCOLS
 RTSP
 .SH EXAMPLE
-TODO
+.nf
+CURL *curl = curl_easy_init();
+if(curl) {
+  CURLcode res;
+  curl_easy_setopt(curl, CURLOPT_URL, "rtsp://rtsp.example.com");
+  res = curl_easy_perform(curl);
+  if(res == CURLE_OK) {
+    long cseq;
+    curl_easy_getinfo(curl, CURLINFO_RTSP_SERVER_CSEQ, &cseq);
+  }
+  curl_easy_cleanup(curl);
+}
+.fi
 .SH AVAILABILITY
 Added in 7.20.0
 .SH RETURN VALUE

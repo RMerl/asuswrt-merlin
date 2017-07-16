@@ -43,7 +43,7 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -158,10 +158,12 @@ check_PROGRAMS = 10-at-a-time$(EXEEXT) anyauthput$(EXEEXT) \
 	imap-tls$(EXEEXT) imap-multi$(EXEEXT) url2file$(EXEEXT) \
 	sftpget$(EXEEXT) ftpsget$(EXEEXT) postinmemory$(EXEEXT) \
 	http2-download$(EXEEXT) http2-upload$(EXEEXT) \
-	http2-serverpush$(EXEEXT) getredirect$(EXEEXT)
+	http2-serverpush$(EXEEXT) getredirect$(EXEEXT) \
+	ftpuploadfrommem$(EXEEXT)
 subdir = docs/examples
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/curl-compilers.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_code_coverage.m4 \
+	$(top_srcdir)/m4/curl-compilers.m4 \
 	$(top_srcdir)/m4/curl-confopts.m4 \
 	$(top_srcdir)/m4/curl-functions.m4 \
 	$(top_srcdir)/m4/curl-openssl.m4 \
@@ -292,6 +294,13 @@ ftpupload_LDADD = $(LDADD)
 @USE_EXPLICIT_LIB_DEPS_FALSE@ftpupload_DEPENDENCIES =  \
 @USE_EXPLICIT_LIB_DEPS_FALSE@	$(LIBDIR)/libcurl.la
 @USE_EXPLICIT_LIB_DEPS_TRUE@ftpupload_DEPENDENCIES =  \
+@USE_EXPLICIT_LIB_DEPS_TRUE@	$(LIBDIR)/libcurl.la
+ftpuploadfrommem_SOURCES = ftpuploadfrommem.c
+ftpuploadfrommem_OBJECTS = ftpuploadfrommem.$(OBJEXT)
+ftpuploadfrommem_LDADD = $(LDADD)
+@USE_EXPLICIT_LIB_DEPS_FALSE@ftpuploadfrommem_DEPENDENCIES =  \
+@USE_EXPLICIT_LIB_DEPS_FALSE@	$(LIBDIR)/libcurl.la
+@USE_EXPLICIT_LIB_DEPS_TRUE@ftpuploadfrommem_DEPENDENCIES =  \
 @USE_EXPLICIT_LIB_DEPS_TRUE@	$(LIBDIR)/libcurl.la
 getinfo_SOURCES = getinfo.c
 getinfo_OBJECTS = getinfo.$(OBJEXT)
@@ -740,16 +749,16 @@ am__v_CCLD_1 =
 SOURCES = 10-at-a-time.c anyauthput.c certinfo.c chkspeed.c \
 	cookie_interface.c debug.c externalsocket.c fileupload.c \
 	fopen.c ftp-wildcard.c ftpget.c ftpgetinfo.c ftpgetresp.c \
-	ftpsget.c ftpupload.c getinfo.c getinmemory.c getredirect.c \
-	http-post.c http2-download.c http2-serverpush.c http2-upload.c \
-	httpcustomheader.c httpput.c https.c imap-append.c imap-copy.c \
-	imap-create.c imap-delete.c imap-examine.c imap-fetch.c \
-	imap-list.c imap-lsub.c imap-multi.c imap-noop.c imap-search.c \
-	imap-ssl.c imap-store.c imap-tls.c multi-app.c \
-	multi-debugcallback.c multi-double.c multi-post.c \
-	multi-single.c persistant.c pop3-dele.c pop3-list.c \
-	pop3-multi.c pop3-noop.c pop3-retr.c pop3-ssl.c pop3-stat.c \
-	pop3-tls.c pop3-top.c pop3-uidl.c post-callback.c \
+	ftpsget.c ftpupload.c ftpuploadfrommem.c getinfo.c \
+	getinmemory.c getredirect.c http-post.c http2-download.c \
+	http2-serverpush.c http2-upload.c httpcustomheader.c httpput.c \
+	https.c imap-append.c imap-copy.c imap-create.c imap-delete.c \
+	imap-examine.c imap-fetch.c imap-list.c imap-lsub.c \
+	imap-multi.c imap-noop.c imap-search.c imap-ssl.c imap-store.c \
+	imap-tls.c multi-app.c multi-debugcallback.c multi-double.c \
+	multi-post.c multi-single.c persistant.c pop3-dele.c \
+	pop3-list.c pop3-multi.c pop3-noop.c pop3-retr.c pop3-ssl.c \
+	pop3-stat.c pop3-tls.c pop3-top.c pop3-uidl.c post-callback.c \
 	postinmemory.c postit2.c progressfunc.c resolve.c rtsp.c \
 	sendrecv.c sepheaders.c sftpget.c simple.c simplepost.c \
 	simplessl.c smtp-expn.c smtp-mail.c smtp-multi.c smtp-ssl.c \
@@ -757,16 +766,16 @@ SOURCES = 10-at-a-time.c anyauthput.c certinfo.c chkspeed.c \
 DIST_SOURCES = 10-at-a-time.c anyauthput.c certinfo.c chkspeed.c \
 	cookie_interface.c debug.c externalsocket.c fileupload.c \
 	fopen.c ftp-wildcard.c ftpget.c ftpgetinfo.c ftpgetresp.c \
-	ftpsget.c ftpupload.c getinfo.c getinmemory.c getredirect.c \
-	http-post.c http2-download.c http2-serverpush.c http2-upload.c \
-	httpcustomheader.c httpput.c https.c imap-append.c imap-copy.c \
-	imap-create.c imap-delete.c imap-examine.c imap-fetch.c \
-	imap-list.c imap-lsub.c imap-multi.c imap-noop.c imap-search.c \
-	imap-ssl.c imap-store.c imap-tls.c multi-app.c \
-	multi-debugcallback.c multi-double.c multi-post.c \
-	multi-single.c persistant.c pop3-dele.c pop3-list.c \
-	pop3-multi.c pop3-noop.c pop3-retr.c pop3-ssl.c pop3-stat.c \
-	pop3-tls.c pop3-top.c pop3-uidl.c post-callback.c \
+	ftpsget.c ftpupload.c ftpuploadfrommem.c getinfo.c \
+	getinmemory.c getredirect.c http-post.c http2-download.c \
+	http2-serverpush.c http2-upload.c httpcustomheader.c httpput.c \
+	https.c imap-append.c imap-copy.c imap-create.c imap-delete.c \
+	imap-examine.c imap-fetch.c imap-list.c imap-lsub.c \
+	imap-multi.c imap-noop.c imap-search.c imap-ssl.c imap-store.c \
+	imap-tls.c multi-app.c multi-debugcallback.c multi-double.c \
+	multi-post.c multi-single.c persistant.c pop3-dele.c \
+	pop3-list.c pop3-multi.c pop3-noop.c pop3-retr.c pop3-ssl.c \
+	pop3-stat.c pop3-tls.c pop3-top.c pop3-uidl.c post-callback.c \
 	postinmemory.c postit2.c progressfunc.c resolve.c rtsp.c \
 	sendrecv.c sepheaders.c sftpget.c simple.c simplepost.c \
 	simplessl.c smtp-expn.c smtp-mail.c smtp-multi.c smtp-ssl.c \
@@ -812,6 +821,9 @@ CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CFLAG_CURL_SYMBOL_HIDING = @CFLAG_CURL_SYMBOL_HIDING@
+CODE_COVERAGE_CFLAGS = @CODE_COVERAGE_CFLAGS@
+CODE_COVERAGE_ENABLED = @CODE_COVERAGE_ENABLED@
+CODE_COVERAGE_LDFLAGS = @CODE_COVERAGE_LDFLAGS@
 CONFIGURE_OPTIONS = @CONFIGURE_OPTIONS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -851,6 +863,8 @@ ENABLE_SHARED = @ENABLE_SHARED@
 ENABLE_STATIC = @ENABLE_STATIC@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
+GCOV = @GCOV@
+GENHTML = @GENHTML@
 GREP = @GREP@
 HAVE_GNUTLS_SRP = @HAVE_GNUTLS_SRP@
 HAVE_LDAP_SSL = @HAVE_LDAP_SSL@
@@ -863,6 +877,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 IPV6_ENABLED = @IPV6_ENABLED@
+LCOV = @LCOV@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBCURL_LIBS = @LIBCURL_LIBS@
@@ -1125,6 +1140,10 @@ ftpupload$(EXEEXT): $(ftpupload_OBJECTS) $(ftpupload_DEPENDENCIES) $(EXTRA_ftpup
 	@rm -f ftpupload$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(ftpupload_OBJECTS) $(ftpupload_LDADD) $(LIBS)
 
+ftpuploadfrommem$(EXEEXT): $(ftpuploadfrommem_OBJECTS) $(ftpuploadfrommem_DEPENDENCIES) $(EXTRA_ftpuploadfrommem_DEPENDENCIES) 
+	@rm -f ftpuploadfrommem$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(ftpuploadfrommem_OBJECTS) $(ftpuploadfrommem_LDADD) $(LIBS)
+
 getinfo$(EXEEXT): $(getinfo_OBJECTS) $(getinfo_DEPENDENCIES) $(EXTRA_getinfo_DEPENDENCIES) 
 	@rm -f getinfo$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(getinfo_OBJECTS) $(getinfo_LDADD) $(LIBS)
@@ -1382,6 +1401,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ftpgetresp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ftpsget.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ftpupload.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ftpuploadfrommem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getinfo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getinmemory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getredirect.Po@am__quote@

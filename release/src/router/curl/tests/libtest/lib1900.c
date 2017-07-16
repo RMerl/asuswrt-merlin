@@ -29,14 +29,14 @@
 #define MAX_URLS 200
 #define MAX_BLACKLIST 20
 
-int urltime[MAX_URLS];
-char *urlstring[MAX_URLS];
-CURL *handles[MAX_URLS];
-char *site_blacklist[MAX_BLACKLIST];
-char *server_blacklist[MAX_BLACKLIST];
-int num_handles;
-int blacklist_num_servers;
-int blacklist_num_sites;
+static int urltime[MAX_URLS];
+static char *urlstring[MAX_URLS];
+static CURL *handles[MAX_URLS];
+static char *site_blacklist[MAX_BLACKLIST];
+static char *server_blacklist[MAX_BLACKLIST];
+static int num_handles;
+static int blacklist_num_servers;
+static int blacklist_num_sites;
 
 static size_t
 write_callback(void *contents, size_t size, size_t nmemb, void *userp)
@@ -142,7 +142,7 @@ int test(char *URL)
   int handlenum = 0;
   struct timeval last_handle_add;
 
-  if(parse_url_file("log/urls.txt") <= 0)
+  if(parse_url_file(libtest_arg2) <= 0)
     goto test_cleanup;
 
   start_test_timing();
@@ -167,7 +167,6 @@ int test(char *URL)
   for(;;) {
     struct timeval interval;
     struct timeval now;
-    long int msnow, mslast;
     fd_set rd, wr, exc;
     int maxfd = -99;
     long timeout;
@@ -177,9 +176,7 @@ int test(char *URL)
 
     if(handlenum < num_handles) {
       now = tutil_tvnow();
-      msnow = now.tv_sec * 1000 + now.tv_usec / 1000;
-      mslast = last_handle_add.tv_sec * 1000 + last_handle_add.tv_usec / 1000;
-      if((msnow - mslast) >= urltime[handlenum]) {
+      if(tutil_tvdiff(now, last_handle_add) >= urltime[handlenum]) {
         fprintf(stdout, "Adding handle %d\n", handlenum);
         setup_handle(URL, m, handlenum);
         last_handle_add = now;

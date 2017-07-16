@@ -6,7 +6,7 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -194,7 +194,7 @@ my $pwd = getcwd();          # current working directory
 
 my $start;
 my $ftpchecktime=1; # time it took to verify our test FTP server
-
+my $scrambleorder;
 my $stunnel = checkcmd("stunnel4") || checkcmd("tstunnel") || checkcmd("stunnel");
 my $valgrind = checktestcmd("valgrind");
 my $valgrind_logfile="--logfile";
@@ -2412,6 +2412,7 @@ sub checksystem {
            }
            elsif ($libcurl =~ /securetransport/i) {
                $has_darwinssl=1;
+               $has_sslpinning=1;
                $ssllib="DarwinSSL";
            }
            elsif ($libcurl =~ /BoringSSL/i) {
@@ -3279,11 +3280,6 @@ sub singletest {
     }
 
     if(!$why) {
-        # TODO:
-        # Add a precheck cache. If a precheck command was already invoked
-        # exactly like this, then use the previous result to speed up
-        # successive test invokes!
-
         my @precheck = getpart("client", "precheck");
         if(@precheck) {
             $cmd = $precheck[0];
@@ -3333,31 +3329,12 @@ sub singletest {
     }
     logmsg sprintf("test %04d...", $testnum) if(!$automakestyle);
 
-    # extract the reply data
-    my @reply = getpart("reply", "data");
-    my @replycheck = getpart("reply", "datacheck");
-
     my %replyattr = getpartattr("reply", "data");
-    my %replycheckattr = getpartattr("reply", "datacheck");
-
-    if (@replycheck) {
-        # we use this file instead to check the final output against
-        # get the mode attribute
-        my $filemode=$replycheckattr{'mode'};
-        if($filemode && ($filemode eq "text") && $has_textaware) {
-            # text mode when running on windows: fix line endings
-            map s/\r\n/\n/g, @replycheck;
-            map s/\n/\r\n/g, @replycheck;
-        }
-        if($replycheckattr{'nonewline'}) {
-            # Yes, we must cut off the final newline from the final line
-            # of the datacheck
-            chomp($replycheck[$#replycheck]);
-        }
-
-        for my $partsuffix (('1', '2', '3', '4')) {
+    my @reply;
+    if (partexists("reply", "datacheck")) {
+        for my $partsuffix (('', '1', '2', '3', '4')) {
             my @replycheckpart = getpart("reply", "datacheck".$partsuffix);
-            if(@replycheckpart || partexists("reply", "datacheck".$partsuffix) ) {
+            if(@replycheckpart) {
                 my %replycheckpartattr = getpartattr("reply", "datacheck".$partsuffix);
                 # get the mode attribute
                 my $filemode=$replycheckpartattr{'mode'};
@@ -3371,13 +3348,13 @@ sub singletest {
                     # of the datacheck
                     chomp($replycheckpart[$#replycheckpart]);
                 }
-                push(@replycheck, @replycheckpart);
+                push(@reply, @replycheckpart);
             }
         }
-
-        @reply=@replycheck;
     }
     else {
+        # check against the data section
+        @reply = getpart("reply", "data");
         # get the mode attribute
         my $filemode=$replyattr{'mode'};
         if($filemode && ($filemode eq "text") && $has_textaware) {
@@ -3617,21 +3594,6 @@ sub singletest {
     my $dumped_core;
     my $cmdres;
 
-    # Apr 2007: precommand isn't being used and could be removed
-    my @precommand= getpart("client", "precommand");
-    if($precommand[0]) {
-        # this is pure perl to eval!
-        my $code = join("", @precommand);
-        eval $code;
-        if($@) {
-            logmsg "perl: $code\n";
-            logmsg "precommand: $@";
-            stopservers($verbose);
-            timestampskippedevents($testnum);
-            return -1;
-        }
-    }
-
     if($gdbthis) {
         my $gdbinit = "$TESTDIR/gdbinit$testnum";
         open(GDBCMD, ">$LOGDIR/gdbcmd");
@@ -3793,7 +3755,7 @@ sub singletest {
     # run the postcheck command
     my @postcheck= getpart("client", "postcheck");
     if(@postcheck) {
-        $cmd = $postcheck[0];
+        $cmd = join("", @postcheck);
         chomp $cmd;
         subVariables \$cmd;
         if($cmd) {
@@ -4144,7 +4106,7 @@ sub singletest {
                 $timevrfyend{$testnum} = Time::HiRes::time() if($timestats);
                 return 1;
             }
-            my @e = valgrindparse($srcdir, $feature{'SSL'}, "$LOGDIR/$vgfile");
+            my @e = valgrindparse("$LOGDIR/$vgfile");
             if(@e && $e[0]) {
                 if($automakestyle) {
                     logmsg "FAIL: $testnum - $testname - valgrind\n";
@@ -4870,6 +4832,10 @@ while(@ARGV) {
         # have the servers display protocol output
         $debugprotocol=1;
     }
+    elsif($ARGV[0] eq "-e") {
+        # run the tests cases event based if possible
+        $run_event_based=1;
+    }
     elsif ($ARGV[0] eq "-g") {
         # run this test with gdb
         $gdbthis=1;
@@ -4892,6 +4858,10 @@ while(@ARGV) {
         # no valgrind
         undef $valgrind;
     }
+    elsif ($ARGV[0] eq "-R") {
+        # execute in scrambled order
+        $scrambleorder=1;
+    }
     elsif($ARGV[0] =~ /^-t(.*)/) {
         # torture
         $torture=1;
@@ -4906,10 +4876,6 @@ while(@ARGV) {
     elsif($ARGV[0] eq "-a") {
         # continue anyway, even if a test fail
         $anyway=1;
-    }
-    elsif($ARGV[0] eq "-e") {
-        # run the tests cases event based if possible
-        $run_event_based=1;
     }
     elsif($ARGV[0] eq "-p") {
         $postmortem=1;
@@ -4958,6 +4924,7 @@ Usage: runtests.pl [options] [test selection(s)]
   -bN      use base port number N for test servers (default $base)
   -c path  use this curl executable
   -d       display server debug info
+  -e       event-based execution
   -g       run the test case with gdb
   -gw      run the test case with gdb as a windowed application
   -h       this help text
@@ -4965,6 +4932,7 @@ Usage: runtests.pl [options] [test selection(s)]
   -l       list all test case names/descriptions
   -n       no valgrind
   -p       print log file contents when a test fails
+  -R       scrambled order
   -r       run time statistics
   -rf      full run time statistics
   -s       short output
@@ -5186,6 +5154,23 @@ else {
         exit;
     }
     $TESTCASES = $verified;
+}
+
+if($scrambleorder) {
+    # scramble the order of the test cases
+    my @rand;
+    while($TESTCASES) {
+        my @all = split(/ +/, $TESTCASES);
+        if(!$all[0]) {
+            # if the first is blank, shift away it
+            shift @all;
+        }
+        my $r = rand @all;
+        push @rand, $all[$r];
+        $all[$r]="";
+        $TESTCASES = join(" ", @all);
+    }
+    $TESTCASES = join(" ", @rand);
 }
 
 #######################################################################
