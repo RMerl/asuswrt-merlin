@@ -1,6 +1,10 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.67_1 (xx-xxx-2017)
+  - NEW: Merged GPL 380_7743 binary blobs for the RT-N66U.
+
+
 380.67 (16-July-2017)
   - NEW: Merged with GPL 380_7743 code, with binary blobs from
          7378 for N66U
