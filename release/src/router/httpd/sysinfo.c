@@ -407,8 +407,8 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				}
 #ifdef RTCONFIG_QTN
 				j = GetPhyStatus_qtn();
-				snprintf(result, sizeof result, (j > 0 ? "%sPort 5: %dFD enabled stp: none vlan: 1 jumbo: off mac: 00:00:00:00:00:00>" :
-							 "%sPort 5: DOWN enabled stp: none vlan: 1 jumbo: off mac: 00:00:00:00:00:00>"),
+				snprintf(result, sizeof result, (j > 0 ? "%sPort 10: %dFD enabled stp: none vlan: 1 jumbo: off mac: 00:00:00:00:00:00>" :
+							 "%sPort 10: DOWN enabled stp: none vlan: 1 jumbo: off mac: 00:00:00:00:00:00>"),
 							  buffer, j);
 #else
                                 strlcpy(result, buffer, sizeof result);

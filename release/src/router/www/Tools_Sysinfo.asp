@@ -218,7 +218,7 @@ function show_etherstate(){
 			} else if (based_modelid == "RT-AC87U") {
 				if (tmpPort == "4")
 					continue;	// This is the internal LAN port
-				if (tmpPort == "5") {
+				if (tmpPort == "10") {
 					tmpPort = "4";	// This is the LAN 4 port from QTN
 					devicename = '<span class="ClientName">&lt;unknown&gt;</span>';
 				}
