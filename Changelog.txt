@@ -5,6 +5,7 @@ Asuswrt-Merlin Changelog
   - NEW: Merged GPL 380_7743 binary blobs for the RT-N66U.
   - FIXED: Duplicate LAN port 1 shown for the RT-AC87U on
            the Sysinfo page.
+  - FIXED: Port forward/UPNP issues with CTF enabled
 
 
 380.67 (16-July-2017)
