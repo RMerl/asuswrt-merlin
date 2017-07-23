@@ -14860,6 +14860,88 @@ ej_login_error_info(int eid, webs_t wp, int argc, char **argv)
 	return 0;
 }
 
+static int
+ej_get_wan_lan_status(int eid, webs_t wp, int argc, char **argv) {
+	char out[128];
+	char cmd[32];
+	int out_len = 0;
+	int ret = 0;
+	int idx = 0;
+	char item[8];
+	char item_tmp[2];
+	char speed[2];
+	FILE *p_fp;
+
+	struct json_object *wanLanStatus = NULL;
+	wanLanStatus = json_object_new_object();
+
+	memset(out, 0, sizeof(out));
+	memset(cmd, 0, sizeof(cmd));
+
+	snprintf(cmd, sizeof(cmd), "%s", "ATE Get_WanLanStatus");
+
+	if((p_fp = popen(cmd, "r")) != NULL) {
+		while (!feof(p_fp)){
+			if(fgets(out, sizeof(out), p_fp)) {
+				out_len = strlen(out);
+				if (out_len > 0) {
+					if(out[out_len - 1] == '\n' || out[out_len - 1] == '\r')
+						out[out_len - 1] = '\0';
+
+					//ex, out is W0=M;L1=X;L2=X;L3=X;L4=G; tranform { "WAN 0": "M", "LAN 1": "X", "LAN 2": "X", "LAN 3": "X", "LAN 4": "G" }
+					for (idx = 0; idx < out_len; idx++) {
+						if(out[idx] != '\0') {
+							if(out[idx] >= '0' && out[idx] <= '9') {
+								memset(item_tmp, 0, sizeof(item_tmp));
+								item_tmp[0] = out[idx];
+								item_tmp[1] = '\0';
+								strlcat(item, item_tmp, sizeof(item));
+								json_object_object_add(wanLanStatus, item, json_object_new_string("X")); //default port speed
+							}
+							else {
+								switch (out[idx]) {
+									case 'W' :
+										memset(item, 0, sizeof(item));
+										strlcat(item, "WAN ", sizeof(item));
+										break;
+									case 'L' :
+										memset(item, 0, sizeof(item));
+										strlcat(item, "LAN ", sizeof(item));
+										break;
+									case 'M' :
+									case 'G' :
+									case 'X' :
+										memset(speed, 0, sizeof(speed));
+										speed[0] = out[idx];
+										speed[1] = '\0';
+										json_object_object_add(wanLanStatus, item, json_object_new_string(speed)); //Update port speed
+										break;
+									default :
+										break;
+								}
+							}
+						}
+					}
+					ret = websWrite(wp, "%s", json_object_get_string(wanLanStatus));
+				}
+				else {
+					ret = websWrite(wp, "{}");
+				}
+			}
+		}
+	}
+	else {
+		ret = websWrite(wp, "{}");
+	}
+
+	pclose(p_fp);
+	
+	if(wanLanStatus)
+		json_object_put(wanLanStatus);
+
+	return ret;
+}
+
 struct ej_handler ej_handlers[] = {
 	{ "nvram_get", ej_nvram_get},
 	{ "nvram_default_get", ej_nvram_default_get},
@@ -15170,6 +15252,7 @@ struct ej_handler ej_handlers[] = {
 #endif
 	{ "get_header_info", ej_get_header_info},
 	{ "login_error_info", ej_login_error_info},
+	{ "get_wan_lan_status", ej_get_wan_lan_status},
 	{ NULL, NULL }
 };
 
