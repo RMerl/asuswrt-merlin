@@ -81,6 +81,15 @@
 #define OLD_DUT_DOMAIN_NAME1 "www.asusnetwork.net"
 #define OLD_DUT_DOMAIN_NAME2 "www.asusrouter.com"
 
+/* index page defined for httpd and wanduck */
+#if defined(GTAC5300)
+#define INDEXPAGE "GameDashboard.asp"
+#else
+#define INDEXPAGE "index.asp"
+#endif
+
+#define NETWORKMAP_PAGE "index.asp"
+
 #ifdef RTCONFIG_TRAFFIC_LIMITER
 /* debug message */
 #define TLD_DEBUG		"/tmp/TLD_DEBUG"
