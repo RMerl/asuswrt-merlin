@@ -1,6 +1,11 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.68 Beta (xx-xxx-2017)
+  - NEW: Backported Ethernet port status report from GPL 382.
+  - CHANGED: Updated Curl to 7.54.1
+
+
 380.67_1 (xx-xxx-2017)
   - NEW: Merged GPL 380_7743 binary blobs for the RT-N66U.
   - FIXED: Duplicate LAN port 1 shown for the RT-AC87U on
