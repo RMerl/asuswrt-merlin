@@ -3070,7 +3070,7 @@ TRACE_PT("write url filter\n");
 			if (vstrsep(b, ">", &filterstr) != 1)
 				continue;
 			if (*filterstr) {
-
+				fprintf(fp, "-I FORWARD -p tcp %s -m webstr --url \"%s\" -j REJECT --reject-with tcp-reset\n", timef, filterstr);
 #ifdef RTCONFIG_IPV6
 				if (ipv6_enabled())
 					fprintf(fp_ipv6, "-I FORWARD -p tcp %s -m webstr --url \"%s\" -j REJECT --reject-with tcp-reset\n", timef, filterstr);
