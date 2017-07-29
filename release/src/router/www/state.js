@@ -798,52 +798,6 @@ function show_banner(L3){// L3 = The third Level of Menu
 	else
 		banner_code +='<td id="notification_status1" class="notificationOn"><div id="notification_status" class="notificationOn"></div><div id="notification_desc" class=""></div></td>\n';
 	
-	//APP Link
-	if(app_support){
-		if(based_modelid == "GT-AC5300"){
-			banner_code +='<td><div style="cursor:pointer;"><div id="app_icon" class="app_status"></div></div>';
-		}
-		else{
-			banner_code +='<td width="30"><div id="app_icon" style="cursor:pointer;padding-right:10px;font-size:12px;font-weight:bold;color:#07C503">App</div>';
-		}
-		banner_code +='<div id="app_link_table" style="display:none;width:325px;height:360px;position:absolute;background-color:rgb(35, 38, 41);z-index:10;margin-top:13px;margin-left:-170px;;border-radius:5px;box-shadow:3px 3px 4px #000;opacity:.95">';
-		banner_code +='<div style="padding:10px;">';
-		banner_code +='<div id="cancel_app" style="width:20px;height:20px;background:url(\'images/button-close.png\') no-repeat;position:absolute;right:10px;"></div>';
-		banner_code +='</div>';
-		//ASUS Router icon
-		banner_code +='<div style="padding:10px;border-bottom:1px solid #666;">';
-		banner_code +='<div style="display:table-cell;vertical-align:middle;padding-left:10px;">';
-		banner_code +='<div style="width:75px;height:75px;background:url(\'images/New_ui/asus_router.png\') no-repeat;"></div>';
-		banner_code +='</div>';
-		banner_code +='<div style="display:table-cell;">';
-		banner_code +='<div style="padding:5px 0 5px 15px;font-size:22px;">ASUS Router</div>';
-		banner_code +='<div style="padding:5px 0 5px 15px;font-size:14px;color:#BDBDBD">ASUS Router is a revolution app to manage your home network.</div>';
-		banner_code +='</div>';	
-		banner_code +='</div>';
-		//Play Store
-		banner_code +='<div style="padding:20px 10px;">';
-		banner_code +='<div style="display:table-cell;vertical-align:middle;padding-left:10px;">';
-		banner_code +='<div><img src="images/New_ui/asus_router_android_qr.png" style="width:75px;height:75px;"></div>';
-		banner_code +='</div>';
-		banner_code +='<div style="display:table-cell;vertical-align:middle;width:100%;text-align:center">';
-		banner_code +='<div style="padding-left: 30px;"><a href="https://play.google.com/store/apps/details?id=com.asus.aihome" target="_blank"><div style="width:172px;height:60px;background:url(\'images/cloudsync/googleplay.png\') no-repeat;"></div></a></div>';
-		banner_code +='</div>';	
-		banner_code +='</div>';
-		//AppStore
-		banner_code +='<div style="padding:20px 10px;">';
-		banner_code +='<div style="display:table-cell;vertical-align:middle;padding-left:10px;">';
-		banner_code +='<div><img src="images/New_ui/asus_router_ios_qr.png" style="width:75px;height:75px;"></div>';
-		banner_code +='</div>';
-		banner_code +='<div style="display:table-cell;vertical-align:middle;width:100%;text-align:center">';
-		banner_code +='<div style="padding-left: 30px;"><a href="https://itunes.apple.com/tw/app/asus-router/id1033794044" target="_blank"><div style="width:172px;height:51px;background:url(\'images/cloudsync/AppStore.png\') no-repeat;"></div></a></div>';
-		banner_code +='</div>';	
-		banner_code +='</div>';
-		
-		banner_code +='</div>';
-		banner_code +='</td>\n';
-	}
-	// APP Link End
-	
 	if(bwdpi_support && qos_enable_flag && qos_type_flag == "1")
 		banner_code +='<td width="30"><div id="bwdpi_status" class=""></div></td>\n';	
 		
@@ -1566,6 +1520,46 @@ function show_footer(){
 	
 	footer_code += '&nbsp|&nbsp<a id="registration_link" target="_blank" href="https://account.asus.com/" target="_self" style="font-weight: bolder;text-decoration:underline;cursor:pointer;"><#Product_Registration#></a>';
 	
+	//APP Link
+	if(app_support){
+		footer_code +='&nbsp;|&nbsp;<span id="app_icon" style="font-weight:bolder;text-decoration:underline;cursor:pointer;">App</span>';
+		footer_code +='<div id="app_link_table" style="display:none;width:325px;height:360px;position:relative;top:-380px;background-color:rgb(35, 38, 41);z-index:10;margin-top:13px;margin-left:-170px;;border-radius:5px;box-shadow:3px 3px 4px #000;opacity:.95">';
+		footer_code +='<div style="padding:10px;">';
+		footer_code +='<div id="cancel_app" style="width:20px;height:20px;background:url(\'images/button-close.png\') no-repeat;position:absolute;right:10px;"></div>';
+		footer_code +='</div>';
+		//ASUS Router icon
+		footer_code +='<div style="padding:10px;border-bottom:1px solid #666;">';
+		footer_code +='<div style="display:table-cell;vertical-align:middle;padding-left:10px;">';
+		footer_code +='<div style="width:75px;height:75px;background:url(\'images/New_ui/asus_router.png\') no-repeat;"></div>';
+		footer_code +='</div>';
+		footer_code +='<div style="display:table-cell;">';
+		footer_code +='<div style="padding:5px 0 5px 15px;font-size:22px;">ASUS Router</div>';
+		footer_code +='<div style="padding:5px 0 5px 15px;font-size:14px;color:#BDBDBD">ASUS Router is a mobile app for managing your home network.</div>';
+		footer_code +='</div>';
+		footer_code +='</div>';
+		//Play Store
+		footer_code +='<div style="padding:20px 10px;">';
+		footer_code +='<div style="display:table-cell;vertical-align:middle;padding-left:10px;">';
+		footer_code +='<div><img src="images/New_ui/asus_router_android_qr.png" style="width:75px;height:75px;"></div>';
+		footer_code +='</div>';
+		footer_code +='<div style="display:table-cell;vertical-align:middle;width:100%;text-align:center">';
+		footer_code +='<div style="padding-left: 30px;"><a href="https://play.google.com/store/apps/details?id=com.asus.aihome" target="_blank"><div style="width:172px;height:60px;background:url(\'images/cloudsync/googleplay.png\') no-repeat;"></div></a></div>';
+		footer_code +='</div>';	
+		footer_code +='</div>';
+		//AppStore
+		footer_code +='<div style="padding:20px 10px;">';
+		footer_code +='<div style="display:table-cell;vertical-align:middle;padding-left:10px;">';
+		footer_code +='<div><img src="images/New_ui/asus_router_ios_qr.png" style="width:75px;height:75px;"></div>';
+		footer_code +='</div>';
+		footer_code +='<div style="display:table-cell;vertical-align:middle;width:100%;text-align:center">';
+		footer_code +='<div style="padding-left: 30px;"><a href="https://itunes.apple.com/tw/app/asus-router/id1033794044" target="_blank"><div style="width:172px;height:51px;background:url(\'images/cloudsync/AppStore.png\') no-repeat;"></div></a></div>';
+		footer_code +='</div>';	
+		footer_code +='</div>';
+		
+		footer_code +='</div>';
+	}
+	// APP Link End
+
 	footer_code += '</td>';
 	footer_code += '<td width="270" id="bottom_help_FAQ" align="right" style="font-family:Arial, Helvetica, sans-serif;">FAQ&nbsp&nbsp<input type="text" id="FAQ_input" class="input_FAQ_table" maxlength="40" onKeyPress="submitenter(this,event);" autocorrect="off" autocapitalize="off"></td>';
 	footer_code += '<td width="30" align="left"><div id="bottom_help_FAQ_icon" class="bottom_help_FAQ_icon" style="cursor:pointer;margin-left:3px;" target="_blank" onClick="search_supportsite();"></div></td>';
