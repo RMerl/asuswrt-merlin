@@ -3991,7 +3991,7 @@ curl/Makefile: curl/configure
 		--disable-proxy --disable-manual --disable-libcurl-option \
 		CPPFLAGS='-I$(TOP)/openssl/include' \
 		LDFLAGS='$(LDFLAGS) -L$(TOP)/openssl' LIBS='-lcrypto -lssl -ldl' \
-		--with-ca-bundle=/rom/ca-bundle.crt
+		--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt
 
 curl-install:
 	@$(SEP)

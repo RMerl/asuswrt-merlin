@@ -173,13 +173,6 @@ endif
 endif	#autoliveupdate_zip
 endif	#merlinupdate
 
-#	Used by Curl
-	cp -f --preserve=timestamps others/ca-bundle.crt $(INSTALLDIR)/rom/ca-bundle.crt
-
-ifeq ($(RTCONFIG_OPENVPN),y)
-	cp -f others/dh2048.pem	 $(INSTALLDIR)/rom/dh2048.pem
-endif
-
 	# remove comments, compress whitespace
 	sed 's/#.*//g;s/[ \t]\+/ /g;s/^[ \t]*//;s/[ \t]*$$//;/^$$/d' < rom/etc/services > $(INSTALLDIR)/rom/etc/services
 	sed 's/#.*//g;s/[ \t]\+/ /g;s/^[ \t]*//;s/[ \t]*$$//;/^$$/d' < rom/etc/protocols > $(INSTALLDIR)/rom/etc/protocols

@@ -1399,7 +1399,7 @@ void start_vpnserver(int serverNum)
 		if (valid == 0)
 		{	// Provide a 2048-bit PEM, from RFC 3526.
 			sprintf(fpath, "/etc/openvpn/server%d/dh.pem", serverNum);
-			eval("cp", "/rom/dh2048.pem", fpath);
+			eval("cp", "/etc/ssl/certs/dh2048.pem", fpath);
 			fp = fopen(fpath, "r");
 			if(fp) {
 				sprintf(&buffer[0], "vpn_crt_server%d_dh", serverNum);
