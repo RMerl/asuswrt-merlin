@@ -46,29 +46,7 @@ function initial(){
 			<div id="subMenu"></div>
 		</td>
 		<td valign="top">
-			<div id="tabMenu" class="submenuBlock">
-				<table border="0" cellspacing="0" cellpadding="0">
-					<tbody>
-					<tr>
-						<td>
-							<a href="cloud_main.asp"><div class="tab"><span>AiCloud 2.0</span></div></a>
-						</td>
-						<td>
-							<a id="smart_sync_link" href="cloud_sync.asp"><div class="tab"><span><#smart_sync#></span></div></a>
-						</td>
-						<td>
-							<a id="rrsLink" href="cloud_router_sync.asp"><div class="tab"><span><#Server_Sync#></span></div></a>
-						</td>
-						<td>
-							<a href="cloud_settings.asp"><div class="tab"><span><#Settings#></span></div></a>
-						</td>
-						<td>
-							<div class="tabclick"><span><#Log#></span></div>
-						</td>
-					</tr>
-					</tbody>
-				</table>
-			</div>
+			<div id="tabMenu" class="submenuBlock"></div>
 <!--==============Beginning of hint content=============-->
 			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 			  <tr>

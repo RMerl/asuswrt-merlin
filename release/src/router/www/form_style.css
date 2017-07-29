@@ -1132,68 +1132,6 @@ color:#FFFFFF;
 	/*text-decoration:underline;*/
 }
 
-.tab:hover{
-	background-position:right -73px;
-	cursor: pointer;
-}	
-.tab:hover span{
-	background-position:left -73px;
-	cursor: pointer;
-} 
-.tab {	
-	background: transparent url(images/New_ui/hightaba.png) no-repeat scroll right top;
-	color: White;
-	float: left;
-	height: 40px;
-	padding-right: 8px;      
-	margin-right: 2px;
-	text-align:center;
-	text-decoration: none;
-	font-family: Verdana;
-	z-index: -1;
-}
-.tab span {
-	background: transparent url(images/New_ui/hightabspan.png) no-repeat;
-	height: 40px;
-	padding-left: 6px;
-	padding-top: 10px \9;
-	line-height: 15px;
-	font-family: Verdana;
-	font-size: 12px;
-	vertical-align: middle;
-	display: table-cell;
-	display: inline-block \9;
-	width: auto;
-	z-index: -1;
-}
-.tabclick {	   
-	background: transparent url(images/New_ui/hightabclicka.png) no-repeat scroll right top;
-	color: White;
-	float: left;
-	height: 40px;
-	padding-right: 8px;      
-	margin-right: 2px;
-	text-align: center;
-	text-decoration: none;
-	font-family: Verdana;
-}
-.tabclick span {
-	background: transparent url(images/New_ui/hightabclickspan.png) repeat;
-	height: 40px;
-	padding-left: 6px;
-	padding-top: 10px \9;
-	line-height: 15px;
-	font-family: Verdana;
-	font-size: 12px; 
-	vertical-align: middle;
-	display: table-cell;
-	display: inline-block \9;
-	width: auto;
-}	
-div.tabclick {
-	height: 40px !important;
-}
-
 .tab_NW {	
 	font-weight: bolder;
 	background: transparent url(images/New_ui/taba.png) no-repeat scroll right top;

@@ -753,29 +753,7 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 			<div id="subMenu"></div>
 		</td>
 		<td valign="top">
-			<div id="tabMenu" class="submenuBlock">
-				<table border="0" cellspacing="0" cellpadding="0">
-					<tbody>
-					<tr>
-						<td>
-							<div class="tabclick"><span>AiCloud 2.0</span></div>
-						</td>
-						<td>
-							<a id="smart_sync_link" href="cloud_sync.asp"><div class="tab" id="tab_smartsync"><span><#smart_sync#></span></div></a>
-						</td>
-						<td>
-							<a id="rrsLink" href="cloud_router_sync.asp"><div class="tab" id="tab_routersync"><span><#Server_Sync#></span></div></a>
-						</td>
-						<td>
-							<a href="cloud_settings.asp"><div class="tab" id="tab_setting"><span><#Settings#></span></div></a>
-						</td>
-						<td>
-							<a href="cloud_syslog.asp"><div class="tab" id="tab_syslog"><span><#Log#></span></div></a>
-						</td>
-					</tr>
-					</tbody>
-				</table>
-			</div>
+			<div id="tabMenu" class="submenuBlock"></div>
 <!--==============Beginning of hint content=============-->
 			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 			  <tr>
