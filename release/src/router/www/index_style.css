@@ -64,8 +64,23 @@ body {
 	border: 1px solid #6B7071;
 }
 
+.menu_blocked {
+	font-weight:bold;
+	text-shadow: 1px 1px 0px black;	
+	width:185px;
+	height:48px;
+	font-family:Verdana;
+	font-size:12px;
+	text-align:left;
+	position:relative;
+	margin-top: -2px;
+	background-color:#3A4042;
+	border: 1px solid #6B7071;
+}
+
 .menu:hover, .menu:active{
 	background-color:#77A5C6;
+	cursor:pointer;
 }
 .menu a {height:44px; text-decoration:none;	position:relative;}
 .menu a:link, .menu a:visited {
@@ -73,47 +88,11 @@ body {
 	padding-left:10px;
 	position:relative;
 }
-
-.menu div#menu_string {
+.menu div{
 	filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);
 }
 
-.m_qis_r {
-	width:185px;
-	height: 53px;
-	font-family:Verdana;
-	font-size: 12px;
-	color:#ffffff;
-	padding-left:0px;
-	position:relative;
-	font-weight: bolder; 
-	text-shadow: 1px 1px 0px black;
-	background: #3A4042; /* Old browsers */
-	background: -moz-linear-gradient(top, #838383  0%, #262626 100%); /* FF3.6+ */
-	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#838383 ), color-stop(100%,#262626)); /* Chrome,Safari4+ */
-	background: -webkit-linear-gradient(top, #838383  0%, #262626 100%); /* Chrome10+,Safari5.1+ */
-	background: -o-linear-gradient(top, #838383  0%, #262626 100%); /* Opera 11.10+ */
-	background: -ms-linear-gradient(top, #838383  0%, #262626 100%); /* IE10+ */
-	background: linear-gradient(to bottom, #838383 0%, #262626 100%); /* W3C */
-	border-radius:5px;
-	border: 1px solid #6B7071;
-}
-
-.m_qis_r:hover {
-	background: #B9D8E6; /* Old browsers */
-	background: -moz-linear-gradient(top, #B9D8E6  0%, #699BBF 100%); /* FF3.6+ */
-	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#B9D8E6), color-stop(100%,#699BBF )); /* Chrome,Safari4+ */
-	background: -webkit-linear-gradient(top, #B9D8E6 0%, #699BBF  100%); /* Chrome10+,Safari5.1+ */
-	background: -o-linear-gradient(top, #B9D8E6 0%, #699BBF  100%); /* Opera 11.10+ */
-	background: -ms-linear-gradient(top, #B9D8E6 0%, #699BBF  100%); /* IE10+ */
-	background: linear-gradient(to bottom, #B9D8E6 0%, #699BBF  100%); /* W3C */
-	border-top-color:#CCE2ED;
-	border-left-color:#BAD5E5;
-	border-bottom-color:#8DB3CF;
-	border-right-color:#B5D1E2;
-}
-
-.m_qis_r_blocked {
+.menu_QIS_title {
 	width:185px;
 	height: 53px;
 	font-family:Verdana;
@@ -138,21 +117,19 @@ body {
 	border-right-color:#6D6D6D;
 }
 
-.m0_r {
-	margin-top:10px;
-	width:185px;
-	text-align:center;
-	font-family:Verdana;
-	background-color:#4E5659;
-	color:#ffffff;
-	font-weight:bold;
-	padding-top:0px;
-	position:relative;
-	text-shadow: 1px 1px 0px black;
-	border: 1px solid #6B7071;
-	border-top-left-radius:8px;
-	border-top-right-radius:8px;
-	height:33px;
+.menu_QIS_title:hover {
+	background: #B9D8E6; /* Old browsers */
+	background: -moz-linear-gradient(top, #B9D8E6  0%, #699BBF 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#B9D8E6), color-stop(100%,#699BBF )); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #B9D8E6 0%, #699BBF  100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #B9D8E6 0%, #699BBF  100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #B9D8E6 0%, #699BBF  100%); /* IE10+ */
+	background: linear-gradient(to bottom, #B9D8E6 0%, #699BBF  100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#B9D8E6', endColorstr='#699BBF ',GradientType=0 ); /* IE6-9 */
+	border-top-color:#CCE2ED;
+	border-left-color:#BAD5E5;
+	border-bottom-color:#8DB3CF;
+	border-right-color:#B5D1E2;
 }
 
 .menu_clicked{
@@ -229,11 +206,6 @@ body {
 }
 
 /*==========================Level 3 Tab Class=================================*/
-.submenuBlock{
-/*	margin-bottom: -10px; */
-	max-width: 760px;
-}
-
 .b1{
 	padding-top:3px;
 	padding-bottom:0px;
@@ -714,99 +686,9 @@ width:122px;
 	border-radius: 0 10px 10px 0;
 }
 
-#index_img0{
-  background: url(images/New_ui/icon_indexes.png);
-  background-position: -0px -0px; width: 43px; height: 43px;
-}
-._index{
-  background: url(images/New_ui/icon_indexes.png);
-  background-position: -0px -40px; width: 43px; height: 43px;
-}
-._Guest_network{
-  background: url(images/New_ui/icon_indexes.png);
-  background-position: -0px -86px; width: 43px; height: 43px;
-}
-._AdaptiveQoS_Bandwidth_Monitor{
-  background: url(images/New_ui/icon_indexes.png);
-  background-position: -0px -128px; width: 43px; height: 43px;
-}
-._GameBoost{
-  background: url(images/New_ui/game.png);
-  background-position: 0px 0px; width: 43px; height: 43px;
-}
-._TrafficAnalyzer_Statistic, ._QoS_EZQoS, ._Main_TrafficMonitor_realtime{
-  background: url(images/New_ui/icon_indexes.png);
-  background-position: -0px -172px; width: 43px; height: 43px;
-}
-._AiProtection_HomeSecurity, ._ParentalControl{
-  background: url(images/New_ui/icon_indexes.png);
-  background-position: -0px -216px; width: 43px; height: 43px;
-}
-._APP_Installation{
-  background: url(images/New_ui/icon_indexes.png);
-  background-position: -0px -256px; width: 43px; height: 43px;
-}
-._Tools_Sysinfo{
-  background: url(images/New_ui/icon_indexes.png);
-  background-position: -0px -346px; width: 43px; height: 43px;
-}
-._cloud_main{
-  background: url(images/New_ui/icon_indexes.png);
-  background-position: -0px -297px; width: 43px; height: 43px;
-}
-#menu_img1{
-  background: url(images/New_ui/icon_menues.png);
-  background-position: -0px 4px; width: 43px; height: 40px;
-}
-#menu_img2{
-  background: url(images/New_ui/icon_menues.png);
-  background-position: -0px 4px; width: 43px; height: 40px;
-}
-#menu_img3{
-  background: url(images/New_ui/icon_menues.png);
-  background-position: -0px -36px; width: 43px; height: 40px;  
-}
-#menu_img4{
-  background: url(images/New_ui/icon_menues.png);
-  background-position: -0px -73px; width: 43px; height: 40px;
-}
-#menu_img5{
-  background: url(images/New_ui/icon_menues.png);
-  background-position: -0px -73px; width: 43px; height: 40px;
-  /*background-position: -0px -109px; width: 43px; height: 40px;*/
-}
-#menu_img6{
-  background: url(images/New_ui/icon_menues.png);
-  background-position: -0px -109px; width: 43px; height: 40px;
-  /*background-position: -0px -145px; width: 43px; height: 40px;*/
-}
-#menu_img7{
-  background: url(images/New_ui/icon_menues.png);
-  background-position: -0px -145px; width: 43px; height: 40px;
-  /*background-position: -0px -183px; width: 43px; height: 40px;*/
-}
-#menu_img8{
-  background: url(images/New_ui/icon_menues.png);
-  background-position: -0px -183px; width: 43px; height: 40px;
-  /*background-position: -0px -221px; width: 43px; height: 40px;*/
-}
-#menu_img9{
-  background: url(images/New_ui/icon_menues.png);
-  background-position: -0px -221px; width: 43px; height: 40px;
-  /*background-position: -0px -257px; width: 43px; height: 40px;*/
-}
-#menu_img10{
-  background: url(images/New_ui/icon_menues.png);
-  background-position: -0px -257px; width: 43px; height: 40px;
-  /*background-position: -0px -293px; width: 43px; height: 40px;*/
-}
-#menu_img11{
-  background: url(images/New_ui/icon_menues.png);
-  background-position: -0px -293px; width: 43px; height: 40px;
-}
 #bottom_help_icon{
-  background: url(images/New_ui/bottom_help.png);
-  background-position: -0px -0px; width: 19px; height: 19px;
+	background: url(images/New_ui/bottom_help.png);
+	background-position: -0px -0px; width: 19px; height: 19px;
 }
 #bottom_help_title{
 	font-family:Arial, Helvetica, sans-serif;
@@ -827,16 +709,16 @@ width:122px;
 	color:#FFFFFF;
 }
 .bottom_help_FAQ_icon{
-  background: url(images/New_ui/bottom_search.png);
-  background-position: -0px -0px; width: 32px; height: 32px;
+	background: url(images/New_ui/bottom_search.png);
+	background-position: -0px -0px; width: 32px; height: 32px;
 }
 .bottom_help_FAQ_icon:hover{
-  background: url(images/New_ui/bottom_search.png);
+	background: url(images/New_ui/bottom_search.png);
 	background-position: -0px -32px; width: 32px; height: 32px;
 }
 .bottom_help_FAQ_icon:active{
-  background: url(images/New_ui/bottom_search.png);
-  background-position: -0px -64px; width: 32px; height: 32px;
+	background: url(images/New_ui/bottom_search.png);
+	background-position: -0px -64px; width: 32px; height: 32px;
 }
 
 .block_filter{
@@ -900,4 +782,256 @@ width:122px;
 	line-height: 33px;
 	text-align: center;
 	box-shadow: 1px 2px 2px #000;
+}
+
+#QIS_wizard_menu{
+	border-radius: 5px;
+}
+
+.menu_Icon{
+	width: 43px;
+	height: 43px;
+}
+.menu_Desc{
+	word-break: keep-all;
+	font-size:12px;
+	font-weight: bold;
+}
+.menu_Split{
+	background-color: #4E5659;
+	height: 30px;
+	width: 185px;
+	margin-top: 10px;
+	border: 1px solid #6B7071;
+	text-align: center;
+	font-family: Verdana;
+	border-radius: 5px 5px 0px 0px;
+	font-weight: bold;
+	text-shadow: 1px 1px 0px black;
+}
+.menu_Index{
+	background: url(images/New_ui/icon_indexes.png);
+	background-position: -0px -40px;
+}
+.menu_GuestNetwork{
+	background: url(images/New_ui/icon_indexes.png);
+	background-position: -0px -86px;
+}
+.menu_PermissionManagement{
+	background: url(images/New_ui/icon_indexes.png);
+	background-position: -0px -86px;
+}
+.menu_Report{
+	background: url(images/New_ui/icon_menues.png);
+	background-position: -0px -257px;
+}
+.menu_BandwidthMonitor{
+	background: url(images/New_ui/icon_indexes.png);
+	background-position: -0px -128px;
+}
+.menu_GameBoost{
+	background: url(images/New_ui/game.png);
+	background-position: 0px 0px;
+}
+.menu_TrafficAnalyzer{
+	background: url(images/New_ui/icon_indexes.png);
+	background-position: -0px -170px;
+}
+.menu_QoS{
+	background: url(images/New_ui/icon_indexes.png);
+	background-position: -0px -170px;
+}
+.menu_AccessControl{
+	background: url(images/New_ui/icon_indexes.png);
+	background-position: -0px -216px;
+}
+.menu_AiProtection{
+	background: url(images/New_ui/icon_indexes.png);
+	background-position: -0px -216px;
+}
+.menu_ParentalControl{
+	background: url(images/New_ui/icon_indexes.png);
+	background-position: -0px -216px;
+}
+.menu_APP{
+	background: url(images/New_ui/icon_indexes.png);
+	background-position: -0px -256px;
+}
+.menu_AiCloud{
+	background: url(images/New_ui/icon_indexes.png);
+	background-position: -0px -297px;
+}
+.menu_Wireless{
+	background: url(images/New_ui/icon_menues.png);
+	background-position: -0px 4px;
+}
+.menu_LAN{
+	background: url(images/New_ui/icon_menues.png);
+	background-position: -0px -36px;  
+}
+.menu_WAN{
+	background: url(images/New_ui/icon_menues.png);
+	background-position: -0px -73px;
+}
+.menu_IPv6{
+	background: url(images/New_ui/icon_menues.png);
+	background-position: -0px -109px;
+}
+.menu_VPN{
+	background: url(images/New_ui/icon_menues.png);
+	background-position: -0px -145px;
+}
+.menu_VLAN{
+	background: url(images/New_ui/icon_menues.png);
+	background-position: -0px -145px;
+}
+.menu_Firewall{
+	background: url(images/New_ui/icon_menues.png);
+	background-position: -0px -183px;
+}
+.menu_Setting{
+	background: url(images/New_ui/icon_menues.png);
+	background-position: -0px -221px;
+}
+.menu_Log{
+	background: url(images/New_ui/icon_menues.png);
+	background-position: -0px -257px;
+}
+.menu_NekworkTool{
+	background: url(images/New_ui/icon_menues.png);
+	background-position: -0px -293px;
+}
+.menu_QIS{
+	background: url(images/New_ui/icon_indexes.png);
+	background-position: -0px -0px;
+}
+.menuClicked{
+	background: #8AA6BE; /* Old browsers */
+	background: -moz-linear-gradient(top, #8AA6BE  0%, #668CAD 44%, #4A779D 45%, #3A6894 46%, #376C9B 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#8AA6BE ), color-stop(44%,#668CAD), color-stop(45%,#4A779D), color-stop(46%,#3A6894), color-stop(100%,#376C9B)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #8AA6BE  0%, #668CAD 44%, #4A779D 45%, #3A6894 46%,#376C9B 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #8AA6BE 0%, #668CAD 44%, #4A779D 45%, #3A6894 46%, #376C9B 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #8AA6BE  0%, #668CAD 44%, #4A779D 45%, #3A6894 46%, #376C9B 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #8AA6BE  0%, #668CAD 44%, #4A779D 45%, #3A6894 46%, #376C9B 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#8AA6BE', endColorstr='#376C9B',GradientType=0 ); /* IE6-9 */
+}
+.tab:hover{
+	background: #4D595D;
+}	
+.tab span, .tabClicked span{ 
+	vertical-align: middle;
+	display: table-cell;
+	height: 25px;
+}
+.tab{
+	cursor:pointer;
+	background: #2F3A3E;
+	color: White;
+	float: left;
+	height: 35px;
+	padding: 8px;      
+	padding-top: 5px;
+	margin-left: -3px;
+	margin-right: 2px;
+	text-align:center;
+	text-decoration: none;
+	font-family: Verdana;
+	font-size: 12px;
+	border-radius: 5px;
+}
+.tabClicked{
+	cursor:pointer;
+	background: #4D595D;
+	color: White;
+	float: left;
+	height: 35px;
+	padding: 8px;      
+	padding-top: 5px;
+	margin-left: -3px;
+	margin-right: 2px;
+	text-align:center;
+	text-decoration: none;
+	font-family: Verdana;
+	font-size: 12px;
+	border-radius: 5px;
+}
+.submenuBlock{
+	margin-bottom: -10px;
+	max-width: 760px;
+}
+/* used for QIS */
+.m_qis_r {
+	width:185px;
+	height: 53px;
+	font-family:Verdana;
+	font-size: 12px;
+	color:#ffffff;
+	padding-left:0px;
+	position:relative;
+	font-weight: bolder; 
+	text-shadow: 1px 1px 0px black;
+	background: #838383; /* Old browsers */
+	background: -moz-linear-gradient(top, #838383  0%, #262626 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#838383 ), color-stop(100%,#262626)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #838383  0%, #262626 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #838383  0%, #262626 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #838383  0%, #262626 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #838383 0%, #262626 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#838383', endColorstr='#262626',GradientType=0 ); /* IE6-9 */
+	border-radius:6px;
+	border: 1px solid #6B7071;
+	border-top-color:#A3A3A3;
+	border-left-color:#7A7A7A;
+	border-bottom-color:#5C5C5C;
+	border-right-color:#6D6D6D;
+}
+
+.m_qis_r:hover {
+	background: #B9D8E6; /* Old browsers */
+	background: -moz-linear-gradient(top, #B9D8E6  0%, #699BBF 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#B9D8E6), color-stop(100%,#699BBF )); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #B9D8E6 0%, #699BBF  100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #B9D8E6 0%, #699BBF  100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #B9D8E6 0%, #699BBF  100%); /* IE10+ */
+	background: linear-gradient(to bottom, #B9D8E6 0%, #699BBF  100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#B9D8E6', endColorstr='#699BBF ',GradientType=0 ); /* IE6-9 */
+	border-top-color:#CCE2ED;
+	border-left-color:#BAD5E5;
+	border-bottom-color:#8DB3CF;
+	border-right-color:#B5D1E2;
+}
+
+.m_qis_r_blocked {
+	width:185px;
+	height: 53px;
+	font-family:Verdana;
+	font-size: 12px;
+	color:#ffffff;
+	padding-left:0px;
+	position:relative;
+	font-weight: bolder; 
+	text-shadow: 1px 1px 0px black;
+	background: #838383; /* Old browsers */
+	background: -moz-linear-gradient(top, #838383  0%, #262626 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#838383 ), color-stop(100%,#262626)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #838383  0%, #262626 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #838383  0%, #262626 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #838383  0%, #262626 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #838383 0%, #262626 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#838383', endColorstr='#262626',GradientType=0 ); /* IE6-9 */
+	border-radius:6px;
+	border: 1px solid #6B7071;
+	border-top-color:#A3A3A3;
+	border-left-color:#7A7A7A;
+	border-bottom-color:#5C5C5C;
+	border-right-color:#6D6D6D;
+}
+._index{
+  background: url(images/New_ui/icon_indexes.png);
+  background-position: -0px -40px; width: 43px; height: 43px;
+}
+
+.menu_Tools{
+  background: url(images/New_ui/icon_indexes.png);
+  background-position: -0px -346px; width: 43px; height: 43px;
 }

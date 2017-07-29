@@ -14861,6 +14861,34 @@ ej_login_error_info(int eid, webs_t wp, int argc, char **argv)
 }
 
 static int
+ej_abs_index_page(int eid, webs_t wp, int argc, char **argv)
+{
+	websWrite(wp, "/%s", INDEXPAGE);
+	return 0;
+}
+
+static int
+ej_rel_index_page(int eid, webs_t wp, int argc, char **argv)
+{
+	websWrite(wp, "%s", INDEXPAGE);
+	return 0;
+}
+
+static int
+ej_networkmap_page(int eid, webs_t wp, int argc, char **argv)
+{
+	websWrite(wp, "%s", NETWORKMAP_PAGE);
+	return 0;
+}
+
+static int
+ej_abs_networkmap_page(int eid, webs_t wp, int argc, char **argv)
+{
+	websWrite(wp, "/%s", NETWORKMAP_PAGE);
+	return 0;
+}
+
+static int
 ej_get_wan_lan_status(int eid, webs_t wp, int argc, char **argv) {
 	char out[128];
 	char cmd[32];
@@ -15253,6 +15281,10 @@ struct ej_handler ej_handlers[] = {
 	{ "get_header_info", ej_get_header_info},
 	{ "login_error_info", ej_login_error_info},
 	{ "get_wan_lan_status", ej_get_wan_lan_status},
+	{ "abs_index_page", ej_abs_index_page},
+	{ "rel_index_page", ej_rel_index_page},
+	{ "networkmap_page", ej_networkmap_page},
+	{ "abs_networkmap_page", ej_abs_networkmap_page},
 	{ NULL, NULL }
 };
 

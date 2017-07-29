@@ -2315,3 +2315,11 @@ padding-top:1px;
 .IE8HACK{
 	display: none \9;
 }
+
+.minup_bg{
+	background :url("images/New_ui/midup_bg.png");
+}
+.mindown_bg{
+	background :url("images/New_ui/middown_bg.png");
+}
+
