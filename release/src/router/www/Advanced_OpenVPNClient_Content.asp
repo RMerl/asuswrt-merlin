@@ -1085,6 +1085,12 @@ function defaultSettings() {
 					</thead>
 
 					<tr>
+						<th>Description</th>
+						<td>
+							<input type="text" maxlength="25" class="input_25_table" name="vpn_client_desc" onBlur="validator.string(this);" value="<% nvram_get("vpn_client_desc"); %>">
+						</td>
+					</tr>
+					<tr>
 						<th>Start with WAN</th>
 						<td>
 							<input type="radio" name="vpn_client_x_eas" class="input" value="1"><#checkbox_Yes#>

@@ -368,6 +368,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 					char *buffer = read_whole_file(buf);
 					if (buffer)
 					{
+						replace_char(buffer, '\n', '>');
 						strlcpy(result, buffer, sizeof(result));
 						free(buffer);
 					}

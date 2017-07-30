@@ -16,13 +16,11 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
+<script language-:JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
-server1pid = '<% sysinfo("pid.vpnserver1"); %>';
-server2pid = '<% sysinfo("pid.vpnserver2"); %>';
-pptpdpid = '<% sysinfo("pid.pptpd"); %>';
 
 var overlib_str0 = new Array();	//Viz add 2013.04 for record longer VPN client username/pwd
 var overlib_str1 = new Array();	//Viz add 2013.04 for record longer VPN client username/pwd
@@ -32,7 +30,7 @@ function initial(){
 	show_menu();
 
 	if (openvpnd_support) {
-		setTimeout("refreshState()",1000);
+		setTimeout("refreshData()",1000);
 		if (based_modelid == "RT-AC3200") {
 			showhide("client3", 0);
 			showhide("client4", 0);
@@ -50,13 +48,27 @@ function initial(){
 }
 
 
-function refreshState(){
+function refreshData(){
+	$.ajax({
+		url: 'ajax_vpn_status.asp',
+		dataType: 'script',
+		error: function(xhr){
+			refreshData();
+		},
+		success: function(response){
+			displayData();
+		}
+	});
+}
+
+function displayData(){
 	var state_srv_run = " - Running";
 	var state_srv_stop = " - <span style=\"background-color: transparent; color: white;\">Stopped</span>";
 	var state_clnt_ced = " - Connected";
 	var state_clnt_cing = " - Connecting...";
 	var state_clnt_err = " - Error connecting";
 	var state_clnt_disc = " - <span style=\"background-color: transparent; color: white;\">Stopped</span>";
+	var state_desc, tmp;
 
 	if (server1pid > 0)
 		document.getElementById("server1_Block_Running").innerHTML = state_srv_run;
@@ -73,49 +85,59 @@ function refreshState(){
 			case 1:
 				client_state = vpnc_state_t1;
 				client_errno = vpnc_errno_t1;
-				client_server = " (<% nvram_get("vpn_client1_addr"); %> " + 
-				                "<% nvram_get("vpn_client1_proto"); %>:" +
-				                "<% nvram_get("vpn_client1_port"); %>)";
+				tmp = "<% nvram_get("vpn_client1_addr"); %>";
+				client_server = " ("+ tmp.shorter(42) +
+				                " <% nvram_get("vpn_client1_proto"); %>" +
+				                ":<% nvram_get("vpn_client1_port"); %>)";
+				client_desc = "<span style=\"background-color: transparent; color: white;\"><% nvram_get("vpn_client1_desc"); %></span>";
 				break;
 			case 2:
 				client_state = vpnc_state_t2;
 				client_errno = vpnc_errno_t2;
-                                client_server = " (<% nvram_get("vpn_client2_addr"); %> " + 
-                                                "<% nvram_get("vpn_client2_proto"); %>:" +
-                                                "<% nvram_get("vpn_client2_port"); %>)";
+				tmp = "<% nvram_get("vpn_client2_addr"); %>";
+				client_server = " ("+ tmp.shorter(42) + 
+				                " <% nvram_get("vpn_client2_proto"); %>" +
+				                ":<% nvram_get("vpn_client2_port"); %>)";
+				client_desc = "<span style=\"background-color: transparent; color: white;\"><% nvram_get("vpn_client2_desc"); %></span>";
 				break;
 			case 3:
 				client_state = vpnc_state_t3;
 				client_errno = vpnc_errno_t3;
-                                client_server = " (<% nvram_get("vpn_client3_addr"); %> " + 
-                                                "<% nvram_get("vpn_client3_proto"); %>:" +
-                                                "<% nvram_get("vpn_client3_port"); %>)";
+				tmp = "<% nvram_get("vpn_client3_addr"); %>";
+				client_server = " ("+ tmp.shorter(42) + 
+				                " <% nvram_get("vpn_client3_proto"); %>" +
+				                ":<% nvram_get("vpn_client3_port"); %>)";
+				client_desc = "<span style=\"background-color: transparent; color: white;\"><% nvram_get("vpn_client3_desc"); %></span>";
 				break;
 			case 4:
 				client_state = vpnc_state_t4;
 				client_errno = vpnc_errno_t4;
-                                client_server = " (<% nvram_get("vpn_client4_addr"); %> " + 
-                                                "<% nvram_get("vpn_client4_proto"); %>:" +
-                                                "<% nvram_get("vpn_client4_port"); %>)";
+				tmp = "<% nvram_get("vpn_client4_addr"); %>";
+				client_server = " ("+ tmp.shorter(42) + 
+				                " <% nvram_get("vpn_client4_proto"); %>" +
+				                ":<% nvram_get("vpn_client4_port"); %>)";
+				client_desc = "<span style=\"background-color: transparent; color: white;\"><% nvram_get("vpn_client4_desc"); %></span>";
 				break;
 			case 5:
 				client_state = vpnc_state_t5;
 				client_errno = vpnc_errno_t5;
-                                client_server = " (<% nvram_get("vpn_client5_addr"); %> " + 
-                                                "<% nvram_get("vpn_client5_proto"); %>:" +
-                                                "<% nvram_get("vpn_client5_port"); %>)";
+				tmp = "<% nvram_get("vpn_client5_addr"); %>";
+				client_server = " ("+ tmp.shorter(42) + 
+				                " <% nvram_get("vpn_client5_proto"); %>" +
+				                ":<% nvram_get("vpn_client5_port"); %>)";
+				client_desc = "<span style=\"background-color: transparent; color: white;\"><% nvram_get("vpn_client5_desc"); %></span>";
 				break;
 		}
 
 		switch (client_state) {
 			case "0":
-				document.getElementById("client"+unit+"_Block_Running").innerHTML = state_clnt_disc;
+				document.getElementById("client"+unit+"_Block_Running").innerHTML = client_desc + state_clnt_disc;
 				break;
 			case "1":
-				document.getElementById("client"+unit+"_Block_Running").innerHTML = state_clnt_cing + client_server;
+				document.getElementById("client"+unit+"_Block_Running").innerHTML = client_desc + state_clnt_cing + client_server;
 				break;
 			case "2":
-				document.getElementById("client"+unit+"_Block_Running").innerHTML = state_clnt_ced + client_server;
+				document.getElementById("client"+unit+"_Block_Running").innerHTML = client_desc + state_clnt_ced + client_server;
 				break;
 			case "-1":
 				code = state_clnt_err;
@@ -123,19 +145,19 @@ function refreshState(){
 					code += " - <#vpn_openvpn_conflict#>";
 				else if(client_errno == 4 || client_errno == 5 || client_errno == 6)
 					code += " - <#qis_fail_desc1#>";
-				document.getElementById("client"+unit+"_Block_Running").innerHTML = code;
+				document.getElementById("client"+unit+"_Block_Running").innerHTML = client_desc + code;
 				break;
 		}
 	}        
 
-	parseStatus(document.form.status_server1.value, "server1_Block");
-	parseStatus(document.form.status_server2.value, "server2_Block");
-	parseStatus(document.form.status_client1.value, "client1_Block");
-	parseStatus(document.form.status_client2.value, "client2_Block");
+	parseStatus(vpn_server1_status, "server1_Block");
+	parseStatus(vpn_server2_status, "server2_Block");
+	parseStatus(vpn_client1_status, "client1_Block");
+	parseStatus(vpn_client2_status, "client2_Block");
 	if (based_modelid != "RT-AC3200") {
-		parseStatus(document.form.status_client3.value, "client3_Block");
-		parseStatus(document.form.status_client4.value, "client4_Block");
-		parseStatus(document.form.status_client5.value, "client5_Block");
+		parseStatus(vpn_client3_status, "client3_Block");
+		parseStatus(vpn_client4_status, "client4_Block");
+		parseStatus(vpn_client5_status, "client5_Block");
 	}
 
 	if (pptpd_support) {
@@ -155,6 +177,7 @@ function refreshState(){
 		showhide("vpnc", 0);
 	}
 
+	setTimeout("refreshData()",2000);
 }
 
 
@@ -167,7 +190,7 @@ function applyRule(){
 function parsePPTPClients() {
 	text = document.form.status_pptp.value;
 
-	if ((text == "")) {
+	if (text == "") {
 		return;
 	}
 
@@ -195,7 +218,7 @@ function parseStatus(text, block){
 	document.getElementById(block).innerHTML = "";
 	var code = "";
 
-	var lines = text.split('\n');
+	var lines = text.split('>');
 	var staticStats = false;
 
 	var routeTableEntries = new Array();
@@ -214,9 +237,9 @@ function parseStatus(text, block){
 		var done = false;
 
 		var fields = lines[i].split(',');
-		if ( fields.length == 0 ) continue;
+		if (fields.length == 0) continue;
 
-		switch ( fields[0] )
+		switch (fields[0])
 		{
 		case "TITLE":
 			break;
@@ -224,7 +247,7 @@ function parseStatus(text, block){
                 case "Updated":
 			break;
 		case "HEADER":
-			switch ( fields[1] )
+			switch (fields[1])
 			{
 			case "CLIENT_LIST":
 				clientTableHeaders = fields.slice(2,fields.length-1);
@@ -252,13 +275,13 @@ function parseStatus(text, block){
 			done = true;
 			break;
 		default:
-			if(staticStats)
+			if (staticStats)
 			{
 				staticstatsTableEntries[staticstatsPtr++] = fields;
 			}
 			break;
 		}
-		if ( done ) break;
+		if (done) break;
 	}
 
 
@@ -475,13 +498,6 @@ function show_vpnc_rulelist(){
 <input type="hidden" name="SystemCmd" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="status_server1" value="<% sysinfo("vpnstatus.server.1"); %>">
-<input type="hidden" name="status_server2" value="<% sysinfo("vpnstatus.server.2"); %>">
-<input type="hidden" name="status_client1" value="<% sysinfo("vpnstatus.client.1"); %>">
-<input type="hidden" name="status_client2" value="<% sysinfo("vpnstatus.client.2"); %>">
-<input type="hidden" name="status_client3" value="<% sysinfo("vpnstatus.client.3"); %>">
-<input type="hidden" name="status_client4" value="<% sysinfo("vpnstatus.client.4"); %>">
-<input type="hidden" name="status_client5" value="<% sysinfo("vpnstatus.client.5"); %>">
 <input type="hidden" name="status_pptp" value="<% nvram_dump("pptp_connected",""); %>">
 <input type="hidden" name="vpnc_proto" value="<% nvram_get("vpnc_proto"); %>">
 <input type="hidden" name="vpnc_pppoe_username" value="<% nvram_get("vpnc_pppoe_username"); %>">
@@ -520,9 +536,7 @@ function show_vpnc_rulelist(){
 					</tr>
 
 				</table>
-
 				<br>
-
 				<table width="100%" id="server1" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
@@ -536,9 +550,7 @@ function show_vpnc_rulelist(){
 					</tr>
 
 				</table>
-
 				<br>
-
 				<table width="100%" id="server2" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
@@ -552,13 +564,11 @@ function show_vpnc_rulelist(){
 					</tr>
 
 				</table>
-
 				<br>
-
 				<table width="100%" id="client1" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td>OpenVPN Client 1<span id="client1_Block_Running" style="background: transparent;"></span></td>
+							<td>OpenVPN <span id="client1_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
@@ -568,13 +578,11 @@ function show_vpnc_rulelist(){
 					</tr>
 
 				</table>
-
 				<br>
-
 				<table width="100%" id="client2" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td>OpenVPN Client 2<span id="client2_Block_Running" style="background: transparent;"></span></td>
+							<td>OpenVPN <span id="client2_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
@@ -584,12 +592,11 @@ function show_vpnc_rulelist(){
 					</tr>
 
 				</table>
-
-			<br>
+				<br>
 				<table width="100%" id="client3" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td>OpenVPN Client 3<span id="client3_Block_Running" style="background: transparent;"></span></td>
+							<td>OpenVPN <span id="client3_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
@@ -599,11 +606,11 @@ function show_vpnc_rulelist(){
 					</tr>
 
 				</table>
-			<br>
+				<br>
 				<table width="100%" id="client4" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
-							<td>OpenVPN Client 4<span id="client4_Block_Running" style="background: transparent;"></span></td>
+							<td>OpenVPN <span id="client4_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
@@ -613,11 +620,11 @@ function show_vpnc_rulelist(){
 					</tr>
 
 				</table>
-			<br>
+				<br>
 				<table width="100%" id="client5" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 					<thead>
 						<tr>
-							<td>OpenVPN Client 5<span id="client5_Block_Running" style="background: transparent;"></span></td>
+							<td>OpenVPN <span id="client5_Block_Running" style="background: transparent;"></span></td>
 						</tr>
 					</thead>
 					<tr>
@@ -627,9 +634,7 @@ function show_vpnc_rulelist(){
 					</tr>
 
 				</table>
-
 				<br>
-
 				<table width="100%" id="vpnc" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
 						<tr>
@@ -646,7 +651,7 @@ function show_vpnc_rulelist(){
 
 				<div class="apply_gen">
 					<input name="button" type="button" class="button_gen" onclick="applyRule();" value="<#CTL_refresh#>"/>
-			    </div>
+				</div>
 			  </td></tr>
 	        </tbody>
             </table>
