@@ -42,7 +42,7 @@
 
 static char server[32];
 static int sig_cur = -1;
-static int server_idx = 0;
+
 
 static void ntp_service()
 {
@@ -184,16 +184,9 @@ int ntp_main(int argc, char *argv[])
 			sleep(SECONDS_TO_WAIT);
 
 			if (strlen(nvram_safe_get("ntp_server0")))
-			{
-				if (server_idx)
-					strlcpy(server, nvram_safe_get("ntp_server1"), sizeof (server));
-				else
-					strlcpy(server, nvram_safe_get("ntp_server0"), sizeof (server));
-
-				server_idx = (server_idx + 1) % 2;
-			}
+				strlcpy(server, nvram_safe_get("ntp_server0"), sizeof (server));
 			else if (strlen(nvram_safe_get("ntp_server1")))
-				strcpy(server, nvram_safe_get("ntp_server1"));
+				strlcpy(server, nvram_safe_get("ntp_server1"), sizeof (server));
 			else
 				strcpy(server, "");
 			args[2] = server;
