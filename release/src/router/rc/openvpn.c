@@ -74,13 +74,10 @@ void start_vpnclient(int clientNum)
 		return;
 	}
 
-        for ( i = 1; i < 4; i++ ) {
-		if (!nvram_get_int("ntp_ready")) {
-			sleep(i*i);
-		} else {
-			i = 4;
-		}
-        }
+	i = 0;
+	while ((!nvram_get_int("ntp_ready")) && (i++ < 10)) {
+		sleep(i*i);
+	}
 
 	vpnlog(VPN_LOG_INFO,"VPN GUI client backend starting...");
 
@@ -675,12 +672,9 @@ void start_vpnserver(int serverNum)
 		return;
 	}
 
-	for ( i = 1; i < 4; i++ ) {
-		if (!nvram_get_int("ntp_ready")) {
-			sleep(i*i);
-		} else {
-			i = 4;
-		}
+	i = 0;
+	while ((!nvram_get_int("ntp_ready")) && (i++ < 10)) {
+		sleep(i*i);
 	}
 
 	vpnlog(VPN_LOG_INFO,"VPN GUI server backend starting...");
@@ -1664,10 +1658,11 @@ void start_vpn_eas()
 	int nums[MAX_OVPN_CLIENT], i;
 
 	if (strlen(nvram_safe_get("vpn_serverx_start")) == 0 && strlen(nvram_safe_get("vpn_clientx_eas")) == 0) return;
+
 	// wait for time sync for a while
-	i = 10;
-	while (time(0) < 1325376000 && i--) {
-		sleep(1);
+	i = 0;
+	while ((!nvram_get_int("ntp_ready")) && (i++ < 10)) {
+		sleep(i*i);
 	}
 
 	// Parse and start servers
