@@ -184,14 +184,15 @@
 				menuName: "VPN",
 				index: "menu_VPN", 
 				tab: [
-					{url: "Advanced_VPN_PPTP.asp", tabName: "<#BOP_isp_heart_item#>"},
-					{url: "Advanced_VPN_OpenVPN.asp", tabName: "__INHERIT__"},
-					{url: "Advanced_VPN_IPSec.asp", tabName: "__INHERIT__"},
-					{url: "Advanced_VPNClient_Content.asp", tabName: "<#vpnc_title#>"},
+					{url: "Advanced_VPNStatus.asp", tabName: "VPN Status"},
+					{url: "Advanced_VPN_OpenVPN.asp", tabName: "<#BOP_isp_heart_item#>"},
+					{url: "Advanced_VPN_PPTP.asp", tabName: "__INHERIT__"},
+					{url: "Advanced_VPNClient_Content.asp", tabName: "PPTP/L2TP Client"},
+					{url: "Advanced_OpenVPNClient_Content.asp", tabName: "OpenVPN Client"},
 					{url: "Advanced_TOR_Content.asp", tabName: "TOR"},
 					{url: "NULL", tabName: "__INHERIT__"}
 				]
-			},		
+			},
 			{
 				menuName: "<#menu5_5#>",
 				index: "menu_Firewall",
