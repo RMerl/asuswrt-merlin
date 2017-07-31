@@ -2210,23 +2210,6 @@ function NSKey(){
 	return event.which;
 }
 
-function is_alphanum(o, event){
-	if (event.which == null)
-		keyPressed = event.keyCode;	// IE
-	else if (event.which != 0 && event.charCode != 0)
-		keyPressed = event.which	// All others
-	else
-		return true;			// Special key
-
-	if ((keyPressed>=48&&keyPressed<=57) ||  //0-9
-	    (keyPressed>=97&&keyPressed<=122) || //little EN
-	    (keyPressed>=65&&keyPressed<=90) ||  //Large EN
-	    (keyPressed==45) ||			 //-
-	    (keyPressed==46) ||			 //.
-	    (keyPressed==32)) return true;	 //space
-		return false;
-}
-
 function checkDuplicateName(newname, targetArray){
 	var existing_string = targetArray.join(',');
 	existing_string = ","+existing_string+",";

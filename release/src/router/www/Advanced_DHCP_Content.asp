@@ -964,7 +964,7 @@ jQuery(function($) {
             				<input type="text" class="input_15_table" maxlength="15" name="dhcp_staticip_x_0" onkeypress="return validator.isIPAddr(this,event)" autocorrect="off" autocapitalize="off">
             			</td>
             			<td width="24%">
-					<input type="text" class="input_15_table" maxlenght="30" onkeypress="return is_alphanum(this, event);" name="dhcp_staticname_x_0" autocorrect="off" autocapitalize="off">
+					<input type="text" class="input_15_table" maxlenght="30" onKeyPress="return validator.isString(this, event);" name="dhcp_staticname_x_0" autocorrect="off" autocapitalize="off">
 				</td>
 				<td width="16%">
 					<div>

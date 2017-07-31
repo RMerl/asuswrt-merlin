@@ -1362,7 +1362,7 @@ function defaultSettings() {
 					</tr>
 					<tr>
 						<td width="24%">
-							<input type="text" class="input_15_table" maxlength="15" name="clientlist_deviceName" onClick="hideClients_Block();" onkeypress="return is_alphanum(this,event);">
+							<input type="text" class="input_15_table" maxlength="15" name="clientlist_deviceName" onClick="hideClients_Block();" onKeyPress="return validator.isString(this, event);">
 						</td>
 						<td width="29%">
 							<input type="text" class="input_18_table" maxlength="18" name="clientlist_ipAddr">
