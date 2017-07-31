@@ -1673,7 +1673,8 @@ wb: openssl libxml2 curl
 push_log: wb
 
 rc: nvram$(BCMEX) shared libbcmcrypto libdisk $(if $(RTCONFIG_FBWIFI),fb_wifi) $(if $(RTCONFIG_PUSH_EMAIL),push_log) $(if $(RTCONFIG_QTN),libqcsapi_client) $(if $(CONFIG_LIBBCM),libbcm) $(if $(RTCONFIG_BWDPI),bwdpi) $(if $(RTCONFIG_USB_SMS_MODEM),smspdu)
-# Dig into our collection of prebuilt objects based on model and architecture.
+	@$(SEP)
+# Dig into our collection of prebuilt objects based on model
 	@-rm -f rc/prebuild/*.o || true
 	@-cp -f rc/prebuild/models/$(BUILD_NAME)/* rc/prebuild/
 	@$(MAKE) -C rc
@@ -2051,7 +2052,7 @@ miniupnpc-install:
 
 # !!TB
 shared: busybox $(if $(RTCONFIG_QTN),libqcsapi_client) $(if $(RTCONFIG_HTTPS),openssl)
-# Dig into our collection of prebuilt objects based on model and architecture.
+# Dig into our collection of prebuilt objects based on model.
 	@-rm -f shared/prebuild/*.o || true
 	@-cp -f shared/prebuild/models/$(BUILD_NAME)/* shared/prebuild/
 
