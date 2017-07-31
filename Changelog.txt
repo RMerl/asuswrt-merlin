@@ -4,16 +4,26 @@ Asuswrt-Merlin Changelog
 380.68 Beta (xx-xxx-2017)
   - NEW: Backported Ethernet port status report from GPL 382.
   - NEW: Merged GPL 380_7743 binary blobs for the RT-N66U.
+  - NEW: Description field added to OpenVPN client configuration
   - CHANGED: Updated Curl to 7.54.1
   - CHANGED: Switched webui menu generation code to GPL 382 code.
              This new code is easier for me to maintain.
              You will need to shift-reload the webui, or flush
              the browser cache after upgrading.
+  - CHANGED: Make VPNStatus page refresh itself every 5 seconds.
+  - CHANGED: Do not alternate between ntp servers from webui and
+             the one hardcoded in nvram - use webui one, unless
+             it's empty - then use the second server set in nvram.
+  - CHANGED: Moved App icon out of the notification area and into
+             the footer of the page, with other links.
+  - CHANGED: Re-organized VPN pages, merging some together.
   - FIXED: Duplicate LAN port 1 shown for the RT-AC87U on
            the Sysinfo page.
   - FIXED: Port forward/UPNP issues with CTF enabled depending on
            selected NAT loopback mode.
   - FIXED: URL filtering wasn't working over IPv4.
+  - FIXED: OpenVPN instances could potentially start too early at
+           boot time (before clock was set)
 
 
 380.67 (16-July-2017)
