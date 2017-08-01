@@ -1,7 +1,7 @@
 menuconfig IP_SET
 	tristate "IP set support"
 	depends on INET && NETFILTER
-	depends on NETFILTER_NETLINK
+	select NETFILTER_NETLINK
 	help
 	  This option adds IP set support to the kernel.
 	  In order to define and use the sets, you need the userspace utility
@@ -18,7 +18,7 @@ config IP_SET_MAX
 	range 2 65534
 	depends on IP_SET
 	help
-	  You can define here default value of the maximum number
+	  You can define here default value of the maximum number 
 	  of IP sets for the kernel.
 
 	  The value can be overriden by the 'max_sets' module
@@ -61,6 +61,15 @@ config IP_SET_HASH_IP
 
 	  To compile it as a module, choose M here.  If unsure, say N.
 
+config IP_SET_HASH_IPMARK
+	tristate "hash:ip,mark set support"
+	depends on IP_SET
+	help
+	  This option adds the hash:ip,mark set type support, by which one
+	  can store IPv4/IPv6 address and mark pairs.
+
+	  To compile it as a module, choose M here.  If unsure, say N.
+
 config IP_SET_HASH_IPPORT
 	tristate "hash:ip,port set support"
 	depends on IP_SET
@@ -90,12 +99,48 @@ config IP_SET_HASH_IPPORTNET
 
 	  To compile it as a module, choose M here.  If unsure, say N.
 
+config IP_SET_HASH_IPMAC
+	tristate "hash:ip,mac set support"
+	depends on IP_SET
+	help
+	  This option adds the hash:ip,mac set type support, by which
+	  one can store IPv4/IPv6 address and MAC (ethernet address) pairs in a set.
+
+	  To compile it as a module, choose M here.  If unsure, say N.
+
+config IP_SET_HASH_MAC
+	tristate "hash:mac set support"
+	depends on IP_SET
+	help
+	  This option adds the hash:mac set type support, by which
+	  one can store MAC (ethernet address) elements in a set.
+
+	  To compile it as a module, choose M here.  If unsure, say N.
+
+config IP_SET_HASH_NETPORTNET
+	tristate "hash:net,port,net set support"
+	depends on IP_SET
+	help
+	  This option adds the hash:net,port,net set type support, by which
+	  one can store two IPv4/IPv6 subnets, and a protocol/port in a set.
+
+	  To compile it as a module, choose M here.  If unsure, say N.
+
 config IP_SET_HASH_NET
 	tristate "hash:net set support"
 	depends on IP_SET
 	help
 	  This option adds the hash:net set type support, by which
 	  one can store IPv4/IPv6 network address/prefix elements in a set.
+
+	  To compile it as a module, choose M here.  If unsure, say N.
+
+config IP_SET_HASH_NETNET
+	tristate "hash:net,net set support"
+	depends on IP_SET
+	help
+	  This option adds the hash:net,net  set type support, by which
+	  one can store IPv4/IPv6 network address/prefix pairs in a set.
 
 	  To compile it as a module, choose M here.  If unsure, say N.
 
@@ -106,6 +151,16 @@ config IP_SET_HASH_NETPORT
 	  This option adds the hash:net,port set type support, by which
 	  one can store IPv4/IPv6 network address/prefix and
 	  protocol/port pairs as elements in a set.
+
+	  To compile it as a module, choose M here.  If unsure, say N.
+
+config IP_SET_HASH_NETIFACE
+	tristate "hash:net,iface set support"
+	depends on IP_SET
+	help
+	  This option adds the hash:net,iface set type support, by which
+	  one can store IPv4/IPv6 network address/prefix and
+	  interface name pairs as elements in a set.
 
 	  To compile it as a module, choose M here.  If unsure, say N.
 
