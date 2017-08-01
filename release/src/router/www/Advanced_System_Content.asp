@@ -23,37 +23,6 @@
 <script language="JavaScript" type="text/javascript" src="/merlin.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <style>
-.contentM_qis{
-	width:740px;
-	margin-top:1200px;
-	margin-left:380px;
-	position:absolute;
-	-webkit-border-radius: 5px;
-	-moz-border-radius: 5px;
-	border-radius: 5px;
-	z-index:200;
-	background-color:#2B373B;
-	display:none;
-	/*behavior: url(/PIE.htc);*/
-}
-.QISform_wireless thead{
-	font-size:15px;
-	line-height:20px;
-	color:#FFFFFF;
-}
-
-.QISform_wireless th{
-	padding-left:10px;
-	*padding-left:30px;
-	font-size:12px;
-	font-weight:bolder;
-	color: #FFFFFF;
-	text-align:left;
-}
-
-.QISform_wireless li{
-	margin-top:10px;
-}
 .cancel{
 	border: 2px solid #898989;
 	border-radius:50%;
@@ -83,6 +52,36 @@
 	border: 1px solid #999;
 	color: #999;
 }
+.contentM_upload{
+	position:absolute;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	z-index:500;
+	background-color:#2B373B;
+	display:none;
+	margin-left: 30%;
+	top: 1200px;
+	width:650px;
+}
+
+
+.Upload_item{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 13px;
+	font-weight: bolder;
+	color: #FFFFFF;
+	margin-left: 15px;
+	margin-bottom: 15px;
+	margin-top: 15px;
+}
+
+.Upload_file{
+	background-color:#2B373B;
+	color:#FC0;
+	*color:#000;
+	border:0px;
+}
 </style>
 <script>
 time_day = uptimeStr.substring(5,7);//Mon, 01 Aug 2011 16:25:44 +0800(1467 secs since boot....
@@ -107,6 +106,8 @@ else
 
 if(sw_mode == 3 || (sw_mode == 4))
 	theUrl = location.hostName;
+
+var httpd_cert_info = [<% httpd_cert_info(); %>][0];
 
 function initial(){	
 	//parse nvram to array
@@ -171,6 +172,7 @@ function initial(){
 		hide_https_lanport(document.form.http_enable.value);
 		hide_https_wanport(document.form.http_enable.value);
 		hide_https_crt();
+		show_cert_details();
 	}	
 	
 	if(wifi_tog_btn_support || wifi_hw_sw_support || sw_mode == 2 || sw_mode == 4){		// wifi_tog_btn && wifi_hw_sw && hide WPS button behavior under repeater mode
@@ -351,7 +353,6 @@ function applyRule(){
 				|| document.form.misc_httpsport_x.value != '<% nvram_get("misc_httpsport_x"); %>'
 				|| getRadioItemCheck(document.form.https_crt_gen) == "1"
 				|| document.form.https_crt_cn.value != '<% nvram_get("https_crt_cn"); %>'
-				|| document.form.https_crt_save.value != '<% nvram_get("https_crt_save"); %>'
 			){
 			restart_httpd_flag = true;
 			if(document.form.https_crt_cn.value != '<% nvram_get("https_crt_cn"); %>'){
@@ -905,11 +906,11 @@ function hide_https_wanport(_value){
 
 function hide_https_crt(){
 	var protos = document.form.http_enable.value;
-	var savecrt = getRadioValue(document.form.https_crt_save);
 
-	document.getElementById("https_crt_save").style.display = (protos == "0" ? "none" : "");
-	document.getElementById("https_crt_san").style.display = (protos == "0" ? "none" : "");
-	document.getElementById("https_crt_gen").style.display = (protos != "0" && savecrt == "1" ? "" : "none");
+	showhide("https_crt_san", (protos != "0" ? 1 : 0));
+	showhide("https_crt_gen", (protos != "0" ? 1 : 0));
+	showhide("https_cert", (protos != "0" ? 1 : 0));
+	showhide("cert_details", (protos != "0" ? 1 : 0));
 }
 
 // show clientlist
@@ -1265,61 +1266,70 @@ function control_all_rule_status(obj) {
 	show_http_clientlist();
 }
 
-function cal_panel_block(){
-	var blockmarginLeft;
-	if (window.innerWidth)
-		winWidth = window.innerWidth;
-	else if ((document.body) && (document.body.clientWidth))
-		winWidth = document.body.clientWidth;
-
-	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
-		winWidth = document.documentElement.clientWidth;
-	}
-
-	if(winWidth >1050){
-		winPadding = (winWidth-1050)/2;
-		winWidth = 1105;
-		blockmarginLeft= (winWidth*0.15)+winPadding;
-	}
-	else if(winWidth <=1050){
-		blockmarginLeft= (winWidth)*0.15+document.body.scrollLeft;
-	}
-
-	document.getElementById("ssl_panel").style.marginLeft = blockmarginLeft+"px";
+function open_upload_window(){
+	$("#upload_cert_window").fadeIn(300);
 }
 
-function show_cert() {
-        cal_panel_block();
-        $("#ssl_panel").fadeIn(300);
+function hide_upload_window(){
+	$("#upload_cert_window").fadeOut(300);
 }
 
-function hide_cert() {
-        this.FromObject ="0";
-        $("#ssl_panel").fadeOut(300);
+function get_cert_info(){
+	$.ajax({
+		url: '/ajax_certinfo.asp',
+		dataType: 'script',
+		error: function(xhr){
+			setTimeout("get_cert_info();", 1000);
+		},
+		success: function(response){
+			show_cert_details();
+	   }
+	});
+}
+
+function show_cert_details(){
+	document.getElementById("SAN").innerHTML = httpd_cert_info.SAN;
+	document.getElementById("issueTo").innerHTML = httpd_cert_info.issueTo;
+	document.getElementById("issueBy").innerHTML = httpd_cert_info.issueBy;
+	document.getElementById("expireOn").innerHTML = httpd_cert_info.expire;
+}
+
+function check_filename(){
+	var key_file = document.upload_form.file_key.value;
+	var cert_file = document.upload_form.file_cert.value;
+	var key_subname = key_file.substring(key_file.indexOf('.') + 1);
+	var cert_subname = cert_file.substring(cert_file.indexOf('.') + 1);
+
+	if(key_subname != 'pem' && key_subname != 'key'){
+		alert("Please select correct private key file.");
+		document.upload_form.file_key.value = "";
+		document.upload_form.file_key.focus();
+		return false;
+	}
+
+	if(cert_subname != 'pem' && cert_subname != 'crt' && cert_subname != 'cer'){
+		alert("Please select correct SSL certificate file.");
+		document.upload_form.file_cert.value = "";
+		document.upload_form.file_cert.focus();
+		return false;
+	}
+
+	return true;
+}
+
+function upload_cert_key(){
+	if(check_filename()){
+		document.upload_form.submit();
+		hide_upload_window();
+//		show_cert_details();
+		setTimeout("get_cert_info();", 3000);
+	}
 }
 
 </script>
 </head>
 
 <body onload="initial();" onunLoad="return unload_body();">
-	<div id="ssl_panel" class="contentM_qis" style="box-shadow: 3px 3px 10px #000;">
-		<table class="QISform_wireless" border=0 align="center" cellpadding="5" cellspacing="0">
-			<tr>
-				<div class="description_down" style="margin-left:10px;margin-top:10px;">Current certificate details</div>
-			</tr>
-			<tr>
-				<div style="margin-top:8px">
-					<textarea cols="63" rows="22" wrap="off" readonly="readonly" id="textarea" style="width:99%; font-family:'Courier New', Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("sslcert",""); %></textarea>
-				</div>
-			</tr>
-			<tr>
-				<div style="margin-top:5px;width:100%;text-align:center;">
-					<input class="button_gen" style="margin-top:10px;margin-bottom:10px;" type="button" onclick="hide_cert();" value="Close">
-				</div>
-			</tr>
-		</table>
-	</div>
-
 <div id="TopBanner"></div>
 
 <div id="Loading" class="popup_bg"></div>
@@ -1633,7 +1643,7 @@ function hide_cert() {
 							<option value="0" <% nvram_match("http_enable", "0", "selected"); %>>HTTP</option>
 							<option value="1" <% nvram_match("http_enable", "1", "selected"); %>>HTTPS</option>
 							<option value="2" <% nvram_match("http_enable", "2", "selected"); %>>BOTH</option>
-						</select>				  	
+						</select>
 					</td>
 				</tr>
 
@@ -1644,27 +1654,49 @@ function hide_cert() {
 						<span id="https_access_page"></span>
 					</td>
 				</tr>
-				<tr id="https_crt_save">
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,21)">Use persistent certificate</a></th>
-					<td>
-						<input type="radio" name="https_crt_save" class="input" value="1" onClick="hide_https_crt();" <% nvram_match_x("", "https_crt_save", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="https_crt_save" class="input" value="0" onClick="hide_https_crt();" <% nvram_match_x("", "https_crt_save", "0", "checked"); %>><#checkbox_No#>
-					</td>
-				</tr>
                                 <tr id="https_crt_gen">
                                         <th>Generate a new certificate</th>
                                         <td>
 						<input type="radio" name="https_crt_gen" class="input" value="1" onClick="hide_https_crt();" <% nvram_match_x("", "https_crt_gen", "1", "checked"); %>><#checkbox_Yes#>
 						<input type="radio" name="https_crt_gen" class="input" value="0" onClick="hide_https_crt();" <% nvram_match_x("", "https_crt_gen", "0", "checked"); %>><#checkbox_No#>
-						<span id="https_crt_view" onclick="show_cert();" style="padding-left:25px;text-decoration:underline;cursor:pointer;">View current certificate</span>
                                         </td>
                                 </tr>
 				<tr id="https_crt_san">
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,22)">Certificate Subject Alternative Names</a></th>
+					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,22)">Additional Certificate SANs</a></th>
 					<td>
 						<input type="text" name="https_crt_cn" value="<% nvram_get("https_crt_cn"); %>" autocomplete="off" class="input_32_table" maxlength="64" autocorrect="off" autocapitalize="off">
 					</td>
 				</tr>
+
+				<tr id="https_cert" style="display:none;">
+					<th>Provide your own certificate</th>
+					<td>
+						<div id="cert_act" style="margin-top: 5px;"><div style="display:table-cell"><input class="button_gen" onclick="open_upload_window();" type="button" value="<#CTL_upload#>"/><img id="loadingicon" style="margin-left:5px;display:none;" src="/images/InternetScan.gif"></div></div>
+					</td>
+				</tr>
+
+				<tr id="cert_details" style="display:none;">
+					<th>Installed Server Certificate</th>
+					<td>
+						<div style="display:table-row;">
+							<div style="display:table-cell;white-space: nowrap;">Issued to :</div>
+							<div id="issueTo" style="display:table-cell; padding-left:10px;"></div>
+						</div>
+						<div style="display:table-row;">
+							<div style="display:table-cell;white-space: nowrap">SAN :</div>
+							<div id="SAN" style="display:table-cell; padding-left:10px;"></div>
+						</div>
+						<div style="display:table-row;">
+							<div style="display:table-cell;white-space: nowrap">Issued by :</div>
+							<div id="issueBy" style="display:table-cell; padding-left:10px;"></div>
+						</div>
+						<div style="display:table-row;">
+							<div style="display:table-cell;white-space: nowrap">Expires on :</div>
+							<div id="expireOn" style="display:table-cell; padding-left:10px;"></div>
+						</div>
+					</td>
+				</tr>
+
 				<tr id="misc_http_x_tr">
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,2);"><#FirewallConfig_x_WanWebEnable_itemname#></a></th>
 					<td>
@@ -1767,5 +1799,26 @@ function hide_cert() {
 </table>
 
 <div id="footer"></div>
+<form method="post" name="upload_form" action="upload_cert_key.cgi" target="hidden_frame" enctype="multipart/form-data">
+<input type="hidden" name="action_mode" value="">
+<input type="hidden" name="action_script" value="">
+<input type="hidden" name="action_wait" value="">
+<div id="upload_cert_window"  class="contentM_upload" style="box-shadow: 1px 5px 10px #000;">
+	<div class="formfonttitle" style="margin-top: 15px; margin-left: 15px;">Import your own certificate</div>
+	<div class="formfontdesc" style="margin-left: 15px;">Upload a certificate issued by a certification authority here. Your private key and SSL certificate is necessary.</div>
+	<div class="Upload_item">
+		<div style="display:table-cell; width: 45%;">Private Key :</div>
+		<div style="display:table-cell;"><input type="file" name="file_key" class="input Upload_file"></div>
+	</div>
+	<div class="Upload_item">
+		<div style="display:table-cell; width: 45%;">SSL Certificate :</div>
+		<div style="display:table-cell;"><input type="file" name="file_cert" class="input Upload_file"></div>
+	</div>
+	<div align="center" style="margin-top:30px; padding-bottom:15px;">
+		<div style="display:table-cell;"><input class="button_gen" type="button" onclick="hide_upload_window();" id="cancelBtn" value="<#CTL_Cancel#>"></div>
+		<div style="display:table-cell; padding-left: 5px;"><input class="button_gen" type="button" onclick="upload_cert_key();" value="<#CTL_ok#>"></div>
+	</div>
+</div>
+</form>
 </body>
 </html>

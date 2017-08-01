@@ -2301,10 +2301,14 @@ void erase_cert(void)
 void start_ssl(void)
 {
 	int ok=0;
-	int save;
 	int retry;
 	unsigned long long sn;
 	char t[32];
+#if !defined(RTCONFIG_JFFS2) && !defined(RTCONFIG_BRCM_NAND_JFFS2) && !defined(RTCONFIG_UBIFS)
+        int save;
+
+	save = nvram_match("https_crt_save", "1");
+#endif
 
 	//fprintf(stderr,"[httpd] start_ssl running!!\n");
 	//nvram_set("https_crt_gen", "1");
@@ -2315,10 +2319,9 @@ void start_ssl(void)
 
 	retry = 1;
 	while (1) {
-		save = nvram_match("https_crt_save", "1");
 
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
-		if (save && f_exists(JFFSCERT) && f_exists(JFFSKEY)) {
+		if (f_exists(JFFSCERT) && f_exists(JFFSKEY)) {
 			eval("cp", "-p", JFFSKEY, JFFSCERT, "/etc/");
 			system("cat /etc/key.pem /etc/cert.pem > /etc/server.pem");
 			ok = 1;
@@ -2356,8 +2359,9 @@ void start_ssl(void)
 			}
 		}
 
-		if ((save && !ok)
+		if ((!ok)
 #if !defined(RTCONFIG_JFFS2) && !defined(RTCONFIG_BRCM_NAND_JFFS2) && !defined(RTCONFIG_UBIFS)
+		    && (save)
 		    && (*nvram_safe_get("https_crt_file")) == 0
 #endif
 		    ){

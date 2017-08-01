@@ -139,6 +139,9 @@ static void do_jffsupload_cgi(char *url, FILE *stream);
 static void do_jffsupload_post(char *url, FILE *stream, int len, char *boundary);
 
 #ifdef RTCONFIG_HTTPS
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+#include <openssl/pem.h>
 extern int do_ssl;
 extern int ssl_stream_fd;
 #endif
@@ -299,6 +302,11 @@ extern char cloud_file[256];
 
 #ifdef RTCONFIG_JFFS2USERICON
 #define JFFS_USERICON		"/jffs/usericon/"
+#endif
+
+#ifdef RTCONFIG_HTTPS
+#define END_KEY "END RSA PRIVATE KEY"
+#define END_CERT "END CERTIFICATE"
 #endif
 
 static void insert_hook_func(webs_t wp, char *fname, char *param)
@@ -1263,17 +1271,6 @@ ej_dump(int eid, webs_t wp, int argc, char_t **argv)
 		parse_openvpn_status(unit);
 		sprintf(filename, "/etc/openvpn/server%d/client_status", unit);
 		ret += dump_file(wp, filename);
-	}
-#endif
-#ifdef RTCONFIG_HTTPS
-	else if(!strcmp(file, "sslcert")){
-		if(check_if_file_exist("/etc/cert.pem")) {
-			doSystem("openssl x509 -noout -in /etc/cert.pem -text -certopt ca_default,no_sigdump,no_serial -nameopt multiline > /tmp/cert.output");
-			ret += dump_file(wp, "/tmp/cert.output");
-			unlink("/tmp/cert.output");
-		} else {
-			ret += websWrite(wp, "No certificate currently in use.");
-		}
 	}
 #endif
 #ifdef RTCONFIG_PUSH_EMAIL
@@ -8911,6 +8908,161 @@ do_vpnupload_cgi(char *url, FILE *stream)
 }
 #endif	//RTCONFIG_OPENVPN
 
+#ifdef RTCONFIG_HTTPS
+static void
+do_upload_cert_key(char *url, FILE *stream, int len, char *boundary)
+{
+	char upload_fifo[32];
+	FILE *fifo = NULL;
+	int ret = EINVAL, ch;
+	char *filename, *p;
+	char buf[1024];
+
+	memset(buf, 0, sizeof(buf));
+
+	/* Key */
+	while (len > 0) {
+		if (!fgets(buf, MIN(len + 1, sizeof(buf)), stream)) {
+			goto err;
+		}
+
+		len -= strlen(buf);
+
+		if (!strncasecmp(buf, "Content-Disposition:", 20)){
+			if(strstr(buf, "name=\"file_key\"")){
+				strcpy(upload_fifo, JFFSKEY);
+				break;
+			}
+		}
+	}
+
+	unlink(upload_fifo);
+	p = buf;
+	filename = strstr(p, "filename=\"") + strlen("filename=\"");
+	p = strstr(filename, "\"");
+	strcpy(p, "\0");
+	//_dprintf("key filename = %s\n", filename);
+
+	/* Skip boundary and headers */
+	while (len > 0) {
+		if (!fgets(buf, MIN(len + 1, sizeof(buf)), stream)) {
+			goto err;
+		}
+
+		len -= strlen(buf);
+		if (!strcmp(buf, "\n") || !strcmp(buf, "\r\n")) {
+			break;
+		}
+	}
+
+	if (!(fifo = fopen(upload_fifo, "w")))
+		goto err;
+
+	while (len > 0) {
+		if (!fgets(buf, MIN(len + 1, sizeof(buf)), stream)) {
+			goto err;
+		}
+		len -= strlen(buf);
+
+		if(boundary) {
+			if (strstr(buf, boundary))
+				break;
+		}
+
+		fputs(buf, fifo);
+		if(strstr(buf, END_KEY))
+			break;
+	}
+
+	ret = 0;
+
+	fclose(fifo);
+	fifo = NULL;
+
+	//_dprintf("done key\n");
+
+	/* Certificate */
+	while (len > 0) {
+		if (!fgets(buf, MIN(len + 1, sizeof(buf)), stream)) {
+			goto err;
+		}
+
+		len -= strlen(buf);
+
+		if (!strncasecmp(buf, "Content-Disposition:", 20)){
+			if(strstr(buf, "name=\"file_cert\"")){
+				strcpy(upload_fifo, JFFSCERT);
+				break;
+			}
+		}
+	}
+
+	unlink(upload_fifo);
+
+	p = buf;
+	filename = strstr(p, "filename=\"") + strlen("filename=\"");
+	p = strstr(filename, "\"");
+	strcpy(p, "\0");
+	//_dprintf("cert filename = %s\n", filename);
+
+	/* Skip boundary and headers */
+	while (len > 0) {
+		if (!fgets(buf, MIN(len + 1, sizeof(buf)), stream)) {
+			goto err;
+		}
+
+		len -= strlen(buf);
+		if (!strcmp(buf, "\n") || !strcmp(buf, "\r\n")) {
+			break;
+		}
+	}
+
+	if (!(fifo = fopen(upload_fifo, "w")))
+		goto err;
+
+	while (len > 0) {
+		if (!fgets(buf, MIN(len + 1, sizeof(buf)), stream)) {
+			goto err;
+		}
+		len -= strlen(buf);
+
+		if(boundary) {
+			if (strstr(buf, boundary))
+				break;
+		}
+
+		fputs(buf, fifo);
+		if(strstr(buf, END_CERT))
+			break;
+	}
+
+	ret = 0;
+
+	fclose(fifo);
+	fifo = NULL;
+
+err:
+	if (fifo)
+		fclose(fifo);
+
+	/* Slurp anything remaining in the request */
+	while (len-- > 0)
+		if((ch = fgetc(stream)) == EOF)
+			break;
+
+	fcntl(fileno(stream), F_SETOWN, -ret);
+	//_dprintf("do_upload_cert_key: end\n");
+
+}
+
+
+static void
+do_upload_cert_key_cgi(char *url, FILE *stream)
+{
+	_dprintf("do_upload_cert_key_cgi\n");
+}
+#endif
+
 // Viz 2010.08
 static void
 do_update_cgi(char *url, FILE *stream)
@@ -10058,6 +10210,9 @@ struct mime_handler mime_handlers[] = {
 	{ "appGet.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_appGet_cgi, do_auth },
 	{ "upgrade.cgi*", "text/html", no_cache_IE7, do_upgrade_post, do_upgrade_cgi, do_auth},
 	{ "upload.cgi*", "text/html", no_cache_IE7, do_upload_post, do_upload_cgi, do_auth },
+#ifdef RTCONFIG_HTTPS
+	{ "upload_cert_key.cgi*", "text/html", no_cache_IE7, do_upload_cert_key, do_upload_cert_key_cgi, do_auth },
+#endif
 #ifdef RTCONFIG_IFTTT
 	{ "get_IFTTTPincode.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_get_IFTTTPincode_cgi, do_auth },
 #endif
@@ -14794,6 +14949,164 @@ ej_get_nt_db(int eid, webs_t wp, int argc, char **argv)
 }
 #endif
 
+#ifdef RTCONFIG_HTTPS
+static char* _get_common_name(const char *src, char *dst, size_t len)
+{
+	char *cp;
+
+	if((cp = strstr(src, "CN=")) == NULL)
+	{
+		return NULL;
+	}
+
+	strlcpy(dst, cp+3, len);
+
+	if((cp = strchr(dst, '/')) != NULL)
+	{
+		*cp = '\0';
+	}
+
+	return dst;
+}
+
+//not handle time zone
+static void ASN1_TimeToTM(ASN1_TIME* time, struct tm *t)
+{
+	unsigned char* data = time->data;
+	int i = 0;
+
+	if (time->type == V_ASN1_UTCTIME)
+	{
+		t->tm_year =
+			(data[0] - '0') * 10 +
+			(data[1] - '0');
+		if(t->tm_year < 70)
+			t->tm_year += 100;
+		i = 2;
+	}
+	else if (time->type == V_ASN1_GENERALIZEDTIME)
+	{
+		t->tm_year =
+			(data[0] - '0') * 1000 +
+			(data[1] - '0') * 100 +
+			(data[2] - '0') * 10 +
+			(data[3] - '0');
+		t->tm_year -= 1900;
+		i = 4;
+	}
+	t->tm_mon = (data[i] - '0') * 10 + (data[i+1] - '0') - 1;
+	i += 2;
+	t->tm_mday = (data[i] - '0') * 10 + (data[i+1] - '0');
+	i += 2;
+	t->tm_hour = (data[i] - '0') * 10 + (data[i+1] - '0');
+	i += 2;
+	t->tm_min  = (data[i] - '0') * 10 + (data[i+1] - '0');
+	i += 2;
+	t->tm_sec  = (data[i] - '0') * 10 + (data[i+1] - '0');
+}
+
+static int
+ej_httpd_cert_info(int eid, webs_t wp, int argc, char **argv)
+{
+	FILE *fp;
+	X509 *x509data = NULL;
+	char buf[256] = {0};
+	char issuer[64] = {0};
+	char subject[64] = {0};
+	char notBefore[64] = {0};
+	char notAfter[64] = {0};
+	struct tm tm;
+
+	fp = fopen(JFFSCERT, "r");
+	if (fp == NULL){
+		websWrite(wp, "{\"issueTo\":\"\",\"issueBy\":\"\",\"from\":\"\",\"expire\":\"\"}");
+		return FALSE;
+	}
+	if(!PEM_read_X509(fp, &x509data, NULL, NULL))
+	{
+		fseek(fp, 0, SEEK_SET);
+		d2i_X509_fp(fp, &x509data);
+	}
+	fclose(fp);
+	if(x509data == NULL){
+		websWrite(wp, "{\"issueTo\":\"\",\"issueBy\":\"\",\"from\":\"\",\"expire\":\"\"}");
+		return FALSE;
+	}
+
+	X509_NAME_oneline(X509_get_issuer_name(x509data), buf, sizeof(buf));
+	_get_common_name(buf, issuer, sizeof(issuer));
+	X509_NAME_oneline(X509_get_subject_name(x509data), buf, sizeof(buf));
+	_get_common_name(buf, subject, sizeof(subject));
+	//strptime(x509data->cert_info->validity->notBefore->data, "%y%m%d%H%M%SZ", &tm, NULL);
+	ASN1_TimeToTM(x509data->cert_info->validity->notBefore, &tm);
+	snprintf(notBefore, sizeof(notBefore), "%d/%d/%d", tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday);
+	//strptime(x509data->cert_info->validity->notAfter->data, "%y%m%d%H%M%SZ", &tm, NULL);
+	ASN1_TimeToTM(x509data->cert_info->validity->notAfter, &tm);
+	snprintf(notAfter, sizeof(notAfter), "%d/%d/%d", tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday);
+
+	websWrite(wp, "{");
+	websWrite(wp, "\"issueTo\":\"%s\",", subject);
+
+	websWrite(wp, "\"SAN\":\"");
+
+// Dump SANs
+	int success = 0;
+	GENERAL_NAMES* names = NULL;
+	unsigned char* utf8 = NULL;
+
+	do
+	{
+		names = X509_get_ext_d2i(x509data, NID_subject_alt_name, 0, 0 );
+		if(!names) break;
+
+		int i = 0, count = sk_GENERAL_NAME_num(names);
+		if(!count) break; /* failed */
+
+		for( i = 0; i < count; ++i )
+		{
+			GENERAL_NAME* entry = sk_GENERAL_NAME_value(names, i);
+			if(!entry) continue;
+
+			if(GEN_DNS == entry->type)
+			{
+				int len1 = 0, len2 = -1;
+
+				len1 = ASN1_STRING_to_UTF8(&utf8, entry->d.dNSName);
+				if(utf8) {
+					len2 = (int)strlen((const char*)utf8);
+				}
+
+				if(utf8 && len1 && len2 && (len1 == len2)) {
+					websWrite(wp, "%s ", utf8);
+					success = 1;
+				}
+
+				if(utf8) {
+					OPENSSL_free(utf8), utf8 = NULL;
+				}
+
+			}
+		}
+	} while (0);
+
+	if(names)
+		GENERAL_NAMES_free(names);
+
+	if(utf8)
+		OPENSSL_free(utf8);
+
+	websWrite(wp, "\",");
+
+	websWrite(wp, "\"issueBy\":\"%s\",", issuer);
+	websWrite(wp, "\"from\":\"%s\",", notBefore);
+	websWrite(wp, "\"expire\":\"%s\"", notAfter);
+	websWrite(wp, "}");
+	if(x509data)
+		X509_free(x509data);
+	return 0;
+}
+#endif
+
 #ifdef RTCONFIG_GETREALIP
 static int
 ej_get_realip(int eid, webs_t wp, int argc, char **argv)
@@ -15277,6 +15590,9 @@ struct ej_handler ej_handlers[] = {
 #endif
 #ifdef RTCONFIG_GETREALIP
 	{ "get_realip", ej_get_realip},
+#endif
+#ifdef RTCONFIG_HTTPS
+	{ "httpd_cert_info", ej_httpd_cert_info},
 #endif
 	{ "get_header_info", ej_get_header_info},
 	{ "login_error_info", ej_login_error_info},
