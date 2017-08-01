@@ -108,6 +108,7 @@ if(sw_mode == 3 || (sw_mode == 4))
 	theUrl = location.hostName;
 
 var httpd_cert_info = [<% httpd_cert_info(); %>][0];
+var uploaded_cert = false;
 
 function initial(){	
 	//parse nvram to array
@@ -352,6 +353,7 @@ function applyRule(){
 				|| document.form.misc_httpport_x.value != '<% nvram_get("misc_httpport_x"); %>'
 				|| document.form.misc_httpsport_x.value != '<% nvram_get("misc_httpsport_x"); %>'
 				|| getRadioItemCheck(document.form.https_crt_gen) == "1"
+		                || uploaded_cert
 				|| document.form.https_crt_cn.value != '<% nvram_get("https_crt_cn"); %>'
 			){
 			restart_httpd_flag = true;
@@ -1321,8 +1323,8 @@ function upload_cert_key(){
 	if(check_filename()){
 		document.upload_form.submit();
 		hide_upload_window();
-//		show_cert_details();
 		setTimeout("get_cert_info();", 3000);
+		uploaded_cert = true;
 	}
 }
 
