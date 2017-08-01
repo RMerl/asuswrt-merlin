@@ -856,9 +856,11 @@ mtype_del(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 	u32 key, multi = 0;
 	size_t dsize = set->dsize;
 
+	rcu_read_lock_bh();
 	t = ipset_dereference_protected(h->table, set);
 	key = HKEY(value, h->initval, t->htable_bits);
 	n = __ipset_dereference_protected(hbucket(t, key), 1);
+	rcu_read_unlock_bh();
 	if (!n)
 		goto out;
 	for (i = 0, k = 0; i < n->pos; i++) {
@@ -886,6 +888,7 @@ mtype_del(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 #endif
 		ip_set_ext_destroy(set, data);
 
+		rcu_read_lock();
 		for (; i < n->pos; i++) {
 			if (!test_bit(i, n->used))
 				k++;
@@ -893,7 +896,7 @@ mtype_del(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 		if (n->pos == 0 && k == 0) {
 			set->ext_size -= ext_size(n->size, dsize);
 			rcu_assign_pointer(hbucket(t, key), NULL);
-			kfree_rcu(n, rcu);
+			kfree(n);
 		} else if (k >= AHASH_INIT_SIZE) {
 			struct hbucket *tmp = kzalloc(sizeof(*tmp) +
 					(n->size - AHASH_INIT_SIZE) * dsize,
@@ -912,8 +915,9 @@ mtype_del(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 			tmp->pos = k;
 			set->ext_size -= ext_size(AHASH_INIT_SIZE, dsize);
 			rcu_assign_pointer(hbucket(t, key), tmp);
-			kfree_rcu(n, rcu);
+			kfree(n);
 		}
+		rcu_read_unlock();
 		goto out;
 	}
 
