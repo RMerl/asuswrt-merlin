@@ -18,6 +18,7 @@
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/form.js"></script>
+<script type="text/javascript" src="/validator.js"></script>
 <script>
 
 if('<% nvram_get("start_aicloud"); %>' == '0')
@@ -210,7 +211,6 @@ function get_real_ip(){
 	});
 }
 
-
 function valid_is_wan_ip(ip_obj){
   // test if WAN IP is a private IP.
   var A_class_start = inet_network("10.0.0.0");
@@ -325,7 +325,21 @@ function show_partition(){
 	});
 }
 
+function getStyleSheet(cssName, rule) {
+	for (i = 0; i < document.styleSheets.length; i++) {
+		if (document.styleSheets[i].href.toString().indexOf(cssName) != -1) {
+			for (x = 0; x < document.styleSheets[i].rules.length; x++) {
+				if(document.styleSheets[i].rules[x].type == 1) {
+					if (document.styleSheets[i].rules[x].selectorText.toString() == rule) {
+						return document.styleSheets[i].rules[x];
+					}
+				}
+			}
+		}
+	}
 
+	return null;
+}
 function divdisplayctrl(flag1, flag2, flag3, flag4){
 	document.getElementById("cloud_uninstall").style.display = flag1;
 	document.getElementById("partition_div").style.display = flag2;
@@ -334,36 +348,24 @@ function divdisplayctrl(flag1, flag2, flag3, flag4){
 
 	if(flag1 != "none"){ // AiCloud 2.0 uninstall
 		document.getElementById("return_btn").style.display = "none";
-		document.getElementById("tab_smartsync").style.display="none";
-		document.getElementById("tab_routersync").style.display="none";
-		document.getElementById("tab_setting").style.display="none";
-		document.getElementById("tab_syslog").style.display="none";
+		getStyleSheet('index_style', '.tab').style.display = "none";
 	}
 	else if(flag2 != "none"){ // partition list
 		//detectUSBStatusApp();
 		show_partition();
 		document.getElementById("return_btn").style.display = "";
 		//calHeight(1);
-		document.getElementById("tab_smartsync").style.display="none";
-		document.getElementById("tab_routersync").style.display="none";
-		document.getElementById("tab_setting").style.display="none";
-		document.getElementById("tab_syslog").style.display="none";
+		getStyleSheet('index_style', '.tab').style.display = "none";
 	}
 	else if(flag3 != "none"){ // AiCloud 2.0 installing
 		document.getElementById("return_btn").style.display = "none";
 		//calHeight(1);
-		document.getElementById("tab_smartsync").style.display="none";
-		document.getElementById("tab_routersync").style.display="none";
-		document.getElementById("tab_setting").style.display="none";
-		document.getElementById("tab_syslog").style.display="none";
+		getStyleSheet('index_style', '.tab').style.display = "none";
 	}	
 	else if(flag4 != "none"){ // Have AiCloud 2.0 installed
 		document.getElementById("return_btn").style.display = "none";
 		//calHeight(1);
-		document.getElementById("tab_smartsync").style.display="";
-		document.getElementById("tab_routersync").style.display="";
-		document.getElementById("tab_setting").style.display="";
-		document.getElementById("tab_syslog").style.display="";
+		getStyleSheet('index_style', '.tab').style.display = "";
 	}
 	else{
 		document.getElementById("return_btn").style.display = "none";		
@@ -792,8 +794,8 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 									<div id="cloud_installed" style="display:none;">
 									<table width="100%" height="550px" style="border-collapse:collapse;">
 
-									  <tr bgcolor="#444f53">
-									    <td colspan="5" bgcolor="#444f53" class="cloud_main_radius">
+									  <tr class="block_bg">
+									    <td colspan="5" class="cloud_main_radius">
 												<div style="padding:10px;width:95%;font-style:italic;font-size:14px;">
 												<#AiCloud_maintext_note#>
 													<br/><br/>
@@ -828,15 +830,15 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 												</div>
 												<div id="privateIP_notes" class="formfontdesc" style="display:none; color:#FFCC00; padding:10px;"></div>
 											</td>
-									  </tr>
+										</tr>
 
-									  <tr height="10px">
+										<tr height="10px">
 											<td colspan="3">
 											</td>
 									  </tr>
 
-									  <tr bgcolor="#444f53" width="235px">
-									    <td bgcolor="#444f53" class="cloud_main_radius_left" width="20%" height="50px">
+									  <tr class="block_bg block_line" width="235px">
+									    <td class="cloud_main_radius_left" width="20%" height="50px">
 												<div style="padding:10px;" align="center"><img src="/images/cloudsync/001.png">
 													<div align="center" style="margin-top:10px;font-size: 18px;text-shadow: 1px 1px 0px black;"><#Cloud_Disk#></div>
 												</div>
@@ -854,7 +856,7 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 											</div>
 										</td>
 
-									    <td bgcolor="#444f53" class="cloud_main_radius_right" width="100px">
+									    <td class="cloud_main_radius_right" width="100px">
 												<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_clouddisk_enable"></div>
 												<div id="iphone_switch_container" class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 												<script type="text/javascript">
@@ -887,8 +889,8 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 											</td>
 									  </tr>
 										
-									  <tr bgcolor="#444f53">
-									    <td bgcolor="#444f53" class="cloud_main_radius_left" width="20%" height="50px">
+									  <tr class="block_bg block_line">
+									    <td class="cloud_main_radius_left" width="20%" height="50px">
 												<div align="center"><img src="/images/cloudsync/002.png">
 													<div align="center" style="margin-top:10px;font-size: 18px;text-shadow: 1px 1px 0px black;"><#Smart_Access#></div>
 												</div>
@@ -904,31 +906,29 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 													<#smart_access_desc#>
 												</div>
 											</td>
-									    <td bgcolor="#444f53" class="cloud_main_radius_right" width="100">
+									    <td class="cloud_main_radius_right" width="100">
 												<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_smartAccess_enable"></div>
 												<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 												<script type="text/javascript">
 													$('#radio_smartAccess_enable').iphoneSwitch('<% nvram_get("webdav_proxy"); %>', 
 														 function() {
-															curState = '<% nvram_get("webdav_proxy"); %>';
 															document.form.webdav_proxy.value = 1;
 															document.form.enable_webdav.value = 1;
 															FormActions("start_apply.htm", "apply", "restart_webdav", "3");
-															showLoading();	
+															showLoading();
 															document.form.submit();
 														 },
 														 function() {
-															curState = '<% nvram_get("webdav_proxy"); %>';
 															document.form.webdav_proxy.value = 0;
 															if(document.form.webdav_aidisk.value == 0)
 																document.form.enable_webdav.value = 0;
 															FormActions("start_apply.htm", "apply", "restart_webdav", "3");
-															showLoading();	
+															showLoading();
 															document.form.submit();
 														 }
 													);
-												</script>			
-												</div>	
+												</script>
+												</div>
 											</td>
 									  </tr>
 
@@ -937,8 +937,8 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 											</td>
 									  </tr>
 
-									  <tr bgcolor="#444f53">
-									    <td bgcolor="#444f53" class="cloud_main_radius_left" width="20%" height="50px">
+									  <tr class="block_bg">
+									    <td class="cloud_main_radius_left" width="20%" height="50px">
 												<div align="center">
 													<img src="/images/cloudsync/003.png">
 													<div align="center" style="margin-top:10px;font-size: 18px;text-shadow: 1px 1px 0px black;"><#smart_sync#></div>
@@ -955,7 +955,7 @@ This agreement constitutes the entire agreement between you and ASUS with respec
 													<#smart_sync_desc#>
 												</div>
 											</td>
-									    <td bgcolor="#444f53" class="cloud_main_radius_right" width="100">
+									    <td class="cloud_main_radius_right" width="100">
 												<!--div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_smartSync_enable"></div>
 												<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 												<script type="text/javascript">

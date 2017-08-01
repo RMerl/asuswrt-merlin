@@ -173,11 +173,6 @@ function initial(){
 		}
 	);
 
-	if(!dualWAN_support){
-		document.getElementById("_APP_Installation").innerHTML = '<table><tbody><tr><td><div class="_APP_Installation"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
-		document.getElementById("_APP_Installation").className = "menu_clicked";
-	}
-
 	if(!wimax_support){
 		for (var i = 0; i < document.form.modem_enable_option.options.length; i++) {
 			if (document.form.modem_enable_option.options[i].value == "4") {

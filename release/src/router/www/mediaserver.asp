@@ -144,8 +144,6 @@ function daapd_display(){
 
 function initial(){
 	show_menu();
-	document.getElementById("_APP_Installation").innerHTML = '<table><tbody><tr><td><div class="_APP_Installation"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
-	document.getElementById("_APP_Installation").className = "menu_clicked";
 
 	document.aidiskForm.protocol.value = PROTOCOL;
 	initial_dir();
@@ -157,11 +155,6 @@ function initial(){
 	do_get_friendly_name("dms");
 	check_dms_status();
 	
-	if((calculate_height-3)*52 + 20 > 535)
-		document.getElementById("upnp_icon").style.height = (calculate_height-3)*52 -70 + "px";
-	else
-		document.getElementById("upnp_icon").style.height = "500px";
-		
 	if(noiTunes_support){		
 		document.getElementById("iTunes_div").style.display = "none";		
 	}

@@ -110,8 +110,6 @@ var ctf_fa_mode = '<% nvram_get("ctf_fa_mode"); %>';
 
 function initial(){
 	show_menu();
-	document.getElementById("_AiProtection_HomeSecurity").innerHTML = '<table><tbody><tr><td><div class="_AiProtection_HomeSecurity"></div></td><td><div style="width:120px;"><#AiProtection_title#></div></td></tr></tbody></table>';
-	document.getElementById("_AiProtection_HomeSecurity").className = "menu_clicked";
 }
 
 function applyRule(){
