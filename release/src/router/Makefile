@@ -2511,7 +2511,7 @@ pppd-clean:
 	-@$(MAKE) -C pppd clean
 	@rm -f pppd/stamp-h1
 
-pppd-install: pppd
+pppd-install:
 	install -D pppd/pppd/pppd $(INSTALLDIR)/pppd/usr/sbin/pppd
 	$(STRIP) $(INSTALLDIR)/pppd/usr/sbin/pppd
 	install -D pppd/chat/chat $(INSTALLDIR)/pppd/usr/sbin/chat
@@ -4510,7 +4510,7 @@ ipset_arm: ipset_arm/stamp-h1
 	$(MAKE) -C ipset_arm
 	$(MAKE) -C ipset_arm modules
 
-ipset_arm-install: ipset_arm
+ipset_arm-install:
 	install -D ipset_arm/src/ipset $(INSTALLDIR)/ipset_arm/usr/sbin/ipset
 	install -d $(INSTALLDIR)/ipset_arm/usr/lib/
 	install ipset_arm/lib/.libs/libipset.so.3.6.0 $(INSTALLDIR)/ipset_arm/usr/lib/libipset.so.3.6.0
