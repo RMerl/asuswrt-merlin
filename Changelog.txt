@@ -5,6 +5,7 @@ Asuswrt-Merlin Changelog
   - NEW: Backported Ethernet port status report from GPL 382.
   - NEW: Merged GPL 380_7743 binary blobs for the RT-N66U.
   - NEW: Description field added to OpenVPN client configuration
+  - NEW: Added missing hash types to ipset_arm (Patch by john9527)
   - CHANGED: Updated Curl to 7.54.1
   - CHANGED: Switched webui menu generation code to GPL 382 code.
              This new code is easier for me to maintain.
@@ -17,6 +18,11 @@ Asuswrt-Merlin Changelog
   - CHANGED: Moved App icon out of the notification area and into
              the footer of the page, with other links.
   - CHANGED: Re-organized VPN pages, merging some together.
+  - CHANGED: Re-designed webui interface for managing SSL
+             certificate.  Added Upload button, and revamped
+             certificate info display (backports from GPL 382)
+  - CHANGED: Removed option to enable/disable persistent webui
+             certificate - they are now always persistent.
   - FIXED: Duplicate LAN port 1 shown for the RT-AC87U on
            the Sysinfo page.
   - FIXED: Port forward/UPNP issues with CTF enabled depending on
@@ -24,6 +30,9 @@ Asuswrt-Merlin Changelog
   - FIXED: URL filtering wasn't working over IPv4.
   - FIXED: OpenVPN instances could potentially start too early at
            boot time (before clock was set)
+  - FIXED: Security issues CVE-2017-11344, CVE-2017-11345 and
+           CVE-2017-11420 in networkmap (patches by
+           Kilo Foxtrot Papa)
 
 
 380.67 (16-July-2017)
