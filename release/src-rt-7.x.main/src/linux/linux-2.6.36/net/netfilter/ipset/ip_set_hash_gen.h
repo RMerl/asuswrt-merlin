@@ -374,6 +374,7 @@ mtype_flush(struct ip_set *set)
 	struct hbucket *n;
 	u32 i;
 
+	rcu_read_lock();
 	t = ipset_dereference_protected(h->table, set);
 	for (i = 0; i < jhash_size(t->htable_bits); i++) {
 		n = __ipset_dereference_protected(hbucket(t, i), 1);
@@ -383,8 +384,9 @@ mtype_flush(struct ip_set *set)
 			mtype_ext_cleanup(set, n);
 		/* FIXME: use slab cache */
 		rcu_assign_pointer(hbucket(t, i), NULL);
-		kfree_rcu(n, rcu);
+		kfree(n);
 	}
+	rcu_read_unlock();
 #ifdef IP_SET_HASH_WITH_NETS
 	memset(h->nets, 0, sizeof(h->nets));
 #endif
