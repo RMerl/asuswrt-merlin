@@ -1009,7 +1009,7 @@ void store_description(char *msg)
                 case 6: // tmp="urn:schemas-upnp-org:service:serviceType:v"
                         mxend = tmp;
                         i = 0; j = 0;
-                        while(i != 4)
+                        while(i != 4 && mxend-tmp < sizeof(tmp))
                         {
                                 if(i == 3)
                                         tmp[j++] = *mxend;
@@ -1017,7 +1017,8 @@ void store_description(char *msg)
                                         i++;
                                 mxend++;
                         }
-                        tmp[j-1] = '\0';
+                        if(j)
+                            tmp[j-1] = '\0';
                         strlcpy(description.service[s_num].name, tmp, sizeof(description.service[s_num].name));
                         NMP_DEBUG_F("service %d name = %s\n", s_num, tmp);
                         break;
