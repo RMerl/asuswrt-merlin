@@ -182,13 +182,13 @@ int ASUS_Discovery()
         lan_gateway = inet_addr(nvram_safe_get("lan_gateway"));
 
         char asus_device_buf[128] = {0};
-        char asus_device_list_buf[2048] = {0};
+        char asus_device_list_buf[2049] = {0};
         int getRouterIndex;
 
-        for (getRouterIndex = 0; getRouterIndex < a_GetRouterCount; getRouterIndex++)
+        for (getRouterIndex = 0; getRouterIndex < a_GetRouterCount && getRouterIndex < MAX_SEARCH_ROUTER; getRouterIndex++)
         {
                 ip_addr_t = inet_addr(searchRouterInfo[getRouterIndex].routerIPAddress);
-                sprintf(asus_device_buf, "<%d>%s>%s>%s>%d>%s>%s>%d",
+                snprintf(asus_device_buf, sizeof(asus_device_buf), "<%d>%s>%s>%s>%d>%s>%s>%d",
                 3,
                 searchRouterInfo[getRouterIndex].routerProductID,
                 searchRouterInfo[getRouterIndex].routerIPAddress,
@@ -198,7 +198,15 @@ int ASUS_Discovery()
                 searchRouterInfo[getRouterIndex].routerSubMask,
                 searchRouterInfo[getRouterIndex].routerOperationMode
                 );
-                strcat(asus_device_list_buf, asus_device_buf);
+                if ((sizeof(asus_device_list_buf) - strlen(asus_device_list_buf)) > strlen(asus_device_buf))
+                {
+                    strncat(asus_device_list_buf, asus_device_buf, strlen(asus_device_buf));
+                }
+                else
+                {
+                    iRet = 1;
+                    break;
+                }
         }
    	nvram_set("asus_device_list", asus_device_list_buf);
  
