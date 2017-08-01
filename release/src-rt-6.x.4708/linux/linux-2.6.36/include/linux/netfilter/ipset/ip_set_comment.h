@@ -28,7 +28,7 @@ ip_set_init_comment(struct ip_set *set, struct ip_set_comment *comment,
 
 	if (unlikely(c)) {
 		set->ext_size -= sizeof(*c) + strlen(c->str) + 1;
-		kfree_rcu(c, rcu);
+		kfree(c);
 		rcu_assign_pointer(comment->c, NULL);
 	}
 	if (!len)
@@ -68,7 +68,7 @@ ip_set_comment_free(struct ip_set *set, struct ip_set_comment *comment)
 	if (unlikely(!c))
 		return;
 	set->ext_size -= sizeof(*c) + strlen(c->str) + 1;
-	kfree_rcu(c, rcu);
+	kfree(c);
 	rcu_assign_pointer(comment->c, NULL);
 }
 
