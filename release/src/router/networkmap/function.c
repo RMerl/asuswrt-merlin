@@ -916,7 +916,7 @@ void store_description(char *msg)
         //printf("%s", p);
         body = strstr(msg, "</root>");
                                                                                                                                              
-        while( p!= NULL && p < body)
+        while( p!= NULL && p < body && s_num < SERVICE_NUM)
         {
                 // get rid of 'TAB' or 'Space' in the start of a line.
                 while((*p == '\r' || *p == '\n' || *p == '\t' || *p == ' ') && p < body)
