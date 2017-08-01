@@ -472,6 +472,7 @@ mtype_expire(struct ip_set *set, struct htype *h)
 	u8 k;
 #endif
 
+	rcu_read_lock();
 	t = ipset_dereference_protected(h->table, set);
 	for (i = 0; i < jhash_size(t->htable_bits); i++) {
 		n = __ipset_dereference_protected(hbucket(t, i), 1);
@@ -502,7 +503,7 @@ mtype_expire(struct ip_set *set, struct htype *h)
 			if (d >= n->size) {
 				set->ext_size -= ext_size(n->size, dsize);
 				rcu_assign_pointer(hbucket(t, i), NULL);
-				kfree_rcu(n, rcu);
+				kfree(n);
 				continue;
 			}
 			tmp = kzalloc(sizeof(*tmp) +
@@ -523,9 +524,10 @@ mtype_expire(struct ip_set *set, struct htype *h)
 			tmp->pos = d;
 			set->ext_size -= ext_size(AHASH_INIT_SIZE, dsize);
 			rcu_assign_pointer(hbucket(t, i), tmp);
-			kfree_rcu(n, rcu);
+			kfree(n);
 		}
 	}
+	rcu_read_unlock();
 }
 
 static void
