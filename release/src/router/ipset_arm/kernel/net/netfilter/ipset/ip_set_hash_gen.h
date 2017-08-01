@@ -719,9 +719,11 @@ mtype_add(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 			forceadd = true;
 	}
 
+	rcu_read_lock_bh();
 	t = ipset_dereference_protected(h->table, set);
 	key = HKEY(value, h->initval, t->htable_bits);
 	n = __ipset_dereference_protected(hbucket(t, key), 1);
+	rcu_read_unlock_bh();
 	if (!n) {
 		if (forceadd || set->elements >= h->maxelem)
 			goto set_full;
@@ -812,6 +814,7 @@ overwrite_extensions:
 #ifdef IP_SET_HASH_WITH_NETS
 	mtype_data_set_flags(data, flags);
 #endif
+	rcu_read_lock();
 	if (SET_WITH_COUNTER(set))
 		ip_set_init_counter(ext_counter(data, set), ext);
 	if (SET_WITH_COMMENT(set))
@@ -826,8 +829,9 @@ overwrite_extensions:
 	if (old != ERR_PTR(-ENOENT)) {
 		rcu_assign_pointer(hbucket(t, key), n);
 		if (old)
-			kfree_rcu(old, rcu);
+			kfree(old);
 	}
+	rcu_read_unlock();
 
 	return 0;
 set_full:
