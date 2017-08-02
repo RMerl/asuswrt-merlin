@@ -252,6 +252,8 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			if (fp) {
 				if (fgets(result, sizeof(result), fp) == NULL)
 					strcpy(result, "error");
+				else
+					result[strcspn(result, "\n")] = 0;
 				fclose(fp);
 			}
 		} else if(strcmp(type,"conn.active") == 0) {
@@ -276,6 +278,8 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			if (fp) {
 				if (fgets(result, sizeof(result), fp) == NULL)
 					strcpy(result, "error");
+				else
+					result[strcspn(result, "\n")] = 0;
 				fclose(fp);
 			}
 		} else if(strncmp(type,"conn.wifi",9) == 0) {
