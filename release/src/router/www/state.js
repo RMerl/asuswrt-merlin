@@ -1380,7 +1380,7 @@ function showMenuTree(menuList, menuExclude){
 				if( dsl_support && (current_url.indexOf("Advanced_DSL_Content") == 0 || current_url.indexOf("Advanced_VDSL_Content") == 0 || current_url.indexOf("Advanced_WAN_Content") == 0)){
 					tab_code += (j == 1) ? 'tabClicked' : 'tab';	//show 1st tab css as class 'tabClicked'
 				}
-				else if(based_modelid != "RT-AC65U" && (current_url.indexOf("AiProtection_WebProtector") == 0 || current_url.indexOf("ParentalControl") == 0)){
+				else if( bwdpi_support && based_modelid != "RT-AC65U" && (current_url.indexOf("AiProtection_WebProtector") == 0 || current_url.indexOf("ParentalControl") == 0)){
 					tab_code += (j == 5) ? 'tabClicked' : 'tab';	//show 1st tab css as class 'tabClicked'
 				}
 				else{
