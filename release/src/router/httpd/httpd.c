@@ -2370,7 +2370,7 @@ void start_ssl(void)
 
 		if (mssl_init("/etc/cert.pem", "/etc/key.pem")) return;
 
-//		erase_cert();
+		erase_cert();
 
 		if (!retry) exit(1);
 		retry = 0;
