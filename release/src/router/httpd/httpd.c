@@ -82,6 +82,7 @@ typedef unsigned int __u32;   // 1225 ham
 #include <syslog.h>
 #include <mssl.h>
 #include <shutils.h>
+#include <sys/file.h>
 #define SERVER_PORT_SSL	443
 #endif
 #include "bcmnvram_f.h"
@@ -2300,15 +2301,28 @@ void erase_cert(void)
 
 void start_ssl(void)
 {
+	int lockfd;
 	int ok=0;
 	int retry;
 	unsigned long long sn;
-	char t[32];
+	int i;
 #if !defined(RTCONFIG_JFFS2) && !defined(RTCONFIG_BRCM_NAND_JFFS2) && !defined(RTCONFIG_UBIFS)
         int save;
 
 	save = nvram_match("https_crt_save", "1");
 #endif
+
+	lockfd = open("/var/lock/sslinit.lock", O_CREAT | O_RDWR, 0666);
+
+	// Avoid collisions if another httpd instance is initializing SSL cert
+	for ( i = 1; i < 5; i++ ) {
+		if (flock(lockfd, LOCK_EX | LOCK_NB) < 0) {
+			//logmessage("httpd", "Conflict, waiting %d", i);
+			sleep(i*i);
+		} else {
+			i = 5;
+		}
+	}
 
 	//fprintf(stderr,"[httpd] start_ssl running!!\n");
 	//nvram_set("https_crt_gen", "1");
@@ -2318,6 +2332,7 @@ void start_ssl(void)
 	}
 
 	retry = 1;
+
 	while (1) {
 
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
@@ -2350,7 +2365,7 @@ void start_ssl(void)
 #endif
 			if (!ok) {
 				erase_cert();
-				syslog(LOG_NOTICE, "Generating SSL certificate...");
+				logmessage("httpd", "Generating SSL certificate...");
 				fprintf(stderr, "Generating SSL certificate...\n"); // tmp test
 				// browsers seems to like this when the ip address moves...	-- zzz
 				f_read("/dev/urandom", &sn, sizeof(sn));
@@ -2368,11 +2383,19 @@ void start_ssl(void)
 			save_cert();
 		}
 
-		if (mssl_init("/etc/cert.pem", "/etc/key.pem")) return;
+		if (mssl_init("/etc/cert.pem", "/etc/key.pem")) {
+			flock(lockfd, LOCK_UN);
+			return;
+		}
 
+		logmessage("httpd", "Failed to initialize SSL, generating new key/cert.");
 		erase_cert();
 
-		if (!retry) exit(1);
+		if (!retry) {
+			flock(lockfd, LOCK_UN);
+			logmessage("httpd", "Unable to start in SSL mode, exiting!");
+			exit(1);
+		}
 		retry = 0;
 	}
 }
