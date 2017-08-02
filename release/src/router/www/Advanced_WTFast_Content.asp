@@ -272,8 +272,6 @@ function initial(){
 	  rv = -1;
 	}
 	show_menu();
-	document.getElementById("_GameBoost").innerHTML = '<table><tbody><tr><td><div class="_GameBoost"></div></td><td><div style="width:120px;"><#Game_Boost#></div></td></tr></tbody></table>';
-	document.getElementById("_GameBoost").className = "menu_clicked";
 
 	var GB_login_str = "<#Game_Boost_login#>";
 	GB_login_str = GB_login_str.replace(/WTFast/gi,"<span><img src=\"/images/wtfast_logo.png\" style=\"margin-bottom:-5px; margin-left:10px;\"></span>");
