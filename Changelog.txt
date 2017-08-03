@@ -6,6 +6,7 @@ Asuswrt-Merlin Changelog
   - NEW: Merged GPL 380_7743 binary blobs for the RT-N66U.
   - NEW: Description field added to OpenVPN client configuration
   - NEW: Added missing hash types to ipset_arm (Patch by john9527)
+  - NEW: Added hostname Busybox applet, used by some Entware packages
   - CHANGED: Updated Curl to 7.54.1
   - CHANGED: Switched webui menu generation code to GPL 382 code.
              This new code is easier for me to maintain.
@@ -23,6 +24,8 @@ Asuswrt-Merlin Changelog
              certificate info display (backports from GPL 382)
   - CHANGED: Removed option to enable/disable persistent webui
              certificate - they are now always persistent.
+  - CHANGED: Reworked Tools -> Sysinfo page, dynamic data will
+             refresh itself every 3 seconds.
   - FIXED: Duplicate LAN port 1 shown for the RT-AC87U on
            the Sysinfo page.
   - FIXED: Port forward/UPNP issues with CTF enabled depending on
@@ -33,6 +36,9 @@ Asuswrt-Merlin Changelog
   - FIXED: Security issues CVE-2017-11344, CVE-2017-11345 and
            CVE-2017-11420 in networkmap (patches by
            Kilo Foxtrot Papa)
+  - FIXED: Webui self-generated certificate could sometime be
+           invalid due to a race condition between the SSL and
+           non-SSL httpd instances starting at the same time.
 
 
 380.67 (16-July-2017)
