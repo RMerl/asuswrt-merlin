@@ -11,9 +11,16 @@
 <title><#Web_Title#> - System Information</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
+<link rel="stylesheet" type="text/css" href="/js/table/table.css">
 <style>
 p{
 	font-weight: bolder;
+}
+.tableApi_table th {
+       height: 20px;
+}
+.data_tr {
+       height: 30px;
 }
 </style>
 
@@ -25,6 +32,7 @@ p{
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/table/table.js"></script>
 <script>
 
 var hwacc = "<% nvram_get("ctf_disable"); %>";
@@ -40,7 +48,7 @@ function initial(){
 	show_menu();
 
 	if (wl_info.band5g_2_support) {
-		document.getElementById("wifi5_1_clients_tr").style.display = "";
+		document.getElementById("wifi51_clients_th").innerHTML = "Wireless Clients (5 GHz-1)";
 		document.getElementById("wifi5_2_clients_tr").style.display = "";
         } else if (based_modelid == "RT-AC87U") {
                 document.getElementById("wifi5_clients_tr_qtn").style.display = "";
@@ -63,10 +71,16 @@ function initial(){
 	else
 		document.getElementById("fwver").innerHTML = buildno + '_' + extendno;
 
-	update_temperatures();
+
+	var rc_caps = "<% nvram_get("rc_support"); %>";
+	var rc_caps_arr = rc_caps.split(' ').sort();
+	rc_caps = rc_caps_arr.toString().replace(/,/g, " ");
+	document.getElementById("rc_td").innerHTML = rc_caps;
+
 	hwaccel_state();
-	show_etherstate();
+	update_temperatures();
 	updateClientList();
+	update_sysinfo();
 }
 
 function update_temperatures(){
@@ -144,37 +158,16 @@ function showbootTime(){
 function show_etherstate(){
 	var state, state2;
 	var hostname, devicename, devicemac, overlib_str, port;
-	var tmpPort;
 	var line;
+	var wan_array;
+	var port_array= Array();
 
-	if (based_modelid == "RT-AC88U")
-		coldisplay = "display:none;";
-	else {
-		coldisplay = "";
-		genClientList();
-	}
-
-	var code = '<table cellpadding="0" cellspacing="0" width="100%"><tr><th style="width:15%;">Port</th><th style="width:15%;' + coldisplay + '">VLAN</th><th style="width:25%;">Link State</th>';
-	code += '<th style="width:45%;' + coldisplay + '">Last Device Seen</th></tr>';
-
-	var code_ports = "";
-	var entry;
-
-	if (based_modelid == "RT-AC88U")
-	{
-		var rtkswitch = <% sysinfo("ethernet.rtk"); %>;
-
-		for (var i = rtkswitch.length - 1; i >= 0; --i) {
-			line = rtkswitch[i];
-			if (line[1] == "0")
-				state = "Down"
-			else
-				state = line[1] + " Mbps";
-
-			code += '<tr><td>LAN ' + line[0] + ' (RTL)</td><td style="' + coldisplay +'">' + '<span class="ClientName">&lt;unknown&gt;</span>' + '</td><td><span>' + state + '</span></td><td style="' + coldisplay +'">'+ '<span class="ClientName">&lt;unknown&gt;</span>' +'</td></tr>';
-		}
-
-	}
+	if ((based_modelid == "RT-N16") || (based_modelid == "RT-AC87U")
+	    || (based_modelid == "RT-AC3200") || (based_modelid == "RT-AC88U")
+	    || (based_modelid == "RT-AC3100"))
+		reversed = true;
+	else
+		reversed = false;
 
 	var t = etherstate.split('>');
 	for (var i = 0; i < t.length; ++i) {
@@ -208,58 +201,152 @@ function show_etherstate(){
 					devicename = '<span class="ClientName" onclick="oui_query_full_vendor(\'' + devicemac +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ devicemac +'</span>'; 
 				}
 			}
-			tmpPort = line[1].replace(":","");
+			port = line[1].replace(":","");
 
-			if (tmpPort == "8") {		// CPU Port
+			if (port == "8") {		// CPU Port
 				continue;
 			} else if ((based_modelid == "RT-AC56U") || (based_modelid == "RT-AC56S") || (based_modelid == "RT-AC88U") || (based_modelid == "RT-AC3100")) {
-				tmpPort++;		// Port starts at 0
-				if (tmpPort == "5") tmpPort = 0;	// Last port is WAN
+				port++;		// Port starts at 0
+				if (port == "5") port = 0;	// Last port is WAN
 			} else if (based_modelid == "RT-AC87U") {
-				if (tmpPort == "4")
+				if (port == "4")
 					continue;	// This is the internal LAN port
-				if (tmpPort == "10") {
-					tmpPort = "4";	// This is the LAN 4 port from QTN
+				if (port == "10") {
+					port = "4";	// This is LAN 4 (RTL) from QTN
 					devicename = '<span class="ClientName">&lt;unknown&gt;</span>';
 				}
 			}
-			if (tmpPort == "0") {
-				port = "WAN";
-			} else if (tmpPort > 4) {
+			if (port == "0") {
+				wan_array = [ "WAN", (line[7] & 0xFFF), state2, devicename];
+				continue;
+			} else if (port > 4) {
 				continue;	// Internal port
 			} else {
-				if ((based_modelid == "RT-N16") || (based_modelid == "RT-AC87U")
-				    || (based_modelid == "RT-AC3200") || (based_modelid == "RT-AC88U") 
-				    || (based_modelid == "RT-AC3100"))  tmpPort = 5 - tmpPort;
-
-				port = "LAN "+tmpPort;
+				if (reversed) port = 5 - port;
 			}
-			entry = '<tr><td>' + port + '</td><td style="' + coldisplay +'">' + (line[7] & 0xFFF) + '</td><td><span>' + state2 + '</span></td>';
-			entry += '<td style="' + coldisplay +'">'+ devicename +'</td></tr>';
 
-			if (based_modelid == "RT-N16")
-				code_ports = entry + code_ports;
+			if (reversed)
+				port_array.unshift(["LAN "+ port, (line[7] & 0xFFF), state2, devicename]);
 			else
-				code_ports += entry;
+				port_array.push(["LAN " + port, (line[7] & 0xFFF), state2, devicename]);
+
 		}
 	}
-	code += code_ports + '</table>';
-	document.getElementById("etherstate_td").innerHTML = code;
+
+	if (based_modelid == "RT-AC88U")
+	{
+		var rtkswitch = <% sysinfo("ethernet.rtk"); %>;
+
+		for (var i = 0; i < rtkswitch.length; i++) {
+			line = rtkswitch[i];
+			if (line[1] == "0")
+				state = "Down"
+			else
+				state = line[1] + " Mbps";
+
+			port_array.push(['LAN ' +line[0] + ' (RTK)', 'NA', state, '&lt;unknown&gt;']);
+		}
+
+	}
+
+	/* Add WAN last, so it can be always at the top */
+	port_array.unshift(wan_array);
+
+	var tableStruct = {
+		data: port_array,
+		container: "tableContainer",
+		title: "Ethernet Ports",
+		header: [
+			{
+				"title" : "Port",
+				"width" : "15%"
+			},
+			{
+				"title" : "VLAN",
+				"width" : "15%"
+			},
+			{
+				"title" : "Link State",
+				"width" : "25%"
+			},
+			{
+				"title" : "Last Device Seen",
+				"width" : "45%"
+			}
+		]
+	}
+
+	if(tableStruct.data.length) {
+		$("#tr_ethernet_ports").css("display", "");
+		tableApi.genTableAPI(tableStruct);
+	}
 }
+
+
+function show_connstate(){
+	document.getElementById("conn_td").innerHTML = conn_stats_arr[0] + " / <% sysinfo("conn.max"); %>&nbsp;&nbsp;-&nbsp;&nbsp;" + conn_stats_arr[1] + " active";
+
+	document.getElementById("wlc_24_td").innerHTML = "Associated: <span>" + wlc_24_arr[0] + "</span>&nbsp;&nbsp;-&nbsp;&nbsp;" +
+	                                                 "Authorized: <span>" + wlc_24_arr[1] + "</span>&nbsp;&nbsp;-&nbsp;&nbsp;" +
+	                                                 "Authenticated: <span>" + wlc_24_arr[2] + "</span>";
+
+	if (band5g_support) {
+		if (based_modelid == "RT-AC87U") {
+			document.getElementById("wlc_5qtn_td").innerHTML = "Associated: <span>" +wlc_51_arr[0] + "</span>";
+		} else {
+			document.getElementById("wlc_51_td").innerHTML = "Associated: <span>" + wlc_51_arr[0] + "</span>&nbsp;&nbsp;-&nbsp;&nbsp;" +
+			                                                 "Authorized: <span>" + wlc_51_arr[1] + "</span>&nbsp;&nbsp;-&nbsp;&nbsp;" +
+			                                                 "Authenticated: <span>" + wlc_51_arr[2] + "</span>";
+		}
+	}
+
+	if (wl_info.band5g_2_support) {
+		document.getElementById("wlc_52_td").innerHTML = "Associated: <span>" + wlc_52_arr[0] + "</span>&nbsp;&nbsp;-&nbsp;&nbsp;" +
+		                                                 "Authorized: <span>" + wlc_52_arr[1] + "</span>&nbsp;&nbsp;-&nbsp;&nbsp;" +
+		                                                 "Authenticated: <span>" + wlc_52_arr[2] + "</span>";
+	}
+
+}
+
+
+function show_memcpu(){
+	document.getElementById("cpu_stats_td").innerHTML = cpu_stats_arr[0] + ", " + cpu_stats_arr[1] + ", " + cpu_stats_arr[2];
+	document.getElementById("mem_total_td").innerHTML = mem_stats_arr[0] + " MB";
+	document.getElementById("mem_free_td").innerHTML = mem_stats_arr[1] + " MB";
+	document.getElementById("mem_buffer_td").innerHTML = mem_stats_arr[2] + " MB";
+	document.getElementById("mem_cache_td").innerHTML = mem_stats_arr[3] + " MB";
+	document.getElementById("mem_swap_td").innerHTML = mem_stats_arr[4] + " / " + mem_stats_arr[5] + " MB";
+
+	document.getElementById("nvram_td").innerHTML = mem_stats_arr[6] + " / " + <% sysinfo("nvram.total"); %> + " bytes";
+	document.getElementById("jffs_td").innerHTML = mem_stats_arr[7];
+}
+
 
 function updateClientList(e){
 	$.ajax({
 		url: '/update_clients.asp',
-		dataType: 'script', 
+		dataType: 'script',
 		error: function(xhr) {
 			setTimeout("updateClientList();", 1000);
 		},
 		success: function(response){
-			if(isJsonChanged(originData, originDataTmp)){
-				show_etherstate();
-			}
-
 			setTimeout("updateClientList();", 3000);
+		}
+	});
+}
+
+function update_sysinfo(e){
+	$.ajax({
+		url: '/ajax_sysinfo.asp',
+		dataType: 'script',
+		error: function(xhr) {
+			setTimeout("update_sysinfo();", 1000);
+		},
+		success: function(response){
+			show_memcpu();
+			show_etherstate();
+			show_connstate();
+			setTimeout("update_sysinfo();", 3000);
 		}
 	});
 }
@@ -319,7 +406,7 @@ function updateClientList(e){
 					</thead>
 					<tr>
 						<th>Model</th>
-				        	<td id="model_id"><% nvram_get("productid"); %></td>
+							<td id="model_id"><% nvram_get("productid"); %></td>
 					</tr>
 					<tr>
 						<th>Firmware Version</th>
@@ -344,7 +431,7 @@ function updateClientList(e){
 					</tr>
 					<tr>
 						<th>Features</th>
-						<td><% nvram_get("rc_support"); %></td>
+						<td id="rc_td"></td>
 					</tr>
 					<tr>
 						<th><#General_x_SystemUpTime_itemname#></a></th>
@@ -374,11 +461,7 @@ function updateClientList(e){
 					</tr>
 					<tr>
 						<th>CPU Load Average (1, 5, 15 mins)</th>
-						<td>
-							<% sysinfo("cpu.load.1"); %>,&nbsp;
-							<% sysinfo("cpu.load.5"); %>,&nbsp;
-							<% sysinfo("cpu.load.15"); %>
-						</td>
+						<td id="cpu_stats_td"></td>
 					</tr>
 
 				</table>
@@ -389,29 +472,29 @@ function updateClientList(e){
 							<td colspan="2">Memory</td>
 						</tr>
 					</thead>
- 					<tr>
+					<tr>
 						<th>Total</th>
-						<td> <% sysinfo("memory.total"); %>&nbsp;MB</td>
+						<td id="mem_total_td"></td>
 					</tr>
 
 					<tr>
 						<th>Free</th>
-						<td> <% sysinfo("memory.free"); %>&nbsp;MB</td>
+						<td id="mem_free_td"></td>
 					</tr>
 
- 					<tr>
+					<tr>
 						<th>Buffers</th>
-						<td> <% sysinfo("memory.buffer"); %>&nbsp;MB</td>
+						<td id="mem_buffer_td"></td>
 					</tr>
 
 					<tr>
 						<th>Cache</th>
-						<td> <% sysinfo("memory.cache"); %>&nbsp;MB</td>
+						<td id="mem_cache_td"></td>
 					</tr>
 
 					<tr>
-						<th>Swap usage</th>
-						<td><% sysinfo("memory.swap.used"); %> / <% sysinfo("memory.swap.total"); %>&nbsp;MB</td>
+						<th>Swap</th>
+						<td id="mem_swap_td"></td>
 					</tr>
 				</table>
 
@@ -423,11 +506,11 @@ function updateClientList(e){
 					</thead>
 					<tr>
 						<th>NVRAM usage</th>
-						<td><% sysinfo("nvram.used"); %>&nbsp;/ <% sysinfo("nvram.total"); %> bytes</td>
+						<td id="nvram_td"></td>
 					</tr>
 					<tr>
 						<th>JFFS</th>
-						<td><% sysinfo("jffs.usage"); %></td>
+						<td id="jffs_td"></td>
 					</tr>
 				</table>
 
@@ -443,59 +526,34 @@ function updateClientList(e){
 					</tr>
 					<tr>
 						<th>Connections</th>
-						<td><% sysinfo("conn.total"); %>&nbsp;/ <% sysinfo("conn.max"); %>&nbsp;&nbsp;-&nbsp;&nbsp;<% sysinfo("conn.active"); %> active</td>
+						<td id="conn_td"></td>
 					</tr>
 					<tr>
 						<th>Ethernet Ports</th>
-						<td id="etherstate_td"><i><span>Querying switch...</span></i></td>
+						<td>
+							<div id="tableContainer" style="margin-top:-10px;"></div>
+						</td>
 					</tr>
 					<tr>
 						<th>Wireless clients (2.4 GHz)</th>
-						<td>
-							Associated: <span><% sysinfo("conn.wifi.0.assoc"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
-							Authorized: <span><% sysinfo("conn.wifi.0.autho"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
-							Authenticated: <span><% sysinfo("conn.wifi.0.authe"); %></span>
-						</td>
+						<td id="wlc_24_td"></td>
 					</tr>
 					<tr id="wifi5_clients_tr" style="display:none;">
-						<th>Wireless clients (5 GHz)</th>
-						<td>
-							Associated: <span><% sysinfo("conn.wifi.1.assoc"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
-							Authorized: <span><% sysinfo("conn.wifi.1.autho"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
-							Authenticated: <span><% sysinfo("conn.wifi.1.authe"); %></span>
-						</td>
-					</tr>
-					<tr id="wifi5_1_clients_tr" style="display:none;">
-						<th>Wireless clients (5 GHz-1)</th>
-						<td>
-							Associated: <span><% sysinfo("conn.wifi.1.assoc"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
-							Authorized: <span><% sysinfo("conn.wifi.1.autho"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
-							Authenticated: <span><% sysinfo("conn.wifi.1.authe"); %></span>
-						</td>
+						<th id="wifi51_clients_th">Wireless clients (5 GHz)</th>
+						<td id="wlc_51_td"></td>
 					</tr>
 					<tr id="wifi5_2_clients_tr" style="display:none;">
 						<th>Wireless clients (5 GHz-2)</th>
-						<td>
-							Associated: <span><% sysinfo("conn.wifi.2.assoc"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
-							Authorized: <span><% sysinfo("conn.wifi.2.autho"); %></span>&nbsp;&nbsp;-&nbsp;&nbsp;
-							Authenticated: <span><% sysinfo("conn.wifi.2.authe"); %></span>
-						</td>
+						<td id="wlc_52_td"></td>
 					</tr>
 					<tr id="wifi5_clients_tr_qtn" style="display:none;">
 						<th>Wireless clients (5 GHz)</th>
-						<td>
-                                                        Associated: <span><% sysinfo("conn.wifi.1.assoc"); %></span>
-						</td>
+						<td id="wlc_5qtn_td"></td>
 					</tr>
 				</table>
 				</td>
 				</tr>
 
-				<tr class="apply_gen" valign="top" height="95px">
-					<td>
-						<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
-					</td>
-				</tr>
 	        </tbody>
             </table>
             </form>
