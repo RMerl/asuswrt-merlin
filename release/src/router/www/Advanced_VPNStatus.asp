@@ -173,8 +173,6 @@ function displayData(){
 
 	if ( (vpnc_support) && (vpnc_clientlist_array != "") ) {
 		show_vpnc_rulelist();
-	} else {
-		showhide("vpnc", 0);
 	}
 
 	setTimeout("refreshData()",2000);
