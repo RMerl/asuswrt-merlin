@@ -42,6 +42,9 @@
 #include <sys/utsname.h>
 #include <sys/param.h>
 #include <net/ethernet.h>
+#ifdef RTCONFIG_TOR
+#include <pwd.h>
+#endif
 
 #ifdef RTCONFIG_RALINK
 #include <ralink.h>
@@ -9908,6 +9911,7 @@ void start_Tor_proxy(void)
 	char *Dnsport;
 	struct stat mdstat_jffs, mdstat_tmp;
 	int mdesc_stat_jffs, mdesc_stat_tmp;
+	struct passwd *pw;
 
 	stop_Tor_proxy();
 
@@ -9923,7 +9927,11 @@ void start_Tor_proxy(void)
 		mdesc_stat_jffs = stat("/jffs/.tordb/cached-microdesc-consensus", &mdstat_jffs);
 		if(mdesc_stat_jffs != -1){
 			_dprintf("Tor: restore microdescriptor directory\n");
-			eval("cp", "-rf", "/jffs/.tordb", "/tmp/.tordb");
+			pw = getpwuid(mdstat_jffs.st_uid);
+			if ((pw) && (strcmp(pw->pw_name, "tor"))){
+				eval("chown", "-R", "tor.tor","/jffs/.tordb");
+			}
+			eval("cp", "-rfa", "/jffs/.tordb", "/tmp/.tordb");
 			sleep(1);
 		}
 	}

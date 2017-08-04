@@ -3488,7 +3488,7 @@ static void Tor_microdes_check() {
 		while (fgets(buf, sizeof(buf), f)) {
 			if ((p=strstr(buf, "now have enough directory")) == NULL) continue;
 			*p = 0;
-			eval("cp", "-rf", "/tmp/.tordb", "/jffs/.tordb");
+			eval("cp", "-rfa", "/tmp/.tordb", "/jffs/.tordb");
 			break;
 		}
 		fclose(f);
