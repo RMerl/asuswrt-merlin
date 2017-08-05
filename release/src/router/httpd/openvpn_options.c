@@ -866,9 +866,9 @@ void parse_openvpn_status(int unit){
 				token = strtok(NULL, ",");	//Connected Since (time_t)
 				token = strtok(NULL, ",");	//Username, include'\n'
 				if(token)
-					fprintf(fpo, "%s", token);
+					fprintf(fpo, "%s\n", token);
 				else
-					fprintf(fpo, "NoUsername");
+					fprintf(fpo, "NoUsername\n");
 			}
 		}
 		fclose(fpi);
