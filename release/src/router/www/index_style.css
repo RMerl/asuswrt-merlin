@@ -789,8 +789,8 @@ width:122px;
 }
 
 .menu_Icon{
-	width: 43px;
-	height: 43px;
+	width: 36px;
+	height: 36px;
 }
 .menu_Desc{
 	word-break: keep-all;
@@ -811,11 +811,11 @@ width:122px;
 }
 .menu_Index{
 	background: url(images/New_ui/icon_indexes.png);
-	background-position: -0px -40px;
+	background-position: 0px -36px;
 }
 .menu_GuestNetwork{
 	background: url(images/New_ui/icon_indexes.png);
-	background-position: -0px -86px;
+	background-position: 0px -72px;
 }
 .menu_PermissionManagement{
 	background: url(images/New_ui/icon_indexes.png);
@@ -827,7 +827,7 @@ width:122px;
 }
 .menu_BandwidthMonitor{
 	background: url(images/New_ui/icon_indexes.png);
-	background-position: -0px -128px;
+	background-position: -0px -108px;
 }
 .menu_GameBoost{
 	background: url(images/New_ui/game.png);
@@ -835,75 +835,80 @@ width:122px;
 }
 .menu_TrafficAnalyzer{
 	background: url(images/New_ui/icon_indexes.png);
-	background-position: -0px -170px;
+	background-position: 0px -144px;
 }
 .menu_QoS{
 	background: url(images/New_ui/icon_indexes.png);
-	background-position: -0px -170px;
+	background-position: 0px -144px;
 }
 .menu_AccessControl{
 	background: url(images/New_ui/icon_indexes.png);
-	background-position: -0px -216px;
+	background-position: 0px -180px;
 }
 .menu_AiProtection{
 	background: url(images/New_ui/icon_indexes.png);
-	background-position: -0px -216px;
+	background-position: 0px -180px;
 }
 .menu_ParentalControl{
 	background: url(images/New_ui/icon_indexes.png);
-	background-position: -0px -216px;
+	background-position: 0px -180px;
 }
 .menu_APP{
 	background: url(images/New_ui/icon_indexes.png);
-	background-position: -0px -256px;
+	background-position: 0px -216px;
 }
 .menu_AiCloud{
 	background: url(images/New_ui/icon_indexes.png);
-	background-position: -0px -297px;
+	background-position: 0px -252px;
 }
+
 .menu_Wireless{
 	background: url(images/New_ui/icon_menues.png);
-	background-position: -0px 4px;
+	background-position: 0px 0px;
 }
 .menu_LAN{
 	background: url(images/New_ui/icon_menues.png);
-	background-position: -0px -36px;  
+	background-position: 0px -36px;  
 }
 .menu_WAN{
 	background: url(images/New_ui/icon_menues.png);
-	background-position: -0px -73px;
+	background-position: 0px -72px;
 }
 .menu_IPv6{
 	background: url(images/New_ui/icon_menues.png);
-	background-position: -0px -109px;
+	background-position: 0px -108px;
 }
 .menu_VPN{
 	background: url(images/New_ui/icon_menues.png);
-	background-position: -0px -145px;
+	background-position: 0px -144px;
 }
 .menu_VLAN{
 	background: url(images/New_ui/icon_menues.png);
-	background-position: -0px -145px;
+	background-position: 0px -144px;
 }
 .menu_Firewall{
 	background: url(images/New_ui/icon_menues.png);
-	background-position: -0px -183px;
+	background-position: 0px -180px;
 }
 .menu_Setting{
 	background: url(images/New_ui/icon_menues.png);
-	background-position: -0px -221px;
+	background-position: 0px -216px;
 }
 .menu_Log{
 	background: url(images/New_ui/icon_menues.png);
-	background-position: -0px -257px;
+	background-position: 0px -252px;
 }
 .menu_NekworkTool{
 	background: url(images/New_ui/icon_menues.png);
-	background-position: -0px -293px;
+	background-position: 0px -288px;
+}
+.menu_SmartHome{
+	background: url(images/New_ui/icon_menues.png);
+	background-position: 0px -324px;
 }
 .menu_QIS{
 	background: url(images/New_ui/icon_indexes.png);
-	background-position: -0px -0px;
+	background-position: 0px 0px;
 }
 .menuClicked{
 	background: #8AA6BE; /* Old browsers */
@@ -1030,8 +1035,7 @@ width:122px;
   background: url(images/New_ui/icon_indexes.png);
   background-position: -0px -40px; width: 43px; height: 43px;
 }
-
 .menu_Tools{
-  background: url(images/New_ui/icon_indexes.png);
-  background-position: -0px -346px; width: 43px; height: 43px;
+	background: url(images/New_ui/icon_indexes.png);
+	background-position: 0px -288px;
 }
