@@ -95,7 +95,7 @@ build_fw()
 		cp $FWNAME $STAGE_LOC/
 
 		ZIPNAME="${FWNAME%.*}".zip
-		sha256sum $FWNAME | unix2dos > sha256sum.sha256
+		sha256sum $FWNAME > sha256sum.sha256
 		zip -j $STAGE_LOC/$ZIPNAME $FWNAME $STAGE_LOC/README-merlin.txt $STAGE_LOC/Changelog.txt sha256sum.sha256 &>/dev/null
 		echo "*** $(date +%R) - Done building $FWMODEL!"
 	else
