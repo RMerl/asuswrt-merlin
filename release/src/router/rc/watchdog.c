@@ -112,11 +112,10 @@ static int modem_flow_count = 0;
 static int modem_data_save = 0;
 #endif
 #endif
-#if defined(RTCONFIG_TOR) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2))
+#if 0 //defined(RTCONFIG_TOR) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2))
 #define TOR_CHECK_PERIOD	10		/* 10 x 30 seconds */
 unsigned int tor_check_count = 0;
 #endif
-
 static struct itimerval itv;
 /* to check watchdog alive */
 #if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))
@@ -3460,7 +3459,7 @@ void rssi_check()
 }
 #endif
 
-#ifdef RTCONFIG_TOR
+#if 0 //#ifdef RTCONFIG_TOR
 #if (defined(RTCONFIG_JFFS2)||defined(RTCONFIG_BRCM_NAND_JFFS2))
 static void Tor_microdes_check() {
 
@@ -3790,7 +3789,7 @@ void watchdog(int sig)
 
 	check_hour_monitor_service();
 
-#if defined(RTCONFIG_TOR) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2))
+#if 0 //#if defined(RTCONFIG_TOR) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2))
 	if (nvram_get_int("Tor_enable"))
 		Tor_microdes_check();
 #endif

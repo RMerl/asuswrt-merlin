@@ -9898,6 +9898,15 @@ void stop_Tor_proxy(void)
 		killall("Tor", SIGTERM);
 	sleep(1);
 	remove("/tmp/torlog");
+
+#if (defined(RTCONFIG_JFFS2)||defined(RTCONFIG_BRCM_NAND_JFFS2))
+	if (f_exists("/tmp/.tordb/cached-microdesc-consensus") &&
+	    !f_exists("/jffs/.tordb/cached-microdesc-consensus"))
+	{
+		//logmessage("Tor", "Backing up database");
+		eval("cp", "-fa", "/tmp/.tordb", "/jffs/.tordb");
+	}
+#endif
 }
 
 void start_Tor_proxy(void)
@@ -9909,8 +9918,7 @@ void start_Tor_proxy(void)
 	char *Socksport;
 	char *Transport;
 	char *Dnsport;
-	struct stat mdstat_jffs, mdstat_tmp;
-	int mdesc_stat_jffs, mdesc_stat_tmp;
+	struct stat mdstat_jffs;
 	struct passwd *pw;
 
 	stop_Tor_proxy();
@@ -9922,16 +9930,17 @@ void start_Tor_proxy(void)
 		return;
 
 #if (defined(RTCONFIG_JFFS2)||defined(RTCONFIG_BRCM_NAND_JFFS2))
-	mdesc_stat_tmp = stat("/tmp/.tordb/cached-microdesc-consensus", &mdstat_tmp);
-	if(mdesc_stat_tmp == -1){
-		mdesc_stat_jffs = stat("/jffs/.tordb/cached-microdesc-consensus", &mdstat_jffs);
-		if(mdesc_stat_jffs != -1){
+	if (stat("/jffs/.tordb/cached-microdesc-consensus", &mdstat_jffs) != -1) {
+		if(difftime(time(NULL), mdstat_jffs.st_mtime) > 60*60*24*7) {
+			logmessage("Tor", "Removing stale DB backup");
+			eval("rm", "-rf", "/jffs/.tordb");
+		} else if (!f_exists("/tmp/.tordb/cached-microdesc-consensus")) {
 			_dprintf("Tor: restore microdescriptor directory\n");
 			pw = getpwuid(mdstat_jffs.st_uid);
 			if ((pw) && (strcmp(pw->pw_name, "tor"))){
 				eval("chown", "-R", "tor.tor","/jffs/.tordb");
 			}
-			eval("cp", "-rfa", "/jffs/.tordb", "/tmp/.tordb");
+			eval("cp", "-fa", "/jffs/.tordb", "/tmp/.tordb");
 			sleep(1);
 		}
 	}
