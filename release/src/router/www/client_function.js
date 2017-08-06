@@ -86,9 +86,9 @@ var isJsonChanged = function(objNew, objOld){
 	// window object
 	var win = window.top || window;
 	
-	// Firefox sometimes contain random characters here, breaking the JSON parser
-	if ((typeof(win.name) != "string") || (win.name.substring(2, 7) != "ouiDB")) {
-			win.name = "";
+	// Browser sometimes contain random characters here, breaking the JSON parser
+	if ((typeof(win.name) != "string") || (win.name.substring(2, 7) != "ouiDB") && (win.name.substring(2,6) != "menu")) {
+		win.name = "";
 	}
 
 	// session store

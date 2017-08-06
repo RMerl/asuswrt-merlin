@@ -155,6 +155,10 @@ var Session = Session || (function(){
 	};
 
 	var win = window.top || window;
+
+	if ((typeof(win.name) != "string") || (win.name.substring(2, 7) != "ouiDB") && (win.name.substring(2,6) != "menu")) {
+		win.name = "";
+	}
 	var store = (win.name ? JSON.parse(win.name) : {});
 	function Save() {
 		win.name = JSON.stringify(store);
