@@ -551,21 +551,16 @@ endif
 # install before samba3(.6.x) for not overwriting some binaries
 obj-$(RTCONFIG_WEBDAV) += samba-3.5.8
 
-ifneq ($(RTCONFIG_SAMBA_MODERN),y)
 ifeq ($(CONFIG_BCMWL5),y)
 ifneq ($(RTCONFIG_8M_SFP),y)
-obj-$(NEED_SAMBA3) += samba-3.0.33
+obj-$(NEED_SAMBA3) += $(if $(RTCONFIG_SAMBA36X),samba-3.6.x,samba-3.0.33)
 else
 obj-$(NEED_SAMBA3) += $(if $(RTCONFIG_SAMBA36X),samba-3.6.x,samba3)
 endif
 else
-obj-$(NEED_SAMBA3) += samba3
+obj-$(NEED_SAMBA3) += $(if $(RTCONFIG_SAMBA36X),samba-3.6.x,samba3)
 endif
-
-else # Samba 3.6.x
-obj-$(NEED_SAMBA3) += samba36
-obj-$(NEED_SAMBA3) += libiconv-1.14
-endif
+obj-$(RTCONFIG_SAMBA36X) += libiconv-1.14
 
 ifeq ($(RTCONFIG_NTFS),y)
 obj-$(RTCONFIG_OPEN_NTFS3G) += ntfs-3g
@@ -2372,8 +2367,8 @@ p910nd:
 samba:
 samba3:
 	@$(MAKE) -C samba3
-samba36: libiconv-1.14
-	@$(MAKE) -C samba36 $(PARALLEL_BUILD)
+samba-3.6.x: libiconv-1.14
+	@$(MAKE) -C samba-3.6.x $(PARALLEL_BUILD)
 samba-3.5.8:
 	@$(MAKE) -C samba-3.5.8 $(PARALLEL_BUILD)
 

@@ -508,10 +508,6 @@ define RouterOptions
 			echo "RTCONFIG_SAMBA3=y" >>$(1); \
 		fi; \
 	fi; \
-	if [ "$(SAMBA36)" = "y" ]; then \
-		sed -i "/RTCONFIG_SAMBA_MODERN/d" $(1); \
-		echo "RTCONFIG_SAMBA_MODERN=y" >>$(1); \
-	fi; \
 	sed -i "/RTCONFIG_EMF/d" $(1); \
 	if [ "$(CONFIG_LINUX26)" = "y" ]; then \
 		if [ "$(SLIM)" = "y" ]; then \
