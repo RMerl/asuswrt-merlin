@@ -50,6 +50,11 @@ Asuswrt-Merlin Changelog
            database in /jffs/.tordb, due to bad permissions.
   - FIXED: When multiple OpenVPN clients are connected to the router,
            their username wouldn't show as Connected.
+  - FIXED: SMB sharing without user authentication would fail if
+           router's admin username was changed from "admin"
+           (Asus bug)
+  - FIXED: SMB sharing without user authentication would cause
+           SMB2 to downgrade to SMB1.
 
 
 380.67 (16-July-2017)
