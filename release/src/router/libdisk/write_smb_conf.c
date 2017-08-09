@@ -249,14 +249,14 @@ int main(int argc, char *argv[])
 //#if defined(RTCONFIG_TFAT) || defined(RTCONFIG_TUXERA_NTFS) || defined(RTCONFIG_TUXERA_HFS)
 		if(nvram_get_int("enable_samba_tuxera") == 1){
 			fprintf(fp, "auth methods = guest\n");
-			fprintf(fp, "guest account = admin\n");
+			fprintf(fp, "guest account = %s\n", nvram_safe_get("http_username"));
 			fprintf(fp, "map to guest = Bad Password\n");
 			fprintf(fp, "guest ok = yes\n");
 		}
 		else{
 #if defined(RTCONFIG_SAMBA36X)
 			fprintf(fp, "auth methods = guest\n");
-			fprintf(fp, "guest account = admin\n");
+			fprintf(fp, "guest account = %s\n", nvram_safe_get("http_username"));
 			fprintf(fp, "map to guest = Bad Password\n");
 			fprintf(fp, "guest ok = yes\n");
 #else
@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
 #else
 #if defined(RTCONFIG_SAMBA36X)
 		fprintf(fp, "auth methods = guest\n");
-		fprintf(fp, "guest account = admin\n");
+		fprintf(fp, "guest account = %s\n", nvram_safe_get("http_username"));
 		fprintf(fp, "map to guest = Bad Password\n");
 		fprintf(fp, "guest ok = yes\n");
 #else
