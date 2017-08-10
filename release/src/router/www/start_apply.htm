@@ -533,6 +533,11 @@ function initial(){
 		parent.showLoading(restart_time, "waiting");
 		setTimeout(getXMLAndRedirect, restart_time*1000);
 	}
+        else if((current_page.indexOf("Advanced_OpenVPNClient_Content.asp") != -1) ||
+	        (current_page.indexOf("Advanced_VPN_OpenVPN.asp") != -1)){
+                parent.showLoading(restart_time, "waiting");
+                setTimeout(getXMLAndRedirect, restart_time*1000);
+        }
 	else if(current_page.indexOf("AiProtection_") != -1){
 		parent.showLoading(restart_time, "waiting");
 		setTimeout(getXMLAndRedirect, restart_time*1000);

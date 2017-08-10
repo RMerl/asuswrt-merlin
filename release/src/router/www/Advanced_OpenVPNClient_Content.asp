@@ -519,7 +519,7 @@ function applyRule(){
 		document.form.action_script.value = "restart_vpnclient"+openvpn_unit;
 	}
 
-	showLoading(document.form.action_wait.value);
+	showLoading();
 
 	tmp_value = "";
 
@@ -862,8 +862,8 @@ function getConnStatus() {
 function defaultSettings() {
 	if (confirm("WARNING: This will reset this OpenVPN client to factory default settings!\n\nKeys and certificates associated to this instance will also be DELETED!\n\nProceed?")) {
 		document.form.action_script.value = "stop_vpnclient" + openvpn_unit + ";clearvpnclient" + openvpn_unit;
-		showLoading(15);
 		document.form.action_wait.value = 15;
+		showLoading();
 		document.form.submit();
 	} else {
 		return false;
@@ -1058,14 +1058,14 @@ function defaultSettings() {
 									 function() {
 										document.form.action_script.value = "start_vpnclient" + openvpn_unit;
 										document.form.action_wait.value = 15;
-										parent.showLoading(15);
+										parent.showLoading();
 										document.form.submit();
 										return true;
 									 },
 									 function() {
 										document.form.action_script.value = "stop_vpnclient" + openvpn_unit;
 										document.form.action_wait.value = 15;
-										parent.showLoading(15);
+										parent.showLoading();
 										document.form.submit();
 										return true;
 									 },
