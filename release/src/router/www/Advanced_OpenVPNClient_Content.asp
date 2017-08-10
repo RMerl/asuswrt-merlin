@@ -275,7 +275,7 @@ function initial()
 	document.form.vpn_client_rgw.value = policy_ori;
 	update_visibility();
 
-	setTimeout("getConnStatus()", 2000);
+	setTimeout("getConnStatus()", 1000);
 }
 
 function getTLS(unit){
@@ -811,6 +811,19 @@ function pullLANIPList(obj){
 
 
 function getConnStatus() {
+	$.ajax({
+		url: 'ajax_vpn_status.asp',
+		dataType: 'script',
+		error: function(xhr){
+			getConnStatus();
+		},
+		success: function(response){
+			showConnStatus();
+		}
+	});
+}
+
+function showConnStatus() {
 	switch (openvpn_unit) {
 		case "1":
 			client_state = vpnc_state_t1;
@@ -834,29 +847,42 @@ function getConnStatus() {
 			break;
 	}
 
-	if (client_state == "-1") {
-		switch (client_errno) {
-			case "1":
-				code = "Error - IP conflict!";
+	switch (client_state) {
+		case "1":	// Connecting
+			code = "Connecting...";
+			setTimeout("getConnStatus()",2000);
+			break;
+		case "2":	// COnnected
+			code = "Connected";
+			break;
+		case "-1":
+			switch (client_errno) {
+				case "1":
+					code = "Error - IP conflict!";
+					break;
+				case "2":
+					code = "Error - Routing conflict!";
+					break;
+				case "4":
+					code = "Error - SSL/TLS issue!";
 				break;
-			case "2":
-				code = "Error - Routing conflict!";
-				break;
-			case "4":
-				code = "Error - SSL/TLS issue!";
-				break;
-			case "5":
-				code = "Error - DH issue!";
-				break;
-			case "6":
-				code = "Error - Authentication failure!";
-				break;
-			default:
-				code = "Error - check configuration!";
-				break;
-		}
-		document.getElementById("vpn_error_msg").innerHTML = "<span>" + code + "</span>";
+				case "5":
+					code = "Error - DH issue!";
+					break;
+				case "6":
+					code = "Error - Authentication failure!";
+					break;
+				default:
+					code = "Error - check configuration!";
+					break;
+			}
+			setTimeout("getConnStatus()",2000);
+		break;
+		default:
+			code = "";
+			break;
 	}
+	document.getElementById("vpn_state_msg").innerHTML = "<span>" + code + "</span>";
 }
 
 function defaultSettings() {
@@ -1057,14 +1083,14 @@ function defaultSettings() {
 								$('#radio_service_enable').iphoneSwitch((client_state > 0),
 									 function() {
 										document.form.action_script.value = "start_vpnclient" + openvpn_unit;
-										document.form.action_wait.value = 15;
+										document.form.action_wait.value = 10;
 										parent.showLoading();
 										document.form.submit();
 										return true;
 									 },
 									 function() {
 										document.form.action_script.value = "stop_vpnclient" + openvpn_unit;
-										document.form.action_wait.value = 15;
+										document.form.action_wait.value = 10;
 										parent.showLoading();
 										document.form.submit();
 										return true;
@@ -1074,7 +1100,7 @@ function defaultSettings() {
 									 }
 								);
 							</script>
-							<div id="vpn_error_msg"></div>
+							<div style="height:30px;line-height:30px;" id="vpn_state_msg"></div>
 					    </td>
 					</tr>
 					<tr>
