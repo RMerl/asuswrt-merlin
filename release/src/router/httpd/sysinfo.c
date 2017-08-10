@@ -32,6 +32,7 @@
 #include <stdarg.h>
 #include <sys/wait.h>
 #include <dirent.h>
+#include <sys/ioctl.h>
 
 #include <typedefs.h>
 #include <bcmutils.h>
@@ -70,7 +71,6 @@ typedef unsigned long long u64;
 #include <linux/major.h>
 #include <rtk_switch.h>
 #include <rtk_types.h>
-#include <sys/ioctl.h>
 
 #define RTKSWITCH_DEV   "/dev/rtkswitch"
 
