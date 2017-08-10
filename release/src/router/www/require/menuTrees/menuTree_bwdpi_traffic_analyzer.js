@@ -545,9 +545,9 @@
 						retArray.push("Captive_Portal_Advanced.asp");
 				}
 
-				if(!cooler_support){
-					retArray.push("Advanced_PerformanceTuning_Content.asp");
-				}
+//				if(!cooler_support){
+//					retArray.push("Advanced_PerformanceTuning_Content.asp");
+//				}
 
 				/* Operation Mode */
 				if(isSwMode("re")){
