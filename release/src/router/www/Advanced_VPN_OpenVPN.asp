@@ -1423,7 +1423,6 @@ function update_cipher() {
 															}
 														);
 													</script>
-													<span>Warning: any unsaved change will be lost.</span>
 												</td>
 											</tr>
 											<tr>

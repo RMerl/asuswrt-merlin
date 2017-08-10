@@ -1074,7 +1074,6 @@ function defaultSettings() {
 									 }
 								);
 							</script>
-							<span>Warning: any unsaved change will be lost.</span>
 							<div id="vpn_error_msg"></div>
 					    </td>
 					</tr>
