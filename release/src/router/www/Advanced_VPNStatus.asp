@@ -389,8 +389,8 @@ function parseStatus(text, block, ipaddress, ripaddress){
 		for (i = 0; i < statsTableEntries.length; ++i)
 		{
 			if (i % 2 == 0) code += '<tr>';
-			code += '<th width="80%" style="text-align:left;">' + statsTableEntries[i][0] +'</th>';
-			code += '<td width="20%" align="left" style="text-align:left;">' + Number(statsTableEntries[i][1]).toLocaleString() +'</td>';
+			code += '<th style="text-align:left;">' + statsTableEntries[i][0] +'</th>';
+			code += '<td align="left" style="text-align:left;">' + Number(statsTableEntries[i][1]).toLocaleString() +'</td>';
 			if (i % 2 == 1) code += '</tr>';
 		}
 		if (i % 2 == 0) code += '</tr>';
@@ -405,17 +405,17 @@ function parseStatus(text, block, ipaddress, ripaddress){
 		code += '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table"><thead><tr><td colspan="4">Statistics</td></tr></thead>';
 
                 if (ipaddress != "") {
-			code += '<tr><th width="80%" style="text-align:left;">Public IP</th>';
-			code += '<td width="20%" align="left" style="text-align:left;">' + ripaddress +'</td>';
-                        code += '<th width="80%" style="text-align:left;">Local IP</th>';
-                        code += '<td width="20%" align="left" style="text-align:left;">' + ipaddress +'</td></tr>';
+			code += '<tr><th style="text-align:left;">Public IP</th>';
+			code += '<td align="left" style="text-align:left;">' + ripaddress +'</td>';
+			code += '<th style="text-align:left;">Local IP</th>';
+			code += '<td align="left" style="text-align:left;">' + ipaddress +'</td></tr>';
                 }
 
 		for (i = 0; i < staticstatsTableEntries.length; ++i)
 		{
 			if (i % 2 == 0) code += '<tr>';
-			code += '<th width="80%" style="text-align:left;">' + staticstatsTableEntries[i][0] +'</th>';
-			code += '<td width="20%" align="left" style="text-align:left;">' + Number(staticstatsTableEntries[i][1]).toLocaleString() +'</td>';
+			code += '<th style="text-align:left;">' + staticstatsTableEntries[i][0] +'</th>';
+			code += '<td align="left" style="text-align:left;">' + Number(staticstatsTableEntries[i][1]).toLocaleString() +'</td>';
 			if (i % 2 == 1) code += '</tr>';
 		}
 		if (i % 2 == 0) code += '</tr>';
