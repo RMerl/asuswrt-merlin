@@ -817,6 +817,7 @@ obj-$(RTCONFIG_TR069) += tr069
 obj-$(RTCONFIG_CLOUDCHECK) += cloudcheck
 
 obj-$(RTCONFIG_GETREALIP) += ministun
+obj-$(RTCONFIG_OPENVPN) += ministun
 
 ifneq ($(find lighttpd-1.4.39, $(obj-y)),"")
 released_dir += APP-IPK
