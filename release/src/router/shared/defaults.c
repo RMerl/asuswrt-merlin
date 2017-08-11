@@ -1790,6 +1790,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "ftp_lang", "EN" },
 	{ "ftp_wanac", "0" },
 	{ "ftp_tls", "0" },
+	{ "ftp_pasvport", "57530" },
 
 //#ifdef RTCONFIG_WEBDAV
 	{ "enable_webdav", "0" }, // 0: Disable, 1: enable

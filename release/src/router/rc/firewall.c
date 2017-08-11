@@ -2451,10 +2451,12 @@ TRACE_PT("writing Parental Control\n");
 #endif
 
 #ifdef RTCONFIG_FTP
-		if ((!nvram_match("enable_ftp", "0")) && (nvram_match("ftp_wanac", "1")))
-
+		if ((!nvram_match("enable_ftp", "0")) && (nvram_get_int("ftp_wanac")))
 		{
 			fprintf(fp, "-A INPUT -p tcp -m tcp --dport 21 -j %s\n", logaccept);
+			int passive_port = nvram_get_int("ftp_pasvport");
+			if (passive_port)
+				fprintf(fp, "-A INPUT -p tcp -m tcp --dport %d:%d -j %s\n", passive_port, passive_port+30, logaccept);
 			int local_ftpport = nvram_get_int("vts_ftpport");
 			if (nvram_match("vts_enable_x", "1") && local_ftpport != 0 && local_ftpport != 21 && ruleHasFTPport())
 				fprintf(fp, "-A INPUT -p tcp -m tcp --dport %d -j %s\n", local_ftpport, logaccept);
@@ -2462,6 +2464,9 @@ TRACE_PT("writing Parental Control\n");
 			if (ipv6_enabled() && nvram_match("ipv6_fw_enable", "1"))
 			{
 				fprintf(fp_ipv6, "-A INPUT -p tcp -m tcp --dport 21 -j %s\n", logaccept);
+				if (passive_port)
+					fprintf(fp_ipv6, "-A INPUT -p tcp -m tcp --dport %d:%d -j %s\n", passive_port, passive_port+30, logaccept);
+
 				if (nvram_match("vts_enable_x", "1") && local_ftpport != 0 && local_ftpport != 21 && ruleHasFTPport())
 					fprintf(fp_ipv6, "-A INPUT -p tcp -m tcp --dport %d -j %s\n", local_ftpport, logaccept);
 			}
@@ -3452,6 +3457,10 @@ TRACE_PT("writing Parental Control\n");
 
 		{
 			fprintf(fp, "-A INPUT -p tcp -m tcp --dport 21 -j %s\n", logaccept);
+			int passive_port = nvram_get_int("ftp_pasvport");
+			if (passive_port)
+				fprintf(fp, "-A INPUT -p tcp -m tcp --dport %d:%d -j %s\n", passive_port, passive_port+30, logaccept);
+
 			int local_ftpport = nvram_get_int("vts_ftpport");
 			if (nvram_match("vts_enable_x", "1") && local_ftpport != 0 && local_ftpport != 21 && ruleHasFTPport())
 				fprintf(fp, "-A INPUT -p tcp -m tcp --dport %d -j %s\n", local_ftpport, logaccept);
@@ -3459,6 +3468,9 @@ TRACE_PT("writing Parental Control\n");
 			if (ipv6_enabled() && nvram_match("ipv6_fw_enable", "1"))
 			{
 				fprintf(fp_ipv6, "-A INPUT -p tcp -m tcp --dport 21 -j %s\n", logaccept);
+				if (passive_port)
+					fprintf(fp_ipv6, "-A INPUT -p tcp -m tcp --dport %d:%d -j %s\n", passive_port, passive_port+30, logaccept);
+
 				if (nvram_match("vts_enable_x", "1") && local_ftpport != 0 && local_ftpport != 21 && ruleHasFTPport())
 					fprintf(fp_ipv6, "-A INPUT -p tcp -m tcp --dport %d -j %s\n", local_ftpport, logaccept);
 			}

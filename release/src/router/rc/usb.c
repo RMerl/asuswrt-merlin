@@ -1976,6 +1976,7 @@ void write_ftpd_conf()
 {
 	FILE *fp;
 	char maxuser[16];
+	int passive_port;
 
 	/* write /etc/vsftpd.conf */
 	fp=fopen("/etc/vsftpd.conf", "w");
@@ -2023,6 +2024,15 @@ void write_ftpd_conf()
 	fprintf(fp, "listen=YES\n");
 #endif
 	fprintf(fp, "pasv_enable=YES\n");
+	if (nvram_get_int("ftp_wanac")) {
+		passive_port = nvram_get_int("ftp_pasvport");
+		if (passive_port > 0) {
+			if (passive_port > 65505)
+				nvram_set_int("ftp_pasvport", 65505);
+			fprintf(fp, "pasv_min_port=%d\n", passive_port);
+			fprintf(fp, "pasv_max_port=%d\n", passive_port + 30);
+		}
+	}
 	fprintf(fp, "tcp_wrappers=NO\n");
 	strcpy(maxuser, nvram_safe_get("st_max_user"));
 	if ((atoi(maxuser)) > 0)
