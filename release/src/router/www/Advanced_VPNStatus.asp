@@ -150,14 +150,14 @@ function displayData(){
 		}
 	}        
 
-	parseStatus(vpn_server1_status, "server1_Block", "");
-	parseStatus(vpn_server2_status, "server2_Block", "");
-	parseStatus(vpn_client1_status, "client1_Block", vpn_client1_ip);
-	parseStatus(vpn_client2_status, "client2_Block", vpn_client2_ip);
+	parseStatus(vpn_server1_status, "server1_Block", "", "");
+	parseStatus(vpn_server2_status, "server2_Block", "", "");
+	parseStatus(vpn_client1_status, "client1_Block", vpn_client1_ip, vpn_client1_rip);
+	parseStatus(vpn_client2_status, "client2_Block", vpn_client2_ip, vpn_client2_rip);
 	if (based_modelid != "RT-AC3200") {
-		parseStatus(vpn_client3_status, "client3_Block", vpn_client3_ip);
-		parseStatus(vpn_client4_status, "client4_Block", vpn_client4_ip);
-		parseStatus(vpn_client5_status, "client5_Block", vpn_client5_ip);
+		parseStatus(vpn_client3_status, "client3_Block", vpn_client3_ip, vpn_client3_rip);
+		parseStatus(vpn_client4_status, "client4_Block", vpn_client4_ip, vpn_client4_rip);
+		parseStatus(vpn_client5_status, "client5_Block", vpn_client5_ip, vpn_client5_rip);
 	}
 
 	if (pptpd_support) {
@@ -212,7 +212,7 @@ function parsePPTPClients() {
 }
 
 
-function parseStatus(text, block, ipaddress){
+function parseStatus(text, block, ipaddress, ripaddress){
 	document.getElementById(block).innerHTML = "";
 	var code = "";
 
@@ -228,7 +228,6 @@ function parseStatus(text, block, ipaddress){
 	var routePtr = 0;
 	var statsPtr = 0;
 	var staticstatsPtr = 0;
-	var col = 0;
 
 // Parse data
 	for (i = 0; text != '' && i < lines.length; ++i)
@@ -406,20 +405,20 @@ function parseStatus(text, block, ipaddress){
 		code += '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table"><thead><tr><td colspan="4">Statistics</td></tr></thead>';
 
                 if (ipaddress != "") {
-                        code += '<tr><th width="80%" style="text-align:left;">IP address</th>';
-                        code += '<td width="20%" align="left" style="text-align:left;">' + ipaddress +'</td>';
-                        col++;
+			code += '<tr><th width="80%" style="text-align:left;">Public IP</th>';
+			code += '<td width="20%" align="left" style="text-align:left;">' + ripaddress +'</td>';
+                        code += '<th width="80%" style="text-align:left;">Local IP</th>';
+                        code += '<td width="20%" align="left" style="text-align:left;">' + ipaddress +'</td></tr>';
                 }
 
 		for (i = 0; i < staticstatsTableEntries.length; ++i)
 		{
-			if (col % 2 == 0) code += '<tr>';
+			if (i % 2 == 0) code += '<tr>';
 			code += '<th width="80%" style="text-align:left;">' + staticstatsTableEntries[i][0] +'</th>';
 			code += '<td width="20%" align="left" style="text-align:left;">' + Number(staticstatsTableEntries[i][1]).toLocaleString() +'</td>';
-			if (col % 2 == 1) code += '</tr>';
-			col++;
+			if (i % 2 == 1) code += '</tr>';
 		}
-		if (col % 2 == 0) code += '</tr>';
+		if (i % 2 == 0) code += '</tr>';
 		code += '</table>';
 	}
 	document.getElementById(block).innerHTML += code;

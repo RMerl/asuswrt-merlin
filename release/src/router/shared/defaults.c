@@ -2966,6 +2966,13 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "wan_realip_state",	"0" },
 	{ "wan_realip_ip",	"" },
 #endif
+#ifdef RTCONFIG_OPENVPN
+	{ "vpn_client1_rip", "" },
+	{ "vpn_client2_rip", "" },
+	{ "vpn_client3_rip", "" },
+	{ "vpn_client4_rip", "" },
+	{ "vpn_client5_rip", "" },
+#endif
 
 	{ "nat_state", "0" },
 	{ "link_wan", "" },

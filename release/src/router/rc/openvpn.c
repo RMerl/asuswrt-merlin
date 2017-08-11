@@ -92,6 +92,8 @@ void start_vpnclient(int clientNum)
 	nvram_set(&buffer[0], "1");	//initializing
 	sprintf(&buffer[0], "vpn_client%d_errno", clientNum);
 	nvram_set(&buffer[0], "0");
+	sprintf(&buffer[0], "vpn_client%d_rip", clientNum);
+	nvram_set(&buffer[0], "");
 
 	// Determine interface
 	sprintf(&buffer[0], "vpn_client%d_if", clientNum);
@@ -640,7 +642,8 @@ void stop_vpnclient(int clientNum)
 	nvram_set(&buffer[0], "0");
 	sprintf(&buffer[0], "vpn_client%d_errno", clientNum);
 	nvram_set(&buffer[0], "0");
-
+	sprintf(&buffer[0], "vpn_client%d_rip", clientNum);
+	nvram_set(&buffer[0], "");
 	update_resolvconf();
 
 	vpnlog(VPN_LOG_INFO,"VPN GUI client backend stopped.");

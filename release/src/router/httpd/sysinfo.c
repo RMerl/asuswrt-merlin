@@ -353,8 +353,10 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			int instance = 1;
 			int fd;
 			struct ifreq ifr;
+			char buf[18];
 
 			strcpy(result, "0.0.0.0");
+
 			fd = socket(AF_INET, SOCK_DGRAM, 0);
 			if (fd) {
 				ifr.ifr_addr.sa_family = AF_INET;
@@ -362,9 +364,16 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				snprintf(ifr.ifr_name, IFNAMSIZ - 1, "tun1%d", instance);
 				if (ioctl(fd, SIOCGIFADDR, &ifr) == 0) {
 					strlcpy(result, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), sizeof result);
+
+					snprintf(buf, sizeof buf, "vpn_client%d_rip", instance);
+					if (!strlen(nvram_safe_get(buf))) {
+						sprintf(buf, "%d", instance);
+						eval("/usr/sbin/gettunnelip.sh", buf);
+					}
 				}
 				close(fd);
 			}
+
 		} else if(strncmp(type,"vpnstatus",9) == 0 ) {
 			int num = 0;
 			char service[10], buf[256];

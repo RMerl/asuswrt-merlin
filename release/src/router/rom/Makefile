@@ -224,6 +224,9 @@ ifeq ($(RTCONFIG_GETREALIP),y)
 	mkdir -p $(INSTALLDIR)/usr/sbin
 	install -m 0755 apps_scripts/getrealip.sh $(INSTALLDIR)/usr/sbin/getrealip.sh
 endif
-
+ifeq ($(RTCONFIG_OPENVPN),y)
+	mkdir -p $(INSTALLDIR)/usr/sbin
+	install -m 0755 apps_scripts/gettunnelip.sh $(INSTALLDIR)/usr/sbin/gettunnelip.sh
+endif
 	install -m 0755 webs_scripts/GoogleDNS_Update.sh $(INSTALLDIR)/usr/sbin
 
