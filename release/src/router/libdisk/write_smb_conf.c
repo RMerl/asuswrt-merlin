@@ -346,7 +346,7 @@ int main(int argc, char *argv[])
 	fprintf(fp, "use sendfile = yes\n");
 #endif
 
-#ifdef RTCONFIG_RECVFILE
+#if 0	//RTCONFIG_RECVFILE
 	if(!nvram_get_int("stop_samba_recv"))
 		fprintf(fp, "use recvfile = yes\n");
 #endif
