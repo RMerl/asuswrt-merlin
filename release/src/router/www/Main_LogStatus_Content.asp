@@ -195,7 +195,7 @@ function get_log_data(){
 									<div class="apply_gen" valign="top"><input class="button_gen" onclick="applySettings();" type="button" value="<#CTL_apply#>" /></div>
 									</form>
 									<div style="margin-top:8px">
-										<textarea cols="63" rows="27" wrap="off" readonly="readonly" id="textarea" class="textarea_ssh_table" style="width:99%; font-family:'Courier New', Courier, mono; font-size:11px;"><% nvram_dump("syslog.log","syslog.sh"); %></textarea>
+										<textarea cols="63" rows="27" wrap="off" readonly="readonly" id="textarea" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;"><% nvram_dump("syslog.log","syslog.sh"); %></textarea>
 									</div>
 									<div>
 									<table class="apply_gen">

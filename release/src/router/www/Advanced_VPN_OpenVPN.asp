@@ -1691,7 +1691,7 @@ function update_cipher() {
 
 											<tr>
 												<td>
-													<textarea rows="8" class="textarea_ssh_table" name="vpn_server_custom" cols="55" maxlength="15000"><% nvram_clean_get("vpn_server_custom"); %></textarea>
+													<textarea rows="8" class="textarea_ssh_table" style="width:99%;" name="vpn_server_custom" cols="55" maxlength="15000"><% nvram_clean_get("vpn_server_custom"); %></textarea>
 												</td>
 											</tr>
 										</table>

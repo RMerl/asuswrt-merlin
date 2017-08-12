@@ -2230,7 +2230,16 @@ padding-top:1px;
 }
 .textarea_ssh_table{
         color: #FFFFFF;
-        background-color: #475A5F;
+        background-color: #576D73;
+        border:2px ridge #777;
+        border-style:bevel;
+}
+.textarea_log_table{
+	color: #FFFFFF;
+	background-color: #475A5F;
+        border:2px ridge #777;
+        border-style:bevel;
+	width:99%;
 }
 .link{
 	cursor:pointer !important;
