@@ -14,12 +14,13 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
-<!--script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script-->
+<script type="text/javascript" language="JavaScript" src="/validator.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script>
 function showclock(){
 	JS_timeObj.setTime(systime_millsec);
 	systime_millsec += 1000;
-	JS_timeObj2 = JS_timeObj.toString();	
+	JS_timeObj2 = JS_timeObj.toString();
 	JS_timeObj2 = JS_timeObj2.substring(0,3) + ", " +
 	              JS_timeObj2.substring(4,10) + "  " +
 				  checkTime(JS_timeObj.getHours()) + ":" +
@@ -36,7 +37,7 @@ function showclock(){
 }
 
 function showbootTime(){
-	Days = Math.floor(boottime / (60*60*24));	
+	Days = Math.floor(boottime / (60*60*24));
 	Hours = Math.floor((boottime / 3600) % 24);
 	Minutes = Math.floor(boottime % 3600 / 60);
 	Seconds = Math.floor(boottime % 60);
@@ -68,8 +69,33 @@ function initial(){
 	showclock();
 	showbootTime();
 	showDST();
-	var retArea = document.getElementById('textarea');
-	retArea.scrollTop = retArea.scrollHeight - retArea.clientHeight;
+	document.getElementById('textarea').scrollTop = 9999999;//make Scroll_y bottom
+	setTimeout("get_log_data();", 5000);
+}
+
+function applySettings(){
+	document.config_form.submit();
+}
+
+var height = 0;
+function get_log_data(){
+	var h = 0;
+    $.ajax({
+    	url: '/ajax_log_data.asp',
+    	dataType: 'script',
+    	error: function(xhr){
+      		setTimeout("get_log_data();", 1000);
+    	},
+    	success: function(response){
+    		h = $("#textarea").scrollTop();
+			if(!(height > 0 && h < height)){
+				document.getElementById("textarea").innerHTML = logString;
+				$("#textarea").animate({ scrollTop: 9999999 }, "slow");
+				setTimeout('height = $("#textarea").scrollTop();', 500);
+			}
+			setTimeout("get_log_data();", 5000);
+		}
+   });
 }
 </script>
 </head>
@@ -100,10 +126,10 @@ function initial(){
 			<div id="subMenu"></div>
 		</td>	
 		<td valign="top">
-			<div id="tabMenu" class="submenuBlock"></div>		
+			<div id="tabMenu" class="submenuBlock"></div>
 			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 				<tr>
-					<td align="left" valign="top">				
+					<td align="left" valign="top">
 						<table width="760px" border="0" cellpadding="5" cellspacing="0" bordercolor="#6b8fa3"  class="FormTitle" id="FormTitle">		
 							<tr>
 								<td bgcolor="#4D595D" colspan="3" valign="top">
@@ -117,38 +143,45 @@ function initial(){
 											<td>
 												<input type="text" id="system_time" name="system_time" size="40" class="devicepin" value="" readonly="1" style="font-size:12px;" autocorrect="off" autocapitalize="off">
 												<br><span id="dstzone" style="display:none;margin-left:5px;color:#FFFFFF;"></span>
-											</td>										
+											</td>
 										</tr>
 										<tr>
 											<th><!--a class="hintstyle" href="javascript:void(0);" onClick="openHint(12, 1);"--><#General_x_SystemUpTime_itemname#></a></th>
 											<td><span id="boot_days"></span> <#Day#> <span id="boot_hours"></span> <#Hour#> <span id="boot_minutes"></span> <#Minute#> <span id="boot_seconds"></span> <#Second#></td>
 										</tr>
+										<tr>
+											<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,1)"><#LANHostConfig_x_ServerLogEnable_itemname#></a></th>
+											<td>
+												<form method="post" name="config_form" action="start_apply.htm" target="hidden_frame">
+													<input type="hidden" name="current_page" value="Main_LogStatus_Content.asp">
+													<input type="hidden" name="next_page" value="Main_LogStatus_Content.asp">
+													<input type="hidden" name="action_mode" value="apply">
+													<input type="hidden" name="action_script" value="restart_logger">
+													<input type="hidden" name="action_wait" value="5">
+													<input type="text" maxlength="15" class="input_15_table" name="log_ipaddr" value="<% nvram_get("log_ipaddr"); %>" onKeyPress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off">
+													<input class="button_gen" onclick="applySettings();" type="button" value="<#CTL_apply#>" />
+												</form>
+											</td>
+										</tr>
 									</table>
 									<div style="margin-top:8px">
-										<textarea cols="63" rows="27" wrap="off" readonly="readonly" id="textarea" style="width:99%; font-family:'Courier New', Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("syslog.log","syslog.sh"); %></textarea>
+										<textarea cols="63" rows="27" wrap="off" readonly="readonly" id="textarea" class="textarea_ssh_table" style="width:99%; font-family:'Courier New', Courier, mono; font-size:11px;"><% nvram_dump("syslog.log","syslog.sh"); %></textarea>
 									</div>
 									<div>
 									<table class="apply_gen">
 										<tr class="apply_gen" valign="top">
-											<td width="40%" align="right">
+											<td width="50%" align="right">
 												<form method="post" name="form1" action="apply.cgi">
 													<input type="hidden" name="current_page" value="Main_LogStatus_Content.asp">
 													<input type="hidden" name="action_mode" value=" Clear ">
 													<input type="submit" onClick="onSubmitCtrl(this, ' Clear ')" value="<#CTL_clear#>" class="button_gen">
 												</form>
-											</td>	
-											<td width="20%" align="center">
+											</td>
+											<td width="50%" align="left">
 												<form method="post" name="form2" action="syslog.txt">
 													<input type="submit" onClick="onSubmitCtrl(this, ' Save ');" value="<#CTL_onlysave#>" class="button_gen">
 												</form>
-											</td>	
-											<td width="40%" align="left" >
-											<form method="post" name="form3" action="apply.cgi">
-												<input type="hidden" name="current_page" value="Main_LogStatus_Content.asp">
-												<input type="hidden" name="action_mode" value=" Refresh ">
-												<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">
-											</form>
-											</td>	
+											</td>
 										</tr>
 									</table>
 									</div>
