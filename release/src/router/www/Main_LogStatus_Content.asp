@@ -137,6 +137,7 @@ function get_log_data(){
 									<div class="formfonttitle"><#System_Log#> - <#menu5_7_2#></div>
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 									<div class="formfontdesc"><#GeneralLog_title#></div>
+									<form method="post" name="config_form" action="start_apply.htm" target="hidden_frame">
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 										<tr>
 											<th width="20%"><#General_x_SystemTime_itemname#></th>
@@ -152,18 +153,47 @@ function get_log_data(){
 										<tr>
 											<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,1)"><#LANHostConfig_x_ServerLogEnable_itemname#></a></th>
 											<td>
-												<form method="post" name="config_form" action="start_apply.htm" target="hidden_frame">
-													<input type="hidden" name="current_page" value="Main_LogStatus_Content.asp">
-													<input type="hidden" name="next_page" value="Main_LogStatus_Content.asp">
-													<input type="hidden" name="action_mode" value="apply">
-													<input type="hidden" name="action_script" value="restart_logger">
-													<input type="hidden" name="action_wait" value="5">
-													<input type="text" maxlength="15" class="input_15_table" name="log_ipaddr" value="<% nvram_get("log_ipaddr"); %>" onKeyPress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off">
-													<input class="button_gen" onclick="applySettings();" type="button" value="<#CTL_apply#>" />
-												</form>
+												<input type="hidden" name="current_page" value="Main_LogStatus_Content.asp">
+												<input type="hidden" name="next_page" value="Main_LogStatus_Content.asp">
+												<input type="hidden" name="action_mode" value="apply">
+												<input type="hidden" name="action_script" value="restart_logger">
+												<input type="hidden" name="action_wait" value="5">
+												<input type="text" maxlength="15" class="input_15_table" name="log_ipaddr" value="<% nvram_get("log_ipaddr"); %>" onKeyPress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off">
+											</td>
+										</tr>
+										<tr>
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,11);">Default message log level</a></th>
+											<td>
+												<select name="message_loglevel" class="input_option">
+												<option value="0" <% nvram_match("message_loglevel", "0", "selected"); %>>emergency</option>
+												<option value="1" <% nvram_match("message_loglevel", "1", "selected"); %>>alert</option>
+												<option value="2" <% nvram_match("message_loglevel", "2", "selected"); %>>critical</option>
+												<option value="3" <% nvram_match("message_loglevel", "3", "selected"); %>>error</option>
+												<option value="4" <% nvram_match("message_loglevel", "4", "selected"); %>>warning</option>
+												<option value="5" <% nvram_match("message_loglevel", "5", "selected"); %>>notice</option>
+												<option value="6" <% nvram_match("message_loglevel", "6", "selected"); %>>info</option>
+												<option value="7" <% nvram_match("message_loglevel", "7", "selected"); %>>debug</option>
+												</select>
+											</td>
+										</tr>
+										<tr>
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,12);">Log only messages more urgent than</a></th>
+											<td>
+												<select name="log_level" class="input_option">
+												<option value="1" <% nvram_match("log_level", "1", "selected"); %>>alert</option>
+												<option value="2" <% nvram_match("log_level", "2", "selected"); %>>critical</option>
+												<option value="3" <% nvram_match("log_level", "3", "selected"); %>>error</option>
+												<option value="4" <% nvram_match("log_level", "4", "selected"); %>>warning</option>
+												<option value="5" <% nvram_match("log_level", "5", "selected"); %>>notice</option>
+												<option value="6" <% nvram_match("log_level", "6", "selected"); %>>info</option>
+												<option value="7" <% nvram_match("log_level", "7", "selected"); %>>debug</option>
+												<option value="8" <% nvram_match("log_level", "8", "selected"); %>>all</option>
+												</select>
 											</td>
 										</tr>
 									</table>
+									<div class="apply_gen" valign="top"><input class="button_gen" onclick="applySettings();" type="button" value="<#CTL_apply#>" /></div>
+									</form>
 									<div style="margin-top:8px">
 										<textarea cols="63" rows="27" wrap="off" readonly="readonly" id="textarea" class="textarea_ssh_table" style="width:99%; font-family:'Courier New', Courier, mono; font-size:11px;"><% nvram_dump("syslog.log","syslog.sh"); %></textarea>
 									</div>
