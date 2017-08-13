@@ -27,7 +27,10 @@ Asuswrt-Merlin Changelog
              certificate - they are now always persistent.
   - CHANGED: Reworked Tools -> Sysinfo page, dynamic data will
              refresh itself every 3 seconds, also port
-             ordering will be more consistent.
+             ordering will be more consistent, and display based
+             on the new tableAPI from GPL 382.
+  - CHANGED: Re-designed DHCP Lease log page to use the new
+             tableAPI, with sortable fields (defaults to IP sort)
   - CHANGED: Do not alternate between ntp server from webui and
              the one hardcoded in nvram - use webui one, unless
              it's empty - then use the second server set in nvram.
