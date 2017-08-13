@@ -16,9 +16,9 @@ Asuswrt-Merlin Changelog
              This new code is easier for me to maintain.
   - CHANGED: Used webui menu icons from GPL 382.
   - CHANGED: Re-organized VPN pages, merging some together.
-  - CHANGED: Make VPNStatus page refresh itself every 5 seconds.
-             It will also report a client's local and public
-             IPs.
+  - CHANGED: Reworked VPNStatus page, will now refresh itself every
+             5 seconds.  It will also report a client's local
+             and public IP addresses.
   - CHANGED: Re-designed webui interface for managing SSL
              certificate.  Added Upload button, and revamped
              certificate info display (includes some backports
@@ -29,6 +29,9 @@ Asuswrt-Merlin Changelog
              refresh itself every 3 seconds, also port
              ordering will be more consistent, and display based
              on the new tableAPI from GPL 382.
+  - CHANGED: Backported system log page from GPL 382: moved logging
+             settings to it, added option to set a remote syslog
+             server's port, and shown log will auto refresh.
   - CHANGED: Re-designed DHCP Lease log page to use the new
              tableAPI, with sortable fields (defaults to IP sort)
   - CHANGED: Do not alternate between ntp server from webui and
