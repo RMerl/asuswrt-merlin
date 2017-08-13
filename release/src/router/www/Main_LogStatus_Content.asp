@@ -159,6 +159,7 @@ function get_log_data(){
 												<input type="hidden" name="action_script" value="restart_logger">
 												<input type="hidden" name="action_wait" value="5">
 												<input type="text" maxlength="15" class="input_15_table" name="log_ipaddr" value="<% nvram_get("log_ipaddr"); %>" onKeyPress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off">
+												<label style="padding-left:15px;">Port:</label><input type="text" class="input_6_table" maxlength="5" name="log_port" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 0, 65535)" value='<% nvram_get("log_port"); %>' autocorrect="off" autocapitalize="off">
 											</td>
 										</tr>
 										<tr>
