@@ -513,13 +513,14 @@ function cal_panel_block(){
 }
 
 
-function applyRule(){
-	if (client_state != 0) {
-		document.form.action_wait.value = 15;
-		document.form.action_script.value = "restart_vpnclient"+openvpn_unit;
+function applyRule(manual_switch){
+	if (manual_switch == 0) {
+		showLoading();
+		if (client_state != 0) {
+			document.form.action_wait.value = 15;
+			document.form.action_script.value = "restart_vpnclient"+openvpn_unit;
+		}
 	}
-
-	showLoading();
 
 	tmp_value = "";
 
@@ -554,7 +555,7 @@ function applyRule(){
 
 	if (((enforce_ori != getRadioValue(document.form.vpn_client_enforce)) ||
 	     (policy_ori != document.form.vpn_client_rgw.value)) &&
-	    (client_state == 0))
+	    (client_state == 0) && (manual_switch == 0))
 		document.form.action_script.value += "start_vpnrouting"+openvpn_unit;
 
 	document.form.submit();
@@ -1085,14 +1086,14 @@ function defaultSettings() {
 										document.form.action_script.value = "start_vpnclient" + openvpn_unit;
 										document.form.action_wait.value = 10;
 										parent.showLoading();
-										document.form.submit();
+										applyRule(1);
 										return true;
 									 },
 									 function() {
 										document.form.action_script.value = "stop_vpnclient" + openvpn_unit;
 										document.form.action_wait.value = 10;
 										parent.showLoading();
-										document.form.submit();
+										applyRule(1)
 										return true;
 									 },
 									 {
@@ -1439,7 +1440,7 @@ function defaultSettings() {
 					</table>
 					<div class="apply_gen">
 						<input type="button" id="restoreButton" class="button_gen" value="<#Setting_factorydefault_value#>" onclick="defaultSettings();">
-						<input name="button" type="button" class="button_gen" onclick="applyRule();" value="<#CTL_apply#>"/>
+						<input name="button" type="button" class="button_gen" onclick="applyRule(0);" value="<#CTL_apply#>"/>
 			        </div>
 				</td></tr>
 	        </tbody>
