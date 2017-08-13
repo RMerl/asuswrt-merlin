@@ -276,7 +276,6 @@ function show_etherstate(){
 	}
 
 	if(tableStruct.data.length) {
-		$("#tr_ethernet_ports").css("display", "");
 		tableApi.genTableAPI(tableStruct);
 	}
 }
