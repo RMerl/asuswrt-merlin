@@ -255,7 +255,6 @@ function show_etherstate(){
 	var tableStruct = {
 		data: port_array,
 		container: "tableContainer",
-		title: "Ethernet Ports",
 		header: [
 			{
 				"title" : "Port",
