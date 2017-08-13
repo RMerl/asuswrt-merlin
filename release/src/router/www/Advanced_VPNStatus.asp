@@ -12,6 +12,10 @@
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 
+<style>
+	.statcell { width:25% !important; text-align:left !important; }
+</style>
+
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
@@ -389,8 +393,8 @@ function parseStatus(text, block, ipaddress, ripaddress){
 		for (i = 0; i < statsTableEntries.length; ++i)
 		{
 			if (i % 2 == 0) code += '<tr>';
-			code += '<th style="text-align:left;">' + statsTableEntries[i][0] +'</th>';
-			code += '<td align="left" style="text-align:left;">' + Number(statsTableEntries[i][1]).toLocaleString() +'</td>';
+			code += '<th class="statcell">' + statsTableEntries[i][0] +'</th>';
+			code += '<td class="statcell">' + Number(statsTableEntries[i][1]).toLocaleString() +'</td>';
 			if (i % 2 == 1) code += '</tr>';
 		}
 		if (i % 2 == 0) code += '</tr>';
@@ -405,17 +409,17 @@ function parseStatus(text, block, ipaddress, ripaddress){
 		code += '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table"><thead><tr><td colspan="4">Statistics</td></tr></thead>';
 
                 if (ipaddress != "") {
-			code += '<tr><th style="text-align:left;">Public IP</th>';
-			code += '<td align="left" style="text-align:left;">' + ripaddress +'</td>';
-			code += '<th style="text-align:left;">Local IP</th>';
-			code += '<td align="left" style="text-align:left;">' + ipaddress +'</td></tr>';
+			code += '<tr><th class="statcell">Public IP</th>';
+			code += '<td class="statcell">' + ripaddress +'</td>';
+			code += '<th class="statcell">Local IP</th>';
+			code += '<td class="statcell">' + ipaddress +'</td></tr>';
                 }
 
 		for (i = 0; i < staticstatsTableEntries.length; ++i)
 		{
 			if (i % 2 == 0) code += '<tr>';
-			code += '<th style="text-align:left;">' + staticstatsTableEntries[i][0] +'</th>';
-			code += '<td align="left" style="text-align:left;">' + Number(staticstatsTableEntries[i][1]).toLocaleString() +'</td>';
+			code += '<th class="statcell">' + staticstatsTableEntries[i][0] +'</th>';
+			code += '<td class="statcell">' + Number(staticstatsTableEntries[i][1]).toLocaleString() +'</td>';
 			if (i % 2 == 1) code += '</tr>';
 		}
 		if (i % 2 == 0) code += '</tr>';
