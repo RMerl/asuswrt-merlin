@@ -180,7 +180,8 @@ var notification = {
 			notification.sim_record = 0;
 		}
 
-		if(realip_support && !external_ip){
+		if(0){
+//		if(realip_support && !external_ip){
 			notification.array[14] = 'noti_external_ip';
 			notification.external_ip = 1;
 			notification.desc[14] = "<#external_ip_warning#>";
