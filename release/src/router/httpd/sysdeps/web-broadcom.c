@@ -1799,25 +1799,13 @@ int
 ej_wl_control_channel(int eid, webs_t wp, int argc, char_t **argv)
 {
 	int ret = 0;
-	int channel_24 = 0, channel_50 = 0;
-#if defined(RTAC3200) || defined(RTAC5300) || defined(RTAC5300R)
-	int channel_50_2 = 0;
-#endif
-	channel_24 = wl_control_channel(0);
 
-	if (!(channel_50 = wl_control_channel(1)))
-		ret = websWrite(wp, "[\"%d\", \"%d\"]", channel_24, 0);
-	else
-#if !defined(RTAC3200) && !defined(RTAC5300) && !defined(RTAC5300R)
-		ret = websWrite(wp, "[\"%d\", \"%d\"]", channel_24, channel_50);
-#else
-	{
-		if (!(channel_50_2 = wl_control_channel(2)))
-			ret = websWrite(wp, "[\"%d\", \"%d\", \"%d\"]", channel_24, channel_50, 0);
-		else
-			ret = websWrite(wp, "[\"%d\", \"%d\", \"%d\"]", channel_24, channel_50, channel_50_2);
-	}
+	ret = websWrite(wp, "[\"%d\", \"%d\"", wl_control_channel(0), wl_control_channel(1));
+
+#if defined(RTAC3200) || defined(RTAC5300) || defined(RTAC5300R)
+	ret += websWrite(wp, ", \"%d\"", wl_control_channel(2););
 #endif
+	ret += websWrite(wp, "]");
 
 	return ret;
 }
