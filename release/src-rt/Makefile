@@ -2794,7 +2794,7 @@ fi; \
 		sed -i "/CONFIG_CRYPTO_SHA512 is not set/d" $(1); \
 		echo "CONFIG_CRYPTO_SHA512=y" >>$(1); \
 	fi; \
-	if [ "$(WTFAST)" = "y" ]; then \
+	if [ "$(ARM)" = "y" ]; then \
 		sed -i "/CONFIG_NETFILTER_TPROXY/d" $(1); \
 		echo "CONFIG_NETFILTER_TPROXY=m" >>$(1); \
 		sed -i "/CONFIG_NETFILTER_XT_MATCH_COMMENT/d" $(1); \
