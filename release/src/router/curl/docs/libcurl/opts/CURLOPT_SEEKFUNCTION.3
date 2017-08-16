@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_SEEKFUNCTION 3 "May 31, 2017" "libcurl 7.54.1" "curl_easy_setopt options"
+.TH CURLOPT_SEEKFUNCTION 3 "August 12, 2017" "libcurl 7.55.1" "curl_easy_setopt options"
 
 .SH NAME
 CURLOPT_SEEKFUNCTION \- user callback for seeking in input stream
@@ -71,7 +71,7 @@ HTTP, FTP, SFTP
 .nf
 static int seek_cb(void *userp, curl_off_t offset, int origin)
 {
-  struct data *d = (stuct data *)userp;
+  struct data *d = (struct data *)userp;
   lseek(our_fd, offset, origin);
   return CURL_SEEKFUNC_OK;
 }

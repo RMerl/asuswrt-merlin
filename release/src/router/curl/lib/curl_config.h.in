@@ -180,9 +180,6 @@
 /* Define to 1 if you have the fdopen function. */
 #undef HAVE_FDOPEN
 
-/* Define to 1 if you have the `fork' function. */
-#undef HAVE_FORK
-
 /* Define to 1 if you have the freeaddrinfo function. */
 #undef HAVE_FREEADDRINFO
 
@@ -258,9 +255,6 @@
 /* Define to 1 if you have the `getppid' function. */
 #undef HAVE_GETPPID
 
-/* Define to 1 if you have the `getprotobyname' function. */
-#undef HAVE_GETPROTOBYNAME
-
 /* Define to 1 if you have the `getpwuid' function. */
 #undef HAVE_GETPWUID
 
@@ -324,9 +318,6 @@
 
 /* Define to 1 if you have the `if_nametoindex' function. */
 #undef HAVE_IF_NAMETOINDEX
-
-/* Define to 1 if you have the `inet_addr' function. */
-#undef HAVE_INET_ADDR
 
 /* Define to 1 if you have the inet_ntoa_r function. */
 #undef HAVE_INET_NTOA_R
@@ -494,9 +485,6 @@
 
 /* Define to 1 if you have the <pem.h> header file. */
 #undef HAVE_PEM_H
-
-/* Define to 1 if you have the `perror' function. */
-#undef HAVE_PERROR
 
 /* Define to 1 if you have the `pipe' function. */
 #undef HAVE_PIPE
@@ -713,9 +701,6 @@
 
 /* Define to 1 if you have the <time.h> header file. */
 #undef HAVE_TIME_H
-
-/* Define to 1 if you have the `uname' function. */
-#undef HAVE_UNAME
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
@@ -1000,9 +985,6 @@
 
 /* Define to 1 to provide own prototypes. */
 #undef WANT_IDN_PROTOTYPES
-
-/* Define to avoid automatic inclusion of winsock.h */
-#undef WIN32_LEAN_AND_MEAN
 
 /* Define to 1 if OS is AIX. */
 #ifndef _ALL_SOURCE

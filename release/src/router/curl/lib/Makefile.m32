@@ -5,7 +5,7 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1999 - 2015, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) 1999 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -77,7 +77,7 @@ LIBCARES_PATH = $(PROOT)/ares
 endif
 
 CC	= $(CROSSPREFIX)gcc
-CFLAGS	= $(CURL_CFLAG_EXTRAS) -g -O2 -Wall
+CFLAGS	= $(CURL_CFLAG_EXTRAS) -g -O2 -Wall -W
 CFLAGS	+= -fno-strict-aliasing
 # comment LDFLAGS below to keep debug info
 LDFLAGS	= $(CURL_LDFLAG_EXTRAS) $(CURL_LDFLAG_EXTRAS_DLL) -s
@@ -250,8 +250,7 @@ ifdef SSL
   endif
   INCLUDES += -I"$(OPENSSL_INCLUDE)"
   CFLAGS += -DUSE_OPENSSL -DHAVE_OPENSSL_ENGINE_H -DHAVE_OPENSSL_PKCS12_H \
-            -DHAVE_ENGINE_LOAD_BUILTIN_ENGINES -DOPENSSL_NO_KRB5 \
-            -DCURL_WANTS_CA_BUNDLE_ENV
+            -DHAVE_ENGINE_LOAD_BUILTIN_ENGINES -DOPENSSL_NO_KRB5
   DLL_LIBS += -L"$(OPENSSL_LIBPATH)" $(OPENSSL_LIBS)
   ifdef SRP
     ifeq "$(wildcard $(OPENSSL_INCLUDE)/openssl/srp.h)" "$(OPENSSL_INCLUDE)/openssl/srp.h"
@@ -340,24 +339,17 @@ $(libcurl_dll_LIBRARY): $(libcurl_a_OBJECTS) $(RESOURCE) $(libcurl_dll_DEPENDENC
 	  -Wl,--output-def,$(@:.dll=.def),--out-implib,$(libcurl_dll_a_LIBRARY) \
 	  $(libcurl_a_OBJECTS) $(RESOURCE) $(DLL_LIBS)
 
-%.o: %.c $(PROOT)/include/curl/curlbuild.h
+%.o: %.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
 
 %.res: %.rc
 	$(RC) $(RCFLAGS) -i $< -o $@
 
 clean:
-ifeq "$(wildcard $(PROOT)/include/curl/curlbuild.h.dist)" "$(PROOT)/include/curl/curlbuild.h.dist"
-	@$(call DEL, $(PROOT)/include/curl/curlbuild.h)
-endif
 	@$(call DEL, $(libcurl_a_OBJECTS) $(RESOURCE))
 
 distclean vclean: clean
 	@$(call DEL, $(libcurl_a_LIBRARY) $(libcurl_dll_LIBRARY) $(libcurl_dll_LIBRARY:.dll=.def) $(libcurl_dll_a_LIBRARY))
-
-$(PROOT)/include/curl/curlbuild.h:
-	@echo Creating $@
-	@$(call COPY, $@.dist, $@)
 
 $(LIBCARES_PATH)/libcares.a:
 	$(MAKE) -C $(LIBCARES_PATH) -f Makefile.m32

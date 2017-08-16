@@ -34,6 +34,11 @@
 
 #ifdef USE_DARWINSSL
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-pointer-compare"
+#endif /* __clang__ */
+
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
@@ -1075,7 +1080,8 @@ CF_INLINE bool is_file(const char *filename)
 }
 
 #if CURL_BUILD_MAC_10_8 || CURL_BUILD_IOS
-static CURLcode darwinssl_version_from_curl(long *darwinver, long ssl_version)
+static CURLcode darwinssl_version_from_curl(SSLProtocol *darwinver,
+                                            long ssl_version)
 {
   switch(ssl_version) {
     case CURL_SSLVERSION_TLSv1_0:
@@ -2027,12 +2033,13 @@ static int verify_cert(const char *cafile, struct Curl_easy *data,
 }
 
 #ifdef DARWIN_SSL_PINNEDPUBKEY
-static CURLcode pkp_pin_peer_pubkey(struct SessionHandle *data,
+static CURLcode pkp_pin_peer_pubkey(struct Curl_easy *data,
                                     SSLContextRef ctx,
                                     const char *pinnedpubkey)
 {  /* Scratch */
   size_t pubkeylen, realpubkeylen, spkiHeaderLength = 24;
-  unsigned char *pubkey = NULL, *realpubkey = NULL, *spkiHeader = NULL;
+  unsigned char *pubkey = NULL, *realpubkey = NULL;
+  const unsigned char *spkiHeader = NULL;
   CFDataRef publicKeyBits = NULL;
 
   /* Result is returned to caller */
@@ -2075,7 +2082,7 @@ static CURLcode pkp_pin_peer_pubkey(struct SessionHandle *data,
 #endif /* DARWIN_SSL_PINNEDPUBKEY_V2 */
 
     pubkeylen = CFDataGetLength(publicKeyBits);
-    pubkey = CFDataGetBytePtr(publicKeyBits);
+    pubkey = (unsigned char *)CFDataGetBytePtr(publicKeyBits);
 
     switch(pubkeylen) {
       case 526:
@@ -2721,9 +2728,9 @@ void Curl_darwinssl_md5sum(unsigned char *tmp, /* input */
 }
 
 void Curl_darwinssl_sha256sum(unsigned char *tmp, /* input */
-                           size_t tmplen,
-                           unsigned char *sha256sum, /* output */
-                           size_t sha256len)
+                              size_t tmplen,
+                              unsigned char *sha256sum, /* output */
+                              size_t sha256len)
 {
   assert(sha256len >= SHA256_DIGEST_LENGTH);
   (void)CC_SHA256(tmp, (CC_LONG)tmplen, sha256sum);
@@ -2843,5 +2850,9 @@ static ssize_t darwinssl_recv(struct connectdata *conn,
   }
   return (ssize_t)processed;
 }
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #endif /* USE_DARWINSSL */

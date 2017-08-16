@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLINFO_SIZE_DOWNLOAD 3 "May 06, 2017" "libcurl 7.54.1" "curl_easy_getinfo options"
+.TH CURLINFO_SIZE_DOWNLOAD 3 "June 15, 2017" "libcurl 7.55.1" "curl_easy_getinfo options"
 
 .SH NAME
 CURLINFO_SIZE_DOWNLOAD \- get the number of downloaded bytes
@@ -34,6 +34,9 @@ downloaded.  The amount is only for the latest transfer and will be reset
 again for each new transfer. This counts actual payload data, what's also
 commonly called body. All meta and header data are excluded and will not be
 counted in this number.
+
+\fICURLINFO_SIZE_DOWNLOAD_T(3)\fP is a newer replacement that returns a more
+sensible variable type.
 .SH PROTOCOLS
 All
 .SH EXAMPLE
@@ -61,3 +64,5 @@ Added in 7.4.1
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
 .BR curl_easy_getinfo "(3), " curl_easy_setopt "(3), "
+.BR CURLINFO_SIZE_DOWNLOAD_T "(3), "
+.BR CURLINFO_SIZE_UPLOAD_T "(3), "

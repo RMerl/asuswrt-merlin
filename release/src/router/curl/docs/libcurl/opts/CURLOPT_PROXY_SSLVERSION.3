@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_PROXY_SSLVERSION 3 "December 13, 2016" "libcurl 7.54.1" "curl_easy_setopt options"
+.TH CURLOPT_PROXY_SSLVERSION 3 "August 12, 2017" "libcurl 7.55.1" "curl_easy_setopt options"
 
 .SH NAME
 CURLOPT_PROXY_SSLVERSION \- set preferred proxy TLS/SSL version
@@ -48,9 +48,9 @@ TLSv1.2
 .IP CURL_SSLVERSION_TLSv1_3
 TLSv1.3
 .IP CURL_SSLVERSION_MAX_DEFAULT
-The flag defines maximum supported TLS version as TLSv1.2 or default
-value from SSL library. Only library NSS currently allows to get
-maximum supported TLS version.
+The flag defines the maximum supported TLS version as TLSv1.2, or the default
+value from the SSL library. Only the NSS library currently allows one to get
+the maximum supported TLS version.
 (Added in 7.54.0)
 .IP CURL_SSLVERSION_MAX_TLSv1_0
 The flag defines maximum supported TLS version as TLSv1.0.

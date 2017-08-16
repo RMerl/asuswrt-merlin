@@ -1,7 +1,8 @@
 <testcase>
 <info>
 <keywords>
-typecheck
+unittest
+Curl_pgrsTime
 </keywords>
 </info>
 
@@ -11,11 +12,14 @@ typecheck
 <server>
 none
 </server>
+<features>
+unittest
+</features>
  <name>
-verify curl/system.h detection
+Curl_pgrsTime unit tests
  </name>
 <tool>
-lib1541
+unit1399
 </tool>
 </client>
 

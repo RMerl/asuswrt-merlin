@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH curl_easy_setopt 3 "April 28, 2016" "libcurl 7.54.1" "libcurl Manual"
+.TH curl_easy_setopt 3 "April 27, 2017" "libcurl 7.55.1" "libcurl Manual"
 
 .SH NAME
 curl_easy_setopt \- set options for a curl easy handle
@@ -174,6 +174,8 @@ Filter out hosts from proxy use. \fICURLOPT_NOPROXY(3)\fP
 Tunnel through the HTTP proxy. \fICURLOPT_HTTPPROXYTUNNEL(3)\fP
 .IP CURLOPT_CONNECT_TO
 Connect to a specific host and port. See \fICURLOPT_CONNECT_TO(3)\fP
+.IP CURLOPT_SOCKS5_AUTH
+Socks5 authentication methods. See \fICURLOPT_SOCKS5_AUTH(3)\fP
 .IP CURLOPT_SOCKS5_GSSAPI_SERVICE
 Socks5 GSSAPI service name. \fICURLOPT_SOCKS5_GSSAPI_SERVICE(3)\fP
 .IP CURLOPT_SOCKS5_GSSAPI_NEC
@@ -304,6 +306,8 @@ Start a new cookie session. See \fICURLOPT_COOKIESESSION(3)\fP
 Add or control cookies. See \fICURLOPT_COOKIELIST(3)\fP
 .IP CURLOPT_HTTPGET
 Do a HTTP GET request. See \fICURLOPT_HTTPGET(3)\fP
+.IP CURLOPT_REQUEST_TARGET
+Set the request target. \fICURLOPT_REQUEST_TARGET(3)\fP
 .IP CURLOPT_HTTP_VERSION
 HTTP version to use. \fICURLOPT_HTTP_VERSION(3)\fP
 .IP CURLOPT_IGNORE_CONTENT_LENGTH

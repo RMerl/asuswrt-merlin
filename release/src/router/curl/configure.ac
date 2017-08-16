@@ -36,7 +36,7 @@ This configure script may be copied, distributed and modified under the
 terms of the curl license; see COPYING for more details])
 
 AC_CONFIG_SRCDIR([lib/urldata.h])
-AC_CONFIG_HEADERS(lib/curl_config.h include/curl/curlbuild.h)
+AC_CONFIG_HEADERS(lib/curl_config.h)
 AC_CONFIG_MACRO_DIR([m4])
 AM_MAINTAINER_MODE
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
@@ -120,11 +120,6 @@ fi
 AC_SUBST([AR])
 
 AC_SUBST(libext)
-
-dnl Remove non-configure distributed curlbuild.h
-if test -f ${srcdir}/include/curl/curlbuild.h; then
-  rm -f ${srcdir}/include/curl/curlbuild.h
-fi
 
 dnl figure out the libcurl version
 CURLVERSION=`$SED -ne 's/^#define LIBCURL_VERSION "\(.*\)".*/\1/p' ${srcdir}/include/curl/curlver.h`
@@ -371,6 +366,7 @@ AC_HELP_STRING([--disable-http],[Disable HTTP support]),
   no)
        AC_MSG_RESULT(no)
        AC_DEFINE(CURL_DISABLE_HTTP, 1, [to disable HTTP])
+       disable_http="yes"
        AC_MSG_WARN([disable HTTP disables FTP over proxy and RTSP])
        AC_SUBST(CURL_DISABLE_HTTP, [1])
        AC_DEFINE(CURL_DISABLE_RTSP, 1, [to disable RTSP])
@@ -2786,6 +2782,7 @@ if test "$want_winidn" = "yes"; then
   clean_LDFLAGS="$LDFLAGS"
   clean_LIBS="$LIBS"
   WINIDN_LIBS="-lnormaliz"
+  WINIDN_CPPFLAGS="-DWINVER=0x0600"
   #
   if test "$want_winidn_path" != "default"; then
     dnl path has been specified
@@ -2801,7 +2798,11 @@ if test "$want_winidn" = "yes"; then
   #
   AC_MSG_CHECKING([if IdnToUnicode can be linked])
   AC_LINK_IFELSE([
-    AC_LANG_FUNC_LINK_TRY([IdnToUnicode])
+    AC_LANG_PROGRAM([[
+      #include <windows.h>
+    ]],[[
+      IdnToUnicode(0, NULL, 0, NULL, 0);
+    ]])
   ],[
     AC_MSG_RESULT([yes])
     tst_links_winidn="yes"
@@ -2958,6 +2959,12 @@ dnl Check for nghttp2
 dnl **********************************************************************
 
 OPT_H2="yes"
+
+if test "x$disable_http" = "xyes"; then
+  # without HTTP, nghttp2 is no use
+  OPT_H2="no"
+fi
+
 AC_ARG_WITH(nghttp2,
 AC_HELP_STRING([--with-nghttp2=PATH],[Enable nghttp2 usage])
 AC_HELP_STRING([--without-nghttp2],[Disable nghttp2 usage]),
@@ -3279,23 +3286,18 @@ case $host in
     ;;
 esac
 
-AC_CHECK_FUNCS([fork \
-  geteuid \
+AC_CHECK_FUNCS([geteuid \
   getpass_r \
   getppid \
-  getprotobyname \
   getpwuid \
   getpwuid_r \
   getrlimit \
   gettimeofday \
   if_nametoindex \
-  inet_addr \
-  perror \
   pipe \
   setlocale \
   setmode \
   setrlimit \
-  uname \
   utime \
   utimes
 ],[
@@ -3400,11 +3402,8 @@ else
 fi
 AM_CONDITIONAL(BUILD_LIBHOSTNAME, test x$build_libhostname = xyes)
 
-CURL_CHECK_OPTION_THREADED_RESOLVER
-
-if test "x$want_thres" = xyes && test "x$want_ares" = xyes; then
-  AC_MSG_ERROR(
-[Options --enable-threaded-resolver and --enable-ares are mutually exclusive])
+if test "x$want_ares" != xyes; then
+  CURL_CHECK_OPTION_THREADED_RESOLVER
 fi
 
 dnl ************************************************************
@@ -3896,6 +3895,7 @@ AC_CONFIG_FILES([Makefile \
            tests/server/Makefile \
            tests/libtest/Makefile \
            tests/unit/Makefile \
+           tests/fuzz/Makefile \
            packages/Makefile \
            packages/Win32/Makefile \
            packages/Win32/cygwin/Makefile \

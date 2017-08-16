@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2016, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -181,6 +181,7 @@ const struct Curl_handler Curl_handler_tftp = {
   ZERO_NULL,                            /* perform_getsock */
   tftp_disconnect,                      /* disconnect */
   ZERO_NULL,                            /* readwrite */
+  ZERO_NULL,                            /* connection_check */
   PORT_TFTP,                            /* defport */
   CURLPROTO_TFTP,                       /* protocol */
   PROTOPT_NONE | PROTOPT_NOURLQUERY     /* flags */
@@ -489,6 +490,11 @@ static CURLcode tftp_send_first(tftp_state_data_t *state, tftp_event_t event)
                             &filename, NULL, FALSE);
     if(result)
       return result;
+
+    if(strlen(filename) > (state->blksize - strlen(mode) - 4)) {
+      failf(data, "TFTP file name too long\n");
+      return CURLE_TFTP_ILLEGAL; /* too long file name field */
+    }
 
     snprintf((char *)state->spacket.data+2,
              state->blksize,
@@ -1344,7 +1350,7 @@ static CURLcode tftp_do(struct connectdata *conn, bool *done)
 
   state = (tftp_state_data_t *)conn->proto.tftpc;
   if(!state)
-    return CURLE_BAD_CALLING_ORDER;
+    return CURLE_TFTP_ILLEGAL;
 
   result = tftp_perform(conn, done);
 

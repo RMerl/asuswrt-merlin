@@ -177,6 +177,7 @@ const struct Curl_handler Curl_handler_scp = {
   ssh_perform_getsock,                  /* perform_getsock */
   scp_disconnect,                       /* disconnect */
   ZERO_NULL,                            /* readwrite */
+  ZERO_NULL,                            /* connection_check */
   PORT_SSH,                             /* defport */
   CURLPROTO_SCP,                        /* protocol */
   PROTOPT_DIRLOCK | PROTOPT_CLOSEACTION
@@ -203,6 +204,7 @@ const struct Curl_handler Curl_handler_sftp = {
   ssh_perform_getsock,                  /* perform_getsock */
   sftp_disconnect,                      /* disconnect */
   ZERO_NULL,                            /* readwrite */
+  ZERO_NULL,                            /* connection_check */
   PORT_SSH,                             /* defport */
   CURLPROTO_SFTP,                       /* protocol */
   PROTOPT_DIRLOCK | PROTOPT_CLOSEACTION
@@ -2825,7 +2827,7 @@ static CURLcode ssh_block_statemach(struct connectdata *conn,
   while((sshc->state != SSH_STOP) && !result) {
     bool block;
     time_t left = 1000;
-    struct timeval now = Curl_tvnow();
+    struct curltime now = Curl_tvnow();
 
     result = ssh_statemach_act(conn, &block);
     if(result)

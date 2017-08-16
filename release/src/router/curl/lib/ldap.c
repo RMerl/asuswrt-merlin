@@ -150,6 +150,7 @@ const struct Curl_handler Curl_handler_ldap = {
   ZERO_NULL,                            /* perform_getsock */
   ZERO_NULL,                            /* disconnect */
   ZERO_NULL,                            /* readwrite */
+  ZERO_NULL,                            /* connection_check */
   PORT_LDAP,                            /* defport */
   CURLPROTO_LDAP,                       /* protocol */
   PROTOPT_NONE                          /* flags */
@@ -175,6 +176,7 @@ const struct Curl_handler Curl_handler_ldaps = {
   ZERO_NULL,                            /* perform_getsock */
   ZERO_NULL,                            /* disconnect */
   ZERO_NULL,                            /* readwrite */
+  ZERO_NULL,                            /* connection_check */
   PORT_LDAPS,                           /* defport */
   CURLPROTO_LDAPS,                      /* protocol */
   PROTOPT_SSL                           /* flags */
@@ -233,7 +235,6 @@ static int ldap_win_bind(struct connectdata *conn, LDAP *server,
                          const char *user, const char *passwd)
 {
   int rc = LDAP_INVALID_CREDENTIALS;
-  ULONG method = LDAP_AUTH_SIMPLE;
 
   PTCHAR inuser = NULL;
   PTCHAR inpass = NULL;
@@ -242,7 +243,7 @@ static int ldap_win_bind(struct connectdata *conn, LDAP *server,
     inuser = Curl_convert_UTF8_to_tchar((char *) user);
     inpass = Curl_convert_UTF8_to_tchar((char *) passwd);
 
-    rc = ldap_bind_s(server, inuser, inpass, method);
+    rc = ldap_simple_bind_s(server, inuser, inpass);
 
     Curl_unicodefree(inuser);
     Curl_unicodefree(inpass);

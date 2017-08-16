@@ -1197,6 +1197,8 @@ int main(int argc, char *argv[])
   int arg=1;
   long pid;
 
+  memset(&req, 0, sizeof(req));
+
   while(argc>arg) {
     if(!strcmp("--version", argv[arg])) {
       printf("rtspd IPv4%s"

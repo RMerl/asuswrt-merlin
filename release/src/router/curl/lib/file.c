@@ -108,6 +108,7 @@ const struct Curl_handler Curl_handler_file = {
   ZERO_NULL,                            /* perform_getsock */
   file_disconnect,                      /* disconnect */
   ZERO_NULL,                            /* readwrite */
+  ZERO_NULL,                            /* connection_check */
   0,                                    /* defport */
   CURLPROTO_FILE,                       /* protocol */
   PROTOPT_NONETWORK | PROTOPT_NOURLQUERY /* flags */
@@ -500,7 +501,7 @@ static CURLcode file_do(struct connectdata *conn, bool *done)
              tm->tm_hour,
              tm->tm_min,
              tm->tm_sec);
-    result = Curl_client_write(conn, CLIENTWRITE_BOTH, buf, 0);
+    result = Curl_client_write(conn, CLIENTWRITE_BOTH, header, 0);
     if(!result)
       /* set the file size to make it available post transfer */
       Curl_pgrsSetDownloadSize(data, expected_size);

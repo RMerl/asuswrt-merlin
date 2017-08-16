@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLINFO_SPEED_UPLOAD 3 "May 06, 2017" "libcurl 7.54.1" "curl_easy_getinfo options"
+.TH CURLINFO_SPEED_UPLOAD 3 "June 15, 2017" "libcurl 7.55.1" "curl_easy_getinfo options"
 
 .SH NAME
 CURLINFO_SPEED_UPLOAD \- get upload speed
@@ -31,6 +31,9 @@ CURLcode curl_easy_getinfo(CURL *handle, CURLINFO_SPEED_UPLOAD, double *speed);
 .SH DESCRIPTION
 Pass a pointer to a double to receive the average upload speed that curl
 measured for the complete upload. Measured in bytes/second.
+
+\fICURLINFO_SPEED_UPLOAD_T(3)\fP is a newer replacement that returns a more
+sensible variable type.
 .SH PROTOCOLS
 .SH EXAMPLE
 .nf

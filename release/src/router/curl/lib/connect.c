@@ -180,12 +180,12 @@ singleipconnect(struct connectdata *conn,
  * @unittest: 1303
  */
 time_t Curl_timeleft(struct Curl_easy *data,
-                     struct timeval *nowp,
+                     struct curltime *nowp,
                      bool duringconnect)
 {
   int timeout_set = 0;
   time_t timeout_ms = duringconnect?DEFAULT_CONNECT_TIMEOUT:0;
-  struct timeval now;
+  struct curltime now;
 
   /* if a timeout is set, use the most restrictive one */
 
@@ -607,7 +607,8 @@ void Curl_persistconninfo(struct connectdata *conn)
   conn->data->info.conn_local_port = conn->local_port;
 }
 
-/* retrieves ip address and port from a sockaddr structure */
+/* retrieves ip address and port from a sockaddr structure.
+   note it calls Curl_inet_ntop which sets errno on fail, not SOCKERRNO. */
 static bool getaddressinfo(struct sockaddr *sa, char *addr,
                            long *port)
 {
@@ -654,7 +655,7 @@ static bool getaddressinfo(struct sockaddr *sa, char *addr,
 
   addr[0] = '\0';
   *port = 0;
-
+  errno = EAFNOSUPPORT;
   return FALSE;
 }
 
@@ -672,11 +673,9 @@ void Curl_updateconninfo(struct connectdata *conn, curl_socket_t sockfd)
     return;
 
   if(!conn->bits.reuse && !conn->bits.tcp_fastopen) {
-    int error;
-
     len = sizeof(struct Curl_sockaddr_storage);
     if(getpeername(sockfd, (struct sockaddr*) &ssrem, &len)) {
-      error = SOCKERRNO;
+      int error = SOCKERRNO;
       failf(data, "getpeername() failed with errno %d: %s",
             error, Curl_strerror(conn, error));
       return;
@@ -685,7 +684,7 @@ void Curl_updateconninfo(struct connectdata *conn, curl_socket_t sockfd)
     len = sizeof(struct Curl_sockaddr_storage);
     memset(&ssloc, 0, sizeof(ssloc));
     if(getsockname(sockfd, (struct sockaddr*) &ssloc, &len)) {
-      error = SOCKERRNO;
+      int error = SOCKERRNO;
       failf(data, "getsockname() failed with errno %d: %s",
             error, Curl_strerror(conn, error));
       return;
@@ -693,18 +692,16 @@ void Curl_updateconninfo(struct connectdata *conn, curl_socket_t sockfd)
 
     if(!getaddressinfo((struct sockaddr*)&ssrem,
                         conn->primary_ip, &conn->primary_port)) {
-      error = ERRNO;
       failf(data, "ssrem inet_ntop() failed with errno %d: %s",
-            error, Curl_strerror(conn, error));
+            errno, Curl_strerror(conn, errno));
       return;
     }
     memcpy(conn->ip_addr_str, conn->primary_ip, MAX_IPADR_LEN);
 
     if(!getaddressinfo((struct sockaddr*)&ssloc,
                        conn->local_ip, &conn->local_port)) {
-      error = ERRNO;
       failf(data, "ssloc inet_ntop() failed with errno %d: %s",
-            error, Curl_strerror(conn, error));
+            errno, Curl_strerror(conn, errno));
       return;
     }
 
@@ -726,7 +723,7 @@ CURLcode Curl_is_connected(struct connectdata *conn,
   CURLcode result = CURLE_OK;
   time_t allow;
   int error = 0;
-  struct timeval now;
+  struct curltime now;
   int rc;
   int i;
 
@@ -879,19 +876,6 @@ void Curl_tcpnodelay(struct connectdata *conn, curl_socket_t sockfd)
   curl_socklen_t onoff = (curl_socklen_t) 1;
   int level = IPPROTO_TCP;
 
-#if 0
-  /* The use of getprotobyname() is disabled since it isn't thread-safe on
-     numerous systems. On these getprotobyname_r() should be used instead, but
-     that exists in at least one 4 arg version and one 5 arg version, and
-     since the proto number rarely changes anyway we now just use the hard
-     coded number. The "proper" fix would need a configure check for the
-     correct function much in the same style the gethostbyname_r versions are
-     detected. */
-  struct protoent *pe = getprotobyname("tcp");
-  if(pe)
-    level = pe->p_proto;
-#endif
-
 #if defined(CURL_DISABLE_VERBOSE_STRINGS)
   (void) conn;
 #endif
@@ -1008,9 +992,8 @@ static CURLcode singleipconnect(struct connectdata *conn,
   if(!getaddressinfo((struct sockaddr*)&addr.sa_addr,
                      ipaddress, &port)) {
     /* malformed address or bug in inet_ntop, try next address */
-    error = ERRNO;
     failf(data, "sa_addr inet_ntop() failed with errno %d: %s",
-          error, Curl_strerror(conn, error));
+          errno, Curl_strerror(conn, errno));
     Curl_closesocket(conn, sockfd);
     return CURLE_OK;
   }
@@ -1153,7 +1136,7 @@ CURLcode Curl_connecthost(struct connectdata *conn,  /* context */
                           const struct Curl_dns_entry *remotehost)
 {
   struct Curl_easy *data = conn->data;
-  struct timeval before = Curl_tvnow();
+  struct curltime before = Curl_tvnow();
   CURLcode result = CURLE_COULDNT_CONNECT;
 
   time_t timeout_ms = Curl_timeleft(data, &before, TRUE);

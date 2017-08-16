@@ -1054,7 +1054,10 @@ CURL_CFLAG_EXTRAS
 CONFIGURE_OPTIONS
 CODE_COVERAGE_RULES
 CODE_COVERAGE_LDFLAGS
+CODE_COVERAGE_LIBS
+CODE_COVERAGE_CXXFLAGS
 CODE_COVERAGE_CFLAGS
+CODE_COVERAGE_CPPFLAGS
 GENHTML
 LCOV
 GCOV
@@ -3099,7 +3102,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-ac_config_headers="$ac_config_headers lib/curl_config.h include/curl/curlbuild.h"
+ac_config_headers="$ac_config_headers lib/curl_config.h"
 
 
 
@@ -3627,9 +3630,6 @@ fi
 
 fi
 
-		# List of supported lcov versions.
-		lcov_version_list="1.6 1.7 1.8 1.9 1.10 1.11 1.13"
-
 		# Extract the first word of "lcov", so it can be a program name with args.
 set dummy lcov; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -3705,40 +3705,11 @@ fi
 
 
 
-		if  test "$LCOV" ; then :
+		if  test -z "$LCOV" ; then :
 
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for lcov version" >&5
-$as_echo_n "checking for lcov version... " >&6; }
-if ${ax_cv_lcov_version+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-				ax_cv_lcov_version=invalid
-				lcov_version=`$LCOV -v 2>/dev/null | $SED -e 's/^.* //'`
-				for lcov_check_version in $lcov_version_list; do
-					if test "$lcov_version" = "$lcov_check_version"; then
-						ax_cv_lcov_version="$lcov_check_version (ok)"
-					fi
-				done
+			as_fn_error $? "To enable code coverage reporting you must have lcov installed" "$LINENO" 5
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_lcov_version" >&5
-$as_echo "$ax_cv_lcov_version" >&6; }
-
-else
-
-			lcov_msg="To enable code coverage reporting you must have one of the following lcov versions installed: $lcov_version_list"
-			as_fn_error $? "$lcov_msg" "$LINENO" 5
-
-fi
-
-		case $ax_cv_lcov_version in
-			""|invalid)
-				lcov_msg="You must have one of the following versions of lcov: $lcov_version_list (found: $lcov_version)."
-				as_fn_error $? "$lcov_msg" "$LINENO" 5
-				LCOV="exit 0;"
-			;;
-		esac
 
 		if  test -z "$GENHTML" ; then :
 
@@ -3746,17 +3717,54 @@ fi
 
 fi
 
-				CODE_COVERAGE_CFLAGS="-O0 -g -fprofile-arcs -ftest-coverage"
-		CODE_COVERAGE_LDFLAGS="-lgcov"
+						CODE_COVERAGE_CPPFLAGS="-DNDEBUG"
+		CODE_COVERAGE_CFLAGS="-O0 -g -fprofile-arcs -ftest-coverage"
+		CODE_COVERAGE_CXXFLAGS="-O0 -g -fprofile-arcs -ftest-coverage"
+		CODE_COVERAGE_LIBS="-lgcov"
+		CODE_COVERAGE_LDFLAGS="$CODE_COVERAGE_LIBS"
 
 
 
+
+
+
+
+		CODE_COVERAGE_RULES_CHECK='
+	-$(A''M_V_at)$(MAKE) $(AM_MAKEFLAGS) -k check
+	$(A''M_V_at)$(MAKE) $(AM_MAKEFLAGS) code-coverage-capture
+'
+		CODE_COVERAGE_RULES_CAPTURE='
+	$(code_coverage_v_lcov_cap)$(LCOV) $(code_coverage_quiet) $(addprefix --directory ,$(CODE_COVERAGE_DIRECTORY)) --capture --output-file "$(CODE_COVERAGE_OUTPUT_FILE).tmp" --test-name "$(call code_coverage_sanitize,$(PACKAGE_NAME)-$(PACKAGE_VERSION))" --no-checksum --compat-libtool $(CODE_COVERAGE_LCOV_SHOPTS) $(CODE_COVERAGE_LCOV_OPTIONS)
+	$(code_coverage_v_lcov_ign)$(LCOV) $(code_coverage_quiet) $(addprefix --directory ,$(CODE_COVERAGE_DIRECTORY)) --remove "$(CODE_COVERAGE_OUTPUT_FILE).tmp" "/tmp/*" $(CODE_COVERAGE_IGNORE_PATTERN) --output-file "$(CODE_COVERAGE_OUTPUT_FILE)" $(CODE_COVERAGE_LCOV_SHOPTS) $(CODE_COVERAGE_LCOV_RMOPTS)
+	-@rm -f $(CODE_COVERAGE_OUTPUT_FILE).tmp
+	$(code_coverage_v_genhtml)LANG=C $(GENHTML) $(code_coverage_quiet) $(addprefix --prefix ,$(CODE_COVERAGE_DIRECTORY)) --output-directory "$(CODE_COVERAGE_OUTPUT_DIRECTORY)" --title "$(PACKAGE_NAME)-$(PACKAGE_VERSION) Code Coverage" --legend --show-details "$(CODE_COVERAGE_OUTPUT_FILE)" $(CODE_COVERAGE_GENHTML_OPTIONS)
+	@echo "file://$(abs_builddir)/$(CODE_COVERAGE_OUTPUT_DIRECTORY)/index.html"
+'
+		CODE_COVERAGE_RULES_CLEAN='
+clean: code-coverage-clean
+distclean: code-coverage-clean
+code-coverage-clean:
+	-$(LCOV) --directory $(top_builddir) -z
+	-rm -rf $(CODE_COVERAGE_OUTPUT_FILE) $(CODE_COVERAGE_OUTPUT_FILE).tmp $(CODE_COVERAGE_OUTPUT_DIRECTORY)
+	-find . \( -name "*.gcda" -o -name "*.gcno" -o -name "*.gcov" \) -delete
+'
+
+else
+
+		CODE_COVERAGE_RULES_CHECK='
+	@echo "Need to reconfigure with --enable-code-coverage"
+'
+		CODE_COVERAGE_RULES_CAPTURE="$CODE_COVERAGE_RULES_CHECK"
+		CODE_COVERAGE_RULES_CLEAN=''
+
+fi
 
 CODE_COVERAGE_RULES='
 # Code coverage
 #
 # Optional:
 #  - CODE_COVERAGE_DIRECTORY: Top-level directory for code coverage reporting.
+#    Multiple directories may be specified, separated by whitespace.
 #    (Default: $(top_builddir))
 #  - CODE_COVERAGE_OUTPUT_FILE: Filename and path for the .info file generated
 #    by lcov for code coverage. (Default:
@@ -3764,13 +3772,26 @@ CODE_COVERAGE_RULES='
 #  - CODE_COVERAGE_OUTPUT_DIRECTORY: Directory for generated code coverage
 #    reports to be created. (Default:
 #    $(PACKAGE_NAME)-$(PACKAGE_VERSION)-coverage)
+#  - CODE_COVERAGE_BRANCH_COVERAGE: Set to 1 to enforce branch coverage,
+#    set to 0 to disable it and leave empty to stay with the default.
+#    (Default: empty)
+#  - CODE_COVERAGE_LCOV_SHOPTS_DEFAULT: Extra options shared between both lcov
+#    instances. (Default: based on $CODE_COVERAGE_BRANCH_COVERAGE)
+#  - CODE_COVERAGE_LCOV_SHOPTS: Extra options to shared between both lcov
+#    instances. (Default: $CODE_COVERAGE_LCOV_SHOPTS_DEFAULT)
 #  - CODE_COVERAGE_LCOV_OPTIONS_GCOVPATH: --gcov-tool pathtogcov
-#  - CODE_COVERAGE_LCOV_OPTIONS_DEFAULT: Extra options to pass to the lcov instance.
-#    (Default: $CODE_COVERAGE_LCOV_OPTIONS_GCOVPATH)
-#  - CODE_COVERAGE_LCOV_OPTIONS: Extra options to pass to the lcov instance.
-#    (Default: $CODE_COVERAGE_LCOV_OPTIONS_DEFAULT)
+#  - CODE_COVERAGE_LCOV_OPTIONS_DEFAULT: Extra options to pass to the
+#    collecting lcov instance. (Default: $CODE_COVERAGE_LCOV_OPTIONS_GCOVPATH)
+#  - CODE_COVERAGE_LCOV_OPTIONS: Extra options to pass to the collecting lcov
+#    instance. (Default: $CODE_COVERAGE_LCOV_OPTIONS_DEFAULT)
+#  - CODE_COVERAGE_LCOV_RMOPTS_DEFAULT: Extra options to pass to the filtering
+#    lcov instance. (Default: empty)
+#  - CODE_COVERAGE_LCOV_RMOPTS: Extra options to pass to the filtering lcov
+#    instance. (Default: $CODE_COVERAGE_LCOV_RMOPTS_DEFAULT)
+#  - CODE_COVERAGE_GENHTML_OPTIONS_DEFAULT: Extra options to pass to the
+#    genhtml instance. (Default: based on $CODE_COVERAGE_BRANCH_COVERAGE)
 #  - CODE_COVERAGE_GENHTML_OPTIONS: Extra options to pass to the genhtml
-#    instance. (Default: empty)
+#    instance. (Default: $CODE_COVERAGE_GENHTML_OPTIONS_DEFAULT)
 #  - CODE_COVERAGE_IGNORE_PATTERN: Extra glob pattern of files to ignore
 #
 # The generated report will be titled using the $(PACKAGE_NAME) and
@@ -3781,49 +3802,59 @@ CODE_COVERAGE_RULES='
 CODE_COVERAGE_DIRECTORY ?= $(top_builddir)
 CODE_COVERAGE_OUTPUT_FILE ?= $(PACKAGE_NAME)-$(PACKAGE_VERSION)-coverage.info
 CODE_COVERAGE_OUTPUT_DIRECTORY ?= $(PACKAGE_NAME)-$(PACKAGE_VERSION)-coverage
+CODE_COVERAGE_BRANCH_COVERAGE ?=
+CODE_COVERAGE_LCOV_SHOPTS_DEFAULT ?= $(if $(CODE_COVERAGE_BRANCH_COVERAGE),\
+--rc lcov_branch_coverage=$(CODE_COVERAGE_BRANCH_COVERAGE))
+CODE_COVERAGE_LCOV_SHOPTS ?= $(CODE_COVERAGE_LCOV_SHOPTS_DEFAULT)
 CODE_COVERAGE_LCOV_OPTIONS_GCOVPATH ?= --gcov-tool "$(GCOV)"
 CODE_COVERAGE_LCOV_OPTIONS_DEFAULT ?= $(CODE_COVERAGE_LCOV_OPTIONS_GCOVPATH)
 CODE_COVERAGE_LCOV_OPTIONS ?= $(CODE_COVERAGE_LCOV_OPTIONS_DEFAULT)
-CODE_COVERAGE_GENHTML_OPTIONS ?=
+CODE_COVERAGE_LCOV_RMOPTS_DEFAULT ?=
+CODE_COVERAGE_LCOV_RMOPTS ?= $(CODE_COVERAGE_LCOV_RMOPTS_DEFAULT)
+CODE_COVERAGE_GENHTML_OPTIONS_DEFAULT ?=\
+$(if $(CODE_COVERAGE_BRANCH_COVERAGE),\
+--rc genhtml_branch_coverage=$(CODE_COVERAGE_BRANCH_COVERAGE))
+CODE_COVERAGE_GENHTML_OPTIONS ?= $(CODE_COVERAGE_GENHTML_OPTIONS_DEFAULT)
 CODE_COVERAGE_IGNORE_PATTERN ?=
-
-code_coverage_quiet = $(code_coverage_quiet_$(V))
-code_coverage_quiet_ =
-code_coverage_quiet_0 = --quiet
-
-# Use recursive makes in order to ignore errors during check
-check-code-coverage:
-	-$(MAKE) $(AM_MAKEFLAGS) -k check
-	$(MAKE) $(AM_MAKEFLAGS) code-coverage-capture
-
-# Capture code coverage data
-code-coverage-capture: code-coverage-capture-hook
-	$(LCOV) $(code_coverage_quiet) --directory $(CODE_COVERAGE_DIRECTORY) --capture --output-file "$(CODE_COVERAGE_OUTPUT_FILE).tmp" --test-name "$(PACKAGE_NAME)-$(PACKAGE_VERSION)" --no-checksum --compat-libtool $(CODE_COVERAGE_LCOV_OPTIONS)
-	$(LCOV) $(code_coverage_quiet) --directory $(CODE_COVERAGE_DIRECTORY) --remove "$(CODE_COVERAGE_OUTPUT_FILE).tmp" "/tmp/*" $(CODE_COVERAGE_IGNORE_PATTERN) --output-file "$(CODE_COVERAGE_OUTPUT_FILE)"
-	-@rm -f $(CODE_COVERAGE_OUTPUT_FILE).tmp
-	LANG=C $(GENHTML) $(code_coverage_quiet) --prefix $(CODE_COVERAGE_DIRECTORY) --output-directory "$(CODE_COVERAGE_OUTPUT_DIRECTORY)" --title "$(PACKAGE_NAME)-$(PACKAGE_VERSION) Code Coverage" --legend --show-details "$(CODE_COVERAGE_OUTPUT_FILE)" $(CODE_COVERAGE_GENHTML_OPTIONS)
-	@echo "file://$(abs_builddir)/$(CODE_COVERAGE_OUTPUT_DIRECTORY)/index.html"
-
-# Hook rule executed before code-coverage-capture, overridable by the user
-code-coverage-capture-hook:
-
-clean: code-coverage-clean
-code-coverage-clean:
-	-$(LCOV) --directory $(top_builddir) -z
-	-rm -rf $(CODE_COVERAGE_OUTPUT_FILE) $(CODE_COVERAGE_OUTPUT_FILE).tmp $(CODE_COVERAGE_OUTPUT_DIRECTORY)
-	-find . -name "*.gcda" -o -name "*.gcov" -delete
 
 GITIGNOREFILES ?=
 GITIGNOREFILES += $(CODE_COVERAGE_OUTPUT_FILE) $(CODE_COVERAGE_OUTPUT_DIRECTORY)
 
-DISTCHECK_CONFIGURE_FLAGS ?=
-DISTCHECK_CONFIGURE_FLAGS += --disable-code-coverage
+code_coverage_v_lcov_cap = $(code_coverage_v_lcov_cap_$(V))
+code_coverage_v_lcov_cap_ = $(code_coverage_v_lcov_cap_$(AM_DEFAULT_VERBOSITY))
+code_coverage_v_lcov_cap_0 = @echo "  LCOV   --capture"\
+ $(CODE_COVERAGE_OUTPUT_FILE);
+code_coverage_v_lcov_ign = $(code_coverage_v_lcov_ign_$(V))
+code_coverage_v_lcov_ign_ = $(code_coverage_v_lcov_ign_$(AM_DEFAULT_VERBOSITY))
+code_coverage_v_lcov_ign_0 = @echo "  LCOV   --remove /tmp/*"\
+ $(CODE_COVERAGE_IGNORE_PATTERN);
+code_coverage_v_genhtml = $(code_coverage_v_genhtml_$(V))
+code_coverage_v_genhtml_ = $(code_coverage_v_genhtml_$(AM_DEFAULT_VERBOSITY))
+code_coverage_v_genhtml_0 = @echo "  GEN   " $(CODE_COVERAGE_OUTPUT_DIRECTORY);
+code_coverage_quiet = $(code_coverage_quiet_$(V))
+code_coverage_quiet_ = $(code_coverage_quiet_$(AM_DEFAULT_VERBOSITY))
+code_coverage_quiet_0 = --quiet
+
+# sanitizes the test-name: replaces with underscores: dashes and dots
+code_coverage_sanitize = $(subst -,_,$(subst .,_,$(1)))
+
+# Use recursive makes in order to ignore errors during check
+check-code-coverage:'"$CODE_COVERAGE_RULES_CHECK"'
+
+# Capture code coverage data
+code-coverage-capture: code-coverage-capture-hook'"$CODE_COVERAGE_RULES_CAPTURE"'
+
+# Hook rule executed before code-coverage-capture, overridable by the user
+code-coverage-capture-hook:
+
+'"$CODE_COVERAGE_RULES_CLEAN"'
+
+A''M_DISTCHECK_CONFIGURE_FLAGS ?=
+A''M_DISTCHECK_CONFIGURE_FLAGS += --disable-code-coverage
 
 .PHONY: check-code-coverage code-coverage-capture code-coverage-capture-hook code-coverage-clean
 '
 
-
-fi
 
 
 
@@ -4103,10 +4134,6 @@ fi
 
 
 
-
-if test -f ${srcdir}/include/curl/curlbuild.h; then
-  rm -f ${srcdir}/include/curl/curlbuild.h
-fi
 
 CURLVERSION=`$SED -ne 's/^#define LIBCURL_VERSION "\(.*\)".*/\1/p' ${srcdir}/include/curl/curlver.h`
 
@@ -16966,7 +16993,15 @@ rm -f conftest.err conftest.i conftest.$ac_ext
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
     compiler_id="CLANG"
-    clangver=`$CC -v 2>&1 | grep version | "$SED" 's/.*version \([0-9]*\.[0-9]*\).*/\1/'`
+    fullclangver=`$CC -v 2>&1 | grep version`
+    clangver=`echo $fullclangver | grep "based on LLVM " | "$SED" 's/.*(based on LLVM \([0-9]*\.[0-9]*\).*)/\1/'`
+    if test -z "$clangver"; then
+      if echo $fullclangver | grep "Apple LLVM version " >/dev/null; then
+                clangver=`3.7`
+      else
+        clangver=`echo $fullclangver | "$SED" 's/.*version \([0-9]*\.[0-9]*\).*/\1/'`
+      fi
+    fi
     clangvhi=`echo $clangver | cut -d . -f1`
     clangvlo=`echo $clangver | cut -d . -f2`
     compiler_num=`(expr $clangvhi "*" 100 + $clangvlo) 2>/dev/null`
@@ -18444,8 +18479,30 @@ $as_echo "$as_me: WARNING: compiler options rejected: $tmp_options" >&2;}
             tmp_CFLAGS="$tmp_CFLAGS -Wunused"
           fi
           #
+                    if test "$compiler_num" -ge "208"; then
+            tmp_CFLAGS="$tmp_CFLAGS -Wvla"
+          fi
+          #
                     if test "$compiler_num" -ge "209"; then
             tmp_CFLAGS="$tmp_CFLAGS -Wshift-sign-overflow"
+          fi
+          #
+                    if test "$compiler_num" -ge "302"; then
+            case $host_os in
+            cygwin* | mingw*)
+                                          ;;
+            *)
+              tmp_CFLAGS="$tmp_CFLAGS -Wmissing-variable-declarations"
+              ;;
+            esac
+          fi
+          #
+                    if test "$compiler_num" -ge "306"; then
+            tmp_CFLAGS="$tmp_CFLAGS -Wdouble-promotion"
+          fi
+          #
+                    if test "$compiler_num" -ge "309"; then
+            tmp_CFLAGS="$tmp_CFLAGS -Wcomma"
           fi
         fi
         ;;
@@ -18530,6 +18587,10 @@ $as_echo "$as_me: WARNING: compiler options rejected: $tmp_options" >&2;}
                         if test "$curl_cv_have_def__WIN32" = "yes"; then
               tmp_CFLAGS="$tmp_CFLAGS -Wno-pedantic-ms-format"
             fi
+          fi
+          #
+                    if test "$compiler_num" -ge "406"; then
+            tmp_CFLAGS="$tmp_CFLAGS -Wdouble-promotion"
           fi
           #
         fi
@@ -19184,11 +19245,6 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_WINDOWS_H 1
 _ACEOF
 
-
-cat >>confdefs.h <<_ACEOF
-#define WIN32_LEAN_AND_MEAN 1
-_ACEOF
-
       ;;
   esac
 
@@ -19702,6 +19758,7 @@ $as_echo "no" >&6; }
 
 $as_echo "#define CURL_DISABLE_HTTP 1" >>confdefs.h
 
+       disable_http="yes"
        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: disable HTTP disables FTP over proxy and RTSP" >&5
 $as_echo "$as_me: WARNING: disable HTTP disables FTP over proxy and RTSP" >&2;}
        CURL_DISABLE_HTTP=1
@@ -20690,11 +20747,6 @@ $as_echo "$curl_cv_header_windows_h" >&6; }
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_WINDOWS_H 1
-_ACEOF
-
-
-cat >>confdefs.h <<_ACEOF
-#define WIN32_LEAN_AND_MEAN 1
 _ACEOF
 
       ;;
@@ -21867,8 +21919,8 @@ $as_echo_n "checking for LDAP libraries... " >&6; }
   #
   for x_nlibs in '' "$u_libs" \
     '-lldap' \
-    '-llber -lldap' \
     '-lldap -llber' \
+    '-llber -lldap' \
     '-lldapssl -lldapx -lldapsdk' \
     '-lldapsdk -lldapx -lldapssl' ; do
     if test "$curl_cv_ldap_LIBS" = "unknown"; then
@@ -26851,6 +26903,7 @@ if test "$want_winidn" = "yes"; then
   clean_LDFLAGS="$LDFLAGS"
   clean_LIBS="$LIBS"
   WINIDN_LIBS="-lnormaliz"
+  WINIDN_CPPFLAGS="-DWINVER=0x0600"
   #
   if test "$want_winidn_path" != "default"; then
             WINIDN_LDFLAGS="-L$want_winidn_path/lib$libsuff"
@@ -26868,24 +26921,13 @@ $as_echo_n "checking if IdnToUnicode can be linked... " >&6; }
 /* end confdefs.h.  */
 
 
-#define IdnToUnicode innocuous_IdnToUnicode
-#ifdef __STDC__
-# include <limits.h>
-#else
-# include <assert.h>
-#endif
-#undef IdnToUnicode
-#ifdef __cplusplus
-extern "C"
-#endif
-char IdnToUnicode ();
-#if defined __stub_IdnToUnicode || defined __stub___IdnToUnicode
-choke me
-#endif
+      #include <windows.h>
 
 int main (void)
 {
-return IdnToUnicode ();
+
+      IdnToUnicode(0, NULL, 0, NULL, 0);
+
  ;
  return 0;
 }
@@ -27370,6 +27412,12 @@ fi
 
 
 OPT_H2="yes"
+
+if test "x$disable_http" = "xyes"; then
+  # without HTTP, nghttp2 is no use
+  OPT_H2="no"
+fi
+
 
 # Check whether --with-nghttp2 was given.
 if test "${with_nghttp2+set}" = set; then :
@@ -28743,11 +28791,6 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_WINDOWS_H 1
 _ACEOF
 
-
-cat >>confdefs.h <<_ACEOF
-#define WIN32_LEAN_AND_MEAN 1
-_ACEOF
-
       ;;
   esac
 
@@ -29554,11 +29597,15 @@ else
                       long tv_usec;
                     };
 #endif
-                    extern $sel_retv SELECTCALLCONV select($sel_arg1,
-                                                           $sel_arg234,
-                                                           $sel_arg234,
-                                                           $sel_arg234,
-                                                           $sel_arg5);
+                    extern $sel_retv SELECTCALLCONV
+#ifdef __ANDROID__
+__attribute__((overloadable))
+#endif
+			select($sel_arg1,
+					$sel_arg234,
+					$sel_arg234,
+					$sel_arg234,
+					$sel_arg5);
 
 int main (void)
 {
@@ -29779,6 +29826,9 @@ else
 #define RECVCALLCONV
 #endif
                       extern $recv_retv RECVCALLCONV
+#ifdef __ANDROID__
+__attribute__((overloadable))
+#endif
                       recv($recv_arg1, $recv_arg2, $recv_arg3, $recv_arg4);
 
 int main (void)
@@ -29967,6 +30017,9 @@ else
 #define SENDCALLCONV
 #endif
                       extern $send_retv SENDCALLCONV
+#ifdef __ANDROID__
+__attribute__((overloadable))
+#endif
                       send($send_arg1, $send_arg2, $send_arg3, $send_arg4);
 
 int main (void)
@@ -39768,23 +39821,18 @@ $as_echo "$as_me: skip check for pipe on msdosdjgpp" >&6;}
     ;;
 esac
 
-for ac_func in fork \
-  geteuid \
+for ac_func in geteuid \
   getpass_r \
   getppid \
-  getprotobyname \
   getpwuid \
   getpwuid_r \
   getrlimit \
   gettimeofday \
   if_nametoindex \
-  inet_addr \
-  perror \
   pipe \
   setlocale \
   setmode \
   setrlimit \
-  uname \
   utime \
   utimes
 
@@ -40043,7 +40091,11 @@ else
 #endif
 #define GNICALLCONV
 #endif
-                    extern int GNICALLCONV getnameinfo($gni_arg1, $gni_arg2,
+                    extern int GNICALLCONV
+#ifdef __ANDROID__
+__attribute__((overloadable))
+#endif
+				getnameinfo($gni_arg1, $gni_arg2,
                                            char *, $gni_arg46,
                                            char *, $gni_arg46,
                                            $gni_arg7);
@@ -40597,6 +40649,7 @@ else
 fi
 
 
+if test "x$want_ares" != xyes; then
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable the threaded resolver" >&5
 $as_echo_n "checking whether to enable the threaded resolver... " >&6; }
@@ -40607,19 +40660,16 @@ if test "${enable_threaded_resolver+set}" = set; then :
 fi
 
   case "$OPT_THRES" in
-    yes)
+    *)
             want_thres="yes"
       ;;
-    *)
+    no)
             want_thres="no"
       ;;
   esac
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $want_thres" >&5
 $as_echo "$want_thres" >&6; }
 
-
-if test "x$want_thres" = xyes && test "x$want_ares" = xyes; then
-  as_fn_error $? "Options --enable-threaded-resolver and --enable-ares are mutually exclusive" "$LINENO" 5
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use POSIX threads for threaded resolver" >&5
@@ -41419,7 +41469,7 @@ if test "x$want_curldebug_assumed" = "xyes" &&
   ac_configure_args="$ac_configure_args --enable-curldebug"
 fi
 
-ac_config_files="$ac_config_files Makefile docs/Makefile docs/examples/Makefile docs/libcurl/Makefile docs/libcurl/opts/Makefile docs/cmdline-opts/Makefile include/Makefile include/curl/Makefile src/Makefile lib/Makefile scripts/Makefile lib/libcurl.vers tests/Makefile tests/certs/Makefile tests/certs/scripts/Makefile tests/data/Makefile tests/server/Makefile tests/libtest/Makefile tests/unit/Makefile packages/Makefile packages/Win32/Makefile packages/Win32/cygwin/Makefile packages/Linux/Makefile packages/Linux/RPM/Makefile packages/Linux/RPM/curl.spec packages/Linux/RPM/curl-ssl.spec packages/Solaris/Makefile packages/EPM/curl.list packages/EPM/Makefile packages/vms/Makefile packages/AIX/Makefile packages/AIX/RPM/Makefile packages/AIX/RPM/curl.spec curl-config libcurl.pc"
+ac_config_files="$ac_config_files Makefile docs/Makefile docs/examples/Makefile docs/libcurl/Makefile docs/libcurl/opts/Makefile docs/cmdline-opts/Makefile include/Makefile include/curl/Makefile src/Makefile lib/Makefile scripts/Makefile lib/libcurl.vers tests/Makefile tests/certs/Makefile tests/certs/scripts/Makefile tests/data/Makefile tests/server/Makefile tests/libtest/Makefile tests/unit/Makefile tests/fuzz/Makefile packages/Makefile packages/Win32/Makefile packages/Win32/cygwin/Makefile packages/Linux/Makefile packages/Linux/RPM/Makefile packages/Linux/RPM/curl.spec packages/Linux/RPM/curl-ssl.spec packages/Solaris/Makefile packages/EPM/curl.list packages/EPM/Makefile packages/vms/Makefile packages/AIX/Makefile packages/AIX/RPM/Makefile packages/AIX/RPM/curl.spec curl-config libcurl.pc"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -42500,7 +42550,6 @@ for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
     "lib/curl_config.h") CONFIG_HEADERS="$CONFIG_HEADERS lib/curl_config.h" ;;
-    "include/curl/curlbuild.h") CONFIG_HEADERS="$CONFIG_HEADERS include/curl/curlbuild.h" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
@@ -42522,6 +42571,7 @@ do
     "tests/server/Makefile") CONFIG_FILES="$CONFIG_FILES tests/server/Makefile" ;;
     "tests/libtest/Makefile") CONFIG_FILES="$CONFIG_FILES tests/libtest/Makefile" ;;
     "tests/unit/Makefile") CONFIG_FILES="$CONFIG_FILES tests/unit/Makefile" ;;
+    "tests/fuzz/Makefile") CONFIG_FILES="$CONFIG_FILES tests/fuzz/Makefile" ;;
     "packages/Makefile") CONFIG_FILES="$CONFIG_FILES packages/Makefile" ;;
     "packages/Win32/Makefile") CONFIG_FILES="$CONFIG_FILES packages/Win32/Makefile" ;;
     "packages/Win32/cygwin/Makefile") CONFIG_FILES="$CONFIG_FILES packages/Win32/cygwin/Makefile" ;;

@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLINFO_CONTENT_LENGTH_DOWNLOAD 3 "May 06, 2017" "libcurl 7.54.1" "curl_easy_getinfo options"
+.TH CURLINFO_CONTENT_LENGTH_DOWNLOAD 3 "June 15, 2017" "libcurl 7.55.1" "curl_easy_getinfo options"
 
 .SH NAME
 CURLINFO_CONTENT_LENGTH_DOWNLOAD \- get content-length of download
@@ -33,6 +33,9 @@ CURLcode curl_easy_getinfo(CURL *handle, CURLINFO_CONTENT_LENGTH_DOWNLOAD,
 Pass a pointer to a double to receive the content-length of the download. This
 is the value read from the Content-Length: field. Since 7.19.4, this returns
 -1 if the size isn't known.
+
+\fICURLINFO_CONTENT_LENGTH_DOWNLOAD_T(3)\fP is a newer replacement that returns a more
+sensible variable type.
 .SH PROTOCOLS
 HTTP(S)
 .SH EXAMPLE

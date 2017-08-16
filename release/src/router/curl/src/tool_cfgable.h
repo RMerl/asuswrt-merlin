@@ -27,6 +27,12 @@
 
 #include "tool_metalink.h"
 
+typedef enum {
+  ERR_NONE,
+  ERR_BINARY_TERMINAL = 1, /* binary to terminal detected */
+  ERR_LAST
+} curl_error;
+
 struct GlobalConfig;
 
 struct OperationConfig {
@@ -133,6 +139,7 @@ struct OperationConfig {
   bool crlf;
   char *customrequest;
   char *krblevel;
+  char *request_target;
   long httpversion;
   bool nobuffer;
   bool readbusy;            /* set when reading input returns EAGAIN */
@@ -141,6 +148,7 @@ struct OperationConfig {
   bool insecure_ok;         /* set TRUE to allow insecure SSL connects */
   bool proxy_insecure_ok;   /* set TRUE to allow insecure SSL connects
                                for proxy */
+  bool terminal_binary_ok;
   bool verifystatus;
   bool create_dirs;
   bool ftp_create_dirs;
@@ -181,6 +189,7 @@ struct OperationConfig {
   char *preproxy;
   int socks5_gssapi_nec;    /* The NEC reference server does not protect the
                                encryption type exchange */
+  unsigned long socks5_auth;/* auth bitmask for socks5 proxies */
   char *proxy_service_name; /* set authentication service name for HTTP and
                                SOCKS5 proxies */
   char *service_name;       /* set authentication service name for DIGEST-MD5,
@@ -236,6 +245,8 @@ struct OperationConfig {
   double expect100timeout;
   bool suppress_connect_headers;  /* suppress proxy CONNECT response headers
                                      from user callbacks */
+  curl_error synthetic_error;     /* if non-zero, it overrides any libcurl
+                                     error */
   struct GlobalConfig *global;
   struct OperationConfig *prev;
   struct OperationConfig *next;   /* Always last in the struct */

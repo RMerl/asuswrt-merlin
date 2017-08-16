@@ -251,12 +251,15 @@ static const struct LongShort aliases[]= {
   {"E7", "proxy-capath",             ARG_STRING},
   {"E8", "proxy-insecure",           ARG_BOOL},
   {"E9", "proxy-tlsv1",              ARG_NONE},
+  {"EA", "socks5-basic",             ARG_BOOL},
+  {"EB", "socks5-gssapi",            ARG_BOOL},
   {"f",  "fail",                     ARG_BOOL},
   {"fa", "fail-early",               ARG_BOOL},
   {"F",  "form",                     ARG_STRING},
   {"Fs", "form-string",              ARG_STRING},
   {"g",  "globoff",                  ARG_BOOL},
   {"G",  "get",                      ARG_NONE},
+  {"Ga", "request-target",           ARG_STRING},
   {"h",  "help",                     ARG_BOOL},
   {"H",  "header",                   ARG_STRING},
   {"Hp", "proxy-header",             ARG_STRING},
@@ -440,6 +443,7 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
   bool toggle = TRUE; /* how to switch boolean options, on or off. Controlled
                          by using --OPTION or --no-OPTION */
 
+  *usedarg = FALSE; /* default is that we don't use the arg */
 
   if(('-' != flag[0]) ||
      (('-' == flag[0]) && ('-' == flag[1]))) {
@@ -493,7 +497,6 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
       letter = parse[0];
       subletter = parse[1];
     }
-    *usedarg = FALSE; /* default is that we don't use the arg */
 
     if(hit < 0) {
       for(j = 0; j < sizeof(aliases)/sizeof(aliases[0]); j++) {
@@ -542,7 +545,8 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
         GetStr(&config->oauth_bearer, nextarg);
         break;
       case 'c': /* connect-timeout */
-        err = str2udouble(&config->connecttimeout, nextarg);
+        err = str2udouble(&config->connecttimeout, nextarg,
+                          LONG_MAX/1000);
         if(err)
           return err;
         break;
@@ -1044,7 +1048,7 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
           return err;
         break;
       case 'R': /* --expect100-timeout */
-        err = str2udouble(&config->expect100timeout, nextarg);
+        err = str2udouble(&config->expect100timeout, nextarg, LONG_MAX/1000);
         if(err)
           return err;
         break;
@@ -1554,9 +1558,25 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
         config->proxy_insecure_ok = toggle;
         break;
 
-      case '9':
+      case '9': /* --proxy-tlsv1 */
         /* TLS version 1 for proxy */
         config->proxy_ssl_version = CURL_SSLVERSION_TLSv1;
+        break;
+
+      case 'A':
+        /* --socks5-basic */
+        if(toggle)
+          config->socks5_auth |= CURLAUTH_BASIC;
+        else
+          config->socks5_auth &= ~CURLAUTH_BASIC;
+        break;
+
+      case 'B':
+        /* --socks5-gssapi */
+        if(toggle)
+          config->socks5_auth |= CURLAUTH_GSSAPI;
+        else
+          config->socks5_auth &= ~CURLAUTH_GSSAPI;
         break;
 
       default: /* unknown flag */
@@ -1591,7 +1611,11 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
       break;
 
     case 'G': /* HTTP GET */
-      config->use_httpget = TRUE;
+      if(subletter == 'a') { /* --request-target */
+        GetStr(&config->request_target, nextarg);
+      }
+      else
+        config->use_httpget = TRUE;
       break;
 
     case 'h': /* h for help */
@@ -1602,12 +1626,45 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
       break;
     case 'H':
       /* A custom header to append to a list */
-      if(subletter == 'p') /* --proxy-header */
-        err = add2list(&config->proxyheaders, nextarg);
-      else
-        err = add2list(&config->headers, nextarg);
-      if(err)
-        return err;
+      if(nextarg[0] == '@') {
+        /* read many headers from a file or stdin */
+        char *string;
+        size_t len;
+        bool use_stdin = !strcmp(&nextarg[1], "-");
+        FILE *file = use_stdin?stdin:fopen(&nextarg[1], FOPEN_READTEXT);
+        if(!file)
+          warnf(global, "Failed to open %s!\n", &nextarg[1]);
+        else {
+          err = file2memory(&string, &len, file);
+          if(!err) {
+            /* Allow strtok() here since this isn't used threaded */
+            /* !checksrc! disable BANNEDFUNC 2 */
+            char *h = strtok(string, "\r\n");
+            while(h) {
+              if(subletter == 'p') /* --proxy-header */
+                err = add2list(&config->proxyheaders, h);
+              else
+                err = add2list(&config->headers, h);
+              if(err)
+                break;
+              h = strtok(NULL, "\r\n");
+            }
+            free(string);
+          }
+          if(!use_stdin)
+            fclose(file);
+          if(err)
+            return err;
+        }
+      }
+      else {
+        if(subletter == 'p') /* --proxy-header */
+          err = add2list(&config->proxyheaders, nextarg);
+        else
+          err = add2list(&config->headers, nextarg);
+        if(err)
+          return err;
+      }
       break;
     case 'i':
       config->include_headers = toggle; /* include the headers as well in the
@@ -1657,7 +1714,7 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
       break;
     case 'm':
       /* specified max time */
-      err = str2udouble(&config->timeout, nextarg);
+      err = str2udouble(&config->timeout, nextarg, LONG_MAX/1000);
       if(err)
         return err;
       break;

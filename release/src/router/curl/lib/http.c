@@ -119,6 +119,7 @@ const struct Curl_handler Curl_handler_http = {
   ZERO_NULL,                            /* perform_getsock */
   ZERO_NULL,                            /* disconnect */
   ZERO_NULL,                            /* readwrite */
+  ZERO_NULL,                            /* connection_check */
   PORT_HTTP,                            /* defport */
   CURLPROTO_HTTP,                       /* protocol */
   PROTOPT_CREDSPERREQUEST               /* flags */
@@ -143,6 +144,7 @@ const struct Curl_handler Curl_handler_https = {
   ZERO_NULL,                            /* perform_getsock */
   ZERO_NULL,                            /* disconnect */
   ZERO_NULL,                            /* readwrite */
+  ZERO_NULL,                            /* connection_check */
   PORT_HTTPS,                           /* defport */
   CURLPROTO_HTTPS,                      /* protocol */
   PROTOPT_SSL | PROTOPT_CREDSPERREQUEST | PROTOPT_ALPN_NPN /* flags */
@@ -1369,7 +1371,7 @@ CURLcode Curl_http_connect(struct connectdata *conn, bool *done)
   if(CONNECT_FIRSTSOCKET_PROXY_SSL())
     return CURLE_OK; /* wait for HTTPS proxy SSL initialization to complete */
 
-  if(conn->tunnel_state[FIRSTSOCKET] == TUNNEL_CONNECT)
+  if(!Curl_connect_complete(conn))
     /* nothing else to do except wait right now - we're not done here. */
     return CURLE_OK;
 
@@ -1851,6 +1853,9 @@ CURLcode Curl_http(struct connectdata *conn, bool *done)
       case HTTPREQ_PUT:
         request = "PUT";
         break;
+      case HTTPREQ_OPTIONS:
+        request = "OPTIONS";
+        break;
       default: /* this should never happen */
       case HTTPREQ_GET:
         request = "GET";
@@ -2266,6 +2271,9 @@ CURLcode Curl_http(struct connectdata *conn, bool *done)
   if(result)
     return result;
 
+  if(data->set.str[STRING_TARGET])
+    ppath = data->set.str[STRING_TARGET];
+
   /* url */
   if(paste_ftp_userpwd)
     result = Curl_add_bufferf(req_buffer, "ftp://%s:%s@%s",
@@ -2592,7 +2600,7 @@ CURLcode Curl_http(struct connectdata *conn, bool *done)
       data->state.expect100header =
         Curl_compareheader(ptr, "Expect:", "100-continue");
     }
-    else if(postsize > TINY_INITIAL_POST_SIZE || postsize < 0) {
+    else if(postsize > EXPECT_100_THRESHOLD || postsize < 0) {
       result = expect100(data, conn, req_buffer);
       if(result)
         return result;
@@ -3314,19 +3322,22 @@ CURLcode Curl_http_readwrite_headers(struct Curl_easy *data,
          * says. We try to allow any number here, but we cannot make
          * guarantees on future behaviors since it isn't within the protocol.
          */
+        char separator;
         nc = sscanf(HEADER1,
-                    " HTTP/%d.%d %d",
+                    " HTTP/%1d.%1d%c%3d",
                     &httpversion_major,
                     &conn->httpversion,
+                    &separator,
                     &k->httpcode);
 
         if(nc == 1 && httpversion_major == 2 &&
            1 == sscanf(HEADER1, " HTTP/2 %d", &k->httpcode)) {
           conn->httpversion = 0;
-          nc = 3;
+          nc = 4;
+          separator = ' ';
         }
 
-        if(nc==3) {
+        if((nc==4) && (' ' == separator)) {
           conn->httpversion += 10 * httpversion_major;
 
           if(k->upgr101 == UPGR101_RECEIVED) {
@@ -3335,7 +3346,7 @@ CURLcode Curl_http_readwrite_headers(struct Curl_easy *data,
               infof(data, "Lying server, not serving HTTP/2\n");
           }
         }
-        else {
+        else if(!nc) {
           /* this is the real world, not a Nirvana
              NCSA 1.5.x returns this crap when asked for HTTP/1.1
           */
@@ -3352,6 +3363,10 @@ CURLcode Curl_http_readwrite_headers(struct Curl_easy *data,
               conn->httpversion = 10;
             }
           }
+        }
+        else {
+          failf(data, "Unsupported HTTP version in response\n");
+          return CURLE_UNSUPPORTED_PROTOCOL;
         }
       }
       else if(conn->handler->protocol & CURLPROTO_RTSP) {
