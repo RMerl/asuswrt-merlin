@@ -1803,7 +1803,7 @@ ej_wl_control_channel(int eid, webs_t wp, int argc, char_t **argv)
 	ret = websWrite(wp, "[\"%d\", \"%d\"", wl_control_channel(0), wl_control_channel(1));
 
 #if defined(RTAC3200) || defined(RTAC5300) || defined(RTAC5300R)
-	ret += websWrite(wp, ", \"%d\"", wl_control_channel(2););
+	ret += websWrite(wp, ", \"%d\"", wl_control_channel(2));
 #endif
 	ret += websWrite(wp, "]");
 
