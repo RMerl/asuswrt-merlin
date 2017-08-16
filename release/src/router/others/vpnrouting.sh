@@ -7,6 +7,14 @@ then
 	PARAM="$dev $tun_mtu $link_mtu $ifconfig_local $ifconfig_remote"
 fi
 
+my_logger(){
+	if [ "$VPN_LOGGING" -gt "3" ]
+	then
+		logger -t "openvpn-routing" "$1"
+	fi
+}
+
+
 create_client_list(){
 	OLDIFS=$IFS
 	IFS="<"
@@ -51,7 +59,7 @@ create_client_list(){
 		if [ "$SRCC" != "" -o "$DSTC" != "" ]
 		then
 			ip rule add $SRCC $SRCA $DSTC $DSTA table $TARGET_LOOKUP priority $RULE_PRIO
-			logger -t "openvpn-routing" "Adding route for $VPN_IP to $DST_IP through $TARGET_NAME"
+			my_logger "Adding route for $VPN_IP to $DST_IP through $TARGET_NAME"
 		fi
 	done
 	IFS=$OLDIFS
@@ -64,7 +72,7 @@ purge_client_list(){
 		if [ $PRIO -ge $START_PRIO -a $PRIO -le $END_PRIO ]
 		then
 			ip rule del prio $PRIO
-			logger -t "openvpn-routing" "Removing rule $PRIO from routing policy"
+			my_logger "Removing rule $PRIO from routing policy"
 		fi
 	done
 }
@@ -78,7 +86,7 @@ run_custom_script(){
 }
 
 init_table(){
-	logger -t "openvpn-routing" "Creating VPN routing table (mode $VPN_REDIR)"
+	my_logger "Creating VPN routing table (mode $VPN_REDIR)"
 	ip route flush table $VPN_TBL
 
 # Fill it with copy of existing main table
@@ -109,30 +117,35 @@ then
 	VPN_REDIR=$(nvram get vpn_client1_rgw)
 	VPN_FORCE=$(nvram get vpn_client1_enforce)
 	VPN_UNIT=1
+	VPN_LOGGING=$(nvram get vpn_client1_verb)
 elif [ "$dev" == "tun12" ]
 then
 	VPN_IP_LIST=$(nvram get vpn_client2_clientlist)
 	VPN_REDIR=$(nvram get vpn_client2_rgw)
 	VPN_FORCE=$(nvram get vpn_client2_enforce)
 	VPN_UNIT=2
+	VPN_LOGGING=$(nvram get vpn_client2_verb)
 elif [ "$dev" == "tun13" ]
 then
 	VPN_IP_LIST=$(nvram get vpn_client3_clientlist)
 	VPN_REDIR=$(nvram get vpn_client3_rgw)
 	VPN_FORCE=$(nvram get vpn_client3_enforce)
 	VPN_UNIT=3
+	VPN_LOGGING=$(nvram get vpn_client3_verb)
 elif [ "$dev" == "tun14" ]
 then
 	VPN_IP_LIST=$(nvram get vpn_client4_clientlist)
 	VPN_REDIR=$(nvram get vpn_client4_rgw)
 	VPN_FORCE=$(nvram get vpn_client4_enforce)
 	VPN_UNIT=4
+	VPN_LOGGING=$(nvram get vpn_client4_verb)
 elif [ "$dev" == "tun15" ]
 then
 	VPN_IP_LIST=$(nvram get vpn_client5_clientlist)
 	VPN_REDIR=$(nvram get vpn_client5_rgw)
 	VPN_FORCE=$(nvram get vpn_client5_enforce)
 	VPN_UNIT=5
+	VPN_LOGGING=$(nvram get vpn_client5_verb)
 else
 	run_custom_script
 	exit 0
@@ -150,7 +163,7 @@ export VPN_GW VPN_IP VPN_TBL VPN_FORCE
 # webui reports that vpn_force changed while vpn client was down
 if [ $script_type = "rmupdate" ]
 then
-	logger -t "openvpn-routing" "Refreshing policy rules for client $VPN_UNIT"
+	my_logger "Refreshing policy rules for client $VPN_UNIT"
 	purge_client_list
 
 	if [ $VPN_FORCE == "1" -a $VPN_REDIR -ge "2" ]
@@ -170,7 +183,7 @@ fi
 
 if [ $script_type == "route-up" -a $VPN_REDIR -lt "2" ]
 then
-	logger -t "openvpn-routing" "Skipping, client $VPN_UNIT not in routing policy mode"
+	my_logger "Skipping, client $VPN_UNIT not in routing policy mode"
 	run_custom_script
 	exit 0
 fi
@@ -188,7 +201,7 @@ then
 		create_client_list
 	else
 		ip route flush table $VPN_TBL
-		logger -t "openvpn-routing" "Flushing client routing table"
+		my_logger "Flushing client routing table"
 	fi
 fi	# End route down
 
@@ -203,7 +216,7 @@ then
 	for NET in $NET_LIST
 	do
 		ip route del $NET dev $dev
-		logger -t "openvpn-routing" "Removing route for $NET to $dev from main routing table"
+		my_logger "Removing route for $NET to $dev from main routing table"
 	done
 
 # Unsure if necessary, but most policy-based routing scripts disable reverse path filtering
@@ -239,7 +252,7 @@ then
 fi	# End route-up
 
 ip route flush cache
-logger -t "openvpn-routing" "Completed routing policy configuration for client $VPN_UNIT"
+my_logger "Completed routing policy configuration for client $VPN_UNIT"
 run_custom_script
 
 exit 0
