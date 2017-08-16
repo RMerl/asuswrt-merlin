@@ -288,7 +288,7 @@ function applyRule(){
 		if(!validator.numberRange(document.form.vpn_server_port, 1, 65535)) {
 			return false;
 		}
-		if(!validator.numberRange(document.form.vpn_server_poll, 0, 1440)) {
+		if(!validator.numberRange(document.form.vpn_server_poll, 0, 60)) {
 			return false;
 		}
 		if(!validator.numberRange(document.form.vpn_server_reneg, -1, 2147483647)) {
