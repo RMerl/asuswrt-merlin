@@ -1,4 +1,4 @@
-# printf.m4 serial 53
+# printf.m4 serial 54
 dnl Copyright (C) 2003, 2007-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -588,8 +588,8 @@ changequote(,)dnl
            darwin[1-6].*)        gl_cv_func_printf_directive_f="guessing no";;
            darwin*)              gl_cv_func_printf_directive_f="guessing yes";;
                                  # Guess yes on Solaris >= 2.10.
-           solaris2.[1-9][0-9]*) gl_cv_func_printf_sizes_c99="guessing yes";;
-           solaris*)             gl_cv_func_printf_sizes_c99="guessing no";;
+           solaris2.[1-9][0-9]*) gl_cv_func_printf_directive_f="guessing yes";;
+           solaris*)             gl_cv_func_printf_directive_f="guessing no";;
                                  # If we don't know, assume the worst.
            *)                    gl_cv_func_printf_directive_f="guessing no";;
          esac

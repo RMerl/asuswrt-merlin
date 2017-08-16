@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <time.h>
 #include <unistd.h>
 
 #ifdef HAVE_MAGIC_H
@@ -54,8 +53,9 @@ void set_colorpairs(void)
     for (i = 0; i < NUMBER_OF_ELEMENTS; i++) {
 	bool bright = FALSE;
 
-	if (parse_color_names(specified_color_combo[i],
-			&foreground, &background, &bright)) {
+	if (specified_color_combo[i] != NULL &&
+			parse_color_names(specified_color_combo[i],
+				&foreground, &background, &bright)) {
 	    if (foreground == -1 && !using_defaults)
 		foreground = COLOR_WHITE;
 	    if (background == -1 && !using_defaults)
@@ -63,8 +63,7 @@ void set_colorpairs(void)
 	    init_pair(i + 1, foreground, background);
 	    interface_color_pair[i] =
 			COLOR_PAIR(i + 1) | (bright ? A_BOLD : A_NORMAL);
-	}
-	else {
+	} else {
 	    if (i != FUNCTION_TAG)
 		interface_color_pair[i] = hilite_attribute;
 	    else

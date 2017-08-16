@@ -28,6 +28,6 @@ info_TEXINFOS = nano.texi
 BUILT_SOURCES += nano.html
 dist_html_DATA += nano.html
 
-AM_MAKEINFOHTMLFLAGS = --no-split
+AM_MAKEINFOHTMLFLAGS = --no-split -c HEADERS=0
 
 EXTRA_DIST = $(BUILT_SOURCES) $(info_TEXINFOS)

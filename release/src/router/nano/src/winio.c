@@ -704,7 +704,10 @@ int parse_kbinput(WINDOW *win)
 	/* Slang and SunOS 5.7-5.9 don't support KEY_RESIZE. */
 	case KEY_RESIZE:
 #endif
-	case KEY_F0:
+#if defined(USE_SLANG) && defined(ENABLE_UTF8)
+	case KEY_BAD:
+#endif
+	case KEY_FLUSH:
 	    return ERR;
     }
 
@@ -773,6 +776,19 @@ int convert_sequence(const int *seq, size_t seq_len)
 			    }
 			}
 			break;
+		    case '5':
+			if (seq_len >= 3) {
+			    switch (seq[2]) {
+				case 'A': /* Esc O 5 A == Ctrl-Up on Haiku. */
+				    return CONTROL_UP;
+				case 'B': /* Esc O 5 B == Ctrl-Down on Haiku. */
+				    return CONTROL_DOWN;
+				case 'C': /* Esc O 5 C == Ctrl-Right on Haiku. */
+				    return CONTROL_RIGHT;
+				case 'D': /* Esc O 5 D == Ctrl-Left on Haiku. */
+				    return CONTROL_LEFT;
+			    }
+			}
 		    case 'A': /* Esc O A == Up on VT100/VT320/xterm. */
 		    case 'B': /* Esc O B == Down on VT100/VT320/xterm. */
 		    case 'C': /* Esc O C == Right on VT100/VT320/xterm. */
@@ -1889,7 +1905,7 @@ char *display_string(const char *buf, size_t column, size_t span, bool isdata)
 		converted[index++] = ' ';
 	    column++;
 	    /* Fill the tab up with the required number of spaces. */
-	    while (column % tabsize != 0) {
+	    while (column % tabsize != 0 && column < beyond) {
 		converted[index++] = ' ';
 		column++;
 	    }
@@ -2162,6 +2178,10 @@ void statusline(message_type importance, const char *msg, ...)
 	waddstr(bottomwin, " ]");
     wattroff(bottomwin, interface_color_pair[STATUS_BAR]);
 
+    /* Defeat a VTE/Konsole bug, where the cursor can go off-limits. */
+    if (ISSET(CONSTANT_SHOW) && ISSET(NO_HELP))
+	wmove(bottomwin, 0, 0);
+
     /* Push the message to the screen straightaway. */
     wrefresh(bottomwin);
 
@@ -2209,37 +2229,23 @@ void bottombars(int menu)
 
     blank_bottombars();
 
-#ifdef DEBUG
-    fprintf(stderr, "In bottombars, number of items == \"%d\"\n", (int) number);
-#endif
-
+    /* Display the first number of shortcuts in the given menu that
+     * have a key combination assigned to them. */
     for (f = allfuncs, i = 0; i < number && f != NULL; f = f->next) {
-#ifdef DEBUG
-	fprintf(stderr, "Checking menu items....");
-#endif
 	if ((f->menus & menu) == 0)
 	    continue;
 
-#ifdef DEBUG
-	fprintf(stderr, "found one! f->menus = %x, desc = \"%s\"\n", f->menus, f->desc);
-#endif
 	s = first_sc_for(menu, f->scfunc);
-	if (s == NULL) {
-#ifdef DEBUG
-	    fprintf(stderr, "Whoops, guess not, no shortcut key found for func!\n");
-#endif
+	if (s == NULL)
 	    continue;
-	}
 
 	wmove(bottomwin, 1 + i % 2, (i / 2) * itemwidth);
-#ifdef DEBUG
-	fprintf(stderr, "Calling onekey with keystr \"%s\" and desc \"%s\"\n", s->keystr, f->desc);
-#endif
+
 	onekey(s->keystr, _(f->desc), itemwidth + (COLS % itemwidth));
 	i++;
     }
 
-    /* Defeat a VTE bug by moving the cursor and forcing a screen update. */
+    /* Defeat a VTE bug by homing the cursor and forcing a screen update. */
     wmove(bottomwin, 0, 0);
     wrefresh(bottomwin);
 }
@@ -2277,24 +2283,19 @@ void place_the_cursor(bool forreal)
 #ifndef NANO_TINY
     if (ISSET(SOFTWRAP)) {
 	filestruct *line = openfile->edittop;
+	size_t leftedge;
 
-	row -= (openfile->firstcolumn / editwincols);
+	row -= chunk_for(openfile->firstcolumn, openfile->edittop);
 
 	/* Calculate how many rows the lines from edittop to current use. */
 	while (line != NULL && line != openfile->current) {
-	    row += strlenpt(line->data) / editwincols + 1;
+	    row += number_of_chunks_in(line) + 1;
 	    line = line->next;
 	}
 
 	/* Add the number of wraps in the current line before the cursor. */
-	row += xpt / editwincols;
-	col = xpt % editwincols;
-
-	/* If the cursor ought to be in column zero, nudge it there. */
-	if (forreal && openfile->placewewant % editwincols == 0 && col != 0) {
-	    row++;
-	    col = 0;
-	}
+	row += get_chunk_and_edge(xpt, openfile->current, &leftedge);
+	col = xpt - leftedge;
     } else
 #endif
     {
@@ -2381,6 +2382,12 @@ void edit_draw(filestruct *fileptr, const char *converted,
 		/* The place in converted from where painting starts. */
 	    regmatch_t match;
 		/* The match positions of a single-line regex. */
+	    const filestruct *start_line = fileptr->prev;
+		/* The first line before fileptr that matches 'start'. */
+	    const filestruct *end_line = fileptr;
+		/* The line that matches 'end'. */
+	    regmatch_t startmatch, endmatch;
+		/* The match positions of the start and end regexes. */
 
 	    /* Two notes about regexec().  A return value of zero means
 	     * that there is a match.  Also, rm_eo is the first
@@ -2436,12 +2443,6 @@ void edit_draw(filestruct *fileptr, const char *converted,
 	    }
 
 	    /* Second case: varnish is a multiline expression. */
-	    const filestruct *start_line = fileptr->prev;
-		/* The first line before fileptr that matches 'start'. */
-	    const filestruct *end_line = fileptr;
-		/* The line that matches 'end'. */
-	    regmatch_t startmatch, endmatch;
-		/* The match positions of the start and end regexes. */
 
 	    /* Assume nothing gets painted until proven otherwise below. */
 	    fileptr->multidata[varnish->id] = CNONE;
@@ -2728,19 +2729,19 @@ int update_softwrapped_line(filestruct *fileptr)
 	/* The first row in the edit window that gets updated. */
     size_t from_col = 0;
 	/* The starting column of the current chunk. */
+    size_t to_col = 0;
+	/* To which column a line is displayed. */
     char *converted;
 	/* The data of the chunk with tabs and control characters expanded. */
-    size_t full_length;
-	/* The length of the expanded line. */
 
     if (fileptr == openfile->edittop)
 	from_col = openfile->firstcolumn;
     else
-	row -= (openfile->firstcolumn / editwincols);
+	row -= chunk_for(openfile->firstcolumn, openfile->edittop);
 
     /* Find out on which screen row the target line should be shown. */
     while (line != fileptr && line != NULL) {
-	row += (strlenpt(line->data) / editwincols) + 1;
+	row += number_of_chunks_in(line) + 1;
 	line = line->next;
     }
 
@@ -2751,18 +2752,30 @@ int update_softwrapped_line(filestruct *fileptr)
 	return 0;
     }
 
-    full_length = strlenpt(fileptr->data);
     starting_row = row;
 
-    while (from_col <= full_length && row < editwinrows) {
+    while (row < editwinrows) {
+	bool end_of_line = FALSE;
+
+	to_col = get_softwrap_breakpoint(fileptr->data, from_col, &end_of_line);
+
 	blank_row(edit, row, 0, COLS);
 
 	/* Convert the chunk to its displayable form and draw it. */
-	converted = display_string(fileptr->data, from_col, editwincols, TRUE);
+	converted = display_string(fileptr->data, from_col, to_col - from_col, TRUE);
 	edit_draw(fileptr, converted, row++, from_col);
 	free(converted);
 
-	from_col += editwincols;
+	if (end_of_line)
+	    break;
+
+	/* If the line is softwrapped before its last column, add a ">" just
+	 * after its softwrap breakpoint, unless we're softwrapping at blanks
+	 * and not in the middle of a word. */
+	if (!ISSET(AT_BLANKS) && to_col - from_col < editwincols)
+	    mvwaddch(edit, row - 1, to_col - from_col, '>');
+
+	from_col = to_col;
     }
 
     return (row - starting_row);
@@ -2796,25 +2809,25 @@ int go_back_chunks(int nrows, filestruct **line, size_t *leftedge)
 
 #ifndef NANO_TINY
     if (ISSET(SOFTWRAP)) {
-	size_t current_chunk = (*leftedge) / editwincols;
-
 	/* Recede through the requested number of chunks. */
 	for (i = nrows; i > 0; i--) {
-	    if (current_chunk > 0) {
-		current_chunk--;
-		continue;
-	    }
+	    size_t chunk = chunk_for(*leftedge, *line);
+
+	    *leftedge = 0;
+
+	    if (chunk >= i)
+		return go_forward_chunks(chunk - i, line, leftedge);
 
 	    if (*line == openfile->fileage)
 		break;
 
+	    i -= chunk;
 	    *line = (*line)->prev;
-	    current_chunk = strlenpt((*line)->data) / editwincols;
+	    *leftedge = HIGHEST_POSITIVE;
 	}
 
-	/* Only change leftedge when we actually could move. */
-	if (i < nrows)
-	    *leftedge = current_chunk * editwincols;
+	if (*leftedge == HIGHEST_POSITIVE)
+	    *leftedge = leftedge_for(*leftedge, *line);
     } else
 #endif
 	for (i = nrows; i > 0 && (*line)->prev != NULL; i--)
@@ -2831,33 +2844,30 @@ int go_forward_chunks(int nrows, filestruct **line, size_t *leftedge)
 {
     int i;
 
-    /* Don't move more chunks than the window can hold. */
-    if (nrows > editwinrows - 1)
-	nrows = (editwinrows < 2) ? 1 : editwinrows - 1;
-
 #ifndef NANO_TINY
     if (ISSET(SOFTWRAP)) {
-	size_t current_chunk = (*leftedge) / editwincols;
-	size_t last_chunk = strlenpt((*line)->data) / editwincols;
+	size_t current_leftedge = *leftedge;
 
 	/* Advance through the requested number of chunks. */
 	for (i = nrows; i > 0; i--) {
-	    if (current_chunk < last_chunk) {
-		current_chunk++;
+	    bool end_of_line = FALSE;
+
+	    current_leftedge = get_softwrap_breakpoint((*line)->data,
+					current_leftedge, &end_of_line);
+
+	    if (!end_of_line)
 		continue;
-	    }
 
 	    if (*line == openfile->filebot)
 		break;
 
 	    *line = (*line)->next;
-	    current_chunk = 0;
-	    last_chunk = strlenpt((*line)->data) / editwincols;
+	    current_leftedge = 0;
 	}
 
 	/* Only change leftedge when we actually could move. */
 	if (i < nrows)
-	    *leftedge = current_chunk * editwincols;
+	    *leftedge = current_leftedge;
     } else
 #endif
 	for (i = nrows; i > 0 && (*line)->next != NULL; i--)
@@ -2874,7 +2884,7 @@ bool less_than_a_screenful(size_t was_lineno, size_t was_leftedge)
 #ifndef NANO_TINY
     if (ISSET(SOFTWRAP)) {
 	filestruct *line = openfile->current;
-	size_t leftedge = (xplustabs() / editwincols) * editwincols;
+	size_t leftedge = leftedge_for(xplustabs(), openfile->current);
 	int rows_left = go_back_chunks(editwinrows - 1, &line, &leftedge);
 
 	return (rows_left > 0 || line->lineno < was_lineno ||
@@ -2939,12 +2949,14 @@ void edit_scroll(scroll_dir direction, int nrows)
 	go_forward_chunks(editwinrows - nrows, &line, &leftedge);
 
 #ifndef NANO_TINY
-    /* Compensate for the earlier chunks of a softwrapped line. */
-    nrows += leftedge / editwincols;
+    if (ISSET(SOFTWRAP)) {
+	/* Compensate for the earlier chunks of a softwrapped line. */
+	nrows += chunk_for(leftedge, line);
 
-    /* Don't compensate for the chunks that are offscreen. */
-    if (line == openfile->edittop)
-	nrows -= openfile->firstcolumn / editwincols;
+	/* Don't compensate for the chunks that are offscreen. */
+	if (line == openfile->edittop)
+	    nrows -= chunk_for(openfile->firstcolumn, line);
+    }
 #endif
 
     /* Draw new content on the blank rows inside the scrolled region
@@ -2957,18 +2969,156 @@ void edit_scroll(scroll_dir direction, int nrows)
 }
 
 #ifndef NANO_TINY
+/* Get the column number after leftedge where we can break the given text, and
+ * return it.  This will always be editwincols or less after leftedge.  Set
+ * end_of_line to TRUE if we reach the end of the line while searching the
+ * text.  Assume leftedge is the leftmost column of a softwrapped chunk. */
+size_t get_softwrap_breakpoint(const char *text, size_t leftedge,
+				bool *end_of_line)
+{
+    size_t index = 0;
+	/* Current index in text. */
+    size_t column = 0;
+	/* Current column position in text. */
+    size_t prev_column = 0;
+	/* Previous column position in text. */
+    size_t goal_column;
+	/* Column of the last character where we can break the text. */
+    bool found_blank = FALSE;
+	/* Did we find at least one blank? */
+    size_t lastblank_index = 0;
+	/* Current index of the last blank in text. */
+    size_t lastblank_column = 0;
+	/* Current column position of the last blank in text. */
+    int char_len = 0;
+	/* Length of current character, in bytes. */
+
+    while (*text != '\0' && column < leftedge)
+	text += parse_mbchar(text, NULL, &column);
+
+    /* Use a full screen row for text. */
+    goal_column = column + editwincols;
+
+    while (*text != '\0' && column <= goal_column) {
+	/* When breaking at blanks, do it *before* the target column. */
+	if (ISSET(AT_BLANKS) && is_blank_mbchar(text) && column < goal_column) {
+	    found_blank = TRUE;
+	    lastblank_index = index;
+	    lastblank_column = column;
+	}
+
+	prev_column = column;
+	char_len = parse_mbchar(text, NULL, &column);
+	text += char_len;
+	index += char_len;
+    }
+
+    /* If we didn't overshoot the target, we've found a breaking point. */
+    if (column <= goal_column) {
+	/* We've reached EOL if we didn't even reach the target. */
+	*end_of_line = (column < goal_column);
+	return column;
+    }
+
+    /* If we're softwrapping at blanks and we found at least one blank, move
+     * the pointer back to the last blank, step beyond it, and we're done. */
+    if (found_blank) {
+	text = text - index + lastblank_index;
+	parse_mbchar(text, NULL, &lastblank_column);
+	return lastblank_column;
+    }
+
+    /* Otherwise, return the column of the last character that doesn't
+     * overshoot the target, since we can't break the text anywhere else. */
+    return (editwincols > 1) ? prev_column : column - 1;
+}
+
+/* Get the row of the softwrapped chunk of the given line that column is on,
+ * relative to the first row (zero-based), and return it.  If leftedge isn't
+ * NULL, return the leftmost column of the chunk in it. */
+size_t get_chunk_and_edge(size_t column, filestruct *line, size_t *leftedge)
+{
+    size_t current_chunk = 0, start_col = 0, end_col;
+    bool end_of_line = FALSE;
+
+    while (TRUE) {
+	end_col = get_softwrap_breakpoint(line->data, start_col, &end_of_line);
+
+	/* We reached the end of the line and/or found column, so get out. */
+	if (end_of_line || (column >= start_col && column < end_col)) {
+	    if (leftedge != NULL)
+		*leftedge = start_col;
+	    return current_chunk;
+	}
+
+	current_chunk++;
+	start_col = end_col;
+    }
+}
+
+/* Return the row of the softwrapped chunk of the given line that column is on,
+ * relative to the first row (zero-based). */
+size_t chunk_for(size_t column, filestruct *line)
+{
+    return get_chunk_and_edge(column, line, NULL);
+}
+
+/* Return the leftmost column of the softwrapped chunk of the given line that
+ * column is on. */
+size_t leftedge_for(size_t column, filestruct *line)
+{
+    size_t leftedge;
+
+    get_chunk_and_edge(column, line, &leftedge);
+
+    return leftedge;
+}
+
+/* Return the row of the last softwrapped chunk of the given line, relative to
+ * the first row (zero-based). */
+size_t number_of_chunks_in(filestruct *line)
+{
+    return chunk_for((size_t)-1, line);
+}
+
 /* Ensure that firstcolumn is at the starting column of the softwrapped chunk
  * it's on.  We need to do this when the number of columns of the edit window
  * has changed, because then the width of softwrapped chunks has changed. */
 void ensure_firstcolumn_is_aligned(void)
 {
-    if (openfile->firstcolumn % editwincols != 0)
-	openfile->firstcolumn -= (openfile->firstcolumn % editwincols);
+    openfile->firstcolumn = leftedge_for(openfile->firstcolumn,
+						openfile->edittop);
 
     /* If smooth scrolling is on, make sure the viewport doesn't center. */
     focusing = FALSE;
 }
+#endif /* !NANO_TINY */
+
+/* When in softwrap mode, and the given column is on or after the breakpoint of
+ * a softwrapped chunk, shift it back to the last column before the breakpoint.
+ * The given column is relative to the given leftedge in current.  The returned
+ * column is relative to the start of the text. */
+size_t actual_last_column(size_t leftedge, size_t column)
+{
+#ifndef NANO_TINY
+    if (ISSET(SOFTWRAP)) {
+	bool last_chunk;
+	size_t end_col = get_softwrap_breakpoint(openfile->current->data,
+					leftedge, &last_chunk) - leftedge;
+
+	/* If we're not on the last chunk, we're one column past the end of
+	 * the row.  Shifting back one column might put us in the middle of
+	  * a multi-column character, but actual_x() will fix that later. */
+	if (!last_chunk)
+	    end_col--;
+
+	if (column > end_col)
+	    column = end_col;
+    }
 #endif
+
+    return leftedge + column;
+}
 
 /* Return TRUE if current[current_x] is above the top of the screen, and FALSE
  * otherwise. */
@@ -3000,7 +3150,8 @@ bool current_is_below_screen(void)
 	return (go_forward_chunks(editwinrows - 1, &line, &leftedge) == 0 &&
 			(line->lineno < openfile->current->lineno ||
 			(line->lineno == openfile->current->lineno &&
-			leftedge < (xplustabs() / editwincols) * editwincols)));
+			leftedge < leftedge_for(xplustabs(),
+						openfile->current))));
     } else
 #endif
 	return (openfile->current->lineno >=
@@ -3119,7 +3270,7 @@ void adjust_viewport(update_type manner)
     openfile->edittop = openfile->current;
 #ifndef NANO_TINY
     if (ISSET(SOFTWRAP))
-	openfile->firstcolumn = (xplustabs() / editwincols) * editwincols;
+	openfile->firstcolumn = leftedge_for(xplustabs(), openfile->current);
 #endif
 
     /* Move edittop back goal rows, starting at current[current_x]. */
@@ -3240,32 +3391,43 @@ void enable_waiting(void)
     nodelay(edit, FALSE);
 }
 
-/* Highlight the current word being replaced or spell checked.  We
- * expect word to have tabs and control characters expanded. */
-void spotlight(bool active, const char *word)
+/* Highlight the text between from_col and to_col when active is TRUE.
+ * Remove the highlight when active is FALSE. */
+void spotlight(bool active, size_t from_col, size_t to_col)
 {
-    size_t word_span = strlenpt(word);
-    size_t room = word_span;
-
-    /* Compute the number of columns that are available for the word. */
-    if (!ISSET(SOFTWRAP)) {
-	room = editwincols + get_page_start(xplustabs()) - xplustabs();
-
-	/* If the word is partially offscreen, reserve space for the "$". */
-	if (word_span > room)
-	    room--;
-    }
+    char *word;
+    size_t word_span, room;
 
     place_the_cursor(FALSE);
+
+#ifndef NANO_TINY
+    if (ISSET(SOFTWRAP)) {
+	spotlight_softwrapped(active, from_col, to_col);
+	return;
+    }
+#endif
+
+    /* This is so we can show zero-length matches. */
+    if (to_col == from_col) {
+	word = mallocstrcpy(NULL, " ");
+	to_col++;
+    } else
+	word = display_string(openfile->current->data, from_col,
+				to_col - from_col, FALSE);
+
+    word_span = strlenpt(word);
+
+    /* Compute the number of columns that are available for the word. */
+    room = editwincols + get_page_start(from_col) - from_col;
+
+    /* If the word is partially offscreen, reserve space for the "$". */
+    if (word_span > room)
+	room--;
 
     if (active)
 	wattron(edit, hilite_attribute);
 
-    /* This is so we can show zero-length matches. */
-    if (word_span == 0)
-	waddch(edit, ' ');
-    else
-	waddnstr(edit, word, actual_x(word, room));
+    waddnstr(edit, word, actual_x(word, room));
 
     if (word_span > room)
 	waddch(edit, '$');
@@ -3273,8 +3435,64 @@ void spotlight(bool active, const char *word)
     if (active)
 	wattroff(edit, hilite_attribute);
 
+    free(word);
+
     wnoutrefresh(edit);
 }
+
+#ifndef NANO_TINY
+/* Highlight the text between from_col and to_col when active is TRUE; remove
+ * the highlight when active is FALSE.  This will not highlight softwrapped
+ * line breaks, since they're not actually part of the spotlighted text. */
+void spotlight_softwrapped(bool active, size_t from_col, size_t to_col)
+{
+    ssize_t row = openfile->current_y;
+    size_t leftedge = leftedge_for(from_col, openfile->current);
+    size_t break_col;
+    bool end_of_line = FALSE;
+    char *word;
+
+    while (row < editwinrows) {
+	break_col = get_softwrap_breakpoint(openfile->current->data,
+						leftedge, &end_of_line);
+
+	/* Stop after the end of the word, by pretending the end of the word is
+	 * the end of the line. */
+	if (break_col >= to_col) {
+	    end_of_line = TRUE;
+	    break_col = to_col;
+	}
+
+	/* This is so we can show zero-length matches. */
+	if (break_col == from_col) {
+	    word = mallocstrcpy(NULL, " ");
+	    break_col++;
+	} else
+	    word = display_string(openfile->current->data, from_col,
+					break_col - from_col, FALSE);
+
+	if (active)
+	    wattron(edit, hilite_attribute);
+
+	waddnstr(edit, word, actual_x(word, break_col));
+
+	if (active)
+	    wattroff(edit, hilite_attribute);
+
+	free(word);
+
+	if (end_of_line)
+	    break;
+
+	wmove(edit, ++row, 0);
+
+	leftedge = break_col;
+	from_col = break_col;
+    }
+
+    wnoutrefresh(edit);
+}
+#endif
 
 #ifndef DISABLE_EXTRA
 #define CREDIT_LEN 54

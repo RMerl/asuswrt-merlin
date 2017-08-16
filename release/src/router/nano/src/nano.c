@@ -780,7 +780,7 @@ void usage(void)
      * It's best to keep its lines within 80 characters. */
     printf(_("To place the cursor on a specific line of a file, put the line number with\n"
 		"a '+' before the filename.  The column number can be added after a comma.\n"));
-    printf(_("When the first filename is '-', nano reads data from standard input.\n\n"));
+    printf(_("When a filename is '-', nano reads data from standard input.\n\n"));
     printf(_("Option\t\tGNU long option\t\tMeaning\n"));
 #ifndef NANO_TINY
     print_opt("-A", "--smarthome",
@@ -851,6 +851,9 @@ void usage(void)
 	print_opt(_("-Y <name>"), _("--syntax=<name>"),
 		N_("Syntax definition to use for coloring"));
 #endif
+#ifndef NANO_TINY
+    print_opt("-a", "--atblanks", N_("When soft-wrapping, do it at whitespace"));
+#endif
     print_opt("-c", "--constantshow", N_("Constantly show cursor position"));
     print_opt("-d", "--rebinddelete",
 	N_("Fix Backspace/Delete confusion problem"));
@@ -861,7 +864,7 @@ void usage(void)
     print_opt("-h", "--help", N_("Show this help text and exit"));
 #ifndef NANO_TINY
     print_opt("-i", "--autoindent", N_("Automatically indent new lines"));
-    print_opt("-k", "--cut", N_("Cut from cursor to end of line"));
+    print_opt("-k", "--cutfromcursor", N_("Cut from cursor to end of line"));
 #endif
 #ifdef ENABLE_LINENUMBERS
     print_opt("-l", "--linenumbers", N_("Show line numbers in front of the text"));
@@ -1285,7 +1288,7 @@ RETSIGTYPE do_continue(int signal)
     terminal_init();
 #endif
     /* Tickle the input routine so it will update the screen. */
-    ungetch(KEY_F0);
+    ungetch(KEY_FLUSH);
 }
 
 #ifndef NANO_TINY
@@ -1684,7 +1687,7 @@ int do_input(bool allow_funcs)
 #ifndef NANO_TINY
 	if (s->scfunc == do_toggle_void) {
 	    do_toggle(s->toggle);
-	    if (s->toggle != CUT_TO_END)
+	    if (s->toggle != CUT_FROM_CURSOR)
 		preserve = TRUE;
 	} else
 #endif
@@ -1759,7 +1762,7 @@ int do_mouse(void)
 	    /* Whether the click was on the row where the cursor is. */
 
 	if (ISSET(SOFTWRAP))
-	    leftedge = (xplustabs() / editwincols) * editwincols;
+	    leftedge = leftedge_for(xplustabs(), openfile->current);
 	else
 #endif
 	    leftedge = get_page_start(xplustabs());
@@ -1775,7 +1778,7 @@ int do_mouse(void)
 	    go_forward_chunks(row_count, &openfile->current, &leftedge);
 
 	openfile->current_x = actual_x(openfile->current->data,
-					leftedge + mouse_col);
+				actual_last_column(leftedge, mouse_col));
 
 #ifndef NANO_TINY
 	/* Clicking where the cursor is toggles the mark, as does clicking
@@ -1805,12 +1808,12 @@ void do_output(char *output, size_t output_len, bool allow_cntrls)
     size_t current_len = strlen(openfile->current->data);
     size_t i = 0;
 #ifndef NANO_TINY
-    size_t orig_rows = 0, original_row = 0;
+    size_t original_row = 0, old_amount = 0;
 
     if (ISSET(SOFTWRAP)) {
 	if (openfile->current_y == editwinrows - 1)
-	    original_row = xplustabs() / editwincols;
-	orig_rows = strlenpt(openfile->current->data) / editwincols;
+	    original_row = chunk_for(xplustabs(), openfile->current);
+	old_amount = number_of_chunks_in(openfile->current);
     }
 #endif
 
@@ -1875,9 +1878,9 @@ void do_output(char *output, size_t output_len, bool allow_cntrls)
      * of the edit window, and we moved one screen row, we're now below
      * the last line of the edit window, so we need a full refresh too. */
     if (ISSET(SOFTWRAP) && refresh_needed == FALSE &&
-		(strlenpt(openfile->current->data) / editwincols != orig_rows ||
+		(number_of_chunks_in(openfile->current) != old_amount ||
 		(openfile->current_y == editwinrows - 1 &&
-		xplustabs() / editwincols != original_row)))
+		chunk_for(xplustabs(), openfile->current) != original_row)))
 	refresh_needed = TRUE;
 #endif
 
@@ -1972,8 +1975,9 @@ int main(int argc, char **argv)
 	{"smooth", 0, NULL, 'S'},
 	{"wordbounds", 0, NULL, 'W'},
 	{"wordchars", 1, NULL, 'X'},
+	{"atblanks", 0, NULL, 'a'},
 	{"autoindent", 0, NULL, 'i'},
-	{"cut", 0, NULL, 'k'},
+	{"cutfromcursor", 0, NULL, 'k'},
 	{"unix", 0, NULL, 'u'},
 	{"softwrap", 0, NULL, '$'},
 #endif
@@ -2024,7 +2028,6 @@ int main(int argc, char **argv)
 		"ABC:DEFGHIKLNOPQ:RST:UVWX:Y:abcdefghijklmno:pqr:s:tuvwxz$",
 		long_options, NULL)) != -1) {
 	switch (optchr) {
-	    case 'a':
 	    case 'b':
 	    case 'e':
 	    case 'f':
@@ -2128,6 +2131,11 @@ int main(int argc, char **argv)
 		syntaxstr = mallocstrcpy(syntaxstr, optarg);
 		break;
 #endif
+#ifndef NANO_TINY
+	    case 'a':
+		SET(AT_BLANKS);
+		break;
+#endif
 	    case 'c':
 		SET(CONSTANT_SHOW);
 		break;
@@ -2142,7 +2150,7 @@ int main(int argc, char **argv)
 		SET(AUTOINDENT);
 		break;
 	    case 'k':
-		SET(CUT_TO_END);
+		SET(CUT_FROM_CURSOR);
 		break;
 #endif
 #ifdef ENABLE_MOUSE
@@ -2534,7 +2542,6 @@ int main(int argc, char **argv)
     /* Read the files mentioned on the command line into new buffers. */
     while (optind < argc && (!openfile || ISSET(MULTIBUFFER))) {
 	ssize_t givenline = 0, givencol = 0;
-	bool dash = FALSE;
 
 	/* If there's a +LINE[,COLUMN] argument here, eat it up. */
 	if (optind < argc - 1 && argv[optind][0] == '+') {
@@ -2547,7 +2554,6 @@ int main(int argc, char **argv)
 	if (strcmp(argv[optind], "-") == 0) {
 	    if (!scoop_stdin())
 		continue;
-	    dash = TRUE;
 	    optind++;
 	} else if (!open_buffer(argv[optind++], FALSE))
 	    continue;
@@ -2556,7 +2562,7 @@ int main(int argc, char **argv)
 	if (givenline != 0 || givencol != 0)
 	    do_gotolinecolumn(givenline, givencol, FALSE, FALSE);
 #ifndef DISABLE_HISTORIES
-	else if (ISSET(POS_HISTORY) && !dash) {
+	else if (ISSET(POS_HISTORY) && openfile->filename[0] != '\0') {
 	    ssize_t savedline, savedcol;
 	    /* If edited before, restore the last cursor position. */
 	    if (has_old_position(argv[optind - 1], &savedline, &savedcol))

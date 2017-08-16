@@ -7,9 +7,9 @@ comment "@c "
 
 # Command arguments, trailing and enclosed.
 color cyan "^@[a-z]+[[:space:]]+.*$"
-color brightmagenta "@[a-z]+\{[^}]*\}"
+color brightmagenta "@[a-zA-Z]+\{[^}]*\}"
 # Commands themselves.
-color yellow "@[a-z]+\{?" "\}"
+color yellow "@[a-zA-Z]+\{?" "\}"
 
 # Menu items.
 color brightred "^\*[[:space:]]+.*::.*$"

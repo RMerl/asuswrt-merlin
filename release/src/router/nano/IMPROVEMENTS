@@ -2,10 +2,11 @@ Improvements in GNU nano
 ========================
 
 Since 2.8.0:
+  - Softwrapping can be done at whitespace (with --soft --atblanks).
   - The ^G help texts have become searchable (with ^W and M-W).
   - Ctrl+Home and Ctrl+End jump to start and end of file.
-  - In softwrap mode the cursor now moves per visual row instead of per
-    logical line, and the screen will scroll per row.
+  - In softwrap mode the cursor now moves per visual row instead of
+    per logical line, and the screen will scroll per row.
 
 Since 2.7.0:
   - The keystroke ^] to complete a fragment to an existing full word.

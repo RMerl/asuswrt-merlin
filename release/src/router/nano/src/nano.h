@@ -48,8 +48,6 @@
 #include <sys/param.h>
 #endif
 
-#include <stdarg.h>
-
 /* Suppress warnings for __attribute__((warn_unused_result)). */
 #define IGNORE_CALL_RESULT(call) do { if (call) {} } while(0)
 
@@ -160,11 +158,11 @@ typedef enum {
 } update_type;
 
 typedef enum {
-    ADD, DEL, BACK, CUT, CUT_EOF, REPLACE,
+    ADD, DEL, BACK, CUT, CUT_TO_EOF, REPLACE,
 #ifndef DISABLE_WRAPPING
     SPLIT_BEGIN, SPLIT_END,
 #endif
-#ifndef DISABLE_COMMENT
+#ifdef ENABLE_COMMENT
     COMMENT, UNCOMMENT, PREFLIGHT,
 #endif
     JOIN, PASTE, INSERT, ENTER, OTHER
@@ -220,8 +218,10 @@ typedef struct syntaxtype {
 	/* The command with which to lint this type of file. */
     char *formatter;
         /* The formatting command (for programming languages mainly). */
+#ifdef ENABLE_COMMENT
     char *comment;
 	/* The line comment prefix (and postfix) for this type of file. */
+#endif
     colortype *color;
 	/* The colors and their regexes used in this syntax. */
     int nmultis;
@@ -489,7 +489,7 @@ enum
     USE_MOUSE,
     USE_REGEXP,
     TEMP_FILE,
-    CUT_TO_END,
+    CUT_FROM_CURSOR,
     BACKWARDS_SEARCH,
     MULTIBUFFER,
     SMOOTH_SCROLL,
@@ -519,7 +519,8 @@ enum
     JUSTIFY_TRIM,
     SHOW_CURSOR,
     LINE_NUMBERS,
-    NO_PAUSES
+    NO_PAUSES,
+    AT_BLANKS
 };
 
 /* Flags for the menus in which a given function should be present. */
@@ -575,6 +576,15 @@ enum
 #define SHIFT_HOME 0x40f
 #define SHIFT_END 0x410
 
+#ifdef USE_SLANG
+#ifdef ENABLE_UTF8
+#define KEY_BAD 0xFF  /* Clipped error code. */
+#endif
+#define KEY_FLUSH 0x91  /* User-definable control code. */
+#else
+#define KEY_FLUSH KEY_F0  /* Nonexistent function key. */
+#endif
+
 #ifndef NANO_TINY
 /* An imaginary key for when we get a SIGWINCH (window resize). */
 #define KEY_WINCH -2
@@ -596,6 +606,9 @@ enum
 
 /* The default width of a tab in spaces. */
 #define WIDTH_OF_TAB 8
+
+/* The default comment character when a syntax does not specify any. */
+#define GENERAL_COMMENT_CHARACTER "#"
 
 /* The maximum number of search/replace history strings saved, not
  * counting the blank lines at their ends. */

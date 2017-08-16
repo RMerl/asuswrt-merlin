@@ -227,10 +227,10 @@ regmatch_t regmatches[10];
 int hilite_attribute = A_REVERSE;
 	/* The curses attribute we use to highlight something. */
 #ifndef DISABLE_COLOR
-char* specified_color_combo[] = {};
+char* specified_color_combo[] = {NULL};
 	/* The color combinations as specified in the rcfile. */
 #endif
-int interface_color_pair[] = {};
+int interface_color_pair[] = {0};
 	/* The processed color pairs for the interface elements. */
 
 char *homedir = NULL;
@@ -667,7 +667,7 @@ void shortcut_init(void)
     add_to_funcs(do_cancel, ((MMOST & ~MMAIN & ~MBROWSER) | MYESNO),
 	N_("Cancel"), IFSCHELP(nano_cancel_msg), BLANKAFTER, VIEW);
 
-    add_to_funcs(do_exit, MMAIN|MHELP,
+    add_to_funcs(do_exit, MMAIN,
 	exit_tag, IFSCHELP(nano_exit_msg), TOGETHER, VIEW);
     /* Remember the entry for Exit, to be able to replace it with Close. */
     exitfunc = tailfunc;
@@ -721,6 +721,7 @@ void shortcut_init(void)
     /* The description ("x") and blank_after (0) are irrelevant,
      * because the help viewer does not have a help text. */
     add_to_funcs(total_refresh, MHELP, refresh_tag, "x", 0, VIEW);
+    add_to_funcs(do_exit, MHELP, close_tag, "x", 0, VIEW);
 
     add_to_funcs(do_search, MHELP, whereis_tag, "x", 0, VIEW);
     add_to_funcs(do_research, MHELP, whereis_next_tag, "x", 0, VIEW);
@@ -929,7 +930,7 @@ void shortcut_init(void)
 	N_("Suspend"), IFSCHELP(nano_suspend_msg), BLANKAFTER, VIEW);
 
 #ifndef NANO_TINY
-    add_to_funcs(do_indent_void, MMAIN,
+    add_to_funcs(do_indent, MMAIN,
 	N_("Indent Text"), IFSCHELP(nano_indent_msg), TOGETHER, NOVIEW);
     add_to_funcs(do_unindent, MMAIN,
 	N_("Unindent Text"), IFSCHELP(nano_unindent_msg), BLANKAFTER, NOVIEW);
@@ -1105,7 +1106,7 @@ void shortcut_init(void)
     add_to_sclist(MMAIN, "F15", 0, do_mark, 0);
     add_to_sclist(MMAIN, "M-6", 0, do_copy_text, 0);
     add_to_sclist(MMAIN, "M-^", 0, do_copy_text, 0);
-    add_to_sclist(MMAIN, "M-}", 0, do_indent_void, 0);
+    add_to_sclist(MMAIN, "M-}", 0, do_indent, 0);
     add_to_sclist(MMAIN, "M-{", 0, do_unindent, 0);
     add_to_sclist(MMAIN, "M-U", 0, do_undo, 0);
     add_to_sclist(MMAIN, "M-E", 0, do_redo, 0);
@@ -1203,7 +1204,7 @@ void shortcut_init(void)
     /* Group of "Editing-behavior" toggles. */
     add_to_sclist(MMAIN, "M-H", 0, do_toggle_void, SMART_HOME);
     add_to_sclist(MMAIN, "M-I", 0, do_toggle_void, AUTOINDENT);
-    add_to_sclist(MMAIN, "M-K", 0, do_toggle_void, CUT_TO_END);
+    add_to_sclist(MMAIN, "M-K", 0, do_toggle_void, CUT_FROM_CURSOR);
 #ifndef DISABLE_WRAPPING
     add_to_sclist(MMAIN, "M-L", 0, do_toggle_void, NO_WRAP);
 #endif
@@ -1375,7 +1376,7 @@ const char *flagtostr(int flag)
 	    return N_("Smart home key");
 	case AUTOINDENT:
 	    return N_("Auto indent");
-	case CUT_TO_END:
+	case CUT_FROM_CURSOR:
 	    return N_("Cut to end");
 	case NO_WRAP:
 	    return N_("Hard wrapping of overlong lines");
@@ -1488,7 +1489,7 @@ sc *strtosc(const char *input)
 #endif
 #ifndef NANO_TINY
     else if (!strcasecmp(input, "indent"))
-	s->scfunc = do_indent_void;
+	s->scfunc = do_indent;
     else if (!strcasecmp(input, "unindent"))
 	s->scfunc = do_unindent;
     else if (!strcasecmp(input, "scrollup"))
@@ -1634,7 +1635,7 @@ sc *strtosc(const char *input)
 	else if (!strcasecmp(input, "autoindent"))
 	    s->toggle = AUTOINDENT;
 	else if (!strcasecmp(input, "cuttoend"))
-	    s->toggle = CUT_TO_END;
+	    s->toggle = CUT_FROM_CURSOR;
 #ifndef DISABLE_WRAPPING
 	else if (!strcasecmp(input, "nowrap"))
 	    s->toggle = NO_WRAP;

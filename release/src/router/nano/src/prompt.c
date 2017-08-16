@@ -137,9 +137,9 @@ int do_statusbar_input(bool *ran_func, bool *finished)
 				s->scfunc == do_delete ||
 				s->scfunc == do_backspace))
 	    ;
-	else if (s->scfunc == do_verbatim_input) {
+	else if (s->scfunc == do_verbatim_input)
 	    do_statusbar_verbatim_input();
-	} else if (s->scfunc == do_cut_text_void)
+	else if (s->scfunc == do_cut_text_void)
 	    do_statusbar_cut_text();
 	else if (s->scfunc == do_delete)
 	    do_statusbar_delete();
@@ -291,7 +291,7 @@ void do_statusbar_delete(void)
 /* Zap some or all text from the answer. */
 void do_statusbar_cut_text(void)
 {
-    if (!ISSET(CUT_TO_END))
+    if (!ISSET(CUT_FROM_CURSOR))
 	statusbar_x = 0;
 
     answer[statusbar_x] = '\0';

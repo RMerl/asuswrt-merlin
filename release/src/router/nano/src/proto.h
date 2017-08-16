@@ -523,8 +523,7 @@ void do_cut_next_word(void);
 #endif
 void do_tab(void);
 #ifndef NANO_TINY
-void do_indent(ssize_t cols);
-void do_indent_void(void);
+void do_indent(void);
 void do_unindent(void);
 #endif
 bool white_string(const char *s);
@@ -540,7 +539,7 @@ RETSIGTYPE cancel_command(int signal);
 bool execute_command(const char *command);
 void discard_until(const undo *thisitem, openfilestruct *thefile);
 void add_undo(undo_type action);
-#ifndef DISABLE_COMMENT
+#ifdef ENABLE_COMMENT
 void update_comment_undo(ssize_t lineno);
 #endif
 void update_undo(undo_type action);
@@ -663,8 +662,15 @@ int go_forward_chunks(int nrows, filestruct **line, size_t *leftedge);
 bool less_than_a_screenful(size_t was_lineno, size_t was_leftedge);
 void edit_scroll(scroll_dir direction, int nrows);
 #ifndef NANO_TINY
+size_t get_softwrap_breakpoint(const char *text, size_t leftedge,
+				bool *end_of_line);
+size_t get_chunk_and_edge(size_t column, filestruct *line, size_t *leftedge);
+size_t chunk_for(size_t column, filestruct *line);
+size_t leftedge_for(size_t column, filestruct *line);
+size_t number_of_chunks_in(filestruct *line);
 void ensure_firstcolumn_is_aligned(void);
 #endif
+size_t actual_last_column(size_t leftedge, size_t column);
 void edit_redraw(filestruct *old_current);
 void edit_refresh(void);
 void adjust_viewport(update_type location);
@@ -673,7 +679,10 @@ void total_refresh(void);
 void display_main_list(void);
 void do_cursorpos(bool force);
 void do_cursorpos_void(void);
-void spotlight(bool active, const char *word);
+void spotlight(bool active, size_t from_col, size_t to_col);
+#ifndef NANO_TINY
+void spotlight_softwrapped(bool active, size_t from_col, size_t to_col);
+#endif
 void xon_complaint(void);
 void xoff_complaint(void);
 void do_suspend_void(void);

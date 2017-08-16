@@ -1,3 +1,98 @@
+Changes between v2.8.5 and v2.8.6:
+----------------------------------
+
+Benno Schulenberg (58):
+      build: for Solaris, tell the linker to use a threading lib
+      bump version numbers and add a news item for the 2.8.6 release
+      display: avoid a jumpy cursor by redrawing bottom bars only when needed
+      display: when back in the main loop, always redraw the help lines
+      display: wipe stale messages from the status bar straightaway
+      docs: add some more mark-up to the Info document
+      docs: be more precise about when a dash is given instead of a filename
+      docs: drop the cluttering Info-style links from the HTML manual
+      docs: improve cross references and mark-up in the Info document
+      docs: improve some spacing, especially of the synopsis in the PDF
+      docs: make the guillemot and the middle dot appear correctly in HTML
+      docs: move the descriptions of 'header' and 'magic' next to 'syntax'
+      docs: remove the mention of backslashes for the argument of 'comment'
+      docs: reword the explanation of the 'syntax' command
+      docs: use real cross references in the Info document
+      docs: use the @command and @option mark-up more consistently
+      files: don't bother counting rows when opening a fresh buffer
+      files: warn more conspicuously when the file on disk has changed
+      gnulib: update to its current state
+      input: recognize the Ctrl+Arrow key sequences from Haiku's Terminal
+      options: recognize -a and --atblanks on the command line
+      options: rename --cut to --cutfromcursor, to be clearer
+      pasting: restore the cap on the number of chunks to move backward
+      rcfile: don't require backslashing in the argument of 'comment'
+      screen: defeat a VTE/Konsole bug also for the case of --constantshow
+      screen: retain the same help-line tags when the window is resized
+      softwrap: when possible, go back a whole bunch of chunks at a time
+      startup: don't try parsing color names that were not specified
+      startup: in default mode, display the tail of the file as Pico does
+      suspension: prevent entering an invalid byte upon resume (with S-Lang)
+      syntax: gentoo: make it clearer that the file contains two syntaxes
+      syntax: man, groff: fix the string that introduces a comment
+      syntax: nanorc: don't color numeric arguments specially
+      syntax: nanorc: don't color the argument of 'linter' as if invalid
+      syntax: texinfo: cover also some special cases like @U, @OE and @TeX
+      tweaks: adjust an error message so it fits all possible cases
+      tweaks: avoid a clang warning about an expression being treated as NULL
+      tweaks: avoid a failure with black diamonds in a PDF
+      tweaks: avoid an unused-variable warning for the tiny version
+      tweaks: chuck some debugging stuff
+      tweaks: chuck two useless asserts, and elide a call to strncasecmp()
+      tweaks: correct two conditions for conditional compilation
+      tweaks: drop a bunch of useless asserts
+      tweaks: elide unneeded calls of get_last_chunk_leftedge()
+      tweaks: fix compilation with --enable-tiny
+      tweaks: move an include to the file that actually makes use of it
+      tweaks: put declarations always first, so it will compile on Haiku
+      tweaks: recognize the empty string as comment inhibitor, instead of NULL
+      tweaks: remove two superfluous includes
+      tweaks: rename a constant, to match the corresponding option
+      tweaks: rename another constant, to be more precise
+      tweaks: rename a variable, to have more contrast
+      tweaks: rename four functions, to be more distinct
+      tweaks: rename two variables, to make a little sense
+      tweaks: reshuffle some things to condense the code
+      tweaks: simplify the parsing of color combinations
+      tweaks: spell an option correctly in NEWS
+      tweaks: swap ^X and ^L in the help lines of the help viewer
+
+David Lawrence Ramsey (29):
+      display: when converting tabs, don't go beyond the screen width
+      docs: consistently describe the -U/-c and -r/-w overrides
+      docs: mention that boldtext can be overridden also for function tags
+      docs: mention the default values for comment and whitespace directives
+      moving: fix the cursor jumping back and forth with non-smooth paging
+      moving: make vertical movement account for varying chunk width
+      new feature: allow lines to be softwrapped at whitespace
+      replacing: make spotlight() account for varying chunk width
+      softwrap: add new functions for chunks of varying width
+      softwrap: don't flag EOL too early, nor break continuous text too early
+      softwrap: in do_mouse(), keep the cursor before a softwrap breakpoint
+      softwrap: make the changes to actually allow the chunk width to vary
+      softwrap: prepare for allowing the chunk width to vary
+      softwrap: remove unneeded caps on the number of chunks to move
+      syntax: nanorc: properly color a "fill" option with a negative value
+      text: adjust the comments in do_indent() and do_unindent()
+      text: make do_unindent() an exact copy of do_indent()
+      text: make sure commenting is disabled when comment "" was specified
+      text: normalize the indentation in do_indent() and do_unindent()
+      text: remove indent-related code from do_unindent()
+      text: remove the last usage of cols in do_indent() and do_unindent()
+      text: remove unindent-related code from do_indent()
+      text: remove unneeded references to cols from the indentation routines
+      text: update placewewant properly when indenting/unindenting
+      tweaks: correct a parameter type, and correct two empty initializations
+      tweaks: fix a typo in NEWS
+      tweaks: only compensate for a partially-offscreen line in softwrap mode
+      tweaks: remove unneeded braces, and mark empty parameter list as void
+      usage: a dash doesn't have to come first among the filenames
+
+
 Changes between v2.8.4 and v2.8.5:
 ----------------------------------
 

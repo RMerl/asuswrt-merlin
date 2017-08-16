@@ -90,12 +90,14 @@ static const rcoption rcopts[] = {
     {"view", VIEW_MODE},
 #ifndef NANO_TINY
     {"allow_insecure_backup", INSECURE_BACKUP},
+    {"atblanks", AT_BLANKS},
     {"autoindent", AUTOINDENT},
     {"backup", BACKUP_FILE},
     {"backupdir", 0},
     {"backwards", BACKWARDS_SEARCH},
     {"casesensitive", CASE_SENSITIVE},
-    {"cut", CUT_TO_END},
+    {"cut", CUT_FROM_CURSOR},  /* deprecated form, remove in 2020 */
+    {"cutfromcursor", CUT_FROM_CURSOR},
     {"justifytrim", JUSTIFY_TRIM},
     {"locking", LOCKING},
     {"matchbrackets", 0},
@@ -315,7 +317,9 @@ void parse_syntax(char *ptr)
     live_syntax->magics = NULL;
     live_syntax->linter = NULL;
     live_syntax->formatter = NULL;
-    live_syntax->comment = NULL;
+#ifdef ENABLE_COMMENT
+    live_syntax->comment = mallocstrcpy(NULL, GENERAL_COMMENT_CHARACTER);
+#endif
     live_syntax->color = NULL;
     lastcolor = NULL;
     live_syntax->nmultis = 0;
@@ -346,7 +350,7 @@ void parse_syntax(char *ptr)
 /* Check whether the given executable function is "universal" (meaning
  * any horizontal movement or deletion) and thus is present in almost
  * all menus. */
-bool is_universal(void (*func))
+bool is_universal(void (*func)(void))
 {
     if (func == do_left || func == do_right ||
 	func == do_home_void || func == do_end_void ||
@@ -609,8 +613,6 @@ void parse_includes(char *ptr)
  * and set bright to TRUE if that color is bright. */
 short color_to_short(const char *colorname, bool *bright)
 {
-    assert(colorname != NULL && bright != NULL);
-
     if (strncasecmp(colorname, "bright", 6) == 0) {
 	*bright = TRUE;
 	colorname += 6;
@@ -649,8 +651,6 @@ void parse_colors(char *ptr, int rex_flags)
     short fg, bg;
     bool bright = FALSE;
     char *item;
-
-    assert(ptr != NULL);
 
     if (!opensyntax) {
 	rcfile_error(
@@ -725,9 +725,6 @@ void parse_colors(char *ptr, int rex_flags)
 
 	    newcolor->next = NULL;
 
-#ifdef DEBUG
-	    fprintf(stderr, "Adding an entry for fg %hd, bg %hd\n", fg, bg);
-#endif
 	    if (lastcolor == NULL)
 		live_syntax->color = newcolor;
 	    else
@@ -778,33 +775,22 @@ void parse_colors(char *ptr, int rex_flags)
 /* Parse the color name, or pair of color names, in combostr. */
 bool parse_color_names(char *combostr, short *fg, short *bg, bool *bright)
 {
-    bool no_fgcolor = FALSE;
+    char *comma = strchr(combostr, ',');
 
-    if (combostr == NULL)
-	return FALSE;
-
-    if (strchr(combostr, ',') != NULL) {
-	char *bgcolorname;
-	strtok(combostr, ",");
-	bgcolorname = strtok(NULL, ",");
-	if (bgcolorname == NULL) {
-	    /* If we have a background color without a foreground color,
-	     * parse it properly. */
-	    bgcolorname = combostr + 1;
-	    no_fgcolor = TRUE;
-	}
-	if (strncasecmp(bgcolorname, "bright", 6) == 0) {
-	    rcfile_error(N_("Background color \"%s\" cannot be bright"), bgcolorname);
+    if (comma != NULL) {
+	*bg = color_to_short(comma + 1, bright);
+	if (*bright) {
+	    rcfile_error(N_("A background color cannot be bright"));
 	    return FALSE;
 	}
-	*bg = color_to_short(bgcolorname, bright);
+	*comma = '\0';
     } else
 	*bg = -1;
 
-    if (!no_fgcolor) {
+    if (comma != combostr) {
 	*fg = color_to_short(combostr, bright);
 
-	/* Don't try to parse screwed-up foreground colors. */
+	/* If the specified foreground color is bad, ignore the regexes. */
 	if (*fg == -1)
 	    return FALSE;
     } else
@@ -877,7 +863,7 @@ void grab_and_store(const char *kind, char *ptr, regexlisttype **storage)
     }
 }
 
-/* Parse and store the name given after a linter/formatter command. */
+/* Gather and store the string after a comment/linter/formatter command. */
 void pick_up_name(const char *kind, char *ptr, char **storage)
 {
     assert(ptr != NULL);
@@ -889,35 +875,27 @@ void pick_up_name(const char *kind, char *ptr, char **storage)
     }
 
     if (*ptr == '\0') {
-	rcfile_error(N_("Missing command after '%s'"), kind);
+	rcfile_error(N_("Missing argument after '%s'"), kind);
 	return;
     }
 
-    free(*storage);
+    /* If the argument starts with a quote, find the terminating quote. */
+    if (*ptr == '"') {
+	char *look = ++ptr;
 
-    /* Allow unsetting the command by using an empty string. */
-    if (!strcmp(ptr, "\"\""))
-	*storage = NULL;
-    else if (*ptr == '"') {
-	*storage = mallocstrcpy(NULL, ++ptr);
-	char* q = *storage;
-	char* p = *storage;
-	/* Snip out the backslashes of escaped characters. */
-	while (*p != '"') {
-	    if (*p == '\0') {
+	look += strlen(ptr);
+
+	while (*look != '"') {
+	    if (--look < ptr) {
 		rcfile_error(N_("Argument of '%s' lacks closing \""), kind);
-		free(*storage);
-		*storage = NULL;
 		return;
-	    } else if (*p == '\\' && *(p + 1) != '\0') {
-		p++;
 	    }
-	    *q++ = *p++;
 	}
-	*q = '\0';
+	*look = '\0';
     }
-    else
-	*storage = mallocstrcpy(NULL, ptr);
+
+    *storage = mallocstrcpy(*storage, ptr);
+
 }
 #endif /* !DISABLE_COLOR */
 

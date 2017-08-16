@@ -20,6 +20,10 @@
 ## versions of nano installed (e.g. your home directory is on NFS).
 # set quiet
 
+## When soft line wrapping is enabled, make it wrap lines at blanks
+## (tabs and spaces) instead of always at the edge of the screen.
+# set atblanks
+
 ## Use auto-indentation.
 # set autoindent
 
@@ -49,8 +53,9 @@
 # set constantshow
 ## (The old form, 'const', is deprecated.)
 
-## Use cut-to-end-of-line by default.
-# set cut
+## Use cut-from-cursor-to-end-of-line by default.
+# set cutfromcursor
+## (The old form, 'cut', is deprecated.)
 
 ## Set the line length for wrapping text and justifying paragraphs.
 ## If the value is 0 or less, the wrapping point will be the screen
@@ -125,7 +130,7 @@
 # set punct "!.?"
 
 ## Do quick status-bar blanking.  Status-bar messages will disappear after
-## 1 keystroke instead of 26.  Note that "const" overrides this.
+## 1 keystroke instead of 26.  Note that "constantshow" overrides this.
 # set quickblank
 
 ## The email-quote string, used to justify email-quoted paragraphs.

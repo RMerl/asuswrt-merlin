@@ -53,13 +53,8 @@ void get_edge_and_target(size_t *leftedge, size_t *target_column)
 {
 #ifndef NANO_TINY
     if (ISSET(SOFTWRAP)) {
-	size_t realspan = strlenpt(openfile->current->data);
-
-	if (realspan > openfile->placewewant)
-	    realspan = openfile->placewewant;
-
-	*leftedge = (realspan / editwincols) * editwincols;
-	*target_column = openfile->placewewant % editwincols;
+	*leftedge = leftedge_for(xplustabs(), openfile->current);
+	*target_column = openfile->placewewant - *leftedge;
     } else
 #endif
     {
@@ -79,6 +74,8 @@ void do_page_up(void)
     if (!ISSET(SMOOTH_SCROLL)) {
 	openfile->current = openfile->edittop;
 	openfile->placewewant = openfile->firstcolumn;
+	openfile->current_x = actual_x(openfile->current->data,
+					openfile->firstcolumn);
 	openfile->current_y = 0;
     }
 
@@ -93,7 +90,7 @@ void do_page_up(void)
 
     openfile->placewewant = leftedge + target_column;
     openfile->current_x = actual_x(openfile->current->data,
-					openfile->placewewant);
+				actual_last_column(leftedge, target_column));
 
     /* Move the viewport so that the cursor stays immobile, if possible. */
     adjust_viewport(STATIONARY);
@@ -111,6 +108,8 @@ void do_page_down(void)
     if (!ISSET(SMOOTH_SCROLL)) {
 	openfile->current = openfile->edittop;
 	openfile->placewewant = openfile->firstcolumn;
+	openfile->current_x = actual_x(openfile->current->data,
+					openfile->firstcolumn);
 	openfile->current_y = 0;
     }
 
@@ -125,7 +124,7 @@ void do_page_down(void)
 
     openfile->placewewant = leftedge + target_column;
     openfile->current_x = actual_x(openfile->current->data,
-					openfile->placewewant);
+				actual_last_column(leftedge, target_column));
 
     /* Move the viewport so that the cursor stays immobile, if possible. */
     adjust_viewport(STATIONARY);
@@ -346,15 +345,16 @@ void do_next_word_void(void)
 void do_home(bool be_clever)
 {
     filestruct *was_current = openfile->current;
-    size_t was_column = openfile->placewewant;
+    size_t was_column = xplustabs();
     bool moved_off_chunk = TRUE;
 #ifndef NANO_TINY
     bool moved = FALSE;
-    size_t leftedge_x = 0;
+    size_t leftedge = 0, leftedge_x = 0;
 
-    if (ISSET(SOFTWRAP))
-	leftedge_x = actual_x(openfile->current->data,
-			(was_column / editwincols) * editwincols);
+    if (ISSET(SOFTWRAP)) {
+	leftedge = leftedge_for(was_column, openfile->current);
+	leftedge_x = actual_x(openfile->current->data, leftedge);
+    }
 
     if (ISSET(SMART_HOME) && be_clever) {
 	size_t indent_x = indent_length(openfile->current->data);
@@ -376,11 +376,11 @@ void do_home(bool be_clever)
     if (!moved && ISSET(SOFTWRAP)) {
 	/* If already at the left edge of the screen, move fully home.
 	 * Otherwise, move to the left edge. */
-	if (was_column % editwincols == 0 && be_clever)
+	if (openfile->current_x == leftedge_x && be_clever)
 	    openfile->current_x = 0;
 	else {
 	    openfile->current_x = leftedge_x;
-	    openfile->placewewant = (was_column / editwincols) * editwincols;
+	    openfile->placewewant = leftedge;
 	    moved_off_chunk = FALSE;
 	}
     } else if (!moved)
@@ -411,15 +411,26 @@ void do_home_void(void)
 void do_end(bool be_clever)
 {
     filestruct *was_current = openfile->current;
-    size_t was_column = openfile->placewewant;
+    size_t was_column = xplustabs();
     size_t line_len = strlen(openfile->current->data);
     bool moved_off_chunk = TRUE;
 
 #ifndef NANO_TINY
     if (ISSET(SOFTWRAP)) {
-	size_t rightedge_x = actual_x(openfile->current->data,
-			((was_column / editwincols) * editwincols) +
-			(editwincols - 1));
+	bool last_chunk = FALSE;
+	size_t leftedge = leftedge_for(was_column, openfile->current);
+	size_t rightedge = get_softwrap_breakpoint(openfile->current->data,
+						leftedge, &last_chunk);
+	size_t rightedge_x;
+
+	/* If we're on the last chunk, we're already at the end of the line.
+	 * Otherwise, we're one column past the end of the line.  Shifting
+	 * backwards one column might put us in the middle of a multi-column
+	 * character, but actual_x() will fix that. */
+	if (!last_chunk)
+	    rightedge--;
+
+	rightedge_x = actual_x(openfile->current->data, rightedge);
 
 	/* If already at the right edge of the screen, move fully to
 	 * the end of the line.  Otherwise, move to the right edge. */
@@ -427,13 +438,15 @@ void do_end(bool be_clever)
 	    openfile->current_x = line_len;
 	else {
 	    openfile->current_x = rightedge_x;
+	    openfile->placewewant = rightedge;
 	    moved_off_chunk = FALSE;
 	}
     } else
 #endif
 	openfile->current_x = line_len;
 
-    openfile->placewewant = xplustabs();
+    if (moved_off_chunk)
+	openfile->placewewant = xplustabs();
 
     /* If we changed chunk, we might be offscreen.  Otherwise,
      * update current if the mark is on or we changed "page". */
@@ -471,7 +484,7 @@ void do_up(bool scroll_only)
 
     openfile->placewewant = leftedge + target_column;
     openfile->current_x = actual_x(openfile->current->data,
-					openfile->placewewant);
+				actual_last_column(leftedge, target_column));
 
     /* When the cursor was on the first line of the edit window (or when just
      * scrolling without moving the cursor), scroll the edit window up -- one
@@ -515,7 +528,7 @@ void do_down(bool scroll_only)
 
     openfile->placewewant = leftedge + target_column;
     openfile->current_x = actual_x(openfile->current->data,
-					openfile->placewewant);
+				actual_last_column(leftedge, target_column));
 
     /* When the cursor was on the last line of the edit window (or when just
      * scrolling without moving the cursor), scroll the edit window down -- one
@@ -562,8 +575,8 @@ void do_left(void)
 {
     size_t was_column = xplustabs();
 #ifndef NANO_TINY
-    size_t was_chunk = (was_column / editwincols);
     filestruct *was_current = openfile->current;
+    size_t was_chunk = chunk_for(was_column, was_current);
 #endif
 
     if (openfile->current_x > 0)
@@ -582,7 +595,8 @@ void do_left(void)
      * we're now above the first line of the edit window, so scroll up. */
     if (ISSET(SOFTWRAP) && openfile->current_y == 0 &&
 		openfile->current == was_current &&
-		openfile->placewewant / editwincols != was_chunk) {
+		chunk_for(openfile->placewewant,
+				openfile->current) != was_chunk) {
 	edit_scroll(UPWARD, ISSET(SMOOTH_SCROLL) ? 1 : editwinrows / 2 + 1);
 	return;
     }
@@ -598,8 +612,8 @@ void do_right(void)
 {
     size_t was_column = xplustabs();
 #ifndef NANO_TINY
-    size_t was_chunk = (was_column / editwincols);
     filestruct *was_current = openfile->current;
+    size_t was_chunk = chunk_for(was_column, was_current);
 #endif
 
     if (openfile->current->data[openfile->current_x] != '\0')
@@ -618,7 +632,8 @@ void do_right(void)
      * we're now below the first line of the edit window, so scroll down. */
     if (ISSET(SOFTWRAP) && openfile->current_y == editwinrows - 1 &&
 		openfile->current == was_current &&
-		openfile->placewewant / editwincols != was_chunk) {
+		chunk_for(openfile->placewewant,
+				openfile->current) != was_chunk) {
 	edit_scroll(DOWNWARD, ISSET(SMOOTH_SCROLL) ? 1 : editwinrows / 2 + 1);
 	return;
     }

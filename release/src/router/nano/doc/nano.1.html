@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Sun Jun 25 10:57:25 2017 -->
+<!-- CreationDate: Fri Jul 21 09:54:28 2017 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -71,9 +71,9 @@ specific line by adding the line number with a plus sign
 (<b>+</b>) before the filename, and even in a specific
 column by adding it with a comma.</p>
 
-<p style="margin-left:11%; margin-top: 1em">If the first
-file specified is a dash (<b>&minus;</b>), <b>nano</b> will
-read data from standard input.</p>
+<p style="margin-left:11%; margin-top: 1em">As a special
+case: if instead of a filename a dash (<b>&minus;</b>) is
+given, <b>nano</b> will read data from standard input.</p>
 
 <h2>EDITING
 <a name="EDITING"></a>
@@ -260,7 +260,8 @@ greater than 0. The default value is 8.</p>
 
 <p style="margin-left:22%;">Do quick status-bar blanking:
 status-bar messages will disappear after 1 keystroke instead
-of 25. Note that <b>&minus;c</b> overrides this.</p>
+of 25. Note that option <b>&minus;c</b>
+(<b>&minus;&minus;constantshow</b>) overrides this.</p>
 
 <p style="margin-left:11%;"><b>&minus;V</b>,
 <b>&minus;&minus;version</b></p>
@@ -292,12 +293,19 @@ as part of a word. This overrides option <b>&minus;W</b>
 highlighting to use from among the ones defined in the
 <i>nanorc</i> files.</p>
 
+<p style="margin-left:11%;"><b>&minus;a</b>,
+<b>&minus;&minus;atblanks</b></p>
+
+<p style="margin-left:22%;">When doing soft line wrapping,
+wrap lines at whitespace instead of always at the edge of
+the screen.</p>
+
 <p style="margin-left:11%;"><b>&minus;c</b>,
 <b>&minus;&minus;constantshow</b></p>
 
 <p style="margin-left:22%;">Constantly show the cursor
-position on the status bar. Note that this overrides
-<b>&minus;U</b>.</p>
+position on the status bar. Note that this overrides option
+<b>&minus;U</b> (<b>&minus;&minus;quickblank</b>).</p>
 
 <p style="margin-left:11%;"><b>&minus;d</b>,
 <b>&minus;&minus;rebinddelete</b></p>
@@ -328,7 +336,7 @@ previous line&rsquo;s indentation. Useful when editing
 source code.</p>
 
 <p style="margin-left:11%;"><b>&minus;k</b>,
-<b>&minus;&minus;cut</b></p>
+<b>&minus;&minus;cutfromcursor</b></p>
 
 <p style="margin-left:22%;">Make the &rsquo;Cut Text&rsquo;
 command (normally <b>^K</b>) cut from the current cursor
@@ -394,8 +402,9 @@ pressing Enter at startup.</p>
 occur at the width of the screen less <i>number</i> columns,
 allowing the wrap point to vary along with the width of the
 screen if the screen is resized. The default value is
-&minus;8. This option conflicts with <b>&minus;w</b> -- the
-last one given takes effect.</p>
+&minus;8. This option conflicts with <b>&minus;w</b>
+(<b>&minus;&minus;nowrap</b>) -- the last one given takes
+effect.</p>
 
 
 <p style="margin-left:11%;"><b>&minus;s&nbsp;</b><i>program</i>,
@@ -429,8 +438,9 @@ editing: read-only mode.</p>
 <b>&minus;&minus;nowrap</b></p>
 
 <p style="margin-left:22%;">Disable the hard-wrapping of
-long lines. This option conflicts with <b>&minus;r</b> --
-the last one given takes effect.</p>
+long lines. This option conflicts with <b>&minus;r</b>
+(<b>&minus;&minus;fill</b>) -- the last one given takes
+effect.</p>
 
 <p style="margin-left:11%;"><b>&minus;x</b>,
 <b>&minus;&minus;nohelp</b></p>
@@ -456,9 +466,8 @@ last when using other options (e.g. &rsquo;nano
 &minus;wS$&rsquo;) or pass it separately (e.g. &rsquo;nano
 &minus;wS &minus;$&rsquo;).</p>
 
-<p style="margin-left:11%;"><b>&minus;a</b>,
-<b>&minus;b</b>, <b>&minus;e</b>, <b>&minus;f</b>,
-<b>&minus;j</b></p>
+<p style="margin-left:11%;"><b>&minus;b</b>,
+<b>&minus;e</b>, <b>&minus;f</b>, <b>&minus;j</b></p>
 
 <p style="margin-left:22%;">Ignored, for compatibility with
 Pico.</p>

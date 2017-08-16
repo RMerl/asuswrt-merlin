@@ -16,7 +16,7 @@
 .\"   Documentation License along with this program.  If not, see
 .\"   <http://www.gnu.org/licenses/>.
 .\"
-.TH NANO 1 "version 2.8.5" "June 2017"
+.TH NANO 1 "version 2.8.6" "July 2017"
 .\" Please adjust this date whenever revising the manpage.
 
 .SH NAME
@@ -36,8 +36,8 @@ When giving a filename on the command line, the cursor can be put on a
 specific line by adding the line number with a plus sign (\fB+\fR) before
 the filename, and even in a specific column by adding it with a comma.
 
-If the first file specified is a dash (\fB\-\fR), \fBnano\fR will read
-data from standard input.
+As a special case: if instead of a filename a dash (\fB\-\fR) is given,
+\fBnano\fR will read data from standard input.
 
 .SH EDITING
 Entering text and moving around in a file is straightforward: typing the
@@ -145,7 +145,8 @@ Set the size (width) of a tab to \fInumber\fP columns.  The value of
 .TP
 .BR \-U ", " \-\-quickblank
 Do quick status-bar blanking: status-bar messages will disappear after 1
-keystroke instead of 25.  Note that \fB\-c\fP overrides this.
+keystroke instead of 25.  Note that option \fB\-c\fR (\fB\-\-constantshow\fR)
+overrides this.
 .TP
 .BR \-V ", " \-\-version
 Show the current version number and exit.
@@ -163,9 +164,13 @@ should be considered as part of a word.  This overrides option
 Specify the name of the syntax highlighting to use from among the ones
 defined in the \fInanorc\fP files.
 .TP
+.BR \-a ", " \-\-atblanks
+When doing soft line wrapping, wrap lines at whitespace
+instead of always at the edge of the screen.
+.TP
 .BR \-c ", " \-\-constantshow
 Constantly show the cursor position on the status bar.
-Note that this overrides \fB\-U\fP.
+Note that this overrides option \fB\-U\fR (\fB\-\-quickblank\fR).
 .TP
 .BR \-d ", " \-\-rebinddelete
 Interpret the Delete key differently so that both Backspace and Delete
@@ -183,7 +188,7 @@ Show a summary of the available command-line options and exit.
 Indent new lines to the previous line's indentation.  Useful when
 editing source code.
 .TP
-.BR \-k ", " \-\-cut
+.BR \-k ", " \-\-cutfromcursor
 Make the 'Cut Text' command (normally \fB^K\fR) cut from the current cursor
 position to the end of the line, instead of cutting the entire line.
 .TP
@@ -221,7 +226,7 @@ Hard-wrap lines at column \fInumber\fP.  If this value is 0 or less, wrapping
 will occur at the width of the screen less \fInumber\fP columns, allowing
 the wrap point to vary along with the width of the screen if the screen
 is resized.  The default value is \-8.  This option conflicts with
-\fB\-w\fR -- the last one given takes effect.
+\fB\-w\fR (\fB\-\-nowrap\fR) -- the last one given takes effect.
 .TP
 .BR \-s\ \fIprogram\fR ", " \-\-speller= \fIprogram
 Use this alternative spell checker command.
@@ -239,7 +244,7 @@ Just view the file and disallow editing: read-only mode.
 .TP
 .BR \-w ", " \-\-nowrap
 Disable the hard-wrapping of long lines.  This option conflicts with
-\fB\-r\fR -- the last one given takes effect.
+\fB\-r\fR (\fB\-\-fill\fR) -- the last one given takes effect.
 .TP
 .BR \-x ", " \-\-nohelp
 Don't show the two help lines at the bottom of the screen.
@@ -255,7 +260,7 @@ continuing it over multiple screen lines.  Since
 this option last when using other options (e.g.\& 'nano \-wS$') or pass it
 separately (e.g.\& 'nano \-wS \-$').
 .TP
-.BR \-a ", " \-b ", " \-e ", " \-f ", " \-j
+.BR \-b ", " \-e ", " \-f ", " \-j
 Ignored, for compatibility with Pico.
 
 .SH TOGGLES

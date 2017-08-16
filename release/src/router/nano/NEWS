@@ -1,3 +1,13 @@
+2017.07.21 - GNU nano 2.8.6 "Kekulé" offers a new feature: the ability
+		to do softwrapping between words -- at whitespace --
+		instead of always at the edge of the screen.  This can
+		be activated with -a or --atblanks or 'set atblanks'
+		together with the softwrap option.  This release further
+		fixes a handful of rare display glitches, fixes a build
+		failure on AIX, harmonizes the quoting rules in the rc
+		files, and renames the option 'cut' to 'cutfromcursor'
+		(please update your nanorc files before 2020).
+
 2017.06.25 - GNU nano 2.8.5 "Farouche" avoids a crash when waking from
 		a suspension that was induced from the outside, allows
 		negative line and column numbers on the command line,
@@ -134,7 +144,7 @@
 		input (M-V followed by a six-digit hexadecimal number which
 		must start with 0 or 10), avoids a crash when resizing the
 		window during Verbatim input, doesn't drop a keystroke after
-		having been suspended, and replaces the	beginning-of-line
+		having been suspended, and replaces the beginning-of-line
 		anchor (^) just once per line.  There are also several tiny
 		improvements in screen rendering and key handling.  Come get
 		your hair tousled!
@@ -581,7 +591,7 @@
 		compiling on AIX, and a segfault when making the terminal
 		window too small.  Rest in Peace Tim and George!
 
-2008.04.01 - GNU nano 2.1.1 wont get fooled again.  This release contains
+2008.04.01 - GNU nano 2.1.1 won't get fooled again.  This release contains
 		fixes for the new user-rebindable keys (in particular
 		bracket match which was mis-bound), and various
 		problems with translations and configure-related
@@ -746,7 +756,7 @@
 		focuses mostly on bugfixes, which include better
 		handling of the cursor at the statusbar prompt, support
 		for certain combinations of Shift and keypad keys in
-		both normal and --rebind-keypad mode, a fix for a minor
+		both normal and --rebindkeypad mode, a fix for a minor
 		display problem after some searches, a real fix for a
 		long-standing segfault when displaying overly long
 		lines, and a real fix for nano's not hanging up properly
@@ -1274,12 +1284,12 @@
 
 
 2001.02.19 - Nano 0.9.99pre3 brings a lot of changes!  The most important
-		being that nano is now officially a GNU	program.  Some
+		being that nano is now officially a GNU program.  Some
 		changes have been made for GNU compatibility (like in the
 		default list of shortcuts: "^G Get Help" is now listed
 		and "^_ Goto Line" is not).  The Yes/No/All keys have
 		finally been internationalized also.  All in all, quite
-		a few changes, considering nano	is supposed to be in
+		a few changes, considering nano is supposed to be in
 		a code freeze.  But there are the usual helping of
 		bugfixes, a nasty bug when cutting text in -k mode and
 		some compatibility issues with older ncurses libraries

@@ -21,10 +21,10 @@
 
 #include "proto.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <utime.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <ctype.h>
@@ -430,8 +430,6 @@ bool open_buffer(const char *filename, bool undoable)
 	/* rc == -2 means that we have a new file.  -1 means that the
 	 * open() failed.  0 means that the open() succeeded. */
 
-    assert(filename != NULL);
-
     /* Display newlines in filenames as ^J. */
     as_an_at = FALSE;
 
@@ -527,8 +525,6 @@ void replace_buffer(const char *filename)
     FILE *f;
     int descriptor;
 
-    assert(filename != NULL && filename[0] != '\0');
-
     /* Open the file quietly. */
     descriptor = open_file(filename, FALSE, TRUE, &f);
 
@@ -605,8 +601,6 @@ void prepare_for_display(void)
  * otherwise, to the previous one. */
 void switch_to_prevnext_buffer(bool to_next)
 {
-    assert(openfile != NULL);
-
     /* If only one file buffer is open, say so and get out. */
     if (openfile == openfile->next && !inhelp) {
 	statusbar(_("No more open file buffers"));
@@ -631,9 +625,14 @@ void switch_to_prevnext_buffer(bool to_next)
     /* Update titlebar and multiline info to match the current buffer. */
     prepare_for_display();
 
+    if (inhelp)
+	return;
+
+    /* Ensure that the main loop will redraw the help lines. */
+    currmenu = MMOST;
+
     /* Indicate the switch on the statusbar. */
-    if (!inhelp)
-	statusline(HUSH, _("Switched to %s"),
+    statusline(HUSH, _("Switched to %s"),
 			((openfile->filename[0] == '\0') ?
 			_("New Buffer") : openfile->filename));
 
@@ -659,8 +658,6 @@ void switch_to_next_buffer_void(void)
  * open buffers. */
 bool close_buffer(void)
 {
-    assert(openfile != NULL);
-
     /* If only one file buffer is open, get out. */
     if (openfile == openfile->next)
 	return FALSE;
@@ -677,7 +674,7 @@ bool close_buffer(void)
     /* Close the file buffer we had open before. */
     unlink_opennode(openfile->prev);
 
-    /* If only one buffer is open now, show Exit in the help lines. */
+    /* If now just one buffer remains open, show "Exit" in the help lines. */
     if (openfile == openfile->next)
 	exitfunc->desc = exit_tag;
 
@@ -699,8 +696,6 @@ int is_file_writable(const char *filename)
 
     if (ISSET(VIEW_MODE))
 	return TRUE;
-
-    assert(filename != NULL);
 
     /* Get the specified file's full path. */
     full_filename = get_full_path(filename);
@@ -777,7 +772,7 @@ void read_file(FILE *f, int fd, const char *filename, bool undoable,
 	add_undo(INSERT);
 
     if (ISSET(SOFTWRAP))
-	was_leftedge = (xplustabs() / editwincols) * editwincols;
+	was_leftedge = leftedge_for(xplustabs(), openfile->current);
 #endif
 
     /* Create an empty buffer. */
@@ -931,7 +926,7 @@ void read_file(FILE *f, int fd, const char *filename, bool undoable,
 			(unsigned long)num_lines), (unsigned long)num_lines);
 
     /* If we inserted less than a screenful, don't center the cursor. */
-    if (less_than_a_screenful(was_lineno, was_leftedge))
+    if (undoable && less_than_a_screenful(was_lineno, was_leftedge))
 	focusing = FALSE;
 
 #ifndef NANO_TINY
@@ -952,8 +947,6 @@ int open_file(const char *filename, bool newfie, bool quiet, FILE **f)
     struct stat fileinfo, fileinfo2;
     int fd;
     char *full_filename;
-
-    assert(filename != NULL && f != NULL);
 
     /* Get the specified file's full path. */
     full_filename = get_full_path(filename);
@@ -1017,8 +1010,6 @@ char *get_next_filename(const char *name, const char *suffix)
     unsigned long i = 0;
     char *buf;
     size_t wholenamelen;
-
-    assert(name != NULL && suffix != NULL);
 
     wholenamelen = strlen(name) + strlen(suffix);
 
@@ -1386,8 +1377,6 @@ char *safe_tempfile(FILE **f)
     int fd;
     mode_t original_umask = 0;
 
-    assert(f != NULL);
-
     /* If $TMPDIR is set, set tempdir to it, run it through
      * get_full_path(), and save the result in full_tempdir.  Otherwise,
      * leave full_tempdir set to NULL. */
@@ -1428,8 +1417,6 @@ char *safe_tempfile(FILE **f)
 /* Initialize full_operating_dir based on operating_dir. */
 void init_operating_dir(void)
 {
-    assert(full_operating_dir == NULL);
-
     if (operating_dir == NULL)
 	return;
 
@@ -1460,8 +1447,6 @@ bool check_operating_dir(const char *currpath, bool allow_tabcomp)
     /* If no operating directory is set, don't bother doing anything. */
     if (operating_dir == NULL)
 	return FALSE;
-
-    assert(full_operating_dir != NULL);
 
     fullpath = get_full_path(currpath);
 
@@ -1987,6 +1972,7 @@ bool write_file(const char *name, FILE *f_open, bool tmp,
 	/* If we must set the filename, and it changed, adjust things. */
 	if (!nonamechange && strcmp(openfile->filename, realname) != 0) {
 #ifndef DISABLE_COLOR
+	    char *newname;
 	    char *oldname = openfile->syntax ? openfile->syntax->name : "";
 	    filestruct *line = openfile->fileage;
 #endif
@@ -1997,7 +1983,7 @@ bool write_file(const char *name, FILE *f_open, bool tmp,
 	    color_update();
 	    color_init();
 
-	    char *newname = openfile->syntax ? openfile->syntax->name : "";
+	    newname = openfile->syntax ? openfile->syntax->name : "";
 
 	    /* If the syntax changed, discard and recompute the multidata. */
 	    if (strcmp(oldname, newname) != 0) {
@@ -2284,6 +2270,8 @@ int do_writeout(bool exiting)
 			openfile->current_stat->st_dev != st.st_dev ||
 			openfile->current_stat->st_ino != st.st_ino)) {
 
+		    warn_and_shortly_pause(_("File on disk has changed"));
+
 		    if (do_yesno_prompt(FALSE, _("File was modified since "
 				"you opened it; continue saving? ")) < 1)
 			continue;
@@ -2455,14 +2443,15 @@ char **username_tab_completion(const char *buf, size_t *num_matches,
 	size_t buf_len)
 {
     char **matches = NULL;
+#ifdef HAVE_PWD_H
+    const struct passwd *userdata;
+#endif
 
     assert(buf != NULL && num_matches != NULL && buf_len > 0);
 
     *num_matches = 0;
 
 #ifdef HAVE_PWD_H
-    const struct passwd *userdata;
-
     while ((userdata = getpwent()) != NULL) {
 	if (strncmp(userdata->pw_name, buf + 1, buf_len - 1) == 0) {
 	    /* Cool, found a match.  Add it to the list.  This makes a

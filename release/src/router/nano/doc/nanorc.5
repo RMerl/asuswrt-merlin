@@ -16,7 +16,7 @@
 .\"   Documentation License along with this program.  If not, see
 .\"   <http://www.gnu.org/licenses/>.
 .\"
-.TH NANORC 5 "version 2.8.5" "June 2017"
+.TH NANORC 5 "version 2.8.6" "July 2017"
 .\" Please adjust this date whenever revising the manpage.
 
 .SH NAME
@@ -57,6 +57,10 @@ When backing up files, allow the backup to succeed even if its permissions
 can't be (re)set due to special OS considerations.  You should
 NOT enable this option unless you are sure you need it.
 .TP
+.B set atblanks
+When soft line wrapping is enabled, make it wrap lines at blank characters
+(tabs and spaces) instead of always at the edge of the screen.
+.TP
 .B set autoindent
 Use auto-indentation.
 .TP
@@ -66,7 +70,7 @@ the file's name.
 .TP
 .B set backupdir "\fIdirectory\fP"
 Make and keep not just one backup file, but make and keep a uniquely
-numbered one every time a file is saved --- when backups are enabled
+numbered one every time a file is saved -- when backups are enabled
 with \fBset backup\fR or \fB\-\-backup\fR or \fB\-B\fR.
 The uniquely numbered files are stored in the specified \fIdirectory\fR.
 .TP
@@ -75,9 +79,9 @@ Do backwards searches by default.
 .TP
 .B set boldtext
 Use bold instead of reverse video for the title bar, status bar, key combos,
-line numbers, and selected text.  This can be overridden for the first four
-by setting the options \fBtitlecolor\fP, \fBstatuscolor\fP, \fBkeycolor\fP,
-and \fBnumbercolor\fP.
+function tags, line numbers, and selected text.  This can be overridden for
+the first five by setting the options \fBtitlecolor\fP, \fBstatuscolor\fP,
+\fBkeycolor\fP, \fBfunctioncolor\fP, and \fBnumbercolor\fP.
 .TP
 .B set brackets "\fIstring\fP"
 Set the characters treated as closing brackets when justifying
@@ -91,14 +95,17 @@ Do case-sensitive searches by default.
 .B set constantshow
 Constantly display the cursor position in the status bar.
 (The old form of this option, '\fBset const\fR', is deprecated.)
+This overrides the option \fBquickblank\fR.
 .TP
-.B set cut
-Use cut-to-end-of-line by default, instead of cutting the whole line.
+.B set cutfromcursor
+Use cut-from-cursor-to-end-of-line by default, instead of cutting the whole line.
+(The old form of this option, '\fBset cut\fR', is deprecated.)
 .TP
 .B set fill \fInumber\fR
 Hard-wrap lines at column number \fInumber\fR.  If \fInumber\fR is 0 or less,
 the maximum line length will be the screen width less \fInumber\fP columns.
-The default value is \fB\-8\fR.
+The default value is \fB\-8\fR.  This option conflicts with
+\fBnowrap\fR -- the last one given takes effect.
 .TP
 .B set functioncolor \fIfgcolor\fR,\fIbgcolor\fR
 Specify the color combination to use for the function descriptions
@@ -156,7 +163,8 @@ Don't pause between warnings at startup.  This means that only
 the last one will be visible (when there are multiple ones).
 .TP
 .B set nowrap
-Don't hard-wrap text at all.
+Don't hard-wrap text at all.  This option conflicts with
+\fBfill\fR -- the last one given takes effect.
 .TP
 .B set numbercolor \fIfgcolor\fR,\fIbgcolor\fR
 Specify the color combination to use for line numbers.
@@ -184,7 +192,7 @@ specfified closing punctuation, optionally followed by closing brackets
 .TP
 .B set quickblank
 Do quick status-bar blanking: status-bar messages will disappear after 1
-keystroke instead of 25.
+keystroke instead of 25.  The option \fBconstantshow\fR overrides this.
 .TP
 .B set quiet
 \fBnano\fP will not report errors in the \fInanorc\fP file nor ask them
@@ -267,7 +275,8 @@ Disallow file modification.
 .TP
 .B set whitespace "\fIstring\fP"
 Set the two characters used to indicate the presence of tabs and
-spaces.  They must be single-column characters.
+spaces.  They must be single-column characters.  The default pair
+for a UTF-8 locale is "\fB\[Fc]\[md]\fR", and for other locales "\fB>.\fR".
 .TP
 .B set wordbounds
 Detect word boundaries differently by treating punctuation
@@ -286,53 +295,58 @@ powerful enough to fully parse a file.  Nevertheless, regular
 expressions can do a lot and are easy to make, so they are a
 good fit for a small editor like \fBnano\fR.
 .sp
-A separate syntax can be defined for each kind of file
+For each kind of file a separate syntax can be defined
 via the following commands:
 .TP
 .BR syntax " ""\fIname\fR"" [""\fIfileregex\fR"" ...]"
-Defines a syntax named \fIname\fP which can be activated via the
-.BR \-Y / \-\-syntax
-command-line option, or will be automatically activated if
-the current filename matches the extended regular expression
-\fIfileregex\fP.  All subsequent \fBcolor\fR, \fBicolor\fR,
-\fBheader\fR and other such statements will apply to this
-\fIname\fP syntax until a new \fBsyntax\fR command is encountered.
+Start the definition of a syntax with this \fIname\fR.
+All subsequent \fBcolor\fR and other such commands
+will be added to this syntax, until a new \fBsyntax\fR
+command is encountered.
 
-The \fBnone\fP syntax is reserved; specifying it on the command line is
-the same as not having a syntax at all.  The \fBdefault\fP syntax is
-special: it takes no \fIfileregex\fP, and applies to files that don't
-match any syntax's \fIfileregex\fP.
+When \fBnano\fR is run, this syntax will be automatically
+activated if the current filename matches the extended regular
+expression \fIfileregex\fR.  Or the syntax can be explicitly
+activated by using the \fB-Y\fR or \fB\-\-syntax\fR
+command-line option followed by the \fIname\fR.
+
+The syntax "\fBdefault\fP" is special: it takes no \fIfileregex\fR,
+and applies to files that don't match any syntax's regexes.
+The syntax "\fBnone\fP" is reserved; specifying it on the command line
+is the same as not having a syntax at all.
+.TP
+.BR header " ""\fIregex\fR"" " ...
+If from all defined syntaxes no \fIfileregex\fR matched, then compare
+this \fIregex\fR (or regexes) against the first line of the current file,
+to determine whether this syntax should be used for it.
+.TP
+.BR magic " ""\fIregex\fR"" " ...
+If no \fIfileregex\fR matched and no \fBheader\fR regex matched
+either, then compare this \fIregex\fR (or regexes) against the
+result of querying the \fBmagic\fP database about the current
+file, to determine whether this syntax should be used for it.
+(This functionality only works when \fBlibmagic\fP is installed on the
+system and will be silently ignored otherwise.)
 .TP
 .BI linter " program " \fR[ "arg " \fR...]
-Use the given \fIprogram\fR to run a syntax check on the current file
-(this overrides the speller function when defined).
+Use the given \fIprogram\fR to run a syntax check on the current file.
+(This overrides the speller function.)
 .TP
 .BI formatter " program " \fR[ "arg " \fR...]
-Use the given \fIprogram\fR to automatically reformat text.
-Useful in certain programming languages (e.g. Go).
+Use the given \fIprogram\fR to automatically reformat text --
+useful in a programming language like Go.
+(This overrides the speller and linter functions.)
 .TP
-.BR header " \fIregex\fR " ...
-Add one or more regexes which will
-be compared against the very first line of the file to be edited,
-to determine whether this syntax should be used for that file.
-.TP
-.BR magic " \fIregex\fR " ...
-Add one or more regexes which
-will be compared against the result of querying the \fBmagic\fP
-database about the file to be edited, to determine whether this
-syntax should be used for that file.  This
-functionality only works when \fBlibmagic\fP is installed on the
-system and will be silently ignored otherwise.
-.TP
-.BI comment " string"
-Use the given string for commenting and uncommenting lines.  A vertical bar or
-pipe character (|) designates bracket-style comments; for example, "/*|*/" for
+.BR comment " ""\fIstring\fR"""
+Use the given string for commenting and uncommenting lines.
+If the string contains a vertical bar or pipe character (\fB|\fR),
+this designates bracket-style comments; for example, "\fB/*|*/\fR" for
 CSS files.  The characters before the pipe are prepended to the line and the
 characters after the pipe are appended at the end of the line.  If no pipe
-character is present, the entire string is prepended; for example, "#" for
-Python files.  If empty double quotes are specified, the comment/uncomment
-function is disabled; for example, "" for JSON.  Double quotes or backslashes
-may be escaped with a backslash; for example, ".\\"" for man page source.
+character is present, the full string is prepended; for example, "\fB#\fR"
+for Python files.  If empty double quotes are specified, the comment/uncomment
+function is disabled; for example, "" for JSON.
+The default value is "\fB#\fP".
 .TP
 .B color \fIfgcolor\fR,\fIbgcolor\fR """\fIregex\fR""" ...
 Display all pieces of text that match
@@ -365,13 +379,13 @@ Read in self-contained color syntaxes from \fIsyntaxfile\fP.  Note that
 \fIsyntaxfile\fP may contain only the above commands, from \fBsyntax\fP
 to \fBicolor\fP.
 .TP
-.BI extendsyntax " name directive " \fR[ "arg " \fR...]
-Extend the syntax previously defined as \fIname\fP to include
-new information.  This allows adding a new \fBcolor\fP, \fBicolor\fP,
+.BI extendsyntax " name command " \fR[ "arg " \fR...]
+Extend the syntax previously defined as \fIname\fR with another
+\fIcommand\fR.  This allows adding a new \fBcolor\fP, \fBicolor\fP,
 \fBheader\fP, \fBmagic\fP, \fBcomment\fP, \fBlinter\fP, or \fBformatter\fP
-directive to an already defined syntax -- useful when you want to
+command to an already defined syntax -- useful when you want to
 slightly improve a syntax defined in one of the system-installed
-files (which are normally not writable).
+files (which normally are not writable).
 
 .SH REBINDING KEYS
 Key bindings can be changed via the following two commands:

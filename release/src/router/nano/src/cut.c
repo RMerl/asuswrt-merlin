@@ -155,7 +155,7 @@ void do_cut_text(bool copy_text, bool cut_till_eof)
 	/* Move the marked text to the cutbuffer, and turn the mark off. */
 	cut_marked(&right_side_up);
 	openfile->mark_set = FALSE;
-    } else if (ISSET(CUT_TO_END))
+    } else if (ISSET(CUT_FROM_CURSOR))
 	/* Move all text up to the end of the line into the cutbuffer. */
 	cut_to_eol();
     else
@@ -248,9 +248,9 @@ void do_copy_text(void)
 /* Cut from the current cursor position to the end of the file. */
 void do_cut_till_eof(void)
 {
-    add_undo(CUT_EOF);
+    add_undo(CUT_TO_EOF);
     do_cut_text(FALSE, TRUE);
-    update_undo(CUT_EOF);
+    update_undo(CUT_TO_EOF);
 }
 #endif /* !NANO_TINY */
 
@@ -270,7 +270,7 @@ void do_uncut_text(void)
     add_undo(PASTE);
 
     if (ISSET(SOFTWRAP))
-	was_leftedge = (xplustabs() / editwincols) * editwincols;
+	was_leftedge = leftedge_for(xplustabs(), openfile->current);
 #endif
 
     /* Add a copy of the text in the cutbuffer to the current buffer
