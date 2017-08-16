@@ -127,13 +127,12 @@ int test(char *URL)
   } while(still_running);
 
   /* See how the transfers went */
-  do {
-    msg = curl_multi_info_read(multi_handle, &msgs_left);
-    if(msg && msg->msg == CURLMSG_DONE) {
+  while((msg = curl_multi_info_read(multi_handle, &msgs_left))) {
+    if(msg->msg == CURLMSG_DONE) {
       printf("HTTP transfer completed with status %d\n", msg->data.result);
       break;
     }
-  } while(msg);
+  }
 
   curl_multi_cleanup(multi_handle);
 

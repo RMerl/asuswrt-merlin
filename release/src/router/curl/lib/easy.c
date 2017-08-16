@@ -572,8 +572,8 @@ static CURLcode wait_or_timeout(struct Curl_multi *multi, struct events *ev)
     int numfds=0;
     int pollrc;
     int i;
-    struct curltime before;
-    struct curltime after;
+    struct timeval before;
+    struct timeval after;
 
     /* populate the fds[] array */
     for(m = ev->list, f=&fds[0]; m; m = m->next) {
@@ -653,9 +653,7 @@ static CURLcode wait_or_timeout(struct Curl_multi *multi, struct events *ev)
  */
 static CURLcode easy_events(struct Curl_multi *multi)
 {
-  /* this struct is made static to allow it to be used after this function
-     returns and curl_multi_remove_handle() is called */
-  static struct events evs= {2, FALSE, 0, NULL, 0};
+  struct events evs= {2, FALSE, 0, NULL, 0};
 
   /* if running event-based, do some further multi inits */
   events_setup(multi, &evs);
@@ -672,7 +670,7 @@ static CURLcode easy_transfer(struct Curl_multi *multi)
   bool done = FALSE;
   CURLMcode mcode = CURLM_OK;
   CURLcode result = CURLE_OK;
-  struct curltime before;
+  struct timeval before;
   int without_fds = 0;  /* count number of consecutive returns from
                            curl_multi_wait() without any filedescriptors */
 
@@ -685,7 +683,7 @@ static CURLcode easy_transfer(struct Curl_multi *multi)
 
     if(!mcode) {
       if(!rc) {
-        struct curltime after = curlx_tvnow();
+        struct timeval after = curlx_tvnow();
 
         /* If it returns without any filedescriptor instantly, we need to
            avoid busy-looping during periods where it has nothing particular

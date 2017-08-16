@@ -44,13 +44,15 @@ int test(char *URL)
   int msgs_left;
   CURLMsg *msg;
   FILE *upload = NULL;
+  int error;
 
   start_test_timing();
 
   upload = fopen(libtest_arg3, "rb");
   if(!upload) {
+    error = ERRNO;
     fprintf(stderr, "fopen() failed with error: %d (%s)\n",
-            errno, strerror(errno));
+            error, strerror(error));
     fprintf(stderr, "Error opening file: (%s)\n", libtest_arg3);
     return TEST_ERR_FOPEN;
   }

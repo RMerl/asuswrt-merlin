@@ -115,8 +115,7 @@ void curl_memdebug(const char *logname)
       logfile = stderr;
 #ifdef MEMDEBUG_LOG_SYNC
     /* Flush the log file after every line so the log isn't lost in a crash */
-    if(logfile)
-      setbuf(logfile, (char *)NULL);
+    setbuf(logfile, (char *)NULL);
 #endif
   }
 }
@@ -147,7 +146,7 @@ static bool countcheck(const char *func, int line, const char *source)
                 source, line, func);
         fflush(logfile); /* because it might crash now */
       }
-      errno = ENOMEM;
+      SET_ERRNO(ENOMEM);
       return TRUE; /* RETURN ERROR! */
     }
     else

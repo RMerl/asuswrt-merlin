@@ -1,8 +1,7 @@
 <testcase>
 <info>
 <keywords>
-unittest
-Curl_pgrsTime
+typecheck
 </keywords>
 </info>
 
@@ -12,14 +11,11 @@ Curl_pgrsTime
 <server>
 none
 </server>
-<features>
-unittest
-</features>
  <name>
-Curl_pgrsTime unit tests
+verify curl/system.h detection
  </name>
 <tool>
-unit1399
+lib1541
 </tool>
 </client>
 

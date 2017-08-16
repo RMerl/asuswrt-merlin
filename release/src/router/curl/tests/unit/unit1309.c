@@ -74,19 +74,17 @@ UNITTEST_START
   struct Curl_tree nodes[NUM_NODES*3];
   int rc;
   int i, j;
-  struct curltime tv_now = {0, 0};
+  struct timeval tv_now = {0, 0};
   root = NULL;              /* the empty tree */
 
   /* add nodes */
   for(i = 0; i < NUM_NODES; i++) {
-    struct curltime key;
-    size_t payload;
+    struct timeval key;
 
     key.tv_sec = 0;
     key.tv_usec = (541*i)%1023;
-    payload = (size_t) key.tv_usec;
 
-    nodes[i].payload = (void *)payload; /* for simplicity */
+    nodes[i].payload = (void *)key.tv_usec; /* for simplicity */
     root = Curl_splayinsert(key, root, &nodes[i]);
   }
 
@@ -111,15 +109,14 @@ UNITTEST_START
 
   /* rebuild tree */
   for(i = 0; i < NUM_NODES; i++) {
-    struct curltime key;
+    struct timeval key;
 
     key.tv_sec = 0;
     key.tv_usec = (541*i)%1023;
 
     /* add some nodes with the same key */
     for(j = 0; j <= i % 3; j++) {
-      size_t payload = key.tv_usec*10 + j;
-      nodes[i*3+j].payload = (void *)payload; /* for simplicity */
+      nodes[i*3+j].payload = (void *)(key.tv_usec*10 + j); /* for simplicity */
       root = Curl_splayinsert(key, root, &nodes[i*3+j]);
     }
   }

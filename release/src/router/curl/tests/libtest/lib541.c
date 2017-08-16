@@ -38,6 +38,7 @@ int test(char *URL)
   FILE *hd_src;
   int hd;
   struct_stat file_info;
+  int error;
 
   if(!libtest_arg2) {
     fprintf(stderr, "Usage: <url> <file-to-upload>\n");
@@ -46,8 +47,9 @@ int test(char *URL)
 
   hd_src = fopen(libtest_arg2, "rb");
   if(NULL == hd_src) {
+    error = ERRNO;
     fprintf(stderr, "fopen failed with error: %d %s\n",
-            errno, strerror(errno));
+            error, strerror(error));
     fprintf(stderr, "Error opening file: %s\n", libtest_arg2);
     return -2; /* if this happens things are major weird */
   }
@@ -56,8 +58,9 @@ int test(char *URL)
   hd = fstat(fileno(hd_src), &file_info);
   if(hd == -1) {
     /* can't open file, bail out */
+    error = ERRNO;
     fprintf(stderr, "fstat() failed with error: %d %s\n",
-            errno, strerror(errno));
+            error, strerror(error));
     fprintf(stderr, "ERROR: cannot open file %s\n", libtest_arg2);
     fclose(hd_src);
     return TEST_ERR_MAJOR_BAD;

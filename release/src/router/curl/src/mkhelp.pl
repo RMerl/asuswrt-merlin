@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/local/bin/perl
 #***************************************************************************
 #                                  _   _ ____  _
 #  Project                     ___| | | |  _ \| |
@@ -36,7 +36,7 @@ if($ARGV[0] eq "-c") {
 my $README = $ARGV[0];
 
 if($README eq "") {
-    print "usage: mkhelp.pl [-c] <README> < manpage\n";
+    print "usage: mkreadme.pl [-c] <README> < manpage\n";
     exit;
 }
 

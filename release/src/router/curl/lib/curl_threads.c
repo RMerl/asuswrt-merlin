@@ -104,22 +104,15 @@ int Curl_thread_join(curl_thread_t *hnd)
 curl_thread_t Curl_thread_create(unsigned int (CURL_STDCALL *func) (void *),
                                  void *arg)
 {
-  curl_thread_t t;
 #ifdef _WIN32_WCE
-  t = CreateThread(NULL, 0, func, arg, 0, NULL);
+  return CreateThread(NULL, 0, func, arg, 0, NULL);
 #else
+  curl_thread_t t;
   t = (curl_thread_t)_beginthreadex(NULL, 0, func, arg, 0, NULL);
-#endif
-  if((t == 0) || (t == LongToHandle(-1L))) {
-#ifdef _WIN32_WCE
-    DWORD gle = GetLastError();
-    errno = ((gle == ERROR_ACCESS_DENIED ||
-              gle == ERROR_NOT_ENOUGH_MEMORY) ?
-             EACCES : EINVAL);
-#endif
+  if((t == 0) || (t == (curl_thread_t)-1L))
     return curl_thread_t_null;
-  }
   return t;
+#endif
 }
 
 void Curl_thread_destroy(curl_thread_t hnd)

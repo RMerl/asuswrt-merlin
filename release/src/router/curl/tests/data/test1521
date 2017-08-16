@@ -16,7 +16,7 @@ lib1521
 </tool>
 
  <name>
-Test all curl_easy_setopt and curl_easy_getinfo options
+try ALL curl_easy_setopt options
  </name>
  <command>
 unused

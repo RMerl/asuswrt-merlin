@@ -862,9 +862,6 @@ static CURLcode operate_do(struct GlobalConfig *global,
           set_binmode(stdout);
         }
 
-        /* explicitly passed to stdout means okaying binary gunk */
-        config->terminal_binary_ok = (outfile && !strcmp(outfile, "-"));
-
         if(!config->tcp_nodelay)
           my_setopt(curl, CURLOPT_TCP_NODELAY, 0L);
 
@@ -972,7 +969,6 @@ static CURLcode operate_do(struct GlobalConfig *global,
 #endif /* !CURL_DISABLE_PROXY */
 
         my_setopt(curl, CURLOPT_FAILONERROR, config->failonerror?1L:0L);
-        my_setopt(curl, CURLOPT_REQUEST_TARGET, config->request_target);
         my_setopt(curl, CURLOPT_UPLOAD, uploadfile?1L:0L);
         my_setopt(curl, CURLOPT_DIRLISTONLY, config->dirlistonly?1L:0L);
         my_setopt(curl, CURLOPT_APPEND, config->ftp_append?1L:0L);
@@ -1342,11 +1338,6 @@ static CURLcode operate_do(struct GlobalConfig *global,
         if(config->socks5_gssapi_nec)
           my_setopt_str(curl, CURLOPT_SOCKS5_GSSAPI_NEC,
                         config->socks5_gssapi_nec);
-
-        /* new in curl 7.55.0 */
-        if(config->socks5_auth)
-          my_setopt_bitmask(curl, CURLOPT_SOCKS5_AUTH,
-                            (long)config->socks5_auth);
 
         /* new in curl 7.43.0 */
         if(config->proxy_service_name)
@@ -1773,10 +1764,7 @@ static CURLcode operate_do(struct GlobalConfig *global,
         }
         else
 #endif
-        if(config->synthetic_error) {
-          ;
-        }
-        else if(result && global->showerror) {
+        if(result && global->showerror) {
           fprintf(global->errors, "curl: (%d) %s\n", result, (errorbuffer[0]) ?
                   errorbuffer : curl_easy_strerror(result));
           if(result == CURLE_SSL_CACERT)

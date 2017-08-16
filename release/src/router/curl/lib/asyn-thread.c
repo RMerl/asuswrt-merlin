@@ -407,7 +407,9 @@ static bool init_resolve_thread(struct connectdata *conn,
 #endif
 
   if(!td->thread_hnd) {
+#ifndef _WIN32_WCE
     err = errno;
+#endif
     goto err_exit;
   }
 
@@ -416,7 +418,8 @@ static bool init_resolve_thread(struct connectdata *conn,
  err_exit:
   destroy_async_data(&conn->async);
 
-  errno = err;
+  SET_ERRNO(err);
+
   return FALSE;
 }
 
@@ -591,29 +594,28 @@ Curl_addrinfo *Curl_resolver_getaddrinfo(struct connectdata *conn,
                                          int *waitp)
 {
   struct addrinfo hints;
+  struct in_addr in;
   Curl_addrinfo *res;
   int error;
   char sbuf[12];
   int pf = PF_INET;
+#ifdef CURLRES_IPV6
+  struct in6_addr in6;
+#endif /* CURLRES_IPV6 */
 
   *waitp = 0; /* default to synchronous response */
 
 #ifndef USE_RESOLVE_ON_IPS
-  {
-    struct in_addr in;
-    /* First check if this is an IPv4 address string */
-    if(Curl_inet_pton(AF_INET, hostname, &in) > 0)
-      /* This is a dotted IP address 123.123.123.123-style */
-      return Curl_ip2addr(AF_INET, &in, hostname, port);
-  }
+  /* First check if this is an IPv4 address string */
+  if(Curl_inet_pton(AF_INET, hostname, &in) > 0)
+    /* This is a dotted IP address 123.123.123.123-style */
+    return Curl_ip2addr(AF_INET, &in, hostname, port);
+
 #ifdef CURLRES_IPV6
-  {
-    struct in6_addr in6;
-    /* check if this is an IPv6 address string */
-    if(Curl_inet_pton(AF_INET6, hostname, &in6) > 0)
-      /* This is an IPv6 address literal */
-      return Curl_ip2addr(AF_INET6, &in6, hostname, port);
-  }
+  /* check if this is an IPv6 address string */
+  if(Curl_inet_pton(AF_INET6, hostname, &in6) > 0)
+    /* This is an IPv6 address literal */
+    return Curl_ip2addr(AF_INET6, &in6, hostname, port);
 #endif /* CURLRES_IPV6 */
 #endif /* !USE_RESOLVE_ON_IPS */
 
@@ -652,7 +654,7 @@ Curl_addrinfo *Curl_resolver_getaddrinfo(struct connectdata *conn,
 
   /* fall-back to blocking version */
   infof(conn->data, "init_resolve_thread() failed for %s; %s\n",
-        hostname, Curl_strerror(conn, errno));
+        hostname, Curl_strerror(conn, ERRNO));
 
   error = Curl_getaddrinfo_ex(hostname, sbuf, &hints, &res);
   if(error) {

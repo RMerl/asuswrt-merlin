@@ -549,7 +549,7 @@ static DWORD WINAPI select_ws_wait_thread(LPVOID lpParameter)
     free(data);
   }
   else
-    return (DWORD)-1;
+    return -1;
 
   /* retrieve the type of file to wait on */
   type = GetFileType(handle);

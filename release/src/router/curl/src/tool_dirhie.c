@@ -50,7 +50,7 @@
 
 static void show_dir_errno(FILE *errors, const char *name)
 {
-  switch(errno) {
+  switch(ERRNO) {
 #ifdef EACCES
   case EACCES:
     fprintf(errors, "You don't have permission to create %s.\n", name);

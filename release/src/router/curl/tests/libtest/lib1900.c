@@ -189,9 +189,8 @@ int test(char *URL)
     abort_on_test_timeout();
 
     /* See how the transfers went */
-    do {
-      msg = curl_multi_info_read(m, &msgs_left);
-      if(msg && msg->msg == CURLMSG_DONE) {
+    while((msg = curl_multi_info_read(m, &msgs_left))) {
+      if(msg->msg == CURLMSG_DONE) {
         int i, found = 0;
 
         /* Find out which handle this message is about */
@@ -204,7 +203,7 @@ int test(char *URL)
         printf("Handle %d Completed with status %d\n", i, msg->data.result);
         curl_multi_remove_handle(m, handles[i]);
       }
-    } while(msg);
+    }
 
     if(handlenum == num_handles && !running) {
       break; /* done */
