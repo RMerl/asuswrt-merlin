@@ -1,11 +1,12 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.68 Beta (xx-xxx-2017)
+380.68 (18-Aug-2017)
   - IMPORTANT: due to major webui changes, you will need to
                either flush your browser cache, or force it
                to reload the page (shift-reload) the first time
                you access the webui after upgrading to 380.68.
+
   - NEW: Merged GPL 380_7743 binary blobs for the RT-N66U.
   - NEW: Backported Ethernet port status report on the Network Map
          from GPL 382.
