@@ -88,7 +88,7 @@ function get_log_data(){
     	},
     	success: function(response){
     		h = $("#textarea").scrollTop();
-			if(!(height > 0 && h < height)){
+			if((document.getElementById("auto_refresh").checked) && !(height > 0 && h < height)){
 				document.getElementById("textarea").innerHTML = logString;
 				$("#textarea").animate({ scrollTop: 9999999 }, "slow");
 				setTimeout('height = $("#textarea").scrollTop();', 500);
@@ -195,6 +195,7 @@ function get_log_data(){
 									</table>
 									<div class="apply_gen" valign="top"><input class="button_gen" onclick="applySettings();" type="button" value="<#CTL_apply#>" /></div>
 									</form>
+									<div style="color:#FFCC00;"><input type="checkbox" checked id="auto_refresh">Auto refresh</div>
 									<div style="margin-top:8px">
 										<textarea cols="63" rows="27" wrap="off" readonly="readonly" id="textarea" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;"><% nvram_dump("syslog.log","syslog.sh"); %></textarea>
 									</div>
