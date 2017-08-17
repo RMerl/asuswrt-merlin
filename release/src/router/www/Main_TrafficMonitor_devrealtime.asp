@@ -13,6 +13,12 @@
 <link rel="stylesheet" type="text/css" href="menu_style.css"> <!-- Viz 2010.09 -->
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
+<style>
+.FormTable_table th:hover{
+        cursor:pointer;
+}
+</style>
+
 <script language="JavaScript" type="text/javascript" src="help.js"></script>
 <script language="JavaScript" type="text/javascript" src="state.js"></script>
 <script language="JavaScript" type="text/javascript" src="general.js"></script>
@@ -122,10 +128,11 @@ function redraw() {
 	var tcpconn = 0;
 	var udpconn = 0;
 
-	sortfield = "color: #FFCC00;";
-	grid = '<table width="730px" class="FormTable_NWM">';
-	grid += '<thead class="FormTable"><tr><th colspan="8" style="color:#fff; text-align:left; font-weight:bold;">Realtime Traffic</th></tr></thead>'
-	grid += '<tr class="traffictable"><th onclick="setSort(this, 0);" style="min-width: 100px; ' + (sortColumn == 0 ? sortfield : "") + '">Host</th>';
+	var sortfield = "box-shadow:inset 0px -1px 0px 0px #FC0;";
+
+	grid = '<table width="730px" class="FormTable_table">';
+	grid += '<thead><tr><td colspan="8">Realtime Traffic</td></tr></thead>'
+	grid += '<tr><th onclick="setSort(this, 0);" style="min-width: 100px; ' + (sortColumn == 0 ? sortfield : "") + '">Host</th>';
 	grid += '<th onclick="setSort(this, 1);" style="' + (sortColumn == 1 ? sortfield : "") + '">Reception<br>(bytes/s)</th>';
 	grid += '<th onclick="setSort(this, 2);" style="' + (sortColumn == 2 ? sortfield : "") + '">Transmission<br>(bytes/s)</th>';
 	grid += '<th onclick="setSort(this, 3);" style="' + (sortColumn == 3 ? sortfield : "") + '">TCP In/Out<br>(pkts/s)</th>';
@@ -236,7 +243,7 @@ function addrow(rclass, host, dl, ul, tcpin, tcpout, udpin, udpout, icmpin, icmp
 	else
 		link = "";
 
-	return '<tr class="' + rclass + '">' +
+	return '<tr class="' + rclass + '" style="height:30px;">' +
                 '<td ' + link + ' >' + host + '</td>' +
                 '<td style="text-align: right; padding-right: 8px;">' + dl + '</td>' +
                 '<td style="text-align: right; padding-right: 8px;">' + ul + '</td>' +
