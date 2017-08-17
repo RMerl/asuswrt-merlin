@@ -12,6 +12,7 @@ Asuswrt-Merlin Changelog
   - NEW: Description field added to OpenVPN client configuration
   - NEW: Added missing hash types to ipset_arm (Patch by john9527)
   - NEW: Added hostname Busybox applet, used by some Entware packages
+  - NEW: Added TPROXY netfilter target module (ARM only)
   - CHANGED: Switched webui menu generation code to GPL 382 code.
              This new code is easier for me to maintain.
   - CHANGED: Used webui menu icons from GPL 382.
@@ -40,11 +41,15 @@ Asuswrt-Merlin Changelog
   - CHANGED: Moved App icon out of the notification area and into
              the footer of the page, with other links.
   - CHANGED: Updated Curl to 7.54.1
+  - CHANGED: Updated nano to 2.8.6
   - CHANGED: Re-designed the way the Tor database gets backed up,
              so it won't grow stale by never being updated.
   - CHANGED: Define and forward a small range of ports
              (57535-57565) for use for passive FTP (needed for
              TLS over WAN).
+  - CHANGED: Reduce the amount of logging done while configuring
+             policy-based routing for an OpenVPN client when
+             using the default log verbosity level of 3.
   - FIXED: Duplicate LAN port 1 shown for the RT-AC87U on
            the Sysinfo page.
   - FIXED: Port forward/UPNP issues with CTF enabled depending on
@@ -69,6 +74,9 @@ Asuswrt-Merlin Changelog
            (Asus bug)
   - FIXED: SMB sharing without user authentication would cause
            SMB2 to downgrade to SMB1.
+  - FIXED: 5GHz-2 would show an "undefined" channel on the
+           Wireless-> General and in the wifi popup if
+           5GHz-1 was disabled (Asus bug).
 
 
 380.67 (16-July-2017)
