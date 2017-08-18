@@ -395,9 +395,9 @@ function restartService(){
 
 /* Finish QIS (exit button click event) */
 function checkIsNewFirmware(){
-	parent.document.getElementById("btn_gotoindex").onclick = "";
-	parent.document.getElementById("btn_gotoindex").style.cursor = "";
-	parent.document.getElementById("btn_gotoindex").className = "m_qis_r_blocked";
+	parent.document.getElementById("QIS_wizard_menu").onclick = "";
+	parent.document.getElementById("QIS_wizard_menu").style.cursor = "default";
+	parent.document.getElementById("QIS_wizard_menu").className = "menu_blocked";
 
 	if(parent.new_FW){
 		$("#currentFW")[0].innerHTML = parent.exist_firmver + "_" + parent.current_buildno + "_" + parent.current_extendno; 
