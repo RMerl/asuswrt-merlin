@@ -212,7 +212,7 @@ function parsePPTPClients() {
 	}
 	code +='</table>';
 
-	document.getElementById('pptp_Block').innerHTML += code;
+	document.getElementById('pptp_Block').innerHTML = code;
 }
 
 
