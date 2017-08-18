@@ -1846,24 +1846,25 @@ function show_top_status(){
 			if(wl_info.band5g_2_support)
 				document.getElementById('elliptic_ssid_5g_2').style.display = "";
 		}
-        }
+	}
 
-  var swpjverno = '<% nvram_get("swpjverno"); %>';
-  var buildno = '<% nvram_get("buildno"); %>';
-  var firmver = '<% nvram_get("firmver"); %>'
-  var extendno = '<% nvram_get("extendno"); %>';
-  if(extendno == "") extendno="0";
+	var swpjverno = '<% nvram_get("swpjverno"); %>';
+	var buildno = '<% nvram_get("buildno"); %>';
+	var firmver = '<% nvram_get("firmver"); %>'
+	var extendno = '<% nvram_get("extendno"); %>';
 
-  if(swpjverno == ''){
+	if(swpjverno == ''){
 		if(swisscom_support)
 			showtext(document.getElementById("firmver"), firmver + "." + buildno + '_' + extendno.split("-g")[0] + '_swisscom' );
-		else
-			showtext(document.getElementById("firmver"), buildno + '_' + extendno.split("-g")[0]);
+                else if ((extendno == "") || (extendno == "0"))
+                        showtext(document.getElementById("firmver"), buildno);
+                else
+                        showtext(document.getElementById("firmver"), buildno + '_' + extendno.split("-g")[0]);
 	}
-  else{
+	else{
 		showtext(document.getElementById("firmver"), swpjverno + '_' + extendno);
-  }
-	
+	}
+
 	// no_op_mode
 	if (!dsl_support) {
 		if(sw_mode == "1")  // Show operation mode in banner, Viz 2011.11
