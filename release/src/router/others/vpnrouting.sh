@@ -169,12 +169,12 @@ then
 	if [ $VPN_FORCE == "1" -a $VPN_REDIR -ge "2" ]
 	then
 		init_table
-		logger -t "openvpn-routing" "Tunnel down - VPN client access blocked"
+		my_logger "Tunnel down - VPN client access blocked"
 		ip route del default table $VPN_TBL
 		ip route add prohibit default table $VPN_TBL
 		create_client_list
 	else
-		logger -t "openvpn-routing" "Allow WAN access to all VPN clients"
+		my_logger "Allow WAN access to all VPN clients"
 		ip route flush table $VPN_TBL
 	fi
 	ip route flush cache
