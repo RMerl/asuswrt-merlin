@@ -259,14 +259,27 @@ var isSwMode = function(mode){
 	var wlc_psta = '<% nvram_get("wlc_psta"); %>';
 	var wlc_express = '<% nvram_get("wlc_express"); %>';
 
-	if(((sw_mode == '3' || sw_mode == '2') && wlc_psta == '1') || (sw_mode == '3' && wlc_psta == '3')) ui_sw_mode = "mb"; // MediaBridge
-	else if(sw_mode == '2' && wlc_express != '0') ui_sw_mode = "ew"; // Express Way
-	else if(sw_mode == '2' && wlc_express == '0' && wlc_psta == '0') ui_sw_mode = "re"; // Repeater
-	else if(sw_mode == '3' && (wlc_psta == '0' || wlc_psta == '')) ui_sw_mode = "ap"; // AP
-	else if(sw_mode == '5') ui_sw_mode = 'hs'; // Hotspot
+	if(((sw_mode == '2' && wlc_psta == '0') || (sw_mode == '3' && wlc_psta == '2')) && wlc_express == '0'){	// Repeater
+		ui_sw_mode = "re";
+	} 
+	else if((sw_mode == '3' && wlc_psta == '0') || (sw_mode == '3' && wlc_psta == '')){	// Access Point
+		ui_sw_mode = "ap";
+	}
+	else if((sw_mode == '3' && wlc_psta == '1' && wlc_express == '0') || (sw_mode == '3' && wlc_psta == '3' && wlc_express == '0') || (sw_mode == '2' && wlc_psta == '1' && wlc_express == '0')){	// MediaBridge
+		ui_sw_mode = "mb";
+	}
+	else if(sw_mode == '2' && wlc_psta == '0' && wlc_express == '1'){	// Express Way 2G
+		ui_sw_mode = "ew2";
+	}
+	else if(sw_mode == '2' && wlc_psta == '0' && wlc_express == '2'){	// Express Way 5G
+		ui_sw_mode = "ew5";
+	}
+	else if(sw_mode == '5'){	// Hotspot
+		ui_sw_mode = 'hs'; 
+	}
 	else ui_sw_mode = "rt"; // Router
 
-	return (ui_sw_mode == mode);
+	return (ui_sw_mode.search(mode) !== -1);
 }
 
 var current_url = location.pathname.substring(location.pathname.lastIndexOf('/') + 1) || "index.asp";
