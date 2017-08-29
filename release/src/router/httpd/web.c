@@ -9274,7 +9274,7 @@ deleteOfflineClient(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg, char_
 	int lock;
 
 	i = 0;
-	while(*mac) {
+	while((*mac) && (i < 12)) {
 		if(*mac==':') {
 			mac++;
 			continue;
