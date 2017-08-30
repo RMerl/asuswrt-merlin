@@ -807,13 +807,13 @@ function validForm(){
 				</tr>
 
 				<tr>
-					<th>Force as Master Browser</i></th>
+					<th>Force as Master Browser</th>
 					<td>
 						<input type="radio" name="smbd_master" class="input" value="1" <% nvram_match_x("", "smbd_master", "1", "checked"); %>><#checkbox_Yes#>
 						<input type="radio" name="smbd_master" class="input" value="0" <% nvram_match_x("", "smbd_master", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
-					<th>Set as WINS server</i></th>
+					<th>Set as WINS server</th>
 					<td>
 						<input type="radio" name="smbd_wins" class="input" value="1" <% nvram_match_x("", "smbd_wins", "1", "checked"); %>><#checkbox_Yes#>
 						<input type="radio" name="smbd_wins" class="input" value="0" <% nvram_match_x("", "smbd_wins", "0", "checked"); %>><#checkbox_No#>
