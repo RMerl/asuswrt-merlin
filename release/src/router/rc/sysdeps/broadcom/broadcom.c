@@ -261,6 +261,7 @@ GetPhyStatus(int verbose)
 		break;
 	case MODEL_RTN16:
 	case MODEL_RTN10U:
+	case MODEL_RTAC3200:
 		/* WAN L1 L2 L3 L4 */
 		ports[0]=0; ports[1]=4; ports[2]=3, ports[3]=2; ports[4]=1;
 		break;
@@ -286,7 +287,6 @@ GetPhyStatus(int verbose)
 	case MODEL_DSLAC68U:
 	case MODEL_RPAC68U:
 	case MODEL_RTAC68U:
-	case MODEL_RTAC3200:
 	case MODEL_RTN18U:
 	case MODEL_RTAC53U:
 	case MODEL_RTN66U:
