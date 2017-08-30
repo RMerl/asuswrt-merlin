@@ -61,7 +61,7 @@
 }
 </style>
 <script>
-var dhcp_staticlist_array = '<% nvram_get("dhcp_staticlist"); %>';
+var dhcp_staticlist_array = "<% nvram_get("dhcp_staticlist"); %>";
 
 if(pptpd_support){
 	var pptpd_clients = '<% nvram_get("pptpd_clients"); %>';
