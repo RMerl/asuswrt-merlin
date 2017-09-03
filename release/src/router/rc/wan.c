@@ -3385,9 +3385,6 @@ stop_wan(void)
 	stop_vpn_eas();
 #endif
 
-#ifdef RTCONFIG_OPENVPN
-	stop_vpn_eas();
-#endif
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 	if (nvram_get_int("pptpd_enable"))
 		stop_pptpd();
