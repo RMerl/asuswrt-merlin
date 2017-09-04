@@ -765,11 +765,6 @@ wan_defaults(void)
 		}
 	}
 #endif
-
-	nvram_unset("wps_reset");
-#if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
-	nvram_set_int("AllLED", 1);
-#endif
 }
 
 void
@@ -1324,6 +1319,11 @@ misc_defaults(int restore_defaults)
 	nvram_set("aae_support", "1");
 #endif
 	nvram_set("ntp_ready", "0");
+
+	nvram_unset("wps_reset");
+#if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN)
+	nvram_set_int("AllLED", 1);
+#endif
 }
 
 /* ASUS use erase nvram to reset default only */
