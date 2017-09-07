@@ -2057,7 +2057,7 @@ ifeq ($(RTCONFIG_RALINK)$(RTCONFIG_QCA),y)
 endif
 	$(MAKE) -C shared
 
-ifeq ($(RTCONFIG_FTP_SSL),n)
+ifeq ($(RTCONFIG_FTP_SSL),y)
 ftp_dep=openssl
 else
 	ftp_dep=
