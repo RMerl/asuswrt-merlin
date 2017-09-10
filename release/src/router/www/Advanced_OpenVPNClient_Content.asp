@@ -444,7 +444,7 @@ function save_Keys(){
 			document.form.vpn_crt_client2_key.disabled = false;
 			document.form.vpn_crt_client2_static.disabled = false;
 			document.form.vpn_crt_client2_crl.disabled = false;
-			document.form.vpn_crt_client2_extra.disabled =  false;
+			document.form.vpn_crt_client2_extra.disabled = false;
 			break;
 		case "3" :
 			document.form.vpn_crt_client3_ca.value = document.getElementById('edit_vpn_crt_client_ca').value;
@@ -452,11 +452,13 @@ function save_Keys(){
 			document.form.vpn_crt_client3_key.value = document.getElementById('edit_vpn_crt_client_key').value;
 			document.form.vpn_crt_client3_static.value = document.getElementById('edit_vpn_crt_client_static').value;
 			document.form.vpn_crt_client3_crl.value = document.getElementById('edit_vpn_crt_client_crl').value;
+			document.form.vpn_crt_client3_extra.value = document.getElementById('edit_vpn_crt_client_extra').value;
 			document.form.vpn_crt_client3_ca.disabled = false;
 			document.form.vpn_crt_client3_crt.disabled = false;
 			document.form.vpn_crt_client3_key.disabled = false;
 			document.form.vpn_crt_client3_static.disabled = false;
 			document.form.vpn_crt_client3_crl.disabled = false;
+			document.form.vpn_crt_client3_extra.disabled = false;
 			break;
 		case "4" :
 			document.form.vpn_crt_client4_ca.value = document.getElementById('edit_vpn_crt_client_ca').value;
@@ -464,11 +466,13 @@ function save_Keys(){
 			document.form.vpn_crt_client4_key.value = document.getElementById('edit_vpn_crt_client_key').value;
 			document.form.vpn_crt_client4_static.value = document.getElementById('edit_vpn_crt_client_static').value;
 			document.form.vpn_crt_client4_crl.value = document.getElementById('edit_vpn_crt_client_crl').value;
+			document.form.vpn_crt_client4_extra.value = document.getElementById('edit_vpn_crt_client_extra').value;
 			document.form.vpn_crt_client4_ca.disabled = false;
 			document.form.vpn_crt_client4_crt.disabled = false;
 			document.form.vpn_crt_client4_key.disabled = false;
 			document.form.vpn_crt_client4_static.disabled = false;
 			document.form.vpn_crt_client4_crl.disabled = false;
+			document.form.vpn_crt_client4_extra.disabled = false;
 			break;
 		case "5" :
 			document.form.vpn_crt_client5_ca.value = document.getElementById('edit_vpn_crt_client_ca').value;
@@ -476,11 +480,13 @@ function save_Keys(){
 			document.form.vpn_crt_client5_key.value = document.getElementById('edit_vpn_crt_client_key').value;
 			document.form.vpn_crt_client5_static.value = document.getElementById('edit_vpn_crt_client_static').value;
 			document.form.vpn_crt_client5_crl.value = document.getElementById('edit_vpn_crt_client_crl').value;
+			document.form.vpn_crt_client5_extra.value = document.getElementById('edit_vpn_crt_client_extra').value;
 			document.form.vpn_crt_client5_ca.disabled = false;
 			document.form.vpn_crt_client5_crt.disabled = false;
 			document.form.vpn_crt_client5_key.disabled = false;
 			document.form.vpn_crt_client5_static.disabled = false;
 			document.form.vpn_crt_client5_crl.disabled = false;
+			document.form.vpn_crt_client5_extra.disabled = false;
 			break;
 	}
 	
@@ -1009,16 +1015,19 @@ function defaultSettings() {
 <input type="hidden" name="vpn_crt_client3_key" value="" disabled>
 <input type="hidden" name="vpn_crt_client3_static" value="" disabled>
 <input type="hidden" name="vpn_crt_client3_crl" value="" disabled>
+<input type="hidden" name="vpn_crt_client3_extra" value="" disabled>
 <input type="hidden" name="vpn_crt_client4_ca" value="" disabled>
 <input type="hidden" name="vpn_crt_client4_crt" value="" disabled>
 <input type="hidden" name="vpn_crt_client4_key" value="" disabled>
 <input type="hidden" name="vpn_crt_client4_static" value="" disabled>
 <input type="hidden" name="vpn_crt_client4_crl" value="" disabled>
+<input type="hidden" name="vpn_crt_client4_extra" value="" disabled>
 <input type="hidden" name="vpn_crt_client5_ca" value="" disabled>
 <input type="hidden" name="vpn_crt_client5_crt" value="" disabled>
 <input type="hidden" name="vpn_crt_client5_key" value="" disabled>
 <input type="hidden" name="vpn_crt_client5_static" value="" disabled>
 <input type="hidden" name="vpn_crt_client5_crl" value="" disabled>
+<input type="hidden" name="vpn_crt_client5_extra" value="" disabled>
 <input type="hidden" name="vpn_upload_type" value="ovpn">
 <input type="hidden" name="vpn_upload_unit" value="<% nvram_get("vpn_client_unit"); %>">
 <input type="hidden" name="vpn_client_if" value="<% nvram_get("vpn_client_if"); %>">
