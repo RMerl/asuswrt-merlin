@@ -10,6 +10,8 @@ Asuswrt-Merlin Changelog
            (Asus bug)
   - FIXED: Extra OpenVPN CA not properly handled for OpenVPN
            clients 3, 4 and 5.
+  - FIXED: Invalid txrate shown on Wireless Client page if client
+           isn't authenticated yet
 
 
 380.68 (18-Aug-2017)
