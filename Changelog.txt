@@ -1,6 +1,17 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.68_2 (12-Sept-2017)
+  - FIXED: Some models would show the wrong menu options while in
+           Repeater mode.
+  - FIXED: USB modem page not displayed if WAN type was set to USB.
+  - FIXED: CVE-2017-12754 security issue.
+  - FIXED: Incorrect LAN ports order on Networkmap (RT-AC3200)
+           (Asus bug)
+  - FIXED: Extra OpenVPN CA not properly handled for OpenVPN
+           clients 3, 4 and 5.
+
+
 380.68 (18-Aug-2017)
   - IMPORTANT: due to major webui changes, you will need to
                either flush your browser cache, or force it
