@@ -4803,7 +4803,7 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			if ((int)sta->tx_rate > 0)
 				sprintf(txrate,"%d", sta->tx_rate / 1000);
 			else
-				sprintf(rxrate,"??");
+				sprintf(txrate,"??");
 
 			ret += websWrite(wp, "\"%s\", \"%s\",", rxrate, txrate);
 
@@ -4947,7 +4947,7 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 					if ((int)sta->tx_rate > 0)
 						sprintf(txrate,"%d", sta->tx_rate / 1000);
 					else
-						sprintf(rxrate,"??");
+						sprintf(txrate,"??");
 
 					ret += websWrite(wp, "\"%s\",\"%s\",", rxrate, txrate);
 
