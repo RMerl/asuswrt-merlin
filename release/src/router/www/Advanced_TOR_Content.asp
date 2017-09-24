@@ -66,7 +66,7 @@ function show_tor_redir_list(){
 				deviceVender = clientList[mac].vendor;
 			}
 			else {
-				clientName = ruleArray[0]; // TODO: Use some kind of default name, or empty string?
+				clientName = mac;
 				deviceType = 0;
 				deviceVender = "";
 			}
