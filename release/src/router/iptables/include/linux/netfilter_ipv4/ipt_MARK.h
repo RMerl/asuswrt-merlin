@@ -1,31 +1,13 @@
-#ifndef _IPT_MARK_H_target
-#define _IPT_MARK_H_target
+#ifndef _IPT_MARK_H
+#define _IPT_MARK_H
 
-struct ipt_mark_target_info {
+struct ipt_mark_info {
 #ifdef KERNEL_64_USERSPACE_32
-	unsigned long long mark;
+    unsigned long long mark, mask;
 #else
-	unsigned long mark;
+    unsigned long mark, mask;
 #endif
+    u_int8_t invert;
 };
 
-enum {
-	IPT_MARK_SET=0,
-	IPT_MARK_AND,
-	IPT_MARK_OR
-};
-
-struct ipt_mark_target_info_v1 {
-#ifdef KERNEL_64_USERSPACE_32
-	unsigned long long mark;
-#else
-	unsigned long mark;
-#endif
-	u_int8_t mode;
-};
-
-struct xt_mark_tginfo2 {
-	u_int32_t mark, mask;
-};
-
-#endif /*_IPT_MARK_H_target*/
+#endif /*_IPT_MARK_H*/

@@ -1,16 +1,17 @@
-This modules adds and/or deletes entries from IP sets which can be defined 
-by ipset(8).
+This modules macthes IP sets which can be defined by ipset(8).
 .TP
-.BR "--add-set " "setname flag[,flag...]"
-add the address(es)/port(s) of the packet to the sets
-.TP
-.BR "--del-set " "setname flag[,flag...]"
-delete the address(es)/port(s) of the packet from the sets,
+.BR "--set " "setname flag[,flag...]"
 where flags are
 .BR "src"
 and/or
-.BR "dst"
-and there can be no more than six of them.
-.TP
-The bindings to follow must previously be defined in order to use 
-multilevel adding/deleting by the SET target.
+.BR "dst" 
+and there can be no more than six of them. Hence the command
+.nf
+ iptables -A FORWARD -m set --set test src,dst
+.fi
+will match packets, for which (depending on the type of the set) the source
+address or port number of the packet can be found in the specified set. If 
+there is a binding belonging to the mached set element or there is a default 
+binding for the given set, then the rule will match the packet only if 
+additionally (depending on the type of the set) the destination address or 
+port number of the packet can be found in the set according to the binding.

@@ -8,122 +8,112 @@
  * published by the Free Software Foundation.  
  */
 
-/* Shared library add-on to iptables to add IP set mangling target. */
+/* Shared library add-on to iptables to add IP set matching. */
 #include <stdio.h>
 #include <netdb.h>
 #include <string.h>
 #include <stdlib.h>
 #include <getopt.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include <iptables.h>
-#include <linux/netfilter_ipv4/ip_tables.h>
-#include <linux/netfilter_ipv4/ip_set.h>
 #include <linux/netfilter_ipv4/ipt_set.h>
 #include "libipt_set.h"
 
 /* Function which prints out usage message. */
 static void help(void)
 {
-	printf("SET v%s options:\n"
-	       " --add-set name flags\n"
-	       " --del-set name flags\n"
-	       "		add/del src/dst IP/port from/to named sets,\n"
-	       "		where flags are the comma separated list of\n"
+	printf("set v%s options:\n"
+	       " [!] --set     name flags\n"
+	       "		'name' is the set name from to match,\n" 
+	       "		'flags' are the comma separated list of\n"
 	       "		'src' and 'dst'.\n"
 	       "\n", IPTABLES_VERSION);
 }
 
 static struct option opts[] = {
-	{"add-set",   1, 0, '1'},
-	{"del-set",   1, 0, '2'},
+	{"set", 1, 0, '1'},
 	{0}
 };
 
-/* Initialize the target. */
-static void init(struct ipt_entry_target *target, unsigned int *nfcache)
+/* Initialize the match. */
+static void init(struct ipt_entry_match *match, unsigned int *nfcache)
 {
-	struct ipt_set_info_target *info =
-	    (struct ipt_set_info_target *) target->data;
-
-	memset(info, 0, sizeof(struct ipt_set_info_target));
-	info->add_set.index =
-	info->del_set.index = IP_SET_INVALID_ID;
-
-}
-
-static void
-parse_target(char **argv, int invert, unsigned int *flags,
-             struct ipt_set_info *info, const char *what)
-{
-	if (info->flags[0])
-		exit_error(PARAMETER_PROBLEM,
-			   "--%s can be specified only once", what);
-
-	if (check_inverse(optarg, &invert, NULL, 0))
-		exit_error(PARAMETER_PROBLEM,
-			   "Unexpected `!' after --%s", what);
-
-	if (!argv[optind]
-	    || argv[optind][0] == '-' || argv[optind][0] == '!')
-		exit_error(PARAMETER_PROBLEM,
-			   "--%s requires two args.", what);
-
-	if (strlen(argv[optind-1]) > IP_SET_MAXNAMELEN - 1)
-		exit_error(PARAMETER_PROBLEM,
-			   "setname `%s' too long, max %d characters.",
-			   argv[optind-1], IP_SET_MAXNAMELEN - 1);
-
-	get_set_byname(argv[optind - 1], info);
-	parse_bindings(argv[optind], info);
-	optind++;
+	struct ipt_set_info_match *info = 
+		(struct ipt_set_info_match *) match->data;
 	
-	*flags = 1;
+
+	memset(info, 0, sizeof(struct ipt_set_info_match));
+
 }
 
-/* Function which parses command options; returns true if it
-   ate an option */
+/* Function which parses command options; returns true if it ate an option */
 static int
 parse(int c, char **argv, int invert, unsigned int *flags,
-      const struct ipt_entry *entry, struct ipt_entry_target **target)
+      const struct ipt_entry *entry,
+      unsigned int *nfcache, struct ipt_entry_match **match)
 {
-	struct ipt_set_info_target *myinfo =
-	    (struct ipt_set_info_target *) (*target)->data;
+	struct ipt_set_info_match *myinfo = 
+		(struct ipt_set_info_match *) (*match)->data;
+	struct ipt_set_info *info = &myinfo->match_set;
 
 	switch (c) {
-	case '1':		/* --add-set <set> <flags> */
-		parse_target(argv, invert, flags,
-			     &myinfo->add_set, "add-set");
-		break;
-	case '2':		/* --del-set <set>[:<flags>] <flags> */
-		parse_target(argv, invert, flags,
-			     &myinfo->del_set, "del-set");
+	case '1':		/* --set <set> <flag>[,<flag> */
+		if (info->flags[0])
+			exit_error(PARAMETER_PROBLEM,
+				   "--set can be specified only once");
+
+		check_inverse(optarg, &invert, &optind, 0);
+		if (invert)
+			info->flags[0] |= IPSET_MATCH_INV;
+
+		if (!argv[optind]
+		    || argv[optind][0] == '-'
+		    || argv[optind][0] == '!')
+			exit_error(PARAMETER_PROBLEM,
+				   "--set requires two args.");
+
+		if (strlen(argv[optind-1]) > IP_SET_MAXNAMELEN - 1)
+			exit_error(PARAMETER_PROBLEM,
+				   "setname `%s' too long, max %d characters.",
+				   argv[optind-1], IP_SET_MAXNAMELEN - 1);
+
+		get_set_byname(argv[optind - 1], info);
+		parse_bindings(argv[optind], info);
+		DEBUGP("parse: set index %u\n", info->index);
+		optind++;
+		
+		*flags = 1;
 		break;
 
 	default:
 		return 0;
 	}
+
 	return 1;
 }
 
-/* Final check; must specify at least one. */
+/* Final check; must have specified --set. */
 static void final_check(unsigned int flags)
 {
 	if (!flags)
 		exit_error(PARAMETER_PROBLEM,
-			   "You must specify either `--add-set' or `--del-set'");
+			   "You must specify `--set' with proper arguments");
+	DEBUGP("final check OK\n");
 }
 
 static void
-print_target(const char *prefix, const struct ipt_set_info *info)
+print_match(const char *prefix, const struct ipt_set_info *info)
 {
 	int i;
 	char setname[IP_SET_MAXNAMELEN];
 
-	if (info->index == IP_SET_INVALID_ID)
-		return;
 	get_set_byid(setname, info->index);
-	printf("%s %s", prefix, setname);
+	printf("%s%s %s", 
+	       (info->flags[0] & IPSET_MATCH_INV) ? "! " : "",
+	       prefix,
+	       setname); 
 	for (i = 0; i < IP_SET_MAX_BINDINGS; i++) {
 		if (!info->flags[i])
 			break;		
@@ -134,36 +124,33 @@ print_target(const char *prefix, const struct ipt_set_info *info)
 	printf(" ");
 }
 
-/* Prints out the targinfo. */
+/* Prints out the matchinfo. */
 static void
 print(const struct ipt_ip *ip,
-      const struct ipt_entry_target *target, int numeric)
+      const struct ipt_entry_match *match, int numeric)
 {
-	struct ipt_set_info_target *info =
-	    (struct ipt_set_info_target *) target->data;
+	struct ipt_set_info_match *info = 
+		(struct ipt_set_info_match *) match->data;
 
-	print_target("add-set", &info->add_set);
-	print_target("del-set", &info->del_set);
+	print_match("set", &info->match_set);
 }
 
-/* Saves the union ipt_targinfo in parsable form to stdout. */
-static void
-save(const struct ipt_ip *ip, const struct ipt_entry_target *target)
+/* Saves the matchinfo in parsable form to stdout. */
+static void save(const struct ipt_ip *ip,
+		 const struct ipt_entry_match *match)
 {
-	struct ipt_set_info_target *info =
-	    (struct ipt_set_info_target *) target->data;
+	struct ipt_set_info_match *info = 
+		(struct ipt_set_info_match *) match->data;
 
-	print_target("--add-set", &info->add_set);
-	print_target("--del-set", &info->del_set);
+	print_match("--set", &info->match_set);
 }
 
 static
-struct iptables_target ipt_set_target 
-= {
-	.name		= "SET",
+struct iptables_match set = {
+	.name		= "set",
 	.version	= IPTABLES_VERSION,
-	.size		= IPT_ALIGN(sizeof(struct ipt_set_info_target)),
-	.userspacesize	= IPT_ALIGN(sizeof(struct ipt_set_info_target)),
+	.size		= IPT_ALIGN(sizeof(struct ipt_set_info_match)),
+	.userspacesize	= IPT_ALIGN(sizeof(struct ipt_set_info_match)),
 	.help		= &help,
 	.init		= &init,
 	.parse		= &parse,
@@ -175,5 +162,5 @@ struct iptables_target ipt_set_target
 
 void _init(void)
 {
-	register_target(&ipt_set_target);
+	register_match(&set);
 }

@@ -1,4 +1,4 @@
-/* This is a module which is used for setting the TOS field of a packet. */
+/* Kernel module to match TOS values. */
 
 /* (C) 1999-2001 Paul `Rusty' Russell
  * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
@@ -8,80 +8,48 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/ip.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
-#include <linux/ip.h>
-#include <net/checksum.h>
 
+#include <linux/netfilter_ipv4/ipt_tos.h>
 #include <linux/netfilter/x_tables.h>
-#include <linux/netfilter_ipv4/ipt_TOS.h>
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Netfilter Core Team <coreteam@netfilter.org>");
-MODULE_DESCRIPTION("iptables TOS mangling module");
-
-static unsigned int
-target(struct sk_buff **pskb,
-       const struct net_device *in,
-       const struct net_device *out,
-       unsigned int hooknum,
-       const struct xt_target *target,
-       const void *targinfo)
-{
-	const struct ipt_tos_target_info *tosinfo = targinfo;
-	struct iphdr *iph = ip_hdr(*pskb);
-
-	if ((iph->tos & IPTOS_TOS_MASK) != tosinfo->tos) {
-		__u8 oldtos;
-		if (!skb_make_writable(pskb, sizeof(struct iphdr)))
-			return NF_DROP;
-		iph = ip_hdr(*pskb);
-		oldtos = iph->tos;
-		iph->tos = (iph->tos & IPTOS_PREC_MASK) | tosinfo->tos;
-		nf_csum_replace2(&iph->check, htons(oldtos), htons(iph->tos));
-	}
-	return XT_CONTINUE;
-}
+MODULE_DESCRIPTION("iptables TOS match module");
 
 static int
-checkentry(const char *tablename,
-	   const void *e_void,
-	   const struct xt_target *target,
-	   void *targinfo,
-	   unsigned int hook_mask)
+match(const struct sk_buff *skb,
+      const struct net_device *in,
+      const struct net_device *out,
+      const struct xt_match *match,
+      const void *matchinfo,
+      int offset,
+      unsigned int protoff,
+      int *hotdrop)
 {
-	const u_int8_t tos = ((struct ipt_tos_target_info *)targinfo)->tos;
+	const struct ipt_tos_info *info = matchinfo;
 
-	if (tos != IPTOS_LOWDELAY
-	    && tos != IPTOS_THROUGHPUT
-	    && tos != IPTOS_RELIABILITY
-	    && tos != IPTOS_MINCOST
-	    && tos != IPTOS_NORMALSVC) {
-		printk(KERN_WARNING "TOS: bad tos value %#x\n", tos);
-		return 0;
-	}
-	return 1;
+	return (ip_hdr(skb)->tos == info->tos) ^ info->invert;
 }
 
-static struct xt_target ipt_tos_reg = {
-	.name		= "TOS",
+static struct xt_match tos_match = {
+	.name		= "tos",
 	.family		= AF_INET,
-	.target		= target,
-	.targetsize	= sizeof(struct ipt_tos_target_info),
-	.table		= "mangle",
-	.checkentry	= checkentry,
+	.match		= match,
+	.matchsize	= sizeof(struct ipt_tos_info),
 	.me		= THIS_MODULE,
 };
 
-static int __init ipt_tos_init(void)
+static int __init ipt_multiport_init(void)
 {
-	return xt_register_target(&ipt_tos_reg);
+	return xt_register_match(&tos_match);
 }
 
-static void __exit ipt_tos_fini(void)
+static void __exit ipt_multiport_fini(void)
 {
-	xt_unregister_target(&ipt_tos_reg);
+	xt_unregister_match(&tos_match);
 }
 
-module_init(ipt_tos_init);
-module_exit(ipt_tos_fini);
+module_init(ipt_multiport_init);
+module_exit(ipt_multiport_fini);

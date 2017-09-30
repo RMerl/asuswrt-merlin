@@ -1,6 +1,6 @@
 /*
 
-	BCOUNT target
+	bcount match (experimental)
 	Copyright (C) 2006 Jonathan Zarate
 
 	Licensed under GNU GPL v2 or later.
@@ -9,91 +9,76 @@
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/version.h>
-#include <linux/if_ether.h>
-
+#include <net/sock.h>
 #include <net/netfilter/nf_conntrack.h>
 #include <linux/netfilter_ipv4/ip_tables.h>
-#include <linux/netfilter_ipv4/ipt_BCOUNT.h>
+#include <linux/netfilter_ipv4/ipt_bcount.h>
 
-//	#define DEBUG_BCOUNT
+//	#define LOG			printk
+#define LOG(...)	do { } while (0);
 
-static unsigned int
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)
-target(struct sk_buff **pskb,
-       const struct net_device *in,
-       const struct net_device *out,
-       unsigned int hooknum,
-       const struct xt_target *target,
-       const void *targinfo)
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,28)
-target(struct sk_buff *skb,
-       const struct net_device *in,
-       const struct net_device *out,
-       unsigned int hooknum,
-       const struct xt_target *target,
-       const void *targinfo)
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,23)
+static int
+#else
+static bool
+#endif
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,28)
+match(const struct sk_buff *skb, const struct net_device *in, const struct net_device *out,
+	const struct xt_match *match, const void *matchinfo, int offset,
+	unsigned int protoff, int *hotdrop)
 #else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,28) */
-target(struct sk_buff *skb,
-       const struct xt_target_param *par)
+match(const struct sk_buff *skb, const struct xt_match_param *par)
 #endif
 {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)
-	struct sk_buff *skb = *pskb;
-#endif
+	const struct ipt_bcount_match *info;
 	struct nf_conn *ct;
 	enum ip_conntrack_info ctinfo;
 
-	ct = nf_ct_get(skb, &ctinfo);
-	if (ct) {
-		ct->bcount += (skb)->len;
-		if (ct->bcount >= 0x0FFFFFFF) ct->bcount = 0x0FFFFFFF;
-#ifdef DEBUG_BCOUNT
-		if (net_ratelimit())
-			printf(KERN_DEBUG "BCOUNT %lx %lx\n", (skb)->len, ct->bcount);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,28)
+	info = matchinfo;
+#else
+	info = par->matchinfo;
 #endif
-	}
-	return IPT_CONTINUE;
+	ct = nf_ct_get((struct sk_buff *)skb, &ctinfo);
+	if (!ct) return !info->invert;
+	return ((ct->bcount >= info->min) && (ct->bcount <= info->max)) ^ info->invert;
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,23)
 static int
-checkentry(const char *tablename,
-	   const void *e,
-	   const struct xt_target *target,
-	   void *targinfo,
-	   unsigned int hook_mask)
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,28)
+#else
 static bool
-checkentry(const char *tablename,
-	   const void *e,
-	   const struct xt_target *target,
-	   void *targinfo,
-	   unsigned int hook_mask)
-#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,28) */
-static bool
-checkentry(const struct xt_tgchk_param *par)
+#endif
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,28)
+checkentry(const char *tablename, const void *inf, const struct xt_match *match,
+	void *matchinfo, unsigned int hook_mask)
+#else
+checkentry(const struct xt_mtchk_param *par)
 #endif
 {
 	return 1;
 }
 
-static struct ipt_target BCOUNT_target = { 
-	.name = "BCOUNT",
-	.family = AF_INET,
-	.target = target,
-	.targetsize = sizeof(struct ipt_BCOUNT_target),
-	.checkentry = checkentry,
-	.me = THIS_MODULE,
+static struct xt_match bcount_match = {
+	.name		= "bcount",
+	.family		= AF_INET,
+	.match		= &match,
+	.matchsize	= sizeof(struct ipt_bcount_match),
+	.checkentry	= &checkentry,
+	.destroy	= NULL,
+	.me		= THIS_MODULE
 };
 
 static int __init init(void)
 {
-	return xt_register_target(&BCOUNT_target);
+	LOG(KERN_INFO "ipt_bcount <" __DATE__ " " __TIME__ "> loaded\n");
+	return xt_register_match(&bcount_match);
 }
 
 static void __exit fini(void)
 {
-	xt_unregister_target(&BCOUNT_target);
+	xt_unregister_match(&bcount_match);
 }
 
 module_init(init);
@@ -101,5 +86,5 @@ module_exit(fini);
 
 
 MODULE_AUTHOR("Jonathan Zarate");
-MODULE_DESCRIPTION("BCOUNT target");
+MODULE_DESCRIPTION("bcount match");
 MODULE_LICENSE("GPL");

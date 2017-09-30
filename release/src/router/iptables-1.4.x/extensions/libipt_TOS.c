@@ -1,18 +1,12 @@
-/* Shared library add-on to iptables to add TOS target support. */
+/* Shared library add-on to iptables to add TOS matching support. */
 #include <stdio.h>
+#include <netdb.h>
 #include <string.h>
 #include <stdlib.h>
 #include <getopt.h>
 
 #include <iptables.h>
-#include <xtables.h>
-#include <linux/netfilter_ipv4/ip_tables.h>
-#include <linux/netfilter_ipv4/ipt_TOS.h>
-
-struct tosinfo {
-	struct ipt_entry_target t;
-	struct ipt_tos_target_info tos;
-};
+#include <linux/netfilter_ipv4/ipt_tos.h>
 
 /* TOS names and values. */
 static
@@ -35,8 +29,8 @@ help(void)
 	unsigned int i;
 
 	printf(
-"TOS target v%s options:\n"
-"  --set-tos value                   Set Type of Service field to one of the\n"
+"TOS match v%s options:\n"
+"[!] --tos value                 Match Type of Service field from one of the\n"
 "                                following numeric or descriptive values:\n",
 XTABLES_VERSION);
 
@@ -49,20 +43,15 @@ XTABLES_VERSION);
 }
 
 static struct option opts[] = {
-	{ .name = "set-tos", .has_arg = true, .val = '1' },
+	{ .name = "tos", .has_arg = true, .val = '1' },
 	XT_GETOPT_TABLEEND
 };
 
-/* Initialize the target. */
 static void
-init(struct xt_entry_target *t)
+parse_tos(const char *s, struct ipt_tos_info *info)
 {
-}
-
-static void
-parse_tos(const char *s, struct ipt_tos_target_info *info)
-{
-	unsigned int i, tos;
+	unsigned int i;
+	unsigned int tos;
 
 	if (xtables_strtoui(s, NULL, &tos, 0, UINT8_MAX)) {
 		if (tos == IPTOS_LOWDELAY
@@ -88,33 +77,27 @@ parse_tos(const char *s, struct ipt_tos_target_info *info)
 static int
 parse(int c, char **argv, int invert, unsigned int *flags,
       const void *entry,
-      struct xt_entry_target **target)
+      struct xt_entry_match **match)
 {
-	struct ipt_tos_target_info *tosinfo
-		= (struct ipt_tos_target_info *)(*target)->data;
+	struct ipt_tos_info *tosinfo = (struct ipt_tos_info *)(*match)->data;
 
 	switch (c) {
 	case '1':
-		if (*flags)
+		/* Ensure that `--tos' haven't been used yet. */
+		if (*flags == 1)
 			xtables_error(PARAMETER_PROBLEM,
-			           "TOS target: Cant specify --set-tos twice");
-		parse_tos(optarg, tosinfo);
+					"tos match: only use --tos once!");
+
+		parse_tos(argv[optind-1], tosinfo);
+		if (invert)
+			tosinfo->invert = 1;
 		*flags = 1;
 		break;
 
 	default:
 		return 0;
 	}
-
 	return 1;
-}
-
-static void
-final_check(unsigned int flags)
-{
-	if (!flags)
-		xtables_error(PARAMETER_PROBLEM,
-		           "TOS target: Parameter --set-tos is required");
 }
 
 static void
@@ -132,35 +115,47 @@ print_tos(u_int8_t tos, int numeric)
 	printf("0x%02x ", tos);
 }
 
-/* Prints out the targinfo. */
+/* Final check; must have specified --tos. */
+static void
+final_check(unsigned int flags)
+{
+	if (!flags)
+		xtables_error(PARAMETER_PROBLEM,
+			   "TOS match: You must specify `--tos'");
+}
+
+/* Prints out the matchinfo. */
 static void
 print(const void *ip,
-      const struct xt_entry_target *target,
+      const struct xt_entry_match *match,
       int numeric)
 {
-	const struct ipt_tos_target_info *tosinfo =
-		(const struct ipt_tos_target_info *)target->data;
-	printf("TOS set ");
-	print_tos(tosinfo->tos, numeric);
+	const struct ipt_tos_info *info = (const struct ipt_tos_info *)match->data;
+    
+	printf("TOS match ");
+	if (info->invert)
+		printf("!");
+	print_tos(info->tos, numeric);
 }
 
-/* Saves the union ipt_targinfo in parsable form to stdout. */
+/* Saves the union ipt_matchinfo in parsable form to stdout. */
 static void
-save(const void *ip, const struct xt_entry_target *target)
+save(const void *ip, const struct xt_entry_match *match)
 {
-	const struct ipt_tos_target_info *tosinfo =
-		(const struct ipt_tos_target_info *)target->data;
-
-	printf("--set-tos 0x%02x ", tosinfo->tos);
+	const struct ipt_tos_info *info = (const struct ipt_tos_info *)match->data;
+    
+	if (info->invert)
+		printf("! ");
+	printf("--tos ");
+	print_tos(info->tos, 0);
 }
 
-static struct xtables_target tos = {
-	.name		= "TOS",
+static struct xtables_match tos = { 
+	.name		= "tos",
 	.version	= XTABLES_VERSION,
-	.size		= XT_ALIGN(sizeof(struct ipt_tos_target_info)),
-	.userspacesize	= XT_ALIGN(sizeof(struct ipt_tos_target_info)),
+	.size		= XT_ALIGN(sizeof(struct ipt_tos_info)),
+	.userspacesize	= XT_ALIGN(sizeof(struct ipt_tos_info)),
 	.help		= &help,
-	.init		= &init,
 	.parse		= &parse,
 	.final_check	= &final_check,
 	.print		= &print,
@@ -170,5 +165,5 @@ static struct xtables_target tos = {
 
 void _init(void)
 {
-	xtables_register_target(&tos);
+	xtables_register_match(&tos);
 }

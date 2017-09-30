@@ -1,4 +1,4 @@
-/* This is a module which is used for setting the TOS field of a packet. */
+/* Kernel module to match TOS values. */
 
 /* (C) 1999-2001 Paul `Rusty' Russell
  * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
@@ -8,69 +8,48 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/ip.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
-#include <linux/ip.h>
-#include <net/checksum.h>
 
+#include <linux/netfilter_ipv4/ipt_tos.h>
 #include <linux/netfilter/x_tables.h>
-#include <linux/netfilter_ipv4/ipt_TOS.h>
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Netfilter Core Team <coreteam@netfilter.org>");
-MODULE_DESCRIPTION("iptables TOS mangling module");
+MODULE_DESCRIPTION("iptables TOS match module");
 
-static unsigned int target(struct sk_buff *skb, const struct xt_action_param *par)
+static int
+match(const struct sk_buff *skb,
+      const struct net_device *in,
+      const struct net_device *out,
+      const struct xt_match *match,
+      const void *matchinfo,
+      int offset,
+      unsigned int protoff,
+      int *hotdrop)
 {
-	const struct ipt_tos_target_info *tosinfo = par->targinfo;
-	struct iphdr *iph = ip_hdr(skb);
+	const struct ipt_tos_info *info = matchinfo;
 
-	if ((iph->tos & IPTOS_TOS_MASK) != tosinfo->tos) {
-		__u8 oldtos;
-		if (!skb_make_writable(skb, sizeof(struct iphdr)))
-			return NF_DROP;
-		iph = ip_hdr(skb);
-		oldtos = iph->tos;
-		iph->tos = (iph->tos & IPTOS_PREC_MASK) | tosinfo->tos;
-		csum_replace2(&iph->check, htons(oldtos), htons(iph->tos));
-	}
-	return XT_CONTINUE;
+	return (ip_hdr(skb)->tos == info->tos) ^ info->invert;
 }
 
-static int checkentry(const struct xt_tgchk_param *par)
-{
-	const u_int8_t tos = ((struct ipt_tos_target_info *)par->targinfo)->tos;
-
-	if (tos != IPTOS_LOWDELAY
-	    && tos != IPTOS_THROUGHPUT
-	    && tos != IPTOS_RELIABILITY
-	    && tos != IPTOS_MINCOST
-	    && tos != IPTOS_NORMALSVC) {
-		printk(KERN_WARNING "TOS: bad tos value %#x\n", tos);
-		return -EINVAL;
-	}
-	return 0;
-}
-
-static struct xt_target ipt_tos_reg = {
-	.name		= "TOS",
-	.family		= NFPROTO_IPV4,
-	.target		= target,
-	.targetsize	= sizeof(struct ipt_tos_target_info),
-	.table		= "mangle",
-	.checkentry	= checkentry,
+static struct xt_match tos_match = {
+	.name		= "tos",
+	.family		= AF_INET,
+	.match		= match,
+	.matchsize	= sizeof(struct ipt_tos_info),
 	.me		= THIS_MODULE,
 };
 
-static int __init ipt_tos_init(void)
+static int __init ipt_multiport_init(void)
 {
-	return xt_register_target(&ipt_tos_reg);
+	return xt_register_match(&tos_match);
 }
 
-static void __exit ipt_tos_fini(void)
+static void __exit ipt_multiport_fini(void)
 {
-	xt_unregister_target(&ipt_tos_reg);
+	xt_unregister_match(&tos_match);
 }
 
-module_init(ipt_tos_init);
-module_exit(ipt_tos_fini);
+module_init(ipt_multiport_init);
+module_exit(ipt_multiport_fini);

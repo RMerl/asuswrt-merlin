@@ -1,9 +1,10 @@
-This target allows to alter the value of the DSCP bits within the TOS
-header of the IPv4 packet.  As this manipulates a packet, it can only
-be used in the mangle table.
+This module matches the 6 bit DSCP field within the TOS field in the
+IP header.  DSCP has superseded TOS within the IETF.
 .TP
-\fB\-\-set\-dscp\fP \fIvalue\fP
-Set the DSCP field to a numerical value (can be decimal or hex)
+[\fB!\fP] \fB\-\-dscp\fP \fIvalue\fP
+Match against a numeric (decimal or hex) value [0-63].
 .TP
-\fB\-\-set\-dscp\-class\fP \fIclass\fP
-Set the DSCP field to a DiffServ class.
+[\fB!\fP] \fB\-\-dscp\-class\fP \fIclass\fP
+Match the DiffServ class. This value may be any of the
+BE, EF, AFxx or CSx classes.  It will then be converted
+into its according numeric value.

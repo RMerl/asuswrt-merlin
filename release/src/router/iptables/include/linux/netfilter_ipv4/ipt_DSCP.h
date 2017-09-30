@@ -1,20 +1,23 @@
-/* iptables module for setting the IPv4 DSCP field
+/* iptables module for matching the IPv4 DSCP field
  *
  * (C) 2002 Harald Welte <laforge@gnumonks.org>
- * based on ipt_FTOS.c (C) 2000 by Matthew G. Marsh <mgm@paktronix.com>
  * This software is distributed under GNU GPL v2, 1991
  * 
  * See RFC2474 for a description of the DSCP field within the IP Header.
  *
- * Id: ipt_DSCP.h,v 1.7 2002/03/14 12:03:13 laforge Exp
+ * Id: ipt_dscp.h,v 1.3 2002/08/05 19:00:21 laforge Exp
 */
-#ifndef _IPT_DSCP_TARGET_H
-#define _IPT_DSCP_TARGET_H
-#include <linux/netfilter_ipv4/ipt_dscp.h>
+#ifndef _IPT_DSCP_H
+#define _IPT_DSCP_H
 
-/* target info */
-struct ipt_DSCP_info {
+#define IPT_DSCP_MASK	0xfc	/* 11111100 */
+#define IPT_DSCP_SHIFT	2
+#define IPT_DSCP_MAX	0x3f	/* 00111111 */
+
+/* match info */
+struct ipt_dscp_info {
 	u_int8_t dscp;
+	u_int8_t invert;
 };
 
-#endif /* _IPT_DSCP_TARGET_H */
+#endif /* _IPT_DSCP_H */

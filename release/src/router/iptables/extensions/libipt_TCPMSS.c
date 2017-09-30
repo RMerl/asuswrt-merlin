@@ -1,42 +1,59 @@
-/* Shared library add-on to iptables to add TCPMSS target support.
- *
- * Copyright (c) 2000 Marc Boucher
-*/
+/* Shared library add-on to iptables to add tcp MSS matching support. */
 #include <stdio.h>
+#include <netdb.h>
 #include <string.h>
 #include <stdlib.h>
 #include <getopt.h>
 
 #include <iptables.h>
-#include <linux/netfilter_ipv4/ip_tables.h>
-#include <linux/netfilter_ipv4/ipt_TCPMSS.h>
-
-struct mssinfo {
-	struct ipt_entry_target t;
-	struct ipt_tcpmss_info mss;
-};
+#include <linux/netfilter_ipv4/ipt_tcpmss.h>
 
 /* Function which prints out usage message. */
 static void
 help(void)
 {
 	printf(
-"TCPMSS target v%s mutually-exclusive options:\n"
-"  --set-mss value               explicitly set MSS option to specified value\n"
-"  --clamp-mss-to-pmtu           automatically clamp MSS value to (path_MTU - 40)\n",
+"tcpmss match v%s options:\n"
+"[!] --mss value[:value]	Match TCP MSS range.\n"
+"				(only valid for TCP SYN or SYN/ACK packets)\n",
 IPTABLES_VERSION);
 }
 
 static struct option opts[] = {
-	{ "set-mss", 1, 0, '1' },
-	{ "clamp-mss-to-pmtu", 0, 0, '2' },
-	{ 0 }
+	{ "mss", 1, 0, '1' },
+	{0}
 };
 
-/* Initialize the target. */
-static void
-init(struct ipt_entry_target *t, unsigned int *nfcache)
+static u_int16_t
+parse_tcp_mssvalue(const char *mssvalue)
 {
+	unsigned int mssvaluenum;
+
+	if (string_to_number(mssvalue, 0, 65535, &mssvaluenum) != -1)
+		return (u_int16_t)mssvaluenum;
+
+	exit_error(PARAMETER_PROBLEM,
+		   "Invalid mss `%s' specified", mssvalue);
+}
+
+static void
+parse_tcp_mssvalues(const char *mssvaluestring,
+		    u_int16_t *mss_min, u_int16_t *mss_max)
+{
+	char *buffer;
+	char *cp;
+
+	buffer = strdup(mssvaluestring);
+	if ((cp = strchr(buffer, ':')) == NULL)
+		*mss_min = *mss_max = parse_tcp_mssvalue(buffer);
+	else {
+		*cp = '\0';
+		cp++;
+
+		*mss_min = buffer[0] ? parse_tcp_mssvalue(buffer) : 0;
+		*mss_max = cp[0] ? parse_tcp_mssvalue(cp) : 0xFFFF;
+	}
+	free(buffer);
 }
 
 /* Function which parses command options; returns true if it
@@ -44,83 +61,84 @@ init(struct ipt_entry_target *t, unsigned int *nfcache)
 static int
 parse(int c, char **argv, int invert, unsigned int *flags,
       const struct ipt_entry *entry,
-      struct ipt_entry_target **target)
+      unsigned int *nfcache,
+      struct ipt_entry_match **match)
 {
-	struct ipt_tcpmss_info *mssinfo
-		= (struct ipt_tcpmss_info *)(*target)->data;
+	struct ipt_tcpmss_match_info *mssinfo =
+		(struct ipt_tcpmss_match_info *)(*match)->data;
 
 	switch (c) {
-		unsigned int mssval;
-
 	case '1':
 		if (*flags)
 			exit_error(PARAMETER_PROBLEM,
-			           "TCPMSS target: Only one option may be specified");
-		if (string_to_number(optarg, 0, 65535 - 40, &mssval) == -1)
-			exit_error(PARAMETER_PROBLEM, "Bad TCPMSS value `%s'", optarg);
-		
-		mssinfo->mss = mssval;
+				   "Only one `--mss' allowed");
+		check_inverse(optarg, &invert, &optind, 0);
+		parse_tcp_mssvalues(argv[optind-1],
+				    &mssinfo->mss_min, &mssinfo->mss_max);
+		if (invert)
+			mssinfo->invert = 1;
 		*flags = 1;
 		break;
-
-	case '2':
-		if (*flags)
-			exit_error(PARAMETER_PROBLEM,
-			           "TCPMSS target: Only one option may be specified");
-		mssinfo->mss = IPT_TCPMSS_CLAMP_PMTU;
-		*flags = 1;
-		break;
-
 	default:
 		return 0;
 	}
-
 	return 1;
 }
 
+static void
+print_tcpmss(u_int16_t mss_min, u_int16_t mss_max, int invert, int numeric)
+{
+	if (invert)
+		printf("! ");
+
+	if (mss_min == mss_max)
+		printf("%u ", mss_min);
+	else
+		printf("%u:%u ", mss_min, mss_max);
+}
+
+/* Final check; must have specified --mss. */
 static void
 final_check(unsigned int flags)
 {
 	if (!flags)
 		exit_error(PARAMETER_PROBLEM,
-		           "TCPMSS target: At least one parameter is required");
+			   "tcpmss match: You must specify `--mss'");
 }
 
-/* Prints out the targinfo. */
+/* Prints out the matchinfo. */
 static void
 print(const struct ipt_ip *ip,
-      const struct ipt_entry_target *target,
+      const struct ipt_entry_match *match,
       int numeric)
 {
-	const struct ipt_tcpmss_info *mssinfo =
-		(const struct ipt_tcpmss_info *)target->data;
-	if(mssinfo->mss == IPT_TCPMSS_CLAMP_PMTU)
-		printf("TCPMSS clamp to PMTU ");
-	else
-		printf("TCPMSS set %u ", mssinfo->mss);
+	const struct ipt_tcpmss_match_info *mssinfo =
+		(const struct ipt_tcpmss_match_info *)match->data;
+
+	printf("tcpmss match ");
+	print_tcpmss(mssinfo->mss_min, mssinfo->mss_max,
+		     mssinfo->invert, numeric);
 }
 
-/* Saves the union ipt_targinfo in parsable form to stdout. */
+/* Saves the union ipt_matchinfo in parsable form to stdout. */
 static void
-save(const struct ipt_ip *ip, const struct ipt_entry_target *target)
+save(const struct ipt_ip *ip, const struct ipt_entry_match *match)
 {
-	const struct ipt_tcpmss_info *mssinfo =
-		(const struct ipt_tcpmss_info *)target->data;
+	const struct ipt_tcpmss_match_info *mssinfo =
+		(const struct ipt_tcpmss_match_info *)match->data;
 
-	if(mssinfo->mss == IPT_TCPMSS_CLAMP_PMTU)
-		printf("--clamp-mss-to-pmtu ");
-	else
-		printf("--set-mss %u ", mssinfo->mss);
+	printf("--mss ");
+	print_tcpmss(mssinfo->mss_min, mssinfo->mss_max,
+		     mssinfo->invert, 0);
 }
 
-static struct iptables_target mss = {
+static struct iptables_match tcpmss = {
 	.next		= NULL,
-	.name		= "TCPMSS",
+	.name		= "tcpmss",
 	.version	= IPTABLES_VERSION,
-	.size		= IPT_ALIGN(sizeof(struct ipt_tcpmss_info)),
-	.userspacesize	= IPT_ALIGN(sizeof(struct ipt_tcpmss_info)),
+	.size		= IPT_ALIGN(sizeof(struct ipt_tcpmss_match_info)),
+	.userspacesize	= IPT_ALIGN(sizeof(struct ipt_tcpmss_match_info)),
 	.help		= &help,
-	.init		= &init,
 	.parse		= &parse,
 	.final_check	= &final_check,
 	.print		= &print,
@@ -130,5 +148,5 @@ static struct iptables_target mss = {
 
 void _init(void)
 {
-	register_target(&mss);
+	register_match(&tcpmss);
 }

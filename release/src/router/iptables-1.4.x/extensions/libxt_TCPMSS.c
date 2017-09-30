@@ -1,126 +1,75 @@
-/* Shared library add-on to iptables to add TCPMSS target support.
- *
- * Copyright (c) 2000 Marc Boucher
-*/
-#include "config.h"
 #include <stdio.h>
 #include <xtables.h>
-#include <netinet/ip.h>
-#include <linux/netfilter/xt_TCPMSS.h>
+#include <linux/netfilter/xt_tcpmss.h>
 
 enum {
-	O_SET_MSS = 0,
-	O_CLAMP_MSS,
+	O_TCPMSS = 0,
 };
 
-struct mssinfo {
-	struct xt_entry_target t;
-	struct xt_tcpmss_info mss;
-};
-
-static void __TCPMSS_help(int hdrsize)
+static void tcpmss_help(void)
 {
 	printf(
-"TCPMSS target mutually-exclusive options:\n"
-"  --set-mss value               explicitly set MSS option to specified value\n"
-"  --clamp-mss-to-pmtu           automatically clamp MSS value to (path_MTU - %d)\n",
-hdrsize);
+"tcpmss match options:\n"
+"[!] --mss value[:value]	Match TCP MSS range.\n"
+"				(only valid for TCP SYN or SYN/ACK packets)\n");
 }
 
-static void TCPMSS_help(void)
-{
-	__TCPMSS_help(sizeof(struct iphdr));
-}
-
-static void TCPMSS_help6(void)
-{
-	__TCPMSS_help(SIZEOF_STRUCT_IP6_HDR);
-}
-
-static const struct xt_option_entry TCPMSS4_opts[] = {
-	{.name = "set-mss", .id = O_SET_MSS, .type = XTTYPE_UINT16,
-	 .min = 0, .max = UINT16_MAX - sizeof(struct iphdr),
-	 .flags = XTOPT_PUT, XTOPT_POINTER(struct xt_tcpmss_info, mss)},
-	{.name = "clamp-mss-to-pmtu", .id = O_CLAMP_MSS, .type = XTTYPE_NONE},
+static const struct xt_option_entry tcpmss_opts[] = {
+	{.name = "mss", .id = O_TCPMSS, .type = XTTYPE_UINT16RC,
+	 .flags = XTOPT_MAND | XTOPT_INVERT},
 	XTOPT_TABLEEND,
 };
 
-static const struct xt_option_entry TCPMSS6_opts[] = {
-	{.name = "set-mss", .id = O_SET_MSS, .type = XTTYPE_UINT16,
-	 .min = 0, .max = UINT16_MAX - SIZEOF_STRUCT_IP6_HDR,
-	 .flags = XTOPT_PUT, XTOPT_POINTER(struct xt_tcpmss_info, mss)},
-	{.name = "clamp-mss-to-pmtu", .id = O_CLAMP_MSS, .type = XTTYPE_NONE},
-	XTOPT_TABLEEND,
-};
-
-static void TCPMSS_parse(struct xt_option_call *cb)
+static void tcpmss_parse(struct xt_option_call *cb)
 {
-	struct xt_tcpmss_info *mssinfo = cb->data;
+	struct xt_tcpmss_match_info *mssinfo = cb->data;
 
 	xtables_option_parse(cb);
-	if (cb->entry->id == O_CLAMP_MSS)
-		mssinfo->mss = XT_TCPMSS_CLAMP_PMTU;
+	mssinfo->mss_min = cb->val.u16_range[0];
+	mssinfo->mss_max = mssinfo->mss_min;
+	if (cb->nvals == 2)
+		mssinfo->mss_max = cb->val.u16_range[1];
+	if (cb->invert)
+		mssinfo->invert = 1;
 }
 
-static void TCPMSS_check(struct xt_fcheck_call *cb)
+static void
+tcpmss_print(const void *ip, const struct xt_entry_match *match, int numeric)
 {
-	if (cb->xflags == 0)
-		xtables_error(PARAMETER_PROBLEM,
-		           "TCPMSS target: At least one parameter is required");
-}
+	const struct xt_tcpmss_match_info *info = (void *)match->data;
 
-static void TCPMSS_print(const void *ip, const struct xt_entry_target *target,
-                         int numeric)
-{
-	const struct xt_tcpmss_info *mssinfo =
-		(const struct xt_tcpmss_info *)target->data;
-	if(mssinfo->mss == XT_TCPMSS_CLAMP_PMTU)
-		printf(" TCPMSS clamp to PMTU");
+	printf(" tcpmss match %s", info->invert ? "!" : "");
+	if (info->mss_min == info->mss_max)
+		printf("%u", info->mss_min);
 	else
-		printf(" TCPMSS set %u", mssinfo->mss);
+		printf("%u:%u", info->mss_min, info->mss_max);
 }
 
-static void TCPMSS_save(const void *ip, const struct xt_entry_target *target)
+static void tcpmss_save(const void *ip, const struct xt_entry_match *match)
 {
-	const struct xt_tcpmss_info *mssinfo =
-		(const struct xt_tcpmss_info *)target->data;
+	const struct xt_tcpmss_match_info *info = (void *)match->data;
 
-	if(mssinfo->mss == XT_TCPMSS_CLAMP_PMTU)
-		printf(" --clamp-mss-to-pmtu");
+	printf("%s --mss ", info->invert ? " !" : "");
+	if (info->mss_min == info->mss_max)
+		printf("%u", info->mss_min);
 	else
-		printf(" --set-mss %u", mssinfo->mss);
+		printf("%u:%u", info->mss_min, info->mss_max);
 }
 
-static struct xtables_target tcpmss_tg_reg[] = {
-	{
-		.family        = NFPROTO_IPV4,
-		.name          = "TCPMSS",
-		.version       = XTABLES_VERSION,
-		.size          = XT_ALIGN(sizeof(struct xt_tcpmss_info)),
-		.userspacesize = XT_ALIGN(sizeof(struct xt_tcpmss_info)),
-		.help          = TCPMSS_help,
-		.print         = TCPMSS_print,
-		.save          = TCPMSS_save,
-		.x6_parse      = TCPMSS_parse,
-		.x6_fcheck     = TCPMSS_check,
-		.x6_options    = TCPMSS4_opts,
-	},
-	{
-		.family        = NFPROTO_IPV6,
-		.name          = "TCPMSS",
-		.version       = XTABLES_VERSION,
-		.size          = XT_ALIGN(sizeof(struct xt_tcpmss_info)),
-		.userspacesize = XT_ALIGN(sizeof(struct xt_tcpmss_info)),
-		.help          = TCPMSS_help6,
-		.print         = TCPMSS_print,
-		.save          = TCPMSS_save,
-		.x6_parse      = TCPMSS_parse,
-		.x6_fcheck     = TCPMSS_check,
-		.x6_options    = TCPMSS6_opts,
-	},
+static struct xtables_match tcpmss_match = {
+	.family		= NFPROTO_UNSPEC,
+	.name		= "tcpmss",
+	.version	= XTABLES_VERSION,
+	.size		= XT_ALIGN(sizeof(struct xt_tcpmss_match_info)),
+	.userspacesize	= XT_ALIGN(sizeof(struct xt_tcpmss_match_info)),
+	.help		= tcpmss_help,
+	.print		= tcpmss_print,
+	.save		= tcpmss_save,
+	.x6_parse	= tcpmss_parse,
+	.x6_options	= tcpmss_opts,
 };
 
 void _init(void)
 {
-	xtables_register_targets(tcpmss_tg_reg, ARRAY_SIZE(tcpmss_tg_reg));
+	xtables_register_match(&tcpmss_match);
 }

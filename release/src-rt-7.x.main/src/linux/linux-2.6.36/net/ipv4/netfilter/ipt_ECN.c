@@ -1,138 +1,128 @@
-/* iptables module for the IPv4 and TCP ECN bits, Version 1.5
+/* IP tables module for matching the value of the IPv4 and TCP ECN bits
  *
- * (C) 2002 by Harald Welte <laforge@netfilter.org>
+ * (C) 2002 by Harald Welte <laforge@gnumonks.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
-*/
+ */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 #include <linux/in.h>
-#include <linux/module.h>
-#include <linux/skbuff.h>
 #include <linux/ip.h>
 #include <net/ip.h>
+#include <linux/module.h>
+#include <linux/skbuff.h>
 #include <linux/tcp.h>
-#include <net/checksum.h>
 
 #include <linux/netfilter/x_tables.h>
 #include <linux/netfilter_ipv4/ip_tables.h>
-#include <linux/netfilter_ipv4/ipt_ECN.h>
+#include <linux/netfilter_ipv4/ipt_ecn.h>
 
-MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Harald Welte <laforge@netfilter.org>");
-MODULE_DESCRIPTION("Xtables: Explicit Congestion Notification (ECN) flag modification");
+MODULE_DESCRIPTION("Xtables: Explicit Congestion Notification (ECN) flag match for IPv4");
+MODULE_LICENSE("GPL");
 
-/* set ECT codepoint from IP header.
- * 	return false if there was an error. */
-static inline bool
-set_ect_ip(struct sk_buff *skb, const struct ipt_ECN_info *einfo)
+static inline bool match_ip(const struct sk_buff *skb,
+			    const struct ipt_ecn_info *einfo)
 {
-	struct iphdr *iph = ip_hdr(skb);
+	return (ip_hdr(skb)->tos & IPT_ECN_IP_MASK) == einfo->ip_ect;
+}
 
-	if ((iph->tos & IPT_ECN_IP_MASK) != (einfo->ip_ect & IPT_ECN_IP_MASK)) {
-		__u8 oldtos;
-		if (!skb_make_writable(skb, sizeof(struct iphdr)))
+static inline bool match_tcp(const struct sk_buff *skb,
+			     const struct ipt_ecn_info *einfo,
+			     bool *hotdrop)
+{
+	struct tcphdr _tcph;
+	const struct tcphdr *th;
+
+	/* In practice, TCP match does this, so can't fail.  But let's
+	 * be good citizens.
+	 */
+	th = skb_header_pointer(skb, ip_hdrlen(skb), sizeof(_tcph), &_tcph);
+	if (th == NULL) {
+		*hotdrop = false;
+		return false;
+	}
+
+	if (einfo->operation & IPT_ECN_OP_MATCH_ECE) {
+		if (einfo->invert & IPT_ECN_OP_MATCH_ECE) {
+			if (th->ece == 1)
+				return false;
+		} else {
+			if (th->ece == 0)
+				return false;
+		}
+	}
+
+	if (einfo->operation & IPT_ECN_OP_MATCH_CWR) {
+		if (einfo->invert & IPT_ECN_OP_MATCH_CWR) {
+			if (th->cwr == 1)
+				return false;
+		} else {
+			if (th->cwr == 0)
+				return false;
+		}
+	}
+
+	return true;
+}
+
+static bool ecn_mt(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct ipt_ecn_info *info = par->matchinfo;
+
+	if (info->operation & IPT_ECN_OP_MATCH_IP)
+		if (!match_ip(skb, info))
 			return false;
-		iph = ip_hdr(skb);
-		oldtos = iph->tos;
-		iph->tos &= ~IPT_ECN_IP_MASK;
-		iph->tos |= (einfo->ip_ect & IPT_ECN_IP_MASK);
-		csum_replace2(&iph->check, htons(oldtos), htons(iph->tos));
+
+	if (info->operation & (IPT_ECN_OP_MATCH_ECE|IPT_ECN_OP_MATCH_CWR)) {
+		if (ip_hdr(skb)->protocol != IPPROTO_TCP)
+			return false;
+		if (!match_tcp(skb, info, &par->hotdrop))
+			return false;
 	}
+
 	return true;
 }
 
-/* Return false if there was an error. */
-static inline bool
-set_ect_tcp(struct sk_buff *skb, const struct ipt_ECN_info *einfo)
+static int ecn_mt_check(const struct xt_mtchk_param *par)
 {
-	struct tcphdr _tcph, *tcph;
-	__be16 oldval;
+	const struct ipt_ecn_info *info = par->matchinfo;
+	const struct ipt_ip *ip = par->entryinfo;
 
-	/* Not enough header? */
-	tcph = skb_header_pointer(skb, ip_hdrlen(skb), sizeof(_tcph), &_tcph);
-	if (!tcph)
-		return false;
+	if (info->operation & IPT_ECN_OP_MATCH_MASK)
+		return -EINVAL;
 
-	if ((!(einfo->operation & IPT_ECN_OP_SET_ECE) ||
-	     tcph->ece == einfo->proto.tcp.ece) &&
-	    (!(einfo->operation & IPT_ECN_OP_SET_CWR) ||
-	     tcph->cwr == einfo->proto.tcp.cwr))
-		return true;
+	if (info->invert & IPT_ECN_OP_MATCH_MASK)
+		return -EINVAL;
 
-	if (!skb_make_writable(skb, ip_hdrlen(skb) + sizeof(*tcph)))
-		return false;
-	tcph = (void *)ip_hdr(skb) + ip_hdrlen(skb);
-
-	oldval = ((__be16 *)tcph)[6];
-	if (einfo->operation & IPT_ECN_OP_SET_ECE)
-		tcph->ece = einfo->proto.tcp.ece;
-	if (einfo->operation & IPT_ECN_OP_SET_CWR)
-		tcph->cwr = einfo->proto.tcp.cwr;
-
-	inet_proto_csum_replace2(&tcph->check, skb,
-				 oldval, ((__be16 *)tcph)[6], 0);
-	return true;
-}
-
-static unsigned int
-ecn_tg(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	const struct ipt_ECN_info *einfo = par->targinfo;
-
-	if (einfo->operation & IPT_ECN_OP_SET_IP)
-		if (!set_ect_ip(skb, einfo))
-			return NF_DROP;
-
-	if (einfo->operation & (IPT_ECN_OP_SET_ECE | IPT_ECN_OP_SET_CWR) &&
-	    ip_hdr(skb)->protocol == IPPROTO_TCP)
-		if (!set_ect_tcp(skb, einfo))
-			return NF_DROP;
-
-	return XT_CONTINUE;
-}
-
-static int ecn_tg_check(const struct xt_tgchk_param *par)
-{
-	const struct ipt_ECN_info *einfo = par->targinfo;
-	const struct ipt_entry *e = par->entryinfo;
-
-	if (einfo->operation & IPT_ECN_OP_MASK) {
-		pr_info("unsupported ECN operation %x\n", einfo->operation);
+	if (info->operation & (IPT_ECN_OP_MATCH_ECE|IPT_ECN_OP_MATCH_CWR) &&
+	    ip->proto != IPPROTO_TCP) {
+		pr_info("cannot match TCP bits in rule for non-tcp packets\n");
 		return -EINVAL;
 	}
-	if (einfo->ip_ect & ~IPT_ECN_IP_MASK) {
-		pr_info("new ECT codepoint %x out of mask\n", einfo->ip_ect);
-		return -EINVAL;
-	}
-	if ((einfo->operation & (IPT_ECN_OP_SET_ECE|IPT_ECN_OP_SET_CWR)) &&
-	    (e->ip.proto != IPPROTO_TCP || (e->ip.invflags & XT_INV_PROTO))) {
-		pr_info("cannot use TCP operations on a non-tcp rule\n");
-		return -EINVAL;
-	}
+
 	return 0;
 }
 
-static struct xt_target ecn_tg_reg __read_mostly = {
-	.name		= "ECN",
+static struct xt_match ecn_mt_reg __read_mostly = {
+	.name		= "ecn",
 	.family		= NFPROTO_IPV4,
-	.target		= ecn_tg,
-	.targetsize	= sizeof(struct ipt_ECN_info),
-	.table		= "mangle",
-	.checkentry	= ecn_tg_check,
+	.match		= ecn_mt,
+	.matchsize	= sizeof(struct ipt_ecn_info),
+	.checkentry	= ecn_mt_check,
 	.me		= THIS_MODULE,
 };
 
-static int __init ecn_tg_init(void)
+static int __init ecn_mt_init(void)
 {
-	return xt_register_target(&ecn_tg_reg);
+	return xt_register_match(&ecn_mt_reg);
 }
 
-static void __exit ecn_tg_exit(void)
+static void __exit ecn_mt_exit(void)
 {
-	xt_unregister_target(&ecn_tg_reg);
+	xt_unregister_match(&ecn_mt_reg);
 }
 
-module_init(ecn_tg_init);
-module_exit(ecn_tg_exit);
+module_init(ecn_mt_init);
+module_exit(ecn_mt_exit);

@@ -1,11 +1,9 @@
-This is used to set the 8-bit Type of Service field in the IP header.
-It is only valid in the
-.B mangle
-table.
+This module matches the 8 bits of Type of Service field in the IP
+header (ie. including the precedence bits).
 .TP
-.BI "--set-tos " "tos"
-You can use a numeric TOS values, or use
-.nf
- iptables -j TOS -h
-.fi
-to see the list of valid TOS names.
+.BI "--tos " "tos"
+The argument is either a standard name, (use
+.br
+ iptables -m tos -h
+.br
+to see the list), or a numeric value to match.
