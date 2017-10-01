@@ -396,7 +396,7 @@ static int decomp(const char *fname, void *buffer, int size, int max)
 	fclose(fp);
 	if ((size * max) != file_size) {
 #ifdef DEBUG
-		_dprintf("%s: filesize mismatch! (%ld/%ld)\n", (size * max), file_size);
+		_dprintf("%s: filesize mismatch! (%ld/%ld)\n", __func__, (size * max), file_size);
 #endif
 		goto exit_decomp;
 	}
