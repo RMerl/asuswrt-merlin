@@ -1373,7 +1373,7 @@ function change_scheduler(value){
 																if(document.form.qos_enable_orig.value != 1){
 																	if (codel_support) {
 																		document.getElementById('qos_sched_tr').style.display = "";
-																		change_scheduler(getRadioValue(document.getElementById('qos_sched')));
+																		change_scheduler(document.getElementById('qos_sched').value);
 																	}
 																	if(document.getElementById('int_type').checked == true && bwdpi_support)
 																		document.form.next_page.value = "QoS_EZQoS.asp";
