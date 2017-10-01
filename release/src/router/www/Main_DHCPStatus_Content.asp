@@ -44,6 +44,11 @@ function initial() {
 	show_leases();
 }
 
+function pad(num, size) {
+    var s = "00" + num;
+    return s.substr(s.length-size);
+}
+
 function show_leases() {
 	var i, line;
 	var Days, Hours, Minutes, Seconds;
@@ -58,7 +63,7 @@ function show_leases() {
 			Hours = Math.floor((line[0] / 3600) % 24);
 			Minutes = Math.floor(line[0] % 3600 / 60);
 			Seconds = Math.floor(line[0] % 60);
-			leasearray[i][0] = Days + "d " + Hours + "h " + Minutes + "m "+ Seconds + "s";
+			leasearray[i][0] = pad(Days,2) + "d " + pad(Hours,2) + "h " + pad(Minutes,2) + "m "+ pad(Seconds,2) + "s";
 
 			overlib_str = "<p><#MAC_Address#>:</p>" + line[1];
 			leasearray[i][1] = '<span class="ClientName" onclick="oui_query_full_vendor(\'' + line[1].toUpperCase() +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ line[1].toUpperCase() +'</span>';
