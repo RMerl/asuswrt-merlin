@@ -1,0 +1,20 @@
+diff --git a/src/forward.c b/src/forward.c
+index e3fa94b..ecf3b98 100644
+--- a/src/forward.c
++++ b/src/forward.c
+@@ -789,9 +789,12 @@ void reply_query(int fd, int family, time_t now)
+ 
+   /* Note: if we send extra options in the EDNS0 header, we can't recreate
+      the query from the reply. */
+-  if (RCODE(header) == REFUSED &&
+-      forward->forwardall == 0 &&
+-      !(forward->flags & FREC_HAS_EXTRADATA))
++  if ((RCODE(header) == REFUSED &&
++        forward->forwardall == 0 &&
++       !(forward->flags & FREC_HAS_EXTRADATA)) ||
++      /* If strict-order is set, try next server on NXDOMAIN reply */
++      (RCODE(header) == NXDOMAIN && option_bool(OPT_ORDER) &&
++       server->next != NULL))
+     /* for broken servers, attempt to send to another one. */
+     {
+       unsigned char *pheader;

@@ -1,7 +1,7 @@
 /*
  dhcp_release6 --iface <interface> --client-id <client-id> --server-id
  server-id --iaid <iaid>  --ip <IP>  [--dry-run] [--help]
- MUST be run as root - will fail othewise
+ MUST be run as root - will fail otherwise
  */
 
 /* Send a DHCPRELEASE message  to IPv6 multicast address  via the specified interface
@@ -20,9 +20,9 @@
  The iaid argument is numeric string and mandatory. Normally
  it can be found in leases file both on client and server.
  
- IP is an IPv6 adress to release
+ IP is an IPv6 address to release
  
- If --dry-run is specified, dhcp_release6 just prints hexadecimal represantation of
+ If --dry-run is specified, dhcp_release6 just prints hexadecimal representation of
  packet to send to stdout and exits.
  
  If --help is specified, dhcp_release6 print usage information to stdout and exits

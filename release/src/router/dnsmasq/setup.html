@@ -78,7 +78,7 @@ by modifying MODIFY_RESOLV_CONF_DYNAMICALLY="no" in <TT>/etc/sysconfig/network/c
  
 
 <h3>Automatic DNS server configuration with DHCP.</h3>
-You need to get your DHCP client to write the addresse(s) of the DNS
+You need to get your DHCP client to write the address(es) of the DNS
 servers to a file other than <TT>/etc/resolv.conf</TT>. For dhcpcd, the
 <TT>dhcpcd.exe</TT> script gets run with the addresses of the nameserver(s) in
 the shell variable <TT>$DNS</TT>. The following bit of shell script
@@ -86,8 +86,8 @@ uses that to write a file suitable for dnsmasq.
 <PRE>
 
 echo -n >|/etc/dhcpc/resolv.conf
-dnsservs=${DNS//,/ }
-for serv in $dnsservs; do
+dnsservers=${DNS//,/ }
+for serv in $dnsservers; do
     echo "nameserver $serv" >>/etc/dhcpc/resolv.conf
 done
 
@@ -186,7 +186,7 @@ more than one nameserver just include as many
 
 <H2>Local domains.</H2>
 Sometimes people have local domains which they do not want forwarded
-to upstream servers. This is accomodated by using server options
+to upstream servers. This is accommodated by using server options
 without the server IP address. To make things clearer <TT>local</TT>
 is a synonym for <TT>server</TT>. For example the option
 <TT>local=/localnet/</TT> ensures that any domain name query which ends in

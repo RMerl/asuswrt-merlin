@@ -22,7 +22,7 @@ sudo chmod 644 /Library/LaunchDaemons/uk.org.thekelleys.dnsmasq.plist
 
 Optionally, edit your dnsmasq configuration file to your liking.
 
-To start the launchd job, which starts dnsmaq, reboot or use the command:
+To start the launchd job, which starts dnsmasq, reboot or use the command:
 sudo launchctl load /Library/LaunchDaemons/uk.org.thekelleys.dnsmasq.plist
 
 To stop the launchd job, which stops dnsmasq, use the command:

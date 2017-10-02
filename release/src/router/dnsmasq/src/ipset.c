@@ -211,7 +211,7 @@ static int old_add_to_ipset(const char *setname, const struct all_addr *ipaddr, 
 
 int add_to_ipset(const char *setname, const struct all_addr *ipaddr, int flags, int remove)
 {
-  int af = AF_INET;
+  int ret = 0, af = AF_INET;
 
 #ifdef HAVE_IPV6
   if (flags & F_IPV6)
@@ -219,11 +219,20 @@ int add_to_ipset(const char *setname, const struct all_addr *ipaddr, int flags, 
       af = AF_INET6;
       /* old method only supports IPv4 */
       if (old_kernel)
-	return -1;
+	{
+	  errno = EAFNOSUPPORT ;
+	  ret = -1;
+	}
     }
 #endif
   
-  return old_kernel ? old_add_to_ipset(setname, ipaddr, remove) : new_add_to_ipset(setname, ipaddr, af, remove);
+  if (ret != -1) 
+    ret = old_kernel ? old_add_to_ipset(setname, ipaddr, remove) : new_add_to_ipset(setname, ipaddr, af, remove);
+
+  if (ret == -1)
+     my_syslog(LOG_ERR, _("failed to update ipset %s: %s"), setname, strerror(errno));
+
+  return ret;
 }
 
 #endif

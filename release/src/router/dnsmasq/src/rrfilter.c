@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2017 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -173,7 +173,7 @@ size_t rrfilter(struct dns_header *header, size_t plen, int mode)
   GETSHORT(qclass, p);
 
   /* First pass, find pointers to start and end of all the records we wish to elide:
-     records added for DNSSEC, unless explicity queried for */
+     records added for DNSSEC, unless explicitly queried for */
   for (rr_found = 0, chop_ns = 0, chop_an = 0, chop_ar = 0, i = 0; 
        i < ntohs(header->ancount) + ntohs(header->nscount) + ntohs(header->arcount);
        i++)
@@ -239,7 +239,15 @@ size_t rrfilter(struct dns_header *header, size_t plen, int mode)
   if (!check_rrs(p, header, plen, 0, rrs, rr_found))
     return plen;
   
-  /* Third pass, elide records */
+  /* Third pass, actually fix up pointers in the records */
+  p = (unsigned char *)(header+1);
+  
+  check_name(&p, header, plen, 1, rrs, rr_found);
+  p += 4; /* qclass, qtype */
+  
+  check_rrs(p, header, plen, 1, rrs, rr_found);
+
+  /*  Fouth pass, elide records */
   for (p = rrs[0], i = 1; i < rr_found; i += 2)
     {
       unsigned char *start = rrs[i];
@@ -254,14 +262,6 @@ size_t rrfilter(struct dns_header *header, size_t plen, int mode)
   header->nscount = htons(ntohs(header->nscount) - chop_ns);
   header->arcount = htons(ntohs(header->arcount) - chop_ar);
 
-  /* Fourth pass, fix up pointers in the remaining records */
-  p = (unsigned char *)(header+1);
-  
-  check_name(&p, header, plen, 1, rrs, rr_found);
-  p += 4; /* qclass, qtype */
-  
-  check_rrs(p, header, plen, 1, rrs, rr_found);
-  
   return plen;
 }
 

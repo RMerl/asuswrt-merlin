@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2017 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,11 +20,11 @@
 
 void dhcp_common_init(void)
 {
-    /* These each hold a DHCP option max size 255
-       and get a terminating zero added */
-  daemon->dhcp_buff = safe_malloc(256);
-  daemon->dhcp_buff2 = safe_malloc(256); 
-  daemon->dhcp_buff3 = safe_malloc(256);
+  /* These each hold a DHCP option max size 255
+     and get a terminating zero added */
+  daemon->dhcp_buff = safe_malloc(DHCP_BUFF_SZ);
+  daemon->dhcp_buff2 = safe_malloc(DHCP_BUFF_SZ); 
+  daemon->dhcp_buff3 = safe_malloc(DHCP_BUFF_SZ);
   
   /* dhcp_packet is used by v4 and v6, outpacket only by v6 
      sizeof(struct dhcp_packet) is as good an initial size as any,
@@ -855,14 +855,14 @@ void log_context(int family, struct dhcp_context *context)
       if (context->flags & CONTEXT_RA_STATELESS)
 	{
 	  if (context->flags & CONTEXT_TEMPLATE)
-	    strncpy(daemon->dhcp_buff, context->template_interface, 256);
+	    strncpy(daemon->dhcp_buff, context->template_interface, DHCP_BUFF_SZ);
 	  else
 	    strcpy(daemon->dhcp_buff, daemon->addrbuff);
 	}
       else 
 #endif
-	inet_ntop(family, start, daemon->dhcp_buff, 256);
-      inet_ntop(family, end, daemon->dhcp_buff3, 256);
+	inet_ntop(family, start, daemon->dhcp_buff, DHCP_BUFF_SZ);
+      inet_ntop(family, end, daemon->dhcp_buff3, DHCP_BUFF_SZ);
       my_syslog(MS_DHCP | LOG_INFO, 
 		(context->flags & CONTEXT_RA_STATELESS) ? 
 		_("%s stateless on %s%.0s%.0s%s") :

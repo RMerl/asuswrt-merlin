@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2017 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,36 +18,53 @@
 
 #ifdef HAVE_AUTH
 
+static struct addrlist *find_addrlist(struct addrlist *list, int flag, struct all_addr *addr_u)
+{
+  do {
+    if (!(list->flags & ADDRLIST_IPV6))
+      {
+	struct in_addr netmask, addr = addr_u->addr.addr4;
+	
+	if (!(flag & F_IPV4))
+	  continue;
+	
+	netmask.s_addr = htonl(~(in_addr_t)0 << (32 - list->prefixlen));
+	
+	if  (is_same_net(addr, list->addr.addr.addr4, netmask))
+	  return list;
+      }
+#ifdef HAVE_IPV6
+    else if (is_same_net6(&(addr_u->addr.addr6), &list->addr.addr.addr6, list->prefixlen))
+      return list;
+#endif
+    
+  } while ((list = list->next));
+  
+  return NULL;
+}
+
 static struct addrlist *find_subnet(struct auth_zone *zone, int flag, struct all_addr *addr_u)
 {
-  struct addrlist *subnet;
+  if (!zone->subnet)
+    return NULL;
+  
+  return find_addrlist(zone->subnet, flag, addr_u);
+}
 
-  for (subnet = zone->subnet; subnet; subnet = subnet->next)
-    {
-      if (!(subnet->flags & ADDRLIST_IPV6))
-	{
-	  struct in_addr netmask, addr = addr_u->addr.addr4;
-
-	  if (!(flag & F_IPV4))
-	    continue;
-	  
-	  netmask.s_addr = htonl(~(in_addr_t)0 << (32 - subnet->prefixlen));
-	  
-	  if  (is_same_net(addr, subnet->addr.addr.addr4, netmask))
-	    return subnet;
-	}
-#ifdef HAVE_IPV6
-      else if (is_same_net6(&(addr_u->addr.addr6), &subnet->addr.addr.addr6, subnet->prefixlen))
-	return subnet;
-#endif
-
-    }
-  return NULL;
+static struct addrlist *find_exclude(struct auth_zone *zone, int flag, struct all_addr *addr_u)
+{
+  if (!zone->exclude)
+    return NULL;
+  
+  return find_addrlist(zone->exclude, flag, addr_u);
 }
 
 static int filter_zone(struct auth_zone *zone, int flag, struct all_addr *addr_u)
 {
-  /* No zones specified, no filter */
+  if (find_exclude(zone, flag, addr_u))
+    return 0;
+
+  /* No subnets specified, no filter */
   if (!zone->subnet)
     return 1;
   
@@ -99,7 +116,8 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
   struct interface_name *intr;
   struct naptr *na;
   struct all_addr addr;
-  struct cname *a;
+  struct cname *a, *candidate;
+  unsigned int wclen;
   
   if (ntohs(header->qdcount) == 0 || OPCODE(header) != QUERY )
     return 0;
@@ -115,6 +133,7 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
     {
       unsigned short flag = 0;
       int found = 0;
+      int cname_wildcard = 0;
   
       /* save pointer to name for copying into answers */
       nameoffset = p - (unsigned char *)header;
@@ -389,25 +408,6 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
 		   }
 	     }
        
-       for (a = daemon->cnames; a; a = a->next)
-	 if (hostname_isequal(name, a->alias) )
-	   {
-	     log_query(F_CONFIG | F_CNAME, name, NULL, NULL);
-	     strcpy(name, a->target);
-	     if (!strchr(name, '.'))
-	       {
-		 strcat(name, ".");
-		 strcat(name, zone->domain);
-	       }
-	     found = 1;
-	     if (add_resource_record(header, limit, &trunc, nameoffset, &ansp, 
-				     daemon->auth_ttl, &nameoffset,
-				     T_CNAME, C_IN, "d", name))
-	       anscount++;
-	     
-	     goto cname_restart;
-	   }
-
       if (!cut)
 	{
 	  nxdomain = 0;
@@ -513,8 +513,62 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
 	      } while ((crecp = cache_find_by_name(crecp, name, now, F_IPV4 | F_IPV6)));
 	}
       
-      if (!found)
-	log_query(flag | F_NEG | (nxdomain ? F_NXDOMAIN : 0) | F_FORWARD | F_AUTH, name, NULL, NULL);
+      /* Only supply CNAME if no record for any type is known. */
+      if (nxdomain)
+	{
+	  /* Check for possible wildcard match against *.domain 
+	     return length of match, to get longest.
+	     Note that if return length of wildcard section, so
+	     we match b.simon to _both_ *.simon and b.simon
+	     but return a longer (better) match to b.simon.
+	  */  
+	  for (wclen = 0, candidate = NULL, a = daemon->cnames; a; a = a->next)
+	    if (a->alias[0] == '*')
+	      {
+		char *test = name;
+		
+		while ((test = strchr(test+1, '.')))
+		  {
+		    if (hostname_isequal(test, &(a->alias[1])))
+		      {
+			if (strlen(test) > wclen && !cname_wildcard)
+			  {
+			    wclen = strlen(test);
+			    candidate = a;
+			    cname_wildcard = 1;
+			  }
+			break;
+		      }
+		  }
+		
+	      }
+	    else if (hostname_isequal(a->alias, name) && strlen(a->alias) > wclen)
+	      {
+		/* Simple case, no wildcard */
+		wclen = strlen(a->alias);
+		candidate = a;
+	      }
+	  
+	  if (candidate)
+	    {
+	      log_query(F_CONFIG | F_CNAME, name, NULL, NULL);
+	      strcpy(name, candidate->target);
+	      if (!strchr(name, '.'))
+		{
+		  strcat(name, ".");
+		  strcat(name, zone->domain);
+		}
+	      found = 1;
+	      if (add_resource_record(header, limit, &trunc, nameoffset, &ansp, 
+				      daemon->auth_ttl, &nameoffset,
+				      T_CNAME, C_IN, "d", name))
+		anscount++;
+	      
+	      goto cname_restart;
+	    }
+
+	  log_query(flag | F_NEG | (nxdomain ? F_NXDOMAIN : 0) | F_FORWARD | F_AUTH, name, NULL, NULL);
+	}
       
     }
   
@@ -538,12 +592,12 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
 	      char *p = name;
 	      
 	      if (subnet->prefixlen >= 24)
-		p += sprintf(p, "%d.", a & 0xff);
+		p += sprintf(p, "%u.", a & 0xff);
 	      a = a >> 8;
 	      if (subnet->prefixlen >= 16 )
-		p += sprintf(p, "%d.", a & 0xff);
+		p += sprintf(p, "%u.", a & 0xff);
 	      a = a >> 8;
-	      p += sprintf(p, "%d.in-addr.arpa", a & 0xff);
+	      p += sprintf(p, "%u.in-addr.arpa", a & 0xff);
 	      
 	    }
 #ifdef HAVE_IPV6
@@ -806,7 +860,7 @@ size_t answer_auth(struct dns_header *header, char *limit, size_t qlen, time_t n
       header->hb4 &= ~HB4_RA;
     }
 
-  /* authoritive */
+  /* authoritative */
   if (auth)
     header->hb3 |= HB3_AA;
   

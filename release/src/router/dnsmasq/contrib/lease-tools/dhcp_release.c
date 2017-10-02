@@ -117,7 +117,7 @@ static ssize_t netlink_recv(int fd)
       msg.msg_flags = 0;
       while ((rc = recvmsg(fd, &msg, MSG_PEEK)) == -1 && errno == EINTR);
       
-      /* 2.2.x doesn't suport MSG_PEEK at all, returning EOPNOTSUPP, so we just grab a 
+      /* 2.2.x doesn't support MSG_PEEK at all, returning EOPNOTSUPP, so we just grab a 
          big buffer and pray in that case. */
       if (rc == -1 && errno == EOPNOTSUPP)
         {

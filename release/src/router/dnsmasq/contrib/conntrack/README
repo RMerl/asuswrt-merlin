@@ -13,10 +13,10 @@ connection comes out of the other side.  However, sometimes, we want to
 maintain that relationship through the proxy and continue the connection
 mark on packets upstream of our proxy
 
-DNSMasq includes such a feature enabled by the --conntrack
+Dnsmasq includes such a feature enabled by the --conntrack
 option. This allows, for example, using iptables to mark traffic from
 a particular IP, and that mark to be persisted to requests made *by*
-DNSMasq. Such a feature could be useful for bandwidth accounting,
+Dnsmasq. Such a feature could be useful for bandwidth accounting,
 captive portals and the like. Note a similar feature has been 
 implemented in Squid 2.2
 
@@ -40,7 +40,7 @@ on IP address. 3) Saves the firewall mark back to the connection mark
 (which will persist it across related packets)
 
 4) is applied to the OUTPUT table, which is where we first see packets
-generated locally. DNSMasq will have already copied the firewall mark
+generated locally. Dnsmasq will have already copied the firewall mark
 from the request, across to the new packet, and so all that remains is
 for iptables to copy it to the connection mark so it's persisted across
 packets.

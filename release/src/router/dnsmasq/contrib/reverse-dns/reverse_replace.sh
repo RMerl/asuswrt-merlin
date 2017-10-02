@@ -5,10 +5,10 @@
 # Parses stdin for IP4 addresses and replaces them 
 # with names retrieved by parsing the dnsmasq log.
 # This currently only gives CNAMEs. But these 
-# usually tell ou more than the mones from reverse 
+# usually tell you more than the ones from reverse 
 # lookups. 
 #
-# This has been tested on debian and asuswrt. Plese
+# This has been tested on debian and asuswrt. Please
 # report successful tests on other platforms.
 #
 # Author: Joachim Zobel <jz-2014@heute-morgen.de>

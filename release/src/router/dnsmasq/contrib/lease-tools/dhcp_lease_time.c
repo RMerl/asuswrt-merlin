@@ -168,7 +168,7 @@ int main(int argc, char **argv)
   *(p++) = 1;
   *(p++) = DHCPINFORM;
 
-  /* Explicity request the lease time, it won't be sent otherwise:
+  /* Explicitly request the lease time, it won't be sent otherwise:
      this is a dnsmasq extension, not standard. */
   *(p++) = OPTION_REQUESTED_OPTIONS;
   *(p++) = 1;
@@ -206,13 +206,13 @@ int main(int argc, char **argv)
 	{
 	  unsigned int x;
 	  if ((x = t/86400))
-	    printf("%dd", x);
+	    printf("%ud", x);
 	  if ((x = (t/3600)%24))
-	    printf("%dh", x);
+	    printf("%uh", x);
 	  if ((x = (t/60)%60))
-	    printf("%dm", x);
+	    printf("%um", x);
 	  if ((x = t%60))
-	    printf("%ds", x);
+	    printf("%us", x);
 	}
       return 0;
     }

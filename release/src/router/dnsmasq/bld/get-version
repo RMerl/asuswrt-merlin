@@ -11,11 +11,18 @@
 # If there is more than one v[0-9].* tag, sort them and use the
 # first. This favours, eg v2.63 over 2.63rc6.
 
+# Change directory to the toplevel source directory.
+if test -z "$1" || ! test -d "$1" || ! cd "$1"; then
+    echo "$0: First argument $1 must be toplevel dir." >&2
+    exit 1
+fi
+
 if which git >/dev/null 2>&1 && \
-    ([ -d $1/.git ] || grep '^gitdir:' $1/.git >/dev/null 2>&1); then 
-    cd $1; git describe | sed 's/^v//'
+    ([ -d .git ] || grep '^gitdir:' .git >/dev/null 2>&1) && \
+    git describe >/dev/null 2>&1; then 
+    git describe | sed 's/^v//'
 elif grep '\$Format:%d\$' $1/VERSION >/dev/null 2>&1; then
-# unsubstituted VERSION, but no git available.
+    # unsubstituted VERSION, but no git available.
     echo UNKNOWN
 else
      vers=`cat $1/VERSION | sed 's/[(), ]/,/ g' | tr ',' '\n' | grep ^v[0-9]`

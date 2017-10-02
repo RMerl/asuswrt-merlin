@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2017 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -105,7 +105,7 @@ int arp_enumerate(void *parm, int (*callback)())
 int iface_enumerate(int family, void *parm, int (*callback)())
 {
   struct ifaddrs *head, *addrs;
-  int errsav, fd = -1, ret = 0;
+  int errsave, fd = -1, ret = 0;
 
   if (family == AF_UNSPEC)
 #if defined(HAVE_BSD_NETWORK) && !defined(__APPLE__)
@@ -237,11 +237,11 @@ int iface_enumerate(int family, void *parm, int (*callback)())
   ret = 1;
 
  err:
-  errsav = errno;
+  errsave = errno;
   freeifaddrs(head); 
   if (fd != -1)
     close(fd);
-  errno = errsav;
+  errno = errsave;
 
   return ret;
 }

@@ -55,7 +55,7 @@ Index: src/dnsmasq.c
  	    }     
  
 @@ -434,7 +433,7 @@
- 	  /* lose the setuid and setgid capbilities */
+ 	  /* lose the setuid and setgid capabilities */
  	  if (capset(hdr, data) == -1)
  	    {
 -	      send_event(err_pipe[1], EVENT_CAP_ERR, errno);

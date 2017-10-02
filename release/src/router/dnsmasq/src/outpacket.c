@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2017 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -29,9 +29,19 @@ void end_opt6(int container)
    PUTSHORT(len, p);
 }
 
+void reset_counter(void)
+{
+  /* Clear out buffer when starting from beginning */
+  if (daemon->outpacket.iov_base)
+    memset(daemon->outpacket.iov_base, 0, daemon->outpacket.iov_len);
+ 
+  save_counter(0);
+}
+
 int save_counter(int newval)
 {
   int ret = outpacket_counter;
+  
   if (newval != -1)
     outpacket_counter = newval;
 
