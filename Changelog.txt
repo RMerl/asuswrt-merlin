@@ -1,6 +1,18 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.68_4 (xx-xxx-2017)
+  - CHANGED: Updated dnsmasq to 2.78 (contains a number of
+             security fixes).
+  - FIXED: rstats could crash at start time in some situations.
+  - FIXED: QOS Scheduler would revert back to sfq after you had
+           re-enabled QOS while (fq_)codel was already selected.
+  - FIXED: Missing tabs on the Parental Control page.
+  - FIXED: Realtek port status wouldn't auto-refresh on the Sysinfo
+           page.
+  - FIXED: Incorrect sort by remaining time on the DHCP Lease page.
+
+
 380.68_2 (12-Sept-2017)
   - FIXED: Some models would show the wrong menu options while in
            Repeater mode.
