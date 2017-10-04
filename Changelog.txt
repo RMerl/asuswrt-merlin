@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.68_4 (xx-xxx-2017)
+380.68_4 (4-Oct-2017)
   - CHANGED: Updated dnsmasq to 2.78 (contains a number of
              security fixes).
   - FIXED: rstats could crash at start time in some situations.
@@ -11,6 +11,8 @@ Asuswrt-Merlin Changelog
   - FIXED: Realtek port status wouldn't auto-refresh on the Sysinfo
            page.
   - FIXED: Incorrect sort by remaining time on the DHCP Lease page.
+  - FIXED: Some LAN clients couldn't be added to the TOR redirected
+           client list.
 
 
 380.68_2 (12-Sept-2017)
