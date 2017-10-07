@@ -480,7 +480,7 @@ function disable_button(val){
 				<input type="password" name="login_passwd" tabindex="2" class="form_input" maxlength="16" placeholder="<#HSDPAConfig_Password_itemname#>" autocapitalize="off" autocomplete="off">
 			</div>
 			<div class="error_hint" style="display:none;" id="error_status_field"></div>
-				<div class="button" onclick="login();"><#CTL_signin#></div>
+			<input type="submit" value="<#CTL_signin#>" class="button" style="border-style: hidden;" onclick="login();">
 		</div>
 
 		<!-- No Login field -->
