@@ -58,6 +58,17 @@ function initial(){
 }
 
 function change_snmpd_enable(enabled){
+	document.getElementById("snmp_wan_tr").style.display = (enabled == 1) ? "":"none";
+	document.getElementById("snmp_sysName_tr").style.display = (enabled == 1) ? "":"none";
+	document.getElementById("snmp_sysLocation_tr").style.display = (enabled == 1) ? "":"none";
+	document.getElementById("snmp_sysContact_tr").style.display = (enabled == 1) ? "":"none";
+	document.getElementById("snmp_roCommunity_tr").style.display = (enabled == 1) ? "":"none";
+	document.getElementById("snmp_rwCommunity_tr").style.display = (enabled == 1) ? "":"none";
+	document.getElementById("snmp_v3_auth_type_tr").style.display = (enabled == 1) ? "":"none";
+	document.getElementById("snmp_v3_auth_passwd_tr").style.display = (enabled == 1) ? "":"none";
+	document.getElementById("snmp_v3_priv_type_tr").style.display = (enabled == 1) ? "":"none";
+	document.getElementById("snmp_v3_priv_passwd_tr").style.display = (enabled == 1) ? "":"none";
+
 	if(enabled == 1){
 		inputCtrl(document.form.sysName, 1);
 		inputCtrl(document.form.sysLocation, 1);
@@ -159,39 +170,40 @@ function change_v3_priv_type(type){
             </td>
          </tr>
 
-	<tr>
-	   <th>Allow access from WAN</th>
-	   <td>
-		<input type="radio" name="snmpd_wan" class="input" value="1" <% nvram_match_x("", "snmpd_wan", "1", "checked"); %>><#checkbox_Yes#>
-		<input type="radio" name="snmpd_wan" class="input" value="0" <% nvram_match_x("", "snmpd_wan", "0", "checked"); %>><#checkbox_No#>
-	   </td>
-	</tr>
-        <tr>
+		<tr id="snmp_wan_tr">
+		   <th>Allow access from WAN</th>
+		   <td>
+			<input type="radio" name="snmpd_wan" class="input" value="1" <% nvram_match_x("", "snmpd_wan", "1", "checked"); %>><#checkbox_Yes#>
+			<input type="radio" name="snmpd_wan" class="input" value="0" <% nvram_match_x("", "snmpd_wan", "0", "checked"); %>><#checkbox_No#>
+		   </td>
+		</tr>
+
+        <tr id="snmp_sysName_tr">
           <th>System Name</th>
           <td><input type="text" maxlength="255" class="input_32_table" name="sysName" value="<% nvram_get("sysName"); %>" autocorrect="off" autocapitalize="off"></td>
         </tr>
 
-        <tr>
+        <tr id="snmp_sysLocation_tr">
           <th>System Location</th>
           <td><input type="text" maxlength="255" class="input_32_table" name="sysLocation" value="<% nvram_get("sysLocation"); %>" autocorrect="off" autocapitalize="off"></td>
         </tr>
 
-        <tr>
+        <tr id="snmp_sysContact_tr">
           <th>System Contact</th>
           <td><input type="text" maxlength="255" class="input_32_table" name="sysContact" value="<% nvram_get("sysContact"); %>" autocorrect="off" autocapitalize="off"></td>
         </tr>
 
-        <tr>
+        <tr id="snmp_roCommunity_tr">
           <th>SNMP Get Community</th>
           <td><input type="text" maxlength="32" class="input_32_table" name="roCommunity" value="<% nvram_get("roCommunity"); %>" autocorrect="off" autocapitalize="off"></td>
         </tr>
 
-        <tr>
+        <tr id="snmp_rwCommunity_tr">
           <th>SNMP Set Community</th>
           <td><input type="text" maxlength="32" class="input_32_table" name="rwCommunity" value="<% nvram_get("rwCommunity"); %>" autocorrect="off" autocapitalize="off"></td>
         </tr>
 
-        <tr>
+        <tr id="snmp_v3_auth_type_tr">
           <th>SNMPv3 Authentication Type</th>
 		<td>
 		  <select name="v3_auth_type" class="input_option" onchange="change_v3_auth_type(this.value);">
@@ -202,12 +214,12 @@ function change_v3_priv_type(type){
 		</td>
         </tr>
 
-        <tr>
+        <tr id="snmp_v3_auth_passwd_tr">
           <th>SNMPv3 Authentication Password</th>
           <td><input type="text" maxlength="64" class="input_32_table" name="v3_auth_passwd" value="<% nvram_get("v3_auth_passwd"); %>" autocomplete="off" autocorrect="off" autocapitalize="off"></td>
         </tr>
 
-        <tr>
+        <tr id="snmp_v3_priv_type_tr">
           <th>SNMPv3 Privacy Type</th>
 		<td>
 		  <select name="v3_priv_type" class="input_option" onchange="change_v3_priv_type(this.value);">
@@ -218,7 +230,7 @@ function change_v3_priv_type(type){
 		</td>
         </tr>
 
-        <tr>
+        <tr id="snmp_v3_priv_passwd_tr">
           <th>SNMPv3 Privacy Password</th>
           <td><input type="text" maxlength="64" class="input_32_table" name="v3_priv_passwd" value="<% nvram_get("v3_priv_passwd"); %>" autocomplete="off" autocorrect="off" autocapitalize="off"></td>
         </tr>
