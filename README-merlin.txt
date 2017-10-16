@@ -3,9 +3,9 @@ Asuswrt-Merlin
 
 About
 -----
-Asuswrt is the name of the common firmware Asus has developed 
-for their various router models.  Originally forked from 
-Tomato, it has since grown into a very different product, removing 
+Asuswrt is the name of the firmware Asus has developed for
+their various router models.  Originally forked from Tomato, 
+it has since grown into a very different product, removing 
 some more technical features that were part of Tomato, but 
 also adding a lot of new original features.
 
@@ -24,11 +24,20 @@ This more conservative approach will also help ensuring the highest
 level of stability possible.  Priority is given to stability over 
 performance, and performance over features.
 
+Asuswrt-Merlin is available in two separate branches:
+
+- The original Asuswrt-Merlin (up to version 380.xxx)
+- The new branch (version 382.xxx and newer)
 
 
 Supported Devices
 -----------------
-Supported devices are:
+Each branch supports different models.  As Asus upgrades models
+to the new 382_xxxx code base, Asuswrt-Merlin will also migrate 
+them to the new branch.
+
+
+Supported devices on version 380:
  * RT-N66U
  * RT-AC66U
  * RT-AC66U_B1 (use the RT-AC68U firmware)
@@ -41,7 +50,10 @@ Supported devices are:
  * RT-AC5300
  * RT-AC1900 & RT-AC1900P (use the RT-AC68U firmware)
 
-Devices that are no longer officially supported:
+Supported devices on version 382:
+ * RT-AC86U
+
+Devices that are no longer supported:
  * RT-N16
 
 
@@ -63,10 +75,9 @@ System:
    - User scripts that run on specific events
    - Cron jobs
    - Ability to customize the config files used by the router services
-   - LED control - put your router in "Stealth Mode" by turning off 
-     all LEDs
+   - Ability to turn off router LEDs
    - Entware easy setup script (alternative to Optware - the two are 
-     mutually exclusive)
+     mutually exclusive) (unavailable on RT-AC86U)
    - SNMP support (based on experimental code from Asus)
    - Nano text editor (for more user-friendly script editing)
 
@@ -100,17 +111,19 @@ Networking:
      destination IPs), sometimes referred to as "selective routing")
    - DNSSEC support
    - fq_codel queue discipline for QoS (ARM-based models only)
+   - Full cone NAT support (RT-AC86U only)
+   - Detailed wireless troubleshooting information (RT-AC86U only)
 
 
 Web interface:
    - Performance improvements
    - Optionally save traffic stats to disk (USB or JFFS partition)
-   - Enhanced traffic monitoring, reporting traffic per IP, and
-     displaying graphical reports of historical data
+   - Enhanced traffic monitoring with graphical reports of
+     historical data
+   - Traffic report per IP (except on RT-AC86U)
    - Hostname field on the DHCP reservation page
    - System information summary page
    - Wifi icon reports the state of both radios
-   - Display the Ethernet port states
    - Wireless site survey
    - Advanced Wireless client list display, including automated refresh
    - Redesigned layout of the various System Log sections
@@ -118,7 +131,7 @@ Web interface:
    - User-provided SSL certificate
 
 
-A few features that first appeared in Asuswrt-Merlin have since been 
+Some features that first appeared in Asuswrt-Merlin have since been 
 integrated/enabled/re-implemented in the official firmware:
 
 - HTTPS webui
@@ -135,6 +148,7 @@ integrated/enabled/re-implemented in the official firmware:
   when possible instead of just NetBIOS names
 - SSHD
 - Improved compatibility with 3TB+ and Advanced Format HDDs
+- Display the Ethernet port states
 
 
 
@@ -180,24 +194,28 @@ https://github.com/RMerl/asuswrt-merlin/wiki
 
 Source code
 -----------
-The buildable source code can be found on Github, at:
+The buildable source code can be found on Github.
 
+Original branch:
 https://github.com/RMerl/asuswrt-merlin
 
+New 382 branch:
+https://github.com/RMerl/asuswrt-merlin.382
 
    
 Contact information
 -------------------
 SmallNetBuilder forums (preferred method: http://www.snbforums.com/forums/asuswrt-merlin.42/ as RMerlin)
 Website: https://asuswrt.lostrealm.ca/
-Github: https://github.com/RMerl/asuswrt-merlin
+Github: https://github.com/RMerl
 Email: rmerl@lostrealm.ca
 Twitter: https://twitter.com/RMerlinDev
 IRC: #asuswrt on DALnet
 Download: https://asuswrt.lostrealm.ca/download
 
-Development news will be posted on Twitter.  You can also keep a closer 
-eye on development as it happens, through the Github code repository.
+Development news will be posted on Twitter and the support forums.  
+You can also keep a closer eye on development as it happens, through 
+the Github code repository.
 
 For support questions, please use the SmallNetBuilder forums whenever 
 possible.  There's a dedicated Asuswrt-Merlin sub-forum there, under 
