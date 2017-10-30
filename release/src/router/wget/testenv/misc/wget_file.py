@@ -3,7 +3,7 @@ class WgetFile:
 
     """ WgetFile is a File Data Container object """
 
-    def __init__ (
+    def __init__(
         self,
         name,
         content="Test Contents",

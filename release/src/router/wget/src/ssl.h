@@ -1,6 +1,6 @@
 /* SSL support.
    Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-   2009, 2010, 2011, 2012 Free Software Foundation, Inc.
+   2009, 2010, 2011, 2012, 2015 Free Software Foundation, Inc.
    Originally contributed by Christian Fraenkel.
 
 This file is part of GNU Wget.
@@ -33,7 +33,7 @@ as that of the covered work.  */
 #define GEN_SSLFUNC_H
 
 bool ssl_init (void);
-bool ssl_connect_wget (int, const char *);
+bool ssl_connect_wget (int, const char *, int *);
 bool ssl_check_certificate (int, const char *);
 
 #endif /* GEN_SSLFUNC_H */

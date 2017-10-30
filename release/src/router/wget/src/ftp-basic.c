@@ -1,7 +1,7 @@
 /* Basic FTP routines.
    Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007, 2008, 2009, 2010, 2011, 2014 Free Software Foundation,
-   Inc.
+   2005, 2006, 2007, 2008, 2009, 2010, 2011, 2014, 2015 Free Software
+   Foundation, Inc.
 
 This file is part of GNU Wget.
 
@@ -43,8 +43,9 @@ as that of the covered work.  */
 #include "host.h"
 #include "ftp.h"
 #include "retr.h"
+#include "c-strcase.h"
 
-
+
 /* Get the response of FTP server and allocate enough room to handle
    it.  <CR> and <LF> characters are stripped from the line, and the
    line is 0-terminated.  All the response lines but the last one are
@@ -134,6 +135,23 @@ ftp_request (const char *command, const char *value)
   return res;
 }
 
+uerr_t
+ftp_greeting (int csock)
+{
+  uerr_t err = FTPOK;
+  char *response = NULL;
+
+  err = ftp_response (csock, &response);
+  if (err != FTPOK)
+    goto bail;
+  if (*response != '2')
+    err = FTPSRVERR;
+
+bail:
+  if (response)
+    xfree (response);
+  return err;
+}
 /* Sends the USER and PASS commands to the server, to control
    connection socket csock.  */
 uerr_t
@@ -143,16 +161,6 @@ ftp_login (int csock, const char *acc, const char *pass)
   char *request, *respline;
   int nwritten;
 
-  /* Get greeting.  */
-  err = ftp_response (csock, &respline);
-  if (err != FTPOK)
-    return err;
-  if (*respline != '2')
-    {
-      xfree (respline);
-      return FTPSRVERR;
-    }
-  xfree (respline);
   /* Send USER username.  */
   request = ftp_request ("USER", acc);
   nwritten = fd_write (csock, request, strlen (request), -1);
@@ -190,7 +198,7 @@ ftp_login (int csock, const char *acc, const char *pass)
     for (i = 0; i < countof (skey_head); i++)
       {
         int l = strlen (skey_head[i]);
-        if (0 == strncasecmp (skey_head[i], respline, l))
+        if (0 == c_strncasecmp (skey_head[i], respline, l))
           {
             seed = respline + l;
             break;
@@ -479,6 +487,119 @@ ftp_eprt (int csock, int *local_sock)
   return FTPOK;
 }
 #endif
+
+#ifdef HAVE_SSL
+/*
+ * The following three functions defined into this #ifdef block
+ * wrap the extended FTP commands defined in RFC 2228 (FTP Security Extensions).
+ * Currently, only FTPS is supported, so these functions are only compiled when SSL
+ * support is available, because there's no point in using FTPS when there's no SSL.
+ * Shall someone add new secure FTP protocols in the future, feel free to remove this
+ * #ifdef, or add new constants to it.
+ */
+
+/*
+ * Sends an AUTH command as defined by RFC 2228,
+ * deriving its argument from the scheme. For example, if the provided scheme
+ * is SCHEME_FTPS, the command sent will be "AUTH TLS". Currently, this is the only
+ * scheme supported, so this function will return FTPNOAUTH when supplied a different
+ * one. It will also return FTPNOAUTH if the target server does not support FTPS.
+ */
+uerr_t
+ftp_auth (int csock, enum url_scheme scheme)
+{
+  uerr_t err = 0;
+  int written = 0;
+  char *request = NULL, *response = NULL;
+
+  if (scheme == SCHEME_FTPS)
+    {
+      request = ftp_request ("AUTH", "TLS");
+      written = fd_write (csock, request, strlen (request), -1);
+      if (written < 0)
+        {
+          err = WRITEFAILED;
+          goto bail;
+        }
+      err = ftp_response (csock, &response);
+      if (err != FTPOK)
+        goto bail;
+      if (*response != '2')
+        err = FTPNOAUTH;
+    }
+  else
+    err = FTPNOAUTH;
+
+bail:
+  xfree (request);
+  xfree (response);
+
+  return err;
+}
+
+uerr_t
+ftp_pbsz (int csock, int pbsz)
+{
+  uerr_t err = 0;
+  int written = 0;
+  char spbsz[5];
+  char *request = NULL, *response = NULL;
+
+  snprintf (spbsz, 5, "%d", pbsz);
+  request = ftp_request ("PBSZ", spbsz);
+  written = fd_write (csock, request, strlen (request), -1);
+  if (written < 0)
+    {
+      err = WRITEFAILED;
+      goto bail;
+    }
+
+  err = ftp_response (csock, &response);
+  if (err != FTPOK)
+    goto bail;
+  if (*response != '2')
+    err = FTPNOPBSZ;
+
+bail:
+  xfree (request);
+  xfree (response);
+
+  return err;
+}
+
+uerr_t
+ftp_prot (int csock, enum prot_level prot)
+{
+  uerr_t err = 0;
+  int written = 0;
+  char *request = NULL, *response = NULL;
+  /* value must be a single character value */
+  char value[2];
+
+  value[0] = prot;
+  value[1] = '\0';
+
+  request = ftp_request ("PROT", value);
+  written = fd_write (csock, request, strlen (request), -1);
+  if (written < 0)
+    {
+      err = WRITEFAILED;
+      goto bail;
+    }
+
+  err = ftp_response (csock, &response);
+  if (err != FTPOK)
+    goto bail;
+  if (*response != '2')
+    err = FTPNOPROT;
+
+bail:
+  xfree (request);
+  xfree (response);
+
+  return err;
+}
+#endif /* HAVE_SSL */
 
 /* Similar to ftp_port, but uses `PASV' to initiate the passive FTP
    transfer.  Reads the response from server and parses it.  Reads the
@@ -784,16 +905,8 @@ ftp_epsv (int csock, ip_address *ip, int *port)
     }
 
   /* Finally, get the port number */
-  tport = 0;
-  for (i = 1; c_isdigit (*s); s++)
-    {
-      if (i > 5)
-        {
-          xfree (respline);
-          return FTPINVPASV;
-        }
+  for (tport = 0, i = 0; i < 5 && c_isdigit (*s); i++, s++)
       tport = (*s - '0') + 10 * tport;
-    }
 
   /* Make sure that the response terminates correcty */
   if (*s++ != delim)
@@ -965,16 +1078,18 @@ ftp_list (int csock, const char *file, bool avoid_list_a, bool avoid_list,
   bool ok = false;
   size_t i = 0;
 
-  *list_a_used = false;
-
   /* 2013-10-12 Andrea Urbani (matfanjol)
      For more information about LIST and "LIST -a" please look at ftp.c,
      function getftp, text "__LIST_A_EXPLANATION__".
 
      If somebody changes the following commands, please, checks also the
      later "i" variable.  */
-  const char *list_commands[] = { "LIST -a",
-                                  "LIST" };
+  static const char *list_commands[] = {
+    "LIST -a",
+    "LIST"
+  };
+
+  *list_a_used = false;
 
   if (avoid_list_a)
     {
@@ -1068,25 +1183,25 @@ ftp_syst (int csock, enum stype *server_type, enum ustype *unix_type)
 
   if (request == NULL)
     *server_type = ST_OTHER;
-  else if (!strcasecmp (request, "VMS"))
+  else if (!c_strcasecmp (request, "VMS"))
     *server_type = ST_VMS;
-  else if (!strcasecmp (request, "UNIX"))
+  else if (!c_strcasecmp (request, "UNIX"))
     {
       *server_type = ST_UNIX;
       /* 2013-10-17 Andrea Urbani (matfanjol)
          I check more in depth the system type */
-      if (!strncasecmp (ftp_last_respline, "215 UNIX Type: L8", 17))
+      if (!c_strncasecmp (ftp_last_respline, "215 UNIX Type: L8", 17))
         *unix_type = UST_TYPE_L8;
-      else if (!strncasecmp (ftp_last_respline,
+      else if (!c_strncasecmp (ftp_last_respline,
                              "215 UNIX MultiNet Unix Emulation V5.3(93)", 41))
         *unix_type = UST_MULTINET;
     }
-  else if (!strcasecmp (request, "WINDOWS_NT")
-           || !strcasecmp (request, "WINDOWS2000"))
+  else if (!c_strcasecmp (request, "WINDOWS_NT")
+           || !c_strcasecmp (request, "WINDOWS2000"))
     *server_type = ST_WINNT;
-  else if (!strcasecmp (request, "MACOS"))
+  else if (!c_strcasecmp (request, "MACOS"))
     *server_type = ST_MACOS;
-  else if (!strcasecmp (request, "OS/400"))
+  else if (!c_strcasecmp (request, "OS/400"))
     *server_type = ST_OS400;
   else
     *server_type = ST_OTHER;
@@ -1135,7 +1250,7 @@ ftp_pwd (int csock, char **pwd)
     goto err;
 
   /* Has the `pwd' been already allocated?  Free! */
-  xfree_null (*pwd);
+  xfree (*pwd);
 
   *pwd = xstrdup (request);
 

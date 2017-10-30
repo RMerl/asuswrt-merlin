@@ -1,11 +1,11 @@
-eval '(exit $?0)' && eval 'exec perl -wS -0777 -pi "$0" ${1+"$@"}'
+eval '(exit $?0)' && eval 'exec perl -wS -0777 -pi "$0" "$@"'
   & eval 'exec perl -wS -0777 -pi "$0" $argv:q'
     if 0;
 # Update an FSF copyright year list to include the current year.
 
-my $VERSION = '2013-01-03.09:41'; # UTC
+my $VERSION = '2016-01-12.23:13'; # UTC
 
-# Copyright (C) 2009-2014 Free Software Foundation, Inc.
+# Copyright (C) 2009-2017 Free Software Foundation, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -124,7 +124,7 @@ use strict;
 use warnings;
 
 my $copyright_re = 'Copyright';
-my $circle_c_re = '(?:\([cC]\)|@copyright{}|&copy;)';
+my $circle_c_re = '(?:\([cC]\)|@copyright\{}|\\\\\(co|&copy;)';
 my $holder = $ENV{UPDATE_COPYRIGHT_HOLDER};
 $holder ||= 'Free Software Foundation, Inc.';
 my $prefix_max = 5;
@@ -269,6 +269,6 @@ else
 # eval: (add-hook 'write-file-hooks 'time-stamp)
 # time-stamp-start: "my $VERSION = '"
 # time-stamp-format: "%:y-%02m-%02d.%02H:%02M"
-# time-stamp-time-zone: "UTC"
+# time-stamp-time-zone: "UTC0"
 # time-stamp-end: "'; # UTC"
 # End:

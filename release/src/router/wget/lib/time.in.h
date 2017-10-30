@@ -1,6 +1,6 @@
 /* A more-standard <time.h>.
 
-   Copyright (C) 2007-2014 Free Software Foundation, Inc.
+   Copyright (C) 2007-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,11 +22,13 @@
 
 /* Don't get in the way of glibc when it includes time.h merely to
    declare a few standard symbols, rather than to declare all the
-   symbols.  Also, Solaris 8 <time.h> eventually includes itself
+   symbols.  (However, skip this for MinGW as it treats __need_time_t
+   incompatibly.)  Also, Solaris 8 <time.h> eventually includes itself
    recursively; if that is happening, just include the system <time.h>
    without adding our own declarations.  */
-#if (defined __need_time_t || defined __need_clock_t \
-     || defined __need_timespec \
+#if (((defined __need_time_t || defined __need_clock_t \
+       || defined __need_timespec)                     \
+      && !defined __MINGW32__)                         \
      || defined _@GUARD_PREFIX@_TIME_H)
 
 # @INCLUDE_NEXT@ @NEXT_TIME_H@
@@ -55,6 +57,8 @@
 #   include <sys/time.h>
 #  elif @PTHREAD_H_DEFINES_STRUCT_TIMESPEC@
 #   include <pthread.h>
+#  elif @UNISTD_H_DEFINES_STRUCT_TIMESPEC@
+#   include <unistd.h>
 #  else
 
 #   ifdef __cplusplus
@@ -213,7 +217,7 @@ _GL_CXXALIAS_SYS (gmtime, struct tm *, (time_t const *__timer));
 _GL_CXXALIASWARN (gmtime);
 # endif
 
-/* Parse BUF as a time stamp, assuming FORMAT specifies its layout, and store
+/* Parse BUF as a timestamp, assuming FORMAT specifies its layout, and store
    the resulting broken-down time into TM.  See
    <http://www.opengroup.org/susv3xsh/strptime.html>.  */
 # if @GNULIB_STRPTIME@
@@ -227,6 +231,25 @@ _GL_CXXALIAS_SYS (strptime, char *, (char const *restrict __buf,
                                      char const *restrict __format,
                                      struct tm *restrict __tm));
 _GL_CXXALIASWARN (strptime);
+# endif
+
+# if defined _GNU_SOURCE && @GNULIB_TIME_RZ@ && ! @HAVE_TIMEZONE_T@
+typedef struct tm_zone *timezone_t;
+_GL_FUNCDECL_SYS (tzalloc, timezone_t, (char const *__name));
+_GL_CXXALIAS_SYS (tzalloc, timezone_t, (char const *__name));
+_GL_FUNCDECL_SYS (tzfree, void, (timezone_t __tz));
+_GL_CXXALIAS_SYS (tzfree, void, (timezone_t __tz));
+_GL_FUNCDECL_SYS (localtime_rz, struct tm *,
+                  (timezone_t __tz, time_t const *restrict __timer,
+                   struct tm *restrict __result) _GL_ARG_NONNULL ((2, 3)));
+_GL_CXXALIAS_SYS (localtime_rz, struct tm *,
+                  (timezone_t __tz, time_t const *restrict __timer,
+                   struct tm *restrict __result));
+_GL_FUNCDECL_SYS (mktime_z, time_t,
+                  (timezone_t __tz, struct tm *restrict __result)
+                  _GL_ARG_NONNULL ((2)));
+_GL_CXXALIAS_SYS (mktime_z, time_t,
+                  (timezone_t __tz, struct tm *restrict __result));
 # endif
 
 /* Convert TM to a time_t value, assuming UTC.  */

@@ -1,5 +1,5 @@
 /* Convert unibyte character to wide character.
-   Copyright (C) 2008, 2010-2014 Free Software Foundation, Inc.
+   Copyright (C) 2008, 2010-2017 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2008.
 
    This program is free software: you can redistribute it and/or modify

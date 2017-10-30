@@ -1,8 +1,8 @@
 #ifndef __HTTP_NTLM_H
 #define __HTTP_NTLM_H
 /* Declarations for http_ntlm.c
-   Copyright (C) 1995, 1996, 1997, 2000, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996, 1997, 2000, 2007, 2008, 2009, 2010, 2011,
+   2015 Free Software Foundation, Inc.
    Contributed by Daniel Stenberg.
 
 This file is part of GNU Wget.

@@ -7,7 +7,6 @@ from misc.wget_file import WgetFile
     This test ensures that Wget correctly handles the -O command for output
     filenames.
 """
-TEST_NAME = "Output Filename Command"
 ############# File Definitions ###############################################
 File1 = "Test Contents."
 
@@ -36,7 +35,6 @@ post_test = {
 }
 
 err = HTTPTest (
-                name=TEST_NAME,
                 pre_hook=pre_test,
                 test_params=test_options,
                 post_hook=post_test

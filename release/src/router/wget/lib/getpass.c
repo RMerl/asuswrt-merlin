@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2001, 2003-2007, 2009-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2001, 2003-2007, 2009-2017 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -85,7 +85,9 @@ getpass (const char *prompt)
 {
   FILE *tty;
   FILE *in, *out;
+# if HAVE_TCGETATTR
   struct termios s, t;
+# endif
   bool tty_changed = false;
   static char *buf;
   static size_t bufsize;

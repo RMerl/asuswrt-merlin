@@ -1,8 +1,8 @@
 #!/bin/sh
 # Print a version string.
-scriptversion=2012-12-31.23; # UTC
+scriptversion=2017-01-09.19; # UTC
 
-# Copyright (C) 2007-2014 Free Software Foundation, Inc.
+# Copyright (C) 2007-2017 Free Software Foundation, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -85,8 +85,9 @@ Print a version string.
 
 Options:
 
-   --prefix           prefix of git tags (default 'v')
-   --fallback         fallback version to use if \"git --version\" fails
+   --prefix PREFIX    prefix of git tags (default 'v')
+   --fallback VERSION
+                      fallback version to use if \"git --version\" fails
 
    --help             display this help and exit
    --version          output version information and exit
@@ -100,8 +101,8 @@ while test $# -gt 0; do
   case $1 in
     --help) echo "$usage"; exit 0;;
     --version) echo "$version"; exit 0;;
-    --prefix) shift; prefix="$1";;
-    --fallback) shift; fallback="$1";;
+    --prefix) shift; prefix=${1?};;
+    --fallback) shift; fallback=${1?};;
     -*)
       echo "$0: Unknown option '$1'." >&2
       echo "$0: Try '--help' for more information." >&2
@@ -199,7 +200,7 @@ v=`echo "$v" |sed "s/^$prefix//"`
 # string we're using came from git.  I.e., skip the test if it's "UNKNOWN"
 # or if it came from .tarball-version.
 if test "x$v_from_git" != x; then
-  # Don't declare a version "dirty" merely because a time stamp has changed.
+  # Don't declare a version "dirty" merely because a timestamp has changed.
   git update-index --refresh > /dev/null 2>&1
 
   dirty=`exec 2>/dev/null;git diff-index --name-only HEAD` || dirty=
@@ -214,12 +215,12 @@ if test "x$v_from_git" != x; then
 fi
 
 # Omit the trailing newline, so that m4_esyscmd can use the result directly.
-echo "$v" | tr -d "$nl"
+printf %s "$v"
 
 # Local variables:
 # eval: (add-hook 'write-file-hooks 'time-stamp)
 # time-stamp-start: "scriptversion="
 # time-stamp-format: "%:y-%02m-%02d.%02H"
-# time-stamp-time-zone: "UTC"
+# time-stamp-time-zone: "UTC0"
 # time-stamp-end: "; # UTC"
 # End:

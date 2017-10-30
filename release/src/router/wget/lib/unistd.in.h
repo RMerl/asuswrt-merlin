@@ -1,5 +1,5 @@
 /* Substitute for and wrapper around <unistd.h>.
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -55,9 +55,13 @@
 #include <stddef.h>
 
 /* mingw doesn't define the SEEK_* or *_FILENO macros in <unistd.h>.  */
+/* MSVC declares 'unlink' in <stdio.h>, not in <unistd.h>.  We must include
+   it before we  #define unlink rpl_unlink.  */
 /* Cygwin 1.7.1 declares symlinkat in <stdio.h>, not in <unistd.h>.  */
 /* But avoid namespace pollution on glibc systems.  */
 #if (!(defined SEEK_CUR && defined SEEK_END && defined SEEK_SET) \
+     || ((@GNULIB_UNLINK@ || defined GNULIB_POSIXCHECK) \
+         && ((defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__)) \
      || ((@GNULIB_SYMLINKAT@ || defined GNULIB_POSIXCHECK) \
          && defined __CYGWIN__)) \
     && ! defined __GLIBC__
@@ -401,6 +405,12 @@ _GL_WARN_ON_USE (dup3, "dup3 is unportable - "
 /* Set of environment variables and values.  An array of strings of the form
    "VARIABLE=VALUE", terminated with a NULL.  */
 #  if defined __APPLE__ && defined __MACH__
+#   include <TargetConditionals.h>
+#   if !TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR
+#    define _GL_USE_CRT_EXTERNS
+#   endif
+#  endif
+#  ifdef _GL_USE_CRT_EXTERNS
 #   include <crt_externs.h>
 #   define environ (*_NSGetEnviron ())
 #  else
@@ -770,7 +780,7 @@ _GL_WARN_ON_USE (gethostname, "gethostname is unportable - "
      ${LOGNAME-$USER}        on Unix platforms,
      $USERNAME               on native Windows platforms.
  */
-# if !@HAVE_GETLOGIN@
+# if !@HAVE_DECL_GETLOGIN@
 _GL_FUNCDECL_SYS (getlogin, char *, (void));
 # endif
 _GL_CXXALIAS_SYS (getlogin, char *, (void));
@@ -1287,13 +1297,24 @@ _GL_WARN_ON_USE (readlink, "readlink is unportable - "
 
 
 #if @GNULIB_READLINKAT@
-# if !@HAVE_READLINKAT@
+# if @REPLACE_READLINKAT@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   define readlinkat rpl_readlinkat
+#  endif
+_GL_FUNCDECL_RPL (readlinkat, ssize_t,
+                  (int fd, char const *file, char *buf, size_t len)
+                  _GL_ARG_NONNULL ((2, 3)));
+_GL_CXXALIAS_RPL (readlinkat, ssize_t,
+                  (int fd, char const *file, char *buf, size_t len));
+# else
+#  if !@HAVE_READLINKAT@
 _GL_FUNCDECL_SYS (readlinkat, ssize_t,
                   (int fd, char const *file, char *buf, size_t len)
                   _GL_ARG_NONNULL ((2, 3)));
-# endif
+#  endif
 _GL_CXXALIAS_SYS (readlinkat, ssize_t,
                   (int fd, char const *file, char *buf, size_t len));
+# endif
 _GL_CXXALIASWARN (readlinkat);
 #elif defined GNULIB_POSIXCHECK
 # undef readlinkat
@@ -1407,13 +1428,25 @@ _GL_WARN_ON_USE (symlink, "symlink is not portable - "
 
 
 #if @GNULIB_SYMLINKAT@
-# if !@HAVE_SYMLINKAT@
+# if @REPLACE_SYMLINKAT@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef symlinkat
+#   define symlinkat rpl_symlinkat
+#  endif
+_GL_FUNCDECL_RPL (symlinkat, int,
+                  (char const *contents, int fd, char const *file)
+                  _GL_ARG_NONNULL ((1, 3)));
+_GL_CXXALIAS_RPL (symlinkat, int,
+                  (char const *contents, int fd, char const *file));
+# else
+#  if !@HAVE_SYMLINKAT@
 _GL_FUNCDECL_SYS (symlinkat, int,
                   (char const *contents, int fd, char const *file)
                   _GL_ARG_NONNULL ((1, 3)));
-# endif
+#  endif
 _GL_CXXALIAS_SYS (symlinkat, int,
                   (char const *contents, int fd, char const *file));
+# endif
 _GL_CXXALIASWARN (symlinkat);
 #elif defined GNULIB_POSIXCHECK
 # undef symlinkat

@@ -1,7 +1,7 @@
-# serial 13  -*- Autoconf -*-
+# serial 15  -*- Autoconf -*-
 # Enable extensions on systems that normally disable them.
 
-# Copyright (C) 2003, 2006-2014 Free Software Foundation, Inc.
+# Copyright (C) 2003, 2006-2017 Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -60,7 +60,7 @@ dnl configure.ac when using autoheader 2.62.
 #ifndef _ALL_SOURCE
 # undef _ALL_SOURCE
 #endif
-/* Enable general extensions on OS X.  */
+/* Enable general extensions on macOS.  */
 #ifndef _DARWIN_C_SOURCE
 # undef _DARWIN_C_SOURCE
 #endif
@@ -71,6 +71,34 @@ dnl configure.ac when using autoheader 2.62.
 /* Enable threading extensions on Solaris.  */
 #ifndef _POSIX_PTHREAD_SEMANTICS
 # undef _POSIX_PTHREAD_SEMANTICS
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-5:2014.  */
+#ifndef __STDC_WANT_IEC_60559_ATTRIBS_EXT__
+# undef __STDC_WANT_IEC_60559_ATTRIBS_EXT__
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-1:2014.  */
+#ifndef __STDC_WANT_IEC_60559_BFP_EXT__
+# undef __STDC_WANT_IEC_60559_BFP_EXT__
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-2:2015.  */
+#ifndef __STDC_WANT_IEC_60559_DFP_EXT__
+# undef __STDC_WANT_IEC_60559_DFP_EXT__
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-4:2015.  */
+#ifndef __STDC_WANT_IEC_60559_FUNCS_EXT__
+# undef __STDC_WANT_IEC_60559_FUNCS_EXT__
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-3:2015.  */
+#ifndef __STDC_WANT_IEC_60559_TYPES_EXT__
+# undef __STDC_WANT_IEC_60559_TYPES_EXT__
+#endif
+/* Enable extensions specified by ISO/IEC TR 24731-2:2010.  */
+#ifndef __STDC_WANT_LIB_EXT2__
+# undef __STDC_WANT_LIB_EXT2__
+#endif
+/* Enable extensions specified by ISO/IEC 24747:2009.  */
+#ifndef __STDC_WANT_MATH_SPEC_FUNCS__
+# undef __STDC_WANT_MATH_SPEC_FUNCS__
 #endif
 /* Enable extensions on HP NonStop.  */
 #ifndef _TANDEM_SOURCE
@@ -101,6 +129,13 @@ dnl configure.ac when using autoheader 2.62.
   AC_DEFINE([_DARWIN_C_SOURCE])
   AC_DEFINE([_GNU_SOURCE])
   AC_DEFINE([_POSIX_PTHREAD_SEMANTICS])
+  AC_DEFINE([__STDC_WANT_IEC_60559_ATTRIBS_EXT__])
+  AC_DEFINE([__STDC_WANT_IEC_60559_BFP_EXT__])
+  AC_DEFINE([__STDC_WANT_IEC_60559_DFP_EXT__])
+  AC_DEFINE([__STDC_WANT_IEC_60559_FUNCS_EXT__])
+  AC_DEFINE([__STDC_WANT_IEC_60559_TYPES_EXT__])
+  AC_DEFINE([__STDC_WANT_LIB_EXT2__])
+  AC_DEFINE([__STDC_WANT_MATH_SPEC_FUNCS__])
   AC_DEFINE([_TANDEM_SOURCE])
   AC_CACHE_CHECK([whether _XOPEN_SOURCE should be defined],
     [ac_cv_should_define__xopen_source],

@@ -1,7 +1,7 @@
 /* Declarations for windows
    Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation,
-   Inc.
+   2005, 2006, 2007, 2008, 2009, 2010, 2011, 2015 Free Software
+   Foundation, Inc.
 
 This file is part of GNU Wget.
 
@@ -57,6 +57,9 @@ as that of the covered work.  */
 /* Declares getpid(). */
 #include <process.h>
 
+/* Declares inet_ntop() and inet_pton(). */
+#include <arpa/inet.h>
+
 /* We have strcasecmp and strncasecmp, just under different names.  */
 #ifndef HAVE_STRCASECMP
 # define strcasecmp stricmp
@@ -84,11 +87,6 @@ typedef __int64 wgint;
 #endif
 
 #define PATH_SEPARATOR '\\'
-
-/* Additional declarations needed for IPv6: */
-#ifdef ENABLE_IPV6
-const char *inet_ntop (int, const void *, char *, socklen_t);
-#endif
 
 /* ioctl needed by set_windows_fd_as_blocking_socket() */
 #include <sys/ioctl.h>

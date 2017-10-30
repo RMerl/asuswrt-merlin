@@ -1,13 +1,44 @@
-# stdio_h.m4 serial 43
-dnl Copyright (C) 2007-2014 Free Software Foundation, Inc.
+# stdio_h.m4 serial 48
+dnl Copyright (C) 2007-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 AC_DEFUN([gl_STDIO_H],
 [
+  AH_VERBATIM([MINGW_ANSI_STDIO],
+[/* Use GNU style printf and scanf.  */
+#ifndef __USE_MINGW_ANSI_STDIO
+# undef __USE_MINGW_ANSI_STDIO
+#endif
+])
+  AC_DEFINE([__USE_MINGW_ANSI_STDIO])
   AC_REQUIRE([gl_STDIO_H_DEFAULTS])
   gl_NEXT_HEADERS([stdio.h])
+
+  dnl Determine whether __USE_MINGW_ANSI_STDIO makes printf and
+  dnl inttypes.h behave like gnu instead of system; we must give our
+  dnl printf wrapper the right attribute to match.
+  AC_CACHE_CHECK([which flavor of printf attribute matches inttypes macros],
+    [gl_cv_func_printf_attribute_flavor],
+    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+       #define __STDC_FORMAT_MACROS 1
+       #include <stdio.h>
+       #include <inttypes.h>
+       /* For non-mingw systems, compilation will trivially succeed.
+          For mingw, compilation will succeed for older mingw (system
+          printf, "I64d") and fail for newer mingw (gnu printf, "lld"). */
+       #if ((defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__) && \
+         (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4))
+       extern char PRIdMAX_probe[sizeof PRIdMAX == sizeof "I64d" ? 1 : -1];
+       #endif
+      ]])], [gl_cv_func_printf_attribute_flavor=system],
+      [gl_cv_func_printf_attribute_flavor=gnu])])
+  if test "$gl_cv_func_printf_attribute_flavor" = gnu; then
+    AC_DEFINE([GNULIB_PRINTF_ATTRIBUTE_FLAVOR_GNU], [1],
+      [Define to 1 if printf and friends should be labeled with
+       attribute "__gnu_printf__" instead of "__printf__"])
+  fi
 
   dnl No need to create extra modules for these functions. Everyone who uses
   dnl <stdio.h> likely needs them.

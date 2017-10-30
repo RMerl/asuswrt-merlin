@@ -1,6 +1,6 @@
 /* Declarations for convert.c
-   Copyright (C) 2003, 2004, 2005, 2006, 2009, 2010, 2011 Free Software
-   Foundation, Inc.
+   Copyright (C) 2003, 2004, 2005, 2006, 2009, 2010, 2011, 2015 Free
+   Software Foundation, Inc.
 
 This file is part of GNU Wget.
 
@@ -40,6 +40,8 @@ enum convert_options {
   CO_NOCONVERT = 0,             /* don't convert this URL */
   CO_CONVERT_TO_RELATIVE,       /* convert to relative, e.g. to
                                    "../../otherdir/foo.gif" */
+  CO_CONVERT_BASENAME_ONLY,     /* convert the file portion only (basename)
+                                   leaving the rest of the URL unchanged */
   CO_CONVERT_TO_COMPLETE,       /* convert to absolute, e.g. to
                                    "http://orighost/somedir/bar.jpg". */
   CO_NULLIFY_BASE               /* change to empty string. */
@@ -67,6 +69,7 @@ struct urlpos {
   unsigned int link_base_p  :1;     /* the url came from <base href=...> */
   unsigned int link_inline_p    :1; /* needed to render the page */
   unsigned int link_css_p   :1;     /* the url came from CSS */
+  unsigned int link_noquote_html_p :1; /* from HTML, but doesn't need " */
   unsigned int link_expect_html :1; /* expected to contain HTML */
   unsigned int link_expect_css  :1; /* expected to contain CSS */
 

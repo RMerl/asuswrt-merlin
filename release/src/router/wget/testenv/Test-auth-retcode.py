@@ -8,7 +8,6 @@ from misc.wget_file import WgetFile
     a 403 Forbidden by the Server.
 """
 
-TEST_NAME = "Forbidden Retcode"
 
 ############# File Definitions ###############################################
 File1 = "Apples and Oranges? Really?"
@@ -41,7 +40,6 @@ post_test = {
 }
 
 err = HTTPTest (
-                name=TEST_NAME,
                 pre_hook=pre_test,
                 test_params=test_options,
                 post_hook=post_test

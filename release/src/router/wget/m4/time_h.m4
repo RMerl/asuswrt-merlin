@@ -1,8 +1,8 @@
 # Configure a more-standard replacement for <time.h>.
 
-# Copyright (C) 2000-2001, 2003-2007, 2009-2014 Free Software Foundation, Inc.
+# Copyright (C) 2000-2001, 2003-2007, 2009-2017 Free Software Foundation, Inc.
 
-# serial 8
+# serial 9
 
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -26,7 +26,7 @@ AC_DEFUN([gl_HEADER_TIME_H_BODY],
 ])
 
 dnl Check whether 'struct timespec' is declared
-dnl in time.h, sys/time.h, or pthread.h.
+dnl in time.h, sys/time.h, pthread.h, or unistd.h.
 
 AC_DEFUN([gl_CHECK_TYPE_STRUCT_TIMESPEC],
 [
@@ -44,6 +44,7 @@ AC_DEFUN([gl_CHECK_TYPE_STRUCT_TIMESPEC],
   TIME_H_DEFINES_STRUCT_TIMESPEC=0
   SYS_TIME_H_DEFINES_STRUCT_TIMESPEC=0
   PTHREAD_H_DEFINES_STRUCT_TIMESPEC=0
+  UNISTD_H_DEFINES_STRUCT_TIMESPEC=0
   if test $gl_cv_sys_struct_timespec_in_time_h = yes; then
     TIME_H_DEFINES_STRUCT_TIMESPEC=1
   else
@@ -70,12 +71,26 @@ AC_DEFUN([gl_CHECK_TYPE_STRUCT_TIMESPEC],
            [gl_cv_sys_struct_timespec_in_pthread_h=no])])
       if test $gl_cv_sys_struct_timespec_in_pthread_h = yes; then
         PTHREAD_H_DEFINES_STRUCT_TIMESPEC=1
+      else
+        AC_CACHE_CHECK([for struct timespec in <unistd.h>],
+          [gl_cv_sys_struct_timespec_in_unistd_h],
+          [AC_COMPILE_IFELSE(
+             [AC_LANG_PROGRAM(
+                [[#include <unistd.h>
+                ]],
+                [[static struct timespec x; x.tv_sec = x.tv_nsec;]])],
+             [gl_cv_sys_struct_timespec_in_unistd_h=yes],
+             [gl_cv_sys_struct_timespec_in_unistd_h=no])])
+        if test $gl_cv_sys_struct_timespec_in_unistd_h = yes; then
+          UNISTD_H_DEFINES_STRUCT_TIMESPEC=1
+        fi
       fi
     fi
   fi
   AC_SUBST([TIME_H_DEFINES_STRUCT_TIMESPEC])
   AC_SUBST([SYS_TIME_H_DEFINES_STRUCT_TIMESPEC])
   AC_SUBST([PTHREAD_H_DEFINES_STRUCT_TIMESPEC])
+  AC_SUBST([UNISTD_H_DEFINES_STRUCT_TIMESPEC])
 ])
 
 AC_DEFUN([gl_TIME_MODULE_INDICATOR],
@@ -94,6 +109,7 @@ AC_DEFUN([gl_HEADER_TIME_H_DEFAULTS],
   GNULIB_STRPTIME=0;                     AC_SUBST([GNULIB_STRPTIME])
   GNULIB_TIMEGM=0;                       AC_SUBST([GNULIB_TIMEGM])
   GNULIB_TIME_R=0;                       AC_SUBST([GNULIB_TIME_R])
+  GNULIB_TIME_RZ=0;                      AC_SUBST([GNULIB_TIME_RZ])
   dnl Assume proper GNU behavior unless another module says otherwise.
   HAVE_DECL_LOCALTIME_R=1;               AC_SUBST([HAVE_DECL_LOCALTIME_R])
   HAVE_NANOSLEEP=1;                      AC_SUBST([HAVE_NANOSLEEP])

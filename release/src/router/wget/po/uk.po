@@ -3,24 +3,25 @@
 # This file is distributed under the same license as the wget package.
 #
 # Olexander Kunytsa <xakep@snark.ukma.kiev.ua>, 2004.
-# Yuri Chornoivan <yurchor@ukr.net>, 2012, 2013.
+# Yuri Chornoivan <yurchor@ukr.net>, 2012, 2013, 2015, 2016, 2017.
 msgid ""
 msgstr ""
-"Project-Id-Version: wget 1.15-pre1\n"
+"Project-Id-Version: wget 1.18.109\n"
 "Report-Msgid-Bugs-To: bug-wget@gnu.org\n"
-"POT-Creation-Date: 2014-10-27 09:59+0100\n"
-"PO-Revision-Date: 2013-11-03 15:13+0200\n"
-"Last-Translator: Olexander Kunytsa <xakep@snark.ukma.kiev.ua>\n"
+"POT-Creation-Date: 2017-10-26 17:36+0200\n"
+"PO-Revision-Date: 2017-01-17 19:30+0200\n"
+"Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <translation-team-uk@lists.sourceforge.net>\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
 "Plural-Forms: nplurals=4; plural=n==1 ? 3 : n%10==1 && n%100!=11 ? 0 : n"
 "%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 "X-Generator: Lokalize 1.5\n"
 
-#: lib/error.c:188
+#: lib/error.c:191
 msgid "Unknown system error"
 msgstr "Невідома системна помилка"
 
@@ -28,7 +29,7 @@ msgstr "Невідома системна помилка"
 msgid "Address family for hostname not supported"
 msgstr "Підтримки сімейства назв вузлів не передбачено"
 
-#: lib/gai_strerror.c:58 src/host.c:365
+#: lib/gai_strerror.c:58 src/host.c:373
 msgid "Temporary failure in name resolution"
 msgstr "Тимчасова помилка розв'язання назв"
 
@@ -96,65 +97,70 @@ msgstr "Перервано за сигналом"
 msgid "Parameter string not correctly encoded"
 msgstr "Помилкове кодування рядка параметрів"
 
-#: lib/gai_strerror.c:87 src/host.c:367
+#: lib/gai_strerror.c:87 src/host.c:375
 msgid "Unknown error"
 msgstr "Невідома помилка"
 
-#: lib/getopt.c:547 lib/getopt.c:576
+#: lib/getopt.c:575 lib/getopt.c:604
 #, c-format
 msgid "%s: option '%s' is ambiguous; possibilities:"
 msgstr "%s: неоднозначний параметр '%s';  можливі варіанти:"
 
-#: lib/getopt.c:624 lib/getopt.c:628
+#: lib/getopt.c:619
+#, c-format
+msgid "%s: option '%s' is ambiguous\n"
+msgstr "%s: параметр «%s» не є однозначним\n"
+
+#: lib/getopt.c:654 lib/getopt.c:658
 #, c-format
 msgid "%s: option '--%s' doesn't allow an argument\n"
 msgstr "%s: додавання аргументів до параметра '--%s' не передбачено\n"
 
-#: lib/getopt.c:637 lib/getopt.c:642
+#: lib/getopt.c:667 lib/getopt.c:672
 #, c-format
 msgid "%s: option '%c%s' doesn't allow an argument\n"
 msgstr "%s: додавання аргументів до параметра '%c%s' не передбачено\n"
 
-#: lib/getopt.c:685 lib/getopt.c:704
+#: lib/getopt.c:715 lib/getopt.c:734
 #, c-format
 msgid "%s: option '--%s' requires an argument\n"
 msgstr "%s: до параметра '--%s' слід додати аргумент\n"
 
 # --option
 # --option
-#: lib/getopt.c:742 lib/getopt.c:745
+#: lib/getopt.c:772 lib/getopt.c:775
 #, c-format
 msgid "%s: unrecognized option '--%s'\n"
 msgstr "%s: нерозпізнаний параметр '--%s'\n"
 
 # +option or -option
-#: lib/getopt.c:753 lib/getopt.c:756
+#: lib/getopt.c:783 lib/getopt.c:786
 #, c-format
 msgid "%s: unrecognized option '%c%s'\n"
 msgstr "%s: нерозпізнаний параметр '%c%s'\n"
 
-#: lib/getopt.c:805 lib/getopt.c:808
+#: lib/getopt.c:835 lib/getopt.c:838
 #, c-format
 msgid "%s: invalid option -- '%c'\n"
 msgstr "%s: некоректний параметр -- '%c'\n"
 
 # 1003.2 specifies the format of this message.
-#: lib/getopt.c:861 lib/getopt.c:878 lib/getopt.c:1088 lib/getopt.c:1106
+#: lib/getopt.c:891 lib/getopt.c:908 lib/getopt.c:1118 lib/getopt.c:1136
 #, c-format
 msgid "%s: option requires an argument -- '%c'\n"
 msgstr "%s: до параметра слід додати аргумент -- '%c'\n"
 
-#: lib/getopt.c:934 lib/getopt.c:950
+#: lib/getopt.c:964 lib/getopt.c:980
 #, c-format
 msgid "%s: option '-W %s' is ambiguous\n"
 msgstr "%s: неоднозначний параметр '-W %s'\n"
 
-#: lib/getopt.c:974 lib/getopt.c:992
+#: lib/getopt.c:1004 lib/getopt.c:1022
 #, c-format
 msgid "%s: option '-W %s' doesn't allow an argument\n"
 msgstr "%s: додавання аргументів до параметра '-W %s' не передбачено\n"
 
-#: lib/getopt.c:1013 lib/getopt.c:1031
+#: lib/getopt.c:1043 lib/getopt.c:1061
 #, c-format
 msgid "%s: option '-W %s' requires an argument\n"
 msgstr "%s: до параметра '-W %s' слід додати аргумент\n"
@@ -180,113 +186,104 @@ msgstr "%s: до параметра '-W %s' слід додати аргумен
 #. If you don't know what to put here, please see
 #. <http://en.wikipedia.org/wiki/Quotation_marks_in_other_languages>
 #. and use glyphs suitable for your language.
-#: lib/quotearg.c:312
+#: lib/quotearg.c:354
 msgid "`"
 msgstr "«"
 
-#: lib/quotearg.c:313
+#: lib/quotearg.c:355
 msgid "'"
 msgstr "»"
 
-#: lib/regcomp.c:131
+#: lib/regcomp.c:135
 msgid "Success"
-msgstr ""
+msgstr "Виконано"
 
-#: lib/regcomp.c:134
+#: lib/regcomp.c:138
 msgid "No match"
-msgstr ""
+msgstr "Немає відповідників"
 
-#: lib/regcomp.c:137
-#, fuzzy
+#: lib/regcomp.c:141
 msgid "Invalid regular expression"
-msgstr "Некоректний формальний вираз %s, %s\n"
+msgstr "Помилка у формальному виразі"
 
-#: lib/regcomp.c:140
+#: lib/regcomp.c:144
 msgid "Invalid collation character"
-msgstr ""
+msgstr "Некоректний символ об’єднання"
 
-#: lib/regcomp.c:143
-#, fuzzy
+#: lib/regcomp.c:147
 msgid "Invalid character class name"
-msgstr "Некоректне ім'я вузла"
+msgstr "Некоректна назва класу символів"
 
-#: lib/regcomp.c:146
+#: lib/regcomp.c:150
 msgid "Trailing backslash"
-msgstr ""
+msgstr "Зворотна похила риска наприкінці"
 
-#: lib/regcomp.c:149
-#, fuzzy
+#: lib/regcomp.c:153
 msgid "Invalid back reference"
-msgstr "Некоректне ім'я користувача"
+msgstr "Некоректне зворотне посилання"
 
-#: lib/regcomp.c:152
-msgid "Unmatched [ or [^"
-msgstr ""
+#: lib/regcomp.c:156
+msgid "Unmatched [, [^, [:, [., or [="
+msgstr "Вираз без парних [, [^, [:, [. або [="
 
-#: lib/regcomp.c:155
+#: lib/regcomp.c:159
 msgid "Unmatched ( or \\("
-msgstr ""
+msgstr "Неврівноважена дужка ( або \\("
 
-#: lib/regcomp.c:158
+#: lib/regcomp.c:162
 msgid "Unmatched \\{"
-msgstr ""
+msgstr "Неврівноважена дужка \\{"
 
-#: lib/regcomp.c:161
+#: lib/regcomp.c:165
 msgid "Invalid content of \\{\\}"
-msgstr ""
+msgstr "Некоректний вміст \\{\\}"
 
-#: lib/regcomp.c:164
-#, fuzzy
+#: lib/regcomp.c:168
 msgid "Invalid range end"
-msgstr "Некоректне ім'я користувача"
+msgstr "Некоректне завершення діапазону"
 
-#: lib/regcomp.c:167
-#, fuzzy
+#: lib/regcomp.c:171
 msgid "Memory exhausted"
-msgstr "недостатньо пам'яті"
+msgstr "Пам’ять вичерпано"
 
-#: lib/regcomp.c:170
-#, fuzzy
+#: lib/regcomp.c:174
 msgid "Invalid preceding regular expression"
-msgstr "Некоректний формальний вираз %s, %s\n"
+msgstr "Помилка у попередньому формальному виразі"
 
-#: lib/regcomp.c:173
-#, fuzzy
+#: lib/regcomp.c:177
 msgid "Premature end of regular expression"
-msgstr "Некоректний формальний вираз %s, %s\n"
+msgstr "Неочікуване завершення формального виразу"
 
-#: lib/regcomp.c:176
-#, fuzzy
+#: lib/regcomp.c:180
 msgid "Regular expression too big"
-msgstr "Некоректний формальний вираз %s, %s\n"
+msgstr "Занадто об’ємний формальний вираз"
 
-#: lib/regcomp.c:179
+#: lib/regcomp.c:183
 msgid "Unmatched ) or \\)"
-msgstr ""
+msgstr "Неврівноважена дужка ) або \\)"
 
-#: lib/regcomp.c:707
-#, fuzzy
+#: lib/regcomp.c:687
 msgid "No previous regular expression"
-msgstr "Некоректний формальний вираз %s, %s\n"
+msgstr "Не виявлено попереднього формального виразу"
 
-#: lib/spawn-pipe.c:135 lib/spawn-pipe.c:138 lib/spawn-pipe.c:259
-#: lib/spawn-pipe.c:262
+#: lib/spawn-pipe.c:137 lib/spawn-pipe.c:140 lib/spawn-pipe.c:261
+#: lib/spawn-pipe.c:264
 #, c-format
 msgid "cannot create pipe"
 msgstr "не вдалося створити канал"
 
-#: lib/spawn-pipe.c:229 lib/spawn-pipe.c:343 lib/wait-process.c:282
+#: lib/spawn-pipe.c:231 lib/spawn-pipe.c:345 lib/wait-process.c:282
 #: lib/wait-process.c:356
 #, c-format
 msgid "%s subprocess failed"
 msgstr "Помилка підпроцесу %s"
 
-#: lib/w32spawn.h:43
+#: lib/w32spawn.h:45
 #, c-format
 msgid "_open_osfhandle failed"
 msgstr "Помилка _open_osfhandle"
 
-#: lib/w32spawn.h:84
+#: lib/w32spawn.h:86
 #, c-format
 msgid "cannot restore fd %d: dup2 failed"
 msgstr "не вдалося відновити файловий дескриптор %d: помилка dup2"
@@ -305,217 +302,267 @@ msgstr "Підпроцесом %s отримано сигнал щодо ава�
 msgid "memory exhausted"
 msgstr "недостатньо пам'яті"
 
-#: src/connect.c:200
+#: src/connect.c:202
 #, c-format
 msgid "%s: unable to resolve bind address %s; disabling bind.\n"
 msgstr "%s: неможливо визначити адресу bind %s; вимикаємо bind.\n"
 
-#: src/connect.c:284
+#: src/connect.c:283
 #, c-format
 msgid "Connecting to %s|%s|:%d... "
 msgstr "Встановлення з'єднання з %s|%s|:%d... "
 
-#: src/connect.c:293
+#: src/connect.c:291
 #, c-format
 msgid "Connecting to %s:%d... "
 msgstr "Встановлення з'єднання з %s:%d... "
 
-#: src/connect.c:296
+#: src/connect.c:294
 #, c-format
 msgid "Connecting to [%s]:%d... "
 msgstr "Встановлення з'єднання з [%s]:%d... "
 
+#: src/connect.c:330
+#, c-format
+msgid "setsockopt SO_RCVBUF failed: %s\n"
+msgstr "помилка SO_RCVBUF setsockopt: %s\n"
+
 #: src/connect.c:358
 msgid "connected.\n"
-msgstr "під'єднано.\n"
+msgstr "з’єднано.\n"
 
-#: src/connect.c:370 src/host.c:783 src/host.c:812
+#: src/connect.c:377 src/host.c:914 src/host.c:952
 #, c-format
 msgid "failed: %s.\n"
 msgstr "невдача: %s.\n"
 
-#: src/connect.c:394 src/http.c:1990
+#: src/connect.c:401 src/http.c:2096
 #, c-format
 msgid "%s: unable to resolve host address %s\n"
 msgstr "%s: неможливо розв'язати адресу вузла %s\n"
 
-#: src/convert.c:196
+#: src/connect.c:471
 #, c-format
-msgid "Converted %d files in %s seconds.\n"
-msgstr "Перетворено %d файлів за %s секунд.\n"
+msgid "setsockopt SO_REUSEADDR failed: %s\n"
+msgstr "помилка SO_REUSEADDR setsockopt: %s\n"
 
-#: src/convert.c:224
+#: src/connect.c:692 src/connect.c:739
 #, c-format
-msgid "Converting %s... "
-msgstr "Перетворення %s... "
+msgid "Too many fds open.  Cannot use select on a fd >= %d\n"
+msgstr ""
+"Відкрито надто багато файлових дескрипторів. Не можна використовувати вибір "
+"для файлового дескриптора >= %d\n"
 
-#: src/convert.c:237
+#: src/convert.c:198
+#, c-format
+msgid "Converted links in %d files in %s seconds.\n"
+msgstr "Перетворено посилання у %d файлах за %s секунд.\n"
+
+#: src/convert.c:227
+#, c-format
+msgid "Converting links in %s... "
+msgstr "Перетворення посилань у форматі %s... "
+
+#: src/convert.c:240
 msgid "nothing to do.\n"
 msgstr "нема чого робити.\n"
 
-#: src/convert.c:245 src/convert.c:269
+#: src/convert.c:248 src/convert.c:272
 #, c-format
 msgid "Cannot convert links in %s: %s\n"
-msgstr "Не можу перетворити посилання в %s: %s\n"
+msgstr "Не вдалося перетворити посилання у %s: %s\n"
 
-#: src/convert.c:260
+#: src/convert.c:263
 #, c-format
 msgid "Unable to delete %s: %s\n"
-msgstr "Не можу видалити %s: %s\n"
+msgstr "Не вдалося вилучити %s: %s\n"
 
-#: src/convert.c:476
+#: src/convert.c:578
 #, c-format
 msgid "Cannot back up %s as %s: %s\n"
-msgstr "Не можу зберегти копію %s під іменем %s: %s\n"
+msgstr "Не вдалося зберегти копію %s із назвою %s: %s\n"
 
-#: src/cookies.c:450
+#: src/cookies.c:311
+#, c-format
+msgid "Unable to get cookie for %s\n"
+msgstr "Не вдалося отримати кукі для %s\n"
+
+#: src/cookies.c:458
 #, c-format
 msgid "Syntax error in Set-Cookie: %s at position %d.\n"
 msgstr "Синтаксична помилка в куках: %s в позиції %d.\n"
 
-#: src/cookies.c:732
+#: src/cookies.c:772
 #, c-format
 msgid "Cookie coming from %s attempted to set domain to "
 msgstr "Кука, що надійшла з %s, визначає домен "
 
-#: src/cookies.c:735 src/spider.c:92
+#: src/cookies.c:775
 #, c-format
 msgid "%s\n"
 msgstr "%s\n"
 
-#: src/cookies.c:1183 src/cookies.c:1304
+#: src/cookies.c:1226 src/cookies.c:1347
 #, c-format
 msgid "Cannot open cookies file %s: %s\n"
-msgstr "Не можу відкрити файл з куками %s: %s\n"
+msgstr "Не вдалося відкрити файл з куками %s: %s\n"
 
-#: src/cookies.c:1341
+#: src/cookies.c:1384
 #, c-format
 msgid "Error writing to %s: %s\n"
 msgstr "Помилка запису в %s: %s\n"
 
-#: src/cookies.c:1344
+#: src/cookies.c:1387
 #, c-format
 msgid "Error closing %s: %s\n"
 msgstr "Помилка закриття %s: %s\n"
 
-#: src/ftp-ls.c:1049
+#: src/ftp-ls.c:1051
 msgid "Unsupported listing type, trying Unix listing parser.\n"
 msgstr "Тип лістингу невідомий, спроба розібрати в стилі лістингу Unix.\n"
 
-#: src/ftp-ls.c:1100 src/ftp-ls.c:1102
+#: src/ftp-ls.c:1102 src/ftp-ls.c:1104
 #, c-format
 msgid "Index of /%s on %s:%d"
-msgstr "Лістинг каталогу /%s на %s:%d"
+msgstr "Покажчик каталогу /%s на %s:%d"
 
-#: src/ftp-ls.c:1127
+#: src/ftp-ls.c:1129
 #, c-format
 msgid "time unknown       "
 msgstr "час невідомий      "
 
-#: src/ftp-ls.c:1131
+#: src/ftp-ls.c:1133
 #, c-format
 msgid "File        "
 msgstr "Файл        "
 
-#: src/ftp-ls.c:1134
+#: src/ftp-ls.c:1136
 #, c-format
 msgid "Directory   "
 msgstr "Каталог     "
 
-#: src/ftp-ls.c:1137
+#: src/ftp-ls.c:1139
 #, c-format
 msgid "Link        "
 msgstr "Посилання   "
 
-#: src/ftp-ls.c:1140
+#: src/ftp-ls.c:1142
 #, c-format
 msgid "Not sure    "
 msgstr "Неточно     "
 
-#: src/ftp-ls.c:1163
+#: src/ftp-ls.c:1165
 #, c-format
 msgid " (%s bytes)"
 msgstr " (%s байт)"
 
-#: src/ftp.c:222
+#: src/ftp.c:226
 #, c-format
 msgid "Length: %s"
 msgstr "Довжина: %s"
 
-#: src/ftp.c:228 src/http.c:2810
+#: src/ftp.c:232 src/http.c:4003
 #, c-format
 msgid ", %s (%s) remaining"
 msgstr ", %s (%s) залишилось"
 
-#: src/ftp.c:232 src/http.c:2814
+#: src/ftp.c:236 src/http.c:4007
 #, c-format
 msgid ", %s remaining"
 msgstr ", %s залишилось"
 
-#: src/ftp.c:235
+#: src/ftp.c:239
 msgid " (unauthoritative)\n"
 msgstr " (не точно)\n"
 
+#: src/ftp.c:404
+msgid "Could not initialize SSL. It will be disabled."
+msgstr "Не вдалося ініціалізувати SSL. Протокол буде вимкнено."
+
 # Second: Login with proper USER/PASS sequence.
 # Second: Login with proper USER/PASS sequence.
-#: src/ftp.c:313
+#: src/ftp.c:486
 #, c-format
 msgid "Logging in as %s ... "
 msgstr "Входимо як %s ... "
 
-#: src/ftp.c:332 src/ftp.c:378 src/ftp.c:445 src/ftp.c:510 src/ftp.c:740
-#: src/ftp.c:793 src/ftp.c:840 src/ftp.c:897 src/ftp.c:958 src/ftp.c:1049
-#: src/ftp.c:1099
+#: src/ftp.c:505 src/ftp.c:591 src/ftp.c:658 src/ftp.c:723 src/ftp.c:957
+#: src/ftp.c:1010 src/ftp.c:1057 src/ftp.c:1120 src/ftp.c:1181 src/ftp.c:1279
+#: src/ftp.c:1329
 msgid "Error in server response, closing control connection.\n"
-msgstr "Помилка в реакції серверу, закриття керівного з'єднання.\n"
+msgstr "Помилка в реакції сервера, закриття керівного з'єднання.\n"
 
-#: src/ftp.c:339
+#: src/ftp.c:512
 msgid "Error in server greeting.\n"
-msgstr "Помилка в привітанні серверу.\n"
+msgstr "Помилка в привітанні сервера.\n"
 
-#: src/ftp.c:346 src/ftp.c:518 src/ftp.c:748 src/ftp.c:848 src/ftp.c:907
-#: src/ftp.c:968 src/ftp.c:1059 src/ftp.c:1109
+#: src/ftp.c:519 src/ftp.c:731 src/ftp.c:965 src/ftp.c:1065 src/ftp.c:1130
+#: src/ftp.c:1191 src/ftp.c:1289 src/ftp.c:1339
 msgid "Write failed, closing control connection.\n"
 msgstr "Помилка запису, закриття керівного з'єднання.\n"
 
-#: src/ftp.c:352
+#: src/ftp.c:525
 msgid "The server refuses login.\n"
 msgstr "Сервер відмовив у реєстрації.\n"
 
-#: src/ftp.c:358
+#: src/ftp.c:531
 msgid "Login incorrect.\n"
-msgstr "Ім'я чи пароль неправильні.\n"
+msgstr "Некоректне ім’я користувача.\n"
 
-#: src/ftp.c:364
+#: src/ftp.c:537
 msgid "Logged in!\n"
 msgstr "Реєстрація вдалась!\n"
 
-#: src/ftp.c:386
-msgid "Server error, can't determine system type.\n"
-msgstr "Помилка серверу, не можу визначити тип системи.\n"
+#: src/ftp.c:557
+msgid "Server did not accept the 'PBSZ 0' command.\n"
+msgstr "Сервер не прийняв команду «PBSZ 0».\n"
 
-#: src/ftp.c:395 src/ftp.c:884 src/ftp.c:941 src/ftp.c:984
+#: src/ftp.c:567
+#, c-format
+msgid "Server did not accept the 'PROT %c' command.\n"
+msgstr "Сервер не прийняв команду «PROT %c».\n"
+
+#: src/ftp.c:599
+msgid "Server error, can't determine system type.\n"
+msgstr "Помилка сервера, не вдалося визначити тип системи.\n"
+
+#: src/ftp.c:608 src/ftp.c:1100 src/ftp.c:1164 src/ftp.c:1207
 msgid "done.    "
 msgstr "зроблено.    "
 
-#: src/ftp.c:498 src/ftp.c:765 src/ftp.c:810 src/ftp.c:1079 src/ftp.c:1128
+#: src/ftp.c:711 src/ftp.c:983 src/ftp.c:1027 src/ftp.c:1309 src/ftp.c:1358
 msgid "done.\n"
 msgstr "зроблено.\n"
 
-#: src/ftp.c:525
+#: src/ftp.c:738
 #, c-format
 msgid "Unknown type `%c', closing control connection.\n"
 msgstr "Невідомий тип `%c', закриття керівного з'єднання.\n"
 
-#: src/ftp.c:537
+#: src/ftp.c:750
 msgid "done.  "
 msgstr "зроблено.  "
 
-#: src/ftp.c:543
+#: src/ftp.c:756
 msgid "==> CWD not needed.\n"
 msgstr "==> CWD не потрібно.\n"
 
-#: src/ftp.c:754
+#: src/ftp.c:940
+msgid "Logically impossible section reached in getftp()"
+msgstr "У getftp() виявлено логічно неможливий розділ"
+
+#: src/ftp.c:941
+#, c-format
+msgid ""
+"cwd_count: %d\n"
+"cwd_start: %d\n"
+"cwd_end: %d\n"
+msgstr ""
+"cwd_count: %d\n"
+"cwd_start: %d\n"
+"cwd_end: %d\n"
+
+#: src/ftp.c:971
 #, c-format
 msgid ""
 "No such directory %s.\n"
@@ -526,37 +573,37 @@ msgstr ""
 
 # do not CWD
 # do not CWD
-#: src/ftp.c:775
+#: src/ftp.c:992
 msgid "==> CWD not required.\n"
 msgstr "==> CWD не вимагається.\n"
 
-#: src/ftp.c:818
+#: src/ftp.c:1035
 msgid "File has already been retrieved.\n"
 msgstr "Файл вже отримано.\n"
 
-#: src/ftp.c:854
+#: src/ftp.c:1071
 msgid "Cannot initiate PASV transfer.\n"
-msgstr "Не можу ініціювати PASV-передачу.\n"
+msgstr "Не вдалося ініціювати PASV-передачу.\n"
 
-#: src/ftp.c:858
+#: src/ftp.c:1075
 msgid "Cannot parse PASV response.\n"
 msgstr "Помилка синтаксичного аналізу відповіді PASV.\n"
 
-#: src/ftp.c:875
+#: src/ftp.c:1092
 #, c-format
 msgid "couldn't connect to %s port %d: %s\n"
 msgstr "не вдалося під'єднатися до %s:%d: %s\n"
 
-#: src/ftp.c:923
+#: src/ftp.c:1146
 #, c-format
 msgid "Bind error (%s).\n"
 msgstr "Помилка зв'язування (%s).\n"
 
-#: src/ftp.c:929
+#: src/ftp.c:1152
 msgid "Invalid PORT.\n"
 msgstr "Некоректний PORT.\n"
 
-#: src/ftp.c:975
+#: src/ftp.c:1198
 msgid ""
 "\n"
 "REST failed, starting from scratch.\n"
@@ -564,17 +611,17 @@ msgstr ""
 "\n"
 "Команда REST не вдалась, починаємо з нуля.\n"
 
-#: src/ftp.c:1015
+#: src/ftp.c:1241
 #, c-format
 msgid "File %s exists.\n"
 msgstr "Файл %s існує.\n"
 
-#: src/ftp.c:1021
+#: src/ftp.c:1247
 #, c-format
 msgid "No such file %s.\n"
 msgstr "Файл %s відсутній.\n"
 
-#: src/ftp.c:1067
+#: src/ftp.c:1297
 #, c-format
 msgid ""
 "No such file %s.\n"
@@ -583,7 +630,7 @@ msgstr ""
 "Файл %s відсутній.\n"
 "\n"
 
-#: src/ftp.c:1117
+#: src/ftp.c:1347
 #, c-format
 msgid ""
 "No such file or directory %s.\n"
@@ -592,40 +639,40 @@ msgstr ""
 "Файл чи каталог %s відсутній.\n"
 "\n"
 
-#: src/ftp.c:1276 src/http.c:2940
+#: src/ftp.c:1506 src/http.c:2551
 #, c-format
 msgid "%s has sprung into existence.\n"
 msgstr "%s почав своє існування.\n"
 
-#: src/ftp.c:1328
+#: src/ftp.c:1595
 #, c-format
 msgid "%s: %s, closing control connection.\n"
 msgstr "%s: %s, закриття керівного з'єднання.\n"
 
-#: src/ftp.c:1340
+#: src/ftp.c:1607
 #, c-format
 msgid "%s (%s) - Data connection: %s; "
 msgstr "%s (%s) - З'єднання: %s; "
 
-#: src/ftp.c:1356
+#: src/ftp.c:1622
 msgid "Control connection closed.\n"
 msgstr "Керівне з'єднання закрито.\n"
 
-#: src/ftp.c:1374
+#: src/ftp.c:1640
 msgid "Data transfer aborted.\n"
 msgstr "Передачу даних перервано.\n"
 
-#: src/ftp.c:1580
+#: src/ftp.c:1864
 #, c-format
 msgid "File %s already there; not retrieving.\n"
 msgstr "Файл %s вже є тут, не завантажуємо.\n"
 
-#: src/ftp.c:1663 src/http.c:3107
+#: src/ftp.c:1949 src/http.c:4273
 #, c-format
 msgid "(try:%2d)"
 msgstr "(спроба:%2d)"
 
-#: src/ftp.c:1745 src/http.c:3493
+#: src/ftp.c:2037 src/http.c:4689
 #, c-format
 msgid ""
 "%s (%s) - written to stdout %s[%s]\n"
@@ -634,7 +681,7 @@ msgstr ""
 "%s (%s) - записаний до stdout %s[%s]\n"
 "\n"
 
-#: src/ftp.c:1746 src/http.c:3494
+#: src/ftp.c:2038 src/http.c:4690
 #, c-format
 msgid ""
 "%s (%s) - %s saved [%s]\n"
@@ -643,36 +690,36 @@ msgstr ""
 "%s (%s) - %s збережено [%s]\n"
 "\n"
 
-#: src/ftp.c:1804 src/main.c:1670 src/recur.c:433 src/recur.c:650
-#: src/retr.c:1102
+#: src/ftp.c:2098 src/main.c:2117 src/metalink.c:1137 src/recur.c:513
+#: src/recur.c:748 src/retr.c:1294
 #, c-format
 msgid "Removing %s.\n"
 msgstr "Вилучення %s.\n"
 
-#: src/ftp.c:1850
+#: src/ftp.c:2152
 #, c-format
 msgid "Using %s as listing tmp file.\n"
-msgstr "Лістинг буде збережено в тимчасовому файлі %s.\n"
+msgstr "Список буде збережено до тимчасового файла %s.\n"
 
-#: src/ftp.c:1867
+#: src/ftp.c:2169
 #, c-format
 msgid "Removed %s.\n"
 msgstr "%s вилучено.\n"
 
-#: src/ftp.c:1904
+#: src/ftp.c:2209
 #, c-format
 msgid "Recursion depth %d exceeded max. depth %d.\n"
 msgstr "Глибина рекурсії %d перевищила максимальну глибину %d.\n"
 
 # Remote file is older, file sizes can be compared and
 # are both equal.
-#: src/ftp.c:1974
+#: src/ftp.c:2279
 #, c-format
 msgid "Remote file no newer than local file %s -- not retrieving.\n"
 msgstr "Локальний файл %s новіший -- не завантажуємо його.\n"
 
 # Remote file is newer or sizes cannot be matched
-#: src/ftp.c:1981
+#: src/ftp.c:2287
 #, c-format
 msgid ""
 "Remote file is newer than local file %s -- retrieving.\n"
@@ -683,7 +730,7 @@ msgstr ""
 
 # Sizes do not match
 # Sizes do not match
-#: src/ftp.c:1988
+#: src/ftp.c:2294
 #, c-format
 msgid ""
 "The sizes do not match (local %s) -- retrieving.\n"
@@ -692,11 +739,11 @@ msgstr ""
 "Розмір файлів не збігається (локальний: %s) -- завантажуємо.\n"
 "\n"
 
-#: src/ftp.c:2006
+#: src/ftp.c:2312
 msgid "Invalid name of the symlink, skipping.\n"
-msgstr "Некоректне ім'я символьного посилання, пропускаємо.\n"
+msgstr "Некоректна назва символьного посилання, пропускаємо.\n"
 
-#: src/ftp.c:2023
+#: src/ftp.c:2329
 #, c-format
 msgid ""
 "Already have correct symlink %s -> %s\n"
@@ -705,47 +752,52 @@ msgstr ""
 "Символьне посилання %s -> %s вже існує.\n"
 "\n"
 
-#: src/ftp.c:2032
+#: src/ftp.c:2338
 #, c-format
 msgid "Creating symlink %s -> %s\n"
 msgstr "Створюємо символьне посилання %s -> %s\n"
 
-#: src/ftp.c:2042
+#: src/ftp.c:2348
 #, c-format
 msgid "Symlinks not supported, skipping symlink %s.\n"
 msgstr "Символьні посилання не підтримуються, пропускаємо їх %s.\n"
 
-#: src/ftp.c:2054
+#: src/ftp.c:2363
 #, c-format
 msgid "Skipping directory %s.\n"
 msgstr "Пропускаємо каталог %s.\n"
 
-#: src/ftp.c:2063
+#: src/ftp.c:2376
 #, c-format
 msgid "%s: unknown/unsupported file type.\n"
 msgstr "%s: невідомий тип файлу (або не підтримується).\n"
 
-#: src/ftp.c:2103
+#: src/ftp.c:2400
+#, c-format
+msgid "Failed to set permissions for %s.\n"
+msgstr "Не вдалося встановити права доступу для %s.\n"
+
+#: src/ftp.c:2421
 #, c-format
 msgid "%s: corrupt time-stamp.\n"
 msgstr "%s: пошкоджена мітка часу.\n"
 
-#: src/ftp.c:2127
+#: src/ftp.c:2445
 #, c-format
 msgid "Will not retrieve dirs since depth is %d (max %d).\n"
 msgstr "Не завантажуємо каталоги оскільки глибина вже %d (максимум %d).\n"
 
-#: src/ftp.c:2177
+#: src/ftp.c:2496
 #, c-format
 msgid "Not descending to %s as it is excluded/not-included.\n"
 msgstr "Не виконуємо вхід до %s, оскільки його виключено або не включено.\n"
 
-#: src/ftp.c:2266 src/ftp.c:2280
+#: src/ftp.c:2586 src/ftp.c:2600
 #, c-format
 msgid "Rejecting %s.\n"
 msgstr "Пропускаємо %s.\n"
 
-#: src/ftp.c:2303
+#: src/ftp.c:2623
 #, c-format
 msgid "Error matching %s against %s: %s\n"
 msgstr "Помилка встановлення відповідності %s %s: %s\n"
@@ -753,153 +805,192 @@ msgstr "Помилка встановлення відповідності %s %s
 # No luck.
 # #### This message SUCKS.  We should see what was the
 # reason that nothing was retrieved.
-#: src/ftp.c:2359
+#: src/ftp.c:2679
 #, c-format
 msgid "No matches on pattern %s.\n"
 msgstr "Немає збігів з шаблоном %s.\n"
 
-#: src/ftp.c:2430
+#: src/ftp.c:2751
 #, c-format
 msgid "Wrote HTML-ized index to %s [%s].\n"
-msgstr "Лістинг у HTML-форматі записано у файл %s [%s].\n"
+msgstr "Покажчик у форматі HTML записано до файла %s [%s].\n"
 
-#: src/ftp.c:2435
+#: src/ftp.c:2756
 #, c-format
 msgid "Wrote HTML-ized index to %s.\n"
-msgstr "Лістинг у HTML-форматі записано у файл %s.\n"
+msgstr "Покажчик у форматі HTML записано до файла %s.\n"
 
-#: src/gnutls.c:110
+#: src/gnutls.c:115
 #, c-format
 msgid "ERROR: Cannot open directory %s.\n"
 msgstr "ПОМИЛКА: не вдалося відкрити каталог %s.\n"
 
-#: src/gnutls.c:141
+#: src/gnutls.c:165
 #, c-format
 msgid "ERROR: Failed to open cert %s: (%d).\n"
 msgstr "ПОМИЛКА: не вдалося відкрити сертифікат %s: (%d).\n"
 
-#: src/gnutls.c:173
+#: src/gnutls.c:170
+#, c-format
+msgid "Loaded CA certificate '%s'\n"
+msgstr "Завантажено сертифікат CA «%s»\n"
+
+#: src/gnutls.c:180
+#, c-format
+msgid "ERROR: Failed to load CRL file '%s': (%d)\n"
+msgstr "ПОМИЛКА: не вдалося завантажити файл CRL «%s»: (%d).\n"
+
+#: src/gnutls.c:184
+#, c-format
+msgid "Loaded CRL file '%s'\n"
+msgstr "Завантажено файл CRL «%s»\n"
+
+#: src/gnutls.c:208
 msgid "ERROR: GnuTLS requires the key and the cert to be of the same type.\n"
 msgstr ""
 "ПОМИЛКА: GnuTLS вимагає, щоб ключ і сертифікат належали до одного типу.\n"
 
-#: src/gnutls.c:589 src/openssl.c:599
+#: src/gnutls.c:602
+#, fuzzy, c-format
+msgid "GnuTLS: unimplemented 'secure-protocol' option value %u\n"
+msgstr ""
+"GnuTLS: нереалізоване у програмі значення параметра «secure-protocol», %d\n"
+
+#: src/gnutls.c:604 src/gnutls.c:641 src/host.c:159 src/openssl.c:255
+msgid "Please report this issue to bug-wget@gnu.org\n"
+msgstr "Будь ласка, повідомте про цю ваду за адресою bug-wget@gnu.org\n"
+
+#: src/gnutls.c:640
+#, c-format
+msgid "GnuTLS: unimplemented 'secure-protocol' option value %d\n"
+msgstr ""
+"GnuTLS: нереалізоване у програмі значення параметра «secure-protocol», %d\n"
+
+#: src/gnutls.c:769 src/openssl.c:763
 msgid "ERROR"
 msgstr "ПОМИЛКА"
 
-#: src/gnutls.c:589 src/openssl.c:599
+#: src/gnutls.c:769 src/openssl.c:763
 msgid "WARNING"
 msgstr "УВАГА"
 
-#: src/gnutls.c:595 src/openssl.c:608
+#: src/gnutls.c:780 src/openssl.c:776
 #, c-format
 msgid "%s: No certificate presented by %s.\n"
 msgstr "%s: %s не надано жодних сертифікатів.\n"
 
-#: src/gnutls.c:601
+#: src/gnutls.c:786
 #, c-format
 msgid "%s: The certificate of %s is not trusted.\n"
 msgstr "%s: Сертифікат %s не довірений.\n"
 
-#: src/gnutls.c:602
+#: src/gnutls.c:787
 #, c-format
 msgid "%s: The certificate of %s hasn't got a known issuer.\n"
 msgstr "%s: сертифікат %s видано невідомим видавцем.\n"
 
-#: src/gnutls.c:603
+#: src/gnutls.c:788
 #, c-format
 msgid "%s: The certificate of %s has been revoked.\n"
 msgstr "%s: сертифікат %s було відкликано.\n"
 
-#: src/gnutls.c:604
+#: src/gnutls.c:789
 #, c-format
 msgid "%s: The certificate signer of %s was not a CA.\n"
 msgstr "%s: підписувачем сертифіката %s не є служба сертифікації.\n"
 
-#: src/gnutls.c:605
+#: src/gnutls.c:790
 #, c-format
 msgid "%s: The certificate of %s was signed using an insecure algorithm.\n"
 msgstr ""
 "%s: сертифікат %s було підписано за допомогою незахищеного алгоритму.\n"
 
-#: src/gnutls.c:606
+#: src/gnutls.c:791
 #, c-format
 msgid "%s: The certificate of %s is not yet activated.\n"
 msgstr "%s: сертифікат %s ще не активовано.\n"
 
-#: src/gnutls.c:607
+#: src/gnutls.c:792
 #, c-format
 msgid "%s: The certificate of %s has expired.\n"
 msgstr "%s: строк дії сертифіката %s вичерпано.\n"
 
-#: src/gnutls.c:618
+#: src/gnutls.c:804
 #, c-format
 msgid "Error initializing X509 certificate: %s\n"
 msgstr "Помилка ініціалізації сертифікату X509: %s\n"
 
-#: src/gnutls.c:627
+#: src/gnutls.c:813
 msgid "No certificate found\n"
 msgstr "Сертифікат не знайдено\n"
 
-#: src/gnutls.c:634
+#: src/gnutls.c:820
 #, c-format
 msgid "Error parsing certificate: %s\n"
 msgstr "Помилка розбору сертифікату: %s.\n"
 
-#: src/gnutls.c:641
+#: src/gnutls.c:827
 msgid "The certificate has not yet been activated\n"
 msgstr "Сертифікат ще не було активовано\n"
 
-#: src/gnutls.c:646
+#: src/gnutls.c:832
 msgid "The certificate has expired\n"
 msgstr "Сертифікат прострочений\n"
 
-#: src/gnutls.c:652
+#: src/gnutls.c:839
 #, c-format
 msgid "The certificate's owner does not match hostname %s\n"
 msgstr "Запис власника сертифіката не відповідає назві вузла %s\n"
 
-#: src/gnutls.c:661
+#: src/gnutls.c:848 src/openssl.c:972
+msgid "The public key does not match pinned public key!\n"
+msgstr "Відкритий ключ не збігається із приєднаним відкритим ключем!\n"
+
+#: src/gnutls.c:857
 msgid "Certificate must be X.509\n"
 msgstr "Сертифікат має належати до типу X.509\n"
 
-#: src/host.c:361
+#: src/host.c:158
+msgid "Error in handling the address list.\n"
+msgstr "Помилка під час обробки списку адрес.\n"
+
+#: src/host.c:369
 msgid "Unknown host"
 msgstr "Невідомий вузол"
 
-#: src/host.c:740
+#: src/host.c:849
 #, c-format
 msgid "Resolving %s... "
-msgstr "Визначення імені %s... "
+msgstr "Визначення назви %s... "
 
-#: src/host.c:792
+#: src/host.c:925
 msgid "failed: No IPv4/IPv6 addresses for host.\n"
 msgstr "невдача: Для вузла відсутня IPv4/IPv6 адреса.\n"
 
-#: src/host.c:815
+#: src/host.c:955
 msgid "failed: timed out.\n"
 msgstr "невдача: тайм-аут.\n"
 
-#: src/html-url.c:303
+#: src/html-url.c:307
 #, c-format
 msgid "%s: Cannot resolve incomplete link %s.\n"
-msgstr "%s: Не можу розібрати неповне посилання %s.\n"
+msgstr "%s: не вдалося розібрати неповне посилання %s.\n"
 
-#: src/html-url.c:836
+#: src/html-url.c:931
 #, c-format
 msgid "%s: Invalid URL %s: %s\n"
 msgstr "%s: Некоректний URL %s: %s\n"
 
-#: src/http.c:371
+#: src/http.c:376
 #, c-format
 msgid "Failed writing HTTP request: %s.\n"
 msgstr "Помилка запису HTTP-запиту: %s.\n"
 
-#: src/http.c:767
+#: src/http.c:781
 msgid "No headers, assuming HTTP/0.9"
 msgstr "Відсутні заголовки, припускається, що це HTTP/0.9"
 
-#: src/http.c:1495
+#: src/http.c:1611
 #, c-format
 msgid ""
 "File %s already there; not retrieving.\n"
@@ -908,80 +999,153 @@ msgstr ""
 "Файл '%s' вже є тут, не завантажуємо.\n"
 "\n"
 
-#: src/http.c:1747
-msgid "Disabling SSL due to encountered errors.\n"
-msgstr "Вимикаємо SSL через помилки.\n"
+#: src/http.c:1821
+msgid "gmtime failed. This is probably a bug.\n"
+msgstr "Помилка gmtime. Ймовірно, маємо справу із вадою у програмі.\n"
 
-#: src/http.c:1869
+#: src/http.c:1882
+msgid ""
+"Cannot convert timestamp to http format. Falling back to time 0 as last "
+"modification time.\n"
+msgstr ""
+"Не вдалося перетворити часову позначку у формат http. Використовуємо час 0, "
+"як час внесення останніх змін.\n"
+
+#: src/http.c:1986
 #, c-format
 msgid "BODY data file %s missing: %s\n"
 msgstr "Не вистачає файла даних BODY %s: %s\n"
 
-#: src/http.c:1971
+#: src/http.c:2078
 #, c-format
 msgid "Reusing existing connection to [%s]:%d.\n"
 msgstr "Повторне використання зв'язку з [%s]:%d.\n"
 
-#: src/http.c:1976
+#: src/http.c:2083
 #, c-format
 msgid "Reusing existing connection to %s:%d.\n"
 msgstr "Повторне використання зв'язку з %s:%d.\n"
 
-#: src/http.c:2048
+#: src/http.c:2149
 #, c-format
 msgid "Failed reading proxy response: %s\n"
 msgstr "Не вдалось прочитати відповідь від проксі: %s\n"
 
-#: src/http.c:2068 src/http.c:2235 src/http.c:3287
+#: src/http.c:2168 src/http.c:3407 src/http.c:4483
 #, c-format
 msgid "%s ERROR %d: %s.\n"
 msgstr "%s ПОМИЛКА %d: %s.\n"
 
-#: src/http.c:2070 src/http.c:2237 src/http.c:2572
+#: src/http.c:2170 src/http.c:3409 src/http.c:3597
 msgid "Malformed status line"
 msgstr "Несформований рядок стану"
 
-#: src/http.c:2081
+#: src/http.c:2181
 #, c-format
 msgid "Proxy tunneling failed: %s"
 msgstr "Помилка тунелювання проксі-сервера: %s"
 
-#: src/http.c:2175
+#: src/http.c:2417
+msgid "Unknown authentication scheme.\n"
+msgstr "Невідома схема аутентифікації.\n"
+
+#: src/http.c:2435
+#, c-format
+msgid "Authentication selected: %s\n"
+msgstr "Вибраний спосіб розпізнавання: %s\n"
+
+#: src/http.c:2566
+#, c-format
+msgid "Saving to: %s\n"
+msgstr "Зберігаємо до %s\n"
+
+#: src/http.c:2785
+#, c-format
+msgid ""
+"When downloading signature:\n"
+"%s: %s.\n"
+msgstr ""
+"Під час отримання підпису:\n"
+"%s: %s.\n"
+
+#: src/http.c:2821
+msgid "Unable to read signature content from temporary file. Skipping.\n"
+msgstr ""
+"Не вдалося прочитати вміст підпису до тимчасового файла. Пропускаємо.\n"
+
+#: src/http.c:2844
+msgid "Could not create temporary file. Skipping signature download.\n"
+msgstr "Не вдалося створити тимчасовий файл. Пропускаємо отримання підпису.\n"
+
+#: src/http.c:2878 src/http.c:2960
+#, c-format
+msgid "Invalid pri value. Assuming %d.\n"
+msgstr "Некоректне значення pri. Припускаємо значення %d.\n"
+
+#: src/http.c:3064
+msgid ""
+"Could not find acceptable digest for Metalink resources.\n"
+"Ignoring them.\n"
+msgstr ""
+"Не вдалося знайти прийнятну контрольну суму для ресурсів Metalink.\n"
+"Ігноруємо їх.\n"
+
+#: src/http.c:3201
+msgid "Disabling SSL due to encountered errors.\n"
+msgstr "Вимикаємо SSL через помилки.\n"
+
+#: src/http.c:3343
 #, c-format
 msgid "%s request sent, awaiting response... "
-msgstr "%s-запит надіслано, очікуємо відповіді... "
+msgstr "%s-запит надіслано, очікуємо на відповідь… "
 
-#: src/http.c:2210
+#: src/http.c:3383
 msgid "No data received.\n"
 msgstr "Не отримано даних.\n"
 
-#: src/http.c:2217
+#: src/http.c:3389
 #, c-format
 msgid "Read error (%s) in headers.\n"
 msgstr "Помилка читання в заголовках (%s).\n"
 
-#: src/http.c:2389
-msgid "Unknown authentication scheme.\n"
-msgstr "Невідома схема аутентифікації.\n"
-
-#: src/http.c:2574
+#: src/http.c:3599
 msgid "(no description)"
 msgstr "(без опису)"
 
-#: src/http.c:2650
+#: src/http.c:3768
 #, c-format
 msgid "Location: %s%s\n"
 msgstr "Розміщення: %s%s\n"
 
-#: src/http.c:2651 src/http.c:2820
+#: src/http.c:3769 src/http.c:4013
 msgid "unspecified"
 msgstr "не вказано"
 
-#: src/http.c:2652
+#: src/http.c:3770
 msgid " [following]"
 msgstr " [перехід]"
 
-#: src/http.c:2765
+#: src/http.c:3853
+#, c-format
+msgid ""
+"File %s not modified on server. Omitting download.\n"
+"\n"
+msgstr ""
+"Файл %s не змінено на сервері. Пропускаємо процедуру отримання.\n"
+"\n"
+
+#: src/http.c:3924
+#, c-format
+msgid ""
+"Server ignored If-Modified-Since header for file %s.\n"
+"You might want to add --no-if-modified-since option.\n"
+"\n"
+msgstr ""
+"Сервер ігнорує заголовок If-Modified-Since для файла %s.\n"
+"Ймовірно, слід додати до команди параметр --no-if-modified-since.\n"
+"\n"
+
+#: src/http.c:3954
 msgid ""
 "\n"
 "    The file is already fully retrieved; nothing to do.\n"
@@ -994,79 +1158,86 @@ msgstr ""
 # No need to print this output if the body won't be
 # downloaded at all, or if the original server response is
 # printed.
-#: src/http.c:2800
+#: src/http.c:3993
 msgid "Length: "
 msgstr "Довжина: "
 
-#: src/http.c:2820
+#: src/http.c:4013
 msgid "ignored"
 msgstr "ігнорується"
 
-#: src/http.c:2961
-#, c-format
-msgid "Saving to: %s\n"
-msgstr "Зберігання до: %s\n"
-
-#: src/http.c:3031
+#: src/http.c:4181
 msgid "Warning: wildcards not supported in HTTP.\n"
 msgstr "Увага: в HTTP не підтримуються шаблони.\n"
 
-#: src/http.c:3096
+#: src/http.c:4263
 msgid "Spider mode enabled. Check if remote file exists.\n"
 msgstr ""
 "Увімкнено режим «павука». Перевірка, чи існує файл на віддаленому "
 "комп'ютері.\n"
 
-#: src/http.c:3185
+#: src/http.c:4353
 #, c-format
 msgid "Cannot write to %s (%s).\n"
 msgstr "Помилка запису в %s (%s).\n"
 
-#: src/http.c:3196
+#: src/http.c:4364
 msgid "Required attribute missing from Header received.\n"
 msgstr "У отриманому заголовку не вистачає потрібного для роботи атрибута.\n"
 
-#: src/http.c:3201
+#: src/http.c:4369
 msgid "Username/Password Authentication Failed.\n"
 msgstr ""
 "Спроба пройти розпізнавання за іменем користувача і паролем зазнала "
 "невдачі.\n"
 
-#: src/http.c:3207
+#: src/http.c:4375
 msgid "Cannot write to WARC file.\n"
 msgstr "Не вдалося записати дані до файла WARC.\n"
 
-#: src/http.c:3213
+#: src/http.c:4381
 msgid "Cannot write to temporary WARC file.\n"
 msgstr "Не вдалося виконати запис до тимчасового файла WARC.\n"
 
-#: src/http.c:3218
+#: src/http.c:4386
 msgid "Unable to establish SSL connection.\n"
-msgstr "Не можу встановити SSL-з'єднання.\n"
+msgstr "Не вдалося встановити SSL-з'єднання.\n"
 
-#: src/http.c:3224
+#: src/http.c:4392
 #, c-format
 msgid "Cannot unlink %s (%s).\n"
 msgstr "неможливо видалити %s (%s).\n"
 
-#: src/http.c:3234
+#: src/http.c:4402
 #, c-format
 msgid "ERROR: Redirection (%d) without location.\n"
 msgstr "ПОМИЛКА: Перенаправлення (%d) без вказування адреси.\n"
 
-#: src/http.c:3282
+#: src/http.c:4424
+msgid ""
+"Could not find Metalink data in HTTP response. Downloading file using HTTP "
+"GET.\n"
+msgstr ""
+"Не вдалося знайти дані Metalink у HTTP-відповіді. Отримуємо файл за "
+"допомогою GET HTTP.\n"
+
+#: src/http.c:4433
+msgid "Metalink headers found. Switching to Metalink mode.\n"
+msgstr "Виявлено заголовки Metalink. Перемикаємося у режим Metalink.\n"
+
+#: src/http.c:4473
 msgid "Remote file does not exist -- broken link!!!\n"
 msgstr "Віддалений файл не існує -- пошкоджене посилання!!!\n"
 
-#: src/http.c:3304
+#: src/http.c:4500
 msgid "Last-modified header missing -- time-stamps turned off.\n"
 msgstr "Відсутній заголовок last-modified -- мітки часу вимкнено.\n"
 
-#: src/http.c:3312
+#: src/http.c:4508
 msgid "Last-modified header invalid -- time-stamp ignored.\n"
 msgstr "Некоректний заголовок last-modified -- ігноруємо мітки часу.\n"
 
-#: src/http.c:3342
+#: src/http.c:4538
 #, c-format
 msgid ""
 "Server file no newer than local file %s -- not retrieving.\n"
@@ -1075,17 +1246,17 @@ msgstr ""
 "Локальний файл %s новіший -- не завантажуємо його.\n"
 "\n"
 
-#: src/http.c:3350
+#: src/http.c:4546
 #, c-format
 msgid "The sizes do not match (local %s) -- retrieving.\n"
 msgstr "Довжини файлів не збігаються (локальний %s) -- завантажуємо.\n"
 
-#: src/http.c:3359
+#: src/http.c:4555
 msgid "Remote file is newer, retrieving.\n"
 msgstr "Файл новіший, ніж локальний, завантажуємо.\n"
 
 # Remote file is newer or sizes cannot be matched
-#: src/http.c:3377
+#: src/http.c:4573
 msgid ""
 "Remote file exists and could contain links to other resources -- "
 "retrieving.\n"
@@ -1097,7 +1268,7 @@ msgstr ""
 
 # Remote file is older, file sizes can be compared and
 # are both equal.
-#: src/http.c:3383
+#: src/http.c:4579
 msgid ""
 "Remote file exists but does not contain any link -- not retrieving.\n"
 "\n"
@@ -1105,7 +1276,7 @@ msgstr ""
 "Віддалений файл існує, але не містить посилань -- не завантажуємо.\n"
 "\n"
 
-#: src/http.c:3392
+#: src/http.c:4588
 msgid ""
 "Remote file exists and could contain further links,\n"
 "but recursion is disabled -- not retrieving.\n"
@@ -1115,7 +1286,7 @@ msgstr ""
 "але рекурсію вимкнено -- не завантажуємо.\n"
 "\n"
 
-#: src/http.c:3398
+#: src/http.c:4594
 msgid ""
 "Remote file exists.\n"
 "\n"
@@ -1123,12 +1294,12 @@ msgstr ""
 "Віддалений файл існує.\n"
 "\n"
 
-#: src/http.c:3407
+#: src/http.c:4603
 #, c-format
 msgid "%s URL: %s %2d %s\n"
 msgstr "%s URL: %s %2d %s\n"
 
-#: src/http.c:3457
+#: src/http.c:4653
 #, c-format
 msgid ""
 "%s (%s) - written to stdout %s[%s/%s]\n"
@@ -1137,7 +1308,7 @@ msgstr ""
 "%s (%s) - запис до stdout %s[%s/%s]\n"
 "\n"
 
-#: src/http.c:3458
+#: src/http.c:4654
 #, c-format
 msgid ""
 "%s (%s) - %s saved [%s/%s]\n"
@@ -1146,57 +1317,58 @@ msgstr ""
 "%s (%s) - %s збережено [%s/%s]\n"
 "\n"
 
-#: src/http.c:3519
+#: src/http.c:4715
 #, c-format
 msgid "%s (%s) - Connection closed at byte %s. "
 msgstr "%s (%s) - З'єднання закрито в позиції %s байт. "
 
-#: src/http.c:3542
+#: src/http.c:4738
 #, c-format
 msgid "%s (%s) - Read error at byte %s (%s)."
 msgstr "%s (%s) - Помилка читання в позиції %s (%s)."
 
-#: src/http.c:3551
+#: src/http.c:4747
 #, c-format
 msgid "%s (%s) - Read error at byte %s/%s (%s). "
 msgstr "%s (%s) - Помилка читання в позиції %s/%s (%s). "
 
-#: src/http.c:3786
+#: src/http.c:4985
 #, c-format
 msgid "Unsupported quality of protection '%s'.\n"
 msgstr "Непідтримувана якість захисту «%s».\n"
 
-#: src/http.c:3792
+#: src/http.c:4990
 #, c-format
 msgid "Unsupported algorithm '%s'.\n"
 msgstr "Непідтримуваний алгоритм «%s».\n"
 
-#: src/init.c:500
-#, c-format
-msgid "%s: WGETRC points to %s, which doesn't exist.\n"
+#: src/init.c:582
+#, fuzzy, c-format
+msgid ""
+"%s: WGETRC points to %s, which couldn't be accessed because of error: %s.\n"
 msgstr "%s: WGETRC вказує на %s, що насправді не існує.\n"
 
-#: src/init.c:605 src/netrc.c:246
+#: src/init.c:683 src/netrc.c:246
 #, c-format
 msgid "%s: Cannot read %s (%s).\n"
 msgstr "%s: Неможливо прочитати %s (%s).\n"
 
-#: src/init.c:622
+#: src/init.c:700
 #, c-format
 msgid "%s: Error in %s at line %d.\n"
 msgstr "%s: Помилка в %s (рядок %d).\n"
 
-#: src/init.c:628
+#: src/init.c:706
 #, c-format
 msgid "%s: Syntax error in %s at line %d.\n"
 msgstr "%s: помилка синтаксису у %s (рядок %d).\n"
 
-#: src/init.c:633
+#: src/init.c:711
 #, c-format
 msgid "%s: Unknown command %s in %s at line %d.\n"
 msgstr "%s: Невідома команда %s в %s (рядок %d).\n"
 
-#: src/init.c:670
+#: src/init.c:750
 #, c-format
 msgid ""
 "Parsing system wgetrc file (env SYSTEM_WGETRC) failed.  Please check\n"
@@ -1208,7 +1380,7 @@ msgstr ""
 "«%s»,\n"
 "або вкажіть інший файл за допомогою --config.\n"
 
-#: src/init.c:685
+#: src/init.c:765
 #, c-format
 msgid ""
 "Parsing system wgetrc file failed.  Please check\n"
@@ -1219,134 +1391,139 @@ msgstr ""
 "«%s»,\n"
 "або вкажіть інший файл за допомогою --config.\n"
 
-#: src/init.c:701
+#: src/init.c:781
 #, c-format
 msgid "%s: Warning: Both system and user wgetrc point to %s.\n"
 msgstr ""
 "%s: Увага: Як системний wgetrc так і wgetrc користувача вказують на %s.\n"
 
-#: src/init.c:891
+#: src/init.c:976
 #, c-format
 msgid "%s: Invalid --execute command %s\n"
 msgstr "%s: некоректна команда в --execute %s\n"
 
-#: src/init.c:936
+#: src/init.c:1037
 #, c-format
 msgid "%s: %s: Invalid boolean %s; use `on' or `off'.\n"
 msgstr "%s: %s: Некоректне булеве %s, вкажіть `on' чи `off'.\n"
 
-#: src/init.c:953
+#: src/init.c:1070
+#, c-format
+msgid "%s: %s: Invalid %s; use `on', `off' or `quiet'.\n"
+msgstr "%s: %s: некоректне значення %s; мало бути «on», «off» або «quiet».\n"
+
+#: src/init.c:1088
 #, c-format
 msgid "%s: %s: Invalid number %s.\n"
 msgstr "%s: %s: Некоректне число %s.\n"
 
-#: src/init.c:1175 src/init.c:1194
+#: src/init.c:1169
+#, c-format
+msgid "%s: %s must only be used once\n"
+msgstr "%s: %s має бути використано лише один раз\n"
+
+#: src/init.c:1324 src/init.c:1343
 #, c-format
 msgid "%s: %s: Invalid byte value %s\n"
 msgstr "%s: %s: Некоректне значення байта %s\n"
 
-#: src/init.c:1219
+#: src/init.c:1368
 #, c-format
 msgid "%s: %s: Invalid time period %s\n"
 msgstr "%s: %s: Некоректний період часу %s\n"
 
-#: src/init.c:1273 src/init.c:1384 src/init.c:1440 src/init.c:1504
-#: src/init.c:1523 src/init.c:1548
+#: src/init.c:1430 src/main.c:1859
+#, c-format
+msgid ""
+"use-askpass requires a string or either environment variable WGET_ASKPASS or "
+"SSH_ASKPASS to be set.\n"
+msgstr ""
+"use-askpass потребує рядка або встановлення змінної середовища WGET_ASKPASS "
+"або SSH_ASKPASS.\n"
+
+#: src/init.c:1448 src/init.c:1470 src/init.c:1578 src/init.c:1634
+#: src/init.c:1700 src/init.c:1719 src/init.c:1744
 #, c-format
 msgid "%s: %s: Invalid value %s.\n"
 msgstr "%s: %s: Некоректне значення %s.\n"
 
-#: src/init.c:1310
+#: src/init.c:1504
 #, c-format
 msgid "%s: %s: Invalid header %s.\n"
 msgstr "%s: %s: Некоректний заголовок %s.\n"
 
-#: src/init.c:1331
+#: src/init.c:1525
 #, c-format
 msgid "%s: %s: Invalid WARC header %s.\n"
 msgstr "%s: %s: некоректний заголовок WARC, %s.\n"
 
-#: src/init.c:1397
+#: src/init.c:1591
 #, c-format
 msgid "%s: %s: Invalid progress type %s.\n"
 msgstr "%s: %s: Некоректний тип стиля показу поступу %s.\n"
 
-#: src/init.c:1477
+#: src/init.c:1673
 #, c-format
 msgid ""
 "%s: %s: Invalid restriction %s,\n"
-"    use [unix|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
+"    use [unix|vms|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
 msgstr ""
 "%s: %s: Некоректне обмеження %s,\n"
-"    вкажіть [unix|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
+"    вкажіть [unix|vms|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
 
-#: src/iri.c:101
+#: src/iri.c:114
 #, c-format
 msgid "Encoding %s isn't valid\n"
 msgstr "Кодування %s є некоректним\n"
 
-#: src/iri.c:126
+#: src/iri.c:140 src/url.c:1572
 #, c-format
 msgid "Conversion from %s to %s isn't supported\n"
-msgstr "Не підтримується перетворення з %s до %s\n"
+msgstr "Підтримки перетворення з %s на %s не передбачено\n"
 
-#: src/iri.c:149 src/iri.c:190
-#, c-format
-msgid "converted '%s' (%s) -> '%s' (%s)\n"
-msgstr ""
-
-#: src/iri.c:158
+#: src/iri.c:180 src/url.c:1600
 msgid "Incomplete or invalid multibyte sequence encountered\n"
 msgstr "Виявлено неповну або некоректну багатобайтову послідовність\n"
 
-#: src/iri.c:183
+#: src/iri.c:199 src/url.c:1617
 #, c-format
 msgid "Unhandled errno %d\n"
 msgstr "Неопрацьована помилка (errno %d)\n"
 
-#: src/iri.c:204
+#: src/iri.c:236
 msgid "locale_to_utf8: locale is unset\n"
 msgstr "locale_to_utf8: локаль не встановлено\n"
 
-#: src/iri.c:238
+#: src/iri.c:282 src/iri.c:297
 #, c-format
 msgid "idn_encode failed (%d): %s\n"
 msgstr "Помилка у idn_encode (%d): %s\n"
 
-#: src/iri.c:257
+#: src/iri.c:289
 #, c-format
-msgid "idn_decode failed (%d): %s\n"
-msgstr "Помилка у idn_decode (%d): %s\n"
+msgid "Failed to convert to lower: %d: %s\n"
+msgstr "Не вдалося перетворити на нижній регістр: %d: %s\n"
 
-#: src/log.c:867
-#, c-format
-msgid ""
-"\n"
-"%s received, redirecting output to %s.\n"
-msgstr ""
-"\n"
-"отримано %s, перенаправляємо виведення в %s.\n"
-
-#: src/log.c:877
+#: src/log.c:921 src/log.c:940
 #, c-format
 msgid ""
 "\n"
-"%s received.\n"
+"Redirecting output to %s.\n"
 msgstr ""
 "\n"
-"отримано %s.\n"
+"Перенаправляємо виведення до %s.\n"
 
-#: src/log.c:878
+#: src/log.c:933
 #, c-format
 msgid "%s: %s; disabling logging.\n"
 msgstr "%s: %s; вимикаємо протоколювання.\n"
 
-#: src/main.c:414
+#: src/main.c:557
 #, c-format
 msgid "Usage: %s [OPTION]... [URL]...\n"
 msgstr "Використання: %s [ПАРАМЕТР]... [URL]...\n"
 
-#: src/main.c:426
+#: src/main.c:569
 msgid ""
 "Mandatory arguments to long options are mandatory for short options too.\n"
 "\n"
@@ -1355,1076 +1532,1208 @@ msgstr ""
 "коротких.\n"
 "\n"
 
-#: src/main.c:428
+#: src/main.c:571
 msgid "Startup:\n"
 msgstr "Запуск:\n"
 
-#: src/main.c:430
-#, fuzzy
+#: src/main.c:573
 msgid ""
-"  -V,  --version                   display the version of Wget and exit.\n"
-msgstr "  -V,  --version           показати версію Wget.\n"
+"  -V,  --version                   display the version of Wget and exit\n"
+msgstr ""
+"  -V,  --version                   показати дані щодо версії Wget і вийти\n"
 
-#: src/main.c:432
-#, fuzzy
-msgid "  -h,  --help                      print this help.\n"
-msgstr "  -h,  --help              вивести цю підказку.\n"
+#: src/main.c:575
+msgid "  -h,  --help                      print this help\n"
+msgstr "  -h,  --help                      вивести цю підказку\n"
 
-#: src/main.c:434
-#, fuzzy
-msgid "  -b,  --background                go to background after startup.\n"
-msgstr "  -b,  --background        перейти в фоновий режим після запуску.\n"
+#: src/main.c:577
+msgid "  -b,  --background                go to background after startup\n"
+msgstr ""
+"  -b,  --background                перейти в фоновий режим після запуску\n"
 
-#: src/main.c:436
-#, fuzzy
-msgid "  -e,  --execute=COMMAND           execute a `.wgetrc'-style command.\n"
-msgstr "  -e,  --execute=КОМАНДА   виконати команду типу `.wgetrc'.\n"
+#: src/main.c:579
+msgid "  -e,  --execute=COMMAND           execute a `.wgetrc'-style command\n"
+msgstr "  -e,  --execute=КОМАНДА           виконати команду типу .wgetrc\n"
 
-#: src/main.c:440
+#: src/main.c:583
 msgid "Logging and input file:\n"
 msgstr "Протоколювання та вхідний файл:\n"
 
-#: src/main.c:442
-#, fuzzy
-msgid "  -o,  --output-file=FILE          log messages to FILE.\n"
-msgstr "  -o,  --output-file=ФАЙЛ    записувати повідомлення у ФАЙЛ.\n"
+#: src/main.c:585
+msgid "  -o,  --output-file=FILE          log messages to FILE\n"
+msgstr "  -o,  --output-file=ФАЙЛ          записувати повідомлення у ФАЙЛ\n"
 
-#: src/main.c:444
-#, fuzzy
-msgid "  -a,  --append-output=FILE        append messages to FILE.\n"
-msgstr "  -a,  --append-output=ФАЙЛ  додавати повідомлення до ФАЙЛу.\n"
+#: src/main.c:587
+msgid "  -a,  --append-output=FILE        append messages to FILE\n"
+msgstr "  -a,  --append-output=ФАЙЛ        додавати повідомлення до ФАЙЛа.\n"
 
-#: src/main.c:447
-#, fuzzy
+#: src/main.c:590
 msgid ""
-"  -d,  --debug                     print lots of debugging information.\n"
-msgstr "  -d,  --debug               виводити відлагоджувальні повідомлення.\n"
-
-#: src/main.c:451
-#, fuzzy
-msgid "       --wdebug                    print Watt-32 debug output.\n"
+"  -d,  --debug                     print lots of debugging information\n"
 msgstr ""
-"       --wdebug              вивести діагностичні дані у форматі Watt-32.\n"
+"  -d,  --debug                     виводити багато діагностичної "
+"інформації.\n"
 
-#: src/main.c:454
-#, fuzzy
-msgid "  -q,  --quiet                     quiet (no output).\n"
-msgstr "  -q,  --quiet               працювати без виведення повідомлень.\n"
+#: src/main.c:594
+msgid "       --wdebug                    print Watt-32 debug output\n"
+msgstr ""
+"       --wdebug                    вивести діагностичні дані у форматі "
+"Watt-32\n"
 
-#: src/main.c:456
-#, fuzzy
-msgid "  -v,  --verbose                   be verbose (this is the default).\n"
-msgstr "  -v,  --verbose             докладне виведення (типове).\n"
+#: src/main.c:597
+msgid "  -q,  --quiet                     quiet (no output)\n"
+msgstr ""
+"  -q,  --quiet                     працювати без виведення повідомлень\n"
 
-#: src/main.c:458
-#, fuzzy
+#: src/main.c:599
+msgid "  -v,  --verbose                   be verbose (this is the default)\n"
+msgstr "  -v,  --verbose                   докладне виведення (типове)\n"
+
+#: src/main.c:601
 msgid ""
 "  -nv, --no-verbose                turn off verboseness, without being "
-"quiet.\n"
-msgstr "  -nv, --no-verbose          вимкнути багатослівність.\n"
-
-#: src/main.c:460
-#, fuzzy
-msgid ""
-"       --report-speed=TYPE         Output bandwidth as TYPE.  TYPE can be "
-"bits.\n"
+"quiet\n"
 msgstr ""
-"       --report-speed=ТИП    вивести ширину каналу у форматі ТИП. ТИПом може "
-"бути «bits».\n"
+"  -nv, --no-verbose                вимкнути докладні повідомлення, але не "
+"вимикати повідомлення взагалі.\n"
 
-#: src/main.c:462
-#, fuzzy
+#: src/main.c:603
+msgid ""
+"       --report-speed=TYPE         output bandwidth as TYPE.  TYPE can be "
+"bits\n"
+msgstr ""
+"       --report-speed=ТИП          вивести ширину каналу у форматі ТИП. "
+"ТИПом може бути «bits».\n"
+
+#: src/main.c:605
 msgid ""
 "  -i,  --input-file=FILE           download URLs found in local or external "
-"FILE.\n"
+"FILE\n"
 msgstr ""
-"  -i,  --input-file=ФАЙЛ     читати URL з локального або зовнішнього файлу.\n"
+"  -i,  --input-file=ФАЙЛ           читати URL з локального або зовнішнього "
+"файла\n"
 
-#: src/main.c:464
-#, fuzzy
-msgid "  -F,  --force-html                treat input file as HTML.\n"
-msgstr "  -F,  --force-html          трактувати вхідний файл як HTML.\n"
+#: src/main.c:608
+msgid ""
+"       --input-metalink=FILE       download files covered in local Metalink "
+"FILE\n"
+msgstr ""
+"       --input-metalink=ФАЙЛ       файли отримання у локальному файлі "
+"Metalink\n"
 
-#: src/main.c:466
-#, fuzzy
+#: src/main.c:611
+msgid "  -F,  --force-html                treat input file as HTML\n"
+msgstr ""
+"  -F,  --force-html               вважати файл вхідних даних файлом HTML\n"
+
+#: src/main.c:613
 msgid ""
 "  -B,  --base=URL                  resolves HTML input-file links (-i -F)\n"
-"                                   relative to URL.\n"
+"                                     relative to URL\n"
 msgstr ""
-"  -B,  --base=АДРЕСА         визначає посилання у HTML на вхідні файли (-i -"
-"F)\n"
-"                             відносно адреси АДРЕСА.\n"
+"  -B,  --base=АДРЕСА               визначає посилання у HTML на вхідні файли "
+"(-i -F)\n"
+"                                   відносно адреси АДРЕСА.\n"
 
-#: src/main.c:469
-#, fuzzy
-msgid "       --config=FILE               Specify config file to use.\n"
-msgstr "       --config=FILE         Вказати файл налаштувань.\n"
+#: src/main.c:616
+msgid "       --config=FILE               specify config file to use\n"
+msgstr "       --config=FILE               вказати файл налаштувань.\n"
 
-#: src/main.c:471
-#, fuzzy
-msgid "       --no-config                 Do not read any config file.\n"
-msgstr "       --no-cookies            не використовувати куки.\n"
+#: src/main.c:618
+msgid "       --no-config                 do not read any config file\n"
+msgstr ""
+"       --no-config                 не читати дані з файла налаштувань\n"
 
-#: src/main.c:475
+#: src/main.c:620
+msgid ""
+"       --rejected-log=FILE         log reasons for URL rejection to FILE\n"
+msgstr ""
+"       --rejected-log=ФАЙЛ         записувати до журналу причини відмови в "
+"адресі у ФАЙЛі\n"
+
+#: src/main.c:624
 msgid "Download:\n"
 msgstr "Завантаження:\n"
 
-#: src/main.c:477
-#, fuzzy
+#: src/main.c:626
 msgid ""
 "  -t,  --tries=NUMBER              set number of retries to NUMBER (0 "
-"unlimits).\n"
+"unlimits)\n"
 msgstr ""
-"  -t,  --tries=ЧИСЛО             обмежити кількість спроб (0 - безліч).\n"
+"  -t,  --tries=ЧИСЛО               обмежити кількість повторних спроб (0 — "
+"не обмежувати)\n"
 
-#: src/main.c:479
-#, fuzzy
+#: src/main.c:628
 msgid ""
-"       --retry-connrefused         retry even if connection is refused.\n"
+"       --retry-connrefused         retry even if connection is refused\n"
 msgstr ""
-"       --retry-connrefused       повторювати, навіть якщо у з'єднанні "
+"       --retry-connrefused         повторювати, навіть якщо у з'єднанні "
 "відмовлено\n"
 
-#: src/main.c:481
-#, fuzzy
-msgid "  -O,  --output-document=FILE      write documents to FILE.\n"
-msgstr "  -O   --output-document=ФАЙЛ    записувати документи у ФАЙЛ.\n"
+#: src/main.c:630
+msgid "  -O,  --output-document=FILE      write documents to FILE\n"
+msgstr "  -O   --output-document=ФАЙЛ      записувати документи до ФАЙЛа\n"
 
-#: src/main.c:483
-#, fuzzy
+#: src/main.c:632
 msgid ""
 "  -nc, --no-clobber                skip downloads that would download to\n"
-"                                   existing files (overwriting them).\n"
+"                                     existing files (overwriting them)\n"
 msgstr ""
-"  -nc, --no-clobber              пропускати файли, які вже існують\n"
-"                                 (не перезаписувати).\n"
+"  -nc, --no-clobber                пропускати файли, які вже існують\n"
+"                                    (не перезаписувати).\n"
 
-#: src/main.c:486
+#: src/main.c:635
 #, fuzzy
+msgid ""
+"       --no-netrc                  don't try to obtain credentials from ."
+"netrc\n"
+msgstr ""
+"       --no-config                 не читати дані з файла налаштувань\n"
+
+#: src/main.c:637
 msgid ""
 "  -c,  --continue                  resume getting a partially-downloaded "
-"file.\n"
+"file\n"
 msgstr ""
-"  -c,  --continue                продовжити завантаження частково "
+"  -c,  --continue                  продовжити завантаження частково "
 "завантаженого\n"
-"                                 файлу.\n"
+"                                     файлу\n"
 
-#: src/main.c:488
+#: src/main.c:639
 msgid ""
 "       --start-pos=OFFSET          start downloading from zero-based "
-"position OFFSET.\n"
+"position OFFSET\n"
 msgstr ""
+"       --start-pos=ЗСУВ            почати отримання з позиції ЗСУВ (відлік "
+"від нуля)\n"
 
-#: src/main.c:490
-#, fuzzy
-msgid "       --progress=TYPE             select progress gauge type.\n"
+#: src/main.c:641
+msgid "       --progress=TYPE             select progress gauge type\n"
 msgstr ""
-"       --progress=ТИП            задати ТИП індикатора візуалізації\n"
-"                                 процесу роботи.\n"
+"       --progress=ТИП              задати ТИП індикатора візуалізації\n"
+"                                     процесу роботи\n"
 
-#: src/main.c:492
-#, fuzzy
+#: src/main.c:643
 msgid ""
 "       --show-progress             display the progress bar in any verbosity "
-"mode.\n"
+"mode\n"
 msgstr ""
-"       --progress=ТИП            задати ТИП індикатора візуалізації\n"
-"                                 процесу роботи.\n"
+"       --progress=ТИП              задати ТИП індикатора візуалізації\n"
+"                                     процесу роботи\n"
 
-#: src/main.c:494
-#, fuzzy
+#: src/main.c:645
 msgid ""
 "  -N,  --timestamping              don't re-retrieve files unless newer "
 "than\n"
-"                                   local.\n"
+"                                     local\n"
 msgstr ""
-"  -N,  --timestamping            не завантажувати файли, які старші, ніж\n"
-"                                 локальні.\n"
+"  -N,  --timestamping              не завантажувати файли, які старші, ніж\n"
+"                                     локальні\n"
 
-#: src/main.c:497
-#, fuzzy
+#: src/main.c:648
 msgid ""
-"  --no-use-server-timestamps       don't set the local file's timestamp by\n"
-"                                   the one on the server.\n"
+"       --no-if-modified-since      don't use conditional if-modified-since "
+"get\n"
+"                                     requests in timestamping mode\n"
 msgstr ""
-"  --no-use-server-timestamps     не встановлювати часову позначку локального "
-"файла\n"
-"                                 за даними з сервера.\n"
+"       --no-if-modified-since      не використовували умовні запити якщо-"
+"змінено-з\n"
+"                                     у режимі часових позначок\n"
 
-#: src/main.c:500
-#, fuzzy
-msgid "  -S,  --server-response           print server response.\n"
-msgstr "  -S,  --server-response         друкувати відповідь серверу.\n"
-
-#: src/main.c:502
-#, fuzzy
-msgid "       --spider                    don't download anything.\n"
-msgstr "       --spider                  нічого не завантажувати.\n"
-
-#: src/main.c:504
-#, fuzzy
-msgid "  -T,  --timeout=SECONDS           set all timeout values to SECONDS.\n"
-msgstr ""
-"  -T,  --timeout=СЕКУНДИ         встановити час очікування відповіді.\n"
-
-#: src/main.c:506
-#, fuzzy
+#: src/main.c:651
 msgid ""
-"       --dns-timeout=SECS          set the DNS lookup timeout to SECS.\n"
+"       --no-use-server-timestamps  don't set the local file's timestamp by\n"
+"                                     the one on the server\n"
 msgstr ""
-"       --dns-timeout=СЕКУНДИ     встановити час очікування на визначення "
-"DNS.\n"
+"       --no-use-server-timestamps  не встановлювати часову позначку "
+"локального\n"
+"                                     файла за даними з сервера\n"
 
-#: src/main.c:508
-#, fuzzy
-msgid "       --connect-timeout=SECS      set the connect timeout to SECS.\n"
+#: src/main.c:654
+msgid "  -S,  --server-response           print server response\n"
+msgstr "  -S,  --server-response           виводити відповідь сервера\n"
+
+#: src/main.c:656
+msgid "       --spider                    don't download anything\n"
+msgstr "       --spider                    нічого не завантажувати\n"
+
+#: src/main.c:658
+msgid "  -T,  --timeout=SECONDS           set all timeout values to SECONDS\n"
 msgstr ""
-"       --connect-timeout=СЕКУНДИ встановити час очікування на з’єднання.\n"
+"  -T,  --timeout=СЕКУНДИ           встановити час очікування відповіді\n"
 
-#: src/main.c:510
-#, fuzzy
-msgid "       --read-timeout=SECS         set the read timeout to SECS.\n"
+#: src/main.c:661
+msgid ""
+"       --dns-servers=ADDRESSES     list of DNS servers to query (comma "
+"separated)\n"
 msgstr ""
-"       --read-timeout=СЕКУНДИ    встановити час очікування на читання.\n"
+"       --dns-servers=АДРЕСИ        список серверів DNS для надсилання "
+"запитів (відокремлених комами)\n"
 
-#: src/main.c:512
-#, fuzzy
-msgid "  -w,  --wait=SECONDS              wait SECONDS between retrievals.\n"
+#: src/main.c:663
+msgid ""
+"       --bind-dns-address=ADDRESS  bind DNS resolver to ADDRESS (hostname or "
+"IP) on local host\n"
 msgstr ""
-"  -w,  --wait=СЕКУНДИ            встановити затримку між завантаженнями.\n"
+"       --bind-dns-address=АДРЕСА   пов’язати засіб визначення назв DNS із "
+"адресою (назва вузла або IP)\n"
+"                                     локального вузла\n"
 
-#: src/main.c:514
-#, fuzzy
+#: src/main.c:666
+msgid "       --dns-timeout=SECS          set the DNS lookup timeout to SECS\n"
+msgstr ""
+"       --dns-timeout=СЕКУНДИ       встановити час очікування на визначення "
+"DNS\n"
+
+#: src/main.c:668
+msgid "       --connect-timeout=SECS      set the connect timeout to SECS\n"
+msgstr ""
+"       --connect-timeout=СЕКУНДИ   встановити час очікування на з’єднання\n"
+
+#: src/main.c:670
+msgid "       --read-timeout=SECS         set the read timeout to SECS\n"
+msgstr ""
+"       --read-timeout=СЕКУНДИ      встановити час очікування на читання\n"
+
+#: src/main.c:672
+msgid "  -w,  --wait=SECONDS              wait SECONDS between retrievals\n"
+msgstr ""
+"  -w,  --wait=СЕКУНДИ              встановити затримку між завантаженнями\n"
+
+#: src/main.c:674
 msgid ""
 "       --waitretry=SECONDS         wait 1..SECONDS between retries of a "
-"retrieval.\n"
+"retrieval\n"
 msgstr ""
-"       --waitretry=СЕКУНД        зачекати 1...СЕКУНД між спробами "
-"отримання.\n"
+"       --waitretry=СЕКУНД          зачекати 1...СЕКУНД між спробами "
+"отримання\n"
 
-#: src/main.c:516
-#, fuzzy
+#: src/main.c:676
 msgid ""
 "       --random-wait               wait from 0.5*WAIT...1.5*WAIT secs "
-"between retrievals.\n"
+"between retrievals\n"
 msgstr ""
-"       --random-wait             зачекати 0.5*WAIT...1.5*WAIT cек. між "
-"спробами.\n"
+"       --random-wait               зачекати 0.5*WAIT...1.5*WAIT cек. між "
+"спробами\n"
 
-#: src/main.c:518
-#, fuzzy
-msgid "       --no-proxy                  explicitly turn off proxy.\n"
-msgstr "       --no-proxy                вимкнути проксі.\n"
+#: src/main.c:678
+msgid "       --no-proxy                  explicitly turn off proxy\n"
+msgstr "       --no-proxy                  вимкнути проксі явним чином\n"
 
-#: src/main.c:520
-#, fuzzy
-msgid "  -Q,  --quota=NUMBER              set retrieval quota to NUMBER.\n"
+#: src/main.c:680
+msgid "  -Q,  --quota=NUMBER              set retrieval quota to NUMBER\n"
 msgstr ""
-"  -Q,  --quota=ЧИСЛО             встановити квоту отримання у значення "
-"ЧИСЛО.\n"
+"  -Q,  --quota=ЧИСЛО               встановити квоту отримання у значення "
+"ЧИСЛО\n"
 
-#: src/main.c:522
-#, fuzzy
+#: src/main.c:682
 msgid ""
 "       --bind-address=ADDRESS      bind to ADDRESS (hostname or IP) on local "
-"host.\n"
+"host\n"
 msgstr ""
-"       --bind-address=АДРЕСА     прив'язка до адреси (ім'я вузла або IP)\n"
-"                                 локального вузла.\n"
+"       --bind-address=АДРЕСА       прив'язка до адреси (назва вузла або IP)\n"
+"                                     локального вузла\n"
 
-#: src/main.c:524
-#, fuzzy
-msgid "       --limit-rate=RATE           limit download rate to RATE.\n"
-msgstr "       --limit-rate=ШВИДКІСТЬ    обмежити швидкість завантаження.\n"
+#: src/main.c:684
+msgid "       --limit-rate=RATE           limit download rate to RATE\n"
+msgstr "       --limit-rate=ШВИДКІСТЬ      обмежити швидкість завантаження\n"
 
-#: src/main.c:526
-#, fuzzy
-msgid "       --no-dns-cache              disable caching DNS lookups.\n"
-msgstr "       --no-dns-cache            вимкнути кешування DNS запитів.\n"
+#: src/main.c:686
+msgid "       --no-dns-cache              disable caching DNS lookups\n"
+msgstr "       --no-dns-cache              вимкнути кешування DNS запитів\n"
 
-#: src/main.c:528
-#, fuzzy
+#: src/main.c:688
 msgid ""
 "       --restrict-file-names=OS    restrict chars in file names to ones OS "
-"allows.\n"
+"allows\n"
 msgstr ""
-"       --restrict-file-names=OS  обмежити символи в іменах файлів "
+"       --restrict-file-names=OS    обмежити символи у назвах файлів "
 "дозволеними\n"
-"                                 у відповідній ОС.\n"
+"                                     у відповідній ОС\n"
 
-#: src/main.c:530
-#, fuzzy
+#: src/main.c:690
 msgid ""
 "       --ignore-case               ignore case when matching files/"
-"directories.\n"
+"directories\n"
 msgstr ""
-"       --ignore-case             ігнорувати регістр при перегляді\n"
-"                                 файлів/каталогів.\n"
+"       --ignore-case               ігнорувати регістр при перегляді\n"
+"                                     файлів/каталогів\n"
 
-#: src/main.c:533
-#, fuzzy
-msgid "  -4,  --inet4-only                connect only to IPv4 addresses.\n"
-msgstr "  -4,  --inet4-only              з'єднуватись лише з IPv4 адресами.\n"
+#: src/main.c:693
+msgid "  -4,  --inet4-only                connect only to IPv4 addresses\n"
+msgstr "  -4,  --inet4-only                з'єднуватись лише з IPv4 адресами\n"
 
-#: src/main.c:535
-#, fuzzy
-msgid "  -6,  --inet6-only                connect only to IPv6 addresses.\n"
-msgstr "  -6,  --inet6-only              з'єднуватись лише з IPv6 адресами.\n"
+#: src/main.c:695
+msgid "  -6,  --inet6-only                connect only to IPv6 addresses\n"
+msgstr "  -6,  --inet6-only                з'єднуватись лише з IPv6 адресами\n"
 
-#: src/main.c:537
-#, fuzzy
+#: src/main.c:697
 msgid ""
 "       --prefer-family=FAMILY      connect first to addresses of specified "
 "family,\n"
-"                                   one of IPv6, IPv4, or none.\n"
+"                                     one of IPv6, IPv4, or none\n"
 msgstr ""
-"       --prefer-family=FAMILY    спершу підключатися до вказаного сімейства\n"
-"                                 адрес: IPv6, IPv4, або none.\n"
+"       --prefer-family=FAMILY      спершу підключатися до вказаного "
+"сімейства\n"
+"                                     адрес: IPv6, IPv4, або none\n"
 
-#: src/main.c:541
-#, fuzzy
+#: src/main.c:701
+msgid "       --user=USER                 set both ftp and http user to USER\n"
+msgstr ""
+"       --user=ІМ'Я                 встановити ІМ'Я користувача для ftp та "
+"http\n"
+
+#: src/main.c:703
 msgid ""
-"       --user=USER                 set both ftp and http user to USER.\n"
+"       --password=PASS             set both ftp and http password to PASS\n"
 msgstr ""
-"       --user=ІМ'Я               встановити ІМ'Я користувача для ftp та "
-"http.\n"
+"       --password=ПАРОЛЬ           встановити ПАРОЛЬ користувача для ftp та "
+"http\n"
 
-#: src/main.c:543
-#, fuzzy
+#: src/main.c:705
+msgid "       --ask-password              prompt for passwords\n"
+msgstr "       --ask-password              запитувати пароль\n"
+
+#: src/main.c:707
 msgid ""
-"       --password=PASS             set both ftp and http password to PASS.\n"
+"       --use-askpass=COMMAND       specify credential handler for "
+"requesting \n"
+"                                     username and password.  If no COMMAND "
+"is \n"
+"                                     specified the WGET_ASKPASS or the "
+"SSH_ASKPASS \n"
+"                                     environment variable is used.\n"
 msgstr ""
-"       --password=ПАРОЛЬ         встановити ПАРОЛЬ користувача для ftp та "
-"http.\n"
+"       --use-askpass=КОМАНДА       вказати обробник реєстраційних даних для "
+"запитів \n"
+"                                     щодо імені користувача і пароля. Якщо "
+"КОМАНДУ \n"
+"                                     не вказано, буде використано змінну "
+"середовища \n"
+"                                     WGET_ASKPASS або SSH_ASKPASS.\n"
 
-#: src/main.c:545
-#, fuzzy
-msgid "       --ask-password              prompt for passwords.\n"
-msgstr "       --ask-password            запитувати пароль.\n"
+#: src/main.c:712
+msgid "       --no-iri                    turn off IRI support\n"
+msgstr "       --no-iri                    вимкнути підтримку IRI\n"
 
-#: src/main.c:547
-#, fuzzy
-msgid "       --no-iri                    turn off IRI support.\n"
-msgstr "       --no-iri                  вимкнути підтримку IRI.\n"
-
-#: src/main.c:549
-#, fuzzy
+#: src/main.c:714
 msgid ""
-"       --local-encoding=ENC        use ENC as the local encoding for IRIs.\n"
+"       --local-encoding=ENC        use ENC as the local encoding for IRIs\n"
 msgstr ""
-"       --local-encoding=КДН      використовувати локальне кодування КДН для "
-"IRI.\n"
+"       --local-encoding=КДН        використовувати локальне кодування КДН "
+"для IRI\n"
 
-#: src/main.c:551
-#, fuzzy
+#: src/main.c:716
 msgid ""
-"       --remote-encoding=ENC       use ENC as the default remote encoding.\n"
+"       --remote-encoding=ENC       use ENC as the default remote encoding\n"
 msgstr ""
-"       --remote-encoding=КДН     використовувати КДН як типове віддалене "
-"кодування.\n"
+"       --remote-encoding=КДН       використовувати КДН як типове віддалене "
+"кодування\n"
 
-#: src/main.c:553
-#, fuzzy
-msgid "       --unlink                    remove file before clobber.\n"
-msgstr "       --unlink                  вилучати файл до перезапису.\n"
+#: src/main.c:718
+msgid "       --unlink                    remove file before clobber\n"
+msgstr "       --unlink                    вилучати файл до перезапису\n"
 
-#: src/main.c:557
+#: src/main.c:721
+msgid ""
+"       --keep-badhash              keep files with checksum mismatch "
+"(append .badhash)\n"
+msgstr ""
+"       --keep-badhash              не вилучати файли із невідповідними "
+"контрольними сумами (долучення .badhash)\n"
+
+#: src/main.c:723
+msgid ""
+"       --metalink-index=NUMBER     Metalink application/metalink4+xml "
+"metaurl ordinal NUMBER\n"
+msgstr ""
+"       --metalink-index=ЧИСЛО      вказати порядковий номер метаадреси "
+"програми metalink або metalink4+xml\n"
+
+#: src/main.c:725
+msgid ""
+"       --metalink-over-http        use Metalink metadata from HTTP response "
+"headers\n"
+msgstr ""
+"       --metalink-over-http        використовувати метадані Metalink із "
+"заголовків HTTP-відповіді\n"
+
+#: src/main.c:727
+msgid ""
+"       --preferred-location        preferred location for Metalink "
+"resources\n"
+msgstr ""
+"       --preferred-location        бажане місце для ресурсів Metalink\n"
+
+#: src/main.c:731
+msgid ""
+"       --no-xattr                  turn off storage of metadata in extended "
+"file attributes\n"
+msgstr ""
+"       --no-xattr                  вимкнути зберігання метаданих у "
+"розширених атрибутах файла\n"
+
+#: src/main.c:736
 msgid "Directories:\n"
 msgstr "Каталоги:\n"
 
-#: src/main.c:559
-#, fuzzy
-msgid "  -nd, --no-directories            don't create directories.\n"
-msgstr "  -nd, --no-directories           не створювати каталоги.\n"
+#: src/main.c:738
+msgid "  -nd, --no-directories            don't create directories\n"
+msgstr "  -nd, --no-directories            не створювати каталоги\n"
 
-#: src/main.c:561
-#, fuzzy
-msgid "  -x,  --force-directories         force creation of directories.\n"
-msgstr "  -x,  --force-directories        примусове створення каталогів.\n"
+#: src/main.c:740
+msgid "  -x,  --force-directories         force creation of directories\n"
+msgstr "  -x,  --force-directories         примусове створення каталогів\n"
 
-#: src/main.c:563
-#, fuzzy
-msgid "  -nH, --no-host-directories       don't create host directories.\n"
+#: src/main.c:742
+msgid "  -nH, --no-host-directories       don't create host directories\n"
 msgstr ""
-"  -nH, --no-host-directories      не створювати каталоги з іменами вузлів.\n"
+"  -nH, --no-host-directories       не створювати каталоги з назвами вузлів\n"
 
-#: src/main.c:565
-#, fuzzy
-msgid "       --protocol-directories      use protocol name in directories.\n"
+#: src/main.c:744
+msgid "       --protocol-directories      use protocol name in directories\n"
 msgstr ""
-"       --protocol-directories     використовувати назву протоколу у назвах "
-"каталогів.\n"
+"       --protocol-directories      використовувати назву протоколу у назвах "
+"каталогів\n"
 
-#: src/main.c:567
-#, fuzzy
-msgid "  -P,  --directory-prefix=PREFIX   save files to PREFIX/...\n"
-msgstr "  -P,  --directory-prefix=PREFIX  зберігати файли в PREFIX/...\n"
+#: src/main.c:746
+msgid "  -P,  --directory-prefix=PREFIX   save files to PREFIX/..\n"
+msgstr "  -P,  --directory-prefix=PREFIX   зберігати файли в PREFIX/..\n"
 
-#: src/main.c:569
-#, fuzzy
+#: src/main.c:748
 msgid ""
 "       --cut-dirs=NUMBER           ignore NUMBER remote directory "
-"components.\n"
+"components\n"
 msgstr ""
-"       --cut-dirs=ЧИСЛО           ігнорувати певне ЧИСЛО компонентів "
-"каталогу.\n"
+"       --cut-dirs=ЧИСЛО            ігнорувати певне ЧИСЛО компонентів "
+"каталогу\n"
 
-#: src/main.c:573
+#: src/main.c:752
 msgid "HTTP options:\n"
 msgstr "Параметри HTTP:\n"
 
-#: src/main.c:575
-#, fuzzy
-msgid "       --http-user=USER            set http user to USER.\n"
-msgstr "       --http-user=ІМ'Я        встановити ІМ'Я http-користувача.\n"
+#: src/main.c:754
+msgid "       --http-user=USER            set http user to USER\n"
+msgstr "       --http-user=ІМ'Я            встановити ІМ'Я http-користувача\n"
 
-#: src/main.c:577
-#, fuzzy
-msgid "       --http-password=PASS        set http password to PASS.\n"
-msgstr "       --http-password=ПАРОЛЬ  встановити ПАРОЛЬ для http-запитів.\n"
-
-#: src/main.c:579
-#, fuzzy
-msgid "       --no-cache                  disallow server-cached data.\n"
+#: src/main.c:756
+msgid "       --http-password=PASS        set http password to PASS\n"
 msgstr ""
-"       --no-cache              заборонити кешування даних на боці сервера.\n"
+"       --http-password=ПАРОЛЬ      встановити ПАРОЛЬ для http-запитів\n"
 
-#: src/main.c:581
-#, fuzzy
+#: src/main.c:758
+msgid "       --no-cache                  disallow server-cached data\n"
+msgstr ""
+"       --no-cache                  заборонити кешування даних на боці "
+"сервера\n"
+
+#: src/main.c:760
 msgid ""
-"       --default-page=NAME         Change the default page name (normally\n"
-"                                   this is `index.html'.).\n"
+"       --default-page=NAME         change the default page name (normally\n"
+"                                     this is 'index.html'.)\n"
 msgstr ""
-"       --default-page=НАЗВА    змінити типову назву сторінки (зазвичай,\n"
-"                               назвою є «index.html».).\n"
+"       --default-page=НАЗВА        змінити типову назву сторінки (зазвичай,\n"
+"                                     назвою є «index.html».)\n"
 
-#: src/main.c:584
-#, fuzzy
+#: src/main.c:763
 msgid ""
 "  -E,  --adjust-extension          save HTML/CSS documents with proper "
-"extensions.\n"
+"extensions\n"
 msgstr ""
-"  -E,  --adjust-extension      зберігати HTML/CSS документи із відповідним\n"
-"                               розширенням.\n"
+"  -E,  --adjust-extension          зберігати HTML/CSS документи із "
+"відповідним\n"
+"                                     розширенням\n"
 
-#: src/main.c:586
+#: src/main.c:765
+msgid ""
+"       --ignore-length             ignore 'Content-Length' header field\n"
+msgstr ""
+"       --ignore-length             ігнорувати поле заголовку `Content-"
+"Length'\n"
+
+#: src/main.c:767
+msgid "       --header=STRING             insert STRING among the headers\n"
+msgstr "       --header=РЯДОК              вставляти РЯДОК в HTTP-заголовки\n"
+
+#: src/main.c:770
 #, fuzzy
 msgid ""
-"       --ignore-length             ignore `Content-Length' header field.\n"
+"       --compression=TYPE          choose compression, one of auto, gzip and "
+"none\n"
 msgstr ""
-"       --ignore-length         ігнорувати поле заголовку `Content-Length'.\n"
+"       --progress=ТИП              задати ТИП індикатора візуалізації\n"
+"                                     процесу роботи\n"
 
-#: src/main.c:588
-#, fuzzy
-msgid "       --header=STRING             insert STRING among the headers.\n"
-msgstr "       --header=РЯДОК          вставляти РЯДОК в HTTP-заголовки.\n"
-
-#: src/main.c:590
-#, fuzzy
+#: src/main.c:773
 msgid ""
-"       --max-redirect              maximum redirections allowed per page.\n"
+"       --max-redirect              maximum redirections allowed per page\n"
 msgstr ""
-"       --max-redirect          максимальна кількість переспрямувань на "
-"сторінку.\n"
+"       --max-redirect              максимальна кількість переспрямувань на "
+"сторінку\n"
 
-#: src/main.c:592
-#, fuzzy
-msgid "       --proxy-user=USER           set USER as proxy username.\n"
+#: src/main.c:775
+msgid "       --proxy-user=USER           set USER as proxy username\n"
 msgstr ""
-"       --proxy-user=ІМ'Я       встановити ІМ'Я користувача для проксі-"
-"серверу.\n"
+"       --proxy-user=ІМ'Я           встановити ІМ'Я користувача для проксі-"
+"сервера\n"
 
-#: src/main.c:594
-#, fuzzy
-msgid "       --proxy-password=PASS       set PASS as proxy password.\n"
-msgstr "       --proxy-password=ПАРОЛЬ встановити ПАРОЛЬ для проксі-серверу.\n"
+#: src/main.c:777
+msgid "       --proxy-password=PASS       set PASS as proxy password\n"
+msgstr ""
+"       --proxy-password=ПАРОЛЬ     встановити ПАРОЛЬ для проксі-сервера\n"
 
-#: src/main.c:596
-#, fuzzy
+#: src/main.c:779
 msgid ""
-"       --referer=URL               include `Referer: URL' header in HTTP "
-"request.\n"
+"       --referer=URL               include 'Referer: URL' header in HTTP "
+"request\n"
 msgstr ""
-"       --referer=URL           включити `Referer: URL' заголовок до HTTP-"
-"запиту.\n"
+"       --referer=URL               включити заголовок «Referer: URL» "
+"заголовок до HTTP-запиту\n"
 
-#: src/main.c:598
-#, fuzzy
-msgid "       --save-headers              save the HTTP headers to file.\n"
-msgstr "       --save-headers          записувати HTTP-заголовки у файл.\n"
+#: src/main.c:781
+msgid "       --save-headers              save the HTTP headers to file\n"
+msgstr ""
+"       --save-headers              записувати HTTP-заголовки до файла\n"
 
-#: src/main.c:600
-#, fuzzy
+#: src/main.c:783
 msgid ""
 "  -U,  --user-agent=AGENT          identify as AGENT instead of Wget/"
-"VERSION.\n"
+"VERSION\n"
 msgstr ""
-"  -U,  --user-agent=АГЕНТ      задати ім'я АГЕНТа замість Wget/ВЕРСІЯ.\n"
+"  -U,  --user-agent=АГЕНТ          задати ім'я АГЕНТа замість Wget/ВЕРСІЯ\n"
 
-#: src/main.c:602
-#, fuzzy
+#: src/main.c:785
 msgid ""
 "       --no-http-keep-alive        disable HTTP keep-alive (persistent "
-"connections).\n"
+"connections)\n"
 msgstr ""
-"       --no-http-keep-alive    заборонити HTTP keep-alive (постійні "
-"з'єднання).\n"
+"       --no-http-keep-alive        заборонити HTTP keep-alive (постійні "
+"з'єднання)\n"
 
-#: src/main.c:604
-#, fuzzy
-msgid "       --no-cookies                don't use cookies.\n"
-msgstr "       --no-cookies            не використовувати куки.\n"
+#: src/main.c:787
+msgid "       --no-cookies                don't use cookies\n"
+msgstr "       --no-cookies                не використовувати куки\n"
 
-#: src/main.c:606
-#, fuzzy
+#: src/main.c:789
 msgid ""
-"       --load-cookies=FILE         load cookies from FILE before session.\n"
-msgstr "       --load-cookies=ФАЙЛ     перед сесією брати куки з ФАЙЛу.\n"
+"       --load-cookies=FILE         load cookies from FILE before session\n"
+msgstr "       --load-cookies=ФАЙЛ         перед сесією брати куки з ФАЙЛа\n"
 
-#: src/main.c:608
-#, fuzzy
-msgid ""
-"       --save-cookies=FILE         save cookies to FILE after session.\n"
-msgstr "       --save-cookies=ФАЙЛ     в кінці сесії записати куки у ФАЙЛ.\n"
+#: src/main.c:791
+msgid "       --save-cookies=FILE         save cookies to FILE after session\n"
+msgstr ""
+"       --save-cookies=ФАЙЛ         в кінці сесії записати куки у ФАЙЛ\n"
 
-#: src/main.c:610
-#, fuzzy
+#: src/main.c:793
 msgid ""
 "       --keep-session-cookies      load and save session (non-permanent) "
-"cookies.\n"
+"cookies\n"
 msgstr ""
-"       --keep-session-cookies  завантажувати і зберігати (тимчасово) куки "
-"сеансів.\n"
+"       --keep-session-cookies      завантажувати і зберігати (тимчасово) "
+"куки сеансів\n"
 
-#: src/main.c:612
-#, fuzzy
+#: src/main.c:795
 msgid ""
 "       --post-data=STRING          use the POST method; send STRING as the "
-"data.\n"
+"data\n"
 msgstr ""
-"       --post-data=РЯДОК       використовувати метод POST; надіслати РЯДОК "
-"як дані.\n"
+"       --post-data=РЯДОК           використовувати метод POST; надіслати "
+"РЯДОК як дані\n"
 
-#: src/main.c:614
-#, fuzzy
+#: src/main.c:797
 msgid ""
 "       --post-file=FILE            use the POST method; send contents of "
-"FILE.\n"
+"FILE\n"
 msgstr ""
-"       --post-file=ФАЙЛ        використовувати метод POST; надіслати вміст "
-"ФАЙЛа.\n"
+"       --post-file=ФАЙЛ            використовувати метод POST; надіслати "
+"вміст ФАЙЛа\n"
 
-#: src/main.c:616
-#, fuzzy
+#: src/main.c:799
 msgid ""
-"       --method=HTTPMethod         use method \"HTTPMethod\" in the "
-"request.\n"
+"       --method=HTTPMethod         use method \"HTTPMethod\" in the request\n"
 msgstr ""
-"       --method=МетодHTTP      використовувати у заголовку спосіб "
-"«МетодHTTP».\n"
+"       --method=МетодHTTP      використовувати у запиті спосіб «МетодHTTP»\n"
 
-#: src/main.c:618
-#, fuzzy
+#: src/main.c:801
 msgid ""
-"       --body-data=STRING          Send STRING as data. --method MUST be "
-"set.\n"
+"       --body-data=STRING          send STRING as data. --method MUST be "
+"set\n"
 msgstr ""
-"       --body-data=РЯДОК       надіслати РЯДОК як дані. МАЄ бути встановлено "
-"--method.\n"
+"       --body-data=РЯДОК           надіслати РЯДОК як дані. МАЄ бути "
+"встановлено --method\n"
 
-#: src/main.c:620
-#, fuzzy
+#: src/main.c:803
 msgid ""
-"       --body-file=FILE            Send contents of FILE. --method MUST be "
-"set.\n"
+"       --body-file=FILE            send contents of FILE. --method MUST be "
+"set\n"
 msgstr ""
-"       --body-file=ФАЙЛ        надіслати вміст файла ФАЙЛ. СЛІД встановити "
-"параметр --method.\n"
+"       --body-file=ФАЙЛ            надіслати вміст файла ФАЙЛ. СЛІД "
+"встановити параметр --method\n"
 
-#: src/main.c:622
-#, fuzzy
+#: src/main.c:805
 msgid ""
 "       --content-disposition       honor the Content-Disposition header "
 "when\n"
-"                                   choosing local file names "
-"(EXPERIMENTAL).\n"
+"                                     choosing local file names "
+"(EXPERIMENTAL)\n"
 msgstr ""
-"       --content-disposition   зважати на заголовок Content-Disposition під\n"
-"                               час вибору назв локальних файлів (ТЕСТОВА "
-"МОЖЛИВІСТЬ).\n"
+"       --content-disposition       зважати на заголовок Content-Disposition "
+"під\n"
+"                                     час вибору назв локальних файлів "
+"(ТЕСТОВА МОЖЛИВІСТЬ)\n"
 
-#: src/main.c:625
-#, fuzzy
+#: src/main.c:808
 msgid ""
 "       --content-on-error          output the received content on server "
-"errors.\n"
+"errors\n"
 msgstr ""
-"       --content-on-error      виводити отримані дані у разі помилок з "
-"сервером.\n"
+"       --content-on-error          виводити отримані дані у разі помилок з "
+"сервером\n"
 
-#: src/main.c:627
-#, fuzzy
+#: src/main.c:810
 msgid ""
 "       --auth-no-challenge         send Basic HTTP authentication "
 "information\n"
-"                                   without first waiting for the server's\n"
-"                                   challenge.\n"
+"                                     without first waiting for the server's\n"
+"                                     challenge\n"
 msgstr ""
-"       --auth-no-challenge     надіслати основні дані щодо розпізнавання "
+"       --auth-no-challenge         надіслати основні дані щодо розпізнавання "
 "HTTP,\n"
-"                               не чекаючи на запит з сервера.\n"
+"                                     не чекаючи на запит з сервера\n"
 
-#: src/main.c:634
+#: src/main.c:817
 msgid "HTTPS (SSL/TLS) options:\n"
 msgstr "Параметри HTTPS (SSL/TLS):\n"
 
-#: src/main.c:636
+#: src/main.c:819
 #, fuzzy
 msgid ""
 "       --secure-protocol=PR        choose secure protocol, one of auto, "
 "SSLv2,\n"
-"                                   SSLv3, TLSv1 and PFS.\n"
+"                                     SSLv3, TLSv1, TLSv1_1, TLSv1_2 and PFS\n"
 msgstr ""
-"       --secure-protocol=PR     вибрати один із протоколів безпеки auto, "
+"       --secure-protocol=PR        вибрати один із протоколів безпеки auto, "
 "SSLv2,\n"
-"                                SSLv3, TLSv1 та PFS.\n"
+"                                     SSLv3, TLSv1 та PFS\n"
 
-#: src/main.c:639
-#, fuzzy
+#: src/main.c:822
 msgid "       --https-only                only follow secure HTTPS links\n"
 msgstr ""
-"       --https-only              переходити лише за безпечними посиланнями "
+"       --https-only                переходити лише за безпечними посиланнями "
 "HTTPS\n"
 
-#: src/main.c:641
-#, fuzzy
+#: src/main.c:824
 msgid ""
-"       --no-check-certificate      don't validate the server's certificate.\n"
-msgstr "       --no-check-certificate   не перевіряти серверний сертифікат.\n"
-
-#: src/main.c:643
-#, fuzzy
-msgid "       --certificate=FILE          client certificate file.\n"
-msgstr "       --certificate=ФАЙЛ       сертифікат клієнта.\n"
-
-#: src/main.c:645
-#, fuzzy
-msgid ""
-"       --certificate-type=TYPE     client certificate type, PEM or DER.\n"
-msgstr "       --certificate-type=TYPE  тип сертифіката, PEM або DER.\n"
-
-#: src/main.c:647
-#, fuzzy
-msgid "       --private-key=FILE          private key file.\n"
-msgstr "       --private-key=ФАЙЛ       Файл приватного ключа.\n"
-
-#: src/main.c:649
-#, fuzzy
-msgid "       --private-key-type=TYPE     private key type, PEM or DER.\n"
-msgstr "       --private-key-type=ТИП   тип приватного ключа, PEM або DER.\n"
-
-#: src/main.c:651
-#, fuzzy
-msgid "       --ca-certificate=FILE       file with the bundle of CA's.\n"
-msgstr "       --ca-certificate=ФАЙЛ    файл з комплектом CA.\n"
-
-#: src/main.c:653
-#, fuzzy
-msgid ""
-"       --ca-directory=DIR          directory where hash list of CA's is "
-"stored.\n"
+"       --no-check-certificate      don't validate the server's certificate\n"
 msgstr ""
-"       --ca-directory=КАТАЛОГ   каталог, у якому зберігається список хешів "
-"служб сертифікації (CA).\n"
+"       --no-check-certificate      не перевіряти серверний сертифікат\n"
 
-#: src/main.c:655
-#, fuzzy
+#: src/main.c:826
+msgid "       --certificate=FILE          client certificate file\n"
+msgstr "       --certificate=ФАЙЛ          файл сертифіката клієнта\n"
+
+#: src/main.c:828
+msgid ""
+"       --certificate-type=TYPE     client certificate type, PEM or DER\n"
+msgstr ""
+"       --certificate-type=TYPE    тип сертифіката клієнта, PEM або DER\n"
+
+#: src/main.c:830
+msgid "       --private-key=FILE          private key file\n"
+msgstr "       --private-key=ФАЙЛ          файл закритого ключа\n"
+
+#: src/main.c:832
+msgid "       --private-key-type=TYPE     private key type, PEM or DER\n"
+msgstr "       --private-key-type=ТИП      тип закритого ключа, PEM або DER\n"
+
+#: src/main.c:834
+msgid "       --ca-certificate=FILE       file with the bundle of CAs\n"
+msgstr "       --ca-certificate=ФАЙЛ       файл з комплектом CA\n"
+
+#: src/main.c:836
+msgid ""
+"       --ca-directory=DIR          directory where hash list of CAs is "
+"stored\n"
+msgstr ""
+"       --ca-directory=КАТАЛОГ      каталог, у якому зберігається список "
+"хешів служб сертифікації (CA)\n"
+
+#: src/main.c:838
+msgid "       --crl-file=FILE             file with bundle of CRLs\n"
+msgstr "       --crl-file=ФАЙЛ             файл з комлектом CRL.\n"
+
+#: src/main.c:840
+msgid ""
+"       --pinnedpubkey=FILE/HASHES  Public key (PEM/DER) file, or any number\n"
+"                                   of base64 encoded sha256 hashes preceded "
+"by\n"
+"                                   'sha256//' and separated by ';', to "
+"verify\n"
+"                                   peer against\n"
+msgstr ""
+"       --pinnedpubkey=ФАЙЛ/ХЕШІ    Файл відкритого ключа (PEM/DER) або "
+"довільна\n"
+"                                   кількість закодованих у base64 хешів "
+"sha256,\n"
+"                                   перед якими вказано «sha256//», які "
+"відокремлено\n"
+"                                   «;», і які слід використовувати для "
+"перевірки\n"
+"                                   вузла\n"
+
+#: src/main.c:846
 msgid ""
 "       --random-file=FILE          file with random data for seeding the SSL "
-"PRNG.\n"
+"PRNG\n"
 msgstr ""
-"       --random-file=ФАЙЛ       файл з псевдовипадковими даними для "
-"ініціювання PRNG SSL.\n"
+"       --random-file=ФАЙЛ          файл з псевдовипадковими даними для "
+"ініціювання PRNG SSL\n"
 
-#: src/main.c:657
-#, fuzzy
+#: src/main.c:850
 msgid ""
 "       --egd-file=FILE             file naming the EGD socket with random "
-"data.\n"
+"data\n"
 msgstr ""
-"       --egd-file=ФАЙЛ          назва файла сокета EGD з псевдовипадковими "
-"даними.\n"
+"       --egd-file=ФАЙЛ             назва файла сокета EGD з "
+"псевдовипадковими даними\n"
 
-#: src/main.c:662
+#: src/main.c:857
+msgid "HSTS options:\n"
+msgstr "Параметри HSTS:\n"
+
+#: src/main.c:859
+msgid "       --no-hsts                   disable HSTS\n"
+msgstr "       --no-hsts                   вимкнути HSTS\n"
+
+#: src/main.c:861
+msgid ""
+"       --hsts-file                 path of HSTS database (will override "
+"default)\n"
+msgstr ""
+"       --hsts-file                 шлях до бази даних HSTS (перевизначає "
+"типовий)\n"
+
+#: src/main.c:866
 msgid "FTP options:\n"
 msgstr "Параметри FTP:\n"
 
-#: src/main.c:665
-#, fuzzy
+#: src/main.c:869
 msgid ""
-"       --ftp-stmlf                 Use Stream_LF format for all binary FTP "
-"files.\n"
+"       --ftp-stmlf                 use Stream_LF format for all binary FTP "
+"files\n"
 msgstr ""
-"       --ftp-stmlf             використовувати формат Stream_LF для всіх "
-"бінарних файлів FTP.\n"
+"       --ftp-stmlf                 використовувати формат Stream_LF для всіх "
+"бінарних файлів FTP\n"
 
-#: src/main.c:668
-#, fuzzy
-msgid "       --ftp-user=USER             set ftp user to USER.\n"
+#: src/main.c:872
+msgid "       --ftp-user=USER             set ftp user to USER\n"
 msgstr ""
-"       --ftp-user=ІМ'Я         встановити ІМ'Я користувача для для ftp.\n"
+"       --ftp-user=ІМ'Я             встановити ІМ'Я користувача для ftp.\n"
 
-#: src/main.c:670
-#, fuzzy
-msgid "       --ftp-password=PASS         set ftp password to PASS.\n"
+#: src/main.c:874
+msgid "       --ftp-password=PASS         set ftp password to PASS\n"
 msgstr ""
-"       --ftp-password=ПАРОЛЬ   встановити ПАРОЛЬ користувача для для ftp.\n"
+"       --ftp-password=ПАРОЛЬ       встановити ПАРОЛЬ користувача для ftp\n"
 
-#: src/main.c:672
-#, fuzzy
-msgid "       --no-remove-listing         don't remove `.listing' files.\n"
-msgstr "       --no-remove-listing     не видаляти файли `.listing'.\n"
+#: src/main.c:876
+msgid "       --no-remove-listing         don't remove '.listing' files\n"
+msgstr "       --no-remove-listing         не вилучати файли .listing\n"
 
-#: src/main.c:674
-#, fuzzy
-msgid "       --no-glob                   turn off FTP file name globbing.\n"
+#: src/main.c:878
+msgid "       --no-glob                   turn off FTP file name globbing\n"
 msgstr ""
-"       --no-glob               вимкнути універсалізацію назв файлів FTP.\n"
+"       --no-glob                   вимкнути універсалізацію назв файлів FTP\n"
 
-#: src/main.c:676
-#, fuzzy
+#: src/main.c:880
 msgid ""
-"       --no-passive-ftp            disable the \"passive\" transfer mode.\n"
-msgstr "       --no-passive-ftp        вимкнути \"пасивний\" тип передачі.\n"
-
-#: src/main.c:678
-#, fuzzy
-msgid "       --preserve-permissions      preserve remote file permissions.\n"
+"       --no-passive-ftp            disable the \"passive\" transfer mode\n"
 msgstr ""
-"       --preserve-permissions  зберігати права доступу до віддаленого "
-"файла.\n"
+"       --no-passive-ftp            вимкнути \"пасивний\" тип передавання\n"
 
-#: src/main.c:680
-#, fuzzy
+#: src/main.c:882
+msgid "       --preserve-permissions      preserve remote file permissions\n"
+msgstr "       --preserve-permissions      зберігати права доступу до файла\n"
+
+#: src/main.c:884
 msgid ""
 "       --retr-symlinks             when recursing, get linked-to files (not "
-"dir).\n"
+"dir)\n"
 msgstr ""
-"       --retr-symlinks         при рекурсії, завантажувати з FTP символічні\n"
-"                               посилання (не каталоги).\n"
+"       --retr-symlinks             при рекурсії, отримувати пов’язані "
+"символічними\n"
+"                                     посиланнями файли (не каталоги)\n"
 
-#: src/main.c:684
+#: src/main.c:889
+msgid "FTPS options:\n"
+msgstr "Параметри FTPS:\n"
+
+#: src/main.c:891
+msgid ""
+"       --ftps-implicit                 use implicit FTPS (default port is "
+"990)\n"
+msgstr ""
+"       --ftps-implicit                 використовувати неявний FTPS (типовий "
+"порт -- 990)\n"
+
+#: src/main.c:893
+msgid ""
+"       --ftps-resume-ssl               resume the SSL/TLS session started in "
+"the control connection when\n"
+"                                         opening a data connection\n"
+msgstr ""
+"       --ftps-resume-ssl               відновити сеанс SSL/TLS, розпочати у "
+"керівному з’єднанні під час\n"
+"                                         відкриття з’єднання для обміну "
+"даними\n"
+
+#: src/main.c:896
+msgid ""
+"       --ftps-clear-data-connection    cipher the control channel only; all "
+"the data will be in plaintext\n"
+msgstr ""
+"       --ftps-clear-data-connection    шифрувати лише канал керування; усі "
+"дані передаватимуться у режимі простого тексту\n"
+
+#: src/main.c:898
+msgid ""
+"       --ftps-fallback-to-ftp          fall back to FTP if FTPS is not "
+"supported in the target server\n"
+msgstr ""
+"       --ftps-fallback-to-ftp          використовувати FTP, якщо на сервері "
+"не передбачено підтримки FTPS\n"
+
+#: src/main.c:902
 msgid "WARC options:\n"
 msgstr "Параметри, пов'язані з WARC:\n"
 
-#: src/main.c:686
-#, fuzzy
+#: src/main.c:904
 msgid ""
 "       --warc-file=FILENAME        save request/response data to a .warc.gz "
-"file.\n"
+"file\n"
 msgstr ""
-"       --warc-file=НАЗВА_ФАЙЛА   зберегти дані запиту і відповіді до файла ."
-"warc.gz.\n"
+"       --warc-file=НАЗВА_ФАЙЛА     зберегти дані запиту і відповіді до "
+"файла .warc.gz\n"
 
-#: src/main.c:688
-#, fuzzy
+#: src/main.c:906
 msgid ""
-"       --warc-header=STRING        insert STRING into the warcinfo record.\n"
-msgstr "       --warc-header=РЯДОК       вставити РЯДОК до запису warcinfo.\n"
+"       --warc-header=STRING        insert STRING into the warcinfo record\n"
+msgstr "       --warc-header=РЯДОК         вставити РЯДОК до запису warcinfo\n"
 
-#: src/main.c:690
-#, fuzzy
+#: src/main.c:908
 msgid ""
-"       --warc-max-size=NUMBER      set maximum size of WARC files to "
-"NUMBER.\n"
+"       --warc-max-size=NUMBER      set maximum size of WARC files to NUMBER\n"
 msgstr ""
-"       --warc-max-size=ЧИСЛО     встановити максимальний розмір файлів WARC "
-"у значення ЧИСЛО.\n"
+"       --warc-max-size=ЧИСЛО       встановити максимальний розмір файлів "
+"WARC у значення ЧИСЛО\n"
 
-#: src/main.c:692
-#, fuzzy
-msgid "       --warc-cdx                  write CDX index files.\n"
-msgstr "       --warc-cdx                записувати файли покажчика CDX.\n"
+#: src/main.c:910
+msgid "       --warc-cdx                  write CDX index files\n"
+msgstr "       --warc-cdx                  записувати файли покажчика CDX\n"
 
-#: src/main.c:694
-#, fuzzy
+#: src/main.c:912
 msgid ""
 "       --warc-dedup=FILENAME       do not store records listed in this CDX "
-"file.\n"
+"file\n"
 msgstr ""
-"       --warc-dedup=НАЗВА_ФАЙЛА  не зберігати записи зі списку, визначеному "
-"у цьому файлі CDX.\n"
+"       --warc-dedup=НАЗВА_ФАЙЛА    не зберігати записи зі списку, "
+"визначеному у цьому файлі CDX\n"
 
-#: src/main.c:697
-#, fuzzy
+#: src/main.c:915
 msgid ""
-"       --no-warc-compression       do not compress WARC files with GZIP.\n"
+"       --no-warc-compression       do not compress WARC files with GZIP\n"
 msgstr ""
-"       --no-warc-compression     не стискати файли WARC за допомогою GZIP.\n"
+"       --no-warc-compression       не стискати файли WARC за допомогою GZIP\n"
 
-#: src/main.c:700
-#, fuzzy
-msgid "       --no-warc-digests           do not calculate SHA1 digests.\n"
+#: src/main.c:918
+msgid "       --no-warc-digests           do not calculate SHA1 digests\n"
 msgstr ""
-"       --no-warc-digests         не обчислювати контрольні суми SHA1.\n"
+"       --no-warc-digests           не обчислювати контрольні суми SHA1\n"
 
-#: src/main.c:702
-#, fuzzy
+#: src/main.c:920
 msgid ""
 "       --no-warc-keep-log          do not store the log file in a WARC "
-"record.\n"
+"record\n"
 msgstr ""
-"       --no-warc-keep-log        не зберігати назви файла журналу у записі "
-"WARC.\n"
+"       --no-warc-keep-log          не зберігати назви файла журналу у записі "
+"WARC\n"
 
-#: src/main.c:704
-#, fuzzy
+#: src/main.c:922
 msgid ""
 "       --warc-tempdir=DIRECTORY    location for temporary files created by "
 "the\n"
-"                                   WARC writer.\n"
+"                                     WARC writer\n"
 msgstr ""
-"       --warc-tempdir=КАТАЛОГ    розташування тимчасових файлів, створених\n"
-"                                 засобом запису WARC.\n"
+"       --warc-tempdir=КАТАЛОГ      розташування тимчасових файлів, "
+"створених\n"
+"                                     засобом запису WARC\n"
 
-#: src/main.c:709
+#: src/main.c:927
 msgid "Recursive download:\n"
 msgstr "Рекурсивне завантаження:\n"
 
-#: src/main.c:711
-#, fuzzy
-msgid "  -r,  --recursive                 specify recursive download.\n"
+#: src/main.c:929
+msgid "  -r,  --recursive                 specify recursive download\n"
 msgstr ""
-"  -r,  --recursive          встановити рекурсивний режим завантаження\n"
+"  -r,  --recursive                 встановити рекурсивний режим "
+"завантаження\n"
 
-#: src/main.c:713
-#, fuzzy
+#: src/main.c:931
 msgid ""
 "  -l,  --level=NUMBER              maximum recursion depth (inf or 0 for "
-"infinite).\n"
+"infinite)\n"
 msgstr ""
-"  -l,  --level=NUMBER       максимальна глибина рекурсії (0 - без "
+"  -l,  --level=ЧИСЛО               максимальна глибина рекурсії (0 - без "
 "обмеження).\n"
 
-#: src/main.c:715
-#, fuzzy
+#: src/main.c:933
 msgid ""
 "       --delete-after              delete files locally after downloading "
-"them.\n"
-msgstr "       --delete-after       локально видалити отримані файли.\n"
+"them\n"
+msgstr "       --delete-after              локально вилучити отримані файли.\n"
 
-#: src/main.c:717
-#, fuzzy
+#: src/main.c:935
 msgid ""
 "  -k,  --convert-links             make links in downloaded HTML or CSS "
 "point to\n"
-"                                   local files.\n"
+"                                     local files\n"
 msgstr ""
-"  -k,  --convert-links      перетворити посилання у отриманих файлах HTML і "
-"CSS\n"
-"                            так, щоб вони вказували на локальні файли.\n"
+"  -k,  --convert-links             перетворити посилання в отриманих файлах "
+"HTML і CSS\n"
+"                                     так, щоб вони вказували на локальні "
+"файли\n"
 
-#: src/main.c:720
-#, fuzzy
+#: src/main.c:938
+msgid ""
+"       --convert-file-only         convert the file part of the URLs only "
+"(usually known as the basename)\n"
+msgstr ""
+"       --convert-file-only         перетворювати лише частину адреси, яка "
+"стосується файла (зазвичай, її називають «базовою назвою»)\n"
+
+#: src/main.c:940
 msgid ""
 "       --backups=N                 before writing file X, rotate up to N "
-"backup files.\n"
+"backup files\n"
 msgstr ""
-"  --backups=N   до записування файла X, послідовно створити N файлів "
-"резервних копій.\n"
+"       --backups=N                 до записування файла X, послідовно "
+"створити N файлів резервних копій\n"
 
-#: src/main.c:724
-#, fuzzy
+#: src/main.c:944
 msgid ""
 "  -K,  --backup-converted          before converting file X, back up as "
-"X_orig.\n"
+"X_orig\n"
 msgstr ""
-"  -K,  --backup-converted   до перетворення файла X створити резервну копію "
-"X_orig.\n"
+"  -K,  --backup-converted          до перетворення файла X створити резервну "
+"копію X_orig\n"
 
-#: src/main.c:727
-#, fuzzy
+#: src/main.c:947
 msgid ""
 "  -K,  --backup-converted          before converting file X, back up as X."
-"orig.\n"
+"orig\n"
 msgstr ""
-"  -K,  --backup-converted   до перетворення файла X створити резервну копію "
-"X_orig.\n"
+"  -K,  --backup-converted          до перетворення файла X створити резервну "
+"копію X.orig\n"
 
-#: src/main.c:730
-#, fuzzy
+#: src/main.c:950
 msgid ""
 "  -m,  --mirror                    shortcut for -N -r -l inf --no-remove-"
-"listing.\n"
+"listing\n"
 msgstr ""
-"  -m,  --mirror             скорочена форма для набору -N -r -l inf --no-"
-"remove-listing.\n"
+"  -m,  --mirror                    скорочена форма для набору -N -r -l inf --"
+"no-remove-listing\n"
 
-#: src/main.c:732
-#, fuzzy
+#: src/main.c:952
 msgid ""
 "  -p,  --page-requisites           get all images, etc. needed to display "
-"HTML page.\n"
+"HTML page\n"
 msgstr ""
-"  -p,  --page-requisites    отримати всі зображення, і т.п. для показу "
-"HTML.\n"
+"  -p,  --page-requisites           отримати всі зображення, і т.п. для "
+"показу HTML\n"
 
-#: src/main.c:734
-#, fuzzy
+#: src/main.c:954
 msgid ""
 "       --strict-comments           turn on strict (SGML) handling of HTML "
-"comments.\n"
+"comments\n"
 msgstr ""
-"       --strict-comments    увімкнути жорстку (SGML) обробку коментарів "
-"HTML.\n"
+"       --strict-comments           увімкнути жорстку (SGML) обробку "
+"коментарів HTML\n"
 
-#: src/main.c:738
+#: src/main.c:958
 msgid "Recursive accept/reject:\n"
 msgstr "Рекурсивне включення/виключення файлів:\n"
 
-#: src/main.c:740
+#: src/main.c:960
 msgid ""
 "  -A,  --accept=LIST               comma-separated list of accepted "
-"extensions.\n"
-msgstr "  -A,  --accept=СПИСОК             список розширень на включення.\n"
+"extensions\n"
+msgstr "  -A,  --accept=СПИСОК             список розширень на включення\n"
 
-#: src/main.c:742
+#: src/main.c:962
 msgid ""
 "  -R,  --reject=LIST               comma-separated list of rejected "
-"extensions.\n"
-msgstr "  -R,  --reject=СПИСОК             список розширень на виключення.\n"
+"extensions\n"
+msgstr "  -R,  --reject=СПИСОК             список розширень на виключення\n"
 
-#: src/main.c:744
-msgid "       --accept-regex=REGEX        regex matching accepted URLs.\n"
+#: src/main.c:964
+msgid "       --accept-regex=REGEX        regex matching accepted URLs\n"
+msgstr "       --accept-regex=ВИРАЗ        формальний вираз прийнятних адрес\n"
+
+#: src/main.c:966
+msgid "       --reject-regex=REGEX        regex matching rejected URLs\n"
+msgstr "       --reject-regex=ВИРАЗ        формальний вираз відкинутих адрес\n"
+
+#: src/main.c:969
+msgid "       --regex-type=TYPE           regex type (posix|pcre)\n"
 msgstr ""
-"       --accept-regex=ВИРАЗ        формальний вираз прийнятних адрес.\n"
+"       --regex-type=ТИП            тип формального виразу (posix|pcre)\n"
 
-#: src/main.c:746
-msgid "       --reject-regex=REGEX        regex matching rejected URLs.\n"
+#: src/main.c:972
+msgid "       --regex-type=TYPE           regex type (posix)\n"
+msgstr "       --regex-type=ТИП            тип формального виразу (posix)\n"
+
+#: src/main.c:975
+msgid ""
+"  -D,  --domains=LIST              comma-separated list of accepted domains\n"
+msgstr "  -D,  --domains=СПИСОК            список дозволених доменів\n"
+
+#: src/main.c:977
+msgid ""
+"       --exclude-domains=LIST      comma-separated list of rejected domains\n"
 msgstr ""
-"       --reject-regex=ВИРАЗ        формальний вираз відкинутих адрес.\n"
+"       --exclude-domains=СПИСОК    список виключених доменів відокремлених "
+"комами\n"
 
-#: src/main.c:749
-msgid "       --regex-type=TYPE           regex type (posix|pcre).\n"
-msgstr ""
-"       --regex-type=ТИП            тип формального виразу (posix|pcre).\n"
-
-#: src/main.c:752
-msgid "       --regex-type=TYPE           regex type (posix).\n"
-msgstr "       --regex-type=ТИП            тип формального виразу (posix).\n"
-
-#: src/main.c:755
+#: src/main.c:979
 msgid ""
-"  -D,  --domains=LIST              comma-separated list of accepted "
-"domains.\n"
-msgstr "  -D,  --domains=СПИСОК            список дозволених доменів.\n"
-
-#: src/main.c:757
-msgid ""
-"       --exclude-domains=LIST      comma-separated list of rejected "
-"domains.\n"
-msgstr "       --exclude-domains=СПИСОК    список виключених доменів.\n"
-
-#: src/main.c:759
-msgid ""
-"       --follow-ftp                follow FTP links from HTML documents.\n"
+"       --follow-ftp                follow FTP links from HTML documents\n"
 msgstr ""
 "       --follow-ftp                переходити за посиланнями на ресурси FTP "
-"з документів HTML.\n"
+"з документів HTML\n"
 
-#: src/main.c:761
+#: src/main.c:981
 msgid ""
 "       --follow-tags=LIST          comma-separated list of followed HTML "
-"tags.\n"
+"tags\n"
 msgstr ""
 "       --follow-tags=СПИСОК        розділений комами список теґів HTML, за "
-"яким слід здійснювати перехід.\n"
+"яким слід здійснювати перехід\n"
 
-#: src/main.c:763
+#: src/main.c:983
 msgid ""
 "       --ignore-tags=LIST          comma-separated list of ignored HTML "
-"tags.\n"
+"tags\n"
 msgstr ""
 "       --ignore-tags=СПИСОК        розділений комами список теґів HTML, які "
-"слід ігнорувати.\n"
+"слід ігнорувати\n"
 
-#: src/main.c:765
-msgid ""
-"  -H,  --span-hosts                go to foreign hosts when recursive.\n"
+#: src/main.c:985
+msgid "  -H,  --span-hosts                go to foreign hosts when recursive\n"
 msgstr ""
 "  -H,  --span-hosts                переходити до інших вузлів під час "
-"рекурсивної обробки.\n"
+"рекурсивної обробки\n"
 
-#: src/main.c:767
-msgid "  -L,  --relative                  follow relative links only.\n"
+#: src/main.c:987
+msgid "  -L,  --relative                  follow relative links only\n"
 msgstr ""
 "  -L,  --relative                  переходити лише за відносними "
-"посиланнями.\n"
+"посиланнями\n"
 
-#: src/main.c:769
-msgid "  -I,  --include-directories=LIST  list of allowed directories.\n"
+#: src/main.c:989
+msgid "  -I,  --include-directories=LIST  list of allowed directories\n"
 msgstr ""
-"  -I,  --include-directories=LIST  вказати список дозволених каталогів.\n"
+"  -I,  --include-directories=LIST  вказати список дозволених каталогів\n"
 
-#: src/main.c:771
-#, fuzzy
+#: src/main.c:991
 msgid ""
 "       --trust-server-names        use the name specified by the "
 "redirection\n"
-"                                   url last component.\n"
+"                                     URL's last component\n"
 msgstr ""
 "  --trust-server-names             використовувати назву, вказану адресою\n"
-"                                   переспрямування останнього компонента.\n"
+"                                   переспрямування останнього компонента\n"
 
-#: src/main.c:774
-msgid "  -X,  --exclude-directories=LIST  list of excluded directories.\n"
+#: src/main.c:994
+msgid "  -X,  --exclude-directories=LIST  list of excluded directories\n"
 msgstr ""
-"  -X,  --exclude-directories=LIST  вказати список виключених каталогів.\n"
+"  -X,  --exclude-directories=LIST  вказати список виключених каталогів\n"
 
-#: src/main.c:776
+#: src/main.c:996
 msgid ""
-"  -np, --no-parent                 don't ascend to the parent directory.\n"
+"  -np, --no-parent                 don't ascend to the parent directory\n"
 msgstr ""
-"  -np, --no-parent                 не підніматися до батьківського "
-"каталогу.\n"
+"  -np, --no-parent                 не підніматися до батьківського каталогу\n"
 
-#: src/main.c:779
-msgid "Mail bug reports and suggestions to <bug-wget@gnu.org>.\n"
+#: src/main.c:999
+msgid "Mail bug reports and suggestions to <bug-wget@gnu.org>\n"
 msgstr ""
-"Повідомлення про помилки та пропозиції надсилайте до <bug-wget@gnu.org>.\n"
+"Повідомлення про помилки та пропозиції надсилайте до <bug-wget@gnu.org>\n"
 
-#: src/main.c:784
+#: src/main.c:1004
 #, c-format
 msgid "GNU Wget %s, a non-interactive network retriever.\n"
 msgstr "GNU Wget %s, Автоматичний завантажувач файлів з мережі.\n"
 
-#: src/main.c:827
+#: src/main.c:1047
 #, c-format
 msgid "Password for user %s: "
 msgstr "Пароль для користувача %s:"
 
-#: src/main.c:829
+#: src/main.c:1049
 #, c-format
 msgid "Password: "
 msgstr "Пароль:"
 
-#: src/main.c:885
+#: src/main.c:1068
+#, c-format
+msgid "Cannot create pipe\n"
+msgstr "Не вдалося створити канал\n"
+
+#: src/main.c:1076
+#, c-format
+msgid "Error initializing spawn file actions for use-askpass: %d\n"
+msgstr ""
+"Помилка під час спроби ініціалізувати дії з поновлення файлів для use-"
+"askpass: %d\n"
+
+#: src/main.c:1085
+#, c-format
+msgid "Error setting spawn file actions for use-askpass: %d\n"
+msgstr ""
+"Помилка під час спроби встановити дії з поновлення файлів для use-askpass: "
+"%d\n"
+
+#: src/main.c:1109
+#, c-format
+msgid "Error reading response from command \"%s %s\": %s\n"
+msgstr "Помилка під час спроби читання відповіді від команди «%s %s»: %s\n"
+
+#: src/main.c:1132
+#, c-format
+msgid "Username for '%s%s': "
+msgstr "Ім’я користувача «%s%s»: "
+
+#: src/main.c:1142
+#, c-format
+msgid "Password for '%s%s@%s': "
+msgstr "Пароль до «%s%s@%s»: "
+
+#: src/main.c:1214
 msgid "Wgetrc: "
 msgstr "Wgetrc: "
 
-#: src/main.c:886
+#: src/main.c:1215
 msgid "Locale: "
 msgstr "Локаль: "
 
-#: src/main.c:887
+#: src/main.c:1216
 msgid "Compile: "
 msgstr "Збірка: "
 
-#: src/main.c:888
+#: src/main.c:1217
 msgid "Link: "
 msgstr "Посилання: "
 
-#: src/main.c:892
+#: src/main.c:1221
 #, c-format
 msgid ""
 "GNU Wget %s built on %s.\n"
@@ -2433,29 +2742,29 @@ msgstr ""
 "GNU Wget %s, зібрано %s.\n"
 "\n"
 
-#: src/main.c:919
+#: src/main.c:1248
 #, c-format
 msgid "    %s (env)\n"
 msgstr "    %s (середовище)\n"
 
-#: src/main.c:926
+#: src/main.c:1255
 #, c-format
 msgid "    %s (user)\n"
 msgstr "    %s (користувач)\n"
 
-#: src/main.c:931
+#: src/main.c:1260
 #, c-format
 msgid "    %s (system)\n"
 msgstr "    %s (система)\n"
 
 #. TRANSLATORS: When available, an actual copyright character
 #. (circle-c) should be used in preference to "(C)".
-#: src/main.c:959
-#, fuzzy, c-format
+#: src/main.c:1288
+#, c-format
 msgid "Copyright (C) %s Free Software Foundation, Inc.\n"
-msgstr "© Free Software Foundation, Inc., 2011\n"
+msgstr "© Free Software Foundation, Inc., %s\n"
 
-#: src/main.c:962
+#: src/main.c:1291
 msgid ""
 "License GPLv3+: GNU GPL version 3 or later\n"
 "<http://www.gnu.org/licenses/gpl.html>.\n"
@@ -2471,7 +2780,7 @@ msgstr ""
 
 #. TRANSLATORS: When available, please use the proper diacritics for
 #. names such as this one. See en_US.po for reference.
-#: src/main.c:970
+#: src/main.c:1299
 msgid ""
 "\n"
 "Originally written by Hrvoje Niksic <hniksic@xemacs.org>.\n"
@@ -2479,73 +2788,85 @@ msgstr ""
 "\n"
 "Автор: Hrvoje Niksic <hniksic@xemacs.org>.\n"
 
-#: src/main.c:973
+#: src/main.c:1302
 msgid "Please send bug reports and questions to <bug-wget@gnu.org>.\n"
 msgstr ""
 "Повідомлення про помилки та пропозиції надсилайте до <bug-wget@gnu.org>.\n"
 
-#: src/main.c:1024 src/main.c:1515
+#: src/main.c:1351 src/main.c:1882
 #, c-format
 msgid "Memory allocation problem\n"
 msgstr "Проблема з розподілом пам’яті\n"
 
-#: src/main.c:1075
+#: src/main.c:1401
 #, c-format
 msgid "Exiting due to error in %s\n"
 msgstr "Завершуємо роботу через помилку у %s\n"
 
-#: src/main.c:1104 src/main.c:1174 src/main.c:1376
+#: src/main.c:1430 src/main.c:1501 src/main.c:1733
 #, c-format
 msgid "Try `%s --help' for more options.\n"
 msgstr "Спробуйте `%s --help' для отримання детальної інформації.\n"
 
-#: src/main.c:1170
+#: src/main.c:1497
 #, c-format
 msgid "%s: illegal option -- `-n%c'\n"
 msgstr "%s: невірний параметр -- `-n%c'\n"
 
-#: src/main.c:1213
+#: src/main.c:1540
 #, c-format
 msgid "Debugging support not compiled in. Ignoring --debug flag.\n"
 msgstr ""
+"Підтримку діагностики не реалізовано під час збирання. Ігноруємо прапорець --"
+"debug.\n"
 
-#: src/main.c:1225
+#: src/main.c:1553
 #, c-format
 msgid ""
 "Both --no-clobber and --convert-links were specified, only --convert-links "
 "will be used.\n"
 msgstr ""
-"Одночасно вказано --no-clobber іd --convert-links, буде використано лише --"
+"Одночасно вказано --no-clobber і --convert-links, буде використано лише --"
 "convert-links.\n"
 
-#: src/main.c:1255
+#: src/main.c:1555
+#, c-format
+msgid ""
+"Both --no-clobber and --convert-file-only were specified, only --convert-"
+"file-only will be used.\n"
+msgstr ""
+"Одночасно вказано --no-clobber і -convert-file-only, буде використано лише -"
+"convert-file-only.\n"
+
+#: src/main.c:1588
 #, c-format
 msgid "Can't be verbose and quiet at the same time.\n"
 msgstr "Режими verbose та quiet не можна використовувати одночасно.\n"
 
-#: src/main.c:1261
+#: src/main.c:1594
 #, c-format
 msgid "Can't timestamp and not clobber old files at the same time.\n"
 msgstr "Режими підтримки міток часу та збереження старих файлів несумісні.\n"
 
-#: src/main.c:1270
+#: src/main.c:1603
 #, c-format
 msgid "Cannot specify both --inet4-only and --inet6-only.\n"
 msgstr "Не можливо вказати одночасно --inet4-only та --inet6-only.\n"
 
-#: src/main.c:1280
+#: src/main.c:1613
 msgid ""
-"Cannot specify both -k and -O if multiple URLs are given, or in combination\n"
+"Cannot specify both -k or --convert-file-only and -O if multiple URLs are "
+"given, or in combination\n"
 "with -p or -r. See the manual for details.\n"
 "\n"
 msgstr ""
-"Не можна задавати одразу -k і -O, якщо вказано декілька адрес, або у "
-"поєднанні\n"
+"Не можна задавати одразу -k або -convert-file-only і -O, якщо вказано "
+"декілька адрес, або у поєднанні\n"
 "з -p або -r. Докладніші відомості можна знайти на сторінці підручника "
 "(man).\n"
 "\n"
 
-#: src/main.c:1289
+#: src/main.c:1622
 msgid ""
 "WARNING: combining -O with -r or -p will mean that all downloaded content\n"
 "will be placed in the single file you specified.\n"
@@ -2555,7 +2876,7 @@ msgstr ""
 "буде розташовано у вказаному вами єдиному файлі.\n"
 "\n"
 
-#: src/main.c:1295
+#: src/main.c:1628
 msgid ""
 "WARNING: timestamping does nothing in combination with -O. See the manual\n"
 "for details.\n"
@@ -2565,19 +2886,19 @@ msgstr ""
 "відомості можна знайти на сторінці підручника (man).\n"
 "\n"
 
-#: src/main.c:1304
+#: src/main.c:1637
 #, c-format
 msgid "File `%s' already there; not retrieving.\n"
 msgstr "Файл `%s' вже є, не завантажуємо.\n"
 
-#: src/main.c:1315
+#: src/main.c:1648
 #, c-format
 msgid ""
 "WARC output does not work with --no-clobber, --no-clobber will be disabled.\n"
 msgstr ""
 "Виведення до WARC не працює з --no-clobber, --no-clobber буде вимкнено.\n"
 
-#: src/main.c:1322
+#: src/main.c:1655
 #, c-format
 msgid ""
 "WARC output does not work with timestamping, timestamping will be disabled.\n"
@@ -2585,21 +2906,21 @@ msgstr ""
 "Виведення до WARC не працює з використанням часових позначок, часові "
 "позначки буде вимкнено.\n"
 
-#: src/main.c:1329
+#: src/main.c:1662
 #, c-format
 msgid "WARC output does not work with --spider.\n"
 msgstr "Виведення до WARC не працює з параметром --spider.\n"
 
-#: src/main.c:1335
-#, fuzzy, c-format
+#: src/main.c:1668
+#, c-format
 msgid ""
 "WARC output does not work with --continue or --start-pos, they will be "
 "disabled.\n"
 msgstr ""
-"Виведення до WARC не працює з параметром --continue. Параметр --continue "
-"буде вимкнено.\n"
+"Виведення до WARC не працює з параметром --continue або --start-pos. Їх буде "
+"вимкнено.\n"
 
-#: src/main.c:1343
+#: src/main.c:1676
 #, c-format
 msgid ""
 "Digests are disabled; WARC deduplication will not find duplicate records.\n"
@@ -2607,41 +2928,52 @@ msgstr ""
 "Контрольні суми вимкнено; засоби уникнення дублювання WARC не зможуть знайти "
 "записи-дублікати.\n"
 
-#: src/main.c:1355
+#: src/main.c:1697
+#, fuzzy, c-format
+msgid ""
+"Compression does not work with --continue or --start-pos, they will be "
+"disabled.\n"
+msgstr ""
+"Виведення до WARC не працює з параметром --continue або --start-pos. Їх буде "
+"вимкнено.\n"
+
+#: src/main.c:1708
 #, c-format
 msgid "Cannot specify both --ask-password and --password.\n"
 msgstr ""
 "Не можна одночасно використовувати параметри --ask-password і --password.\n"
 
-#: src/main.c:1363
+#: src/main.c:1716
 #, c-format
 msgid ""
 "Specifying both --start-pos and --continue is not recommended; --continue "
 "will be disabled.\n"
 msgstr ""
+"Не рекомендуємо використовувати одночасно --start-pos і --continue; --"
+"continue буде вимкнено.\n"
 
-#: src/main.c:1371
+#: src/main.c:1728
 #, c-format
 msgid "%s: missing URL\n"
 msgstr "%s: не вказано URL\n"
 
-#: src/main.c:1412
+#: src/main.c:1769
 #, c-format
 msgid "You cannot specify both --post-data and --post-file.\n"
 msgstr ""
 "Не можна одночасно використовувати параметри --post-data і --post-file.\n"
 
-#: src/main.c:1417
+#: src/main.c:1774
 #, c-format
 msgid ""
 "You cannot use --post-data or --post-file along with --method. --method "
-"expects data through --body-data and --body-file options"
+"expects data through --body-data and --body-file options\n"
 msgstr ""
 "Не можна використовувати --post-data або --post-file без --method. Параметру "
 "--method потрібні дані, передані за допомогою параметрів --body-data і --"
-"body-file."
+"body-file.\n"
 
-#: src/main.c:1426
+#: src/main.c:1783
 #, c-format
 msgid ""
 "You must specify a method through --method=HTTPMethod to use with --body-"
@@ -2650,29 +2982,69 @@ msgstr ""
 "Вам слід вказати метод за допомогою параметра --method=МетодHTTP, щоб "
 "скористатися --body-data або --body-file.\n"
 
-#: src/main.c:1432
+#: src/main.c:1789
 #, c-format
 msgid "You cannot specify both --body-data and --body-file.\n"
 msgstr "Не можна одночасно визначати --body-data і --body-file.\n"
 
-#: src/main.c:1484
+#: src/main.c:1841
 #, c-format
 msgid "This version does not have support for IRIs\n"
 msgstr "Поточна версія не має підтримки IRI\n"
 
-#: src/main.c:1584
+#: src/main.c:1951
 #, c-format
-msgid "-k can be used together with -O only if outputting to a regular file.\n"
+msgid ""
+"-k or -r can be used together with -O only if outputting to a regular file.\n"
 msgstr ""
-"-k можна використовувати разом з -O, лише якщо дані записуються до "
+"-k або -r можна використовувати разом з -O, лише якщо дані записуються до "
 "звичайного файла.\n"
 
-#: src/main.c:1689
+#: src/main.c:1957
+#, c-format
+msgid ""
+"--convert-links or --convert-file-only can be used together only if "
+"outputting to a regular file.\n"
+msgstr ""
+"--convert-links і --convert-file-only можна використовувати разом, лише якщо "
+"дані записуються до звичайного файла.\n"
+
+#: src/main.c:1968
+#, c-format
+msgid "Failed to init libcares\n"
+msgstr "Не вдалося ініціалізувати libcares\n"
+
+#: src/main.c:1974
+#, c-format
+msgid "Failed to init c-ares channel\n"
+msgstr "Не вдалося ініціалізувати канал c-ares\n"
+
+#: src/main.c:1997
+#, c-format
+msgid "Failed to parse IP address '%s'\n"
+msgstr "Не вдалося обробити IP-адресу «%s»\n"
+
+#: src/main.c:2008
+#, c-format
+msgid "Failed to set DNS server(s) '%s' (%d)\n"
+msgstr "Не вдалося встановити сервери DNS «%s» (%d)\n"
+
+#: src/main.c:2136
 #, c-format
 msgid "No URLs found in %s.\n"
 msgstr "В %s не знайдено посилань.\n"
 
-#: src/main.c:1710
+#: src/main.c:2152
+#, c-format
+msgid "Unable to parse metalink file %s.\n"
+msgstr "Не вдалося обробити файл метапосилань %s.\n"
+
+#: src/main.c:2182 src/metalink.c:337
+#, c-format
+msgid "Could not download all resources from %s.\n"
+msgstr "Не вдалося отримати усі ресурси з %s.\n"
+
+#: src/main.c:2209
 #, c-format
 msgid ""
 "FINISHED --%s--\n"
@@ -2681,102 +3053,273 @@ msgid ""
 msgstr ""
 "ЗАКІНЧЕНО --%s--\n"
 "Загальний час: %s\n"
-"Завантажено: %d файлів, %s у %s (%s)\n"
+"Завантажено: %d файлів, %s за %s (%s)\n"
 
-#: src/main.c:1724
+#: src/main.c:2223
 #, c-format
 msgid "Download quota of %s EXCEEDED!\n"
 msgstr "ВИЧЕРПАНО обмеження на завантаження (%s)!\n"
 
-#: src/mswindows.c:100
+#: src/metalink.c:93
+msgid "-O not supported for metalink download. Ignoring.\n"
+msgstr ""
+"Підтримки -O для отримання даних з метапосиланням не передбачено. Ігноруємо "
+"цей параметр.\n"
+
+#: src/metalink.c:172
+#, c-format
+msgid "[--trust-server-names %s, --directory-prefix=%s]\n"
+msgstr "[--trust-server-names %s, --directory-prefix=%s]\n"
+
+#: src/metalink.c:176
+#, c-format
+msgid "Planned metalink file: %s\n"
+msgstr "Запланований файл метапосилань: %s\n"
+
+#: src/metalink.c:179
+#, c-format
+msgid "Secured metalink file: %s\n"
+msgstr "Безпечний файл metalink: %s\n"
+
+#: src/metalink.c:184
+msgid "Rejecting metalink file. Unsafe name.\n"
+msgstr "Відкидаємо файл metalink. Назва не є безпечною.\n"
+
+#: src/metalink.c:238
+#, c-format
+msgid "Processing metaurl %s...\n"
+msgstr "Обробляємо метаадресу %s…\n"
+
+#: src/metalink.c:251
+#, c-format
+msgid "Rejecting metaurl file %s. Unsafe name.\n"
+msgstr "Відкидаємо файл метаадреси %s. Назва не є безпечною.\n"
+
+#: src/metalink.c:268
+#, c-format
+msgid "Failed to download %s. Skipping metaurl.\n"
+msgstr "Не вдалося отримати %s. Пропускаємо метаадресу.\n"
+
+#: src/metalink.c:285
+#, c-format
+msgid "Unable to parse metaurl file %s.\n"
+msgstr "Не вдалося обробити файл метаадреси: %s\n"
+
+#: src/metalink.c:354
+msgid "Metaurls processing returned with error.\n"
+msgstr "Спроба обробити метаадреси завершилася повідомленням про помилку.\n"
+
+#: src/metalink.c:386
+#, c-format
+msgid "Resource type %s not supported, ignoring...\n"
+msgstr "Підтримки ресурсів типу %s не передбачено, ігноруємо...\n"
+
+#: src/metalink.c:509
+msgid "Could not open downloaded file.\n"
+msgstr "Не вдалося відкрити отриманий файл.\n"
+
+#: src/metalink.c:514
+#, c-format
+msgid "Computing size for %s\n"
+msgstr "Обчислюємо розмір %s\n"
+
+#: src/metalink.c:519
+msgid "File size not declared. Skipping check.\n"
+msgstr "Розмір файла не оголошено. Пропускаємо перевірку.\n"
+
+#: src/metalink.c:527
+msgid "Could not get downloaded file's size.\n"
+msgstr "Не вдалося отримати дані щодо розміру отримуваного файла.\n"
+
+#: src/metalink.c:539
+#, c-format
+msgid "Size mismatch for file %s.\n"
+msgstr "Невідповідність розмірів для файла %s.\n"
+
+#: src/metalink.c:547
+msgid "Size matches.\n"
+msgstr "Розміри збігаються.\n"
+
+#: src/metalink.c:600
+#, c-format
+msgid "Computing checksum for %s\n"
+msgstr "Обчислюємо контрольну суму для %s\n"
+
+#: src/metalink.c:678
+msgid "Checksum matches.\n"
+msgstr "Контрольні суми збігаються.\n"
+
+#: src/metalink.c:683
+#, c-format
+msgid "Checksum mismatch for file %s.\n"
+msgstr "Невідповідність контрольних сум для файла %s.\n"
+
+#: src/metalink.c:723
+msgid "Could not open downloaded file for signature verification.\n"
+msgstr "Не вдалося відкрити отриманий файл для перевірки підпису.\n"
+
+#: src/metalink.c:782
+#, c-format
+msgid "GPGME data_new_from_mem: %s\n"
+msgstr "GPGME data_new_from_mem: %s\n"
+
+#: src/metalink.c:794
+#, c-format
+msgid "GPGME op_verify: %s\n"
+msgstr "GPGME op_verify: %s\n"
+
+#: src/metalink.c:807
+msgid "GPGME op_verify_result: NULL\n"
+msgstr "GPGME op_verify_result: NULL\n"
+
+#: src/metalink.c:823
+msgid "Signature validation succeeded.\n"
+msgstr "Перевірку підписів пройдено.\n"
+
+#: src/metalink.c:831
+msgid "Invalid signature. Rejecting resource.\n"
+msgstr "Некоректний підпис. Відмовляємо ресурсу.\n"
+
+#: src/metalink.c:840
+msgid "Data matches signature, but signature is not trusted.\n"
+msgstr "Дані відповідають підпису, але підпис не є надійним.\n"
+
+#: src/metalink.c:867
+msgid "No checksums found.\n"
+msgstr "Контрольних сум не знайдено.\n"
+
+#: src/metalink.c:873
+#, c-format
+msgid "Failed to download %s. Skipping resource.\n"
+msgstr "Не вдалося отримати %s. Пропускаємо ресурс.\n"
+
+#: src/metalink.c:880
+#, c-format
+msgid "File %s retrieved but size does not match. \n"
+msgstr "Файл %s отримано, але його розмір не збігається із еталонним. \n"
+
+#: src/metalink.c:887
+#, c-format
+msgid "File %s retrieved but checksum does not match. \n"
+msgstr ""
+"Файл %s отримано, але його контрольна сума не збігається із еталонною. \n"
+
+#: src/metalink.c:896
+#, c-format
+msgid "File %s retrieved but signature does not match. \n"
+msgstr "Файл %s отримано, але його підпис не збігається із еталонним. \n"
+
+#: src/metalink.c:1115
+#, c-format
+msgid "Renaming %s to %s.\n"
+msgstr "Перейменовуємо %s на %s.\n"
+
+#: src/mswindows.c:97
 #, c-format
 msgid "Continuing in background.\n"
 msgstr "Продовжуємо у фоновому режимі.\n"
 
-#: src/mswindows.c:293
+#: src/mswindows.c:290
 #, c-format
 msgid "Continuing in background, pid %lu.\n"
 msgstr "Продовжуємо у фоновому режимі, номер процесу %lu.\n"
 
-#: src/mswindows.c:295 src/utils.c:481
+#: src/mswindows.c:292 src/utils.c:510
 #, c-format
 msgid "Output will be written to %s.\n"
 msgstr "Виведення буде записано до %s.\n"
 
-#: src/mswindows.c:327
+#: src/mswindows.c:324
 #, c-format
 msgid "fake_fork_child() failed\n"
 msgstr "помилка fake_fork_child()\n"
 
-#: src/mswindows.c:335
+#: src/mswindows.c:332
 #, c-format
 msgid "fake_fork() failed\n"
 msgstr "помилка fake_fork()\n"
 
-#: src/mswindows.c:463 src/mswindows.c:470
+#: src/mswindows.c:460 src/mswindows.c:467
 #, c-format
 msgid "%s: Couldn't find usable socket driver.\n"
-msgstr "%s: Не можу знайти потрібний драйвер.\n"
+msgstr "%s: не вдалося знайти потрібний драйвер.\n"
 
-#: src/mswindows.c:650
+#: src/mswindows.c:647
 #, c-format
 msgid "ioctl() failed.  The socket could not be set as blocking.\n"
 msgstr "Помилка ioctl(). Не вдалося встановити блокування за сокетом.\n"
 
-#: src/netrc.c:354
+#: src/netrc.c:366
 #, c-format
 msgid "%s: %s:%d: warning: %s token appears before any machine name\n"
-msgstr "%s: %s:%d: попередження: лексема %s перед іменем машини\n"
+msgstr "%s: %s:%d: попередження: лексема %s перед назвою машини\n"
 
-#: src/netrc.c:385
+#: src/netrc.c:407
 #, c-format
 msgid "%s: %s:%d: unknown token \"%s\"\n"
 msgstr "%s: %s:%d: невідома лексема \"%s\"\n"
 
-#: src/netrc.c:448
+#: src/netrc.c:470
 #, c-format
 msgid "Usage: %s NETRC [HOSTNAME]\n"
-msgstr "Використання: %s NETRC [ІМ'Я ВУЗЛА]\n"
+msgstr "Використання: %s NETRC [НАЗВА ВУЗЛА]\n"
 
-#: src/netrc.c:466
+#: src/netrc.c:488
 #, c-format
 msgid "%s: cannot stat %s: %s\n"
-msgstr "%s: не можу виконати stat %s: %s\n"
+msgstr "%s: не вдалося виконати stat %s: %s\n"
 
-#: src/openssl.c:118
+#: src/openssl.c:123
 msgid "WARNING: using a weak random seed.\n"
 msgstr ""
 "ПОПЕРЕДЖЕННЯ: використовується слабкий засіб створення псевдовипадкових "
 "чисел.\n"
 
-#: src/openssl.c:189
+#: src/openssl.c:195
 msgid "Could not seed PRNG; consider using --random-file.\n"
 msgstr ""
 "Не вдалося створити початкове значення PRNG. Вам варто скористатися --random-"
 "file.\n"
 
-#: src/openssl.c:630
+#: src/openssl.c:245
+msgid "Your OpenSSL version is too old to support TLSv1.1\n"
+msgstr ""
+"Ваша версія бібліотеки OpenSSL є надто старою, підтримку TLSv1.1 у ній не "
+"реалізовано\n"
+
+#: src/openssl.c:249
+msgid "Your OpenSSL version is too old to support TLSv1.2\n"
+msgstr ""
+"Ваша версія бібліотеки OpenSSL є надто старою, підтримку TLSv1.2 у ній не "
+"реалізовано\n"
+
+#: src/openssl.c:254
+#, c-format
+msgid "OpenSSL: unimplemented 'secure-protocol' option value %d\n"
+msgstr "OpenSSL: не реалізоване значення параметра «secure-protocol», %d\n"
+
+#: src/openssl.c:798
 #, c-format
 msgid "%s: cannot verify %s's certificate, issued by %s:\n"
 msgstr "%s: не вдалося перевірити сертифікат %s, випущений %s:\n"
 
-#: src/openssl.c:639
+#: src/openssl.c:809
 msgid "  Unable to locally verify the issuer's authority.\n"
 msgstr "  Неможливо локально перевірити чинність запису видавця.\n"
 
-#: src/openssl.c:644
+#: src/openssl.c:814
 msgid "  Self-signed certificate encountered.\n"
 msgstr "  Виявлено самопідписаний сертифікат.\n"
 
-#: src/openssl.c:647
+#: src/openssl.c:817
 msgid "  Issued certificate not yet valid.\n"
 msgstr "  Виданий сертифікат ще не дійсний.\n"
 
-#: src/openssl.c:650
+#: src/openssl.c:820
 msgid "  Issued certificate has expired.\n"
 msgstr "  Виданий сертифікат прострочений.\n"
 
-#: src/openssl.c:735
+#: src/openssl.c:908
 #, c-format
 msgid ""
 "%s: no certificate subject alternative name matches\n"
@@ -2785,7 +3328,7 @@ msgstr ""
 "%s: жоден з варіантів призначення сертифіката не\n"
 "\tвідповідає потрібній назві вузла, %s.\n"
 
-#: src/openssl.c:752
+#: src/openssl.c:927
 #, c-format
 msgid ""
 "    %s: certificate common name %s doesn't match requested host name %s.\n"
@@ -2793,7 +3336,7 @@ msgstr ""
 "    %s: загальна назва об’єкта сертифікації, %s, не відповідає потрібній "
 "назві вузла %s.\n"
 
-#: src/openssl.c:784
+#: src/openssl.c:959
 #, c-format
 msgid ""
 "    %s: certificate common name is invalid (contains a NUL character).\n"
@@ -2804,14 +3347,14 @@ msgstr ""
 "    Це може означати, що автентичність вузла викликає сумніви\n"
 "    (тобто це насправді не %s).\n"
 
-#: src/openssl.c:802
+#: src/openssl.c:984
 #, c-format
 msgid "To connect to %s insecurely, use `--no-check-certificate'.\n"
 msgstr ""
 "Для з’єднання з %s без захисту, скористайтеся параметром «--no-check-"
 "certificate».\n"
 
-#: src/progress.c:244
+#: src/progress.c:245
 #, c-format
 msgid ""
 "\n"
@@ -2820,57 +3363,57 @@ msgstr ""
 "\n"
 "%*s[ пропуск %sK ]"
 
-#: src/progress.c:465
+#: src/progress.c:466
 #, c-format
 msgid "Invalid dot style specification %s; leaving unchanged.\n"
 msgstr "Некоректне вказання стилю %s; лишаємо без зміни.\n"
 
 #. TRANSLATORS: "ETA" is English-centric, but this must
 #. be short, ideally 3 chars.  Abbreviate if necessary.
-#: src/progress.c:854
-#, fuzzy, c-format
-msgid "   eta %s"
-msgstr "  час %s"
+#: src/progress.c:858
+#, c-format
+msgid "    eta %s"
+msgstr "    час %s"
 
-#: src/progress.c:1150
-msgid "   in "
-msgstr "   у "
+#: src/progress.c:1148
+msgid "    in "
+msgstr "    за "
 
 #: src/ptimer.c:158
 #, c-format
 msgid "Cannot get REALTIME clock frequency: %s\n"
 msgstr "Не вдається отримати значення таймеру реального часy: %s\n"
 
-#: src/recur.c:434
+#: src/recur.c:514
 #, c-format
 msgid "Removing %s since it should be rejected.\n"
 msgstr "Вилучення %s, оскільки його треба пропустити.\n"
 
-#: src/res.c:391
+#: src/res.c:392
 #, c-format
 msgid "Cannot open %s: %s"
-msgstr "Не можу відкрити %s: %s"
+msgstr "Не вдалося відкрити %s: %s"
 
-#: src/res.c:550
+#: src/res.c:551
 msgid "Loading robots.txt; please ignore errors.\n"
 msgstr "Завантажуємо файл robots.txt; не зважайте на помилки.\n"
 
-#: src/retr.c:768
+#: src/retr.c:913
 #, c-format
 msgid "Error parsing proxy URL %s: %s.\n"
 msgstr "Помилка розбору адреси проксі %s: %s.\n"
 
-#: src/retr.c:778
+#: src/retr.c:925
 #, c-format
 msgid "Error in proxy URL %s: Must be HTTP.\n"
 msgstr "Помилка в адресі проксі-сервера %s: має бути HTTP.\n"
 
-#: src/retr.c:879
+#: src/retr.c:1054
 #, c-format
 msgid "%d redirections exceeded.\n"
 msgstr "%d зациклень - більше, ніж допустимо.\n"
 
-#: src/retr.c:1126
+#: src/retr.c:1318
 msgid ""
 "Giving up.\n"
 "\n"
@@ -2878,7 +3421,7 @@ msgstr ""
 "Аварійне завершення.\n"
 "\n"
 
-#: src/retr.c:1126
+#: src/retr.c:1318
 msgid ""
 "Retrying.\n"
 "\n"
@@ -2886,120 +3429,139 @@ msgstr ""
 "Продовження спроб.\n"
 "\n"
 
-#: src/spider.c:75
-msgid ""
-"Found no broken links.\n"
-"\n"
-msgstr ""
-"Жодного пошкодженого посилання.\n"
-"\n"
-
-#: src/spider.c:82
-#, c-format
-msgid ""
-"Found %d broken link.\n"
-"\n"
-msgid_plural ""
-"Found %d broken links.\n"
-"\n"
-msgstr[0] ""
-"Знайдено %d помилкове посилання.\n"
-"\n"
-msgstr[1] ""
-"Знайдено %d помилкових посилання.\n"
-"\n"
-msgstr[2] ""
-"Знайдено %d помилкових посилань.\n"
-"\n"
-msgstr[3] ""
-"Знайдено %d помилкове посилання.\n"
-"\n"
-
-#: src/url.c:639
+#: src/url.c:676
 msgid "No error"
 msgstr "Без помилок"
 
-#: src/url.c:641
+#: src/url.c:678
 #, c-format
 msgid "Unsupported scheme %s"
 msgstr "Схема %s не підтримується"
 
-#: src/url.c:643
+#: src/url.c:680
 msgid "Scheme missing"
 msgstr "Схема відсутня"
 
-#: src/url.c:645
+#: src/url.c:682
 msgid "Invalid host name"
-msgstr "Некоректне ім'я вузла"
+msgstr "Некоректна назва вузла"
 
-#: src/url.c:647
+#: src/url.c:684
 msgid "Bad port number"
 msgstr "Невірний номер порту"
 
-#: src/url.c:649
+#: src/url.c:686
 msgid "Invalid user name"
 msgstr "Некоректне ім'я користувача"
 
-#: src/url.c:651
+#: src/url.c:688
 msgid "Unterminated IPv6 numeric address"
 msgstr "Незакінчена числова IPv6 адреса"
 
-#: src/url.c:653
+#: src/url.c:690
 msgid "IPv6 addresses not supported"
 msgstr "IPv6 не підтримується"
 
-#: src/url.c:655
+#: src/url.c:692
 msgid "Invalid IPv6 numeric address"
 msgstr "Некоректна числова IPv6 адреса"
 
-#: src/url.c:959
+#: src/url.c:1008
 msgid "HTTPS support not compiled in"
 msgstr "Підтримку HTTPS не скомпільовано"
 
-#: src/utils.c:116
+#: src/url.c:1603
+#, fuzzy
+msgid "Unconvertable multibyte sequence encountered\n"
+msgstr "Виявлено неповну або некоректну багатобайтову послідовність\n"
+
+#: src/utils.c:130
 #, c-format
 msgid "%s: %s: Failed to allocate enough memory; memory exhausted.\n"
 msgstr "%s: %s: Не вдалося виділити достатньо пам'яті; недостатньо пам'яті.\n"
 
-#: src/utils.c:122
+#: src/utils.c:136
 #, c-format
 msgid "%s: %s: Failed to allocate %ld bytes; memory exhausted.\n"
 msgstr "%s: %s: Не вдалося виділити %ld байт; недостатньо пам'яті.\n"
 
-#: src/utils.c:336
+#: src/utils.c:356
 #, c-format
-msgid "%s: aprintf: text buffer is too big (%ld bytes), aborting.\n"
-msgstr "%s: aprintf: текстовий буфер завеликий (%ld байт), перериваю.\n"
+msgid "%s: aprintf: text buffer is too big (%d bytes), aborting.\n"
+msgstr ""
+"%s: aprintf: текстовий буфер завеликий (%d байт), перериваємо обробку.\n"
 
-#: src/utils.c:479
+#: src/utils.c:508
 #, c-format
 msgid "Continuing in background, pid %d.\n"
 msgstr "Продовжуємо у фоновому режимі, номер процесу %d.\n"
 
-#: src/utils.c:555
+#: src/utils.c:584
 #, c-format
 msgid "Failed to unlink symlink %s: %s\n"
 msgstr "Не вдалося видалити символьне посилання %s: %s\n"
 
-#: src/utils.c:2273 src/utils.c:2292
+#: src/utils.c:884
+#, fuzzy, c-format
+msgid "Failed to Fopen file %s\n"
+msgstr "Не вдалося ініціалізувати libcares\n"
+
+#: src/utils.c:890
+#, fuzzy, c-format
+msgid "Failed to get FD for file %s\n"
+msgstr "Не вдалося встановити права доступу для %s.\n"
+
+#: src/utils.c:897
+#, fuzzy, c-format
+msgid "Failed to stat file %s, (check permissions)\n"
+msgstr "Не вдалося встановити права доступу для %s.\n"
+
+#: src/utils.c:907
+#, c-format
+msgid "File %s changed since the last check. Security check failed."
+msgstr ""
+
+#: src/utils.c:942
+#, fuzzy, c-format
+msgid "Failed to open file %s, reason :%s\n"
+msgstr "Не вдалося обробити IP-адресу «%s»\n"
+
+#: src/utils.c:948
+#, fuzzy, c-format
+msgid "Failed to stat file %s, error: %s\n"
+msgstr "Не вдалося встановити права доступу для %s.\n"
+
+#: src/utils.c:957
+#, c-format
+msgid ""
+"Trying to open file %s but it changed since last check. Security check "
+"failed."
+msgstr ""
+
+#: src/utils.c:2461 src/utils.c:2480
 #, c-format
 msgid "Invalid regular expression %s, %s\n"
 msgstr "Некоректний формальний вираз %s, %s\n"
 
-#: src/utils.c:2315 src/utils.c:2339
+#: src/utils.c:2504 src/utils.c:2528
 #, c-format
 msgid "Error while matching %s: %d\n"
 msgstr "Помилка під час спроби встановлення відповідності %s: %d\n"
 
-#: src/warc.c:222
+#: src/utils.c:2821
+#, c-format
+msgid "Skipping key with wrong size (%d/%d): %s\n"
+msgstr ""
+
+#: src/warc.c:223
 msgid "Error opening GZIP stream to WARC file.\n"
 msgstr "Помилка під час спроби відкрити потік даних GZIP до файла WARC.\n"
 
-#: src/warc.c:710
+#: src/warc.c:798
 msgid "Error writing warcinfo record to WARC file.\n"
 msgstr "Помилка під час спроби запису warcinfo до файла WARC.\n"
 
-#: src/warc.c:771
+#: src/warc.c:861
 #, c-format
 msgid ""
 "Opening WARC file %s.\n"
@@ -3008,27 +3570,27 @@ msgstr ""
 "Відкриваємо файл WARC %s.\n"
 "\n"
 
-#: src/warc.c:777
+#: src/warc.c:867
 #, c-format
 msgid "Error opening WARC file %s.\n"
 msgstr "Помилка під час спроби відкрити файл WARC %s.\n"
 
-#: src/warc.c:974
+#: src/warc.c:1064
 msgid "CDX file does not list original urls. (Missing column 'a'.)\n"
 msgstr ""
 "У файлі CDX немає списку початкових адрес. (Не вказано стовпчик «a».)\n"
 
-#: src/warc.c:977
+#: src/warc.c:1067
 msgid "CDX file does not list checksums. (Missing column 'k'.)\n"
 msgstr "У файлі CDX немає списку контрольних сум. (Не вказано стовпчик «k».)\n"
 
-#: src/warc.c:980
+#: src/warc.c:1070
 msgid "CDX file does not list record ids. (Missing column 'u'.)\n"
 msgstr ""
 "У файлі CDX немає списку ідентифікаторів записів. (Не вказано стовпчик "
 "«u».)\n"
 
-#: src/warc.c:1002
+#: src/warc.c:1094
 #, c-format
 msgid ""
 "Loaded %d record from CDX.\n"
@@ -3049,46 +3611,78 @@ msgstr[3] ""
 "З CDX завантажено %d запис.\n"
 "\n"
 
-#: src/warc.c:1047
+#: src/warc.c:1140
 #, c-format
 msgid "Could not read CDX file %s for deduplication.\n"
 msgstr "Не вдалося прочитати файл CDX %s для усування дублювання.\n"
 
-#: src/warc.c:1057
+#: src/warc.c:1150
 msgid "Could not open temporary WARC manifest file.\n"
 msgstr "Не вдалося відкрити тимчасовий файл маніфесту WARC.\n"
 
-#: src/warc.c:1067
+#: src/warc.c:1160
 msgid "Could not open temporary WARC log file.\n"
 msgstr "Не вдалося відкрити тимчасовий файл журналу WARC.\n"
 
-#: src/warc.c:1076
+#: src/warc.c:1169
 msgid "Could not open WARC file.\n"
 msgstr "Не вдалося відкрити файл WARC.\n"
 
-#: src/warc.c:1085
+#: src/warc.c:1178
 msgid "Could not open CDX file for output.\n"
 msgstr "Не вдалося відкрити файл CDX для виведення даних.\n"
 
-#: src/warc.c:1113
+#: src/warc.c:1208
 msgid "Could not open temporary WARC file.\n"
 msgstr "Не вдалося відкрити тимчасовий файл WARC.\n"
 
-#: src/warc.c:1370
+#: src/warc.c:1476
 msgid "Found exact match in CDX file. Saving revisit record to WARC.\n"
 msgstr ""
 "У файлі CDX виявлено точний відповідник. Зберігаємо запис повторного "
 "відвідування до WARC.\n"
 
-#~ msgid "Authorization failed.\n"
-#~ msgstr "Авторизація не вдалась.\n"
+#~ msgid ""
+#~ "Found no broken links.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "Жодного пошкодженого посилання.\n"
+#~ "\n"
 
 #~ msgid ""
-#~ "       --metalink-file       download URLs found in local or external "
-#~ "metalink FILE.\n"
+#~ "Found %d broken link.\n"
+#~ "\n"
+#~ msgid_plural ""
+#~ "Found %d broken links.\n"
+#~ "\n"
+#~ msgstr[0] ""
+#~ "Знайдено %d помилкове посилання.\n"
+#~ "\n"
+#~ msgstr[1] ""
+#~ "Знайдено %d помилкових посилання.\n"
+#~ "\n"
+#~ msgstr[2] ""
+#~ "Знайдено %d помилкових посилань.\n"
+#~ "\n"
+#~ msgstr[3] ""
+#~ "Знайдено %d помилкове посилання.\n"
+#~ "\n"
+
+#~ msgid "Invalid UTF-8 sequence: %s\n"
+#~ msgstr "Некоректна послідовність UTF-8: %s\n"
+
+#~ msgid "idn_decode failed (%d): %s\n"
+#~ msgstr "Помилка у idn_decode (%d): %s\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "%s received.\n"
 #~ msgstr ""
-#~ "       --metalink-file       отримати дані з адрес, вказаних у локальному "
-#~ "або зовнішньому файлі метапосилань ФАЙЛ.\n"
+#~ "\n"
+#~ "отримано %s.\n"
+
+#~ msgid "Authorization failed.\n"
+#~ msgstr "Авторизація не вдалась.\n"
 
 #~ msgid ""
 #~ "       --retries                 specify the number of retries for a "

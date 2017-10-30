@@ -23,5 +23,5 @@ class FilesCrawled:
             diff = headers.symmetric_difference(remaining)
 
             if diff:
-                print_red (str(diff))
+                print_red(str(diff))
                 raise TestFailed('Not all files were crawled correctly.')

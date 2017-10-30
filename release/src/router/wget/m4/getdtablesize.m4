@@ -1,5 +1,5 @@
-# getdtablesize.m4 serial 5
-dnl Copyright (C) 2008-2014 Free Software Foundation, Inc.
+# getdtablesize.m4 serial 6
+dnl Copyright (C) 2008-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -9,7 +9,9 @@ AC_DEFUN([gl_FUNC_GETDTABLESIZE],
   AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
   AC_REQUIRE([AC_CANONICAL_HOST])
   AC_CHECK_FUNCS_ONCE([getdtablesize])
-  if test $ac_cv_func_getdtablesize = yes; then
+  AC_CHECK_DECLS_ONCE([getdtablesize])
+  if test $ac_cv_func_getdtablesize = yes &&
+     test $ac_cv_have_decl_getdtablesize = yes; then
     # Cygwin 1.7.25 automatically increases the RLIMIT_NOFILE soft limit
     # up to an unchangeable hard limit; all other platforms correctly
     # require setrlimit before getdtablesize() can report a larger value.

@@ -1,6 +1,6 @@
 /* Provide a sys/socket header file for systems lacking it (read: MinGW)
    and for systems where it is incomplete.
-   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2017 Free Software Foundation, Inc.
    Written by Simon Josefsson.
 
    This program is free software; you can redistribute it and/or modify
@@ -79,7 +79,12 @@ _GL_INLINE_HEADER_BEGIN
 
 #if !@HAVE_SA_FAMILY_T@
 # if !GNULIB_defined_sa_family_t
+/* On OS/2 kLIBC, sa_family_t is unsigned char unless TCPV40HDRS is defined. */
+#  if !defined __KLIBC__ || defined TCPV40HDRS
 typedef unsigned short  sa_family_t;
+#  else
+typedef unsigned char   sa_family_t;
+#  endif
 #  define GNULIB_defined_sa_family_t 1
 # endif
 #endif

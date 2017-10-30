@@ -1,5 +1,6 @@
 /* Exit status handling.
-   Copyright (C) 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2009, 2010, 2011, 2012, 2015 Free Software Foundation,
+   Inc.
 
    This file is part of GNU Wget.
 
@@ -56,7 +57,7 @@ get_status_for_err (uerr_t err)
     case FTPNSFOD: case FTPUNKNOWNTYPE: case FTPSRVERR:
     case FTPRETRINT: case FTPRESTFAIL: case FTPNOPASV:
     case CONTNOTSUPPORTED: case RANGEERR: case RETRBADPATTERN:
-    case PROXERR:
+    case PROXERR: case GATEWAYTIMEOUT:
       return WGET_EXIT_SERVER_ERROR;
     case URLERROR: case QUOTEXC: case SSLINITFAILED: case UNKNOWNATTR:
     default:

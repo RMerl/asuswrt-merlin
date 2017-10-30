@@ -1,6 +1,6 @@
-# serial 65
+# serial 66
 
-# Copyright (C) 1996-2001, 2003-2014 Free Software Foundation, Inc.
+# Copyright (C) 1996-2001, 2003-2017 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -93,6 +93,7 @@ AC_DEFUN([gl_REGEX],
                                       0, sizeof data - 1, &regs)
                            != -1)
                     result |= 1;
+                  regfree (&regex);
                 }
 
                 {
@@ -124,6 +125,7 @@ AC_DEFUN([gl_REGEX],
                       if (i != 0 && i != 21)
                         result |= 1;
                     }
+                  regfree (&regex);
                 }
 
                 if (! setlocale (LC_ALL, "C"))

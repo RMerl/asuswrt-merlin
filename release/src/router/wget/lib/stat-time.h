@@ -1,6 +1,6 @@
 /* stat-related time functions.
 
-   Copyright (C) 2005, 2007, 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005, 2007, 2009-2017 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ _GL_INLINE_HEADER_BEGIN
 #endif
 
 /* Return the nanosecond component of *ST's access time.  */
-_GL_STAT_TIME_INLINE long int
+_GL_STAT_TIME_INLINE long int _GL_ATTRIBUTE_PURE
 get_stat_atime_ns (struct stat const *st)
 {
 # if defined STAT_TIMESPEC
@@ -67,7 +67,7 @@ get_stat_atime_ns (struct stat const *st)
 }
 
 /* Return the nanosecond component of *ST's status change time.  */
-_GL_STAT_TIME_INLINE long int
+_GL_STAT_TIME_INLINE long int _GL_ATTRIBUTE_PURE
 get_stat_ctime_ns (struct stat const *st)
 {
 # if defined STAT_TIMESPEC
@@ -80,7 +80,7 @@ get_stat_ctime_ns (struct stat const *st)
 }
 
 /* Return the nanosecond component of *ST's data modification time.  */
-_GL_STAT_TIME_INLINE long int
+_GL_STAT_TIME_INLINE long int _GL_ATTRIBUTE_PURE
 get_stat_mtime_ns (struct stat const *st)
 {
 # if defined STAT_TIMESPEC
@@ -93,7 +93,7 @@ get_stat_mtime_ns (struct stat const *st)
 }
 
 /* Return the nanosecond component of *ST's birth time.  */
-_GL_STAT_TIME_INLINE long int
+_GL_STAT_TIME_INLINE long int _GL_ATTRIBUTE_PURE
 get_stat_birthtime_ns (struct stat const *st)
 {
 # if defined HAVE_STRUCT_STAT_ST_BIRTHTIMESPEC_TV_NSEC
@@ -108,7 +108,7 @@ get_stat_birthtime_ns (struct stat const *st)
 }
 
 /* Return *ST's access time.  */
-_GL_STAT_TIME_INLINE struct timespec
+_GL_STAT_TIME_INLINE struct timespec _GL_ATTRIBUTE_PURE
 get_stat_atime (struct stat const *st)
 {
 #ifdef STAT_TIMESPEC
@@ -122,7 +122,7 @@ get_stat_atime (struct stat const *st)
 }
 
 /* Return *ST's status change time.  */
-_GL_STAT_TIME_INLINE struct timespec
+_GL_STAT_TIME_INLINE struct timespec _GL_ATTRIBUTE_PURE
 get_stat_ctime (struct stat const *st)
 {
 #ifdef STAT_TIMESPEC
@@ -136,7 +136,7 @@ get_stat_ctime (struct stat const *st)
 }
 
 /* Return *ST's data modification time.  */
-_GL_STAT_TIME_INLINE struct timespec
+_GL_STAT_TIME_INLINE struct timespec _GL_ATTRIBUTE_PURE
 get_stat_mtime (struct stat const *st)
 {
 #ifdef STAT_TIMESPEC
@@ -151,7 +151,7 @@ get_stat_mtime (struct stat const *st)
 
 /* Return *ST's birth time, if available; otherwise return a value
    with tv_sec and tv_nsec both equal to -1.  */
-_GL_STAT_TIME_INLINE struct timespec
+_GL_STAT_TIME_INLINE struct timespec _GL_ATTRIBUTE_PURE
 get_stat_birthtime (struct stat const *st)
 {
   struct timespec t;
@@ -181,7 +181,7 @@ get_stat_birthtime (struct stat const *st)
      || defined HAVE_STRUCT_STAT_ST_BIRTHTIMENSEC)
   /* FreeBSD and NetBSD sometimes signal the absence of knowledge by
      using zero.  Attempt to work around this problem.  Alas, this can
-     report failure even for valid time stamps.  Also, NetBSD
+     report failure even for valid timestamps.  Also, NetBSD
      sometimes returns junk in the birth time fields; work around this
      bug if it is detected.  */
   if (! (t.tv_sec && 0 <= t.tv_nsec && t.tv_nsec < 1000000000))

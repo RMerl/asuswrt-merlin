@@ -1,5 +1,5 @@
 /* Keep track of visited URLs in spider mode.
-   Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011 Free Software
+   Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2015 Free Software
    Foundation, Inc.
 
 This file is part of GNU Wget.
@@ -51,7 +51,7 @@ spider_cleanup (void)
   if (nonexisting_urls_set)
     string_set_free (nonexisting_urls_set);
 }
-
+
 /* Remembers broken links.  */
 void
 nonexisting_url (const char *url)

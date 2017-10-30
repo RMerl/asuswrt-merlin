@@ -1,6 +1,6 @@
 /* Provide a more complete sys/time.h.
 
-   Copyright (C) 2007-2014 Free Software Foundation, Inc.
+   Copyright (C) 2007-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -109,6 +109,13 @@ _GL_CXXALIAS_SYS_CAST (gettimeofday, int,
                        (struct timeval *restrict, void *restrict));
 # endif
 _GL_CXXALIASWARN (gettimeofday);
+# if defined __cplusplus && defined GNULIB_NAMESPACE
+namespace GNULIB_NAMESPACE {
+  typedef ::timeval
+#undef timeval
+    timeval;
+}
+# endif
 #elif defined GNULIB_POSIXCHECK
 # undef gettimeofday
 # if HAVE_RAW_DECL_GETTIMEOFDAY

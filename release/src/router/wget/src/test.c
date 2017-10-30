@@ -1,6 +1,6 @@
 /* Unit testing.
-   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software
-   Foundation, Inc.
+   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2015 Free
+   Software Foundation, Inc.
 
 This file is part of GNU Wget.
 
@@ -41,24 +41,20 @@ as that of the covered work.  */
 #error "TESTING not set!!!"
 #endif
 
-const char *test_parse_content_disposition();
-const char *test_subdir_p();
-const char *test_dir_matches_p();
-const char *test_commands_sorted();
-const char *test_cmd_spec_restrict_file_names();
-const char *test_path_simplify ();
-const char *test_append_uri_pathel();
-const char *test_are_urls_equal();
-const char *test_is_robots_txt_url();
-
 const char *program_argstring = "TEST";
 
-int tests_run;
+static int tests_run;
 
 static const char *
-all_tests()
+all_tests(void)
 {
+#ifdef HAVE_METALINK
+  mu_run_test (test_find_key_value);
+  mu_run_test (test_find_key_values);
+  mu_run_test (test_has_key);
+#endif
   mu_run_test (test_parse_content_disposition);
+  mu_run_test (test_parse_range_header);
   mu_run_test (test_subdir_p);
   mu_run_test (test_dir_matches_p);
   mu_run_test (test_commands_sorted);
@@ -67,17 +63,24 @@ all_tests()
   mu_run_test (test_append_uri_pathel);
   mu_run_test (test_are_urls_equal);
   mu_run_test (test_is_robots_txt_url);
+#ifdef HAVE_HSTS
+  mu_run_test (test_hsts_new_entry);
+  mu_run_test (test_hsts_url_rewrite_superdomain);
+  mu_run_test (test_hsts_url_rewrite_congruent);
+  mu_run_test (test_hsts_read_database);
+#endif
 
   return NULL;
 }
 
-char *program_name; /* Needed by lib/error.c. */
+const char *program_name; /* Needed by lib/error.c. */
 
 int
-main (int argc _GL_UNUSED, char *argv[])
+main (int argc _GL_UNUSED, const char *argv[])
 {
   const char *result;
 
+  printf ("[DEBUG] Testing...\n\n");
 #ifdef ENABLE_NLS
   /* Set the current locale.  */
   setlocale (LC_ALL, "");

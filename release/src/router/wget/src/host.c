@@ -1,7 +1,7 @@
 /* Host name resolution and matching.
    Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 Free Software Foundation,
-   Inc.
+   2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2015 Free Software
+   Foundation, Inc.
 
 This file is part of GNU Wget.
 
@@ -61,6 +61,7 @@ as that of the covered work.  */
 #include "host.h"
 #include "url.h"
 #include "hash.h"
+#include "ptimer.h"
 
 #ifndef NO_ADDRESS
 # define NO_ADDRESS NO_DATA
@@ -151,6 +152,13 @@ address_list_set_faulty (struct address_list *al, int index)
      "faulty" attempt is always preceded with all-faulty addresses,
      and this is how Wget uses it.  */
   assert (index == al->faulty);
+  if (index != al->faulty)
+    {
+      logprintf (LOG_ALWAYS, "index: %d\nal->faulty: %d\n", index, al->faulty);
+      logprintf (LOG_ALWAYS, _("Error in handling the address list.\n"));
+      logprintf (LOG_ALWAYS, _("Please report this issue to bug-wget@gnu.org\n"));
+      abort();
+    }
 
   ++al->faulty;
   if (al->faulty >= al->count)
@@ -309,7 +317,7 @@ address_list_release (struct address_list *al)
       address_list_delete (al);
     }
 }
-
+
 /* Versions of gethostbyname and getaddrinfo that support timeout. */
 
 #ifndef ENABLE_IPV6
@@ -408,7 +416,7 @@ getaddrinfo_with_timeout (const char *node, const char *service,
 }
 
 #endif /* ENABLE_IPV6 */
-
+
 /* Return a textual representation of ADDR, i.e. the dotted quad for
    IPv4 addresses, and the colon-separated list of hex words (with all
    zeros omitted, etc.) for IPv6 addresses.  */
@@ -416,14 +424,12 @@ getaddrinfo_with_timeout (const char *node, const char *service,
 const char *
 print_address (const ip_address *addr)
 {
-#ifdef ENABLE_IPV6
   static char buf[64];
+
   if (!inet_ntop (addr->family, IP_INADDR_DATA (addr), buf, sizeof buf))
     snprintf (buf, sizeof buf, "<error: %s>", strerror (errno));
+
   return buf;
-#else
-  return inet_ntoa (addr->data.d4);
-#endif
 }
 
 /* The following two functions were adapted from glibc's
@@ -570,7 +576,7 @@ is_valid_ipv6_address (const char *str, const char *end)
 
   return true;
 }
-
+
 /* Simple host cache, used by lookup_host to speed up resolving.  The
    cache doesn't handle TTL because Wget is a fairly short-lived
    application.  Refreshing is attempted when connect fails, though --
@@ -592,7 +598,7 @@ cache_query (const char *host)
   al = hash_table_get (host_name_addresses_map, host);
   if (al)
     {
-      DEBUGP (("Found %s in host_name_addresses_map (%p)\n", host, al));
+      DEBUGP (("Found %s in host_name_addresses_map (%p)\n", host, (void *) al));
       ++al->refcount;
       return al;
     }
@@ -637,7 +643,113 @@ cache_remove (const char *host)
       hash_table_remove (host_name_addresses_map, host);
     }
 }
-
+
+#ifdef HAVE_LIBCARES
+#include <sys/select.h>
+#include <ares.h>
+extern ares_channel ares;
+
+static struct address_list *
+merge_address_lists (struct address_list *al1, struct address_list *al2)
+{
+  int count = al1->count + al2->count;
+
+  /* merge al2 into al1 */
+  al1->addresses = xrealloc (al1->addresses, sizeof (ip_address) * count);
+  memcpy (al1->addresses + al1->count, al2->addresses, sizeof (ip_address) * al2->count);
+  al1->count = count;
+
+  address_list_delete (al2);
+
+  return al1;
+}
+
+static struct address_list *
+address_list_from_hostent (struct hostent *host)
+{
+  int count, i;
+  struct address_list *al = xnew0 (struct address_list);
+
+  for (count = 0; host->h_addr_list[count]; count++)
+    ;
+
+  assert (count > 0);
+
+  al->addresses = xnew_array (ip_address, count);
+  al->count     = count;
+  al->refcount  = 1;
+
+  for (i = 0; i < count; i++)
+    {
+      ip_address *ip = &al->addresses[i];
+      ip->family = host->h_addrtype;
+      memcpy (IP_INADDR_DATA (ip), host->h_addr_list[i], ip->family == AF_INET ? 4 : 16);
+    }
+
+  return al;
+}
+
+/* Since GnuLib's select() (i.e. rpl_select()) cannot handle socket-numbers
+ * returned from C-ares, we must use the original select() from Winsock.
+ */
+#ifdef WINDOWS
+#undef select
+#endif
+
+static void
+wait_ares (ares_channel channel)
+{
+  struct ptimer *timer = NULL;
+
+  if (opt.dns_timeout)
+    timer = ptimer_new ();
+
+  for (;;)
+    {
+      struct timeval *tvp, tv;
+      fd_set read_fds, write_fds;
+      int nfds, rc;
+
+      FD_ZERO (&read_fds);
+      FD_ZERO (&write_fds);
+      nfds = ares_fds (channel, &read_fds, &write_fds);
+      if (nfds == 0)
+        break;
+
+      if (timer)
+        {
+          double max = opt.dns_timeout - ptimer_measure (timer);
+
+          tv.tv_sec = (long) max;
+          tv.tv_usec = 1000000 * (max - (long) max);
+          tvp = ares_timeout (channel, &tv, &tv);
+        }
+      else
+        tvp = ares_timeout (channel, NULL, &tv);
+
+      rc = select (nfds, &read_fds, &write_fds, NULL, tvp);
+      if (rc == 0 && timer && ptimer_measure (timer) >= opt.dns_timeout)
+        ares_cancel (channel);
+      else
+        ares_process (channel, &read_fds, &write_fds);
+    }
+}
+
+static void
+callback (void *arg, int status, int timeouts _GL_UNUSED, struct hostent *host)
+{
+  struct address_list **al = (struct address_list **) arg;
+
+  if (!host || status != ARES_SUCCESS)
+    {
+      *al = NULL;
+      return;
+    }
+
+  *al = address_list_from_hostent (host);
+}
+#endif
+
 /* Look up HOST in DNS and return a list of IP addresses.
 
    This function caches its result so that, if the same host is passed
@@ -730,95 +842,123 @@ lookup_host (const char *host, int flags)
 
       if (opt.enable_iri && (name = idn_decode ((char *) host)) != NULL)
         {
-          int len = strlen (host) + strlen (name) + 4;
-          str = xmalloc (len);
-          snprintf (str, len, "%s (%s)", name, host);
-          str[len-1] = '\0';
+          str = aprintf ("%s (%s)", name, host);
           xfree (name);
         }
 
       logprintf (LOG_VERBOSE, _("Resolving %s... "),
                  quotearg_style (escape_quoting_style, str ? str : host));
 
-      if (str)
-        xfree (str);
+      xfree (str);
     }
 
 #ifdef ENABLE_IPV6
-  {
-    int err;
-    struct addrinfo hints, *res;
+#ifdef HAVE_LIBCARES
+  if (ares)
+    {
+      struct address_list *al4;
+      struct address_list *al6;
 
-    xzero (hints);
-    hints.ai_socktype = SOCK_STREAM;
-    if (opt.ipv4_only)
-      hints.ai_family = AF_INET;
-    else if (opt.ipv6_only)
-      hints.ai_family = AF_INET6;
-    else
-      /* We tried using AI_ADDRCONFIG, but removed it because: it
-         misinterprets IPv6 loopbacks, it is broken on AIX 5.1, and
-         it's unneeded since we sort the addresses anyway.  */
+      if (opt.ipv4_only || !opt.ipv6_only)
+        ares_gethostbyname (ares, host, AF_INET, callback, &al4);
+      if (opt.ipv6_only || !opt.ipv4_only)
+        ares_gethostbyname (ares, host, AF_INET6, callback, &al6);
+
+      wait_ares (ares);
+
+      if (al4 && al6)
+        al = merge_address_lists (al4, al6);
+      else if (al4)
+        al = al4;
+      else
+        al = al6;
+    }
+  else
+#endif
+    {
+      int err;
+      struct addrinfo hints, *res;
+
+      xzero (hints);
+      hints.ai_socktype = SOCK_STREAM;
+      if (opt.ipv4_only)
+        hints.ai_family = AF_INET;
+      else if (opt.ipv6_only)
+        hints.ai_family = AF_INET6;
+      else
+        /* We tried using AI_ADDRCONFIG, but removed it because: it
+           misinterprets IPv6 loopbacks, it is broken on AIX 5.1, and
+           it's unneeded since we sort the addresses anyway.  */
         hints.ai_family = AF_UNSPEC;
 
-    if (flags & LH_BIND)
-      hints.ai_flags |= AI_PASSIVE;
+      if (flags & LH_BIND)
+        hints.ai_flags |= AI_PASSIVE;
 
 #ifdef AI_NUMERICHOST
-    if (numeric_address)
-      {
-        /* Where available, the AI_NUMERICHOST hint can prevent costly
-           access to DNS servers.  */
-        hints.ai_flags |= AI_NUMERICHOST;
-        timeout = 0;            /* no timeout needed when "resolving"
+      if (numeric_address)
+        {
+          /* Where available, the AI_NUMERICHOST hint can prevent costly
+             access to DNS servers.  */
+          hints.ai_flags |= AI_NUMERICHOST;
+          timeout = 0; /* no timeout needed when "resolving"
                                    numeric hosts -- avoid setting up
                                    signal handlers and such. */
-      }
+        }
 #endif
 
-    err = getaddrinfo_with_timeout (host, NULL, &hints, &res, timeout);
-    if (err != 0 || res == NULL)
-      {
-        if (!silent)
-          logprintf (LOG_VERBOSE, _("failed: %s.\n"),
-                     err != EAI_SYSTEM ? gai_strerror (err) : strerror (errno));
-        return NULL;
-      }
-    al = address_list_from_addrinfo (res);
-    freeaddrinfo (res);
-    if (!al)
-      {
-        logprintf (LOG_VERBOSE,
-                   _("failed: No IPv4/IPv6 addresses for host.\n"));
-        return NULL;
-      }
+      err = getaddrinfo_with_timeout (host, NULL, &hints, &res, timeout);
 
-    /* Reorder addresses so that IPv4 ones (or IPv6 ones, as per
-       --prefer-family) come first.  Sorting is stable so the order of
-       the addresses with the same family is undisturbed.  */
-    if (al->count > 1 && opt.prefer_family != prefer_none)
-      stable_sort (al->addresses, al->count, sizeof (ip_address),
-                   opt.prefer_family == prefer_ipv4
-                   ? cmp_prefer_ipv4 : cmp_prefer_ipv6);
-  }
+      if (err != 0 || res == NULL)
+        {
+          if (!silent)
+            logprintf (LOG_VERBOSE, _ ("failed: %s.\n"),
+                       err != EAI_SYSTEM ? gai_strerror (err) : strerror (errno));
+          return NULL;
+        }
+      al = address_list_from_addrinfo (res);
+      freeaddrinfo (res);
+    }
+
+  if (!al)
+    {
+      logprintf (LOG_VERBOSE,
+                 _ ("failed: No IPv4/IPv6 addresses for host.\n"));
+      return NULL;
+    }
+
+  /* Reorder addresses so that IPv4 ones (or IPv6 ones, as per
+     --prefer-family) come first.  Sorting is stable so the order of
+     the addresses with the same family is undisturbed.  */
+  if (al->count > 1 && opt.prefer_family != prefer_none)
+    stable_sort (al->addresses, al->count, sizeof (ip_address),
+                 opt.prefer_family == prefer_ipv4
+                 ? cmp_prefer_ipv4 : cmp_prefer_ipv6);
 #else  /* not ENABLE_IPV6 */
-  {
-    struct hostent *hptr = gethostbyname_with_timeout (host, timeout);
-    if (!hptr)
-      {
-        if (!silent)
-          {
-            if (errno != ETIMEDOUT)
-              logprintf (LOG_VERBOSE, _("failed: %s.\n"),
-                         host_errstr (h_errno));
-            else
-              logputs (LOG_VERBOSE, _("failed: timed out.\n"));
-          }
-        return NULL;
-      }
-    /* Do older systems have h_addr_list?  */
-    al = address_list_from_ipv4_addresses (hptr->h_addr_list);
-  }
+#ifdef HAVE_LIBCARES
+  if (ares)
+    {
+      ares_gethostbyname (ares, host, AF_INET, callback, &al);
+      wait_ares (ares);
+    }
+  else
+#endif
+    {
+      struct hostent *hptr = gethostbyname_with_timeout (host, timeout);
+      if (!hptr)
+        {
+          if (!silent)
+            {
+              if (errno != ETIMEDOUT)
+                logprintf (LOG_VERBOSE, _ ("failed: %s.\n"),
+                           host_errstr (h_errno));
+              else
+                logputs (LOG_VERBOSE, _ ("failed: timed out.\n"));
+            }
+          return NULL;
+        }
+      /* Do older systems have h_addr_list?  */
+      al = address_list_from_ipv4_addresses (hptr->h_addr_list);
+    }
 #endif /* not ENABLE_IPV6 */
 
   /* Print the addresses determined by DNS lookup, but no more than
@@ -848,7 +988,7 @@ lookup_host (const char *host, int flags)
 
   return al;
 }
-
+
 /* Determine whether a URL is acceptable to be followed, according to
    a list of domains to accept.  */
 bool

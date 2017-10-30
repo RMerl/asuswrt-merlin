@@ -1,6 +1,6 @@
 /* Duplicate an open file descriptor to a specified file descriptor.
 
-   Copyright (C) 1999, 2004-2007, 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2004-2007, 2009-2017 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -85,6 +85,57 @@ ms_windows_dup2 (int fd, int desired_fd)
 
 #  define dup2 ms_windows_dup2
 
+# elif defined __KLIBC__
+
+#  include <InnoTekLIBC/backend.h>
+
+static int
+klibc_dup2dirfd (int fd, int desired_fd)
+{
+  int tempfd;
+  int dupfd;
+
+  tempfd = open ("NUL", O_RDONLY);
+  if (tempfd == -1)
+    return -1;
+
+  if (tempfd == desired_fd)
+    {
+      close (tempfd);
+
+      char path[_MAX_PATH];
+      if (__libc_Back_ioFHToPath (fd, path, sizeof (path)))
+        return -1;
+
+      return open(path, O_RDONLY);
+    }
+
+  dupfd = klibc_dup2dirfd (fd, desired_fd);
+
+  close (tempfd);
+
+  return dupfd;
+}
+
+static int
+klibc_dup2 (int fd, int desired_fd)
+{
+  int dupfd;
+  struct stat sbuf;
+
+  dupfd = dup2 (fd, desired_fd);
+  if (dupfd == -1 && errno == ENOTSUP \
+      && !fstat (fd, &sbuf) && S_ISDIR (sbuf.st_mode))
+    {
+      close (desired_fd);
+
+      return klibc_dup2dirfd (fd, desired_fd);
+    }
+
+  return dupfd;
+}
+
+#  define dup2 klibc_dup2
 # endif
 
 int

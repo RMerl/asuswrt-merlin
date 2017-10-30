@@ -1,5 +1,5 @@
 /* size_max.h -- declare SIZE_MAX through system headers
-   Copyright (C) 2005-2006, 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2006, 2009-2017 Free Software Foundation, Inc.
    Written by Simon Josefsson.
 
    This program is free software; you can redistribute it and/or modify

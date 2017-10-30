@@ -1,7 +1,7 @@
 #! /bin/sh
 # Output a system dependent table of character encoding aliases.
 #
-#   Copyright (C) 2000-2004, 2006-2014 Free Software Foundation, Inc.
+#   Copyright (C) 2000-2004, 2006-2017 Free Software Foundation, Inc.
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -348,12 +348,10 @@ case "$os" in
     #echo "sun_eu_greek ?" # what is this?
     echo "UTF-8 UTF-8"
     ;;
-  freebsd* | os2*)
+  freebsd*)
     # FreeBSD 4.2 doesn't have nl_langinfo(CODESET); therefore
     # localcharset.c falls back to using the full locale name
     # from the environment variables.
-    # Likewise for OS/2. OS/2 has XFree86 just like FreeBSD. Just
-    # reuse FreeBSD's locale data for OS/2.
     echo "C ASCII"
     echo "US-ASCII ASCII"
     for l in la_LN lt_LN; do

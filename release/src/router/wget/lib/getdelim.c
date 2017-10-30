@@ -1,5 +1,5 @@
 /* getdelim.c --- Implementation of replacement getdelim function.
-   Copyright (C) 1994, 1996-1998, 2001, 2003, 2005-2014 Free Software
+   Copyright (C) 1994, 1996-1998, 2001, 2003, 2005-2017 Free Software
    Foundation, Inc.
 
    This program is free software; you can redistribute it and/or
@@ -47,6 +47,16 @@
 # define getc_maybe_unlocked(fp)        getc_unlocked(fp)
 #endif
 
+static void
+alloc_failed (void)
+{
+#if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+  /* Avoid errno problem without using the realloc module; see:
+     http://lists.gnu.org/archive/html/bug-gnulib/2016-08/msg00025.html  */
+  errno = ENOMEM;
+#endif
+}
+
 /* Read up to (and including) a DELIMITER from FP into *LINEPTR (and
    NUL-terminate it).  *LINEPTR is a pointer returned from malloc (or
    NULL), pointing to *N characters of space.  It is realloc'ed as
@@ -74,6 +84,7 @@ getdelim (char **lineptr, size_t *n, int delimiter, FILE *fp)
       new_lineptr = (char *) realloc (*lineptr, *n);
       if (new_lineptr == NULL)
         {
+          alloc_failed ();
           result = -1;
           goto unlock_return;
         }
@@ -111,6 +122,7 @@ getdelim (char **lineptr, size_t *n, int delimiter, FILE *fp)
           new_lineptr = (char *) realloc (*lineptr, needed);
           if (new_lineptr == NULL)
             {
+              alloc_failed ();
               result = -1;
               goto unlock_return;
             }

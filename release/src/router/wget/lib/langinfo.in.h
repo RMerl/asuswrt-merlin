@@ -1,5 +1,5 @@
 /* Substitute for and wrapper around <langinfo.h>.
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -49,7 +49,10 @@ typedef int nl_item;
 # define CODESET     10000
 /* nl_langinfo items of the LC_NUMERIC category */
 # define RADIXCHAR   10001
+# define DECIMAL_POINT RADIXCHAR
 # define THOUSEP     10002
+# define THOUSANDS_SEP THOUSEP
+# define GROUPING    10114
 /* nl_langinfo items of the LC_TIME category */
 # define D_T_FMT     10003
 # define D_FMT       10004
@@ -102,6 +105,21 @@ typedef int nl_item;
 # define ALT_DIGITS  10051
 /* nl_langinfo items of the LC_MONETARY category */
 # define CRNCYSTR    10052
+# define CURRENCY_SYMBOL   CRNCYSTR
+# define INT_CURR_SYMBOL   10100
+# define MON_DECIMAL_POINT 10101
+# define MON_THOUSANDS_SEP 10102
+# define MON_GROUPING      10103
+# define POSITIVE_SIGN     10104
+# define NEGATIVE_SIGN     10105
+# define FRAC_DIGITS       10106
+# define INT_FRAC_DIGITS   10107
+# define P_CS_PRECEDES     10108
+# define N_CS_PRECEDES     10109
+# define P_SEP_BY_SPACE    10110
+# define N_SEP_BY_SPACE    10111
+# define P_SIGN_POSN       10112
+# define N_SIGN_POSN       10113
 /* nl_langinfo items of the LC_MESSAGES category */
 # define YESEXPR     10053
 # define NOEXPR      10054

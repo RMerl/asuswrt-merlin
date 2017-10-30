@@ -1,6 +1,6 @@
 /* Compile-time assert-like macros.
 
-   Copyright (C) 2005-2006, 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2006, 2009-2017 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -248,7 +248,12 @@ template <int w>
 /* Verify requirement R at compile-time, as a declaration without a
    trailing ';'.  */
 
-#define verify(R) _GL_VERIFY (R, "verify (" #R ")")
+#ifdef __GNUC__
+# define verify(R) _GL_VERIFY (R, "verify (" #R ")")
+#else
+/* PGI barfs if R is long.  Play it safe.  */
+# define verify(R) _GL_VERIFY (R, "verify (...)")
+#endif
 
 #ifndef __has_builtin
 # define __has_builtin(x) 0
@@ -263,7 +268,7 @@ template <int w>
 # define assume(R) ((R) ? (void) 0 : __builtin_unreachable ())
 #elif 1200 <= _MSC_VER
 # define assume(R) __assume (R)
-#elif (defined lint \
+#elif ((defined GCC_LINT || defined lint) \
        && (__has_builtin (__builtin_trap) \
            || 3 < __GNUC__ + (3 < __GNUC_MINOR__ + (4 <= __GNUC_PATCHLEVEL__))))
   /* Doing it this way helps various packages when configured with

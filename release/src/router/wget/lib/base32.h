@@ -1,5 +1,5 @@
 /* base32.h -- Encode binary data using printable characters.
-   Copyright (C) 2004-2006, 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2006, 2009-2017 Free Software Foundation, Inc.
    Adapted from Simon Josefsson's base64 code by Gijs van Tulder.
 
    This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@ struct base32_decode_context
   char buf[8];
 };
 
-extern bool isbase32 (char ch);
+extern bool isbase32 (char ch) _GL_ATTRIBUTE_CONST;
 
 extern void base32_encode (const char *restrict in, size_t inlen,
                            char *restrict out, size_t outlen);

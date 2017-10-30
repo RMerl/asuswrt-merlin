@@ -1,6 +1,6 @@
 #serial 15
 
-# Copyright (C) 2000-2001, 2003-2007, 2009-2014 Free Software Foundation, Inc.
+# Copyright (C) 2000-2001, 2003-2007, 2009-2017 Free Software Foundation, Inc.
 
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,

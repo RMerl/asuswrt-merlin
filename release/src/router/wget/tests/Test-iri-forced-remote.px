@@ -27,8 +27,6 @@ my $eacute_l1 = "\xE9";
 my $eacute_u8 = "\xC3\xA9";
 my $eurosign_l15 = "\xA4";
 my $eurosign_u8 = "\xE2\x82\xAC";
-my $currency_l1 = "\xA4";
-my $currency_u8 = "\xC2\xA4";
 
 my $pageindex = <<EOF;
 <html>
@@ -120,8 +118,8 @@ my %urls = (
         code => "200",
         msg => "Ok",
         headers => {
-            # wrong charset here, overridden by --remote-encoding=iso-8859-1
-            "Content-type" => "text/html; charset=UTF-8",
+            # wrong charset specified by meta tag in $pagefrancais, overridden by HTTP Content-Type
+            "Content-type" => "text/html; charset=iso-8859-1",
         },
         content => $pagefrancais,
     },
@@ -151,7 +149,7 @@ my %urls = (
     },
 );
 
-my $cmdline = $WgetTest::WGETPATH . " --iri -e robots=on --trust-server-names --remote-encoding=iso-8859-1 -nH -r http://localhost:{{port}}/";
+my $cmdline = $WgetTest::WGETPATH . " --iri -e robots=on --trust-server-names --local-encoding=utf-8 -nH -r http://localhost:{{port}}/";
 
 my $expected_error_code = 0;
 
@@ -168,7 +166,7 @@ my %expected_downloaded_files = (
     "p2_${eacute_u8}${eacute_u8}n.html" => {
         content => $pageeen,
     },
-    "p3_${currency_u8}${currency_u8}${currency_u8}.html" => {
+    "p3_${eurosign_u8}${eurosign_u8}${eurosign_u8}.html" => {
         content => $pageeuro,
     },
 );

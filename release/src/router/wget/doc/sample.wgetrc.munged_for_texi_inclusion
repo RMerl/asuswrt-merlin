@@ -16,6 +16,9 @@
 ## To use the settings in this file, you will have to uncomment them,
 ## as well as change them, in most cases, as the values on the
 ## commented-out lines are the default values (e.g. "off").
+##
+## Command are case-, underscore- and minus-insensitive.
+## For example ftp_proxy, ftp-proxy and ftpproxy are the same.
 
 
 ##
@@ -122,7 +125,7 @@
 #iri = off
 
 # Force the default system encoding
-#locale = UTF-8
+#localencoding = UTF-8
 
 # Force the default remote server encoding
 #remoteencoding = UTF-8

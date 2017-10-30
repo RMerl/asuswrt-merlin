@@ -1,5 +1,5 @@
 /* Set the access and modification time of an open fd.
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,10 +22,10 @@
 
 #include "utimens.h"
 
-/* Set the access and modification time stamps of FD to be
+/* Set the access and modification timestamps of FD to be
    TIMESPEC[0] and TIMESPEC[1], respectively.
    Fail with ENOSYS on systems without futimes (or equivalent).
-   If TIMESPEC is null, set the time stamps to the current time.
+   If TIMESPEC is null, set the timestamps to the current time.
    Return 0 on success, -1 (setting errno) on failure.  */
 int
 futimens (int fd, struct timespec const times[2])

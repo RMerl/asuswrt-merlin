@@ -7,7 +7,6 @@ from misc.wget_file import WgetFile
     This test ensures that Wget stores the cookie even in the event of a
     401 Unauthorized Response
 """
-TEST_NAME = "Basic Cookie 401 Response"
 ############# File Definitions ###############################################
 File1 = """All happy families are alike;
 Each unhappy family is unhappy in its own way"""
@@ -50,7 +49,6 @@ post_test = {
 }
 
 err = HTTPTest (
-                name=TEST_NAME,
                 pre_hook=pre_test,
                 test_params=test_options,
                 post_hook=post_test

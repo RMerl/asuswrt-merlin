@@ -7,14 +7,14 @@ from misc.wget_file import WgetFile
     This test ensures that Wget identifies bad servers trying to set cookies
     for a different domain and rejects them.
 """
-TEST_NAME = "Cookie Domain Mismatch"
 ############# File Definitions ###############################################
 File1 = "Would you care for a cup of coffee?"
 File2 = "Anyone for chocochip cookies?"
 
 File1_rules = {
     "SendHeader"        : {
-        "Set-Cookie"    : "sess-id=0213; path=/; domain=.example.com"
+        # use upper case 'I' to provoke Wget failure with turkish locale
+        "Set-Cookie"    : "sess-id=0213; path=/; DoMAIn=.example.com"
     }
 }
 File2_rules = {
@@ -48,7 +48,6 @@ post_test = {
 }
 
 err = HTTPTest (
-                name=TEST_NAME,
                 pre_hook=pre_test,
                 test_params=test_options,
                 post_hook=post_test

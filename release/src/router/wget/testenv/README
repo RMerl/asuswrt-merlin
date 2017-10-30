@@ -4,7 +4,7 @@ Install Instructions:
 ================================================================================
 
 This Test Suite exploits the Parallel Test Harness available in GNU Autotools.
-Since it uses features from a relatively recent verion of Autotools, the minimum
+Since it uses features from a relatively recent version of Autotools, the minimum
 required version as been bumped up to 1.11.
 Run the './configure' command to generate the Makefile and then run 'make check'
 to execute the Test Suite. Use the '-j n' option with 'make check' to execute
@@ -43,7 +43,8 @@ Working:
 ================================================================================
 
 The Test Files are valid Python scripts and the default mask for them is 755.
-A singular Test must be invoked in the following manner:
+A singular Test must be invoked in the following manner, with the current
+directory being the testenv directory:
 $ ./python3 <Name of Test File>      OR
 $ ./<Name of Test File>
 The script will then initialize the various elements and pass them to an object
@@ -93,8 +94,11 @@ Environment Variables:
   valgrind.
 * NO_CLEANUP: Do not remove the temporary files created by the test.
   This will prevent the ${testname}-test directory from being deleted
-* VALGRIND_TESTS: If this variable is set, the test suite will execute all the
-  tests through valgrind's memcheck tool.
+* VALGRIND_TESTS: If this variable is set and contains the valgrind command line,
+  the test suite will execute all the tests via this command.
+  If it is set to "1", valgrind memcheck is enabled with hard coded options.
+  This variable is set by ./configure --enable-valgrind-tests.
+* SSL_TESTS: This must be set to run any https tests.
 
 
 File Structure:
@@ -114,27 +118,27 @@ from misc.wget_file import WgetFile
 
 It is recommended that a small description of the Test Case is provided next.
 This would be very helpful to future contributors.
-Next, is the const variable, TEST_NAME that defines the name of the Test.
 
 Each File in the Test must be represented as a WgetFile object. The WgetFile
 Class has the following prototype:
 WgetFile (str name, str contents, str timestamp, dict rules)
-None except name is a mandatory paramter, one may pass only those parameters
+None except name is a mandatory parameter, one may pass only those parameters
 that are required by the File object.
 
-The timestamp string should be a valid Unix Timestamp as defined in RFC xxxx.
+The timestamp string should be in a format: "YYYY-MM-DD HH:MM:SS" in UTC zone.
 The rules object is a dictionary element, with the key as the Rule Name and
 value as the Rule Data. In most cases, the Rule Data is another dictionary.
 
 Various variables used consistently across all tests are:
-    * WGET_OPTIONS: The command line string passed to Wget upon invokation. This
+    * WGET_OPTIONS: The command line string passed to Wget upon invocation. This
     string may contain URLs, like in the case where in-URL authentication is
     used. Variable names passed like {{var_name}} will be replaced by the
     contents of the variable self.var_name before being passed to Wget
     * WGET_URLS: This is a list of filenames which will be appended as the URLs
-    to Wget during invokation. This is a list of lists, where WGET_URLS[0]
+    to Wget during invocation. This is a list of lists, where WGET_URLS[0]
     represents the list of Filenames called from Server[0], WGET_URLS[1] is a
-    list of files downloaded from Server[2], etc.
+    list of files downloaded from Server[2], etc.  They must be relative URLs,
+    i.e., not start with "/".
     * Files: This variable defines the files that exist in the Server's
     filesystem. The Files variable is a list of lists of WgetFile objects.
     This means that File[0] is a list of WgetFile objects that lie on Server[0],
@@ -151,13 +155,11 @@ Various variables used consistently across all tests are:
 
 Both, the HTTPTest and FTPTest modules have the same prototype:
 {
-    name,
     pre_hook,
     test_options,
     post_hook,
     protocols
 }
-name should be a string, and is usually passed to the TEST_NAME variable,
 the three hooks should be Python dict objects and protocols should be a list of
 protocols, like [HTTP, HTTPS].
 
@@ -182,7 +184,8 @@ This section lists the currently supported File Rules and their structure.
 
     * SendHeader    : This list of Headers will be sent in EVERY response to a
     request for the respective file. It follows the same value format as
-    ExpectHeader.
+    ExpectHeader. Additionally you can specify a list of strings as <Header Data>
+    if you want the header repeated with multiple values.
 
     * Response      : The HTTP Response Code to send to a request for this File.
     The value is an Integer that represents a valid HTTP Response Code.
@@ -211,7 +214,7 @@ executed. The currently supported options are:
     download. The complete URL will be created and passed to Wget
     automatically. (alias URLs)
     * WgetCommands  : A string consisting of the various commandline switches
-    sent to Wget upon invokation. Any data placed between {{ }} in this string
+    sent to Wget upon invocation. Any data placed between {{ }} in this string
     will be replaced with the contents of self.<data> before being passed to
     Wget. This is particularly useful for getting the hostname and port for a
     file. While all Download URL's are passed to Urls, a notable exception is
@@ -277,13 +280,6 @@ red-flagged as a XPASS. Currently, tests expected to fail under valgrind are not
 explicitly marked as XFAIL. Tests failing under valgrind must always be
 considered a blocking error.
 
-Remember to always name the Test correctly using the TEST_NAME variable. This
-is essential since a directory with the Test Name is created and this can
-cause synchronization problems when the Parallel Test Harness is used.
-One can use the following command on Unix systems to check for TEST_NAME
-clashes:
-$ grep -r -h "TEST_NAME =" | cut -c13- | uniq -c -d
-
 Work Remaining:
 ================================================================================
 
@@ -292,7 +288,7 @@ Some amount of work still remains to be done.
     * Support parallel-wget branch
         * Support to spawn multiple servers is already in place. Need to handle
         multiple requests to a server simultaneously. Use THreading MixIn.
-    * SSL Tests. Use xyne's HTTPS server implemention
+    * SSL Tests. Use xyne's HTTPS server implementation
     * Complete support for FTP Tests
     * IRI Support. This shouldn't require much effort
 

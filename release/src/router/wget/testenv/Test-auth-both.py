@@ -5,10 +5,9 @@ from misc.wget_file import WgetFile
 
 """
     This test ensures Wget's Basic Authorization Negotiation.
-    Also, we ensure that Wget saves the host after a successfull auth and
+    Also, we ensure that Wget saves the host after a successful auth and
     doesn't wait for a challenge the second time.
 """
-TEST_NAME = "Multiple authentication support"
 ############# File Definitions ###############################################
 File1 = "Would you like some Tea?"
 File2 = "With lemon or cream?"
@@ -18,7 +17,10 @@ File1_rules = {
     "Authentication"    : {
         "Type"          : "Both",
         "User"          : "Sauron",
-        "Pass"          : "TheEye"
+        "Pass"          : "TheEye",
+        "Parm"          : {
+            "qop"       : "auth"
+        }
     },
     "RejectHeader"      : {
         "Authorization" : "Basic U2F1cm9uOlRoZUV5ZQ=="
@@ -28,7 +30,10 @@ File2_rules = {
     "Authentication"    : {
         "Type"          : "Both_inline",
         "User"          : "Sauron",
-        "Pass"          : "TheEye"
+        "Pass"          : "TheEye",
+        "Parm"          : {
+            "qop"       : "auth"
+        }
     },
     "RejectHeader"      : {
         "Authorization" : "Basic U2F1cm9uOlRoZUV5ZQ=="
@@ -38,7 +43,11 @@ File3_rules = {
     "Authentication"    : {
         "Type"          : "Digest",
         "User"          : "Sauron",
-        "Pass"          : "TheEye"
+        "Pass"          : "TheEye",
+        "Parm"          : {
+            "qop"       : "auth"
+        }
+
     }
 }
 
@@ -68,7 +77,6 @@ post_test = {
 }
 
 err = HTTPTest (
-                name=TEST_NAME,
                 pre_hook=pre_test,
                 test_params=test_options,
                 post_hook=post_test

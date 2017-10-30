@@ -8,7 +8,6 @@ from misc.wget_file import WgetFile
     Simultaneuously, we also check if multiple cookies to the same domain
     are handled correctly
 """
-TEST_NAME = "Cookie Expires"
 ############# File Definitions ###############################################
 File1 = "Hello World!"
 File2 = "'Ello! This is Amazing!"
@@ -30,7 +29,8 @@ File2_rules = {
 }
 File3_rules = {
     "SendHeader"        : {
-        "Set-Cookie"    : "sess-id=0213; path=/; Expires=Sun, 06 Nov 2001 12:32:43 GMT"
+        # use upper case 'I' to provoke Wget failure with turkish locale
+        "Set-Cookie"    : "sess-id=0213; path=/; ExPIRes=Sun, 06 Nov 2001 12:32:43 GMT"
     },
     "ExpectHeader"      : {
         "Cookie"        : "new-sess=N; sess-id=0213"
@@ -71,7 +71,6 @@ post_test = {
 }
 
 err = HTTPTest (
-                name=TEST_NAME,
                 pre_hook=pre_test,
                 test_params=test_options,
                 post_hook=post_test

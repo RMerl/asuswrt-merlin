@@ -1,7 +1,7 @@
 # Detect some bugs in glibc's implementation of utimes.
-# serial 3
+# serial 4
 
-dnl Copyright (C) 2003-2005, 2009-2014 Free Software Foundation, Inc.
+dnl Copyright (C) 2003-2005, 2009-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -33,6 +33,7 @@ AC_DEFUN([gl_FUNC_UTIMES],
 #include <stdlib.h>
 #include <stdio.h>
 #include <utime.h>
+#include <errno.h>
 
 static int
 inorder (time_t a, time_t b, time_t c)
@@ -45,7 +46,10 @@ main ()
 {
   int result = 0;
   char const *file = "conftest.utimes";
-  static struct timeval timeval[2] = {{9, 10}, {999999, 999999}};
+  /* On OS/2, file timestamps must be on or after 1980 in local time,
+     with an even number of seconds.  */
+  static struct timeval timeval[2] = {{315620000 + 10, 10},
+                                      {315620000 + 1000000, 999998}};
 
   /* Test whether utimes() essentially works.  */
   {
@@ -82,9 +86,19 @@ main ()
           result |= 1;
         else if (fstat (fd, &st0) != 0)
           result |= 1;
-        else if (utimes (file, timeval) != 0)
+        else if (utimes (file, timeval) != 0
+                 && (errno != EACCES
+                     /* OS/2 kLIBC utimes fails on opened files.  */
+                     || close (fd) != 0
+                     || utimes (file, timeval) != 0
+                     || (fd = open (file, O_WRONLY)) < 0))
           result |= 2;
-        else if (utimes (file, NULL) != 0)
+        else if (utimes (file, NULL) != 0
+                 && (errno != EACCES
+                     /* OS/2 kLIBC utimes fails on opened files.  */
+                     || close (fd) != 0
+                     || utimes (file, NULL) != 0
+                     || (fd = open (file, O_WRONLY)) < 0))
           result |= 8;
         else if (fstat (fd, &st1) != 0)
           result |= 1;
@@ -131,6 +145,6 @@ main ()
        [gl_cv_func_working_utimes=no])])
 
   if test $gl_cv_func_working_utimes = yes; then
-    AC_DEFINE([HAVE_WORKING_UTIMES], [1], [Define if utimes works properly. ])
+    AC_DEFINE([HAVE_WORKING_UTIMES], [1], [Define if utimes works properly.])
   fi
 ])

@@ -1,7 +1,7 @@
-# serial 6
+# serial 7
 # See if we need to provide futimens replacement.
 
-dnl Copyright (C) 2009-2014 Free Software Foundation, Inc.
+dnl Copyright (C) 2009-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -38,21 +38,11 @@ AC_DEFUN([gl_FUNC_FUTIMENS],
       if (fstat (fd, &st)) return 6;
       if (st.st_ctime < st.st_atime) return 7;
       ]])],
-dnl FIXME: simplify this in 2012, when file system bugs are no longer common
-         [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#ifdef __linux__
-/* The Linux kernel added futimens in 2.6.22, but has bugs with UTIME_OMIT
-   in several file systems as recently as 2.6.32.  Always replace futimens
-   to support older kernels.  */
-choke me
-#endif
-      ]])],
-           [gl_cv_func_futimens_works=yes],
-           [gl_cv_func_futimens_works="needs runtime check"])],
+         [gl_cv_func_futimens_works=yes],
          [gl_cv_func_futimens_works=no],
-         [gl_cv_func_futimens_works="guessing no"])
+         [gl_cv_func_futimens_works="guessing yes"])
       rm -f conftest.file])
-    if test "$gl_cv_func_futimens_works" != yes; then
+    if test "$gl_cv_func_futimens_works" = no; then
       REPLACE_FUTIMENS=1
     fi
   fi

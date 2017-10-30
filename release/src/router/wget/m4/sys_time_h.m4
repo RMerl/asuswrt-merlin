@@ -1,7 +1,7 @@
 # Configure a replacement for <sys/time.h>.
 # serial 8
 
-# Copyright (C) 2007, 2009-2014 Free Software Foundation, Inc.
+# Copyright (C) 2007, 2009-2017 Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -105,6 +105,7 @@ AC_DEFUN([gl_HEADER_SYS_TIME_H_DEFAULTS],
   HAVE_GETTIMEOFDAY=1;       AC_SUBST([HAVE_GETTIMEOFDAY])
   HAVE_STRUCT_TIMEVAL=1;     AC_SUBST([HAVE_STRUCT_TIMEVAL])
   HAVE_SYS_TIME_H=1;         AC_SUBST([HAVE_SYS_TIME_H])
+  HAVE_TIMEZONE_T=0;         AC_SUBST([HAVE_TIMEZONE_T])
   REPLACE_GETTIMEOFDAY=0;    AC_SUBST([REPLACE_GETTIMEOFDAY])
   REPLACE_STRUCT_TIMEVAL=0;  AC_SUBST([REPLACE_STRUCT_TIMEVAL])
 ])

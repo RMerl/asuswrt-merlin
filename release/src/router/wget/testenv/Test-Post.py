@@ -6,7 +6,6 @@ from misc.wget_file import WgetFile
 """
     Simple test for HTTP POST Requests usiong the --method command
 """
-TEST_NAME = "HTTP POST Requests"
 ############# File Definitions ###############################################
 File1 = """A reader lives a thousand lives before he dies, said Jojen.
 The man who never reads lives only one"""
@@ -39,7 +38,6 @@ post_test = {
 }
 
 err = HTTPTest (
-                name=TEST_NAME,
                 pre_hook=pre_test,
                 test_params=test_options,
                 post_hook=post_test

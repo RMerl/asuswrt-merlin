@@ -1,16 +1,16 @@
-eval '(exit $?0)' && eval 'exec perl -wST "$0" ${1+"$@"}'
+eval '(exit $?0)' && eval 'exec perl -wST "$0" "$@"'
   & eval 'exec perl -wST "$0" $argv:q'
     if 0;
 # Detect instances of "if (p) free (p);".
 # Likewise "if (p != 0)", "if (0 != p)", or with NULL; and with braces.
 
-my $VERSION = '2012-01-06 07:23'; # UTC
+my $VERSION = '2016-08-01 17:47'; # UTC
 # The definition above must lie within the first 8 lines in order
 # for the Emacs time-stamp write hook (at end) to update it.
 # If you change this file with Emacs, please let the write hook
 # do its job.  Otherwise, update this string manually.
 
-# Copyright (C) 2008-2014 Free Software Foundation, Inc.
+# Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -129,6 +129,9 @@ sub is_NULL ($)
           $err = EXIT_ERROR, next;
       while (defined (my $line = <FH>))
         {
+          # Skip non-matching lines early to save time
+          $line =~ /\bif\b/
+            or next;
           while ($line =~
               /\b(if\s*\(\s*([^)]+?)(?:\s*!=\s*([^)]+?))?\s*\)
               #  1          2                  3
@@ -202,6 +205,6 @@ EOF
 ## eval: (add-hook 'write-file-hooks 'time-stamp)
 ## time-stamp-start: "my $VERSION = '"
 ## time-stamp-format: "%:y-%02m-%02d %02H:%02M"
-## time-stamp-time-zone: "UTC"
+## time-stamp-time-zone: "UTC0"
 ## time-stamp-end: "'; # UTC"
 ## End:

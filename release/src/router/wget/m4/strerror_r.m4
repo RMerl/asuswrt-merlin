@@ -1,5 +1,5 @@
-# strerror_r.m4 serial 15
-dnl Copyright (C) 2002, 2007-2014 Free Software Foundation, Inc.
+# strerror_r.m4 serial 18
+dnl Copyright (C) 2002, 2007-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -14,10 +14,10 @@ AC_DEFUN([gl_FUNC_STRERROR_R],
 
   dnl Some systems don't declare strerror_r() if _THREAD_SAFE and _REENTRANT
   dnl are not defined.
-  AC_CHECK_DECLS_ONCE([strerror_r])
-  if test $ac_cv_have_decl_strerror_r = no; then
-    HAVE_DECL_STRERROR_R=0
-  fi
+  AC_CHECK_DECL([strerror_r],
+    [HAVE_DECL_STRERROR_R=1], [HAVE_DECL_STRERROR_R=0])
+  AC_DEFINE_UNQUOTED([HAVE_DECL_STRERROR_R_ORIG], [$HAVE_DECL_STRERROR_R],
+    [Define to 1 if you have the declaration of 'strerror_r' in the system include files, or to 0 otherwise.])
 
   if test $ac_cv_func_strerror_r = yes; then
     if test "$ERRNO_H:$REPLACE_STRERROR_0" = :0; then
@@ -36,6 +36,20 @@ AC_DEFUN([gl_FUNC_STRERROR_R],
       REPLACE_STRERROR_R=1
     fi
   fi
+
+  # Overwrite the findings of AC_FUNC_STRERROR_R (for code that uses that).
+  AC_REQUIRE([AC_FUNC_STRERROR_R])
+])
+
+# If this module is in use, we unconditionally want POSIX semantics; so
+# replace autoconf's macro with a version that does not probe
+AC_DEFUN([AC_FUNC_STRERROR_R], [
+  AC_DEFINE([HAVE_DECL_STRERROR_R], [1],
+    [Define to 1, since you should have the declaration of strerror_r.])
+  AC_DEFINE([HAVE_STRERROR_R], [1],
+    [Define to 1, since you should have the function strerror_r.])
+  AC_DEFINE([STRERROR_R_CHAR_P], [0],
+    [Define to 0, since strerror_r should not return char *.])
 ])
 
 # Prerequisites of lib/strerror_r.c.
@@ -54,7 +68,7 @@ AC_DEFUN([gl_FUNC_STRERROR_R_WORKS],
   AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
   AC_REQUIRE([gl_FUNC_STRERROR_0])
 
-  AC_CHECK_FUNCS_ONCE([strerror_r])
+  AC_CHECK_FUNC([strerror_r])
   if test $ac_cv_func_strerror_r = yes; then
     if test "$ERRNO_H:$REPLACE_STRERROR_0" = :0; then
       dnl The POSIX prototype is:  int strerror_r (int, char *, size_t);

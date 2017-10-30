@@ -1,6 +1,6 @@
 /* A GNU-like <stdio.h>.
 
-   Copyright (C) 2004, 2007-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2007-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -84,8 +84,13 @@
    except that it indicates to GCC that the supported format string directives
    are the ones of the system printf(), rather than the ones standardized by
    ISO C99 and POSIX.  */
-#define _GL_ATTRIBUTE_FORMAT_PRINTF_SYSTEM(formatstring_parameter, first_argument) \
+#if GNULIB_PRINTF_ATTRIBUTE_FLAVOR_GNU
+# define _GL_ATTRIBUTE_FORMAT_PRINTF_SYSTEM(formatstring_parameter, first_argument) \
+  _GL_ATTRIBUTE_FORMAT_PRINTF (formatstring_parameter, first_argument)
+#else
+# define _GL_ATTRIBUTE_FORMAT_PRINTF_SYSTEM(formatstring_parameter, first_argument) \
   _GL_ATTRIBUTE_FORMAT ((__printf__, formatstring_parameter, first_argument))
+#endif
 
 /* _GL_ATTRIBUTE_FORMAT_SCANF
    indicates to GCC that the function takes a format string and arguments,
@@ -111,6 +116,26 @@
 #if (@GNULIB_RENAMEAT@ || defined GNULIB_POSIXCHECK) && defined __sun \
     && ! defined __GLIBC__
 # include <unistd.h>
+#endif
+
+/* MSVC declares 'perror' in <stdlib.h>, not in <stdio.h>.  We must include
+   it before we  #define perror rpl_perror.  */
+/* But in any case avoid namespace pollution on glibc systems.  */
+#if (@GNULIB_PERROR@ || defined GNULIB_POSIXCHECK) \
+    && ((defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__) \
+    && ! defined __GLIBC__
+# include <stdlib.h>
+#endif
+
+/* MSVC declares 'remove' in <io.h>, not in <stdio.h>.  We must include
+   it before we  #define remove rpl_remove.  */
+/* MSVC declares 'rename' in <io.h>, not in <stdio.h>.  We must include
+   it before we  #define rename rpl_rename.  */
+/* But in any case avoid namespace pollution on glibc systems.  */
+#if (@GNULIB_REMOVE@ || @GNULIB_RENAME@ || defined GNULIB_POSIXCHECK) \
+    && ((defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__) \
+    && ! defined __GLIBC__
+# include <io.h>
 #endif
 
 
@@ -718,10 +743,9 @@ _GL_WARN_ON_USE (getline, "getline is unportable - "
    so any use of gets warrants an unconditional warning; besides, C11
    removed it.  */
 #undef gets
-#if HAVE_RAW_DECL_GETS
+#if HAVE_RAW_DECL_GETS && !defined __cplusplus
 _GL_WARN_ON_USE (gets, "gets is a security hole - use fgets instead");
 #endif
-
 
 #if @GNULIB_OBSTACK_PRINTF@ || @GNULIB_OBSTACK_PRINTF_POSIX@
 struct obstack;

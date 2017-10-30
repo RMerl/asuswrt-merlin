@@ -1,5 +1,5 @@
 /* getline.c --- Implementation of replacement getline function.
-   Copyright (C) 2005-2007, 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2007, 2009-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as

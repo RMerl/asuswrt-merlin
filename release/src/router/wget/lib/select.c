@@ -1,7 +1,7 @@
 /* Emulation for select(2)
    Contributed by Paolo Bonzini.
 
-   Copyright 2008-2014 Free Software Foundation, Inc.
+   Copyright 2008-2017 Free Software Foundation, Inc.
 
    This file is part of gnulib.
 
@@ -82,9 +82,11 @@ typedef DWORD (WINAPI *PNtQueryInformationFile)
 #define PIPE_BUF        512
 #endif
 
-/* Optimized test whether a HANDLE refers to a console.
-   See <http://lists.gnu.org/archive/html/bug-gnulib/2009-08/msg00065.html>.  */
-#define IsConsoleHandle(h) (((intptr_t) (h) & 3) == 3)
+static BOOL IsConsoleHandle (HANDLE h)
+{
+  DWORD mode;
+  return GetConsoleMode (h, &mode) != 0;
+}
 
 static BOOL
 IsSocketHandle (HANDLE h)
@@ -252,6 +254,7 @@ rpl_select (int nfds, fd_set *rfds, fd_set *wfds, fd_set *xfds,
   DWORD ret, wait_timeout, nhandles, nsock, nbuffer;
   MSG msg;
   int i, fd, rc;
+  clock_t tend;
 
   if (nfds > FD_SETSIZE)
     nfds = FD_SETSIZE;
@@ -388,6 +391,10 @@ rpl_select (int nfds, fd_set *rfds, fd_set *wfds, fd_set *xfds,
   /* Place a sentinel at the end of the array.  */
   handle_array[nhandles] = NULL;
 
+  /* When will the waiting period expire?  */
+  if (wait_timeout != INFINITE)
+    tend = clock () + wait_timeout;
+
 restart:
   if (wait_timeout == 0 || nsock == 0)
     rc = 0;
@@ -404,6 +411,16 @@ restart:
           memcpy (&handle_wfds, wfds, sizeof (fd_set));
           memcpy (&handle_xfds, xfds, sizeof (fd_set));
         }
+      else
+        wait_timeout = 0;
+    }
+
+  /* How much is left to wait?  */
+  if (wait_timeout != INFINITE)
+    {
+      clock_t tnow = clock ();
+      if (tend >= tnow)
+        wait_timeout = tend - tnow;
       else
         wait_timeout = 0;
     }
@@ -453,7 +470,16 @@ restart:
             }
         }
 
-      if (rc == 0 && wait_timeout == INFINITE)
+      if (rc == 0
+          && (wait_timeout == INFINITE
+              /* If NHANDLES > 1, but no bits are set, it means we've
+                 been told incorrectly that some handle was signaled.
+                 This happens with anonymous pipes, which always cause
+                 MsgWaitForMultipleObjects to exit immediately, but no
+                 data is found ready to be read by windows_poll_handle.
+                 To avoid a total failure (whereby we return zero and
+                 don't wait at all), let's poll in a more busy loop.  */
+              || (wait_timeout != 0 && nhandles > 1)))
         {
           /* Sleep 1 millisecond to avoid busy wait and retry with the
              original fd_sets.  */
@@ -463,6 +489,8 @@ restart:
           SleepEx (1, TRUE);
           goto restart;
         }
+      if (timeout && wait_timeout == 0 && rc == 0)
+        timeout->tv_sec = timeout->tv_usec = 0;
     }
 
   /* Now fill in the results.  */

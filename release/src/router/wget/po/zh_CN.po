@@ -1,161 +1,166 @@
 # Simplified Chinese translation of GNU Wget
-# Copyright (C) 2003, 2009, 2011 Free Software Foundation, Inc.
+# Copyright (C) 2003, 2009, 2010, 2011, 2015 Free Software Foundation, Inc.
 # This file is distributed under the same license as the wget package.
 # Rongjun Mu <elanmu@sina.com>, 2003.
 # Liu Songhe <jackliu9999@263.net>, 2003.
 # Zong Yaotang <zong@cosix.com.cn>, 2003.
 # Ji ZhengYu <zhengyuji@gmail.com>, 2009, 2010.
 # Anthony Fok <foka@debian.org>, 2010, 2011.
+# Mingcong Bai <jeffbai@aosc.xyz>, 2015.
+# Mingye Wang <arthur200126@gmail.com>, 2015, 2017.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: wget 1.12-pre7\n"
+"Project-Id-Version: wget 1.18.109\n"
 "Report-Msgid-Bugs-To: bug-wget@gnu.org\n"
-"POT-Creation-Date: 2014-10-27 09:59+0100\n"
-"PO-Revision-Date: 2011-10-28 13:04+0800\n"
-"Last-Translator: Anthony Fok <foka@debian.org>\n"
+"POT-Creation-Date: 2017-10-26 17:36+0200\n"
+"PO-Revision-Date: 2017-01-18 21:48-0500\n"
+"Last-Translator: Mingye Wang (Arthur2e5) <arthur200126@gmail.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 1.8.11\n"
 
-#: lib/error.c:188
+#: lib/error.c:191
 msgid "Unknown system error"
 msgstr "未知的系统错误"
 
 #: lib/gai_strerror.c:57
-#, fuzzy
 msgid "Address family for hostname not supported"
-msgstr "不支持 IPv6 地址"
+msgstr "主机名的地址家族不被支持"
 
-#: lib/gai_strerror.c:58 src/host.c:365
+#: lib/gai_strerror.c:58 src/host.c:373
 msgid "Temporary failure in name resolution"
 msgstr "名字解析时有临时错误"
 
 #: lib/gai_strerror.c:59
 msgid "Bad value for ai_flags"
-msgstr ""
+msgstr "错误的 ai_flags 值"
 
 #: lib/gai_strerror.c:60
-#, fuzzy
 msgid "Non-recoverable failure in name resolution"
-msgstr "名字解析时有临时错误"
+msgstr "名称解析时出现不可恢复的错误"
 
 #: lib/gai_strerror.c:61
 msgid "ai_family not supported"
-msgstr ""
+msgstr "不支持的 ai_family"
 
 #: lib/gai_strerror.c:62
 msgid "Memory allocation failure"
-msgstr ""
+msgstr "内存分配失败"
 
 #: lib/gai_strerror.c:63
 msgid "No address associated with hostname"
-msgstr ""
+msgstr "没有与主机名关联的地址"
 
 #: lib/gai_strerror.c:64
 msgid "Name or service not known"
-msgstr ""
+msgstr "名称或服务未知"
 
 #: lib/gai_strerror.c:65
 msgid "Servname not supported for ai_socktype"
-msgstr ""
+msgstr "ai_socktype 不支持 Servname"
 
 #: lib/gai_strerror.c:66
-#, fuzzy
 msgid "ai_socktype not supported"
-msgstr "不支持 IPv6 地址"
+msgstr "不支持的 ai_socktype"
 
 #: lib/gai_strerror.c:67
-#, fuzzy
 msgid "System error"
-msgstr "未知的系统错误"
+msgstr "系统错误"
 
 #: lib/gai_strerror.c:68
 msgid "Argument buffer too small"
-msgstr ""
+msgstr "参数缓冲区太小"
 
 #: lib/gai_strerror.c:70
 msgid "Processing request in progress"
-msgstr ""
+msgstr "正在处理请求"
 
 #: lib/gai_strerror.c:71
 msgid "Request canceled"
-msgstr ""
+msgstr "请求已取消"
 
 #: lib/gai_strerror.c:72
 msgid "Request not canceled"
-msgstr ""
+msgstr "请求未取消"
 
 #: lib/gai_strerror.c:73
 msgid "All requests done"
-msgstr ""
+msgstr "全部请求已完成"
 
 #: lib/gai_strerror.c:74
 msgid "Interrupted by a signal"
-msgstr ""
+msgstr "被信号中断"
 
 #: lib/gai_strerror.c:75
 msgid "Parameter string not correctly encoded"
-msgstr ""
+msgstr "参数字符串未正确编码"
 
-#: lib/gai_strerror.c:87 src/host.c:367
+#: lib/gai_strerror.c:87 src/host.c:375
 msgid "Unknown error"
-msgstr "未知的错误"
+msgstr "未知错误"
 
-#: lib/getopt.c:547 lib/getopt.c:576
-#, fuzzy, c-format
+#: lib/getopt.c:575 lib/getopt.c:604
+#, c-format
 msgid "%s: option '%s' is ambiguous; possibilities:"
+msgstr "%s：选项 \"%s\" 有歧义；可能性有："
+
+#: lib/getopt.c:619
+#, c-format
+msgid "%s: option '%s' is ambiguous\n"
 msgstr "%s：选项“%s”不明确\n"
 
-#: lib/getopt.c:624 lib/getopt.c:628
+#: lib/getopt.c:654 lib/getopt.c:658
 #, c-format
 msgid "%s: option '--%s' doesn't allow an argument\n"
 msgstr "%s：选项“--%s”不允许有参数\n"
 
-#: lib/getopt.c:637 lib/getopt.c:642
+#: lib/getopt.c:667 lib/getopt.c:672
 #, c-format
 msgid "%s: option '%c%s' doesn't allow an argument\n"
 msgstr "%s：选项“%c%s”不允许有参数\n"
 
-#: lib/getopt.c:685 lib/getopt.c:704
+#: lib/getopt.c:715 lib/getopt.c:734
 #, c-format
 msgid "%s: option '--%s' requires an argument\n"
 msgstr "%s：选项“%s”需要参数\n"
 
-#: lib/getopt.c:742 lib/getopt.c:745
+#: lib/getopt.c:772 lib/getopt.c:775
 #, c-format
 msgid "%s: unrecognized option '--%s'\n"
 msgstr "%s：无法识别的选项“--%s”\n"
 
-#: lib/getopt.c:753 lib/getopt.c:756
+#: lib/getopt.c:783 lib/getopt.c:786
 #, c-format
 msgid "%s: unrecognized option '%c%s'\n"
 msgstr "%s：无法识别的选项“%c%s”\n"
 
-#: lib/getopt.c:805 lib/getopt.c:808
+#: lib/getopt.c:835 lib/getopt.c:838
 #, c-format
 msgid "%s: invalid option -- '%c'\n"
 msgstr "%s：无效选项 -- %c\n"
 
-#: lib/getopt.c:861 lib/getopt.c:878 lib/getopt.c:1088 lib/getopt.c:1106
+#: lib/getopt.c:891 lib/getopt.c:908 lib/getopt.c:1118 lib/getopt.c:1136
 #, c-format
 msgid "%s: option requires an argument -- '%c'\n"
 msgstr "%s：选项需要参数 -- %c\n"
 
-#: lib/getopt.c:934 lib/getopt.c:950
+#: lib/getopt.c:964 lib/getopt.c:980
 #, c-format
 msgid "%s: option '-W %s' is ambiguous\n"
 msgstr "%s：选项“-W %s”不明确\n"
 
-#: lib/getopt.c:974 lib/getopt.c:992
+#: lib/getopt.c:1004 lib/getopt.c:1022
 #, c-format
 msgid "%s: option '-W %s' doesn't allow an argument\n"
 msgstr "%s：选项“-W %s”不允许有参数\n"
 
-#: lib/getopt.c:1013 lib/getopt.c:1031
+#: lib/getopt.c:1043 lib/getopt.c:1061
 #, c-format
 msgid "%s: option '-W %s' requires an argument\n"
 msgstr "%s：选项“%s”需要参数\n"
@@ -181,335 +186,379 @@ msgstr "%s：选项“%s”需要参数\n"
 #. If you don't know what to put here, please see
 #. <http://en.wikipedia.org/wiki/Quotation_marks_in_other_languages>
 #. and use glyphs suitable for your language.
-#: lib/quotearg.c:312
+#: lib/quotearg.c:354
 msgid "`"
 msgstr "“"
 
-#: lib/quotearg.c:313
+#: lib/quotearg.c:355
 msgid "'"
 msgstr "”"
 
-#: lib/regcomp.c:131
+#: lib/regcomp.c:135
 msgid "Success"
-msgstr ""
+msgstr "成功"
 
-#: lib/regcomp.c:134
+#: lib/regcomp.c:138
 msgid "No match"
-msgstr ""
+msgstr "无匹配"
 
-#: lib/regcomp.c:137
+#: lib/regcomp.c:141
 msgid "Invalid regular expression"
-msgstr ""
+msgstr "无效的正则表达式"
 
-#: lib/regcomp.c:140
+#: lib/regcomp.c:144
 msgid "Invalid collation character"
-msgstr ""
+msgstr "无效的校勘字符"
 
-#: lib/regcomp.c:143
-#, fuzzy
+#: lib/regcomp.c:147
 msgid "Invalid character class name"
-msgstr "无效的主机名"
+msgstr "无效的字符类型名"
 
-#: lib/regcomp.c:146
+#: lib/regcomp.c:150
 msgid "Trailing backslash"
-msgstr ""
+msgstr "末尾的反斜杠"
 
-#: lib/regcomp.c:149
-#, fuzzy
+#: lib/regcomp.c:153
 msgid "Invalid back reference"
-msgstr "无效的用户名"
+msgstr "无效的后向引用"
 
-#: lib/regcomp.c:152
-msgid "Unmatched [ or [^"
-msgstr ""
+#: lib/regcomp.c:156
+msgid "Unmatched [, [^, [:, [., or [="
+msgstr "未匹配的 [、[^、[:、[. 或 [="
 
-#: lib/regcomp.c:155
+#: lib/regcomp.c:159
 msgid "Unmatched ( or \\("
-msgstr ""
+msgstr "未匹配的( 或\\("
 
-#: lib/regcomp.c:158
+#: lib/regcomp.c:162
 msgid "Unmatched \\{"
-msgstr ""
+msgstr "未匹配的\\{"
 
-#: lib/regcomp.c:161
+#: lib/regcomp.c:165
 msgid "Invalid content of \\{\\}"
-msgstr ""
+msgstr "\\{\\} 中内容无效"
 
-#: lib/regcomp.c:164
-#, fuzzy
+#: lib/regcomp.c:168
 msgid "Invalid range end"
-msgstr "无效的用户名"
+msgstr "无效的范围结束符"
 
-#: lib/regcomp.c:167
-#, fuzzy
+#: lib/regcomp.c:171
 msgid "Memory exhausted"
 msgstr "内存耗尽"
 
-#: lib/regcomp.c:170
+#: lib/regcomp.c:174
 msgid "Invalid preceding regular expression"
-msgstr ""
+msgstr "无效的前置正则表达式"
 
-#: lib/regcomp.c:173
+#: lib/regcomp.c:177
 msgid "Premature end of regular expression"
-msgstr ""
+msgstr "正则表达式异常结束"
 
-#: lib/regcomp.c:176
+#: lib/regcomp.c:180
 msgid "Regular expression too big"
-msgstr ""
+msgstr "正则表达式过长"
 
-#: lib/regcomp.c:179
+#: lib/regcomp.c:183
 msgid "Unmatched ) or \\)"
-msgstr ""
+msgstr "未匹配的 ) 或 \\)"
 
-#: lib/regcomp.c:707
+#: lib/regcomp.c:687
 msgid "No previous regular expression"
-msgstr ""
+msgstr "缺少之前的正则表达式"
 
-#: lib/spawn-pipe.c:135 lib/spawn-pipe.c:138 lib/spawn-pipe.c:259
-#: lib/spawn-pipe.c:262
+#: lib/spawn-pipe.c:137 lib/spawn-pipe.c:140 lib/spawn-pipe.c:261
+#: lib/spawn-pipe.c:264
 #, c-format
 msgid "cannot create pipe"
-msgstr ""
+msgstr "无法创建管道"
 
-#: lib/spawn-pipe.c:229 lib/spawn-pipe.c:343 lib/wait-process.c:282
+#: lib/spawn-pipe.c:231 lib/spawn-pipe.c:345 lib/wait-process.c:282
 #: lib/wait-process.c:356
 #, c-format
 msgid "%s subprocess failed"
-msgstr ""
+msgstr "%s 子进程失败"
 
-#: lib/w32spawn.h:43
+#: lib/w32spawn.h:45
 #, c-format
 msgid "_open_osfhandle failed"
-msgstr ""
+msgstr "_open_osfhandle 失败"
 
-#: lib/w32spawn.h:84
+#: lib/w32spawn.h:86
 #, c-format
 msgid "cannot restore fd %d: dup2 failed"
-msgstr ""
+msgstr "无法还原 fd %d: dup2 失败"
 
 #: lib/wait-process.c:223 lib/wait-process.c:255 lib/wait-process.c:317
 #, c-format
 msgid "%s subprocess"
-msgstr ""
+msgstr "%s 子进程"
 
 #: lib/wait-process.c:274 lib/wait-process.c:346
 #, c-format
 msgid "%s subprocess got fatal signal %d"
-msgstr ""
+msgstr "%s 子进程收到致命信号 %d"
 
 #: lib/xalloc-die.c:34
 msgid "memory exhausted"
 msgstr "内存耗尽"
 
-#: src/connect.c:200
+#: src/connect.c:202
 #, c-format
 msgid "%s: unable to resolve bind address %s; disabling bind.\n"
 msgstr "%s: 无法解析 bind 地址 %s；禁用 bind。\n"
 
-#: src/connect.c:284
+#: src/connect.c:283
 #, c-format
 msgid "Connecting to %s|%s|:%d... "
 msgstr "正在连接 %s|%s|:%d... "
 
-#: src/connect.c:293
+#: src/connect.c:291
 #, c-format
 msgid "Connecting to %s:%d... "
 msgstr "正在连接 %s:%d... "
 
-#: src/connect.c:296
-#, fuzzy, c-format
+#: src/connect.c:294
+#, c-format
 msgid "Connecting to [%s]:%d... "
-msgstr "正在连接 %s:%d... "
+msgstr "正在连接 [%s]:%d... "
+
+#: src/connect.c:330
+#, c-format
+msgid "setsockopt SO_RCVBUF failed: %s\n"
+msgstr "setsockopt SO_RCVBUF 失败：%s\n"
 
 #: src/connect.c:358
 msgid "connected.\n"
 msgstr "已连接。\n"
 
-#: src/connect.c:370 src/host.c:783 src/host.c:812
+#: src/connect.c:377 src/host.c:914 src/host.c:952
 #, c-format
 msgid "failed: %s.\n"
 msgstr "失败：%s。\n"
 
-#: src/connect.c:394 src/http.c:1990
+#: src/connect.c:401 src/http.c:2096
 #, c-format
 msgid "%s: unable to resolve host address %s\n"
 msgstr "%s: 无法解析主机地址 %s\n"
 
-#: src/convert.c:196
+#: src/connect.c:471
 #, c-format
-msgid "Converted %d files in %s seconds.\n"
-msgstr "已转换了 %d 个文件，用时 %s 秒。\n"
+msgid "setsockopt SO_REUSEADDR failed: %s\n"
+msgstr "setsockopt SO_REUSEADDR 失败：%s\n"
 
-#: src/convert.c:224
+#: src/connect.c:692 src/connect.c:739
 #, c-format
-msgid "Converting %s... "
-msgstr "正在转换 %s... "
+msgid "Too many fds open.  Cannot use select on a fd >= %d\n"
+msgstr "打开太多文件描述符了。select 最多只能用于 %d 号描述符\n"
 
-#: src/convert.c:237
+#: src/convert.c:198
+#, c-format
+msgid "Converted links in %d files in %s seconds.\n"
+msgstr "已转换了 %d 个文件中的链接，用时 %s 秒。\n"
+
+#: src/convert.c:227
+#, c-format
+msgid "Converting links in %s... "
+msgstr "正在转换 %s 中的链接... "
+
+#: src/convert.c:240
 msgid "nothing to do.\n"
 msgstr "不需进行任何操作。\n"
 
-#: src/convert.c:245 src/convert.c:269
+#: src/convert.c:248 src/convert.c:272
 #, c-format
 msgid "Cannot convert links in %s: %s\n"
 msgstr "无法转换 %s 中的链接：%s\n"
 
-#: src/convert.c:260
+#: src/convert.c:263
 #, c-format
 msgid "Unable to delete %s: %s\n"
 msgstr "无法删除 %s: %s\n"
 
-#: src/convert.c:476
+#: src/convert.c:578
 #, c-format
 msgid "Cannot back up %s as %s: %s\n"
 msgstr "无法将 %s 备份成 %s: %s\n"
 
-#: src/cookies.c:450
+#: src/cookies.c:311
+#, c-format
+msgid "Unable to get cookie for %s\n"
+msgstr "无法获取 %s 的 cookie\n"
+
+#: src/cookies.c:458
 #, c-format
 msgid "Syntax error in Set-Cookie: %s at position %d.\n"
 msgstr "在 Set-Cookie 中出现语法错误：%s 在位置 %d 处。\n"
 
-#: src/cookies.c:732
-#, fuzzy, c-format
+#: src/cookies.c:772
+#, c-format
 msgid "Cookie coming from %s attempted to set domain to "
-msgstr "来自 %s 的 Cookie 尝试将域设置为 %s\n"
+msgstr "来自 %s 的 Cookie 尝试将域设置为 "
 
-#: src/cookies.c:735 src/spider.c:92
+#: src/cookies.c:775
 #, c-format
 msgid "%s\n"
 msgstr "%s\n"
 
-#: src/cookies.c:1183 src/cookies.c:1304
+#: src/cookies.c:1226 src/cookies.c:1347
 #, c-format
 msgid "Cannot open cookies file %s: %s\n"
 msgstr "无法打开 cookie 文件 %s: %s\n"
 
-#: src/cookies.c:1341
+#: src/cookies.c:1384
 #, c-format
 msgid "Error writing to %s: %s\n"
 msgstr "写入 %s 时发生错误: %s\n"
 
-#: src/cookies.c:1344
+#: src/cookies.c:1387
 #, c-format
 msgid "Error closing %s: %s\n"
 msgstr "关闭 %s 时发生错误: %s\n"
 
-#: src/ftp-ls.c:1049
+#: src/ftp-ls.c:1051
 msgid "Unsupported listing type, trying Unix listing parser.\n"
 msgstr "不支持的文件列表类型，试用 Unix 格式的列表来分析。\n"
 
-#: src/ftp-ls.c:1100 src/ftp-ls.c:1102
+#: src/ftp-ls.c:1102 src/ftp-ls.c:1104
 #, c-format
 msgid "Index of /%s on %s:%d"
 msgstr "/%s 的索引，在 %s:%d"
 
-#: src/ftp-ls.c:1127
+#: src/ftp-ls.c:1129
 #, c-format
 msgid "time unknown       "
 msgstr "未知的时间         "
 
-#: src/ftp-ls.c:1131
+#: src/ftp-ls.c:1133
 #, c-format
 msgid "File        "
 msgstr "文件        "
 
-#: src/ftp-ls.c:1134
+#: src/ftp-ls.c:1136
 #, c-format
 msgid "Directory   "
 msgstr "目录        "
 
-#: src/ftp-ls.c:1137
+#: src/ftp-ls.c:1139
 #, c-format
 msgid "Link        "
 msgstr "链接        "
 
-#: src/ftp-ls.c:1140
+#: src/ftp-ls.c:1142
 #, c-format
 msgid "Not sure    "
 msgstr "不确定      "
 
-#: src/ftp-ls.c:1163
+#: src/ftp-ls.c:1165
 #, c-format
 msgid " (%s bytes)"
 msgstr " (%s 字节)"
 
-#: src/ftp.c:222
+#: src/ftp.c:226
 #, c-format
 msgid "Length: %s"
 msgstr "长度：%s"
 
-#: src/ftp.c:228 src/http.c:2810
+#: src/ftp.c:232 src/http.c:4003
 #, c-format
 msgid ", %s (%s) remaining"
 msgstr "，剩余 %s (%s)"
 
-#: src/ftp.c:232 src/http.c:2814
+#: src/ftp.c:236 src/http.c:4007
 #, c-format
 msgid ", %s remaining"
 msgstr "，剩余 %s"
 
-#: src/ftp.c:235
+#: src/ftp.c:239
 msgid " (unauthoritative)\n"
 msgstr " (非正式数据)\n"
 
-#: src/ftp.c:313
+#: src/ftp.c:404
+msgid "Could not initialize SSL. It will be disabled."
+msgstr "不能初始化 SSL，因此将禁用之。"
+
+#: src/ftp.c:486
 #, c-format
 msgid "Logging in as %s ... "
 msgstr "正在以 %s 登录 ... "
 
-#: src/ftp.c:332 src/ftp.c:378 src/ftp.c:445 src/ftp.c:510 src/ftp.c:740
-#: src/ftp.c:793 src/ftp.c:840 src/ftp.c:897 src/ftp.c:958 src/ftp.c:1049
-#: src/ftp.c:1099
+#: src/ftp.c:505 src/ftp.c:591 src/ftp.c:658 src/ftp.c:723 src/ftp.c:957
+#: src/ftp.c:1010 src/ftp.c:1057 src/ftp.c:1120 src/ftp.c:1181 src/ftp.c:1279
+#: src/ftp.c:1329
 msgid "Error in server response, closing control connection.\n"
 msgstr "服务器响应时发生错误，正在关闭控制连接。\n"
 
-#: src/ftp.c:339
+#: src/ftp.c:512
 msgid "Error in server greeting.\n"
 msgstr "服务器消息出现错误。\n"
 
-#: src/ftp.c:346 src/ftp.c:518 src/ftp.c:748 src/ftp.c:848 src/ftp.c:907
-#: src/ftp.c:968 src/ftp.c:1059 src/ftp.c:1109
+#: src/ftp.c:519 src/ftp.c:731 src/ftp.c:965 src/ftp.c:1065 src/ftp.c:1130
+#: src/ftp.c:1191 src/ftp.c:1289 src/ftp.c:1339
 msgid "Write failed, closing control connection.\n"
 msgstr "写入失败，正在关闭控制连接。\n"
 
-#: src/ftp.c:352
+#: src/ftp.c:525
 msgid "The server refuses login.\n"
 msgstr "服务器拒绝登录。\n"
 
-#: src/ftp.c:358
+#: src/ftp.c:531
 msgid "Login incorrect.\n"
 msgstr "登录不正确。\n"
 
-#: src/ftp.c:364
+#: src/ftp.c:537
 msgid "Logged in!\n"
 msgstr "登录成功！\n"
 
-#: src/ftp.c:386
+#: src/ftp.c:557
+msgid "Server did not accept the 'PBSZ 0' command.\n"
+msgstr "服务器不接受‘PBSZ 0’命令。\n"
+
+#: src/ftp.c:567
+#, c-format
+msgid "Server did not accept the 'PROT %c' command.\n"
+msgstr "服务器不接受‘PROT %c’命令。\n"
+
+#: src/ftp.c:599
 msgid "Server error, can't determine system type.\n"
 msgstr "服务器错误，无法确定操作系统的类型。\n"
 
-#: src/ftp.c:395 src/ftp.c:884 src/ftp.c:941 src/ftp.c:984
+#: src/ftp.c:608 src/ftp.c:1100 src/ftp.c:1164 src/ftp.c:1207
 msgid "done.    "
 msgstr "完成。   "
 
-#: src/ftp.c:498 src/ftp.c:765 src/ftp.c:810 src/ftp.c:1079 src/ftp.c:1128
+#: src/ftp.c:711 src/ftp.c:983 src/ftp.c:1027 src/ftp.c:1309 src/ftp.c:1358
 msgid "done.\n"
 msgstr "完成。\n"
 
-#: src/ftp.c:525
+#: src/ftp.c:738
 #, c-format
 msgid "Unknown type `%c', closing control connection.\n"
 msgstr "未知的类别“%c”，正在关闭控制连接。\n"
 
-#: src/ftp.c:537
+#: src/ftp.c:750
 msgid "done.  "
 msgstr "完成。 "
 
-#: src/ftp.c:543
+#: src/ftp.c:756
 msgid "==> CWD not needed.\n"
 msgstr "==> 不需要 CWD。\n"
 
-#: src/ftp.c:754
+#: src/ftp.c:940
+msgid "Logically impossible section reached in getftp()"
+msgstr "进入了 getftp() 中逻辑上不可能的段落"
+
+#: src/ftp.c:941
+#, c-format
+msgid ""
+"cwd_count: %d\n"
+"cwd_start: %d\n"
+"cwd_end: %d\n"
+msgstr ""
+"cwd_count: %d\n"
+"cwd_start: %d\n"
+"cwd_end: %d\n"
+
+#: src/ftp.c:971
 #, c-format
 msgid ""
 "No such directory %s.\n"
@@ -518,37 +567,37 @@ msgstr ""
 "目录 %s 不存在。\n"
 "\n"
 
-#: src/ftp.c:775
+#: src/ftp.c:992
 msgid "==> CWD not required.\n"
 msgstr "==> 不需要 CWD。\n"
 
-#: src/ftp.c:818
+#: src/ftp.c:1035
 msgid "File has already been retrieved.\n"
 msgstr "该文件已经被获取了。\n"
 
-#: src/ftp.c:854
+#: src/ftp.c:1071
 msgid "Cannot initiate PASV transfer.\n"
 msgstr "无法启动 PASV 传输。\n"
 
-#: src/ftp.c:858
+#: src/ftp.c:1075
 msgid "Cannot parse PASV response.\n"
 msgstr "无法解析 PASV 响应内容。\n"
 
-#: src/ftp.c:875
+#: src/ftp.c:1092
 #, c-format
 msgid "couldn't connect to %s port %d: %s\n"
 msgstr "无法连接到 %s 端口号 %d: %s\n"
 
-#: src/ftp.c:923
+#: src/ftp.c:1146
 #, c-format
 msgid "Bind error (%s).\n"
 msgstr "Bind 错误 (%s)。\n"
 
-#: src/ftp.c:929
+#: src/ftp.c:1152
 msgid "Invalid PORT.\n"
 msgstr "PORT 命令无效。\n"
 
-#: src/ftp.c:975
+#: src/ftp.c:1198
 msgid ""
 "\n"
 "REST failed, starting from scratch.\n"
@@ -556,17 +605,17 @@ msgstr ""
 "\n"
 "断点续传 (REST) 失败，重头开始下载。\n"
 
-#: src/ftp.c:1015
+#: src/ftp.c:1241
 #, c-format
 msgid "File %s exists.\n"
 msgstr "文件 %s 已存在。\n"
 
-#: src/ftp.c:1021
+#: src/ftp.c:1247
 #, c-format
 msgid "No such file %s.\n"
 msgstr "文件 %s 不存在。\n"
 
-#: src/ftp.c:1067
+#: src/ftp.c:1297
 #, c-format
 msgid ""
 "No such file %s.\n"
@@ -575,7 +624,7 @@ msgstr ""
 "文件 %s 不存在。\n"
 "\n"
 
-#: src/ftp.c:1117
+#: src/ftp.c:1347
 #, c-format
 msgid ""
 "No such file or directory %s.\n"
@@ -584,40 +633,40 @@ msgstr ""
 "文件或目录 %s 不存在。\n"
 "\n"
 
-#: src/ftp.c:1276 src/http.c:2940
+#: src/ftp.c:1506 src/http.c:2551
 #, c-format
 msgid "%s has sprung into existence.\n"
 msgstr "%s 突然出现。\n"
 
-#: src/ftp.c:1328
+#: src/ftp.c:1595
 #, c-format
 msgid "%s: %s, closing control connection.\n"
 msgstr "%s：%s，正在关闭控制连接。\n"
 
-#: src/ftp.c:1340
+#: src/ftp.c:1607
 #, c-format
 msgid "%s (%s) - Data connection: %s; "
 msgstr "%s (%s) - 数据连接：%s；"
 
-#: src/ftp.c:1356
+#: src/ftp.c:1622
 msgid "Control connection closed.\n"
 msgstr "已关闭控制连接。\n"
 
-#: src/ftp.c:1374
+#: src/ftp.c:1640
 msgid "Data transfer aborted.\n"
 msgstr "数据传输已被中止。\n"
 
-#: src/ftp.c:1580
+#: src/ftp.c:1864
 #, c-format
 msgid "File %s already there; not retrieving.\n"
 msgstr "文件 %s 已存在；不获取。\n"
 
-#: src/ftp.c:1663 src/http.c:3107
+#: src/ftp.c:1949 src/http.c:4273
 #, c-format
 msgid "(try:%2d)"
 msgstr "(尝试次数：%2d)"
 
-#: src/ftp.c:1745 src/http.c:3493
+#: src/ftp.c:2037 src/http.c:4689
 #, c-format
 msgid ""
 "%s (%s) - written to stdout %s[%s]\n"
@@ -626,7 +675,7 @@ msgstr ""
 "%s (%s) - 已写入标准输出 %s[%s]\n"
 "\n"
 
-#: src/ftp.c:1746 src/http.c:3494
+#: src/ftp.c:2038 src/http.c:4690
 #, c-format
 msgid ""
 "%s (%s) - %s saved [%s]\n"
@@ -635,40 +684,40 @@ msgstr ""
 "%s (%s) - %s 已保存 [%s]\n"
 "\n"
 
-#: src/ftp.c:1804 src/main.c:1670 src/recur.c:433 src/recur.c:650
-#: src/retr.c:1102
+#: src/ftp.c:2098 src/main.c:2117 src/metalink.c:1137 src/recur.c:513
+#: src/recur.c:748 src/retr.c:1294
 #, c-format
 msgid "Removing %s.\n"
 msgstr "正在删除 %s。\n"
 
-#: src/ftp.c:1850
+#: src/ftp.c:2152
 #, c-format
 msgid "Using %s as listing tmp file.\n"
 msgstr "使用 %s 作为列表临时文件。\n"
 
-#: src/ftp.c:1867
+#: src/ftp.c:2169
 #, c-format
 msgid "Removed %s.\n"
 msgstr "已删除 %s。\n"
 
-#: src/ftp.c:1904
+#: src/ftp.c:2209
 #, c-format
 msgid "Recursion depth %d exceeded max. depth %d.\n"
 msgstr "链接递归深度 %d 超过最大值 %d。\n"
 
-#: src/ftp.c:1974
+#: src/ftp.c:2279
 #, c-format
 msgid "Remote file no newer than local file %s -- not retrieving.\n"
 msgstr "远程文件比本地文件 %s 更老 -- 不获取。\n"
 
-#: src/ftp.c:1981
+#: src/ftp.c:2287
 #, c-format
 msgid ""
 "Remote file is newer than local file %s -- retrieving.\n"
 "\n"
 msgstr "远程文件较本地文件 %s 新 -- 获取。\n"
 
-#: src/ftp.c:1988
+#: src/ftp.c:2294
 #, c-format
 msgid ""
 "The sizes do not match (local %s) -- retrieving.\n"
@@ -677,11 +726,11 @@ msgstr ""
 "文件大小不符 (本地文件 %s) -- 获取。\n"
 "\n"
 
-#: src/ftp.c:2006
+#: src/ftp.c:2312
 msgid "Invalid name of the symlink, skipping.\n"
 msgstr "无效的符号连接名，跳过。\n"
 
-#: src/ftp.c:2023
+#: src/ftp.c:2329
 #, c-format
 msgid ""
 "Already have correct symlink %s -> %s\n"
@@ -690,196 +739,238 @@ msgstr ""
 "已经存在正确的符号连接 %s -> %s\n"
 "\n"
 
-#: src/ftp.c:2032
+#: src/ftp.c:2338
 #, c-format
 msgid "Creating symlink %s -> %s\n"
 msgstr "正在创建符号链接 %s -> %s\n"
 
-#: src/ftp.c:2042
+#: src/ftp.c:2348
 #, c-format
 msgid "Symlinks not supported, skipping symlink %s.\n"
 msgstr "不支持符号连接，正在跳过符号连接 %s。\n"
 
-#: src/ftp.c:2054
+#: src/ftp.c:2363
 #, c-format
 msgid "Skipping directory %s.\n"
 msgstr "正在跳过目录 %s。\n"
 
-#: src/ftp.c:2063
+#: src/ftp.c:2376
 #, c-format
 msgid "%s: unknown/unsupported file type.\n"
 msgstr "%s：未知的/不支持的文件类型。\n"
 
-#: src/ftp.c:2103
+#: src/ftp.c:2400
+#, c-format
+msgid "Failed to set permissions for %s.\n"
+msgstr "无法设定 %s 的权限\n"
+
+#: src/ftp.c:2421
 #, c-format
 msgid "%s: corrupt time-stamp.\n"
 msgstr "%s：错误的时间戳标记。\n"
 
-#: src/ftp.c:2127
+#: src/ftp.c:2445
 #, c-format
 msgid "Will not retrieve dirs since depth is %d (max %d).\n"
 msgstr "因为目录深度为 %d (最大值为 %d)，所以不获取目录。\n"
 
-#: src/ftp.c:2177
+#: src/ftp.c:2496
 #, c-format
 msgid "Not descending to %s as it is excluded/not-included.\n"
 msgstr "不进入 %s 目录因为其已被排除或未被包含进来。\n"
 
-#: src/ftp.c:2266 src/ftp.c:2280
+#: src/ftp.c:2586 src/ftp.c:2600
 #, c-format
 msgid "Rejecting %s.\n"
 msgstr "拒绝 %s。\n"
 
-#: src/ftp.c:2303
+#: src/ftp.c:2623
 #, c-format
 msgid "Error matching %s against %s: %s\n"
 msgstr "%s 和 %s 匹配错误: %s\n"
 
-#: src/ftp.c:2359
+#: src/ftp.c:2679
 #, c-format
 msgid "No matches on pattern %s.\n"
 msgstr "没有与模式 %s 相符合的。\n"
 
-#: src/ftp.c:2430
+#: src/ftp.c:2751
 #, c-format
 msgid "Wrote HTML-ized index to %s [%s].\n"
 msgstr "已经将 HTML 格式的索引写入到 %s [%s]。\n"
 
-#: src/ftp.c:2435
+#: src/ftp.c:2756
 #, c-format
 msgid "Wrote HTML-ized index to %s.\n"
 msgstr "已经将 HTML 格式的索引写入到 %s。\n"
 
-#: src/gnutls.c:110
+#: src/gnutls.c:115
 #, c-format
 msgid "ERROR: Cannot open directory %s.\n"
 msgstr "错误：无法打开目录 %s。\n"
 
-#: src/gnutls.c:141
-#, fuzzy, c-format
+#: src/gnutls.c:165
+#, c-format
 msgid "ERROR: Failed to open cert %s: (%d).\n"
-msgstr "错误：无法打开目录 %s。\n"
+msgstr "错误：无法打开证书 %s：(%d)。\n"
 
-#: src/gnutls.c:173
+#: src/gnutls.c:170
+#, c-format
+msgid "Loaded CA certificate '%s'\n"
+msgstr "已载入 CA 证书“%s”\n"
+
+#: src/gnutls.c:180
+#, c-format
+msgid "ERROR: Failed to load CRL file '%s': (%d)\n"
+msgstr "错误：无法加载 CRL 文件‘%s’: (%d)\n"
+
+#: src/gnutls.c:184
+#, c-format
+msgid "Loaded CRL file '%s'\n"
+msgstr "已加载 CRL 文件‘%s’\n"
+
+#: src/gnutls.c:208
 msgid "ERROR: GnuTLS requires the key and the cert to be of the same type.\n"
-msgstr ""
+msgstr "错误：GnuTLS 要求密钥和证书具有相同的类型。\n"
 
-#: src/gnutls.c:589 src/openssl.c:599
+#: src/gnutls.c:602
+#, fuzzy, c-format
+msgid "GnuTLS: unimplemented 'secure-protocol' option value %u\n"
+msgstr "GnuTLS：未实现‘secure-protocol’选项值 %d\n"
+
+#: src/gnutls.c:604 src/gnutls.c:641 src/host.c:159 src/openssl.c:255
+msgid "Please report this issue to bug-wget@gnu.org\n"
+msgstr "请将此问题报告到 bug-wget@gnu.org\n"
+
+#: src/gnutls.c:640
+#, c-format
+msgid "GnuTLS: unimplemented 'secure-protocol' option value %d\n"
+msgstr "GnuTLS：未实现‘secure-protocol’选项值 %d\n"
+
+#: src/gnutls.c:769 src/openssl.c:763
 msgid "ERROR"
 msgstr "错误"
 
-#: src/gnutls.c:589 src/openssl.c:599
+#: src/gnutls.c:769 src/openssl.c:763
 msgid "WARNING"
 msgstr "警告"
 
-#: src/gnutls.c:595 src/openssl.c:608
+#: src/gnutls.c:780 src/openssl.c:776
 #, c-format
 msgid "%s: No certificate presented by %s.\n"
 msgstr "%s: %s 未提出证书。\n"
 
-#: src/gnutls.c:601
+#: src/gnutls.c:786
 #, c-format
 msgid "%s: The certificate of %s is not trusted.\n"
 msgstr "%s: %s 的证书不可信。\n"
 
-#: src/gnutls.c:602
+#: src/gnutls.c:787
 #, c-format
 msgid "%s: The certificate of %s hasn't got a known issuer.\n"
 msgstr "%s: %s 的证书颁发者未知。\n"
 
-#: src/gnutls.c:603
+#: src/gnutls.c:788
 #, c-format
 msgid "%s: The certificate of %s has been revoked.\n"
 msgstr "%s: %s 的证书已经过期。\n"
 
-#: src/gnutls.c:604
-#, fuzzy, c-format
+#: src/gnutls.c:789
+#, c-format
 msgid "%s: The certificate signer of %s was not a CA.\n"
-msgstr "%s: %s 的证书不可信。\n"
+msgstr "%s: 证书 %s 的签发者不是一个 CA。\n"
 
-#: src/gnutls.c:605
-#, fuzzy, c-format
+#: src/gnutls.c:790
+#, c-format
 msgid "%s: The certificate of %s was signed using an insecure algorithm.\n"
-msgstr "%s: %s 的证书颁发者未知。\n"
+msgstr "%s: %s 的证书使用不安全的算法签名。\n"
 
-#: src/gnutls.c:606
-#, fuzzy, c-format
+#: src/gnutls.c:791
+#, c-format
 msgid "%s: The certificate of %s is not yet activated.\n"
-msgstr "%s: %s 的证书不可信。\n"
+msgstr "%s: %s 的证书还未生效。\n"
 
-#: src/gnutls.c:607
-#, fuzzy, c-format
+#: src/gnutls.c:792
+#, c-format
 msgid "%s: The certificate of %s has expired.\n"
 msgstr "%s: %s 的证书已经过期。\n"
 
-#: src/gnutls.c:618
+#: src/gnutls.c:804
 #, c-format
 msgid "Error initializing X509 certificate: %s\n"
 msgstr "初始化 X509 证书错误: %s\n"
 
-#: src/gnutls.c:627
+#: src/gnutls.c:813
 msgid "No certificate found\n"
 msgstr "未找到证书\n"
 
-#: src/gnutls.c:634
+#: src/gnutls.c:820
 #, c-format
 msgid "Error parsing certificate: %s\n"
 msgstr "解析证书时发生错误: %s。\n"
 
-#: src/gnutls.c:641
+#: src/gnutls.c:827
 msgid "The certificate has not yet been activated\n"
 msgstr "证书还未激活\n"
 
-#: src/gnutls.c:646
+#: src/gnutls.c:832
 msgid "The certificate has expired\n"
 msgstr "证书已经过期\n"
 
-#: src/gnutls.c:652
+#: src/gnutls.c:839
 #, c-format
 msgid "The certificate's owner does not match hostname %s\n"
 msgstr "证书所有者与主机名 %s 不符\n"
 
-#: src/gnutls.c:661
-msgid "Certificate must be X.509\n"
-msgstr ""
+#: src/gnutls.c:848 src/openssl.c:972
+msgid "The public key does not match pinned public key!\n"
+msgstr "公钥与固定的公钥不匹配！\n"
 
-#: src/host.c:361
+#: src/gnutls.c:857
+msgid "Certificate must be X.509\n"
+msgstr "证书必须是 X.509 格式\n"
+
+#: src/host.c:158
+msgid "Error in handling the address list.\n"
+msgstr "处理地址列表时出错。\n"
+
+#: src/host.c:369
 msgid "Unknown host"
 msgstr "未知的主机"
 
-#: src/host.c:740
+#: src/host.c:849
 #, c-format
 msgid "Resolving %s... "
 msgstr "正在解析主机 %s... "
 
-#: src/host.c:792
+#: src/host.c:925
 msgid "failed: No IPv4/IPv6 addresses for host.\n"
 msgstr "失败：主机没有 IPv4/IPv6 地址。\n"
 
-#: src/host.c:815
+#: src/host.c:955
 msgid "failed: timed out.\n"
 msgstr "失败：超时。\n"
 
-#: src/html-url.c:303
+#: src/html-url.c:307
 #, c-format
 msgid "%s: Cannot resolve incomplete link %s.\n"
 msgstr "%s：无法解析不完整的链接 %s。\n"
 
-#: src/html-url.c:836
+#: src/html-url.c:931
 #, c-format
 msgid "%s: Invalid URL %s: %s\n"
 msgstr "%s：无效的 URL %s: %s\n"
 
-#: src/http.c:371
+#: src/http.c:376
 #, c-format
 msgid "Failed writing HTTP request: %s.\n"
 msgstr "无法写入 HTTP 请求：%s。\n"
 
-#: src/http.c:767
+#: src/http.c:781
 msgid "No headers, assuming HTTP/0.9"
-msgstr "没有 HTTP 头，尝试 HTTP/0.9"
+msgstr "没有 HTTP 头，假定为 HTTP/0.9"
 
-#: src/http.c:1495
+#: src/http.c:1611
 #, c-format
 msgid ""
 "File %s already there; not retrieving.\n"
@@ -888,80 +979,150 @@ msgstr ""
 "文件 %s 已经存在；不获取。\n"
 "\n"
 
-#: src/http.c:1747
-msgid "Disabling SSL due to encountered errors.\n"
-msgstr "由于遭遇错误，将禁用 SSL。\n"
+#: src/http.c:1821
+msgid "gmtime failed. This is probably a bug.\n"
+msgstr "gmtime 失败。这可能是一个 bug。\n"
 
-#: src/http.c:1869
-#, fuzzy, c-format
+#: src/http.c:1882
+msgid ""
+"Cannot convert timestamp to http format. Falling back to time 0 as last "
+"modification time.\n"
+msgstr "不能转换为 http 格式的时间戳。将最后修改时间回落到 0。\n"
+
+#: src/http.c:1986
+#, c-format
 msgid "BODY data file %s missing: %s\n"
-msgstr "缺少 POST 数据文件 %s : %s\n"
+msgstr "缺少 BODY 数据文件 %s: %s\n"
 
-#: src/http.c:1971
-#, fuzzy, c-format
+#: src/http.c:2078
+#, c-format
 msgid "Reusing existing connection to [%s]:%d.\n"
-msgstr "再次使用存在的到 %s:%d 的连接。\n"
+msgstr "重用已有的的到 [%s]:%d 的连接\n"
 
-#: src/http.c:1976
+#: src/http.c:2083
 #, c-format
 msgid "Reusing existing connection to %s:%d.\n"
 msgstr "再次使用存在的到 %s:%d 的连接。\n"
 
-#: src/http.c:2048
+#: src/http.c:2149
 #, c-format
 msgid "Failed reading proxy response: %s\n"
 msgstr "无法读取代理响应：%s\n"
 
-#: src/http.c:2068 src/http.c:2235 src/http.c:3287
+#: src/http.c:2168 src/http.c:3407 src/http.c:4483
 #, c-format
 msgid "%s ERROR %d: %s.\n"
 msgstr "%s 错误 %d：%s。\n"
 
-#: src/http.c:2070 src/http.c:2237 src/http.c:2572
+#: src/http.c:2170 src/http.c:3409 src/http.c:3597
 msgid "Malformed status line"
 msgstr "不正常的状态行"
 
-#: src/http.c:2081
+#: src/http.c:2181
 #, c-format
 msgid "Proxy tunneling failed: %s"
 msgstr "代理渠道错误: %s"
 
-#: src/http.c:2175
+#: src/http.c:2417
+msgid "Unknown authentication scheme.\n"
+msgstr "未知的验证方式。\n"
+
+#: src/http.c:2435
+#, c-format
+msgid "Authentication selected: %s\n"
+msgstr "选定的验证方式：%s\n"
+
+#: src/http.c:2566
+#, c-format
+msgid "Saving to: %s\n"
+msgstr "正在保存至: %s\n"
+
+#: src/http.c:2785
+#, c-format
+msgid ""
+"When downloading signature:\n"
+"%s: %s.\n"
+msgstr ""
+"当下载签名:\n"
+"%s: %s 时。\n"
+
+#: src/http.c:2821
+msgid "Unable to read signature content from temporary file. Skipping.\n"
+msgstr "无法从临时文件读取签名内容。跳过。\n"
+
+#: src/http.c:2844
+msgid "Could not create temporary file. Skipping signature download.\n"
+msgstr "无法创建临时文件。跳过签名下载。\n"
+
+#: src/http.c:2878 src/http.c:2960
+#, c-format
+msgid "Invalid pri value. Assuming %d.\n"
+msgstr "pri 值无效。假定为 %d。\n"
+
+#: src/http.c:3064
+msgid ""
+"Could not find acceptable digest for Metalink resources.\n"
+"Ignoring them.\n"
+msgstr ""
+"无法为 Metalink 资源找到任何可接受的摘要。\n"
+"将忽略这些资源。\n"
+
+#: src/http.c:3201
+msgid "Disabling SSL due to encountered errors.\n"
+msgstr "由于遭遇错误，将禁用 SSL。\n"
+
+#: src/http.c:3343
 #, c-format
 msgid "%s request sent, awaiting response... "
 msgstr "已发出 %s 请求，正在等待回应... "
 
-#: src/http.c:2210
+#: src/http.c:3383
 msgid "No data received.\n"
 msgstr "没有接收到数据。\n"
 
-#: src/http.c:2217
+#: src/http.c:3389
 #, c-format
 msgid "Read error (%s) in headers.\n"
 msgstr "读取文件头错误 (%s)。\n"
 
-#: src/http.c:2389
-msgid "Unknown authentication scheme.\n"
-msgstr "未知的验证方式。\n"
-
-#: src/http.c:2574
+#: src/http.c:3599
 msgid "(no description)"
 msgstr "(没有描述)"
 
-#: src/http.c:2650
+#: src/http.c:3768
 #, c-format
 msgid "Location: %s%s\n"
 msgstr "位置：%s%s\n"
 
-#: src/http.c:2651 src/http.c:2820
+#: src/http.c:3769 src/http.c:4013
 msgid "unspecified"
 msgstr "未指定"
 
-#: src/http.c:2652
+#: src/http.c:3770
 msgid " [following]"
 msgstr " [跟随至新的 URL]"
 
-#: src/http.c:2765
+#: src/http.c:3853
+#, c-format
+msgid ""
+"File %s not modified on server. Omitting download.\n"
+"\n"
+msgstr ""
+"文件 %s 在服务器上未被更改。忽略此下载。\n"
+"\n"
+
+#: src/http.c:3924
+#, c-format
+msgid ""
+"Server ignored If-Modified-Since header for file %s.\n"
+"You might want to add --no-if-modified-since option.\n"
+"\n"
+msgstr ""
+"服务器忽略了文件 %s 的 If-Modified-Since 文件头。\n"
+"你也许应该附加 --no-if-modified-since 选项。\n"
+"\n"
+
+#: src/http.c:3954
 msgid ""
 "\n"
 "    The file is already fully retrieved; nothing to do.\n"
@@ -971,77 +1132,80 @@ msgstr ""
 "    文件已下载完成；不会进行任何操作。\n"
 "\n"
 
-#: src/http.c:2800
+#: src/http.c:3993
 msgid "Length: "
 msgstr "长度："
 
-#: src/http.c:2820
+#: src/http.c:4013
 msgid "ignored"
 msgstr "已忽略"
 
-#: src/http.c:2961
-#, c-format
-msgid "Saving to: %s\n"
-msgstr "正在保存至: %s\n"
-
-#: src/http.c:3031
+#: src/http.c:4181
 msgid "Warning: wildcards not supported in HTTP.\n"
 msgstr "警告：HTTP 不支持通配符。\n"
 
-#: src/http.c:3096
+#: src/http.c:4263
 msgid "Spider mode enabled. Check if remote file exists.\n"
-msgstr "开启 Spider 模式。检查是否存在远程文件。\n"
+msgstr "打开 Spider 模式。检查是否存在远程文件。\n"
 
-#: src/http.c:3185
+#: src/http.c:4353
 #, c-format
 msgid "Cannot write to %s (%s).\n"
 msgstr "无法写入 %s (%s)。\n"
 
-#: src/http.c:3196
+#: src/http.c:4364
 msgid "Required attribute missing from Header received.\n"
-msgstr ""
+msgstr "接收的响应头中缺少必要的属性。\n"
 
-#: src/http.c:3201
+#: src/http.c:4369
 msgid "Username/Password Authentication Failed.\n"
-msgstr ""
+msgstr "用户名/密码认证失败。\n"
 
-#: src/http.c:3207
-#, fuzzy
+#: src/http.c:4375
 msgid "Cannot write to WARC file.\n"
-msgstr "无法写入 %s (%s)。\n"
+msgstr "无法写入 WARC 文件。\n"
 
-#: src/http.c:3213
-#, fuzzy
+#: src/http.c:4381
 msgid "Cannot write to temporary WARC file.\n"
-msgstr "无法写入 %s (%s)。\n"
+msgstr "无法写入临时 WARC 文件。\n"
 
-#: src/http.c:3218
+#: src/http.c:4386
 msgid "Unable to establish SSL connection.\n"
 msgstr "无法建立 SSL 连接。\n"
 
-#: src/http.c:3224
-#, fuzzy, c-format
+#: src/http.c:4392
+#, c-format
 msgid "Cannot unlink %s (%s).\n"
-msgstr "无法写入 %s (%s)。\n"
+msgstr "无法清除 %s 的链接 (%s)。\n"
 
-#: src/http.c:3234
+#: src/http.c:4402
 #, c-format
 msgid "ERROR: Redirection (%d) without location.\n"
 msgstr "错误：重定向 (%d) 但没有指定位置。\n"
 
-#: src/http.c:3282
+#: src/http.c:4424
+msgid ""
+"Could not find Metalink data in HTTP response. Downloading file using HTTP "
+"GET.\n"
+msgstr "无法从 HTTP 响应中找到 Metalink 数据。使用 HTTP GET 下载文件。\n"
+
+#: src/http.c:4433
+msgid "Metalink headers found. Switching to Metalink mode.\n"
+msgstr "发现 Metalink 响应头。将切换到 Metalink 模式。\n"
+
+#: src/http.c:4473
 msgid "Remote file does not exist -- broken link!!!\n"
 msgstr "远程文件不存在 -- 链接失效！！！\n"
 
-#: src/http.c:3304
+#: src/http.c:4500
 msgid "Last-modified header missing -- time-stamps turned off.\n"
 msgstr "缺少“Last-modified”文件头 -- 关闭时间戳标记。\n"
 
-#: src/http.c:3312
+#: src/http.c:4508
 msgid "Last-modified header invalid -- time-stamp ignored.\n"
 msgstr "无效的“Last-modified”文件头 -- 忽略时间戳标记。\n"
 
-#: src/http.c:3342
+#: src/http.c:4538
 #, c-format
 msgid ""
 "Server file no newer than local file %s -- not retrieving.\n"
@@ -1050,16 +1214,16 @@ msgstr ""
 "远程文件比本地文件 %s 更老 -- 不获取。\n"
 "\n"
 
-#: src/http.c:3350
+#: src/http.c:4546
 #, c-format
 msgid "The sizes do not match (local %s) -- retrieving.\n"
 msgstr "文件大小不符 (本地文件 %s) -- 获取。\n"
 
-#: src/http.c:3359
+#: src/http.c:4555
 msgid "Remote file is newer, retrieving.\n"
 msgstr "远程文件较新，获取。\n"
 
-#: src/http.c:3377
+#: src/http.c:4573
 msgid ""
 "Remote file exists and could contain links to other resources -- "
 "retrieving.\n"
@@ -1068,7 +1232,7 @@ msgstr ""
 "存在远程文件且可能含有到其它资源的链接 -- 获取。\n"
 "\n"
 
-#: src/http.c:3383
+#: src/http.c:4579
 msgid ""
 "Remote file exists but does not contain any link -- not retrieving.\n"
 "\n"
@@ -1076,7 +1240,7 @@ msgstr ""
 "存在远程文件但不含任何链接 -- 无法获取。\n"
 "\n"
 
-#: src/http.c:3392
+#: src/http.c:4588
 msgid ""
 "Remote file exists and could contain further links,\n"
 "but recursion is disabled -- not retrieving.\n"
@@ -1086,7 +1250,7 @@ msgstr ""
 "但不能进行递归操作 -- 无法获取。\n"
 "\n"
 
-#: src/http.c:3398
+#: src/http.c:4594
 msgid ""
 "Remote file exists.\n"
 "\n"
@@ -1094,12 +1258,12 @@ msgstr ""
 "存在远程文件。\n"
 "\n"
 
-#: src/http.c:3407
+#: src/http.c:4603
 #, c-format
 msgid "%s URL: %s %2d %s\n"
 msgstr "%s URL: %s %2d %s\n"
 
-#: src/http.c:3457
+#: src/http.c:4653
 #, c-format
 msgid ""
 "%s (%s) - written to stdout %s[%s/%s]\n"
@@ -1108,7 +1272,7 @@ msgstr ""
 "%s (%s) - 已写入至标准输出 %s[%s/%s]\n"
 "\n"
 
-#: src/http.c:3458
+#: src/http.c:4654
 #, c-format
 msgid ""
 "%s (%s) - %s saved [%s/%s]\n"
@@ -1117,199 +1281,210 @@ msgstr ""
 "%s (%s) - 已保存 %s [%s/%s])\n"
 "\n"
 
-#: src/http.c:3519
+#: src/http.c:4715
 #, c-format
 msgid "%s (%s) - Connection closed at byte %s. "
 msgstr "%s (%s) - 在 %s 字节处连接关闭。"
 
-#: src/http.c:3542
+#: src/http.c:4738
 #, c-format
 msgid "%s (%s) - Read error at byte %s (%s)."
 msgstr "%s (%s) - 在 %s 字节处发生读取错误 (%s)。"
 
-#: src/http.c:3551
+#: src/http.c:4747
 #, c-format
 msgid "%s (%s) - Read error at byte %s/%s (%s). "
 msgstr "%s (%s) - 在 %s/%s 字节处发生读取错误 (%s)。"
 
-#: src/http.c:3786
+#: src/http.c:4985
 #, c-format
 msgid "Unsupported quality of protection '%s'.\n"
-msgstr ""
+msgstr "不支持的保护质量 '%s'。\n"
 
-#: src/http.c:3792
-#, fuzzy, c-format
-msgid "Unsupported algorithm '%s'.\n"
-msgstr "不支持的协议类型 %s"
-
-#: src/init.c:500
+#: src/http.c:4990
 #, c-format
-msgid "%s: WGETRC points to %s, which doesn't exist.\n"
+msgid "Unsupported algorithm '%s'.\n"
+msgstr "不支持的算法‘%s’。\n"
+
+#: src/init.c:582
+#, fuzzy, c-format
+msgid ""
+"%s: WGETRC points to %s, which couldn't be accessed because of error: %s.\n"
 msgstr "%s: WGETRC指向 %s，但它并不存在。\n"
 
-#: src/init.c:605 src/netrc.c:246
+#: src/init.c:683 src/netrc.c:246
 #, c-format
 msgid "%s: Cannot read %s (%s).\n"
 msgstr "%s：无法读取 %s (%s)。\n"
 
-#: src/init.c:622
+#: src/init.c:700
 #, c-format
 msgid "%s: Error in %s at line %d.\n"
 msgstr "%1$s：错误发生于第 %3$d 行的 %2$s。\n"
 
-#: src/init.c:628
+#: src/init.c:706
 #, c-format
 msgid "%s: Syntax error in %s at line %d.\n"
 msgstr "%1$s: 第 %3$d 行的 %2$s 处发生语法错误。\n"
 
-#: src/init.c:633
+#: src/init.c:711
 #, c-format
 msgid "%s: Unknown command %s in %s at line %d.\n"
 msgstr "%1$s: 未知的命令 %2$s 在第 %4$d 行 %3$s 处。\n"
 
-#: src/init.c:670
+#: src/init.c:750
 #, c-format
 msgid ""
 "Parsing system wgetrc file (env SYSTEM_WGETRC) failed.  Please check\n"
 "'%s',\n"
 "or specify a different file using --config.\n"
 msgstr ""
+"解析系统 wgetrc 文件（env SYSTEM_WGETRC）失败。请检查\n"
+"'%s'，\n"
+"或使用 --config 参数指定另一个配置文件。\n"
 
-#: src/init.c:685
+#: src/init.c:765
 #, c-format
 msgid ""
 "Parsing system wgetrc file failed.  Please check\n"
 "'%s',\n"
 "or specify a different file using --config.\n"
 msgstr ""
+"解析系统 wgetrc 文件失败。请检查\n"
+"'%s'，\n"
+"或使用 --config 参数指定另一个配置文件。\n"
 
-#: src/init.c:701
+#: src/init.c:781
 #, c-format
 msgid "%s: Warning: Both system and user wgetrc point to %s.\n"
 msgstr "%s：警告：系统与用户的 wgetrc 都指向 %s。\n"
 
-#: src/init.c:891
+#: src/init.c:976
 #, c-format
 msgid "%s: Invalid --execute command %s\n"
 msgstr "%s：无效的 --execute 命令 %s\n"
 
-#: src/init.c:936
+#: src/init.c:1037
 #, c-format
 msgid "%s: %s: Invalid boolean %s; use `on' or `off'.\n"
 msgstr "%s：%s：无效的布尔值 %s；请使用“on”或“off”。\n"
 
-#: src/init.c:953
+#: src/init.c:1070
+#, c-format
+msgid "%s: %s: Invalid %s; use `on', `off' or `quiet'.\n"
+msgstr "%s：%s：无效的 %s；请使用“on”、“off”或“quiet”。\n"
+
+#: src/init.c:1088
 #, c-format
 msgid "%s: %s: Invalid number %s.\n"
 msgstr "%s：%s：无效数字 %s。\n"
 
-#: src/init.c:1175 src/init.c:1194
+#: src/init.c:1169
+#, c-format
+msgid "%s: %s must only be used once\n"
+msgstr "%s: %s 只能单次使用\n"
+
+#: src/init.c:1324 src/init.c:1343
 #, c-format
 msgid "%s: %s: Invalid byte value %s\n"
 msgstr "%s：%s：无效的字节数值 %s\n"
 
-#: src/init.c:1219
+#: src/init.c:1368
 #, c-format
 msgid "%s: %s: Invalid time period %s\n"
 msgstr "%s：%s：无效的时间周期 %s\n"
 
-#: src/init.c:1273 src/init.c:1384 src/init.c:1440 src/init.c:1504
-#: src/init.c:1523 src/init.c:1548
+#: src/init.c:1430 src/main.c:1859
+#, c-format
+msgid ""
+"use-askpass requires a string or either environment variable WGET_ASKPASS or "
+"SSH_ASKPASS to be set.\n"
+msgstr ""
+
+#: src/init.c:1448 src/init.c:1470 src/init.c:1578 src/init.c:1634
+#: src/init.c:1700 src/init.c:1719 src/init.c:1744
 #, c-format
 msgid "%s: %s: Invalid value %s.\n"
 msgstr "%s：%s：无效的值 %s。\n"
 
-#: src/init.c:1310
+#: src/init.c:1504
 #, c-format
 msgid "%s: %s: Invalid header %s.\n"
 msgstr "%s：%s：无效的文件头 %s。\n"
 
-#: src/init.c:1331
-#, fuzzy, c-format
+#: src/init.c:1525
+#, c-format
 msgid "%s: %s: Invalid WARC header %s.\n"
-msgstr "%s：%s：无效的文件头 %s。\n"
+msgstr "%s：%s：无效的 WARC 头 %s。\n"
 
-#: src/init.c:1397
+#: src/init.c:1591
 #, c-format
 msgid "%s: %s: Invalid progress type %s.\n"
 msgstr "%s：%s：无效的进度指示方式 %s。\n"
 
-#: src/init.c:1477
+# 对应参数是逗号分隔的一个列表，不要变成顿号。
+#: src/init.c:1673
 #, c-format
 msgid ""
 "%s: %s: Invalid restriction %s,\n"
-"    use [unix|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
+"    use [unix|vms|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
 msgstr ""
 "%s：%s：无效的限定项 %s，\n"
-"    请使用 [unix|windows]、[lowercase|uppercase]、[nocontrol] 或 [ascii]。\n"
+"    请使用 [unix|vms|windows],[lowercase|uppercase],[nocontrol],[ascii]。\n"
 
-#: src/iri.c:101
+#: src/iri.c:114
 #, c-format
 msgid "Encoding %s isn't valid\n"
 msgstr "编码 %s 无效\n"
 
-#: src/iri.c:126
+#: src/iri.c:140 src/url.c:1572
 #, c-format
 msgid "Conversion from %s to %s isn't supported\n"
 msgstr "不支持从 %s 转换为 %s\n"
 
-#: src/iri.c:149 src/iri.c:190
-#, c-format
-msgid "converted '%s' (%s) -> '%s' (%s)\n"
-msgstr ""
-
-#: src/iri.c:158
+#: src/iri.c:180 src/url.c:1600
 msgid "Incomplete or invalid multibyte sequence encountered\n"
 msgstr "出现不完整或无效的多字节序列\n"
 
-#: src/iri.c:183
+#: src/iri.c:199 src/url.c:1617
 #, c-format
 msgid "Unhandled errno %d\n"
 msgstr "无法处理的错误 %d\n"
 
-#: src/iri.c:204
+#: src/iri.c:236
 msgid "locale_to_utf8: locale is unset\n"
 msgstr "locale_to_utf8: locale 未设定\n"
 
-#: src/iri.c:238
+#: src/iri.c:282 src/iri.c:297
 #, c-format
 msgid "idn_encode failed (%d): %s\n"
 msgstr "idn_encode 错误 (%d): %s\n"
 
-#: src/iri.c:257
+#: src/iri.c:289
 #, c-format
-msgid "idn_decode failed (%d): %s\n"
-msgstr "idn_decode 错误 (%d): %s\n"
+msgid "Failed to convert to lower: %d: %s\n"
+msgstr "无法转为小写：%d：%s\n"
 
-#: src/log.c:867
-#, c-format
-msgid ""
-"\n"
-"%s received, redirecting output to %s.\n"
-msgstr ""
-"\n"
-"接收 %s 完毕，正在把输出重定向至 %s。\n"
-
-#: src/log.c:877
+#: src/log.c:921 src/log.c:940
 #, c-format
 msgid ""
 "\n"
-"%s received.\n"
+"Redirecting output to %s.\n"
 msgstr ""
 "\n"
-"接收了 %s。\n"
+"正在把输出重定向至 %s。\n"
 
-#: src/log.c:878
+#: src/log.c:933
 #, c-format
 msgid "%s: %s; disabling logging.\n"
 msgstr "%s：%s；禁用日志记录。\n"
 
-#: src/main.c:414
+#: src/main.c:557
 #, c-format
 msgid "Usage: %s [OPTION]... [URL]...\n"
 msgstr "用法： %s [选项]... [URL]...\n"
 
-#: src/main.c:426
+#: src/main.c:569
 msgid ""
 "Mandatory arguments to long options are mandatory for short options too.\n"
 "\n"
@@ -1317,947 +1492,1028 @@ msgstr ""
 "长选项所必须的参数在使用短选项时也是必须的。\n"
 "\n"
 
-#: src/main.c:428
+#: src/main.c:571
 msgid "Startup:\n"
 msgstr "启动：\n"
 
-#: src/main.c:430
-#, fuzzy
+#: src/main.c:573
 msgid ""
-"  -V,  --version                   display the version of Wget and exit.\n"
-msgstr "  -V,  --version           显示 Wget 的版本信息并退出。\n"
+"  -V,  --version                   display the version of Wget and exit\n"
+msgstr "  -V,  --version                   显示 Wget 的版本信息并退出\n"
 
-#: src/main.c:432
-#, fuzzy
-msgid "  -h,  --help                      print this help.\n"
-msgstr "  -h,  --help              打印此帮助。\n"
+#: src/main.c:575
+msgid "  -h,  --help                      print this help\n"
+msgstr "  -h,  --help                      打印此帮助\n"
 
-#: src/main.c:434
-#, fuzzy
-msgid "  -b,  --background                go to background after startup.\n"
-msgstr "  -b,  --background        启动后转入后台。\n"
+#: src/main.c:577
+msgid "  -b,  --background                go to background after startup\n"
+msgstr "  -b,  --background                启动后转入后台\n"
 
-#: src/main.c:436
-#, fuzzy
-msgid "  -e,  --execute=COMMAND           execute a `.wgetrc'-style command.\n"
-msgstr "  -e,  --execute=COMMAND   运行一个“.wgetrc”风格的命令。\n"
+#: src/main.c:579
+msgid "  -e,  --execute=COMMAND           execute a `.wgetrc'-style command\n"
+msgstr "  -e,  --execute=命令              运行一个“.wgetrc”风格的命令\n"
 
-#: src/main.c:440
+#: src/main.c:583
 msgid "Logging and input file:\n"
 msgstr "日志和输入文件：\n"
 
-#: src/main.c:442
-#, fuzzy
-msgid "  -o,  --output-file=FILE          log messages to FILE.\n"
-msgstr "  -o,  --output-file=FILE    将日志信息写入 FILE。\n"
+#: src/main.c:585
+msgid "  -o,  --output-file=FILE          log messages to FILE\n"
+msgstr "  -o,  --output-file=文件          将日志信息写入 FILE\n"
 
-#: src/main.c:444
-#, fuzzy
-msgid "  -a,  --append-output=FILE        append messages to FILE.\n"
-msgstr "  -a,  --append-output=FILE  将信息添加至 FILE。\n"
+#: src/main.c:587
+msgid "  -a,  --append-output=FILE        append messages to FILE\n"
+msgstr "  -a,  --append-output=文件        将信息添加至 FILE\n"
 
-#: src/main.c:447
-#, fuzzy
+#: src/main.c:590
 msgid ""
-"  -d,  --debug                     print lots of debugging information.\n"
-msgstr "  -d,  --debug               打印大量调试信息。\n"
+"  -d,  --debug                     print lots of debugging information\n"
+msgstr "  -d,  --debug                     打印大量调试信息\n"
 
-#: src/main.c:451
-#, fuzzy
-msgid "       --wdebug                    print Watt-32 debug output.\n"
-msgstr "       --wdebug              打印 Watt-32 调试信息。\n"
+#: src/main.c:594
+msgid "       --wdebug                    print Watt-32 debug output\n"
+msgstr "       --wdebug                    打印 Watt-32 调试信息\n"
 
-#: src/main.c:454
-#, fuzzy
-msgid "  -q,  --quiet                     quiet (no output).\n"
-msgstr "  -q,  --quiet               安静模式 (无信息输出)。\n"
+#: src/main.c:597
+msgid "  -q,  --quiet                     quiet (no output)\n"
+msgstr "  -q,  --quiet                     安静模式 (无信息输出)\n"
 
-#: src/main.c:456
-#, fuzzy
-msgid "  -v,  --verbose                   be verbose (this is the default).\n"
-msgstr "  -v,  --verbose             详尽的输出 (此为默认值)。\n"
+#: src/main.c:599
+msgid "  -v,  --verbose                   be verbose (this is the default)\n"
+msgstr "  -v,  --verbose                   详尽的输出 (此为默认值)\n"
 
-#: src/main.c:458
-#, fuzzy
+#: src/main.c:601
 msgid ""
 "  -nv, --no-verbose                turn off verboseness, without being "
-"quiet.\n"
-msgstr "  -nv, --no-verbose          关闭详尽输出，但不进入安静模式。\n"
+"quiet\n"
+msgstr "  -nv, --no-verbose                关闭详尽输出，但不进入安静模式\n"
 
-#: src/main.c:460
+#: src/main.c:603
 msgid ""
-"       --report-speed=TYPE         Output bandwidth as TYPE.  TYPE can be "
-"bits.\n"
+"       --report-speed=TYPE         output bandwidth as TYPE.  TYPE can be "
+"bits\n"
 msgstr ""
+"       --report-speed=类型         以 <类型> 报告带宽。类型可以是 bits\n"
 
-#: src/main.c:462
-#, fuzzy
+#: src/main.c:605
 msgid ""
 "  -i,  --input-file=FILE           download URLs found in local or external "
-"FILE.\n"
-msgstr "  -i,  --input-file=FILE     下载本地或外部 FILE 中的 URLs。\n"
+"FILE\n"
+msgstr "  -i,  --input-file=文件           下载本地或外部 <文件> 中的 URL\n"
 
-#: src/main.c:464
-#, fuzzy
-msgid "  -F,  --force-html                treat input file as HTML.\n"
-msgstr "  -F,  --force-html          把输入文件当成 HTML 文件。\n"
+#: src/main.c:608
+msgid ""
+"       --input-metalink=FILE       download files covered in local Metalink "
+"FILE\n"
+msgstr "       --input-metalink=文件       下载本地 Metalink <文件> 中的文件\n"
 
-#: src/main.c:466
-#, fuzzy
+#: src/main.c:611
+msgid "  -F,  --force-html                treat input file as HTML\n"
+msgstr "  -F,  --force-html                把输入文件当成 HTML 文件\n"
+
+#: src/main.c:613
 msgid ""
 "  -B,  --base=URL                  resolves HTML input-file links (-i -F)\n"
-"                                   relative to URL.\n"
+"                                     relative to URL\n"
 msgstr ""
-"  -B,  --base=URL            解析与 URL 相关的\n"
-"                             HTML 输入文件 (由 -i -F 选项指定)。\n"
+"  -B,  --base=URL                  解析相对于 URL 的 HTML 输入文件链接 (-i -"
+"F)\n"
 
-#: src/main.c:469
-#, fuzzy
-msgid "       --config=FILE               Specify config file to use.\n"
-msgstr "       --certificate=FILE       客户端证书文件。\n"
+#: src/main.c:616
+msgid "       --config=FILE               specify config file to use\n"
+msgstr "       --config=文件               指定要使用的配置文件\n"
 
-#: src/main.c:471
-#, fuzzy
-msgid "       --no-config                 Do not read any config file.\n"
-msgstr "       --no-cookies            不使用 cookies。\n"
+#: src/main.c:618
+msgid "       --no-config                 do not read any config file\n"
+msgstr "       --no-cookies                不读取任何配置文件\n"
 
-#: src/main.c:475
+#: src/main.c:620
+msgid ""
+"       --rejected-log=FILE         log reasons for URL rejection to FILE\n"
+msgstr "       --rejected-log=文件         将拒绝 URL 的原因写入 <文件>。\n"
+
+#: src/main.c:624
 msgid "Download:\n"
 msgstr "下载：\n"
 
-#: src/main.c:477
-#, fuzzy
+#: src/main.c:626
 msgid ""
 "  -t,  --tries=NUMBER              set number of retries to NUMBER (0 "
-"unlimits).\n"
+"unlimits)\n"
 msgstr ""
-"  -t,  --tries=NUMBER            设置重试次数为 NUMBER (0 代表无限制)。\n"
+"  -t,  --tries=数字                设置重试次数为 <数字> (0 代表无限制)\n"
 
-#: src/main.c:479
-#, fuzzy
+#: src/main.c:628
 msgid ""
-"       --retry-connrefused         retry even if connection is refused.\n"
-msgstr "       --retry-connrefused       即使拒绝连接也是重试。\n"
+"       --retry-connrefused         retry even if connection is refused\n"
+msgstr "       --retry-connrefused         即使拒绝连接也是重试\n"
 
-#: src/main.c:481
-#, fuzzy
-msgid "  -O,  --output-document=FILE      write documents to FILE.\n"
-msgstr "  -O,  --output-document=FILE    将文档写入 FILE。\n"
+#: src/main.c:630
+msgid "  -O,  --output-document=FILE      write documents to FILE\n"
+msgstr "  -O,  --output-document=文件      将文档写入 FILE\n"
 
-#: src/main.c:483
-#, fuzzy
+#: src/main.c:632
 msgid ""
 "  -nc, --no-clobber                skip downloads that would download to\n"
-"                                   existing files (overwriting them).\n"
-msgstr ""
-"  -nc, --no-clobber              不要重复下载已存在的文件。\n"
-"                                 \n"
+"                                     existing files (overwriting them)\n"
+msgstr "  -nc, --no-clobber                不要下载已存在将被覆盖的文件\n"
 
-#: src/main.c:486
+#: src/main.c:635
 #, fuzzy
+msgid ""
+"       --no-netrc                  don't try to obtain credentials from ."
+"netrc\n"
+msgstr "       --no-cookies                不读取任何配置文件\n"
+
+#: src/main.c:637
 msgid ""
 "  -c,  --continue                  resume getting a partially-downloaded "
-"file.\n"
-msgstr "  -c,  --continue                断点续传下载文件。\n"
+"file\n"
+msgstr "  -c,  --continue                  断点续传下载文件\n"
 
-#: src/main.c:488
+#: src/main.c:639
 msgid ""
 "       --start-pos=OFFSET          start downloading from zero-based "
-"position OFFSET.\n"
-msgstr ""
+"position OFFSET\n"
+msgstr "       --start-pos=偏移量          从由零计数的 <偏移量> 开始下载\n"
 
-#: src/main.c:490
-#, fuzzy
-msgid "       --progress=TYPE             select progress gauge type.\n"
-msgstr "       --progress=TYPE           选择进度条类型。\n"
+#: src/main.c:641
+msgid "       --progress=TYPE             select progress gauge type\n"
+msgstr "       --progress=类型             选择进度条类型\n"
 
-#: src/main.c:492
-#, fuzzy
+#: src/main.c:643
 msgid ""
 "       --show-progress             display the progress bar in any verbosity "
-"mode.\n"
-msgstr "       --progress=TYPE           选择进度条类型。\n"
+"mode\n"
+msgstr "       --show-progress             在任意啰嗦状态下都显示进度条\n"
 
-#: src/main.c:494
-#, fuzzy
+#: src/main.c:645
 msgid ""
 "  -N,  --timestamping              don't re-retrieve files unless newer "
 "than\n"
-"                                   local.\n"
-msgstr "  -N,  --timestamping            只获取比本地文件新的文件。\n"
+"                                     local\n"
+msgstr "  -N,  --timestamping              只获取比本地文件新的文件\n"
 
-#: src/main.c:497
-#, fuzzy
+#: src/main.c:648
 msgid ""
-"  --no-use-server-timestamps       don't set the local file's timestamp by\n"
-"                                   the one on the server.\n"
+"       --no-if-modified-since      don't use conditional if-modified-since "
+"get\n"
+"                                     requests in timestamping mode\n"
 msgstr ""
-"  --no-use-server-timestamps     不用服务器上的时间戳来设置本地文件。\n"
+"       --no-if-modified-since      不要在时间戳 (timestamping) 模式下使用\n"
+"                                     if-modified-since get 条件请求\n"
 
-#: src/main.c:500
-#, fuzzy
-msgid "  -S,  --server-response           print server response.\n"
-msgstr "  -S,  --server-response         打印服务器响应。\n"
-
-#: src/main.c:502
-#, fuzzy
-msgid "       --spider                    don't download anything.\n"
-msgstr "       --spider                  不下载任何文件。\n"
-
-#: src/main.c:504
-#, fuzzy
-msgid "  -T,  --timeout=SECONDS           set all timeout values to SECONDS.\n"
-msgstr "  -T,  --timeout=SECONDS         将所有超时设为 SECONDS 秒。\n"
-
-#: src/main.c:506
-#, fuzzy
+#: src/main.c:651
 msgid ""
-"       --dns-timeout=SECS          set the DNS lookup timeout to SECS.\n"
-msgstr "       --dns-timeout=SECS        设置 DNS 查寻超时为 SECS 秒。\n"
+"       --no-use-server-timestamps  don't set the local file's timestamp by\n"
+"                                     the one on the server\n"
+msgstr ""
+"       --no-use-server-timestamps       不用服务器上的时间戳来设置本地文件\n"
 
-#: src/main.c:508
-#, fuzzy
-msgid "       --connect-timeout=SECS      set the connect timeout to SECS.\n"
-msgstr "       --connect-timeout=SECS    设置连接超时为 SECS 秒。\n"
+#: src/main.c:654
+msgid "  -S,  --server-response           print server response\n"
+msgstr "  -S,  --server-response           打印服务器响应\n"
 
-#: src/main.c:510
-#, fuzzy
-msgid "       --read-timeout=SECS         set the read timeout to SECS.\n"
-msgstr "       --read-timeout=SECS       设置读取超时为 SECS 秒。\n"
+#: src/main.c:656
+msgid "       --spider                    don't download anything\n"
+msgstr "       --spider                    不下载任何文件\n"
 
-#: src/main.c:512
-#, fuzzy
-msgid "  -w,  --wait=SECONDS              wait SECONDS between retrievals.\n"
-msgstr "  -w,  --wait=SECONDS            等待间隔为 SECONDS 秒。\n"
+#: src/main.c:658
+msgid "  -T,  --timeout=SECONDS           set all timeout values to SECONDS\n"
+msgstr "  -T,  --timeout=SECONDS           将所有超时设为 SECONDS 秒\n"
 
-#: src/main.c:514
-#, fuzzy
+#: src/main.c:661
+msgid ""
+"       --dns-servers=ADDRESSES     list of DNS servers to query (comma "
+"separated)\n"
+msgstr ""
+
+#: src/main.c:663
+msgid ""
+"       --bind-dns-address=ADDRESS  bind DNS resolver to ADDRESS (hostname or "
+"IP) on local host\n"
+msgstr ""
+"       --bind-dns-address=地址     将 DNS 解析器绑定至本地主机上的<地址> (主"
+"机名或 IP)\n"
+
+#: src/main.c:666
+msgid "       --dns-timeout=SECS          set the DNS lookup timeout to SECS\n"
+msgstr "       --dns-timeout=SECS          设置 DNS 查寻超时为 SECS 秒\n"
+
+#: src/main.c:668
+msgid "       --connect-timeout=SECS      set the connect timeout to SECS\n"
+msgstr "       --connect-timeout=SECS      设置连接超时为 SECS 秒\n"
+
+#: src/main.c:670
+msgid "       --read-timeout=SECS         set the read timeout to SECS\n"
+msgstr "       --read-timeout=SECS         设置读取超时为 SECS 秒\n"
+
+#: src/main.c:672
+msgid "  -w,  --wait=SECONDS              wait SECONDS between retrievals\n"
+msgstr "  -w,  --wait=SECONDS              等待间隔为 SECONDS 秒\n"
+
+#: src/main.c:674
 msgid ""
 "       --waitretry=SECONDS         wait 1..SECONDS between retries of a "
-"retrieval.\n"
+"retrieval\n"
 msgstr ""
-"       --waitretry=SECONDS       在获取文件的重试期间等待 1..SECONDS 秒。\n"
+"       --waitretry=SECONDS         在获取文件的重试期间等待 1..SECONDS 秒\n"
 
-#: src/main.c:516
-#, fuzzy
+#: src/main.c:676
 msgid ""
 "       --random-wait               wait from 0.5*WAIT...1.5*WAIT secs "
-"between retrievals.\n"
+"between retrievals\n"
 msgstr ""
-"       --random-wait             获取多个文件时，每次随机等待间隔\n"
-"                                 0.5*WAIT...1.5*WAIT 秒。\n"
+"       --random-wait               获取多个文件时，每次随机等待间隔 "
+"(0.5~1.5)*WAIT 秒\n"
 
-#: src/main.c:518
-#, fuzzy
-msgid "       --no-proxy                  explicitly turn off proxy.\n"
-msgstr "       --no-proxy                禁止使用代理。\n"
+#: src/main.c:678
+msgid "       --no-proxy                  explicitly turn off proxy\n"
+msgstr "       --no-proxy                  禁止使用代理\n"
 
-#: src/main.c:520
-#, fuzzy
-msgid "  -Q,  --quota=NUMBER              set retrieval quota to NUMBER.\n"
-msgstr "  -Q,  --quota=NUMBER            设置获取配额为 NUMBER 字节。\n"
+#: src/main.c:680
+msgid "  -Q,  --quota=NUMBER              set retrieval quota to NUMBER\n"
+msgstr "  -Q,  --quota=数字                设置获取配额为 <数字> 字节\n"
 
-#: src/main.c:522
-#, fuzzy
+#: src/main.c:682
 msgid ""
 "       --bind-address=ADDRESS      bind to ADDRESS (hostname or IP) on local "
-"host.\n"
+"host\n"
 msgstr ""
-"       --bind-address=ADDRESS    绑定至本地主机上的 ADDRESS (主机名或是 "
-"IP)。\n"
+"       --bind-address=ADDRESS      绑定至本地主机上的 ADDRESS (主机名或是 "
+"IP)\n"
 
-#: src/main.c:524
-#, fuzzy
-msgid "       --limit-rate=RATE           limit download rate to RATE.\n"
-msgstr "       --limit-rate=RATE         限制下载速率为 RATE。\n"
+#: src/main.c:684
+msgid "       --limit-rate=RATE           limit download rate to RATE\n"
+msgstr "       --limit-rate=RATE           限制下载速率为 RATE\n"
 
-#: src/main.c:526
-#, fuzzy
-msgid "       --no-dns-cache              disable caching DNS lookups.\n"
-msgstr "       --no-dns-cache            关闭 DNS 查寻缓存。\n"
+#: src/main.c:686
+msgid "       --no-dns-cache              disable caching DNS lookups\n"
+msgstr "       --no-dns-cache              关闭 DNS 查询缓存\n"
 
-#: src/main.c:528
-#, fuzzy
+#: src/main.c:688
 msgid ""
 "       --restrict-file-names=OS    restrict chars in file names to ones OS "
-"allows.\n"
+"allows\n"
 msgstr ""
-"       --restrict-file-names=OS  限定文件名中的字符为 OS 允许的字符。\n"
+"       --restrict-file-names=系统  限定文件名中的字符为 <系统> 允许的字符\n"
 
-#: src/main.c:530
-#, fuzzy
+#: src/main.c:690
 msgid ""
 "       --ignore-case               ignore case when matching files/"
-"directories.\n"
-msgstr "       --ignore-case             匹配文件/目录时忽略大小写。\n"
+"directories\n"
+msgstr "       --ignore-case               匹配文件/目录时忽略大小写\n"
 
-#: src/main.c:533
-#, fuzzy
-msgid "  -4,  --inet4-only                connect only to IPv4 addresses.\n"
-msgstr "  -4,  --inet4-only              仅连接至 IPv4 地址。\n"
+#: src/main.c:693
+msgid "  -4,  --inet4-only                connect only to IPv4 addresses\n"
+msgstr "  -4,  --inet4-only                仅连接至 IPv4 地址\n"
 
-#: src/main.c:535
-#, fuzzy
-msgid "  -6,  --inet6-only                connect only to IPv6 addresses.\n"
-msgstr "  -6,  --inet6-only              仅连接至 IPv6 地址。\n"
+#: src/main.c:695
+msgid "  -6,  --inet6-only                connect only to IPv6 addresses\n"
+msgstr "  -6,  --inet6-only                仅连接至 IPv6 地址\n"
 
-#: src/main.c:537
-#, fuzzy
+#: src/main.c:697
 msgid ""
 "       --prefer-family=FAMILY      connect first to addresses of specified "
 "family,\n"
-"                                   one of IPv6, IPv4, or none.\n"
+"                                     one of IPv6, IPv4, or none\n"
 msgstr ""
-"       --prefer-family=FAMILY    首先连接至指定协议的地址\n"
-"                                 FAMILY 为 IPv6，IPv4 或是 none。\n"
+"       --prefer-family=地址族      首先连接至指定家族（IPv6，IPv4 或 none）的"
+"地址\n"
 
-#: src/main.c:541
-#, fuzzy
-msgid ""
-"       --user=USER                 set both ftp and http user to USER.\n"
+#: src/main.c:701
+msgid "       --user=USER                 set both ftp and http user to USER\n"
 msgstr ""
-"       --user=USER               将 ftp 和 http 的用户名均设置为 USER。\n"
+"       --user=用户                 将 ftp 和 http 的用户名均设置为 <用户>\n"
 
-#: src/main.c:543
-#, fuzzy
+#: src/main.c:703
 msgid ""
-"       --password=PASS             set both ftp and http password to PASS.\n"
+"       --password=PASS             set both ftp and http password to PASS\n"
 msgstr ""
-"       --password=PASS           将 ftp 和 http 的密码均设置为 PASS。\n"
+"       --password=密码             将 ftp 和 http 的密码均设置为 <密码>\n"
 
-#: src/main.c:545
-#, fuzzy
-msgid "       --ask-password              prompt for passwords.\n"
-msgstr "       --ask-password            提示输入密码。\n"
+#: src/main.c:705
+msgid "       --ask-password              prompt for passwords\n"
+msgstr "       --ask-password              提示输入密码\n"
 
-#: src/main.c:547
-#, fuzzy
-msgid "       --no-iri                    turn off IRI support.\n"
-msgstr "       --no-iri                  关闭 IRI 支持。\n"
-
-#: src/main.c:549
-#, fuzzy
+#: src/main.c:707
 msgid ""
-"       --local-encoding=ENC        use ENC as the local encoding for IRIs.\n"
+"       --use-askpass=COMMAND       specify credential handler for "
+"requesting \n"
+"                                     username and password.  If no COMMAND "
+"is \n"
+"                                     specified the WGET_ASKPASS or the "
+"SSH_ASKPASS \n"
+"                                     environment variable is used.\n"
 msgstr ""
-"       --local-encoding=ENC      IRI (国际化资源标识符) 使用 ENC 作为本地编"
-"码。\n"
 
-#: src/main.c:551
-#, fuzzy
+#: src/main.c:712
+msgid "       --no-iri                    turn off IRI support\n"
+msgstr "       --no-iri                    关闭 IRI 支持\n"
+
+#: src/main.c:714
 msgid ""
-"       --remote-encoding=ENC       use ENC as the default remote encoding.\n"
-msgstr "       --remote-encoding=ENC     使用 ENC 作为默认远程编码。\n"
+"       --local-encoding=ENC        use ENC as the local encoding for IRIs\n"
+msgstr ""
+"       --local-encoding=ENC        使用 ENC 作为 IRI (国际化资源标识符) 的本"
+"地编码\n"
 
-#: src/main.c:553
-#, fuzzy
-msgid "       --unlink                    remove file before clobber.\n"
-msgstr "       --no-glob               不在 FTP 文件名中使用通配符展开。\n"
+#: src/main.c:716
+msgid ""
+"       --remote-encoding=ENC       use ENC as the default remote encoding\n"
+msgstr "       --remote-encoding=ENC       使用 ENC 作为默认远程编码\n"
 
-#: src/main.c:557
+#: src/main.c:718
+msgid "       --unlink                    remove file before clobber\n"
+msgstr "       --unlink                    覆盖前移除文件\n"
+
+#: src/main.c:721
+msgid ""
+"       --keep-badhash              keep files with checksum mismatch "
+"(append .badhash)\n"
+msgstr ""
+
+#: src/main.c:723
+msgid ""
+"       --metalink-index=NUMBER     Metalink application/metalink4+xml "
+"metaurl ordinal NUMBER\n"
+msgstr ""
+
+#: src/main.c:725
+msgid ""
+"       --metalink-over-http        use Metalink metadata from HTTP response "
+"headers\n"
+msgstr ""
+"       --metalink-over-http        使用来自 HTTP 响应头的 Metalink 元数据\n"
+
+#: src/main.c:727
+msgid ""
+"       --preferred-location        preferred location for Metalink "
+"resources\n"
+msgstr "       --preferred-location        Metalink 资源的首选位置\n"
+
+#: src/main.c:731
+msgid ""
+"       --no-xattr                  turn off storage of metadata in extended "
+"file attributes\n"
+msgstr "       --no-xattr                  不要在文件的拓展属性中储存元数据\n"
+
+#: src/main.c:736
 msgid "Directories:\n"
 msgstr "目录：\n"
 
-#: src/main.c:559
-#, fuzzy
-msgid "  -nd, --no-directories            don't create directories.\n"
-msgstr "  -nd, --no-directories           不创建目录。\n"
+#: src/main.c:738
+msgid "  -nd, --no-directories            don't create directories\n"
+msgstr "  -nd, --no-directories            不创建目录\n"
 
-#: src/main.c:561
-#, fuzzy
-msgid "  -x,  --force-directories         force creation of directories.\n"
-msgstr "  -x,  --force-directories        强制创建目录。\n"
+#: src/main.c:740
+msgid "  -x,  --force-directories         force creation of directories\n"
+msgstr "  -x,  --force-directories         强制创建目录\n"
 
-#: src/main.c:563
-#, fuzzy
-msgid "  -nH, --no-host-directories       don't create host directories.\n"
-msgstr "  -nH, --no-host-directories      不要创建主目录。\n"
+#: src/main.c:742
+msgid "  -nH, --no-host-directories       don't create host directories\n"
+msgstr "  -nH, --no-host-directories       不要创建主 (host) 目录\n"
 
-#: src/main.c:565
-#, fuzzy
-msgid "       --protocol-directories      use protocol name in directories.\n"
-msgstr "       --protocol-directories     在目录中使用协议名称。\n"
+#: src/main.c:744
+msgid "       --protocol-directories      use protocol name in directories\n"
+msgstr "       --protocol-directories      在目录中使用协议名称\n"
 
-#: src/main.c:567
-#, fuzzy
-msgid "  -P,  --directory-prefix=PREFIX   save files to PREFIX/...\n"
-msgstr "  -P,  --directory-prefix=PREFIX  以 PREFIX/... 保存文件\n"
+#: src/main.c:746
+msgid "  -P,  --directory-prefix=PREFIX   save files to PREFIX/..\n"
+msgstr "  -P,  --directory-prefix=前缀     保存文件到 <前缀>/..\n"
 
-#: src/main.c:569
-#, fuzzy
+#: src/main.c:748
 msgid ""
 "       --cut-dirs=NUMBER           ignore NUMBER remote directory "
-"components.\n"
-msgstr "       --cut-dirs=NUMBER          忽略远程目录中 NUMBER 个目录层。\n"
+"components\n"
+msgstr "       --cut-dirs=数字             忽略远程目录中 <数字> 个目录层。\n"
 
-#: src/main.c:573
+#: src/main.c:752
 msgid "HTTP options:\n"
 msgstr "HTTP 选项：\n"
 
-#: src/main.c:575
-#, fuzzy
-msgid "       --http-user=USER            set http user to USER.\n"
-msgstr "       --http-user=USER        设置 http 用户名为 USER。\n"
+#: src/main.c:754
+msgid "       --http-user=USER            set http user to USER\n"
+msgstr "       --http-user=用户            设置 http 用户名为 <用户>\n"
 
-#: src/main.c:577
-#, fuzzy
-msgid "       --http-password=PASS        set http password to PASS.\n"
-msgstr "       --http-password=PASS    设置 http 密码为 PASS。\n"
+#: src/main.c:756
+msgid "       --http-password=PASS        set http password to PASS\n"
+msgstr "       --http-password=密码        设置 http 密码为 <密码>\n"
 
-#: src/main.c:579
-#, fuzzy
-msgid "       --no-cache                  disallow server-cached data.\n"
-msgstr "       --no-cache              不在服务器上缓存数据。\n"
+#: src/main.c:758
+msgid "       --no-cache                  disallow server-cached data\n"
+msgstr "       --no-cache                  不使用服务器缓存的数据。\n"
 
-#: src/main.c:581
-#, fuzzy
+#: src/main.c:760
 msgid ""
-"       --default-page=NAME         Change the default page name (normally\n"
-"                                   this is `index.html'.).\n"
-msgstr ""
-"       --default-page=NAME     改变默认页\n"
-"                               (默认页通常是“index.html”)。\n"
+"       --default-page=NAME         change the default page name (normally\n"
+"                                     this is 'index.html'.)\n"
+msgstr "       --default-page=NAME         改变默认页 (通常是“index.html”)。\n"
 
-#: src/main.c:584
-#, fuzzy
+#: src/main.c:763
 msgid ""
 "  -E,  --adjust-extension          save HTML/CSS documents with proper "
-"extensions.\n"
-msgstr "  -E,  --adjust-extension      以合适的扩展名保存 HTML/CSS 文档。\n"
+"extensions\n"
+msgstr "  -E,  --adjust-extension          以合适的扩展名保存 HTML/CSS 文档\n"
 
-#: src/main.c:586
+#: src/main.c:765
+msgid ""
+"       --ignore-length             ignore 'Content-Length' header field\n"
+msgstr "       --ignore-length             忽略头部的‘Content-Length’区域\n"
+
+#: src/main.c:767
+msgid "       --header=STRING             insert STRING among the headers\n"
+msgstr "       --header=字符串             在头部插入 <字符串>\n"
+
+#: src/main.c:770
 #, fuzzy
 msgid ""
-"       --ignore-length             ignore `Content-Length' header field.\n"
-msgstr "       --ignore-length         忽略头部的‘Content-Length’区域。\n"
+"       --compression=TYPE          choose compression, one of auto, gzip and "
+"none\n"
+msgstr "       --progress=类型             选择进度条类型\n"
 
-#: src/main.c:588
-#, fuzzy
-msgid "       --header=STRING             insert STRING among the headers.\n"
-msgstr "       --header=STRING         在头部插入 STRING。\n"
-
-#: src/main.c:590
-#, fuzzy
+#: src/main.c:773
 msgid ""
-"       --max-redirect              maximum redirections allowed per page.\n"
-msgstr "       --max-redirect          每页所允许的最大重定向。\n"
+"       --max-redirect              maximum redirections allowed per page\n"
+msgstr "       --max-redirect              每页所允许的最大重定向\n"
 
-#: src/main.c:592
-#, fuzzy
-msgid "       --proxy-user=USER           set USER as proxy username.\n"
-msgstr "       --proxy-user=USER       使用 USER 作为代理用户名。\n"
+#: src/main.c:775
+msgid "       --proxy-user=USER           set USER as proxy username\n"
+msgstr "       --proxy-user=用户           使用 <用户> 作为代理用户名\n"
 
-#: src/main.c:594
-#, fuzzy
-msgid "       --proxy-password=PASS       set PASS as proxy password.\n"
-msgstr "       --proxy-password=PASS   使用 PASS 作为代理密码。\n"
+#: src/main.c:777
+msgid "       --proxy-password=PASS       set PASS as proxy password\n"
+msgstr "       --proxy-password=密码       使用 <密码> 作为代理密码\n"
 
-#: src/main.c:596
-#, fuzzy
+#: src/main.c:779
 msgid ""
-"       --referer=URL               include `Referer: URL' header in HTTP "
-"request.\n"
-msgstr "       --referer=URL           在 HTTP 请求头包含‘Referer: URL’。\n"
+"       --referer=URL               include 'Referer: URL' header in HTTP "
+"request\n"
+msgstr "       --referer=URL               在 HTTP 请求头包含‘Referer: URL’\n"
 
-#: src/main.c:598
-#, fuzzy
-msgid "       --save-headers              save the HTTP headers to file.\n"
-msgstr "       --save-headers          将 HTTP 头保存至文件。\n"
+#: src/main.c:781
+msgid "       --save-headers              save the HTTP headers to file\n"
+msgstr "       --save-headers              将 HTTP 头保存至文件。\n"
 
-#: src/main.c:600
-#, fuzzy
+#: src/main.c:783
 msgid ""
 "  -U,  --user-agent=AGENT          identify as AGENT instead of Wget/"
-"VERSION.\n"
-msgstr "  -U,  --user-agent=AGENT      标识为 AGENT 而不是 Wget/VERSION。\n"
+"VERSION\n"
+msgstr ""
+"  -U,  --user-agent=代理           标识自己为 <代理> 而不是 Wget/VERSION。\n"
 
-#: src/main.c:602
-#, fuzzy
+#: src/main.c:785
 msgid ""
 "       --no-http-keep-alive        disable HTTP keep-alive (persistent "
-"connections).\n"
-msgstr "       --no-http-keep-alive    禁用 HTTP keep-alive (永久连接)。\n"
+"connections)\n"
+msgstr "       --no-http-keep-alive        禁用 HTTP keep-alive (持久连接)。\n"
 
-#: src/main.c:604
-#, fuzzy
-msgid "       --no-cookies                don't use cookies.\n"
-msgstr "       --no-cookies            不使用 cookies。\n"
+#: src/main.c:787
+msgid "       --no-cookies                don't use cookies\n"
+msgstr "       --no-cookies                不使用 cookies。\n"
 
-#: src/main.c:606
-#, fuzzy
+#: src/main.c:789
 msgid ""
-"       --load-cookies=FILE         load cookies from FILE before session.\n"
-msgstr "       --load-cookies=FILE     会话开始前从 FILE 中载入 cookies。\n"
+"       --load-cookies=FILE         load cookies from FILE before session\n"
+msgstr ""
+"       --load-cookies=文件         会话开始前从 <文件> 中载入 cookies。\n"
 
-#: src/main.c:608
-#, fuzzy
-msgid ""
-"       --save-cookies=FILE         save cookies to FILE after session.\n"
-msgstr "       --save-cookies=FILE     会话结束后保存 cookies 至 FILE。\n"
+#: src/main.c:791
+msgid "       --save-cookies=FILE         save cookies to FILE after session\n"
+msgstr "       --save-cookies=文件         会话结束后保存 cookies 至 FILE。\n"
 
-#: src/main.c:610
-#, fuzzy
+#: src/main.c:793
 msgid ""
 "       --keep-session-cookies      load and save session (non-permanent) "
-"cookies.\n"
-msgstr "       --keep-session-cookies  载入并保存会话 (非永久) cookies。\n"
+"cookies\n"
+msgstr "       --keep-session-cookies      载入并保存会话 (非永久) cookies。\n"
 
-#: src/main.c:612
-#, fuzzy
+#: src/main.c:795
 msgid ""
 "       --post-data=STRING          use the POST method; send STRING as the "
-"data.\n"
+"data\n"
 msgstr ""
-"       --post-data=STRING      使用 POST 方式；把 STRING 作为数据发送。\n"
+"       --post-data=字符串          使用 POST 方式；把 <字串>作为数据发送。\n"
 
-#: src/main.c:614
-#, fuzzy
+#: src/main.c:797
 msgid ""
 "       --post-file=FILE            use the POST method; send contents of "
-"FILE.\n"
-msgstr "       --post-file=FILE        使用 POST 方式；发送 FILE 内容。\n"
-
-#: src/main.c:616
-msgid ""
-"       --method=HTTPMethod         use method \"HTTPMethod\" in the "
-"request.\n"
+"FILE\n"
 msgstr ""
+"       --post-file=文件            使用 POST 方式；发送 <文件> 内容。\n"
 
-#: src/main.c:618
-#, fuzzy
+#: src/main.c:799
 msgid ""
-"       --body-data=STRING          Send STRING as data. --method MUST be "
-"set.\n"
+"       --method=HTTPMethod         use method \"HTTPMethod\" in the request\n"
+msgstr "       --method=HTTP方法           在请求中使用指定的 <HTTP 方法>。\n"
+
+#: src/main.c:801
+msgid ""
+"       --body-data=STRING          send STRING as data. --method MUST be "
+"set\n"
 msgstr ""
-"       --post-data=STRING      使用 POST 方式；把 STRING 作为数据发送。\n"
+"       --post-data=字符串          把 <字串> 作为数据发送，必须设置 --"
+"method\n"
 
-#: src/main.c:620
-#, fuzzy
+#: src/main.c:803
 msgid ""
-"       --body-file=FILE            Send contents of FILE. --method MUST be "
-"set.\n"
-msgstr "       --post-file=FILE        使用 POST 方式；发送 FILE 内容。\n"
+"       --body-file=FILE            send contents of FILE. --method MUST be "
+"set\n"
+msgstr ""
+"       --post-file=文件            发送 <文件> 内容，必须设置 --method\n"
 
-#: src/main.c:622
-#, fuzzy
+#: src/main.c:805
 msgid ""
 "       --content-disposition       honor the Content-Disposition header "
 "when\n"
-"                                   choosing local file names "
-"(EXPERIMENTAL).\n"
+"                                     choosing local file names "
+"(EXPERIMENTAL)\n"
 msgstr ""
-"       --content-disposition   当选中本地文件名时\n"
-"                               允许 Content-Disposition 头部 (尚在实验)。\n"
+"       --content-disposition       当选择本地文件名时允许 Content-"
+"Disposition\n"
+"                                   头部 (实验中)。\n"
 
-#: src/main.c:625
+#: src/main.c:808
 msgid ""
 "       --content-on-error          output the received content on server "
-"errors.\n"
-msgstr ""
+"errors\n"
+msgstr "       --content-on-error          在服务器错误时输出接收到的内容\n"
 
-#: src/main.c:627
-#, fuzzy
+#: src/main.c:810
 msgid ""
 "       --auth-no-challenge         send Basic HTTP authentication "
 "information\n"
-"                                   without first waiting for the server's\n"
-"                                   challenge.\n"
+"                                     without first waiting for the server's\n"
+"                                     challenge\n"
 msgstr ""
-"       --auth-no-challenge     发送不含服务器询问的首次等待\n"
-"                               的基本 HTTP 验证信息。\n"
+"       --auth-no-challenge         不先等待服务器询问就发送基本 HTTP 验证信"
+"息。\n"
 
-#: src/main.c:634
+#: src/main.c:817
 msgid "HTTPS (SSL/TLS) options:\n"
 msgstr "HTTPS (SSL/TLS) 选项：\n"
 
-#: src/main.c:636
+#: src/main.c:819
 #, fuzzy
 msgid ""
 "       --secure-protocol=PR        choose secure protocol, one of auto, "
 "SSLv2,\n"
-"                                   SSLv3, TLSv1 and PFS.\n"
+"                                     SSLv3, TLSv1, TLSv1_1, TLSv1_2 and PFS\n"
 msgstr ""
-"       --secure-protocol=PR     选择安全协议，可以是 auto、SSLv2、\n"
-"                                SSLv3 或是 TLSv1 中的一个。\n"
+"       --secure-protocol=PR         选择安全协议，可以是 auto、SSLv2、\n"
+"                                    SSLv3、TLSv1、PFS 中的一个。\n"
 
-#: src/main.c:639
-#, fuzzy
+#: src/main.c:822
 msgid "       --https-only                only follow secure HTTPS links\n"
-msgstr "  -L,  --relative                  只跟踪有关系的链接。\n"
+msgstr "       --https-only                 只跟随安全的 HTTPS 链接\n"
 
-#: src/main.c:641
-#, fuzzy
+#: src/main.c:824
 msgid ""
-"       --no-check-certificate      don't validate the server's certificate.\n"
-msgstr "       --no-check-certificate   不要验证服务器的证书。\n"
+"       --no-check-certificate      don't validate the server's certificate\n"
+msgstr "       --no-check-certificate       不要验证服务器的证书。\n"
 
-#: src/main.c:643
-#, fuzzy
-msgid "       --certificate=FILE          client certificate file.\n"
-msgstr "       --certificate=FILE       客户端证书文件。\n"
+#: src/main.c:826
+msgid "       --certificate=FILE          client certificate file\n"
+msgstr "       --certificate=文件           客户端证书文件。\n"
 
-#: src/main.c:645
-#, fuzzy
+#: src/main.c:828
 msgid ""
-"       --certificate-type=TYPE     client certificate type, PEM or DER.\n"
-msgstr "       --certificate-type=TYPE  客户端证书类型，PEM 或 DER。\n"
+"       --certificate-type=TYPE     client certificate type, PEM or DER\n"
+msgstr "       --certificate-type=类型      客户端证书类型，PEM 或 DER。\n"
 
-#: src/main.c:647
-#, fuzzy
-msgid "       --private-key=FILE          private key file.\n"
-msgstr "       --private-key=FILE       私钥文件。\n"
+#: src/main.c:830
+msgid "       --private-key=FILE          private key file\n"
+msgstr "       --private-key=文件           私钥文件。\n"
 
-#: src/main.c:649
-#, fuzzy
-msgid "       --private-key-type=TYPE     private key type, PEM or DER.\n"
-msgstr "       --private-key-type=TYPE  私钥文件类型，PEM 或 DER。\n"
+#: src/main.c:832
+msgid "       --private-key-type=TYPE     private key type, PEM or DER\n"
+msgstr "       --private-key-type=类型      私钥文件类型，PEM 或 DER。\n"
 
-#: src/main.c:651
-#, fuzzy
-msgid "       --ca-certificate=FILE       file with the bundle of CA's.\n"
-msgstr "       --ca-certificate=FILE    带有一组 CA 认证的文件。\n"
+#: src/main.c:834
+msgid "       --ca-certificate=FILE       file with the bundle of CAs\n"
+msgstr "       --ca-certificate=文件        带有一组 CA 证书的文件。\n"
 
-#: src/main.c:653
-#, fuzzy
+#: src/main.c:836
 msgid ""
-"       --ca-directory=DIR          directory where hash list of CA's is "
-"stored.\n"
-msgstr "       --ca-directory=DIR       保存 CA 认证的哈希列表的目录。\n"
+"       --ca-directory=DIR          directory where hash list of CAs is "
+"stored\n"
+msgstr "       --ca-directory=DIR           保存 CA 证书的哈希列表的目录。\n"
 
-#: src/main.c:655
-#, fuzzy
+#: src/main.c:838
+msgid "       --crl-file=FILE             file with bundle of CRLs\n"
+msgstr "       --ca-certificate=文件        带有一组 CA 证书的文件。\n"
+
+#: src/main.c:840
+msgid ""
+"       --pinnedpubkey=FILE/HASHES  Public key (PEM/DER) file, or any number\n"
+"                                   of base64 encoded sha256 hashes preceded "
+"by\n"
+"                                   'sha256//' and separated by ';', to "
+"verify\n"
+"                                   peer against\n"
+msgstr ""
+"       --pinnedpubkey=文件/散列值  用于验证节点的公钥（PEM/DER）文件或\n"
+"                                   任何数量的 sha256 散列值，以 base64 编"
+"码、\n"
+"                                   “sha256//” 开头、用“;”间隔\n"
+
+#: src/main.c:846
 msgid ""
 "       --random-file=FILE          file with random data for seeding the SSL "
-"PRNG.\n"
-msgstr "       --random-file=FILE       带有生成 SSL PRNG 的随机数据的文件。\n"
+"PRNG\n"
+msgstr ""
+"       --random-file=文件           用于初始化 SSL 伪随机数生成器（PRNG）的文"
+"件，\n"
+"                                      应含有随机数据\n"
 
-#: src/main.c:657
-#, fuzzy
+#: src/main.c:850
 msgid ""
 "       --egd-file=FILE             file naming the EGD socket with random "
-"data.\n"
+"data\n"
 msgstr ""
-"       --egd-file=FILE          用于命名带有随机数据的 EGD 套接字的文件。\n"
+"       --egd-file=文件              用于命名带有随机数据的 EGD 套接字的文"
+"件。\n"
 
-#: src/main.c:662
+#: src/main.c:857
+msgid "HSTS options:\n"
+msgstr "HSTS 选项：\n"
+
+#: src/main.c:859
+msgid "       --no-hsts                   disable HSTS\n"
+msgstr "       --no-hsts                   禁用 HSTS\n"
+
+#: src/main.c:861
+msgid ""
+"       --hsts-file                 path of HSTS database (will override "
+"default)\n"
+msgstr "       --hsts-file                 HSTS 数据库路径（将覆盖默认值）\n"
+
+#: src/main.c:866
 msgid "FTP options:\n"
 msgstr "FTP 选项：\n"
 
-#: src/main.c:665
-#, fuzzy
+#: src/main.c:869
 msgid ""
-"       --ftp-stmlf                 Use Stream_LF format for all binary FTP "
-"files.\n"
+"       --ftp-stmlf                 use Stream_LF format for all binary FTP "
+"files\n"
 msgstr ""
-"       --ftp-stmlf             对所有二进制 FTP 文件使用 Stream_LF 格式\n"
+"       --ftp-stmlf                 对所有二进制 FTP 文件使用 Stream_LF 格式\n"
 
-#: src/main.c:668
-#, fuzzy
-msgid "       --ftp-user=USER             set ftp user to USER.\n"
-msgstr "       --ftp-user=USER         设置 ftp 用户名为 USER。\n"
+#: src/main.c:872
+msgid "       --ftp-user=USER             set ftp user to USER\n"
+msgstr "       --ftp-user=用户             设置 ftp 用户名为 <用户>。\n"
 
-#: src/main.c:670
-#, fuzzy
-msgid "       --ftp-password=PASS         set ftp password to PASS.\n"
-msgstr "       --ftp-password=PASS     设置 ftp 密码为 PASS。\n"
+#: src/main.c:874
+msgid "       --ftp-password=PASS         set ftp password to PASS\n"
+msgstr "       --ftp-password=密码         设置 ftp 密码为 <密码>\n"
 
-#: src/main.c:672
-#, fuzzy
-msgid "       --no-remove-listing         don't remove `.listing' files.\n"
-msgstr "       --no-remove-listing     不要删除‘.listing’文件。\n"
+#: src/main.c:876
+msgid "       --no-remove-listing         don't remove '.listing' files\n"
+msgstr "       --no-remove-listing         不要删除‘.listing’文件\n"
 
-#: src/main.c:674
-#, fuzzy
-msgid "       --no-glob                   turn off FTP file name globbing.\n"
-msgstr "       --no-glob               不在 FTP 文件名中使用通配符展开。\n"
+#: src/main.c:878
+msgid "       --no-glob                   turn off FTP file name globbing\n"
+msgstr "       --no-glob                   不在 FTP 文件名中使用通配符展开\n"
 
-#: src/main.c:676
-#, fuzzy
+#: src/main.c:880
 msgid ""
-"       --no-passive-ftp            disable the \"passive\" transfer mode.\n"
-msgstr "       --no-passive-ftp        禁用“passive”传输模式。\n"
+"       --no-passive-ftp            disable the \"passive\" transfer mode\n"
+msgstr "       --no-passive-ftp            禁用“passive”传输模式\n"
 
-#: src/main.c:678
-#, fuzzy
-msgid "       --preserve-permissions      preserve remote file permissions.\n"
-msgstr "       --preserve-permissions  保留远程文件的权限。\n"
+#: src/main.c:882
+msgid "       --preserve-permissions      preserve remote file permissions\n"
+msgstr "       --preserve-permissions      保留远程文件的权限\n"
 
-#: src/main.c:680
-#, fuzzy
+#: src/main.c:884
 msgid ""
 "       --retr-symlinks             when recursing, get linked-to files (not "
-"dir).\n"
+"dir)\n"
 msgstr ""
-"       --retr-symlinks         递归目录时，获取链接的文件 (而非目录)。\n"
+"       --retr-symlinks             递归目录时，获取链接的文件 (而非目录)\n"
 
-#: src/main.c:684
-#, fuzzy
+#: src/main.c:889
+msgid "FTPS options:\n"
+msgstr "FTPS 选项：\n"
+
+#: src/main.c:891
+msgid ""
+"       --ftps-implicit                 use implicit FTPS (default port is "
+"990)\n"
+msgstr "       --ftps-implicit                 使用隐式 FTPS（默认端口 990）\n"
+
+#: src/main.c:893
+msgid ""
+"       --ftps-resume-ssl               resume the SSL/TLS session started in "
+"the control connection when\n"
+"                                         opening a data connection\n"
+msgstr ""
+"       --ftps-resume-ssl               打开数据连接时继续控制连接中的 SSL/"
+"TLS 会话\n"
+
+#: src/main.c:896
+msgid ""
+"       --ftps-clear-data-connection    cipher the control channel only; all "
+"the data will be in plaintext\n"
+msgstr ""
+"       --ftps-clear-data-connection    只加密控制信道；数据传输使用明文\n"
+
+#: src/main.c:898
+msgid ""
+"       --ftps-fallback-to-ftp          fall back to FTP if FTPS is not "
+"supported in the target server\n"
+msgstr ""
+"       --ftps-fallback-to-ftp          回落到 FTP，如果目标服务器不支持 "
+"FTPS\n"
+
+#: src/main.c:902
 msgid "WARC options:\n"
-msgstr "FTP 选项：\n"
+msgstr "WARC 选项：\n"
 
-#: src/main.c:686
+#: src/main.c:904
 msgid ""
 "       --warc-file=FILENAME        save request/response data to a .warc.gz "
-"file.\n"
+"file\n"
 msgstr ""
+"       --warc-file=文件名          在一个 .warc.gz 文件里保持请求/响应数据\n"
 
-#: src/main.c:688
-#, fuzzy
+#: src/main.c:906
 msgid ""
-"       --warc-header=STRING        insert STRING into the warcinfo record.\n"
-msgstr "       --header=STRING         在头部插入 STRING。\n"
+"       --warc-header=STRING        insert STRING into the warcinfo record\n"
+msgstr "       --warc-header=字符串        在头部插入 <字符串>\n"
 
-#: src/main.c:690
-#, fuzzy
+#: src/main.c:908
 msgid ""
-"       --warc-max-size=NUMBER      set maximum size of WARC files to "
-"NUMBER.\n"
-msgstr ""
-"  -t,  --tries=NUMBER            设置重试次数为 NUMBER (0 代表无限制)。\n"
+"       --warc-max-size=NUMBER      set maximum size of WARC files to NUMBER\n"
+msgstr "       --warc-max-size=数字        将 WARC 的最大尺寸设置为 <数字>\n"
 
-#: src/main.c:692
-#, fuzzy
-msgid "       --warc-cdx                  write CDX index files.\n"
-msgstr "       --spider                  不下载任何文件。\n"
+#: src/main.c:910
+msgid "       --warc-cdx                  write CDX index files\n"
+msgstr "       --warc-cdx                  写入 CDX 索引文件\n"
 
-#: src/main.c:694
+#: src/main.c:912
 msgid ""
 "       --warc-dedup=FILENAME       do not store records listed in this CDX "
-"file.\n"
-msgstr ""
+"file\n"
+msgstr "       --warc-dedup=文件名         不要记录列在此 CDX 文件内的记录\n"
 
-#: src/main.c:697
+#: src/main.c:915
 msgid ""
-"       --no-warc-compression       do not compress WARC files with GZIP.\n"
-msgstr ""
+"       --no-warc-compression       do not compress WARC files with GZIP\n"
+msgstr "       --no-warc-compression       不要 GZIP 压缩 WARC 文件\n"
 
-#: src/main.c:700
-#, fuzzy
-msgid "       --no-warc-digests           do not calculate SHA1 digests.\n"
-msgstr "       --no-cookies            不使用 cookies。\n"
+#: src/main.c:918
+msgid "       --no-warc-digests           do not calculate SHA1 digests\n"
+msgstr "       --no-warc-digests           不要计算 SHA1 摘要\n"
 
-#: src/main.c:702
-#, fuzzy
+#: src/main.c:920
 msgid ""
 "       --no-warc-keep-log          do not store the log file in a WARC "
-"record.\n"
-msgstr "       --ignore-case             匹配文件/目录时忽略大小写。\n"
+"record\n"
+msgstr "       --no-warc-keep-log          不要在 WARC 记录中存储日志文件\n"
 
-#: src/main.c:704
+#: src/main.c:922
 msgid ""
 "       --warc-tempdir=DIRECTORY    location for temporary files created by "
 "the\n"
-"                                   WARC writer.\n"
-msgstr ""
+"                                     WARC writer\n"
+msgstr "       --warc-tempdir=目录         WARC 写入器的临时文件目录\n"
 
-#: src/main.c:709
+#: src/main.c:927
 msgid "Recursive download:\n"
 msgstr "递归下载：\n"
 
-#: src/main.c:711
-#, fuzzy
-msgid "  -r,  --recursive                 specify recursive download.\n"
-msgstr "  -r,  --recursive          指定递归下载。\n"
+#: src/main.c:929
+msgid "  -r,  --recursive                 specify recursive download\n"
+msgstr "  -r,  --recursive                 指定递归下载\n"
 
-#: src/main.c:713
-#, fuzzy
+#: src/main.c:931
 msgid ""
 "  -l,  --level=NUMBER              maximum recursion depth (inf or 0 for "
-"infinite).\n"
+"infinite)\n"
 msgstr ""
-"  -l,  --level=NUMBER       最大递归深度 (inf 或 0 代表无限制，即全部下"
-"载)。\n"
+"  -l,  --level=数字                最大递归深度 (inf 或 0 代表无限制，即全部"
+"下载)。\n"
 
-#: src/main.c:715
-#, fuzzy
+#: src/main.c:933
 msgid ""
 "       --delete-after              delete files locally after downloading "
-"them.\n"
-msgstr "       --delete-after       下载完成后删除本地文件。\n"
+"them\n"
+msgstr "       --delete-after             下载完成后删除本地文件\n"
 
-#: src/main.c:717
-#, fuzzy
+#: src/main.c:935
 msgid ""
 "  -k,  --convert-links             make links in downloaded HTML or CSS "
 "point to\n"
-"                                   local files.\n"
+"                                     local files\n"
 msgstr ""
-"  -k,  --convert-links      让下载得到的 HTML 或 CSS 中的链接指向本地文件。\n"
+"  -k,  --convert-links            让下载得到的 HTML 或 CSS 中的链接指向本地文"
+"件\n"
 
-#: src/main.c:720
+#: src/main.c:938
+msgid ""
+"       --convert-file-only         convert the file part of the URLs only "
+"(usually known as the basename)\n"
+msgstr ""
+"       --convert-file-only         只转换 URL 的文件部分（一般叫做“基础名”/"
+"basename）\n"
+
+#: src/main.c:940
 msgid ""
 "       --backups=N                 before writing file X, rotate up to N "
-"backup files.\n"
+"backup files\n"
 msgstr ""
+"       --backups=N                 写入文件 X 前，轮换移动最多 N 个备份文件\n"
 
-#: src/main.c:724
-#, fuzzy
+#: src/main.c:944
 msgid ""
 "  -K,  --backup-converted          before converting file X, back up as "
-"X_orig.\n"
-msgstr "  -K,  --backup-converted   在转换文件 X 前先将它备份为 X_orig。\n"
+"X_orig\n"
+msgstr ""
+"  -K,  --backup-converted         在转换文件 X 前先将它备份为 X_orig。\n"
 
-#: src/main.c:727
-#, fuzzy
+#: src/main.c:947
 msgid ""
 "  -K,  --backup-converted          before converting file X, back up as X."
-"orig.\n"
-msgstr "  -K,  --backup-converted   在转换文件 X 前先将它备份为 X.orig。\n"
+"orig\n"
+msgstr ""
+"  -K,  --backup-converted         在转换文件 X 前先将它备份为 X.orig。\n"
 
-#: src/main.c:730
-#, fuzzy
+#: src/main.c:950
 msgid ""
 "  -m,  --mirror                    shortcut for -N -r -l inf --no-remove-"
-"listing.\n"
+"listing\n"
 msgstr ""
-"  -m,  --mirror             -N -r -l inf --no-remove-listing 的缩写形式。\n"
+"  -m,  --mirror                   -N -r -l inf --no-remove-listing 的缩写形"
+"式。\n"
 
-#: src/main.c:732
-#, fuzzy
+#: src/main.c:952
 msgid ""
 "  -p,  --page-requisites           get all images, etc. needed to display "
-"HTML page.\n"
+"HTML page\n"
 msgstr ""
-"  -p,  --page-requisites    下载所有用于显示 HTML 页面的图片之类的元素。\n"
+"  -p,  --page-requisites          下载所有用于显示 HTML 页面的图片之类的元"
+"素。\n"
 
-#: src/main.c:734
-#, fuzzy
+#: src/main.c:954
 msgid ""
 "       --strict-comments           turn on strict (SGML) handling of HTML "
-"comments.\n"
-msgstr "       --strict-comments    用严格方式 (SGML) 处理 HTML 注释。\n"
+"comments\n"
+msgstr "       --strict-comments          用严格方式 (SGML) 处理 HTML 注释。\n"
 
-#: src/main.c:738
+#: src/main.c:958
 msgid "Recursive accept/reject:\n"
 msgstr "递归接受/拒绝：\n"
 
-#: src/main.c:740
+#: src/main.c:960
 msgid ""
 "  -A,  --accept=LIST               comma-separated list of accepted "
-"extensions.\n"
-msgstr "  -A,  --accept=LIST               逗号分隔的可接受的扩展名列表。\n"
+"extensions\n"
+msgstr "  -A,  --accept=列表               逗号分隔的可接受的扩展名列表\n"
 
-#: src/main.c:742
+#: src/main.c:962
 msgid ""
 "  -R,  --reject=LIST               comma-separated list of rejected "
-"extensions.\n"
-msgstr "  -R,  --reject=LIST               逗号分隔的要拒绝的扩展名列表。\n"
+"extensions\n"
+msgstr "  -R,  --reject=列表               逗号分隔的要拒绝的扩展名列表\n"
 
-#: src/main.c:744
-msgid "       --accept-regex=REGEX        regex matching accepted URLs.\n"
-msgstr ""
+#: src/main.c:964
+msgid "       --accept-regex=REGEX        regex matching accepted URLs\n"
+msgstr "       --accept-regex=REGEX        匹配接受的 URL 的正则表达式\n"
 
-#: src/main.c:746
-msgid "       --reject-regex=REGEX        regex matching rejected URLs.\n"
-msgstr ""
+#: src/main.c:966
+msgid "       --reject-regex=REGEX        regex matching rejected URLs\n"
+msgstr "       --reject-regex=REGEX        匹配拒绝的 URL 的正则表达式\n"
 
-#: src/main.c:749
-#, fuzzy
-msgid "       --regex-type=TYPE           regex type (posix|pcre).\n"
-msgstr "       --progress=TYPE           选择进度条类型。\n"
+#: src/main.c:969
+msgid "       --regex-type=TYPE           regex type (posix|pcre)\n"
+msgstr "       --regex-type=类型           正则类型 (posix|pcre)\n"
 
-#: src/main.c:752
-#, fuzzy
-msgid "       --regex-type=TYPE           regex type (posix).\n"
-msgstr "       --progress=TYPE           选择进度条类型。\n"
+#: src/main.c:972
+msgid "       --regex-type=TYPE           regex type (posix)\n"
+msgstr "       --regex-type=类型           正则类型 (posix)\n"
 
-#: src/main.c:755
+#: src/main.c:975
 msgid ""
-"  -D,  --domains=LIST              comma-separated list of accepted "
-"domains.\n"
-msgstr "  -D,  --domains=LIST              逗号分隔的可接受的域列表。\n"
+"  -D,  --domains=LIST              comma-separated list of accepted domains\n"
+msgstr "  -D,  --domains=列表              逗号分隔的可接受的域名列表\n"
 
-#: src/main.c:757
+#: src/main.c:977
 msgid ""
-"       --exclude-domains=LIST      comma-separated list of rejected "
-"domains.\n"
-msgstr "       --exclude-domains=LIST      逗号分隔的要拒绝的域列表。\n"
+"       --exclude-domains=LIST      comma-separated list of rejected domains\n"
+msgstr "       --exclude-domains=列表      逗号分隔的要拒绝的域名列表\n"
 
-#: src/main.c:759
+#: src/main.c:979
 msgid ""
-"       --follow-ftp                follow FTP links from HTML documents.\n"
-msgstr "       --follow-ftp                跟踪 HTML 文档中的 FTP 链接。\n"
+"       --follow-ftp                follow FTP links from HTML documents\n"
+msgstr "       --follow-ftp                跟踪 HTML 文档中的 FTP 链接\n"
 
-#: src/main.c:761
+#: src/main.c:981
 msgid ""
 "       --follow-tags=LIST          comma-separated list of followed HTML "
-"tags.\n"
-msgstr "       --follow-tags=LIST          逗号分隔的跟踪的 HTML 标识列表。\n"
+"tags\n"
+msgstr "       --follow-tags=列表          逗号分隔的跟踪的 HTML 标识列表\n"
 
-#: src/main.c:763
+#: src/main.c:983
 msgid ""
 "       --ignore-tags=LIST          comma-separated list of ignored HTML "
-"tags.\n"
-msgstr "       --ignore-tags=LIST          逗号分隔的忽略的 HTML 标识列表。\n"
+"tags\n"
+msgstr "       --ignore-tags=列表          逗号分隔的忽略的 HTML 标识列表\n"
 
-#: src/main.c:765
-msgid ""
-"  -H,  --span-hosts                go to foreign hosts when recursive.\n"
-msgstr "  -H,  --span-hosts                递归时转向外部主机。\n"
+#: src/main.c:985
+msgid "  -H,  --span-hosts                go to foreign hosts when recursive\n"
+msgstr "  -H,  --span-hosts                递归时转向外部主机\n"
 
-#: src/main.c:767
-msgid "  -L,  --relative                  follow relative links only.\n"
-msgstr "  -L,  --relative                  只跟踪有关系的链接。\n"
+#: src/main.c:987
+msgid "  -L,  --relative                  follow relative links only\n"
+msgstr "  -L,  --relative                  仅跟踪相对链接\n"
 
-#: src/main.c:769
-msgid "  -I,  --include-directories=LIST  list of allowed directories.\n"
-msgstr "  -I,  --include-directories=LIST  允许目录的列表。\n"
+#: src/main.c:989
+msgid "  -I,  --include-directories=LIST  list of allowed directories\n"
+msgstr "  -I,  --include-directories=列表  允许目录的列表\n"
 
-#: src/main.c:771
-#, fuzzy
+#: src/main.c:991
 msgid ""
 "       --trust-server-names        use the name specified by the "
 "redirection\n"
-"                                   url last component.\n"
+"                                     URL's last component\n"
 msgstr ""
-"       --trust-server-names        使用重定向 URL 的最后一段作为本地文件"
-"名。\n"
+"       --trust-server-names        使用重定向 URL 的最后一段作为本地文件名\n"
 
-#: src/main.c:774
-msgid "  -X,  --exclude-directories=LIST  list of excluded directories.\n"
-msgstr "  -X,  --exclude-directories=LIST  排除目录的列表。\n"
+#: src/main.c:994
+msgid "  -X,  --exclude-directories=LIST  list of excluded directories\n"
+msgstr "  -X,  --exclude-directories=列表  排除目录的列表\n"
 
-#: src/main.c:776
+#: src/main.c:996
 msgid ""
-"  -np, --no-parent                 don't ascend to the parent directory.\n"
-msgstr "  -np, --no-parent                 不追溯至父目录。\n"
+"  -np, --no-parent                 don't ascend to the parent directory\n"
+msgstr "  -np, --no-parent                 不追溯至父目录\n"
 
-#: src/main.c:779
-msgid "Mail bug reports and suggestions to <bug-wget@gnu.org>.\n"
-msgstr "请将错误报告或建议寄给 <bug-wget@gnu.org>。\n"
+#: src/main.c:999
+msgid "Mail bug reports and suggestions to <bug-wget@gnu.org>\n"
+msgstr "请将错误报告或建议寄给 <bug-wget@gnu.org>\n"
 
-#: src/main.c:784
+#: src/main.c:1004
 #, c-format
 msgid "GNU Wget %s, a non-interactive network retriever.\n"
 msgstr "GNU Wget %s，非交互式的网络文件下载工具。\n"
 
-#: src/main.c:827
+#: src/main.c:1047
 #, c-format
 msgid "Password for user %s: "
 msgstr "用户 %s 的密码: "
 
-#: src/main.c:829
+#: src/main.c:1049
 #, c-format
 msgid "Password: "
 msgstr "密码: "
 
-#: src/main.c:885
+#: src/main.c:1068
+#, c-format
+msgid "Cannot create pipe\n"
+msgstr "无法创建管道\n"
+
+#: src/main.c:1076
+#, c-format
+msgid "Error initializing spawn file actions for use-askpass: %d\n"
+msgstr ""
+
+#: src/main.c:1085
+#, c-format
+msgid "Error setting spawn file actions for use-askpass: %d\n"
+msgstr ""
+
+#: src/main.c:1109
+#, c-format
+msgid "Error reading response from command \"%s %s\": %s\n"
+msgstr ""
+
+#: src/main.c:1132
+#, c-format
+msgid "Username for '%s%s': "
+msgstr "“%s%s”的用户名："
+
+#: src/main.c:1142
+#, c-format
+msgid "Password for '%s%s@%s': "
+msgstr "%s%s@%s 的密码："
+
+#: src/main.c:1214
 msgid "Wgetrc: "
 msgstr "Wgetrc: "
 
-#: src/main.c:886
+#: src/main.c:1215
 msgid "Locale: "
-msgstr "字符集: "
+msgstr "语区: "
 
-#: src/main.c:887
+#: src/main.c:1216
 msgid "Compile: "
 msgstr "编译: "
 
-#: src/main.c:888
+#: src/main.c:1217
 msgid "Link: "
-msgstr "链接程序: "
+msgstr "链接: "
 
-#: src/main.c:892
+#: src/main.c:1221
 #, c-format
 msgid ""
 "GNU Wget %s built on %s.\n"
@@ -2266,29 +2522,29 @@ msgstr ""
 "GNU Wget %s 在 %s 上编译。\n"
 "\n"
 
-#: src/main.c:919
+#: src/main.c:1248
 #, c-format
 msgid "    %s (env)\n"
 msgstr "    %s (环境)\n"
 
-#: src/main.c:926
+#: src/main.c:1255
 #, c-format
 msgid "    %s (user)\n"
 msgstr "    %s (用户)\n"
 
-#: src/main.c:931
+#: src/main.c:1260
 #, c-format
 msgid "    %s (system)\n"
 msgstr "    %s (系统)\n"
 
 #. TRANSLATORS: When available, an actual copyright character
 #. (circle-c) should be used in preference to "(C)".
-#: src/main.c:959
-#, fuzzy, c-format
+#: src/main.c:1288
+#, c-format
 msgid "Copyright (C) %s Free Software Foundation, Inc.\n"
-msgstr "版权所有 © 2009 Free Software Foundation, Inc.\n"
+msgstr "Copyright © %s Free Software Foundation, Inc.\n"
 
-#: src/main.c:962
+#: src/main.c:1291
 msgid ""
 "License GPLv3+: GNU GPL version 3 or later\n"
 "<http://www.gnu.org/licenses/gpl.html>.\n"
@@ -2302,7 +2558,7 @@ msgstr ""
 
 #. TRANSLATORS: When available, please use the proper diacritics for
 #. names such as this one. See en_US.po for reference.
-#: src/main.c:970
+#: src/main.c:1299
 msgid ""
 "\n"
 "Originally written by Hrvoje Niksic <hniksic@xemacs.org>.\n"
@@ -2310,68 +2566,78 @@ msgstr ""
 "\n"
 "最初由 Hrvoje Nikšić <hniksic@xemacs.org> 编写。\n"
 
-#: src/main.c:973
+#: src/main.c:1302
 msgid "Please send bug reports and questions to <bug-wget@gnu.org>.\n"
 msgstr "请将错误报告或建议寄给 <bug-wget@gnu.org>。\n"
 
-#: src/main.c:1024 src/main.c:1515
+#: src/main.c:1351 src/main.c:1882
 #, c-format
 msgid "Memory allocation problem\n"
-msgstr ""
+msgstr "内存分配问题\n"
 
-#: src/main.c:1075
+#: src/main.c:1401
 #, c-format
 msgid "Exiting due to error in %s\n"
-msgstr ""
+msgstr "由于 %s 出错退出\n"
 
-#: src/main.c:1104 src/main.c:1174 src/main.c:1376
+#: src/main.c:1430 src/main.c:1501 src/main.c:1733
 #, c-format
 msgid "Try `%s --help' for more options.\n"
 msgstr "请尝试使用“%s --help”查看更多的选项。\n"
 
-#: src/main.c:1170
+#: src/main.c:1497
 #, c-format
 msgid "%s: illegal option -- `-n%c'\n"
 msgstr "%s：非法的选项 -- “-n%c”\n"
 
-#: src/main.c:1213
+#: src/main.c:1540
 #, c-format
 msgid "Debugging support not compiled in. Ignoring --debug flag.\n"
-msgstr ""
+msgstr "未编译调试支持，忽略 --debug。\n"
 
-#: src/main.c:1225
+#: src/main.c:1553
 #, c-format
 msgid ""
 "Both --no-clobber and --convert-links were specified, only --convert-links "
 "will be used.\n"
 msgstr ""
+"同时指定了 --no-clobber 及 --convert-links 参数，将使用 --convert-links\n"
 
-#: src/main.c:1255
+#: src/main.c:1555
+#, c-format
+msgid ""
+"Both --no-clobber and --convert-file-only were specified, only --convert-"
+"file-only will be used.\n"
+msgstr "同时指定了 --no-clobber 及 --convert-file-only 参数，将只使用后者\n"
+
+#: src/main.c:1588
 #, c-format
 msgid "Can't be verbose and quiet at the same time.\n"
 msgstr "无法同时使用详细输出模式和安静模式。\n"
 
-#: src/main.c:1261
+#: src/main.c:1594
 #, c-format
 msgid "Can't timestamp and not clobber old files at the same time.\n"
 msgstr "无法修改时间戳标记而不更改本地文件。\n"
 
-#: src/main.c:1270
+#: src/main.c:1603
 #, c-format
 msgid "Cannot specify both --inet4-only and --inet6-only.\n"
 msgstr "无法同时指定 --inet4-only 和 --inet6-only。\n"
 
-#: src/main.c:1280
+#: src/main.c:1613
 msgid ""
-"Cannot specify both -k and -O if multiple URLs are given, or in combination\n"
+"Cannot specify both -k or --convert-file-only and -O if multiple URLs are "
+"given, or in combination\n"
 "with -p or -r. See the manual for details.\n"
 "\n"
 msgstr ""
-"如果给出了多个 URL 则无法同时指定 -k 和 -O 选项，也不可以与 -p 或 -r 选项\n"
+"如果给出了多个 URL 则无法同时指定 -k（或 --convert-file-only）和 -O 选项，也"
+"不可以与 -p 或 -r 选项\n"
 "结合使用。参阅手册来获取详细信息。\n"
 "\n"
 
-#: src/main.c:1289
+#: src/main.c:1622
 msgid ""
 "WARNING: combining -O with -r or -p will mean that all downloaded content\n"
 "will be placed in the single file you specified.\n"
@@ -2381,7 +2647,7 @@ msgstr ""
 "会被放入您指定的那个单一文件。\n"
 "\n"
 
-#: src/main.c:1295
+#: src/main.c:1628
 msgid ""
 "WARNING: timestamping does nothing in combination with -O. See the manual\n"
 "for details.\n"
@@ -2391,197 +2657,413 @@ msgstr ""
 "参阅手册来获取详细信息。\n"
 "\n"
 
-#: src/main.c:1304
+#: src/main.c:1637
 #, c-format
 msgid "File `%s' already there; not retrieving.\n"
 msgstr "文件“%s”已经存在；不获取。\n"
 
-#: src/main.c:1315
+#: src/main.c:1648
 #, c-format
 msgid ""
 "WARC output does not work with --no-clobber, --no-clobber will be disabled.\n"
-msgstr ""
+msgstr "WARC 输出不能和 --no-clobber 同时工作，后者将被禁用。\n"
 
-#: src/main.c:1322
+#: src/main.c:1655
 #, c-format
 msgid ""
 "WARC output does not work with timestamping, timestamping will be disabled.\n"
-msgstr ""
+msgstr "WARC 输出不能和时间戳模式 (timestamping) 同时工作，后者将被禁用。\n"
 
-#: src/main.c:1329
+#: src/main.c:1662
 #, c-format
 msgid "WARC output does not work with --spider.\n"
-msgstr ""
+msgstr "WARC 输出不能和 --spider 同时工作。\n"
 
-#: src/main.c:1335
+#: src/main.c:1668
 #, c-format
 msgid ""
 "WARC output does not work with --continue or --start-pos, they will be "
 "disabled.\n"
-msgstr ""
+msgstr "WARC 输出不能和 --continue 或 --start-pos 同时工作，后者将被禁用。\n"
 
-#: src/main.c:1343
+#: src/main.c:1676
 #, c-format
 msgid ""
 "Digests are disabled; WARC deduplication will not find duplicate records.\n"
-msgstr ""
+msgstr "已禁用摘要；WARC 去重将不查找重复记录。\n"
 
-#: src/main.c:1355
+#: src/main.c:1697
+#, fuzzy, c-format
+msgid ""
+"Compression does not work with --continue or --start-pos, they will be "
+"disabled.\n"
+msgstr "WARC 输出不能和 --continue 或 --start-pos 同时工作，后者将被禁用。\n"
+
+#: src/main.c:1708
 #, c-format
 msgid "Cannot specify both --ask-password and --password.\n"
 msgstr "无法同时指定 --ask-password 和 --password。\n"
 
-#: src/main.c:1363
+#: src/main.c:1716
 #, c-format
 msgid ""
 "Specifying both --start-pos and --continue is not recommended; --continue "
 "will be disabled.\n"
 msgstr ""
+"不推荐同时指定 --start-pos 及 --continue 参数；将禁用 --continue 参数。\n"
 
-#: src/main.c:1371
+#: src/main.c:1728
 #, c-format
 msgid "%s: missing URL\n"
 msgstr "%s：未指定 URL\n"
 
-#: src/main.c:1412
-#, fuzzy, c-format
+#: src/main.c:1769
+#, c-format
 msgid "You cannot specify both --post-data and --post-file.\n"
-msgstr "无法同时指定 --ask-password 和 --password。\n"
+msgstr "无法同时指定 --post-data 和 --post-file。\n"
 
-#: src/main.c:1417
+#: src/main.c:1774
 #, c-format
 msgid ""
 "You cannot use --post-data or --post-file along with --method. --method "
-"expects data through --body-data and --body-file options"
+"expects data through --body-data and --body-file options\n"
 msgstr ""
+"--post-data 及 --post-file 参数不能与 --method 一起使用。--method 期望从 --"
+"body-data 及 --body-file 参数获取数据\n"
 
-#: src/main.c:1426
+#: src/main.c:1783
 #, c-format
 msgid ""
 "You must specify a method through --method=HTTPMethod to use with --body-"
 "data or --body-file.\n"
 msgstr ""
+"使用 --body-data 或 --body-file 参数时必须通过 --method=HTTPMethod 指定一个传"
+"输方式。\n"
 
-#: src/main.c:1432
-#, fuzzy, c-format
+#: src/main.c:1789
+#, c-format
 msgid "You cannot specify both --body-data and --body-file.\n"
-msgstr "无法同时指定 --inet4-only 和 --inet6-only。\n"
+msgstr "无法同时指定 --body-data 和 --body-file。\n"
 
-#: src/main.c:1484
+#: src/main.c:1841
 #, c-format
 msgid "This version does not have support for IRIs\n"
-msgstr "此版本不支持 IRIs\n"
+msgstr "此版本不支持 IRI\n"
 
-#: src/main.c:1584
+#: src/main.c:1951
 #, c-format
-msgid "-k can be used together with -O only if outputting to a regular file.\n"
-msgstr "-k 只有在输出至普通文件的时候才可以与 -O 共用。\n"
+msgid ""
+"-k or -r can be used together with -O only if outputting to a regular file.\n"
+msgstr "-k 或 -r 只有在输出至普通文件的时候才可以与 -O 共用。\n"
 
-#: src/main.c:1689
+#: src/main.c:1957
+#, c-format
+msgid ""
+"--convert-links or --convert-file-only can be used together only if "
+"outputting to a regular file.\n"
+msgstr ""
+"--convert-links 或 --convert-file-only 只有在输出至普通文件时才可共用。\n"
+
+#: src/main.c:1968
+#, c-format
+msgid "Failed to init libcares\n"
+msgstr "未能初始化 libcares\n"
+
+#: src/main.c:1974
+#, c-format
+msgid "Failed to init c-ares channel\n"
+msgstr "未能初始化 c-ares 信道\n"
+
+#: src/main.c:1997
+#, c-format
+msgid "Failed to parse IP address '%s'\n"
+msgstr "无法解析 IP 地址“%s”\n"
+
+#: src/main.c:2008
+#, c-format
+msgid "Failed to set DNS server(s) '%s' (%d)\n"
+msgstr "错误：未能设置 DNS 服务器“%s”（%d）。\n"
+
+#: src/main.c:2136
 #, c-format
 msgid "No URLs found in %s.\n"
 msgstr "在 %s 中找不到 URL。\n"
 
-#: src/main.c:1710
-#, fuzzy, c-format
+#: src/main.c:2152
+#, c-format
+msgid "Unable to parse metalink file %s.\n"
+msgstr "无法解析 metalink 文件 %s。\n"
+
+#: src/main.c:2182 src/metalink.c:337
+#, c-format
+msgid "Could not download all resources from %s.\n"
+msgstr "无法从 %s 下载所有资源。\n"
+
+#: src/main.c:2209
+#, c-format
 msgid ""
 "FINISHED --%s--\n"
 "Total wall clock time: %s\n"
 "Downloaded: %d files, %s in %s (%s)\n"
 msgstr ""
 "下载完毕 --%1$s--\n"
-"下载了：%2$d 个文件，%4$s (%5$s) 中的 %3$s\n"
+"总用时：%2$s\n"
+"下载了：%3$d 个文件，%5$s (%6$s) 中的 %4$s\n"
 
-#: src/main.c:1724
+#: src/main.c:2223
 #, c-format
 msgid "Download quota of %s EXCEEDED!\n"
 msgstr "超过下载限额 (%s 字节)！\n"
 
-#: src/mswindows.c:100
+#: src/metalink.c:93
+msgid "-O not supported for metalink download. Ignoring.\n"
+msgstr "-O 不可用于 metalink 下载。忽略此参数。\n"
+
+#: src/metalink.c:172
+#, c-format
+msgid "[--trust-server-names %s, --directory-prefix=%s]\n"
+msgstr ""
+
+#: src/metalink.c:176
+#, fuzzy, c-format
+msgid "Planned metalink file: %s\n"
+msgstr "无法解析 metalink 文件 %s。\n"
+
+#: src/metalink.c:179
+#, fuzzy, c-format
+msgid "Secured metalink file: %s\n"
+msgstr "无法解析 metalink 文件 %s。\n"
+
+#: src/metalink.c:184
+msgid "Rejecting metalink file. Unsafe name.\n"
+msgstr ""
+
+#: src/metalink.c:238
+#, c-format
+msgid "Processing metaurl %s...\n"
+msgstr "正在处理 metaurl %s……\n"
+
+#: src/metalink.c:251
+#, c-format
+msgid "Rejecting metaurl file %s. Unsafe name.\n"
+msgstr ""
+
+#: src/metalink.c:268
+#, c-format
+msgid "Failed to download %s. Skipping metaurl.\n"
+msgstr "下载 %s 失败。将跳过该 metaurl。\n"
+
+#: src/metalink.c:285
+#, c-format
+msgid "Unable to parse metaurl file %s.\n"
+msgstr "无法解析 metaurl 文件 %s。\n"
+
+#: src/metalink.c:354
+msgid "Metaurls processing returned with error.\n"
+msgstr ""
+
+#: src/metalink.c:386
+#, c-format
+msgid "Resource type %s not supported, ignoring...\n"
+msgstr "不支持资源类型 %s，将忽略此项……\n"
+
+#: src/metalink.c:509
+msgid "Could not open downloaded file.\n"
+msgstr "无法打开已下载的文件。\n"
+
+#: src/metalink.c:514
+#, c-format
+msgid "Computing size for %s\n"
+msgstr "计算 %s 的大小\n"
+
+#: src/metalink.c:519
+msgid "File size not declared. Skipping check.\n"
+msgstr "未声明文件大小。跳过检查。\n"
+
+#: src/metalink.c:527
+msgid "Could not get downloaded file's size.\n"
+msgstr "无法得知已下载文件的大小。\n"
+
+#: src/metalink.c:539
+#, c-format
+msgid "Size mismatch for file %s.\n"
+msgstr "文件 %s 大小不匹配。\n"
+
+#: src/metalink.c:547
+msgid "Size matches.\n"
+msgstr "大小匹配。\n"
+
+#: src/metalink.c:600
+#, c-format
+msgid "Computing checksum for %s\n"
+msgstr "计算 %s 的校验和\n"
+
+#: src/metalink.c:678
+msgid "Checksum matches.\n"
+msgstr "校验和匹配。\n"
+
+#: src/metalink.c:683
+#, c-format
+msgid "Checksum mismatch for file %s.\n"
+msgstr "文件 %s 校验和不匹配。\n"
+
+#: src/metalink.c:723
+msgid "Could not open downloaded file for signature verification.\n"
+msgstr "无法打开下载完成的文件以进行签名校验。\n"
+
+#: src/metalink.c:782
+#, c-format
+msgid "GPGME data_new_from_mem: %s\n"
+msgstr "GPGME data_new_from_mem: %s\n"
+
+#: src/metalink.c:794
+#, c-format
+msgid "GPGME op_verify: %s\n"
+msgstr "GPGME op_verify: %s\n"
+
+#: src/metalink.c:807
+msgid "GPGME op_verify_result: NULL\n"
+msgstr "GPGME op_verify_result: NULL\n"
+
+#: src/metalink.c:823
+msgid "Signature validation succeeded.\n"
+msgstr "签名验证成功。\n"
+
+#: src/metalink.c:831
+msgid "Invalid signature. Rejecting resource.\n"
+msgstr "无效签名。将拒绝此资源。\n"
+
+#: src/metalink.c:840
+msgid "Data matches signature, but signature is not trusted.\n"
+msgstr "数据与签名相符，但签名未被信任。\n"
+
+#: src/metalink.c:867
+msgid "No checksums found.\n"
+msgstr "未找到校验和。\n"
+
+#: src/metalink.c:873
+#, c-format
+msgid "Failed to download %s. Skipping resource.\n"
+msgstr "下载 %s 失败。将跳过该资源。\n"
+
+#: src/metalink.c:880
+#, c-format
+msgid "File %s retrieved but size does not match. \n"
+msgstr "已接收文件 %s，但大小不相符。\n"
+
+#: src/metalink.c:887
+#, c-format
+msgid "File %s retrieved but checksum does not match. \n"
+msgstr "已接收文件 %s，但校验值不相符。\n"
+
+#: src/metalink.c:896
+#, c-format
+msgid "File %s retrieved but signature does not match. \n"
+msgstr "已接收文件 %s，但签名不相符。\n"
+
+#: src/metalink.c:1115
+#, c-format
+msgid "Renaming %s to %s.\n"
+msgstr "正在将 %s 重命名为 %s。\n"
+
+#: src/mswindows.c:97
 #, c-format
 msgid "Continuing in background.\n"
 msgstr "继续在后台运行。\n"
 
-#: src/mswindows.c:293
+#: src/mswindows.c:290
 #, c-format
 msgid "Continuing in background, pid %lu.\n"
 msgstr "继续在后台运行，pid 为 %lu。\n"
 
-#: src/mswindows.c:295 src/utils.c:481
+#: src/mswindows.c:292 src/utils.c:510
 #, c-format
 msgid "Output will be written to %s.\n"
 msgstr "将把输出写入至 %s。\n"
 
-#: src/mswindows.c:327
+#: src/mswindows.c:324
 #, c-format
 msgid "fake_fork_child() failed\n"
-msgstr ""
+msgstr "fake_fork_child() 失败\n"
 
-#: src/mswindows.c:335
+#: src/mswindows.c:332
 #, c-format
 msgid "fake_fork() failed\n"
-msgstr ""
+msgstr "fake_fork() 失败\n"
 
-#: src/mswindows.c:463 src/mswindows.c:470
+#: src/mswindows.c:460 src/mswindows.c:467
 #, c-format
 msgid "%s: Couldn't find usable socket driver.\n"
 msgstr "%s：找不到可用的 socket 驱动程序。\n"
 
-#: src/mswindows.c:650
+#: src/mswindows.c:647
 #, c-format
 msgid "ioctl() failed.  The socket could not be set as blocking.\n"
-msgstr ""
+msgstr "调用 ioctl() 失败。套接字不可设为阻塞（blocking）状态。\n"
 
-#: src/netrc.c:354
+#: src/netrc.c:366
 #, c-format
 msgid "%s: %s:%d: warning: %s token appears before any machine name\n"
 msgstr "%s：%s:%d：警告: %s 标记出现在机器名称前\n"
 
-#: src/netrc.c:385
+#: src/netrc.c:407
 #, c-format
 msgid "%s: %s:%d: unknown token \"%s\"\n"
 msgstr "%s：%s:%d：未知的标记“%s”\n"
 
-#: src/netrc.c:448
+#: src/netrc.c:470
 #, c-format
 msgid "Usage: %s NETRC [HOSTNAME]\n"
 msgstr "用法：%s NETRC [主机名]\n"
 
-#: src/netrc.c:466
+#: src/netrc.c:488
 #, c-format
 msgid "%s: cannot stat %s: %s\n"
 msgstr "%s：无法 stat %s：%s\n"
 
-#: src/openssl.c:118
+#: src/openssl.c:123
 msgid "WARNING: using a weak random seed.\n"
 msgstr "警告: 正在使用一个弱口令的随机种子。\n"
 
-#: src/openssl.c:189
+#: src/openssl.c:195
 msgid "Could not seed PRNG; consider using --random-file.\n"
 msgstr "无法 seed PRNG；考虑使用 --random-file。\n"
 
-#: src/openssl.c:630
+#: src/openssl.c:245
+msgid "Your OpenSSL version is too old to support TLSv1.1\n"
+msgstr "你的 OpenSSL 版本太老，不支持 TLSv1.1\n"
+
+#: src/openssl.c:249
+msgid "Your OpenSSL version is too old to support TLSv1.2\n"
+msgstr "你的 OpenSSL 版本太老，不支持 TLSv1.2\n"
+
+#: src/openssl.c:254
+#, c-format
+msgid "OpenSSL: unimplemented 'secure-protocol' option value %d\n"
+msgstr "OpenSSL：未实现‘secure-protocol’选项值 %d\n"
+
+#: src/openssl.c:798
 #, c-format
 msgid "%s: cannot verify %s's certificate, issued by %s:\n"
 msgstr "%s: 无法验证 %s 的由 %s 颁发的证书:\n"
 
-#: src/openssl.c:639
+#: src/openssl.c:809
 msgid "  Unable to locally verify the issuer's authority.\n"
 msgstr "  无法本地校验颁发者的权限。\n"
 
-#: src/openssl.c:644
+#: src/openssl.c:814
 msgid "  Self-signed certificate encountered.\n"
 msgstr "  出现了自己签名的证书。\n"
 
-#: src/openssl.c:647
+#: src/openssl.c:817
 msgid "  Issued certificate not yet valid.\n"
 msgstr "  颁发的证书还未生效。\n"
 
-#: src/openssl.c:650
+#: src/openssl.c:820
 msgid "  Issued certificate has expired.\n"
 msgstr "  颁发的证书已经过期。\n"
 
-#: src/openssl.c:735
+#: src/openssl.c:908
 #, c-format
 msgid ""
 "%s: no certificate subject alternative name matches\n"
@@ -2590,13 +3072,13 @@ msgstr ""
 "%s: 没有匹配的证书主体别名 (Subject Alternative Name)。\n"
 "\t请求的主机名为 %s。\n"
 
-#: src/openssl.c:752
+#: src/openssl.c:927
 #, c-format
 msgid ""
 "    %s: certificate common name %s doesn't match requested host name %s.\n"
 msgstr "    %s: 证书通用名 %s 与所要求的主机名 %s 不符。\n"
 
-#: src/openssl.c:784
+#: src/openssl.c:959
 #, c-format
 msgid ""
 "    %s: certificate common name is invalid (contains a NUL character).\n"
@@ -2607,12 +3089,12 @@ msgstr ""
 "    这可能意味着该主机所声称的身份与实际不符。\n"
 "    (也就是说，它不是真正的 %s)。\n"
 
-#: src/openssl.c:802
+#: src/openssl.c:984
 #, c-format
 msgid "To connect to %s insecurely, use `--no-check-certificate'.\n"
 msgstr "要以不安全的方式连接至 %s，使用“--no-check-certificate”。\n"
 
-#: src/progress.c:244
+#: src/progress.c:245
 #, c-format
 msgid ""
 "\n"
@@ -2621,57 +3103,57 @@ msgstr ""
 "\n"
 "%*s[ 跳过 %sK ]"
 
-#: src/progress.c:465
+#: src/progress.c:466
 #, c-format
 msgid "Invalid dot style specification %s; leaving unchanged.\n"
 msgstr "无效的进度指示方式 %s；不会改变原来的方式。\n"
 
 #. TRANSLATORS: "ETA" is English-centric, but this must
 #. be short, ideally 3 chars.  Abbreviate if necessary.
-#: src/progress.c:854
-#, fuzzy, c-format
-msgid "   eta %s"
-msgstr " 剩余 %s"
+#: src/progress.c:858
+#, c-format
+msgid "    eta %s"
+msgstr "  剩余 %s"
 
-#: src/progress.c:1150
-msgid "   in "
-msgstr " 用时 "
+#: src/progress.c:1148
+msgid "    in "
+msgstr "  用时 "
 
 #: src/ptimer.c:158
 #, c-format
 msgid "Cannot get REALTIME clock frequency: %s\n"
 msgstr "无法获取 REALTIME 时钟频率: %s\n"
 
-#: src/recur.c:434
+#: src/recur.c:514
 #, c-format
 msgid "Removing %s since it should be rejected.\n"
 msgstr "正在删除 %s 因为它应该被指定了拒绝下载。\n"
 
-#: src/res.c:391
+#: src/res.c:392
 #, c-format
 msgid "Cannot open %s: %s"
 msgstr "无法打开 %s: %s"
 
-#: src/res.c:550
+#: src/res.c:551
 msgid "Loading robots.txt; please ignore errors.\n"
 msgstr "正在载入 robots.txt；请忽略错误消息。\n"
 
-#: src/retr.c:768
+#: src/retr.c:913
 #, c-format
 msgid "Error parsing proxy URL %s: %s.\n"
 msgstr "解析代理服务器 URL %s 时发生错误：%s。\n"
 
-#: src/retr.c:778
+#: src/retr.c:925
 #, c-format
 msgid "Error in proxy URL %s: Must be HTTP.\n"
 msgstr "代理服务器 URL %s 错误：必须是 HTTP。\n"
 
-#: src/retr.c:879
+#: src/retr.c:1054
 #, c-format
 msgid "%d redirections exceeded.\n"
 msgstr "已超过 %d 次重定向。\n"
 
-#: src/retr.c:1126
+#: src/retr.c:1318
 msgid ""
 "Giving up.\n"
 "\n"
@@ -2679,7 +3161,7 @@ msgstr ""
 "放弃操作。\n"
 "\n"
 
-#: src/retr.c:1126
+#: src/retr.c:1318
 msgid ""
 "Retrying.\n"
 "\n"
@@ -2687,135 +3169,164 @@ msgstr ""
 "重试中。\n"
 "\n"
 
-#: src/spider.c:75
-msgid ""
-"Found no broken links.\n"
-"\n"
-msgstr ""
-"未找到死链接。\n"
-"\n"
-
-#: src/spider.c:82
-#, c-format
-msgid ""
-"Found %d broken link.\n"
-"\n"
-msgid_plural ""
-"Found %d broken links.\n"
-"\n"
-msgstr[0] ""
-"找到 %d 个死链接。\n"
-"\n"
-
-#: src/url.c:639
+#: src/url.c:676
 msgid "No error"
 msgstr "没有错误"
 
-#: src/url.c:641
+#: src/url.c:678
 #, c-format
 msgid "Unsupported scheme %s"
 msgstr "不支持的协议类型 %s"
 
-#: src/url.c:643
+#: src/url.c:680
 msgid "Scheme missing"
 msgstr "地址缺少协议类型"
 
-#: src/url.c:645
+#: src/url.c:682
 msgid "Invalid host name"
 msgstr "无效的主机名"
 
-#: src/url.c:647
+#: src/url.c:684
 msgid "Bad port number"
 msgstr "端口号错误"
 
-#: src/url.c:649
+#: src/url.c:686
 msgid "Invalid user name"
 msgstr "无效的用户名"
 
-#: src/url.c:651
+#: src/url.c:688
 msgid "Unterminated IPv6 numeric address"
 msgstr "未结束的 IPv6 数字地址"
 
-#: src/url.c:653
+#: src/url.c:690
 msgid "IPv6 addresses not supported"
 msgstr "不支持 IPv6 地址"
 
-#: src/url.c:655
+#: src/url.c:692
 msgid "Invalid IPv6 numeric address"
 msgstr "无效的 IPv6 数字地址"
 
-#: src/url.c:959
+#: src/url.c:1008
 msgid "HTTPS support not compiled in"
 msgstr "未将 HTTPS 支持编译到程序中"
 
-#: src/utils.c:116
+#: src/url.c:1603
+#, fuzzy
+msgid "Unconvertable multibyte sequence encountered\n"
+msgstr "出现不完整或无效的多字节序列\n"
+
+#: src/utils.c:130
 #, c-format
 msgid "%s: %s: Failed to allocate enough memory; memory exhausted.\n"
 msgstr "%s: %s: 无法分配足够内存；内存耗尽。\n"
 
-#: src/utils.c:122
+#: src/utils.c:136
 #, c-format
 msgid "%s: %s: Failed to allocate %ld bytes; memory exhausted.\n"
 msgstr "%s: %s: 无法分配 %ld 字节；内存耗尽。\n"
 
-#: src/utils.c:336
+#: src/utils.c:356
 #, c-format
-msgid "%s: aprintf: text buffer is too big (%ld bytes), aborting.\n"
-msgstr "%s: aprintf: 文本缓冲区太大 (%ld 字节)，退出。\n"
+msgid "%s: aprintf: text buffer is too big (%d bytes), aborting.\n"
+msgstr "%s: aprintf: 文本缓冲区太大 (%d 字节)，退出。\n"
 
-#: src/utils.c:479
+#: src/utils.c:508
 #, c-format
 msgid "Continuing in background, pid %d.\n"
 msgstr "继续在后台运行，pid 为 %d。\n"
 
-#: src/utils.c:555
+#: src/utils.c:584
 #, c-format
 msgid "Failed to unlink symlink %s: %s\n"
 msgstr "无法删除符号链接 %s: %s\n"
 
-#: src/utils.c:2273 src/utils.c:2292
+#: src/utils.c:884
+#, fuzzy, c-format
+msgid "Failed to Fopen file %s\n"
+msgstr "未能初始化 libcares\n"
+
+#: src/utils.c:890
+#, fuzzy, c-format
+msgid "Failed to get FD for file %s\n"
+msgstr "无法设定 %s 的权限\n"
+
+#: src/utils.c:897
+#, fuzzy, c-format
+msgid "Failed to stat file %s, (check permissions)\n"
+msgstr "无法设定 %s 的权限\n"
+
+#: src/utils.c:907
+#, c-format
+msgid "File %s changed since the last check. Security check failed."
+msgstr ""
+
+#: src/utils.c:942
+#, fuzzy, c-format
+msgid "Failed to open file %s, reason :%s\n"
+msgstr "无法解析 IP 地址“%s”\n"
+
+#: src/utils.c:948
+#, fuzzy, c-format
+msgid "Failed to stat file %s, error: %s\n"
+msgstr "无法设定 %s 的权限\n"
+
+#: src/utils.c:957
+#, c-format
+msgid ""
+"Trying to open file %s but it changed since last check. Security check "
+"failed."
+msgstr ""
+
+#: src/utils.c:2461 src/utils.c:2480
 #, c-format
 msgid "Invalid regular expression %s, %s\n"
-msgstr ""
+msgstr "无效的正则表达式 %s, %s\n"
 
-#: src/utils.c:2315 src/utils.c:2339
-#, fuzzy, c-format
+#: src/utils.c:2504 src/utils.c:2528
+#, c-format
 msgid "Error while matching %s: %d\n"
-msgstr "写入 %s 时发生错误: %s\n"
+msgstr "匹配 %s 出错: %d\n"
 
-#: src/warc.c:222
+#: src/utils.c:2821
+#, c-format
+msgid "Skipping key with wrong size (%d/%d): %s\n"
+msgstr ""
+
+#: src/warc.c:223
 msgid "Error opening GZIP stream to WARC file.\n"
-msgstr ""
+msgstr "从 GZIP 流打开 WARC 文件失败。\n"
 
-#: src/warc.c:710
+#: src/warc.c:798
 msgid "Error writing warcinfo record to WARC file.\n"
-msgstr ""
+msgstr "向 WARC 文件写入 warcinfo 记录时发生错误。\n"
 
-#: src/warc.c:771
+#: src/warc.c:861
 #, c-format
 msgid ""
 "Opening WARC file %s.\n"
 "\n"
 msgstr ""
+"正打开 WARC 文件 %s。\n"
+"\n"
 
-#: src/warc.c:777
-#, fuzzy, c-format
+#: src/warc.c:867
+#, c-format
 msgid "Error opening WARC file %s.\n"
-msgstr "解析证书时发生错误: %s。\n"
+msgstr "打开 WARC 文件 %s 出错。\n"
 
-#: src/warc.c:974
+#: src/warc.c:1064
 msgid "CDX file does not list original urls. (Missing column 'a'.)\n"
-msgstr ""
+msgstr "CDX 文件未列出源 URL。（缺少列 'a'）\n"
 
-#: src/warc.c:977
+#: src/warc.c:1067
 msgid "CDX file does not list checksums. (Missing column 'k'.)\n"
-msgstr ""
+msgstr "CDX 文件未列出校验值。（缺少列 'k'）\n"
 
-#: src/warc.c:980
+#: src/warc.c:1070
 msgid "CDX file does not list record ids. (Missing column 'u'.)\n"
-msgstr ""
+msgstr "CDX 文件未列出记录 ID。（缺少列 'u'）\n"
 
-#: src/warc.c:1002
+#: src/warc.c:1094
 #, c-format
 msgid ""
 "Loaded %d record from CDX.\n"
@@ -2824,437 +3335,64 @@ msgid_plural ""
 "Loaded %d records from CDX.\n"
 "\n"
 msgstr[0] ""
+"从 CDX 加载了 %d 个记录。\n"
+"\n"
 
-#: src/warc.c:1047
+#: src/warc.c:1140
 #, c-format
 msgid "Could not read CDX file %s for deduplication.\n"
-msgstr ""
+msgstr "无法读取 CDX 文件 %s 以供去重。\n"
 
-#: src/warc.c:1057
+#: src/warc.c:1150
 msgid "Could not open temporary WARC manifest file.\n"
-msgstr ""
+msgstr "无法打开临时 WARC 清单文件。\n"
 
-#: src/warc.c:1067
+#: src/warc.c:1160
 msgid "Could not open temporary WARC log file.\n"
-msgstr ""
+msgstr "无法打开临时 WARC 日志文件。\n"
 
-#: src/warc.c:1076
+#: src/warc.c:1169
 msgid "Could not open WARC file.\n"
-msgstr ""
+msgstr "无法打开 WARC 文件。\n"
 
-#: src/warc.c:1085
-#, fuzzy
+#: src/warc.c:1178
 msgid "Could not open CDX file for output.\n"
-msgstr "找不到代理服务器主机。\n"
+msgstr "无法打开 CDX 文件以供输出。\n"
 
-#: src/warc.c:1113
+#: src/warc.c:1208
 msgid "Could not open temporary WARC file.\n"
-msgstr ""
+msgstr "无法打开临时 WARC 文件。\n"
 
-#: src/warc.c:1370
+#: src/warc.c:1476
 msgid "Found exact match in CDX file. Saving revisit record to WARC.\n"
-msgstr ""
-
-#~ msgid "Authorization failed.\n"
-#~ msgstr "验证失败。\n"
+msgstr "从 CDX 文件发现了精确匹配。正将重访问记录保存到 WARC。\n"
 
 #~ msgid ""
-#~ "WARNING: Can't reopen standard output in binary mode;\n"
-#~ "         downloaded file may contain inappropriate line endings.\n"
-#~ msgstr ""
-#~ "警告: 无法在二进制模式下重新打开标准输出设备；\n"
-#~ "         下载到的文件可能带有错误的行尾结束符。\n"
-
-#~ msgid "%s: illegal option -- %c\n"
-#~ msgstr "%s：非法选项 -- %c\n"
-
-#~ msgid ""
-#~ "GNU Wget %s built on VMS %s %s.\n"
+#~ "Found no broken links.\n"
 #~ "\n"
 #~ msgstr ""
-#~ "GNU Wget %s 在 VMS %s %s 上编译。\n"
-#~ "\n"
-
-#~ msgid "Currently maintained by Micah Cowan <micah@cowan.name>.\n"
-#~ msgstr "目前由 Micah Cowan <micah@cowan.name> 维护。\n"
-
-#~ msgid ""
-#~ "  -B,  --base=URL            prepends URL to relative links in -F -i "
-#~ "file.\n"
-#~ msgstr ""
-#~ "  -B,  --base=URL            prepends URL 至 -F -i 选项所指定文件中的相关"
-#~ "链接。\n"
-
-#~ msgid "Unable to convert `%s' to a bind address.  Reverting to ANY.\n"
-#~ msgstr "无法转换 “%s”为绑定地址，正在恢复为 ANY。\n"
-
-#~ msgid "Error in Set-Cookie, field `%s'"
-#~ msgstr "在 Set-Cookie 的中出现错误，字段“%s”"
-
-#~ msgid ""
-#~ "\n"
-#~ "REST failed; will not truncate `%s'.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "重置 (REST) 失败；不会截短‘%s’。\n"
-
-#~ msgid " [%s to go]"
-#~ msgstr " [尚有 %s]"
-
-#~ msgid "Host not found"
-#~ msgstr "找不到主机"
-
-#~ msgid "Failed to set up an SSL context\n"
-#~ msgstr "无法创建 SSL context\n"
-
-#~ msgid "Failed to load certificates from %s\n"
-#~ msgstr "无法从 %s 载入证书 (certificate)\n"
-
-#~ msgid "Trying without the specified certificate\n"
-#~ msgstr "尝试不载入指定的证书 (certificate)\n"
-
-#~ msgid "Failed to get certificate key from %s\n"
-#~ msgstr "无法从 %s 获取证书密钥\n"
-
-#~ msgid "End of file while parsing headers.\n"
-#~ msgstr "正在分析文件头时，文件已结束。\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Continued download failed on this file, which conflicts with `-c'.\n"
-#~ "Refusing to truncate existing file `%s'.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "无法续传此文件，与“-c”选项的意义冲突。\n"
-#~ "不会截短已存在的文件“%s”。\n"
-#~ "\n"
-
-#~ msgid " (%s to go)"
-#~ msgstr " (尚有 %s)"
-
-#~ msgid "File `%s' already there, will not retrieve.\n"
-#~ msgstr "文件“%s”已经存在，不会获取。\n"
-
-#~ msgid ""
-#~ "%s (%s) - `%s' saved [%ld/%ld])\n"
-#~ "\n"
-#~ msgstr ""
-#~ "%s (%s) -- 已保存“%s”[%ld/%ld])\n"
-#~ "\n"
-
-#~ msgid "%s (%s) - Connection closed at byte %ld/%ld. "
-#~ msgstr "%s (%s) - 连接在 %ld/%ld 字节时被关闭。"
-
-#~ msgid "%s: %s: Invalid boolean `%s', use always, on, off, or never.\n"
-#~ msgstr "%s：%s：无效的布尔值“%s”，请使用 always、on、off 或 never。\n"
-
-#~ msgid ""
-#~ "Startup:\n"
-#~ "  -V,  --version           display the version of Wget and exit.\n"
-#~ "  -h,  --help              print this help.\n"
-#~ "  -b,  --background        go to background after startup.\n"
-#~ "  -e,  --execute=COMMAND   execute a `.wgetrc'-style command.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "启动：\n"
-#~ "  -V,  --version           显示 Wget 的版本并且退出。\n"
-#~ "  -h,  --help              打印此帮助。\n"
-#~ "  -b,  -background         启动后进入后台操作。\n"
-#~ "  -e,  -execute=COMMAND    运行‘.wgetrc’形式的命令。\n"
+#~ "未找到死链接。\n"
 #~ "\n"
 
 #~ msgid ""
-#~ "Logging and input file:\n"
-#~ "  -o,  --output-file=FILE     log messages to FILE.\n"
-#~ "  -a,  --append-output=FILE   append messages to FILE.\n"
-#~ "  -d,  --debug                print debug output.\n"
-#~ "  -q,  --quiet                quiet (no output).\n"
-#~ "  -v,  --verbose              be verbose (this is the default).\n"
-#~ "  -nv, --non-verbose          turn off verboseness, without being quiet.\n"
-#~ "  -i,  --input-file=FILE      download URLs found in FILE.\n"
-#~ "  -F,  --force-html           treat input file as HTML.\n"
-#~ "  -B,  --base=URL             prepends URL to relative links in -F -i "
-#~ "file.\n"
+#~ "Found %d broken link.\n"
 #~ "\n"
-#~ msgstr ""
-#~ "日志记录及输入文件：\n"
-#~ "  -o,  --output-file=文件     将日志消息写入到指定文件中。\n"
-#~ "  -a,  --append-output=文件   将日志消息追加到指定文件的末端。\n"
-#~ "  -d,  --debug                打印调试输出。\n"
-#~ "  -q,  --quiet                安静模式(不输出信息)。\n"
-#~ "  -v,  --verbose               详细输出模式(默认)。\n"
-#~ "  -nv, --non-verbose          关闭详细输出模式，但不进入安静模式。\n"
-#~ "  -i,  --input-file=文件      下载从指定文件中找到的 URL。\n"
-#~ "  -F,  --force-html           以 HTML 方式处理输入文件。\n"
-#~ "  -B,  --base=URL             使用 -F -i 文件选项时，在相对链接前添加指定"
-#~ "的 URL。\n"
+#~ msgid_plural ""
+#~ "Found %d broken links.\n"
 #~ "\n"
+#~ msgstr[0] ""
+#~ "找到 %d 个死链接。\n"
+#~ "\n"
+
+#~ msgid "Invalid UTF-8 sequence: %s\n"
+#~ msgstr "无效的 UTF-8 序列: %s\n"
+
+#~ msgid "idn_decode failed (%d): %s\n"
+#~ msgstr "idn_decode 错误 (%d): %s\n"
 
 #~ msgid ""
-#~ "Download:\n"
-#~ "  -t,  --tries=NUMBER           set number of retries to NUMBER (0 "
-#~ "unlimits).\n"
-#~ "       --retry-connrefused      retry even if connection is refused.\n"
-#~ "  -O   --output-document=FILE   write documents to FILE.\n"
-#~ "  -nc, --no-clobber             don't clobber existing files or use .# "
-#~ "suffixes.\n"
-#~ "  -c,  --continue               resume getting a partially-downloaded "
-#~ "file.\n"
-#~ "       --progress=TYPE          select progress gauge type.\n"
-#~ "  -N,  --timestamping           don't re-retrieve files unless newer than "
-#~ "local.\n"
-#~ "  -S,  --server-response        print server response.\n"
-#~ "       --spider                 don't download anything.\n"
-#~ "  -T,  --timeout=SECONDS        set all timeout values to SECONDS.\n"
-#~ "       --dns-timeout=SECS       set the DNS lookup timeout to SECS.\n"
-#~ "       --connect-timeout=SECS   set the connect timeout to SECS.\n"
-#~ "       --read-timeout=SECS      set the read timeout to SECS.\n"
-#~ "  -w,  --wait=SECONDS           wait SECONDS between retrievals.\n"
-#~ "       --waitretry=SECONDS      wait 1...SECONDS between retries of a "
-#~ "retrieval.\n"
-#~ "       --random-wait            wait from 0...2*WAIT secs between "
-#~ "retrievals.\n"
-#~ "  -Y,  --proxy=on/off           turn proxy on or off.\n"
-#~ "  -Q,  --quota=NUMBER           set retrieval quota to NUMBER.\n"
-#~ "       --bind-address=ADDRESS   bind to ADDRESS (hostname or IP) on local "
-#~ "host.\n"
-#~ "       --limit-rate=RATE        limit download rate to RATE.\n"
-#~ "       --dns-cache=off          disable caching DNS lookups.\n"
-#~ "       --restrict-file-names=OS restrict chars in file names to ones OS "
-#~ "allows.\n"
 #~ "\n"
+#~ "%s received.\n"
 #~ msgstr ""
-#~ "下载：\n"
-#~ "  -t,  --tries=次数             配置重试次数（0 表示无限）。\n"
-#~ "       --retry-connrefused      即使拒绝连接也重试。\n"
-#~ "  -O   --output-document=文件   将数据写入此文件中。\n"
-#~ "  -nc, --no-clobber             不更改已经存在的文件，也不使用在文件名后\n"
-#~ "                                添加 .#（# 为数字）的方法写入新的文件。\n"
-#~ "  -c,  --continue               继续接收已下载了一部分的文件。\n"
-#~ "       --progress=方式          选择下载进度的表示方式。\n"
-#~ "  -N,  --timestamping           除非远程文件较新，否则不再获取。\n"
-#~ "  -S,  --server-response        显示服务器回应消息。\n"
-#~ "       --spider                 不下载任何数据。\n"
-#~ "  -T,  --timeout=秒数           配置读取数据的超时时间 (秒数)。\n"
-#~ "  -w,  --wait=秒数              接收不同文件之间等待的秒数。\n"
-#~ "       --waitretry=秒数         在每次重试之间稍等一段时间 (由 1 秒至指定"
-#~ "的 秒数不等)。\n"
-#~ "       --random-wait            接收不同文件之间稍等一段时间(由 0 秒至  "
-#~ "2*WAIT 秒不等)。\n"
-#~ "  -Y,  --proxy=on/off           打开或关闭代理服务器。\n"
-#~ "  -Q,  --quota=大小             配置接收数据的限额大小。\n"
-#~ "       --bind-address=地址      使用本机的指定地址 (主机名称或 IP) 进行连"
-#~ "接。\n"
-#~ "       --limit-rate=速率        限制下载的速率。\n"
-#~ "       --dns-cache=off          禁止查找存于高速缓存中的 DNS。\n"
-#~ "       --restrict-file-names=OS 限制文件名中的字符为指定的 OS (操作系统) "
-#~ "所允许的字符。\n"
 #~ "\n"
-
-#~ msgid ""
-#~ "Directories:\n"
-#~ "  -nd, --no-directories            don't create directories.\n"
-#~ "  -x,  --force-directories         force creation of directories.\n"
-#~ "  -nH, --no-host-directories       don't create host directories.\n"
-#~ "  -P,  --directory-prefix=PREFIX   save files to PREFIX/...\n"
-#~ "       --cut-dirs=NUMBER           ignore NUMBER remote directory "
-#~ "components.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "目录：\n"
-#~ "  -nd  --no-directories            不创建目录。\n"
-#~ "  -x,  --force-directories         强制创建目录。\n"
-#~ "  -nH, --no-host-directories       不创建含有远程主机名称的目录。\n"
-#~ "  -P,  --directory-prefix=名称     保存文件前先创建指定名称的目录。\n"
-#~ "       --cut-dirs=数目             忽略远程目录中指定数目的目录层。\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "HTTP options:\n"
-#~ "       --http-user=USER      set http user to USER.\n"
-#~ "       --http-passwd=PASS    set http password to PASS.\n"
-#~ "  -C,  --cache=on/off        (dis)allow server-cached data (normally "
-#~ "allowed).\n"
-#~ "  -E,  --html-extension      save all text/html documents with .html "
-#~ "extension.\n"
-#~ "       --ignore-length       ignore `Content-Length' header field.\n"
-#~ "       --header=STRING       insert STRING among the headers.\n"
-#~ "       --proxy-user=USER     set USER as proxy username.\n"
-#~ "       --proxy-passwd=PASS   set PASS as proxy password.\n"
-#~ "       --referer=URL         include `Referer: URL' header in HTTP "
-#~ "request.\n"
-#~ "  -s,  --save-headers        save the HTTP headers to file.\n"
-#~ "  -U,  --user-agent=AGENT    identify as AGENT instead of Wget/VERSION.\n"
-#~ "       --no-http-keep-alive  disable HTTP keep-alive (persistent "
-#~ "connections).\n"
-#~ "       --cookies=off         don't use cookies.\n"
-#~ "       --load-cookies=FILE   load cookies from FILE before session.\n"
-#~ "       --save-cookies=FILE   save cookies to FILE after session.\n"
-#~ "       --post-data=STRING    use the POST method; send STRING as the "
-#~ "data.\n"
-#~ "       --post-file=FILE      use the POST method; send contents of FILE.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "HTTP 选项：\n"
-#~ "       --http-user=用户    配置 http 用户名。\n"
-#~ "       --http-passwd=密码    配置 http 用户密码。\n"
-#~ "  -C,  --cache=on/off        (不)使用服务器中的高速缓存中的数据 (默认是使"
-#~ "用的)。\n"
-#~ "  -E,  --html-extension      将所有 MIME 类型为 text/html 的文件都加上 ."
-#~ "html 扩展文件名。\n"
-#~ "       --ignore-length       忽略“Content-Length”文件头字段。\n"
-#~ "       --header=字符串         在文件头中添加指定字符串。\n"
-#~ "       --proxy-user=用户   配置代理服务器用户名。\n"
-#~ "       --proxy-passwd=密码   配置代理服务器用户密码。\n"
-#~ "       --referer=URL         在 HTTP 请求中包含“Referer：URL”头。\n"
-#~ "  -s,  --save-headers        将 HTTP 头存入文件。\n"
-#~ "  -U,  --user-agent=AGENT    标志为 AGENT 而不是 Wget/VERSION。\n"
-#~ "       --no-http-keep-alive  禁用 HTTP keep-alive（持久性连接）。\n"
-#~ "       --cookies=off         禁用 cookie。\n"
-#~ "       --load-cookies=文件   会话开始前由指定文件载入 cookie。\n"
-#~ "       --save-cookies=文件   会话结束后将 cookie 保存至指定文件。\n"
-#~ "       --post-data=字符串    使用 POST 方法，发送指定字符串。\n"
-#~ "       --post-file=文件      使用 POST 方法，发送指定文件中的内容。\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "HTTPS (SSL) options:\n"
-#~ "       --sslcertfile=FILE     optional client certificate.\n"
-#~ "       --sslcertkey=KEYFILE   optional keyfile for this certificate.\n"
-#~ "       --egd-file=FILE        file name of the EGD socket.\n"
-#~ "       --sslcadir=DIR         dir where hash list of CA's are stored.\n"
-#~ "       --sslcafile=FILE       file with bundle of CA's\n"
-#~ "       --sslcerttype=0/1      Client-Cert type 0=PEM (default) / 1=ASN1 "
-#~ "(DER)\n"
-#~ "       --sslcheckcert=0/1     Check the server cert agenst given CA\n"
-#~ "       --sslprotocol=0-3      choose SSL protocol; 0=automatic,\n"
-#~ "                              1=SSLv2 2=SSLv3 3=TLSv1\n"
-#~ "\n"
-#~ msgstr ""
-#~ "HTTPS (SSL) 选项：\n"
-#~ "       --sslcertfile=文件     可选的客户段端证书。\n"
-#~ "       --sslcertkey=密钥文件  对此证书可选的“密钥文件”。\n"
-#~ "       --egd-file=文件        EGD socket 文件名。\n"
-#~ "       --sslcadir=目录         CA 散列表所在的目录。\n"
-#~ "       --sslcafile=文件      包含 CA 的文件。\n"
-#~ "       --sslcerttype=0/1      Client-Cert 类型 0=PEM (默认) / 1=ASN1 "
-#~ "(DER)\n"
-#~ "       --sslcheckcert=0/1     根据提供的 CA 检查服务器的证书\n"
-#~ "       --sslprotocol=0-3      选择 SSL 协议；0=自动选择，\n"
-#~ "                              1=SSLv2 2=SSLv3 3=TLSv1\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "FTP options:\n"
-#~ "  -nr, --dont-remove-listing   don't remove `.listing' files.\n"
-#~ "  -g,  --glob=on/off           turn file name globbing on or off.\n"
-#~ "       --passive-ftp           use the \"passive\" transfer mode.\n"
-#~ "       --retr-symlinks         when recursing, get linked-to files (not "
-#~ "dirs).\n"
-#~ "\n"
-#~ msgstr ""
-#~ "FTP 选项：\n"
-#~ "  -nr, --dont-remove-listing   不删除“.listing”文件。\n"
-#~ "  -g,  --glob=on/off           设置是否展开有通配符的文件名。\n"
-#~ "       --passive-ftp           使用“被动”传输模式。\n"
-#~ "       --retr-symlinks         在递归模式中，下载链接所指示的文件(连至目"
-#~ "录\n"
-#~ "                               则例外）。\n"
-
-#~ msgid ""
-#~ "Recursive retrieval:\n"
-#~ "  -r,  --recursive          recursive download.\n"
-#~ "  -l,  --level=NUMBER       maximum recursion depth (inf or 0 for "
-#~ "infinite).\n"
-#~ "       --delete-after       delete files locally after downloading them.\n"
-#~ "  -k,  --convert-links      convert non-relative links to relative.\n"
-#~ "  -K,  --backup-converted   before converting file X, back up as X.orig.\n"
-#~ "  -m,  --mirror             shortcut option equivalent to -r -N -l inf -"
-#~ "nr.\n"
-#~ "  -p,  --page-requisites    get all images, etc. needed to display HTML "
-#~ "page.\n"
-#~ "       --strict-comments    turn on strict (SGML) handling of HTML "
-#~ "comments.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "递归下载：\n"
-#~ "  -r,  --recursive          递归下载。\n"
-#~ "  -l,  --level=数字         最大递归深度(inf 或 0 表示无限)。\n"
-#~ "       --delete-after       删除下载后的文件。\n"
-#~ "  -k,  --convert-links      将绝对链接转换为相对链接。\n"
-#~ "  -K,  --backup-converted   转换文件 X 前先将其备份为 X.orig。\n"
-#~ "  -m,  --mirror             等效于 -r -N -l inf -nr 的选项。\n"
-#~ "  -p,  --page-requisites    下载所有显示完整网页所需的文件，例如图像。\n"
-#~ "       --strict-comments    打开对 HTML 备注的严格(SGML)处理选项。\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "Recursive accept/reject:\n"
-#~ "  -A,  --accept=LIST                comma-separated list of accepted "
-#~ "extensions.\n"
-#~ "  -R,  --reject=LIST                comma-separated list of rejected "
-#~ "extensions.\n"
-#~ "  -D,  --domains=LIST               comma-separated list of accepted "
-#~ "domains.\n"
-#~ "       --exclude-domains=LIST       comma-separated list of rejected "
-#~ "domains.\n"
-#~ "       --follow-ftp                 follow FTP links from HTML "
-#~ "documents.\n"
-#~ "       --follow-tags=LIST           comma-separated list of followed HTML "
-#~ "tags.\n"
-#~ "  -G,  --ignore-tags=LIST           comma-separated list of ignored HTML "
-#~ "tags.\n"
-#~ "  -H,  --span-hosts                 go to foreign hosts when recursive.\n"
-#~ "  -L,  --relative                   follow relative links only.\n"
-#~ "  -I,  --include-directories=LIST   list of allowed directories.\n"
-#~ "  -X,  --exclude-directories=LIST   list of excluded directories.\n"
-#~ "  -np, --no-parent                  don't ascend to the parent "
-#~ "directory.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "递归下载时有关接受/拒绝的选项：\n"
-#~ "  -A,  --accept=列表                接受的文件样式列表，以逗号分隔。\n"
-#~ "  -R,  --reject=列表                排除的文件样式列表，以逗号分隔。\n"
-#~ "  -D,  --domains=列表               接受的域列表，以逗号分隔。\n"
-#~ "       --exclude-domains=列表       排除的域列表，以逗号分隔。\n"
-#~ "       --follow-ftp                 跟随 HTML 文件中的 FTP 链接。\n"
-#~ "       --follow-tags=列表           要跟随的 HTML 标记，以逗号分隔。\n"
-#~ "  -G,  --ignore-tags=列表           要忽略的 HTML 标记，以逗号分隔。\n"
-#~ "  -H,  --span-hosts                 递归时可进入其它主机。\n"
-#~ "  -L,  --relative                   只跟随相对链接。\n"
-#~ "  -I,  --include-directories=列表   要下载的目录列表。\n"
-#~ "  -X,  --exclude-directories=列表   要排除的目录列表。\n"
-#~ "  -np, --no-parent                  不搜索上层目录。\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "This program is distributed in the hope that it will be useful,\n"
-#~ "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-#~ "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-#~ "GNU General Public License for more details.\n"
-#~ msgstr ""
-#~ "此程序发布的目的是希望它会有用，但它不作任何保证；\n"
-#~ "甚至没有可售性或适用于特定目的的保证。\n"
-#~ "详情请查看 GNU General Public License。\n"
-
-#~ msgid "Starting WinHelp %s\n"
-#~ msgstr "正在启动 WinHelp %s\n"
-
-#~ msgid "Empty host"
-#~ msgstr "未指定主机"
-
-#~ msgid "%s: %s: Not enough memory.\n"
-#~ msgstr "%s：%s：内存不足。\n"
-
-#~ msgid "Syntax error in Set-Cookie at character `%c'.\n"
-#~ msgstr "在 Set-Cookie 中字符“%c”处出现语法错误。\n"
-
-#~ msgid "%s: %s: Cannot convert `%s' to an IP address.\n"
-#~ msgstr "%s：%s：无法将“%s”转换为一个 IP 地址。\n"
-
-#~ msgid "%s: %s: invalid command\n"
-#~ msgstr "%s：%s：无效的命令\n"
-
-#~ msgid "%s: Redirection cycle detected.\n"
-#~ msgstr "%s：重定向到自己。\n"
+#~ "接收了 %s。\n"

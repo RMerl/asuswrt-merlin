@@ -1,6 +1,6 @@
 # Makefile for `wget' utility
 # Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-# 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software
+# 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2015 Free Software
 # Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -30,9 +30,8 @@
 # see http://www.gnu.org/software/automake/manual/html_node/Parallel-Test-Harness.html#Parallel-Test-Harness
 
 #
-# Version: $(VERSION)
+# Version: @VERSION@
 #
-
 
 ../src/wget$(EXEEXT):
 	cd ../src && $(MAKE) $(AM_MAKEFLAGS)
@@ -113,6 +112,7 @@ PX_TESTS = \
              Test-O.px \
              Test--post-file.px \
              Test-proxied-https-auth.px \
+             Test-proxied-https-auth-keepalive.px \
              Test-proxy-auth-basic.px \
              Test-restrict-ascii.px \
              Test-Restrict-Lowercase.px \
@@ -127,20 +127,35 @@ PX_TESTS = \
              Test--start-pos.px \
              Test--start-pos--continue.px \
              Test--httpsonly-r.px \
-             Test-204.px
+             Test-204.px \
+             Test-ftp-pasv-not-supported.px \
+             Test-https-pfs.px \
+             Test-https-tlsv1.px \
+             Test-https-tlsv1x.px \
+             Test-https-selfsigned.px \
+             Test-https-weboftrust.px \
+             Test-https-clientcert.px \
+             Test-https-crl.px \
+             Test-https-badcerts.px
 
 EXTRA_DIST = FTPServer.pm FTPTest.pm HTTPServer.pm HTTPTest.pm \
-             WgetTests.pm WgetFeature.pm WgetFeature.cfg $(PX_TESTS) \
-             certs
+             SSLTest.pm SSLServer.pm \
+             WgetTests.pm WgetFeature.pm $(PX_TESTS) \
+             certs valgrind-suppressions valgrind-suppressions-ssl
 
 check_PROGRAMS = unit-tests
 unit_tests_SOURCES =
-LDADD = ../src/libunittest.a ../lib/libgnu.a $(LIBS)
+LDADD = ../src/libunittest.a ../lib/libgnu.a $(GETADDRINFO_LIB) $(HOSTENT_LIB)\
+ $(INET_NTOP_LIB) $(LIBSOCKET) $(LIB_CLOCK_GETTIME) $(LIB_CRYPTO)\
+ $(LIB_NANOSLEEP) $(LIB_POSIX_SPAWN) $(LIB_SELECT) $(LIBICONV) $(LIBINTL)\
+ $(LIBTHREAD) $(LIBUNISTRING) $(SERVENT_LIB)
+
 
 CLEANFILES = *~ *.bak core core.[0-9]*
 
 TESTS = ./unit-tests$(EXEEXT) $(PX_TESTS)
 TEST_EXTENSIONS = .px
-AM_TESTS_ENVIRONMENT = export WGETRC=/dev/null; export SYSTEM_WGETRC=/dev/null;
 PX_LOG_COMPILER = $(PERL)
 AM_PX_LOG_FLAGS = -I$(srcdir)
+AM_TESTS_ENVIRONMENT = export WGETRC=; export SYSTEM_WGETRC=;\
+ export VALGRIND_TESTS="@VALGRIND_TESTS@";

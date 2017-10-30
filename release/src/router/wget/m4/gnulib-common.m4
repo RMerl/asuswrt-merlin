@@ -1,5 +1,5 @@
-# gnulib-common.m4 serial 34
-dnl Copyright (C) 2007-2014 Free Software Foundation, Inc.
+# gnulib-common.m4 serial 36
+dnl Copyright (C) 2007-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -48,6 +48,16 @@ AC_DEFUN([gl_COMMON_BODY], [
 /* The name _UNUSED_PARAMETER_ is an earlier spelling, although the name
    is a misnomer outside of parameter lists.  */
 #define _UNUSED_PARAMETER_ _GL_UNUSED
+
+/* gcc supports the "unused" attribute on possibly unused labels, and
+   g++ has since version 4.5.  Note to support C++ as well as C,
+   _GL_UNUSED_LABEL should be used with a trailing ;  */
+#if !defined __cplusplus || __GNUC__ > 4 \
+    || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5)
+# define _GL_UNUSED_LABEL _GL_UNUSED
+#else
+# define _GL_UNUSED_LABEL
+#endif
 
 /* The __pure__ attribute was added in gcc 2.96.  */
 #if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96)
@@ -243,9 +253,10 @@ AC_DEFUN([gl_PROG_AR_RANLIB],
 [
   dnl Minix 3 comes with two toolchains: The Amsterdam Compiler Kit compiler
   dnl as "cc", and GCC as "gcc". They have different object file formats and
-  dnl library formats. In particular, the GNU binutils programs ar, ranlib
+  dnl library formats. In particular, the GNU binutils programs ar and ranlib
   dnl produce libraries that work only with gcc, not with cc.
   AC_REQUIRE([AC_PROG_CC])
+  AC_BEFORE([$0], [AM_PROG_AR])
   AC_CACHE_CHECK([for Minix Amsterdam compiler], [gl_cv_c_amsterdam_compiler],
     [
       AC_EGREP_CPP([Amsterdam],
@@ -257,25 +268,37 @@ Amsterdam
         [gl_cv_c_amsterdam_compiler=yes],
         [gl_cv_c_amsterdam_compiler=no])
     ])
-  if test -z "$AR"; then
-    if test $gl_cv_c_amsterdam_compiler = yes; then
+
+  dnl Don't compete with AM_PROG_AR's decision about AR/ARFLAGS if we are not
+  dnl building with __ACK__.
+  if test $gl_cv_c_amsterdam_compiler = yes; then
+    if test -z "$AR"; then
       AR='cc -c.a'
-      if test -z "$ARFLAGS"; then
-        ARFLAGS='-o'
-      fi
-    else
-      dnl Use the Automake-documented default values for AR and ARFLAGS,
-      dnl but prefer ${host}-ar over ar (useful for cross-compiling).
-      AC_CHECK_TOOL([AR], [ar], [ar])
-      if test -z "$ARFLAGS"; then
-        ARFLAGS='cru'
-      fi
+    fi
+    if test -z "$ARFLAGS"; then
+      ARFLAGS='-o'
     fi
   else
-    if test -z "$ARFLAGS"; then
-      ARFLAGS='cru'
-    fi
+    dnl AM_PROG_AR was added in automake v1.11.2.  AM_PROG_AR does not AC_SUBST
+    dnl ARFLAGS variable (it is filed into Makefile.in directly by automake
+    dnl script on-demand, if not specified by ./configure of course).
+    dnl Don't AC_REQUIRE the AM_PROG_AR otherwise the code for __ACK__ above
+    dnl will be ignored.  Also, pay attention to call AM_PROG_AR in else block
+    dnl because AM_PROG_AR is written so it could re-set AR variable even for
+    dnl __ACK__.  It may seem like its easier to avoid calling the macro here,
+    dnl but we need to AC_SUBST both AR/ARFLAGS (thus those must have some good
+    dnl default value and automake should usually know them).
+    m4_ifdef([AM_PROG_AR], [AM_PROG_AR], [:])
   fi
+
+  dnl In case the code above has not helped with setting AR/ARFLAGS, use
+  dnl Automake-documented default values for AR and ARFLAGS, but prefer
+  dnl ${host}-ar over ar (useful for cross-compiling).
+  AC_CHECK_TOOL([AR], [ar], [ar])
+  if test -z "$ARFLAGS"; then
+    ARFLAGS='cr'
+  fi
+
   AC_SUBST([AR])
   AC_SUBST([ARFLAGS])
   if test -z "$RANLIB"; then
@@ -309,26 +332,28 @@ m4_ifdef([AC_PROG_MKDIR_P], [
 ])
 
 # AC_C_RESTRICT
-# This definition overrides the AC_C_RESTRICT macro from autoconf 2.60..2.61,
-# so that mixed use of GNU C and GNU C++ and mixed use of Sun C and Sun C++
-# works.
-# This definition can be removed once autoconf >= 2.62 can be assumed.
-# AC_AUTOCONF_VERSION was introduced in 2.62, so use that as the witness.
-m4_ifndef([AC_AUTOCONF_VERSION],[
+# This definition is copied from post-2.69 Autoconf and overrides the
+# AC_C_RESTRICT macro from autoconf 2.60..2.69.  It can be removed
+# once autoconf >= 2.70 can be assumed.  It's painful to check version
+# numbers, and in practice this macro is more up-to-date than Autoconf
+# is, so override Autoconf unconditionally.
 AC_DEFUN([AC_C_RESTRICT],
 [AC_CACHE_CHECK([for C/C++ restrict keyword], [ac_cv_c_restrict],
   [ac_cv_c_restrict=no
    # The order here caters to the fact that C++ does not require restrict.
    for ac_kw in __restrict __restrict__ _Restrict restrict; do
-     AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-      [[typedef int * int_ptr;
-        int foo (int_ptr $ac_kw ip) {
-        return ip[0];
-       }]],
-      [[int s[1];
-        int * $ac_kw t = s;
-        t[0] = 0;
-        return foo(t)]])],
+     AC_COMPILE_IFELSE(
+      [AC_LANG_PROGRAM(
+	 [[typedef int *int_ptr;
+	   int foo (int_ptr $ac_kw ip) { return ip[0]; }
+	   int bar (int [$ac_kw]); /* Catch GCC bug 14050.  */
+	   int bar (int ip[$ac_kw]) { return ip[0]; }
+	 ]],
+	 [[int s[1];
+	   int *$ac_kw t = s;
+	   t[0] = 0;
+	   return foo (t) + bar (t);
+	 ]])],
       [ac_cv_c_restrict=$ac_kw])
      test "$ac_cv_c_restrict" != no && break
    done
@@ -338,21 +363,21 @@ AC_DEFUN([AC_C_RESTRICT],
    nothing if this is not supported.  Do not define if restrict is
    supported directly.  */
 #undef restrict
-/* Work around a bug in Sun C++: it does not support _Restrict, even
-   though the corresponding Sun C compiler does, which causes
-   "#define restrict _Restrict" in the previous line.  Perhaps some future
-   version of Sun C++ will work with _Restrict; if so, it'll probably
-   define __RESTRICT, just as Sun C does.  */
+/* Work around a bug in Sun C++: it does not support _Restrict or
+   __restrict__, even though the corresponding Sun C compiler ends up with
+   "#define restrict _Restrict" or "#define restrict __restrict__" in the
+   previous line.  Perhaps some future version of Sun C++ will work with
+   restrict; if so, hopefully it defines __RESTRICT like Sun C does.  */
 #if defined __SUNPRO_CC && !defined __RESTRICT
 # define _Restrict
+# define __restrict__
 #endif])
  case $ac_cv_c_restrict in
    restrict) ;;
    no) AC_DEFINE([restrict], []) ;;
    *)  AC_DEFINE_UNQUOTED([restrict], [$ac_cv_c_restrict]) ;;
  esac
-])
-])
+])# AC_C_RESTRICT
 
 # gl_BIGENDIAN
 # is like AC_C_BIGENDIAN, except that it can be AC_REQUIREd.

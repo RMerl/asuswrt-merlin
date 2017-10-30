@@ -137,3 +137,4 @@ __DATA__
 
 #include "wget.h"
 #include <stdio.h>
+#include "version.h"

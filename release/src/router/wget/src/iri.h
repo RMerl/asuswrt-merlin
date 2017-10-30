@@ -1,5 +1,6 @@
 /* Internationalization related declarations.
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008, 2009, 2010, 2011, 2015 Free Software Foundation,
+   Inc.
 
 This file is part of GNU Wget.
 
@@ -39,29 +40,30 @@ struct iri {
 
 #ifdef ENABLE_IRI
 
-char *parse_charset (char *str);
-char *find_locale (void);
-bool check_encoding_name (char *encoding);
+char *parse_charset (const char *str);
+const char *find_locale (void);
+bool check_encoding_name (const char *encoding);
 const char *locale_to_utf8 (const char *str);
-char *idn_encode (struct iri *i, char *host);
-char *idn_decode (char *host);
-bool remote_to_utf8 (struct iri *i, const char *str, const char **new);
+char *idn_encode (const struct iri *i, const char *host);
+char *idn_decode (const char *host);
+bool remote_to_utf8 (const struct iri *i, const char *str, char **new);
 struct iri *iri_new (void);
 struct iri *iri_dup (const struct iri *);
 void iri_free (struct iri *i);
-void set_uri_encoding (struct iri *i, char *charset, bool force);
-void set_content_encoding (struct iri *i, char *charset);
+void set_uri_encoding (struct iri *i, const char *charset, bool force);
+void set_content_encoding (struct iri *i, const char *charset);
 
 #else /* ENABLE_IRI */
 
 extern struct iri dummy_iri;
 
-#define parse_charset(str)          (str, NULL)
+#define parse_charset(str)          NULL
 #define find_locale()               NULL
 #define check_encoding_name(str)    false
 #define locale_to_utf8(str)         (str)
 #define idn_encode(a,b)             NULL
 #define idn_decode(str)             NULL
+#define idn2_free(str)              ((void)0)
 #define remote_to_utf8(a,b,c)       false
 #define iri_new()                   (&dummy_iri)
 #define iri_dup(a)                  (&dummy_iri)

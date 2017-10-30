@@ -1,6 +1,7 @@
 /* Collect URLs from HTML source.
    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2007, 2008, 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
+   2007, 2008, 2009, 2010, 2011, 2012, 2015 Free Software Foundation,
+   Inc.
 
 This file is part of GNU Wget.
 
@@ -45,6 +46,7 @@ as that of the covered work.  */
 #include "recur.h"
 #include "html-url.h"
 #include "css-url.h"
+#include "c-strcase.h"
 
 typedef void (*tag_handler_t) (int, struct taginfo *, struct map_context *);
 
@@ -54,6 +56,7 @@ typedef void (*tag_handler_t) (int, struct taginfo *, struct map_context *);
 DECLARE_TAG_HANDLER (tag_find_urls);
 DECLARE_TAG_HANDLER (tag_handle_base);
 DECLARE_TAG_HANDLER (tag_handle_form);
+DECLARE_TAG_HANDLER (tag_handle_img);
 DECLARE_TAG_HANDLER (tag_handle_link);
 DECLARE_TAG_HANDLER (tag_handle_meta);
 
@@ -103,7 +106,7 @@ static struct known_tag {
   { TAG_FORM,    "form",        tag_handle_form },
   { TAG_FRAME,   "frame",       tag_find_urls },
   { TAG_IFRAME,  "iframe",      tag_find_urls },
-  { TAG_IMG,     "img",         tag_find_urls },
+  { TAG_IMG,     "img",         tag_handle_img },
   { TAG_INPUT,   "input",       tag_find_urls },
   { TAG_LAYER,   "layer",       tag_find_urls },
   { TAG_LINK,    "link",        tag_handle_link },
@@ -181,7 +184,8 @@ static const char *additional_attributes[] = {
   "name",                       /* used by tag_handle_meta  */
   "content",                    /* used by tag_handle_meta  */
   "action",                     /* used by tag_handle_form  */
-  "style"                       /* used by check_style_attr */
+  "style",                      /* used by check_style_attr */
+  "srcset",                     /* used by tag_handle_img */
 };
 
 static struct hash_table *interesting_tags;
@@ -255,7 +259,7 @@ find_attr (struct taginfo *tag, const char *name, int *attrind)
 {
   int i;
   for (i = 0; i < tag->nattrs; i++)
-    if (!strcasecmp (tag->attrs[i].name, name))
+    if (!c_strcasecmp (tag->attrs[i].name, name))
       {
         if (attrind)
           *attrind = i;
@@ -302,6 +306,7 @@ append_url (const char *link_uri, int position, int size,
           logprintf (LOG_NOTQUIET,
                      _("%s: Cannot resolve incomplete link %s.\n"),
                      ctx->document_file, link_uri);
+          iri_free (iri);
           return NULL;
         }
 
@@ -310,6 +315,7 @@ append_url (const char *link_uri, int position, int size,
         {
           DEBUGP (("%s: link \"%s\" doesn't parse.\n",
                    ctx->document_file, link_uri));
+          iri_free (iri);
           return NULL;
         }
     }
@@ -333,6 +339,7 @@ append_url (const char *link_uri, int position, int size,
           DEBUGP (("%s: merged link \"%s\" doesn't parse.\n",
                    ctx->document_file, complete_uri));
           xfree (complete_uri);
+          iri_free (iri);
           return NULL;
         }
       xfree (complete_uri);
@@ -378,7 +385,7 @@ append_url (const char *link_uri, int position, int size,
 
   return newel;
 }
-
+
 static void
 check_style_attr (struct taginfo *tag, struct map_context *ctx)
 {
@@ -487,8 +494,7 @@ tag_handle_base (int tagid _GL_UNUSED, struct taginfo *tag, struct map_context *
   base_urlpos->ignore_when_downloading = 1;
   base_urlpos->link_base_p = 1;
 
-  if (ctx->base)
-    xfree (ctx->base);
+  xfree (ctx->base);
   if (ctx->parent_base)
     ctx->base = uri_merge (ctx->parent_base, newbase);
   else
@@ -536,12 +542,12 @@ tag_handle_link (int tagid _GL_UNUSED, struct taginfo *tag, struct map_context *
           char *rel = find_attr (tag, "rel", NULL);
           if (rel)
             {
-              if (0 == strcasecmp (rel, "stylesheet"))
+              if (0 == c_strcasecmp (rel, "stylesheet"))
                 {
                   up->link_inline_p = 1;
                   up->link_expect_css = 1;
                 }
-              else if (0 == strcasecmp (rel, "shortcut icon"))
+              else if (0 == c_strcasecmp (rel, "shortcut icon"))
                 {
                   up->link_inline_p = 1;
                 }
@@ -553,7 +559,7 @@ tag_handle_link (int tagid _GL_UNUSED, struct taginfo *tag, struct map_context *
                      <link rel="alternate" type="application/rss+xml" href=".../?feed=rss2" />
                   */
                   char *type = find_attr (tag, "type", NULL);
-                  if (!type || strcasecmp (type, "text/html") == 0)
+                  if (!type || c_strcasecmp (type, "text/html") == 0)
                     up->link_expect_html = 1;
                 }
             }
@@ -570,7 +576,7 @@ tag_handle_meta (int tagid _GL_UNUSED, struct taginfo *tag, struct map_context *
   char *name = find_attr (tag, "name", NULL);
   char *http_equiv = find_attr (tag, "http-equiv", NULL);
 
-  if (http_equiv && 0 == strcasecmp (http_equiv, "refresh"))
+  if (http_equiv && 0 == c_strcasecmp (http_equiv, "refresh"))
     {
       /* Some pages use a META tag to specify that the page be
          refreshed by a new page after a given number of seconds.  The
@@ -615,7 +621,7 @@ tag_handle_meta (int tagid _GL_UNUSED, struct taginfo *tag, struct map_context *
           entry->link_expect_html = 1;
         }
     }
-  else if (http_equiv && 0 == strcasecmp (http_equiv, "content-type"))
+  else if (http_equiv && 0 == c_strcasecmp (http_equiv, "content-type"))
     {
       /* Handle stuff like:
          <meta http-equiv="Content-Type" content="text/html; charset=CHARSET"> */
@@ -629,17 +635,17 @@ tag_handle_meta (int tagid _GL_UNUSED, struct taginfo *tag, struct map_context *
       if (!mcharset)
         return;
 
-      xfree_null (meta_charset);
+      xfree (meta_charset);
       meta_charset = mcharset;
     }
-  else if (name && 0 == strcasecmp (name, "robots"))
+  else if (name && 0 == c_strcasecmp (name, "robots"))
     {
       /* Handle stuff like:
          <meta name="robots" content="index,nofollow"> */
       char *content = find_attr (tag, "content", NULL);
       if (!content)
         return;
-      if (!strcasecmp (content, "none"))
+      if (!c_strcasecmp (content, "none"))
         ctx->nofollow = true;
       else
         {
@@ -651,7 +657,7 @@ tag_handle_meta (int tagid _GL_UNUSED, struct taginfo *tag, struct map_context *
               /* Find the next occurrence of ',' or whitespace,
                * or the end of the string.  */
               end = content + strcspn (content, ", \f\n\r\t\v");
-              if (!strncasecmp (content, "nofollow", end - content))
+              if (!c_strncasecmp (content, "nofollow", end - content))
                 ctx->nofollow = true;
               /* Skip past the next comma, if any. */
               if (*end == ',')
@@ -666,6 +672,91 @@ tag_handle_meta (int tagid _GL_UNUSED, struct taginfo *tag, struct map_context *
                 }
               content = end;
             }
+        }
+    }
+}
+
+/* Handle the IMG tag.  This requires special handling for the srcset attr,
+   while the traditional src/lowsrc/href attributes can be handled generically.
+*/
+
+static void
+tag_handle_img (int tagid, struct taginfo *tag, struct map_context *ctx) {
+  int attrind;
+  char *srcset;
+
+  /* Use the generic approach for the attributes without special syntax. */
+  tag_find_urls(tagid, tag, ctx);
+
+  srcset = find_attr (tag, "srcset", &attrind);
+  if (srcset)
+    {
+      /* These are relative to the input text. */
+      int base_ind = ATTR_POS (tag,attrind,ctx);
+      int size = strlen (srcset);
+
+      /* These are relative to srcset. */
+      int offset, url_start, url_end;
+
+      /* Make sure to line up base_ind with srcset[0], not outside quotes. */
+      if (ctx->text[base_ind] == '"' || ctx->text[base_ind] == '\'')
+        ++base_ind;
+
+      offset = 0;
+      while (offset < size)
+        {
+          bool has_descriptor = true;
+
+          /* Skip over initial whitespace and commas. Note there is no \v
+            in HTML5 whitespace. */
+          url_start = offset + strspn (srcset + offset, " \f\n\r\t,");
+
+          if (url_start == size)
+            return;
+
+          /* URL is any non-whitespace chars (including commas) - but with
+             trailing commas removed. */
+          url_end = url_start + strcspn (srcset + url_start, " \f\n\r\t");
+          while ((url_end - 1) > url_start && srcset[url_end - 1] == ',')
+            {
+              has_descriptor = false;
+              --url_end;
+            }
+
+          if (url_end > url_start)
+            {
+              char *url_text = strdupdelim (srcset + url_start,
+                                            srcset + url_end);
+              struct urlpos *up = append_url (url_text, base_ind + url_start,
+                                              url_end - url_start, ctx);
+              if (up)
+                {
+                  up->link_inline_p = 1;
+                  up->link_noquote_html_p = 1;
+                }
+              xfree (url_text);
+            }
+
+          /* If the URL wasn't terminated by a , there may also be a descriptor
+             which we just skip. */
+          if (has_descriptor)
+            {
+              /* This is comma-terminated, except there may be one level of
+                 parentheses escaping that. */
+              bool in_paren = false;
+              for (offset = url_end; offset < size; ++offset)
+                {
+                  char c = srcset[offset];
+                  if (c == '(')
+                    in_paren = true;
+                  else if (c == ')' && in_paren)
+                    in_paren = false;
+                  else if (c == ',' && !in_paren)
+                    break;
+                }
+            }
+          else
+            offset = url_end;
         }
     }
 }
@@ -692,7 +783,7 @@ collect_tags_mapper (struct taginfo *tag, void *arg)
 
   check_style_attr (tag, ctx);
 
-  if (tag->end_tag_p && (0 == strcasecmp (tag->name, "style"))
+  if (tag->end_tag_p && (0 == c_strcasecmp (tag->name, "style"))
       && tag->contents_begin && tag->contents_end
       && tag->contents_begin <= tag->contents_end)
   {
@@ -701,7 +792,7 @@ collect_tags_mapper (struct taginfo *tag, void *arg)
                   tag->contents_end - tag->contents_begin);
   }
 }
-
+
 /* Analyze HTML tags FILE and construct a list of URLs referenced from
    it.  It merges relative links in FILE with URL.  It is aware of
    <base href=...> and does the right thing.  */
@@ -748,16 +839,19 @@ get_urls_html (const char *file, const char *url, bool *meta_disallow_follow,
   map_html_tags (fm->content, fm->length, collect_tags_mapper, &ctx, flags,
                  NULL, interesting_attributes);
 
+#ifdef ENABLE_IRI
   /* Meta charset is only valid if there was no HTTP header Content-Type charset. */
   /* This is true for HTTP 1.0 and 1.1. */
   if (iri && !iri->content_encoding && meta_charset)
     set_content_encoding (iri, meta_charset);
+#endif
+  xfree (meta_charset);
 
   DEBUGP (("no-follow in %s: %d\n", file, ctx.nofollow));
   if (meta_disallow_follow)
     *meta_disallow_follow = ctx.nofollow;
 
-  xfree_null (ctx.base);
+  xfree (ctx.base);
   wget_read_file_free (fm);
   return ctx.head;
 }
@@ -788,6 +882,7 @@ get_urls_file (const char *file)
     {
       int up_error_code;
       char *url_text;
+      char *new_url;
       struct urlpos *entry;
       struct url *url;
 
@@ -822,7 +917,7 @@ get_urls_file (const char *file)
           url_text = merged;
         }
 
-      char *new_url = rewrite_shorthand_url (url_text);
+      new_url = rewrite_shorthand_url (url_text);
       if (new_url)
         {
           xfree (url_text);

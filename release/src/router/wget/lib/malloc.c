@@ -1,6 +1,6 @@
 /* malloc() function that is glibc compatible.
 
-   Copyright (C) 1997-1998, 2006-2007, 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-1998, 2006-2007, 2009-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
