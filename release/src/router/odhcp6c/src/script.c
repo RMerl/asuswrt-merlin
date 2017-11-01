@@ -1,5 +1,6 @@
 /**
  * Copyright (C) 2012-2014 Steven Barth <steven@midlink.org>
+ * Copyright (C) 2017 Hans Dedecker <dedeckeh@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License v2 as published by
@@ -39,17 +40,16 @@ static const int8_t hexvals[] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
 
-
 static char action[16] = "";
 static char *argv[4] = {NULL, NULL, action, NULL};
 static volatile pid_t running = 0;
 static time_t started;
 
-
 static void script_sighandle(int signal)
 {
 	if (signal == SIGCHLD) {
 		pid_t child;
+
 		while ((child = waitpid(-1, NULL, WNOHANG)) > 0)
 			if (running == child)
 				running = 0;
@@ -61,13 +61,14 @@ int script_init(const char *path, const char *ifname)
 	argv[0] = (char*)path;
 	argv[1] = (char*)ifname;
 	signal(SIGCHLD, script_sighandle);
+
 	return 0;
 }
-
 
 ssize_t script_unhexlify(uint8_t *dst, size_t len, const char *src)
 {
 	size_t c;
+
 	for (c = 0; c < len && src[0] && src[1]; ++c) {
 		int8_t x = (int8_t)*src++;
 		int8_t y = (int8_t)*src++;
@@ -83,34 +84,37 @@ ssize_t script_unhexlify(uint8_t *dst, size_t len, const char *src)
 	return c;
 }
 
-
-static void script_hexlify(char *dst, const uint8_t *src, size_t len) {
+static void script_hexlify(char *dst, const uint8_t *src, size_t len)
+{
 	for (size_t i = 0; i < len; ++i) {
 		*dst++ = hexdigits[src[i] >> 4];
 		*dst++ = hexdigits[src[i] & 0x0f];
 	}
+
 	*dst = 0;
 }
-
 
 static void ipv6_to_env(const char *name,
 		const struct in6_addr *addr, size_t cnt)
 {
 	size_t buf_len = strlen(name);
 	char *buf = realloc(NULL, cnt * INET6_ADDRSTRLEN + buf_len + 2);
+
 	memcpy(buf, name, buf_len);
 	buf[buf_len++] = '=';
+
 	for (size_t i = 0; i < cnt; ++i) {
 		inet_ntop(AF_INET6, &addr[i], &buf[buf_len], INET6_ADDRSTRLEN);
 		buf_len += strlen(&buf[buf_len]);
 		buf[buf_len++] = ' ';
 	}
+
 	if (buf[buf_len - 1] == ' ')
 		buf_len--;
+
 	buf[buf_len] = '\0';
 	putenv(buf);
 }
-
 
 static void fqdn_to_env(const char *name, const uint8_t *fqdn, size_t len)
 {
@@ -118,8 +122,10 @@ static void fqdn_to_env(const char *name, const uint8_t *fqdn, size_t len)
 	size_t buf_size = len + buf_len + 2;
 	const uint8_t *fqdn_end = fqdn + len;
 	char *buf = realloc(NULL, len + buf_len + 2);
+
 	memcpy(buf, name, buf_len);
 	buf[buf_len++] = '=';
+
 	while (fqdn < fqdn_end) {
 		int l = dn_expand(fqdn, fqdn_end, fqdn, &buf[buf_len], buf_size - buf_len);
 		if (l <= 0)
@@ -128,8 +134,10 @@ static void fqdn_to_env(const char *name, const uint8_t *fqdn, size_t len)
 		buf_len += strlen(&buf[buf_len]);
 		buf[buf_len++] = ' ';
 	}
+
 	if (buf[buf_len - 1] == ' ')
 		buf_len--;
+
 	buf[buf_len] = '\0';
 	putenv(buf);
 }
@@ -138,6 +146,7 @@ static void bin_to_env(uint8_t *opts, size_t len)
 {
 	uint8_t *oend = opts + len, *odata;
 	uint16_t otype, olen;
+
 	dhcpv6_for_each_option(opts, oend, otype, olen, odata) {
 		char *buf = realloc(NULL, 14 + (olen * 2));
 		size_t buf_len = 0;
@@ -165,21 +174,26 @@ static void entry_to_env(const char *name, const void *data, size_t len, enum en
 	const size_t max_entry_len = (INET6_ADDRSTRLEN-1 + 5 + 22 + 15 + 10 +
 				      INET6_ADDRSTRLEN-1 + 11 + 1);
 	char *buf = realloc(NULL, buf_len + 2 + (len / sizeof(*e)) * max_entry_len);
+
 	memcpy(buf, name, buf_len);
 	buf[buf_len++] = '=';
 
 	for (size_t i = 0; i < len / sizeof(*e); ++i) {
 		inet_ntop(AF_INET6, &e[i].target, &buf[buf_len], INET6_ADDRSTRLEN);
 		buf_len += strlen(&buf[buf_len]);
+
 		if (type != ENTRY_HOST) {
 			snprintf(&buf[buf_len], 6, "/%"PRIu16, e[i].length);
 			buf_len += strlen(&buf[buf_len]);
+
 			if (type == ENTRY_ROUTE) {
 				buf[buf_len++] = ',';
+
 				if (!IN6_IS_ADDR_UNSPECIFIED(&e[i].router)) {
 					inet_ntop(AF_INET6, &e[i].router, &buf[buf_len], INET6_ADDRSTRLEN);
 					buf_len += strlen(&buf[buf_len]);
 				}
+
 				snprintf(&buf[buf_len], 23, ",%u,%u", e[i].valid, e[i].priority);
 				buf_len += strlen(&buf[buf_len]);
 			} else {
@@ -202,15 +216,16 @@ static void entry_to_env(const char *name, const void *data, size_t len, enum en
 				buf_len += strlen(&buf[buf_len]);
 			}
 		}
+
 		buf[buf_len++] = ' ';
 	}
 
 	if (buf[buf_len - 1] == ' ')
 		buf_len--;
+
 	buf[buf_len] = '\0';
 	putenv(buf);
 }
-
 
 static void search_to_env(const char *name, const uint8_t *start, size_t len)
 {
@@ -220,32 +235,34 @@ static void search_to_env(const char *name, const uint8_t *start, size_t len)
 	*c++ = '=';
 
 	for (struct odhcp6c_entry *e = (struct odhcp6c_entry*)start;
-				(uint8_t*)e < &start[len] && &e->auxtarget[e->auxlen] <= &start[len];
-				e = (struct odhcp6c_entry*)(&e->auxtarget[e->auxlen])) {
+				(uint8_t*)e < &start[len] &&
+				(uint8_t*)odhcp6c_next_entry(e) <= &start[len];
+				e = odhcp6c_next_entry(e)) {
 		c = mempcpy(c, e->auxtarget, e->auxlen);
 		*c++ = ' ';
 	}
 
 	if (c[-1] == ' ')
 		c--;
+
 	*c = '\0';
 	putenv(buf);
 }
-
 
 static void int_to_env(const char *name, int value)
 {
 	size_t len = 13 + strlen(name);
 	char *buf = realloc(NULL, len);
+
 	snprintf(buf, len, "%s=%d", name, value);
 	putenv(buf);
 }
-
 
 static void s46_to_env_portparams(const uint8_t *data, size_t len, FILE *fp)
 {
 	uint8_t *odata;
 	uint16_t otype, olen;
+
 	dhcpv6_for_each_option(data, &data[len], otype, olen, odata) {
 		if (otype == DHCPV6_OPT_S46_PORTPARAMS &&
 				olen == sizeof(struct dhcpv6_s46_portparams)) {
@@ -255,7 +272,6 @@ static void s46_to_env_portparams(const uint8_t *data, size_t len, FILE *fp)
 		}
 	}
 }
-
 
 static void s46_to_env(enum odhcp6c_state state, const uint8_t *data, size_t len)
 {
@@ -277,6 +293,7 @@ static void s46_to_env(enum odhcp6c_state state, const uint8_t *data, size_t len
 
 	uint8_t *odata;
 	uint16_t otype, olen;
+
 	dhcpv6_for_each_option(data, &data[len], otype, olen, odata) {
 		struct dhcpv6_s46_rule *rule = (struct dhcpv6_s46_rule*)odata;
 		struct dhcpv6_s46_v4v6bind *bind = (struct dhcpv6_s46_v4v6bind*)odata;
@@ -370,7 +387,6 @@ static void s46_to_env(enum odhcp6c_state state, const uint8_t *data, size_t len
 	putenv(str);
 }
 
-
 void script_call(const char *status, int delay, bool resume)
 {
 	time_t now = odhcp6c_get_milli_time() / 1000;
@@ -386,12 +402,14 @@ void script_call(const char *status, int delay, bool resume)
 		strncpy(action, status, sizeof(action) - 1);
 
 	pid_t pid = fork();
+
 	if (pid > 0) {
 		running = pid;
 		started = now;
 
 		if (!resume)
 			action[0] = 0;
+
 	} else if (pid == 0) {
 		size_t dns_len, search_len, custom_len, sntp_ip_len, ntp_ip_len, ntp_dns_len;
 		size_t sip_ip_len, sip_fqdn_len, aftr_name_len, cer_len, addr_len;

@@ -1,0 +1,14 @@
+.project
+.cproject
+odhcp6c
+config.log
+CMakeCache.txt
+CMakeFiles
+CPackConfig.cmake
+CPackSourceConfig.cmake
+_CPack_Packages
+#Makefile
+cmake_install.cmake
+install_manifest.txt
+*.deb
+*.o

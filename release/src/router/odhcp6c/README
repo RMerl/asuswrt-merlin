@@ -30,6 +30,7 @@ especially routers. It compiles to only about 35 KB (-Os -s).
 	i) DS-Lite AFTR-Name Option
 	j) Softwire address and port mapped clients (MAP, LW4over6)
 	j) CER-ID (experimental)
+	k) Server unicast Option
 
 4. Support for requesting and parsing Router Advertisements
 	a) parsing of prefixes, routes, MTU and RDNSS options
@@ -38,7 +39,7 @@ especially routers. It compiles to only about 35 KB (-Os -s).
 ** Compiling **
 
 odhcp6c uses cmake:
-* To prepare a Makefile use:  "cmake ." 
+* To prepare a Makefile use:  "cmake ."
 * To build / install use: "make" / "make install" afterwards.
 * To build DEB or RPM packages use: "make package" afterwards.
 
