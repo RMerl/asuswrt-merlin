@@ -30,7 +30,12 @@
 #include <net/if.h>
 #include <sys/syscall.h>
 #include <arpa/inet.h>
-#include <linux/if_addr.h>
+
+#include <linux/rtnetlink.h>
+
+#ifndef IFA_F_DADFAILED
+#define IFA_F_DADFAILED 0x08
+#endif
 
 #include "odhcp6c.h"
 #include "ra.h"
