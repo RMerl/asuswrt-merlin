@@ -9849,14 +9849,15 @@ int check_rsasign(char *fname)
         }
     }
 
-    fclose(dataFileFP);
-
     if (ferror(dataFileFP)) {
         _dprintf("input file");
         EVP_PKEY_free(pkey);
+        fclose(dataFileFP);
 	free(sig);
         return 0;
     }
+
+    fclose(dataFileFP);
 
     if (!EVP_VerifyFinal(&ctx, sig, siglen, pkey)) {
         _dprintf("EVP_VerifyFinal: failed.\n");
