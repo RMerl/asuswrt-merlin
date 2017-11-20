@@ -168,7 +168,7 @@ simply using two bytes at the head of every packet and having a max
 packet size of 32k. Small packets (&lt;255, the typical case) are
 penalized with twice the segmentation overhead). Using the lacing
 values as suggested, small packets see the minimum possible
-byte-aligned overheade (1 byte) and large packets, over 512 bytes or
+byte-aligned overhead (1 byte) and large packets, over 512 bytes or
 so, see a fairly constant ~.5% overhead on encoding space.</p>
 
 <p>Note that a lacing value of 255 implies that a second lacing value
@@ -192,10 +192,7 @@ consists of nothing more than a lacing value of zero in the header.</p>
 <p>Packets are not restricted to beginning and ending within a page,
 although individual segments are, by definition, required to do so.
 Packets are not restricted to a maximum size, although excessively
-large packets in the data stream are discouraged; the Ogg
-bitstream specification strongly recommends nominal page size of
-approximately 4-8kB (large packets are foreseen as being useful for
-initialization data at the beginning of a logical bitstream).</p>
+large packets in the data stream are discouraged.</p>
 
 <p>After segmenting a packet, the encoder may decide not to place all the
 resulting segments into the current page; to do so, the encoder places
@@ -244,6 +241,7 @@ limiting, implemented by simply truncating packets in the nominal case
 if the packet is arranged so that the least sensitive portion of the
 data comes last.</p>
 
+<a name="page_header"></a>
 <h3>Page header</h3>
 
 <p>The headering mechanism is designed to avoid copying and re-assembly

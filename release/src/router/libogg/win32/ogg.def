@@ -1,4 +1,4 @@
-; $Id: ogg.def 14733 2008-04-14 21:27:06Z sping $
+; $Id$
 ;
 ; ogg.def
 ;
@@ -63,6 +63,8 @@ ogg_stream_reset
 ogg_stream_reset_serialno
 ogg_stream_destroy
 ogg_stream_eos
+ogg_stream_pageout_fill
+ogg_stream_flush_fill
 ;
 ogg_page_checksum_set
 ogg_page_version

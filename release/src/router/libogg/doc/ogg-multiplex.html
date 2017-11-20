@@ -117,16 +117,17 @@ Streams'.</p>
 
 <h3>Seeking</h3> 
 
-<p>Ogg is designed to use a bisection search to implement exact
-positional seeking rather than building an index; an index requires
-two-pass encoding and as such is not acceptable given the requirement
-for full-featured linear encoding.</p>
+<p>Ogg is designed to use an interpolated bisection search to
+implement exact positional seeking.  Interpolated bisection search is
+a spec-mandated mechanism.</p>
 
-<p><i>Even making an index optional then requires an
-application to support multiple methods (bisection search for a
-one-pass stream, indexing for a two-pass stream), which adds no
-additional functionality as bisection search delivers the same
-functionality for both stream types.</i></p>
+<p><i>An index may improve objective performance, but it seldom
+improves subjective performance outside of a few high-latency use
+cases and adds no additional functionality as bisection search
+delivers the same functionality for both one- and two-pass stream
+types.  For these reasons, use of indexes is discouraged, except in
+cases where an index provides demonstrable and noticable performance
+improvement.</i></p>
 
 <p>Seek operations are by absolute time; a direct bisection search must
 find the exact time position requested. Information in the Ogg
