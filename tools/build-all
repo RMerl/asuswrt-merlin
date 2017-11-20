@@ -5,20 +5,21 @@
 
 ### Manual/hardcoded
 # Append git revision
-BUILDREV=1
+export BUILDREV=1
+#export MERLINUPDATE=n
 
 # Set DEFAULTBUILD to "none", then
 # uncomment desired models
 #
 # You can also set DEFAULTBUILD to one of the BUILDMODELS flags (see below)
 
-DEFAULTBUILD="none"
+DEFAULTBUILD="all"
 
-BN66=y
-BAC66=y
+#BN66=y
+#BAC66=y
 
 #BAC56=y
-BAC68=y
+#BAC68=y
 #BAC87=y
 
 #BAC3200=y
@@ -87,7 +88,7 @@ build_fw()
 	FWPATH=$1
 	echo "*** $(date +%R) - Starting building $FWMODEL..."
 	cd ~/$FWPATH
-	make $FWMODEL &>/dev/null
+	make $FWMODEL &> output.txt
 
 	if [ $? -eq 0 ]; then
 		cd image
