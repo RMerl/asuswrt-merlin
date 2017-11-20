@@ -1,6 +1,22 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.69 Beta (xx-xxx-xxxx)
+  - CHANGED: Updated odhcp6c to be insync with upstream
+             (patch by theMIRon)
+  - CHANGED: Updated openssl to 1.0.2m.
+  - CHANGED: Updated libogg to 1.3.3 and libvorbis to 1.3.5.
+  - CHANGED: Updated wget to 1.19.2 (fixing connectivity to some
+             TLS 1.2 servers)
+  - CHANGED: Updated RT-N66U and RT-AC66U SDK to GPL 380_8120's
+             (fixing KRACK in repeater/bridge mode)
+  - FIXED: allow IA_NA mode downgrade with forced IA_PD
+           (for ISPs with broken IPv6 support)
+           (patch by theMIRon)
+  - FIXED: Trend Micro signature check might randomly fail the
+           RSA validation.
+
+
 380.68_4 (4-Oct-2017)
   - CHANGED: Updated dnsmasq to 2.78 (contains a number of
              security fixes).
