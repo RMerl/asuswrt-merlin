@@ -5,13 +5,13 @@
  * GOVERNED BY A BSD-STYLE SOURCE LICENSE INCLUDED WITH THIS SOURCE *
  * IN 'COPYING'. PLEASE READ THESE TERMS BEFORE DISTRIBUTING.       *
  *                                                                  *
- * THE OggVorbis SOURCE CODE IS (C) COPYRIGHT 1994-2009             *
+ * THE OggVorbis SOURCE CODE IS (C) COPYRIGHT 1994-2015             *
  * by the Xiph.Org Foundation http://www.xiph.org/                  *
  *                                                                  *
  ********************************************************************
 
  function: floor backend 1 implementation
- last mod: $Id: floor1.c 16227 2009-07-08 06:58:46Z xiphmont $
+ last mod: $Id: floor1.c 19457 2015-03-03 00:15:29Z giles $
 
  ********************************************************************/
 
@@ -31,15 +31,22 @@
 #define floor1_rangedB 140 /* floor 1 fixed at -140dB to 0dB range */
 
 typedef struct lsfit_acc{
-  long x0;
-  long x1;
+  int x0;
+  int x1;
 
-  long xa;
-  long ya;
-  long x2a;
-  long y2a;
-  long xya;
-  long an;
+  int xa;
+  int ya;
+  int x2a;
+  int y2a;
+  int xya;
+  int an;
+
+  int xb;
+  int yb;
+  int x2b;
+  int y2b;
+  int xyb;
+  int bn;
 } lsfit_acc;
 
 /***********************************************/
@@ -63,25 +70,6 @@ static void floor1_free_look(vorbis_look_floor *i){
     memset(look,0,sizeof(*look));
     _ogg_free(look);
   }
-}
-
-static int ilog(unsigned int v){
-  int ret=0;
-  while(v){
-    ret++;
-    v>>=1;
-  }
-  return(ret);
-}
-
-static int ilog2(unsigned int v){
-  int ret=0;
-  if(v)--v;
-  while(v){
-    ret++;
-    v>>=1;
-  }
-  return(ret);
 }
 
 static void floor1_pack (vorbis_info_floor *i,oggpack_buffer *opb){
@@ -110,8 +98,10 @@ static void floor1_pack (vorbis_info_floor *i,oggpack_buffer *opb){
 
   /* save out the post list */
   oggpack_write(opb,info->mult-1,2);     /* only 1,2,3,4 legal now */
-  oggpack_write(opb,ilog2(maxposit),4);
-  rangebits=ilog2(maxposit);
+  /* maxposit cannot legally be less than 1; this is encode-side, we
+     can assume our setup is OK */
+  oggpack_write(opb,ov_ilog(maxposit-1),4);
+  rangebits=ov_ilog(maxposit-1);
 
   for(j=0,k=0;j<info->partitions;j++){
     count+=info->class_dim[info->partitionclass[j]];
@@ -160,6 +150,7 @@ static vorbis_info_floor *floor1_unpack (vorbis_info *vi,oggpack_buffer *opb){
 
   for(j=0,k=0;j<info->partitions;j++){
     count+=info->class_dim[info->partitionclass[j]];
+    if(count>VIF_POSIT) goto err_out;
     for(;k<count;k++){
       int t=info->postlist[k+2]=oggpack_read(opb,rangebits);
       if(t<0 || t>=(1<<rangebits))
@@ -194,6 +185,8 @@ static vorbis_look_floor *floor1_look(vorbis_dsp_state *vd,
   vorbis_info_floor1 *info=(vorbis_info_floor1 *)in;
   vorbis_look_floor1 *look=_ogg_calloc(1,sizeof(*look));
   int i,j,n=0;
+
+  (void)vd;
 
   look->vi=info;
   look->n=info->postlist[1];
@@ -381,7 +374,7 @@ static void render_line(int n, int x0,int x1,int y0,int y1,float *d){
   }
 }
 
-static void render_line0(int x0,int x1,int y0,int y1,int *d){
+static void render_line0(int n, int x0,int x1,int y0,int y1,int *d){
   int dy=y1-y0;
   int adx=x1-x0;
   int ady=abs(dy);
@@ -393,8 +386,12 @@ static void render_line0(int x0,int x1,int y0,int y1,int *d){
 
   ady-=abs(base*adx);
 
-  d[x]=y;
-  while(++x<x1){
+  if(n>x1)n=x1;
+
+  if(x<n)
+    d[x]=y;
+
+  while(++x<n){
     err=err+ady;
     if(err>=adx){
       err-=adx;
@@ -412,7 +409,7 @@ static int accumulate_fit(const float *flr,const float *mdct,
                           int n,vorbis_info_floor1 *info){
   long i;
 
-  long xa=0,ya=0,x2a=0,y2a=0,xya=0,na=0, xb=0,yb=0,x2b=0,y2b=0,xyb=0,nb=0;
+  int xa=0,ya=0,x2a=0,y2a=0,xya=0,na=0, xb=0,yb=0,x2b=0,y2b=0,xyb=0,nb=0;
 
   memset(a,0,sizeof(*a));
   a->x0=x0;
@@ -440,72 +437,65 @@ static int accumulate_fit(const float *flr,const float *mdct,
     }
   }
 
-  xb+=xa;
-  yb+=ya;
-  x2b+=x2a;
-  y2b+=y2a;
-  xyb+=xya;
-  nb+=na;
+  a->xa=xa;
+  a->ya=ya;
+  a->x2a=x2a;
+  a->y2a=y2a;
+  a->xya=xya;
+  a->an=na;
 
-  /* weight toward the actually used frequencies if we meet the threshhold */
-  {
-    int weight=nb*info->twofitweight/(na+1);
-
-    a->xa=xa*weight+xb;
-    a->ya=ya*weight+yb;
-    a->x2a=x2a*weight+x2b;
-    a->y2a=y2a*weight+y2b;
-    a->xya=xya*weight+xyb;
-    a->an=na*weight+nb;
-  }
+  a->xb=xb;
+  a->yb=yb;
+  a->x2b=x2b;
+  a->y2b=y2b;
+  a->xyb=xyb;
+  a->bn=nb;
 
   return(na);
 }
 
-static int fit_line(lsfit_acc *a,int fits,int *y0,int *y1){
-  long x=0,y=0,x2=0,y2=0,xy=0,an=0,i;
-  long x0=a[0].x0;
-  long x1=a[fits-1].x1;
+static int fit_line(lsfit_acc *a,int fits,int *y0,int *y1,
+                    vorbis_info_floor1 *info){
+  double xb=0,yb=0,x2b=0,y2b=0,xyb=0,bn=0;
+  int i;
+  int x0=a[0].x0;
+  int x1=a[fits-1].x1;
 
   for(i=0;i<fits;i++){
-    x+=a[i].xa;
-    y+=a[i].ya;
-    x2+=a[i].x2a;
-    y2+=a[i].y2a;
-    xy+=a[i].xya;
-    an+=a[i].an;
+    double weight = (a[i].bn+a[i].an)*info->twofitweight/(a[i].an+1)+1.;
+
+    xb+=a[i].xb + a[i].xa * weight;
+    yb+=a[i].yb + a[i].ya * weight;
+    x2b+=a[i].x2b + a[i].x2a * weight;
+    y2b+=a[i].y2b + a[i].y2a * weight;
+    xyb+=a[i].xyb + a[i].xya * weight;
+    bn+=a[i].bn + a[i].an * weight;
   }
 
   if(*y0>=0){
-    x+=   x0;
-    y+=  *y0;
-    x2+=  x0 *  x0;
-    y2+= *y0 * *y0;
-    xy+= *y0 *  x0;
-    an++;
+    xb+=   x0;
+    yb+=  *y0;
+    x2b+=  x0 *  x0;
+    y2b+= *y0 * *y0;
+    xyb+= *y0 *  x0;
+    bn++;
   }
 
   if(*y1>=0){
-    x+=   x1;
-    y+=  *y1;
-    x2+=  x1 *  x1;
-    y2+= *y1 * *y1;
-    xy+= *y1 *  x1;
-    an++;
+    xb+=   x1;
+    yb+=  *y1;
+    x2b+=  x1 *  x1;
+    y2b+= *y1 * *y1;
+    xyb+= *y1 *  x1;
+    bn++;
   }
 
   {
-    /* need 64 bit multiplies, which C doesn't give portably as int */
-    double fx=x;
-    double fx2=x2;
-    double denom=(an*fx2-fx*fx);
+    double denom=(bn*x2b-xb*xb);
 
     if(denom>0.){
-      double fy=y;
-      double fxy=xy;
-
-      double a=(fy*fx2-fxy*fx)/denom;
-      double b=(an*fxy-fx*fy)/denom;
+      double a=(yb*x2b-xyb*xb)/denom;
+      double b=(bn*xyb-xb*yb)/denom;
       *y0=rint(a+b*x0);
       *y1=rint(a+b*x1);
 
@@ -523,16 +513,6 @@ static int fit_line(lsfit_acc *a,int fits,int *y0,int *y1){
     }
   }
 }
-
-/*static void fit_line_point(lsfit_acc *a,int fits,int *y0,int *y1){
-  long y=0;
-  int i;
-
-  for(i=0;i<fits && y==0;i++)
-    y+=a[i].ya;
-
-  *y0=*y1=y;
-  }*/
 
 static int inspect_error(int x0,int x1,int y0,int y1,const float *mask,
                          const float *mdct,
@@ -632,7 +612,7 @@ int *floor1_fit(vorbis_block *vb,vorbis_look_floor1 *look,
     /* start by fitting the implicit base case.... */
     int y0=-200;
     int y1=-200;
-    fit_line(fits,posts-1,&y0,&y1);
+    fit_line(fits,posts-1,&y0,&y1,info);
 
     fit_valueA[0]=y0;
     fit_valueB[0]=y0;
@@ -672,8 +652,8 @@ int *floor1_fit(vorbis_block *vb,vorbis_look_floor1 *look,
             int ly1=-200;
             int hy0=-200;
             int hy1=-200;
-            int ret0=fit_line(fits+lsortpos,sortpos-lsortpos,&ly0,&ly1);
-            int ret1=fit_line(fits+sortpos,hsortpos-sortpos,&hy0,&hy1);
+            int ret0=fit_line(fits+lsortpos,sortpos-lsortpos,&ly0,&ly1,info);
+            int ret1=fit_line(fits+sortpos,hsortpos-sortpos,&hy0,&hy1,info);
 
             if(ret0){
               ly0=ly;
@@ -857,9 +837,9 @@ int floor1_encode(oggpack_buffer *opb,vorbis_block *vb,
 
     /* beginning/end post */
     look->frames++;
-    look->postbits+=ilog(look->quant_q-1)*2;
-    oggpack_write(opb,out[0],ilog(look->quant_q-1));
-    oggpack_write(opb,out[1],ilog(look->quant_q-1));
+    look->postbits+=ov_ilog(look->quant_q-1)*2;
+    oggpack_write(opb,out[0],ov_ilog(look->quant_q-1));
+    oggpack_write(opb,out[1],ov_ilog(look->quant_q-1));
 
 
     /* partition by partition */
@@ -875,7 +855,9 @@ int floor1_encode(oggpack_buffer *opb,vorbis_block *vb,
 
       /* generate the partition's first stage cascade value */
       if(csubbits){
-        int maxval[8];
+        int maxval[8]={0,0,0,0,0,0,0,0}; /* gcc's static analysis
+                                            issues a warning without
+                                            initialization */
         for(k=0;k<csub;k++){
           int booknum=info->class_subbook[class][k];
           if(booknum<0){
@@ -945,6 +927,8 @@ int floor1_encode(oggpack_buffer *opb,vorbis_block *vb,
       int hx=0;
       int lx=0;
       int ly=post[0]*info->mult;
+      int n=ci->blocksizes[vb->W]/2;
+
       for(j=1;j<look->posts;j++){
         int current=look->forward_index[j];
         int hy=post[current]&0x7fff;
@@ -953,7 +937,7 @@ int floor1_encode(oggpack_buffer *opb,vorbis_block *vb,
           hy*=info->mult;
           hx=info->postlist[current];
 
-          render_line0(lx,hx,ly,hy,ilogmask);
+          render_line0(n,lx,hx,ly,hy,ilogmask);
 
           lx=hx;
           ly=hy;
@@ -981,8 +965,8 @@ static void *floor1_inverse1(vorbis_block *vb,vorbis_look_floor *in){
   if(oggpack_read(&vb->opb,1)==1){
     int *fit_value=_vorbis_block_alloc(vb,(look->posts)*sizeof(*fit_value));
 
-    fit_value[0]=oggpack_read(&vb->opb,ilog(look->quant_q-1));
-    fit_value[1]=oggpack_read(&vb->opb,ilog(look->quant_q-1));
+    fit_value[0]=oggpack_read(&vb->opb,ov_ilog(look->quant_q-1));
+    fit_value[1]=oggpack_read(&vb->opb,ov_ilog(look->quant_q-1));
 
     /* partition by partition */
     for(i=0,j=2;i<info->partitions;i++){
@@ -1039,7 +1023,7 @@ static void *floor1_inverse1(vorbis_block *vb,vorbis_look_floor *in){
           }
         }
 
-        fit_value[i]=val+predicted;
+        fit_value[i]=(val+predicted)&0x7fff;
         fit_value[look->loneighbor[i-2]]&=0x7fff;
         fit_value[look->hineighbor[i-2]]&=0x7fff;
 
@@ -1070,13 +1054,18 @@ static int floor1_inverse2(vorbis_block *vb,vorbis_look_floor *in,void *memo,
     int hx=0;
     int lx=0;
     int ly=fit_value[0]*info->mult;
+    /* guard lookup against out-of-range values */
+    ly=(ly<0?0:ly>255?255:ly);
+
     for(j=1;j<look->posts;j++){
       int current=look->forward_index[j];
       int hy=fit_value[current]&0x7fff;
       if(hy==fit_value[current]){
 
-        hy*=info->mult;
         hx=info->postlist[current];
+        hy*=info->mult;
+        /* guard lookup against out-of-range values */
+        hy=(hy<0?0:hy>255?255:hy);
 
         render_line(n,lx,hx,ly,hy,out);
 

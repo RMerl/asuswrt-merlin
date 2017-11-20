@@ -1,6 +1,6 @@
 ## Process this with automake to create Makefile.in
 
-SUBDIRS = vorbisfile vorbisenc
+SUBDIRS = libvorbis vorbisfile vorbisenc
 
 docdir = $(datadir)/doc/$(PACKAGE)-$(VERSION)
 
@@ -9,7 +9,6 @@ static_docs = \
 	rfc5215.xml \
 	rfc5215.txt \
 	eightphase.png \
-	evenlsp.png \
 	fish_xiph_org.png \
 	floor1_inverse_dB_table.html \
 	floorval.png \
@@ -17,8 +16,6 @@ static_docs = \
 	framing.html \
 	helper.html \
 	index.html \
-	lspmap.png \
-	oddlsp.png \
 	oggstream.html \
 	programming.html \
 	squarepolar.png \
@@ -27,15 +24,12 @@ static_docs = \
 	v-comment.html \
 	vorbis-clip.txt \
 	vorbis-errors.txt \
-	vorbis-fidelity.html \
-	vorbis.html \
-	vorbisword2.png \
-	wait.png \
-	white-xifish.png
+	vorbis-fidelity.html
 
 # bits needed by the spec
 SPEC_PNG = \
 	components.png \
+	fish_xiph_org.png \
 	floor1-1.png \
 	floor1-2.png \
 	floor1-3.png \
@@ -44,13 +38,8 @@ SPEC_PNG = \
 	hufftree-under.png \
 	residue-pack.png \
 	residue2.png \
-	white-xifish.png \
 	window1.png \
 	window2.png
-SPEC_PDF = xifish.pdf
-
-# FIXME: also needed here
-#	white-xifish.png 
 
 SPEC_TEX = \
 	Vorbis_I_spec.tex \
@@ -72,13 +61,13 @@ built_docs = Vorbis_I_spec.pdf Vorbis_I_spec.html Vorbis_I_spec.css
 
 # conditionally make the generated documentation
 if BUILD_DOCS
-doc_DATA = $(static_docs) $(SPEC_PNG) $(built_docs)
+doc_DATA = $(static_docs) $(SPEC_PNG) $(built_docs) doxygen-build.stamp
 else
-doc_DATA = $(static_docs)
+doc_DATA = $(static_docs) doxygen-build.stamp
 endif
 
 EXTRA_DIST = $(static_docs) $(built_docs) \
-	$(SPEC_TEX) $(SPEC_PNG) $(SPEC_PDF) Vorbis_I_spec.cfg
+	$(SPEC_TEX) $(SPEC_PNG) $(SPEC_PDF) Vorbis_I_spec.cfg Doxyfile.in
 
 # these are expensive; only remove if we have to
 MAINTAINERCLEANFILES = $(built_docs)
@@ -89,19 +78,16 @@ CLEANFILES = $(SPEC_TEX:%.tex=%.aux) \
 	     Vorbis_I_spec.out Vorbis_I_spec.tmp \
 	     Vorbis_I_spec.toc Vorbis_I_spec.xref \
 	     Vorbis_I_spec*.png \
-	     zzVorbis_I_spec.ps xifish.png
+	     zzVorbis_I_spec.ps
 DISTCLEANFILES = $(built_docs)
 
 
 # explicit rules for generating docs
 if BUILD_DOCS
-xifish.png: white-xifish.png
-	cp $< $@
-
-Vorbis_I_spec.html Vorbis_I_spec.css: $(SPEC_TEX) $(SPEC_PNG) xifish.png
+Vorbis_I_spec.html Vorbis_I_spec.css: $(SPEC_TEX) $(SPEC_PNG)
 	htlatex $<
 
-Vorbis_I_spec.pdf: $(SPEC_TEX) $(SPEC_PNG) xifish.png
+Vorbis_I_spec.pdf: $(SPEC_TEX) $(SPEC_PNG)
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
@@ -114,3 +100,36 @@ NO_DOCS_ERROR:
 	@echo "Try re-running after passing --enable-docs to configure."
 	@echo
 endif
+
+if HAVE_DOXYGEN
+doxygen-build.stamp: Doxyfile $(top_srcdir)/include/vorbis/*.h
+	doxygen
+	touch doxygen-build.stamp
+else
+doxygen-build.stamp:
+	echo "*** Warning: Doxygen not found; documentation will not be built."
+	touch doxygen-build.stamp
+endif
+
+install-data-local: doxygen-build.stamp
+	$(mkinstalldirs) $(DESTDIR)$(docdir)
+	if test -d vorbis; then \
+	  for dir in vorbis/*; do \
+	    if test -d $$dir; then \
+	      b=`basename $$dir`; \
+	      $(mkinstalldirs) $(DESTDIR)$(docdir)/$$b; \
+	      for f in $$dir/*; do \
+		$(INSTALL_DATA) $$f $(DESTDIR)$(docdir)/$$b; \
+	      done \
+	    fi \
+	  done \
+	fi
+
+uninstall-local:
+	rm -rf $(DESTDIR)$(docdir)
+
+clean-local:
+	if test -d vorbis; then rm -rf vorbis; fi
+	if test -f doxygen-build.stamp; then rm -f doxygen-build.stamp; fi
+
+

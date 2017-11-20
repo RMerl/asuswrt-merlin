@@ -95,7 +95,7 @@ called to initialize the <b>OggVorbis_File</b> structure with default values.
 <tr bgcolor=#cccccc>
         <td>
 <pre><b>
-  if(ov_open_callbacks(stdin, &vf, NULL, 0, OV_CALLBACKS_NOCLOSE) < 0) {
+  if(ov_open_callbacks(stdin, &amp;vf, NULL, 0, OV_CALLBACKS_NOCLOSE) &lt; 0) {
       fprintf(stderr,"Input does not appear to be an Ogg bitstream.\n");
       exit(1);
   }
@@ -115,14 +115,14 @@ We also want to pull out and show the user a comment attached to the file using 
         <td>
 <pre><b>
   {
-    char **ptr=ov_comment(&vf,-1)->user_comments;
-    vorbis_info *vi=ov_info(&vf,-1);
+    char **ptr=ov_comment(&amp;vf,-1)-&gt;user_comments;
+    vorbis_info *vi=ov_info(&amp;vf,-1);
     while(*ptr){
       fprintf(stderr,"%s\n",*ptr);
       ++ptr;
     }
-    fprintf(stderr,"\nBitstream is %d channel, %ldHz\n",vi->channels,vi->rate);
-    fprintf(stderr,"Encoded by: %s\n\n",ov_comment(&vf,-1)->vendor);
+    fprintf(stderr,"\nBitstream is %d channel, %ldHz\n",vi-&gt;channels,vi-&gt;rate);
+    fprintf(stderr,"Encoded by: %s\n\n",ov_comment(&amp;vf,-1)-&gt;vendor);
   }
   
 </b></pre>
@@ -140,7 +140,7 @@ Here's the read loop:
 <pre><b>
 
   while(!eof){
-    long ret=ov_read(&vf,pcmout,sizeof(pcmout),0,2,1,&current_section);
+    long ret=ov_read(&amp;vf,pcmout,sizeof(pcmout),0,2,1,&amp;current_section);
     switch(ret){
     case 0:
       /* EOF */
@@ -172,7 +172,7 @@ Now that we've finished playing, we can pack up and go home.  It's important to 
         <td>
 <pre><b>
 
-  ov_clear(&vf);
+  ov_clear(&amp;vf);
     
   fprintf(stderr,"Done.\n");
   return(0);
@@ -191,7 +191,7 @@ distribution in <a href="vorbisfile_example_c.html">vorbisfile_example.c</a>.
 <table border=0 width=100%>
 <tr valign=top>
 <td><p class=tiny>copyright &copy; 2000 vorbis team</p></td>
-<td align=right><p class=tiny><a href="http://www.xiph.org/ogg/vorbis/">Ogg Vorbis</a><br><a href="mailto:team@vorbis.org">team@vorbis.org</a></p></td>
+<td align=right><p class=tiny><a href="http://www.xiph.org/ogg/vorbis/">Ogg Vorbis</a></p></td>
 </tr><tr>
 <td><p class=tiny>vorbisfile documentation</p></td>
 <td align=right><p class=tiny>vorbisfile version 1.25 - 20000615</p></td>

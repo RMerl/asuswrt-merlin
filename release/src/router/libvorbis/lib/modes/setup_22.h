@@ -11,7 +11,7 @@
  ********************************************************************
 
  function: 22kHz settings
- last mod: $Id: setup_22.h 16227 2009-07-08 06:58:46Z xiphmont $
+ last mod: $Id: setup_22.h 17026 2010-03-25 05:00:27Z xiphmont $
 
  ********************************************************************/
 
@@ -52,8 +52,8 @@ static const ve_setup_data_template ve_setup_22_stereo={
   _psy_noise_suppress,
 
   _psy_compand_8,
-  _psy_compand_8_mapping,
-  _psy_compand_8_mapping,
+  _psy_compand_16_mapping,
+  _psy_compand_16_mapping,
 
   {_noise_start_16,_noise_start_16},
   { _noise_part_16, _noise_part_16},
@@ -70,7 +70,7 @@ static const ve_setup_data_template ve_setup_22_stereo={
 
   _floor_books,
   _floor,
-  _floor_mapping_16_short,
+  2,
   _floor_mapping_16,
 
   _mapres_template_16_stereo
@@ -103,8 +103,8 @@ static const ve_setup_data_template ve_setup_22_uncoupled={
   _psy_noise_suppress,
 
   _psy_compand_8,
-  _psy_compand_8_mapping,
-  _psy_compand_8_mapping,
+  _psy_compand_16_mapping,
+  _psy_compand_16_mapping,
 
   {_noise_start_16,_noise_start_16},
   { _noise_part_16, _noise_part_16},
@@ -121,7 +121,7 @@ static const ve_setup_data_template ve_setup_22_uncoupled={
 
   _floor_books,
   _floor,
-  _floor_mapping_16_short,
+  2,
   _floor_mapping_16,
 
   _mapres_template_16_uncoupled

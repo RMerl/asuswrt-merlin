@@ -9,7 +9,7 @@
 <table border=0 width=100%>
 <tr>
 <td><p class=tiny>Vorbisfile documentation</p></td>
-<td align=right><p class=tiny>vorbisfile version 1.2.0 - 20070723</p></td>
+<td align=right><p class=tiny>vorbisfile version 1.3.2 - 20101101</p></td>
 </tr>
 </table>
 
@@ -19,9 +19,12 @@
 
 <p>
 This partially opens a vorbis file to test for Vorbis-ness.  It loads
-the headers for the first chain and tests for seekability (but does not seek).
-Use <a href="ov_test_open.html">ov_test_open()</a> to finish opening the file
-or <a href="ov_clear.html">ov_clear</a> to close/free it.
+the headers for the first chain and tests for seekability (but does
+not seek).  Use <a href="ov_test_open.html">ov_test_open()</a> to
+finish opening the file or <a href="ov_clear.html">ov_clear</a> to
+close/free it.  Note that vorbisfile does <b>not</b> take ownership of
+the file if the call fails; the calling applicaiton is responsible for
+closing the file if this call returns an error.
 <p>
 
 <p><em><b> WARNING for Windows developers: </b> Do not use ov_test()
@@ -88,11 +91,11 @@ All the <a href="ov_open.html#notes">notes from ov_open()</a> apply to ov_test()
 <hr noshade>
 <table border=0 width=100%>
 <tr valign=top>
-<td><p class=tiny>copyright &copy; 2007 Xiph.org</p></td>
+<td><p class=tiny>copyright &copy; 2000-2010 Xiph.Org</p></td>
 <td align=right><p class=tiny><a href="http://www.xiph.org/ogg/vorbis/">Ogg Vorbis</a></p></td>
 </tr><tr>
 <td><p class=tiny>Vorbisfile documentation</p></td>
-<td align=right><p class=tiny>vorbisfile version 1.2.0 - 20070723</p></td>
+<td align=right><p class=tiny>vorbisfile version 1.3.2 - 20101101</p></td>
 </tr>
 </table>
 

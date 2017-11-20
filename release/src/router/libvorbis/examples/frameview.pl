@@ -185,27 +185,27 @@ $panel->configure(-background=>$panel->optionGet("background",""));
 
 #$panel->resizable("FALSE","FALSE");
 
-my $panel_shell=$panel->Label(Name=>"shell",borderwidth=>1,relief=>'raised')->
+my $panel_shell=$panel->Label(Name=>"shell",-borderwidth=>1,-relief=>'raised')->
     place(-x=>10,-y=>36,-relwidth=>1.0,-relheight=>1.0,
           -width=>-20,-height=>-46,-anchor=>'nw');
 
-my $panel_quit=$panel_shell->Button(-class=>"Exit",text=>"quit",-command=>[sub{Shutdown()}])->
+my $panel_quit=$panel_shell->Button(-class=>"Exit",-text=>"quit",-command=>[sub{Shutdown()}])->
     place(-x=>-1,-y=>-1,-relx=>1.0,-rely=>1.0,-anchor=>'se');
 
-$panel->Label(Name=>"logo text",-class=>"Panel",text=>$version)->
+$panel->Label(Name=>"logo text",-class=>"Panel",-text=>$version)->
     place(-x=>5,-y=>5,-anchor=>'nw');
 
 
-my $graph_shell=$toplevel->Label(Name=>"shell",borderwidth=>1,relief=>'raised')->
+my $graph_shell=$toplevel->Label(Name=>"shell",-borderwidth=>1,-relief=>'raised')->
     place(-x=>10,-y=>36,-relwidth=>1.0,-relheight=>1.0,
           -width=>-20,-height=>-46,-anchor=>'nw');
 
-my $graph_status=$toplevel->Label(Name=>"logo text",-class=>"Panel",text=>"Starting up")->
+my $graph_status=$toplevel->Label(Name=>"logo text",-class=>"Panel",-text=>"Starting up")->
     place(-x=>5,-y=>5,-anchor=>'nw');
 
 
 my $panely=5;
-my $panel_rescan=$panel_shell->Button(text=>"rescan",command=>[sub{scan_directory()}])->
+my $panel_rescan=$panel_shell->Button(-text=>"rescan",-command=>[sub{scan_directory()}])->
     place(-x=>-5,-relx=>1.,-y=>$panely,-anchor=>'ne');
 $panely+=$panel_rescan->reqheight()+6;
 
@@ -236,7 +236,7 @@ $graphy-=$temp->reqheight()+5;
 my$onecrop;
 my$twocrop;
 
-my$oneresize=$temp=$graph_shell->Checkbutton(text=>"rescale",-variable=>\$onecrop,
+my$oneresize=$temp=$graph_shell->Checkbutton(-text=>"rescale",-variable=>\$onecrop,
 				-command=>[sub{draw_graph();}])->
     place(-x=>5,-y=>5,-anchor=>'nw');
 
@@ -245,7 +245,7 @@ my$one=$graph_shell->Canvas()->
 				     -x=>5,-y=>5+$temp->reqheight,-anchor=>'nw');
 
 
-my$tworesize=$temp=$graph_shell->Checkbutton(text=>"rescale",-variable=>\$twocrop,
+my$tworesize=$temp=$graph_shell->Checkbutton(-text=>"rescale",-variable=>\$twocrop,
 				-command=>[sub{draw_graph();}])->
     place(-rely=>1.,-y=>5,-anchor=>'nw',-in=>$one);
 my$two=$graph_shell->Canvas()->
@@ -552,18 +552,18 @@ sub populate_panel{
 	}
 
 	my $temp=$panel_twos[$i]=$panel_shell->
-	    Checkbutton(-variable=>\$panel_twovars[$i],-command=>['main::draw_graph'],text=>'2')->
+	    Checkbutton(-variable=>\$panel_twovars[$i],-command=>['main::draw_graph'],-text=>'2')->
 	    place(-y=>$localy,-x=>-5,-anchor=>"ne",-relx=>1.);
 	my $oney=$temp->reqheight();
 	my $onex=$temp->reqwidth()+15;
 
 	$temp=$panel_ones[$i]=$panel_shell->
-	    Checkbutton(-variable=>\$panel_onevars[$i],-command=>['main::draw_graph'],text=>'1')->
+	    Checkbutton(-variable=>\$panel_onevars[$i],-command=>['main::draw_graph'],-text=>'1')->
 	    place(-y=>0,-x=>0,-anchor=>"ne",-in=>$temp,-bordermode=>'outside');
 	$oney=$temp->reqheight() if ($oney<$temp->reqheight());
 	$onex+=$temp->reqwidth();
 
-	$temp=$panel_labels[$i]=$panel_shell->Label(-text=>$key,-class=>'Field',justify=>'left')->
+	$temp=$panel_labels[$i]=$panel_shell->Label(-text=>$key,-class=>'Field',-justify=>'left')->
 	    place(-y=>$localy,-x=>5,-anchor=>"nw",-relwidth=>1.,-width=>-$onex,
 		  -bordermode=>'outside');
 	$oney=$temp->reqheight() if ($oney<$temp->reqheight());
@@ -587,7 +587,7 @@ sub Shutdown{
 
 sub Status{
     my$text=shift @_;
-    $graph_status->configure(text=>"$text");
+    $graph_status->configure(-text=>"$text");
     $toplevel->update();
 }
 

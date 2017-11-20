@@ -111,44 +111,44 @@ context.
 
 \begin{Verbatim}[commandchars=\\\{\}]
 
-  1) [floor1_partitions] = read 5 bits as unsigned integer
-  2) [maximum_class] = -1
-  3) iterate [i] over the range 0 ... [floor1_partitions]-1 \{
+  1) [floor1\_partitions] = read 5 bits as unsigned integer
+  2) [maximum\_class] = -1
+  3) iterate [i] over the range 0 ... [floor1\_partitions]-1 \{
 
-        4) vector [floor1_partition_class_list] element [i] = read 4 bits as unsigned integer
+        4) vector [floor1\_partition\_class\_list] element [i] = read 4 bits as unsigned integer
 
      \}
 
-  5) [maximum_class] = largest integer scalar value in vector [floor1_partition_class_list]
-  6) iterate [i] over the range 0 ... [maximum_class] \{
+  5) [maximum\_class] = largest integer scalar value in vector [floor1\_partition\_class\_list]
+  6) iterate [i] over the range 0 ... [maximum\_class] \{
 
-        7) vector [floor1_class_dimensions] element [i] = read 3 bits as unsigned integer and add 1
-	8) vector [floor1_class_subclasses] element [i] = read 2 bits as unsigned integer
-        9) if ( vector [floor1_class_subclasses] element [i] is nonzero ) \{
+        7) vector [floor1\_class\_dimensions] element [i] = read 3 bits as unsigned integer and add 1
+	8) vector [floor1\_class\_subclasses] element [i] = read 2 bits as unsigned integer
+        9) if ( vector [floor1\_class\_subclasses] element [i] is nonzero ) \{
 
-             10) vector [floor1_class_masterbooks] element [i] = read 8 bits as unsigned integer
+             10) vector [floor1\_class\_masterbooks] element [i] = read 8 bits as unsigned integer
 
            \}
 
-       11) iterate [j] over the range 0 ... (2 exponent [floor1_class_subclasses] element [i]) - 1 \{
+       11) iterate [j] over the range 0 ... (2 exponent [floor1\_class\_subclasses] element [i]) - 1 \{
 
-             12) array [floor1_subclass_books] element [i],[j] =
+             12) array [floor1\_subclass\_books] element [i],[j] =
                  read 8 bits as unsigned integer and subtract one
            \}
       \}
 
- 13) [floor1_multiplier] = read 2 bits as unsigned integer and add one
+ 13) [floor1\_multiplier] = read 2 bits as unsigned integer and add one
  14) [rangebits] = read 4 bits as unsigned integer
- 15) vector [floor1_X_list] element [0] = 0
- 16) vector [floor1_X_list] element [1] = 2 exponent [rangebits];
- 17) [floor1_values] = 2
- 18) iterate [i] over the range 0 ... [floor1_partitions]-1 \{
+ 15) vector [floor1\_X\_list] element [0] = 0
+ 16) vector [floor1\_X\_list] element [1] = 2 exponent [rangebits];
+ 17) [floor1\_values] = 2
+ 18) iterate [i] over the range 0 ... [floor1\_partitions]-1 \{
 
-       19) [current_class_number] = vector [floor1_partition_class_list] element [i]
-       20) iterate [j] over the range 0 ... ([floor1_class_dimensions] element [current_class_number])-1 \{
-             21) vector [floor1_X_list] element ([floor1_values]) =
+       19) [current\_class\_number] = vector [floor1\_partition\_class\_list] element [i]
+       20) iterate [j] over the range 0 ... ([floor1\_class\_dimensions] element [current\_class\_number])-1 \{
+             21) vector [floor1\_X\_list] element ([floor1\_values]) =
                  read [rangebits] bits as unsigned integer
-             22) increment [floor1_values] by one
+             22) increment [floor1\_values] by one
            \}
      \}
 
@@ -157,14 +157,17 @@ context.
 
 An end-of-packet condition while reading any aspect of a floor 1
 configuration during setup renders a stream undecodable.  In addition,
-a \varname{[floor1_class_masterbooks]} or
-\varname{[floor1_subclass_books]} scalar element greater than the
+a \varname{[floor1\_class\_masterbooks]} or
+\varname{[floor1\_subclass\_books]} scalar element greater than the
 highest numbered codebook configured in this stream is an error
-condition that renders the stream undecodable.  All vector
-[floor1_x_list] element values must be unique within the vector; a
-non-unique value renders the stream undecodable.
+condition that renders the stream undecodable.  Vector
+[floor1\_x\_list] is limited to a maximum length of 65 elements; a
+setup indicating more than 65 total elements (including elements 0 and
+1 set prior to the read loop) renders the stream undecodable.  All
+vector [floor1\_x\_list] element values must be unique within the
+vector; a non-unique value renders the stream undecodable.
 
-\paragraph{packet decode} \label{vorbis:spec:floor1-decode}
+\subsubsection{packet decode} \label{vorbis:spec:floor1-decode}
 
 Packet decode begins by checking the \varname{[nonzero]} flag:
 
@@ -183,35 +186,35 @@ which happens to be approximately -140dB).
 Assuming \varname{[nonzero]} is set, decode proceeds as follows:
 
 \begin{Verbatim}[commandchars=\\\{\}]
-  1) [range] = vector \{ 256, 128, 86, 64 \} element ([floor1_multiplier]-1)
-  2) vector [floor1_Y] element [0] = read \link{vorbis:spec:ilog}{ilog}([range]-1) bits as unsigned integer
-  3) vector [floor1_Y] element [1] = read \link{vorbis:spec:ilog}{ilog}([range]-1) bits as unsigned integer
+  1) [range] = vector \{ 256, 128, 86, 64 \} element ([floor1\_multiplier]-1)
+  2) vector [floor1\_Y] element [0] = read \link{vorbis:spec:ilog}{ilog}([range]-1) bits as unsigned integer
+  3) vector [floor1\_Y] element [1] = read \link{vorbis:spec:ilog}{ilog}([range]-1) bits as unsigned integer
   4) [offset] = 2;
-  5) iterate [i] over the range 0 ... [floor1_partitions]-1 \{
+  5) iterate [i] over the range 0 ... [floor1\_partitions]-1 \{
 
-       6) [class] = vector [floor1_partition_class]  element [i]
-       7) [cdim]  = vector [floor1_class_dimensions] element [class]
-       8) [cbits] = vector [floor1_class_subclasses] element [class]
+       6) [class] = vector [floor1\_partition\_class]  element [i]
+       7) [cdim]  = vector [floor1\_class\_dimensions] element [class]
+       8) [cbits] = vector [floor1\_class\_subclasses] element [class]
        9) [csub]  = (2 exponent [cbits])-1
       10) [cval]  = 0
       11) if ( [cbits] is greater than zero ) \{
 
              12) [cval] = read from packet using codebook number
-                 (vector [floor1_class_masterbooks] element [class]) in scalar context
+                 (vector [floor1\_class\_masterbooks] element [class]) in scalar context
           \}
 
       13) iterate [j] over the range 0 ... [cdim]-1 \{
 
-             14) [book] = array [floor1_subclass_books] element [class],([cval] bitwise AND [csub])
+             14) [book] = array [floor1\_subclass\_books] element [class],([cval] bitwise AND [csub])
              15) [cval] = [cval] right shifted [cbits] bits
 	     16) if ( [book] is not less than zero ) \{
 
-	           17) vector [floor1_Y] element ([j]+[offset]) = read from packet using codebook
+	           17) vector [floor1\_Y] element ([j]+[offset]) = read from packet using codebook
                        [book] in scalar context
 
                  \} else [book] is less than zero \{
 
-	           18) vector [floor1_Y] element ([j]+[offset]) = 0
+	           18) vector [floor1\_Y] element ([j]+[offset]) = 0
 
                  \}
           \}
@@ -229,12 +232,12 @@ operation above, floor decode is to return 'unused' status as if the
 \varname{[nonzero]} flag had been unset at the beginning of decode.
 
 
-Vector \varname{[floor1_Y]} contains the values from packet decode
+Vector \varname{[floor1\_Y]} contains the values from packet decode
 needed for floor 1 synthesis.
 
 
 
-\paragraph{curve computation} \label{vorbis:spec:floor1-synth}
+\subsubsection{curve computation} \label{vorbis:spec:floor1-synth}
 
 Curve computation is split into two logical steps; the first step
 derives final Y amplitude values from the encoded, wrapped difference
@@ -249,6 +252,16 @@ optimizations, implementors are warned to follow the details closely.
 Deviation from implementing a strictly equivalent algorithm can result
 in serious decoding errors.
 
+{\em Additional note:} Although \varname{[floor1\_final\_Y]} values in
+the prediction loop and at the end of step 1 are inherently limited by
+the prediction algorithm to [0, \varname{[range]}), it is possible to
+  abuse the setup and codebook machinery to produce negative or
+  over-range results.  We suggest that decoder implementations guard
+  the values in vector \varname{[floor1\_final\_Y]} by clamping each
+  element to [0, \varname{[range]}) after step 1.  Variants of this
+    suggestion are acceptable as valid floor1 setups cannot produce
+    out of range values.
+
 \begin{description}
 \item[step 1: amplitude value synthesis]
 
@@ -256,23 +269,23 @@ Unwrap the always-positive-or-zero values read from the packet into
 +/- difference values, then apply to line prediction.
 
 \begin{Verbatim}[commandchars=\\\{\}]
-  1) [range] = vector \{ 256, 128, 86, 64 \} element ([floor1_multiplier]-1)
-  2) vector [floor1_step2_flag] element [0] = set
-  3) vector [floor1_step2_flag] element [1] = set
-  4) vector [floor1_final_Y] element [0] = vector [floor1_Y] element [0]
-  5) vector [floor1_final_Y] element [1] = vector [floor1_Y] element [1]
-  6) iterate [i] over the range 2 ... [floor1_values]-1 \{
+  1) [range] = vector \{ 256, 128, 86, 64 \} element ([floor1\_multiplier]-1)
+  2) vector [floor1\_step2\_flag] element [0] = set
+  3) vector [floor1\_step2\_flag] element [1] = set
+  4) vector [floor1\_final\_Y] element [0] = vector [floor1\_Y] element [0]
+  5) vector [floor1\_final\_Y] element [1] = vector [floor1\_Y] element [1]
+  6) iterate [i] over the range 2 ... [floor1\_values]-1 \{
 
-       7) [low_neighbor_offset] = \link{vorbis:spec:low:neighbor}{low_neighbor}([floor1_X_list],[i])
-       8) [high_neighbor_offset] = \link{vorbis:spec:high:neighbor}{high_neighbor}([floor1_X_list],[i])
+       7) [low\_neighbor\_offset] = \link{vorbis:spec:low:neighbor}{low\_neighbor}([floor1\_X\_list],[i])
+       8) [high\_neighbor\_offset] = \link{vorbis:spec:high:neighbor}{high\_neighbor}([floor1\_X\_list],[i])
 
-       9) [predicted] = \link{vorbis:spec:render:point}{render_point}( vector [floor1_X_list] element [low_neighbor_offset],
-				      vector [floor1_final_Y] element [low_neighbor_offset],
-                                      vector [floor1_X_list] element [high_neighbor_offset],
-				      vector [floor1_final_Y] element [high_neighbor_offset],
-                                      vector [floor1_X_list] element [i] )
+       9) [predicted] = \link{vorbis:spec:render:point}{render\_point}( vector [floor1\_X\_list] element [low\_neighbor\_offset],
+				      vector [floor1\_final\_Y] element [low\_neighbor\_offset],
+                                      vector [floor1\_X\_list] element [high\_neighbor\_offset],
+				      vector [floor1\_final\_Y] element [high\_neighbor\_offset],
+                                      vector [floor1\_X\_list] element [i] )
 
-      10) [val] = vector [floor1_Y] element [i]
+      10) [val] = vector [floor1\_Y] element [i]
       11) [highroom] = [range] - [predicted]
       12) [lowroom]  = [predicted]
       13) if ( [highroom] is less than [lowroom] ) \{
@@ -287,31 +300,31 @@ Unwrap the always-positive-or-zero values read from the packet into
 
       16) if ( [val] is nonzero ) \{
 
-            17) vector [floor1_step2_flag] element [low_neighbor_offset] = set
-            18) vector [floor1_step2_flag] element [high_neighbor_offset] = set
-            19) vector [floor1_step2_flag] element [i] = set
+            17) vector [floor1\_step2\_flag] element [low\_neighbor\_offset] = set
+            18) vector [floor1\_step2\_flag] element [high\_neighbor\_offset] = set
+            19) vector [floor1\_step2\_flag] element [i] = set
             20) if ( [val] is greater than or equal to [room] ) \{
 
                   21) if ( [highroom] is greater than [lowroom] ) \{
 
-                        22) vector [floor1_final_Y] element [i] = [val] - [lowroom] + [predicted]
+                        22) vector [floor1\_final\_Y] element [i] = [val] - [lowroom] + [predicted]
 
 		      \} else [highroom] is not greater than [lowroom] \{
 
-                        23) vector [floor1_final_Y] element [i] = [predicted] - [val] + [highroom] - 1
+                        23) vector [floor1\_final\_Y] element [i] = [predicted] - [val] + [highroom] - 1
 
                       \}
 
                 \} else [val] is less than [room] \{
 
-		  24) if ([val] is odd) \{
+                    24) if ([val] is odd) \{
 
-                        25) vector [floor1_final_Y] element [i] =
+                        25) vector [floor1\_final\_Y] element [i] =
                             [predicted] - (([val] + 1) divided by  2 using integer division)
 
                       \} else [val] is even \{
 
-                        26) vector [floor1_final_Y] element [i] =
+                        26) vector [floor1\_final\_Y] element [i] =
                             [predicted] + ([val] / 2 using integer division)
 
                       \}
@@ -320,8 +333,8 @@ Unwrap the always-positive-or-zero values read from the packet into
 
           \} else [val] is zero \{
 
-            27) vector [floor1_step2_flag] element [i] = unset
-            28) vector [floor1_final_Y] element [i] = [predicted]
+            27) vector [floor1\_step2\_flag] element [i] = unset
+            28) vector [floor1\_final\_Y] element [i] = [predicted]
 
           \}
 
@@ -338,18 +351,18 @@ Unwrap the always-positive-or-zero values read from the packet into
 Curve synthesis generates a return vector \varname{[floor]} of length
 \varname{[n]} (where \varname{[n]} is provided by the decode process
 calling to floor decode).  Floor 1 curve synthesis makes use of the
-\varname{[floor1_X_list]}, \varname{[floor1_final_Y]} and
-\varname{[floor1_step2_flag]} vectors, as well as [floor1_multiplier]
-and [floor1_values] values.
+\varname{[floor1\_X\_list]}, \varname{[floor1\_final\_Y]} and
+\varname{[floor1\_step2\_flag]} vectors, as well as [floor1\_multiplier]
+and [floor1\_values] values.
 
 Decode begins by sorting the scalars from vectors
-\varname{[floor1_X_list]}, \varname{[floor1_final_Y]} and
-\varname{[floor1_step2_flag]} together into new vectors
-\varname{[floor1_X_list]'}, \varname{[floor1_final_Y]'} and
-\varname{[floor1_step2_flag]'} according to ascending sort order of the
-values in \varname{[floor1_X_list]}.  That is, sort the values of
-\varname{[floor1_X_list]} and then apply the same permutation to
-elements of the other two vectors so that the X, Y and step2_flag
+\varname{[floor1\_X\_list]}, \varname{[floor1\_final\_Y]} and
+\varname{[floor1\_step2\_flag]} together into new vectors
+\varname{[floor1\_X\_list]'}, \varname{[floor1\_final\_Y]'} and
+\varname{[floor1\_step2\_flag]'} according to ascending sort order of the
+values in \varname{[floor1\_X\_list]}.  That is, sort the values of
+\varname{[floor1\_X\_list]} and then apply the same permutation to
+elements of the other two vectors so that the X, Y and step2\_flag
 values still match.
 
 Then compute the final curve in one pass:
@@ -357,14 +370,14 @@ Then compute the final curve in one pass:
 \begin{Verbatim}[commandchars=\\\{\}]
   1) [hx] = 0
   2) [lx] = 0
-  3) [ly] = vector [floor1_final_Y]' element [0] * [floor1_multiplier]
-  4) iterate [i] over the range 1 ... [floor1_values]-1 \{
+  3) [ly] = vector [floor1\_final\_Y]' element [0] * [floor1\_multiplier]
+  4) iterate [i] over the range 1 ... [floor1\_values]-1 \{
 
-       5) if ( [floor1_step2_flag]' element [i] is set ) \{
+       5) if ( [floor1\_step2\_flag]' element [i] is set ) \{
 
-             6) [hy] = [floor1_final_Y]' element [i] * [floor1_multiplier]
- 	     7) [hx] = [floor1_X_list]' element [i]
-             8) \link{vorbis:spec:render:line}{render_line}( [lx], [ly], [hx], [hy], [floor] )
+             6) [hy] = [floor1\_final\_Y]' element [i] * [floor1\_multiplier]
+ 	     7) [hx] = [floor1\_X\_list]' element [i]
+             8) \link{vorbis:spec:render:line}{render\_line}( [lx], [ly], [hx], [hy], [floor] )
              9) [lx] = [hx]
 	    10) [ly] = [hy]
           \}
@@ -372,7 +385,7 @@ Then compute the final curve in one pass:
 
  11) if ( [hx] is less than [n] ) \{
 
-        12) \link{vorbis:spec:render:line}{render_line}( [hx], [hy], [n], [hy], [floor] )
+        12) \link{vorbis:spec:render:line}{render\_line}( [hx], [hy], [n], [hy], [floor] )
 
      \}
 
@@ -383,7 +396,7 @@ Then compute the final curve in one pass:
      \}
 
  15) for each scalar in vector [floor], perform a lookup substitution using
-     the scalar value from [floor] as an offset into the vector \link{vorbis:spec:floor1:inverse:dB:table}{[floor1_inverse_dB_static_table]}
+     the scalar value from [floor] as an offset into the vector \link{vorbis:spec:floor1:inverse:dB:table}{[floor1\_inverse\_dB\_static\_table]}
 
  16) done
 

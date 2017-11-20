@@ -9,13 +9,13 @@
 <table border=0 width=100%>
 <tr>
 <td><p class=tiny>libvorbisenc documentation</p></td>
-<td align=right><p class=tiny>libvorbisenc release 1.1 - 20040709</p></td>
+<td align=right><p class=tiny>libvorbisenc version 1.3.2 - 20101101</p></td>
 </tr>
 </table>
 
 <h1>vorbis_encode_ctl</h1>
 
-<p><i>declared in "vorbis/libvorbisenc.h";</i></p>
+<p><i>declared in "vorbis/vorbisenc.h";</i></p>
 
 <p>This function implements a generic interface to miscellaneous
 encoder settings similar to the clasasic UNIX 'ioctl()' system call.
@@ -46,7 +46,7 @@ extern int vorbis_encode_ctl(vorbis_info *vi,int request,void *arg);
 <h3>Parameters</h3>
 <dl>
 <dt><i>vi</i></dt>
-<dd>File pointer to an initialized <a href="vorbis_info.html">vorbis_info</a> struct.</dd><p>
+<dd>Pointer to an initialized <a href="../libvorbis/vorbis_info.html">vorbis_info</a> struct.</dd><p>
 <dt><i>request</i></dt>
 <dd>Specifies the desired action; possible request fields are detailed below.</dd><p>
 <dt><i>arg</i></dt>
@@ -91,6 +91,20 @@ the impulse block bias to the the value pointed to by arg; valid range
 is -15.0 to 0.0 [default].  A negative impulse block bias will direct
 to encoder to use more bits when incoding short blocks that contain
 strong impulses, thus improving the accuracy of impulse encoding.</dd><p>
+
+<dt><i>OV_ECTL_COUPLING_GET</i></dt>
+<dd><b>Argument: int *</b><br>
+Returns the current encoder coupling enabled/disabled 
+setting in the int pointed to by arg.
+</dd><p>
+
+<dt><i>OV_ECTL_COUPLING_SET</i></dt> 
+<dd><b>Argument: int *</b><br>
+Enables/disables channel coupling in multichannel encoding according to arg.
+*arg of zero disables all channel coupling, nonzero allows the encoder to use
+coupling if a coupled mode is available for the input.  At present, coupling 
+is available for stereo and 5.1 input modes.
+</dd><p>
 
 <dt><i>OV_ECTL_RATEMANAGE_GET [deprecated]</i></dt>
 <dd>
@@ -155,11 +169,11 @@ href="vorbis_encode_setup_init.html">vorbis_encode_setup_init()</a>.</dd><p>
 <hr noshade>
 <table border=0 width=100%>
 <tr valign=top>
-<td><p class=tiny>copyright &copy; 2004 xiph.org</p></td>
-<td align=right><p class=tiny><a href="http://www.xiph.org/ogg/vorbis/index.html">Ogg Vorbis</a><br><a href="mailto:team@vorbis.org">team@vorbis.org</a></p></td>
+<td><p class=tiny>copyright &copy; 2000-2010 Xiph.Org</p></td>
+<td align=right><p class=tiny><a href="http://www.xiph.org/ogg/vorbis/index.html">Ogg Vorbis</a></p></td>
 </tr><tr>
 <td><p class=tiny>libvorbisenc documentation</p></td>
-<td align=right><p class=tiny>libvorbisenc release 1.1 - 20040709</p></td>
+<td align=right><p class=tiny>libvorbisenc version 1.3.2 - 20101101</p></td>
 </tr>
 </table>
 
