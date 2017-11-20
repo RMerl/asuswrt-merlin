@@ -1,0 +1,133 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Socket;
+use WgetFeature qw(https);
+use SSLTest;
+
+###############################################################################
+
+# code, msg, headers, content
+my %urls = (
+    '/somefile.txt' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/plain",
+        },
+        content => "blabla",
+    },
+);
+
+# Skip the test if openssl is not available
+my $ossl = `openssl version`;
+unless ($ossl =~ m/OpenSSL 1/)
+{
+  exit 77;
+}
+
+my $srcdir;
+if (@ARGV) {
+    $srcdir = shift @ARGV;
+} elsif (defined $ENV{srcdir}) {
+    $srcdir = $ENV{srcdir};
+}
+$srcdir = Cwd::abs_path("$srcdir");
+
+# HOSTALIASES env variable allows us to create hosts file alias.
+my $testhostname = "WgetTestingServer";
+$ENV{'HOSTALIASES'} = "$srcdir/certs/wgethosts";
+
+my $addr = gethostbyname($testhostname);
+unless ($addr)
+{
+    warn "Failed to resolve $addr, using $srcdir/certs/wgethosts\n";
+    exit 77;
+}
+unless (inet_ntoa($addr) =~ "127.0.0.1")
+{
+    warn "Failed to resolve $$addr, using $srcdir/certs/wgethosts\n";
+    exit 77;
+}
+
+my $cacrt      = "$srcdir/certs/test-ca-cert.pem";
+my $cakey      = "$srcdir/certs/test-ca-key.pem";
+
+# Prepare server certificate
+my $servercrt  = "$srcdir/certs/server.crt";
+my $serverkey  = "$srcdir/certs/server.key";
+
+my $servercheck =`(openssl x509 -noout -modulus -in $servercrt | openssl md5 ;
+                   openssl rsa  -noout -modulus -in $serverkey | openssl md5) |
+                   uniq | wc -l`;
+# Check if certificate and key are made correctly.
+unless(-e $servercrt && -e $serverkey && $servercheck == 1)
+{
+    exit 77; # skip
+}
+
+# Use client certificate
+my $clientcert     = "$srcdir/certs/client.crt";
+my $clientkey      = "$srcdir/certs/client.key";
+
+my $clientcheck=`(openssl x509 -noout -modulus -in $clientcert | openssl md5 ;
+                  openssl rsa -noout -modulus -in $clientkey | openssl md5) |
+                  uniq | wc -l`;
+
+# Check if client certificate and key are made correctly.
+unless(-e $clientcert && -e $clientkey && $clientcheck == 1)
+{
+    exit 77; # skip
+}
+
+# Try Wget using SSL with mismatched client cert & key . Expect error
+my $port = 21443;
+my $cmdline = $WgetTest::WGETPATH . " --certificate=$clientcert ".
+                                    " --private-key=$serverkey ".
+                                    " --ca-certificate=$cacrt".
+                                    " https://$testhostname:$port/somefile.txt";
+my $expected_error_code = 5;
+my %existing_files = (
+);
+
+my %expected_downloaded_files = (
+  'somefile.txt' => {
+    content => "blabla",
+  },
+);
+
+my $sslsock = SSLTest->new(cmdline   => $cmdline,
+                           input     => \%urls,
+                           errcode   => $expected_error_code,
+                           existing  => \%existing_files,
+                           output    => \%expected_downloaded_files,
+                           certfile  => $servercrt,
+                           keyfile   => $serverkey,
+                           lhostname => $testhostname,
+                           sslport   => $port);
+if ($sslsock->run() == 0)
+{
+  exit 0;
+}
+
+# Retry wget using SSL with client certificate. Expect success
+$port    = 22443;
+$cmdline = $WgetTest::WGETPATH . " --certificate=$clientcert".
+                                 " --private-key=$clientkey ".
+                                 " --ca-certificate=$cacrt".
+                                 " https://$testhostname:$port/somefile.txt";
+
+$expected_error_code = 0;
+
+my $retryssl = SSLTest->new(cmdline  => $cmdline,
+                           input     => \%urls,
+                           errcode   => $expected_error_code,
+                           existing  => \%existing_files,
+                           output    => \%expected_downloaded_files,
+                           certfile  => $servercrt,
+                           keyfile   => $serverkey,
+                           lhostname => $testhostname,
+                           sslport   => $port);
+exit $retryssl->run();
+# vim: et ts=4 sw=4

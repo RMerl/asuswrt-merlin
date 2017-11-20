@@ -1,0 +1,181 @@
+#!/usr/bin/env perl
+# Simulate a tunneling proxy to a HTTPS URL that needs authentication.
+# Use a persistent connection (Connection: keep-alive)
+
+use strict;
+use warnings;
+
+use WgetFeature qw(https);
+use WgetTests;  # For $WGETPATH.
+
+my $cert_path;
+my $key_path;
+my $srcdir;
+
+our $VALGRIND_SUPP_FILE;
+
+if (@ARGV) {
+    $srcdir = shift @ARGV;
+} elsif (defined $ENV{srcdir}) {
+    $srcdir = $ENV{srcdir};
+}
+
+if (defined $srcdir) {
+    $key_path = "$srcdir/certs/server-key.pem";
+    $cert_path = "$srcdir/certs/server-cert.pem";
+} else {
+    $key_path = "certs/server-key.pem";
+    $cert_path = "certs/server-cert.pem";
+}
+
+
+use HTTP::Daemon;
+use HTTP::Request;
+# Skip this test rather than fail it when the module isn't installed
+if (!eval {require IO::Socket::SSL;1;}) {
+    print STDERR "This test needs the perl module \"IO::Socket::SSL\".\n";
+    print STDERR "Install e.g. on Debian with 'apt-get install libio-socket-ssl-perl'\n";
+    print STDERR " or if using cpanminus 'cpanm IO::Socket::SSL' could be used to install it.\n";
+    exit 77; # skip
+}
+IO::Socket::SSL->import();
+
+my $SOCKET = HTTP::Daemon->new (LocalAddr => 'localhost',
+    ReuseAddr => 1) or die "Cannot create server!!!";
+
+sub get_request {
+    my $conn = shift;
+    my $content = '';
+    my $line;
+
+    while (defined ($line = <$conn>)) {
+        $content .= $line;
+        last if $line eq "\r\n";
+    }
+
+    my $rqst = HTTP::Request->parse($content)
+        or die "Couldn't parse request:\n$content\n";
+
+    return $rqst;
+}
+
+sub do_server {
+    my ($synch_callback) = @_;
+    my $s = $SOCKET;
+    my $conn;
+    my $rqst;
+    my $rspn;
+
+    # sync with the parent
+    $synch_callback->();
+
+    # Simulate a HTTPS proxy server with tunneling.
+
+    $conn = $s->accept;
+    $rqst = $conn->get_request;
+    die "Method not CONNECT\n" if ($rqst->method ne 'CONNECT');
+    $rspn = HTTP::Response->new(200, 'OK');
+    $conn->send_response($rspn);
+
+    # Now switch from plain to SSL (for simulating a transparent tunnel
+    # to an HTTPS server).
+
+    my %options = (
+        SSL_server => 1,
+        SSL_passwd_cb => sub { return "Hello"; });
+    $options{SSL_cert_file} = $cert_path if ($cert_path);
+    $options{SSL_key_file} = $key_path if ($key_path);
+    my @options = %options;
+    $conn = IO::Socket::SSL->new_from_fd($conn->fileno, @options)
+        or die "Couldn't initiate SSL";
+
+    for my $expect_inner_auth (0, 1) {
+        # TODO: expect no auth the first time, request it, expect it the second
+        #   time.
+
+        $rqst = &get_request($conn)
+            or die "Didn't get proxied request\n";
+
+        unless ($expect_inner_auth) {
+            die "Early proxied auth\n" if $rqst->header('Authorization');
+
+            $rspn = HTTP::Response->new(401, 'Unauthorized', [
+                'WWW-Authenticate' => 'Basic realm="gondor"',
+                Connection => 'keep-alive'
+                ]);
+        } else {
+            die "No proxied auth\n" unless $rqst->header('Authorization');
+
+            $rspn = HTTP::Response->new(200, 'OK', [
+                'Content-Type' => 'text/plain',
+                'Connection' => 'close',
+                ], "foobarbaz\n");
+        }
+
+        $rspn->protocol('HTTP/1.0');
+        print STDERR "=====\n";
+        print STDERR $rspn->as_string;
+        print STDERR "\n=====\n";
+        print $conn $rspn->as_string;
+    }
+
+    $conn->close;
+    undef $conn;
+    undef $s;
+}
+
+sub fork_server {
+    pipe(FROM_CHILD, TO_PARENT) or die "Cannot create pipe!";
+    select((select(TO_PARENT), $| = 1)[0]);
+
+    my $pid = fork();
+    if ($pid < 0) {
+        die "Cannot fork";
+    } elsif ($pid == 0) {
+        # child
+        close FROM_CHILD;
+        do_server(sub { print TO_PARENT "SYNC\n"; close TO_PARENT });
+        exit 0;
+    } else {
+        # parent
+        close TO_PARENT;
+        chomp(my $line = <FROM_CHILD>);
+        close FROM_CHILD;
+    }
+
+    return $pid;
+}
+
+unlink "needs-auth.txt";
+my $pid = &fork_server;
+
+my $cmdline = $WgetTest::WGETPATH . " --user=fiddle-dee-dee"
+    . " --password=Dodgson -e https_proxy=localhost:{{port}}"
+    . " --no-check-certificate"
+    . " https://no.such.domain/needs-auth.txt";
+$cmdline =~ s/\Q{{port}}/$SOCKET->sockport()/e;
+
+if (defined $srcdir) {
+    $VALGRIND_SUPP_FILE = $srcdir . '/valgrind-suppressions-ssl';
+} else {
+    $VALGRIND_SUPP_FILE = './valgrind-suppressions-ssl';
+}
+
+my $valgrind = $ENV{VALGRIND_TESTS};
+if (!defined $valgrind || $valgrind eq "" || $valgrind == 0) {
+    # Valgrind not requested - leave $cmdline as it is
+} elsif ($valgrind == 1) {
+    $cmdline =
+      'valgrind --suppressions=' . $VALGRIND_SUPP_FILE
+      . ' --error-exitcode=301 --leak-check=yes --track-origins=yes '
+      . $cmdline;
+} else {
+    $cmdline = $valgrind . " " . $cmdline;
+}
+
+my $code = system($cmdline . " 2>&1") >> 8;
+unlink "needs-auth.txt";
+
+warn "Got code: $code\n" if $code;
+kill ('TERM', $pid);
+exit ($code != 0);

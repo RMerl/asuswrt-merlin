@@ -1,0 +1,149 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 1 (0x1)
+    Signature Algorithm: sha1WithRSAEncryption
+        Issuer: C=US, ST=CA, L=San Jose, O=Wget Testing Department, OU=Testing, CN=WgetTesting/emailAddress=bugs-wget@gnu.org
+        Validity
+            Not Before: May 14 09:05:02 2017 GMT
+            Not After : May  8 16:03:42 2017 GMT
+        Subject: CN=WgetTestingServer, ST=CA, C=US/emailAddress=ExpiredTester, O=Dis
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (4096 bit)
+                Modulus:
+                    00:d8:ed:cc:9c:e5:35:42:f2:1b:d8:30:36:40:a5:
+                    01:8e:0f:c2:3c:5b:f0:d1:09:a0:aa:63:07:44:b9:
+                    2e:20:20:47:5e:43:f3:bc:3b:df:88:f9:26:e6:07:
+                    d9:9c:4c:67:53:46:3a:78:c5:0a:90:0c:f2:e9:a1:
+                    e0:d9:f3:52:bc:51:07:32:ac:9b:d3:ac:f9:25:7d:
+                    52:8b:2f:fa:06:6e:2d:c4:d4:2e:c7:38:81:f3:30:
+                    4e:b5:d6:7b:2e:fe:4c:12:84:db:f4:7f:22:91:4d:
+                    45:37:bb:01:96:61:59:62:af:2e:de:21:70:fa:3e:
+                    29:97:9d:3c:bf:41:5c:cd:2a:b4:f7:4f:6f:78:a1:
+                    b3:d5:79:53:4e:68:7b:cf:0e:78:87:47:9c:3f:3f:
+                    da:50:27:08:7d:12:c7:e2:da:cc:6f:a4:63:12:ca:
+                    28:a0:7d:f8:a8:ac:a3:72:77:ab:18:52:83:b1:2e:
+                    44:49:1a:0c:25:bc:21:bd:40:09:96:6b:60:04:e4:
+                    f2:3f:bc:c4:1e:3c:43:55:1d:fa:40:18:cd:70:91:
+                    24:03:1a:b8:95:e0:b2:70:3f:1e:05:a8:21:37:b1:
+                    d0:ff:54:36:65:9f:a7:ba:2d:c2:ef:e2:a9:a4:c4:
+                    72:c5:4c:82:8e:46:3e:b6:d9:aa:62:14:07:1d:53:
+                    19:08:9b:88:6d:b9:20:88:7c:bc:89:95:02:d5:54:
+                    96:7b:b0:a8:14:fd:30:ce:5f:41:b7:bf:e2:75:9a:
+                    a3:fa:20:43:2f:c8:80:cd:97:f7:57:37:5d:11:9b:
+                    fe:bf:aa:56:0e:2f:cd:47:7e:0f:db:2d:f7:71:44:
+                    c5:21:7d:c6:b3:50:5d:30:b0:4c:54:8f:7e:05:82:
+                    e6:5e:3b:62:d7:1b:5a:f5:de:57:76:2a:90:b0:d4:
+                    ec:72:8e:ab:64:f1:6f:12:21:80:7c:64:8a:5c:da:
+                    c1:86:12:ff:a9:e9:93:2f:2c:70:59:84:a4:5c:13:
+                    e0:02:d4:9a:72:0e:40:c3:db:99:1b:60:85:c0:94:
+                    1d:15:24:5b:8b:f6:6f:2c:d1:b5:95:50:e2:53:76:
+                    4f:cf:57:8e:d5:8b:c1:f5:3f:ad:07:aa:7b:84:32:
+                    dd:32:b5:59:a5:1b:d4:a2:b6:3b:6c:07:cc:4b:e8:
+                    fc:6a:d8:42:e8:08:dc:f1:f1:91:74:cf:9f:5f:57:
+                    6e:ab:93:5b:5e:af:7d:1c:b7:d3:eb:08:4c:a9:a7:
+                    b5:aa:d6:46:a8:a0:63:68:7b:44:cf:5c:21:42:3c:
+                    98:ff:42:31:77:94:4f:85:d2:7a:da:56:b1:c4:3c:
+                    b9:2d:e9:d6:88:f3:6c:ff:7b:39:19:83:80:ab:31:
+                    ab:19:6b
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: critical
+                CA:TRUE
+            X509v3 Subject Key Identifier: 
+                E6:C0:06:2E:89:41:44:32:AE:B6:C5:62:B6:7E:B5:DA:3B:75:D4:04
+            X509v3 Authority Key Identifier: 
+                keyid:17:ED:93:43:8F:A7:A6:00:75:D4:E8:B6:82:0D:88:37:7E:C0:6D:08
+
+            X509v3 Key Usage: 
+                Digital Signature, Key Encipherment, Certificate Sign, CRL Sign
+            X509v3 Extended Key Usage: 
+                TLS Web Server Authentication
+            X509v3 CRL Distribution Points: 
+
+                Full Name:
+                  URI:http://test.wgettest.org/Bogus.crl
+
+                Full Name:
+                  URI:http://test.wgettest.org/Bogus.crl
+
+            X509v3 Subject Alternative Name: 
+                DNS:WgetTestingServer
+            Authority Information Access: 
+                CA Issuers - URI:http://test.wgettest.com/Bogus.crt
+                CA Issuers - URI:http://test.wgettest.com/Bogus.crt
+                OCSP - URI:http://test.wgettest.com/ocsp/
+                OCSP - URI:http://test.wgettest.com/ocsp/
+
+    Signature Algorithm: sha1WithRSAEncryption
+         41:03:d8:91:54:f2:5c:e5:15:80:cd:96:a2:89:94:df:8c:d4:
+         ce:99:1a:f6:69:03:1d:aa:a8:3d:7f:8a:65:bd:b2:3a:f0:46:
+         00:6d:c7:cc:7a:18:44:cb:b4:17:f1:40:83:b1:17:90:64:ba:
+         22:2e:18:7e:35:29:20:4c:8f:34:14:86:34:1f:42:6e:a6:e7:
+         d7:18:a3:11:77:3d:ec:b1:39:59:7b:12:3f:55:b0:86:4a:9f:
+         6a:1c:b6:9e:03:3d:39:bf:f6:34:f5:d7:6f:44:bd:9a:54:e5:
+         f9:d9:14:85:01:d9:3d:0e:18:89:d0:bf:27:df:9a:4f:39:7c:
+         ec:46:92:e5:3e:9e:e5:10:4a:ed:03:aa:3b:93:02:e9:f3:18:
+         c1:5f:e8:cb:16:e0:54:9f:8b:0a:c9:65:48:32:93:90:91:2e:
+         84:26:14:28:b5:5c:61:38:39:28:3e:8e:74:dd:08:07:67:41:
+         9a:82:67:48:ba:3b:c1:66:76:27:7a:9c:c5:95:45:b5:9c:4d:
+         94:9b:f5:e2:93:39:2c:d8:15:31:27:82:56:9b:1a:73:e5:f2:
+         6a:9a:cd:47:0a:2b:ff:6e:5f:b2:f8:53:4f:fc:c3:1c:b7:25:
+         00:30:77:21:87:9b:88:d4:87:f7:30:79:f7:bd:a2:df:42:c4:
+         95:c4:e3:3c:94:4a:87:96:94:54:de:fe:80:13:e6:ec:37:dd:
+         33:a2:e4:f7:15:e7:a8:08:c6:3d:3b:65:34:96:5f:46:c8:41:
+         7f:ce:c5:ca:3a:44:d2:fb:9c:3c:c7:2c:da:12:b3:1f:62:40:
+         38:12:cb:36:b7:5c:e7:32:5c:e3:2a:af:b5:36:e8:83:d3:8e:
+         da:4c:b5:52:5f:f4:d6:54:b7:3b:9d:62:86:5a:26:f1:58:a8:
+         2e:f6:46:9c:6f:98:76:e1:bb:9c:27:73:0f:78:11:60:b9:ac:
+         13:6e:d9:ec:24:5f:64:e9:59:14:36:02:f1:f0:57:97:ce:31:
+         0a:80:1e:d0:c0:c0:77:62:24:c5:d9:61:e9:d9:57:76:64:e1:
+         1c:c7:5a:55:e2:58:ab:2f:58:6f:42:91:03:aa:6f:1c:9b:fc:
+         0a:c5:ee:14:1d:07:a1:b3:ec:97:6f:ac:2f:85:7f:ea:88:18:
+         78:84:ac:af:d8:e9:b7:23:5c:a3:14:ab:8e:ee:95:5b:0d:6c:
+         e4:25:be:77:04:59:19:57:1e:f7:e0:5a:f2:fc:33:12:57:28:
+         11:2e:1f:05:6b:43:62:8f:c0:c3:4a:97:f9:6a:73:1d:dd:c0:
+         6f:d4:a2:23:0a:d2:86:68:df:bd:ac:75:61:cf:d8:3f:9a:d1:
+         8e:e9:33:59:bd:13:9a:27
+-----BEGIN CERTIFICATE-----
+MIIHODCCBSCgAwIBAgIBATANBgkqhkiG9w0BAQUFADCBmTELMAkGA1UEBhMCVVMx
+CzAJBgNVBAgMAkNBMREwDwYDVQQHDAhTYW4gSm9zZTEgMB4GA1UECgwXV2dldCBU
+ZXN0aW5nIERlcGFydG1lbnQxEDAOBgNVBAsMB1Rlc3RpbmcxFDASBgNVBAMMC1dn
+ZXRUZXN0aW5nMSAwHgYJKoZIhvcNAQkBFhFidWdzLXdnZXRAZ251Lm9yZzAeFw0x
+NzA1MTQwOTA1MDJaFw0xNzA1MDgxNjAzNDJaMGIxGjAYBgNVBAMMEVdnZXRUZXN0
+aW5nU2VydmVyMQswCQYDVQQIDAJDQTELMAkGA1UEBhMCVVMxHDAaBgkqhkiG9w0B
+CQEWDUV4cGlyZWRUZXN0ZXIxDDAKBgNVBAoMA0RpczCCAiIwDQYJKoZIhvcNAQEB
+BQADggIPADCCAgoCggIBANjtzJzlNULyG9gwNkClAY4Pwjxb8NEJoKpjB0S5LiAg
+R15D87w734j5JuYH2ZxMZ1NGOnjFCpAM8umh4NnzUrxRBzKsm9Os+SV9Uosv+gZu
+LcTULsc4gfMwTrXWey7+TBKE2/R/IpFNRTe7AZZhWWKvLt4hcPo+KZedPL9BXM0q
+tPdPb3ihs9V5U05oe88OeIdHnD8/2lAnCH0Sx+LazG+kYxLKKKB9+Kiso3J3qxhS
+g7EuREkaDCW8Ib1ACZZrYATk8j+8xB48Q1Ud+kAYzXCRJAMauJXgsnA/HgWoITex
+0P9UNmWfp7otwu/iqaTEcsVMgo5GPrbZqmIUBx1TGQibiG25IIh8vImVAtVUlnuw
+qBT9MM5fQbe/4nWao/ogQy/IgM2X91c3XRGb/r+qVg4vzUd+D9st93FExSF9xrNQ
+XTCwTFSPfgWC5l47YtcbWvXeV3YqkLDU7HKOq2TxbxIhgHxkilzawYYS/6npky8s
+cFmEpFwT4ALUmnIOQMPbmRtghcCUHRUkW4v2byzRtZVQ4lN2T89XjtWLwfU/rQeq
+e4Qy3TK1WaUb1KK2O2wHzEvo/GrYQugI3PHxkXTPn19XbquTW16vfRy30+sITKmn
+tarWRqigY2h7RM9cIUI8mP9CMXeUT4XSetpWscQ8uS3p1ojzbP97ORmDgKsxqxlr
+AgMBAAGjggG/MIIBuzAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTmwAYuiUFE
+Mq62xWK2frXaO3XUBDAfBgNVHSMEGDAWgBQX7ZNDj6emAHXU6LaCDYg3fsBtCDAL
+BgNVHQ8EBAMCAaYwEwYDVR0lBAwwCgYIKwYBBQUHAwEwXQYDVR0fBFYwVDAooCag
+JIYiaHR0cDovL3Rlc3Qud2dldHRlc3Qub3JnL0JvZ3VzLmNybDAooCagJIYiaHR0
+cDovL3Rlc3Qud2dldHRlc3Qub3JnL0JvZ3VzLmNybDAcBgNVHREEFTATghFXZ2V0
+VGVzdGluZ1NlcnZlcjCByAYIKwYBBQUHAQEEgbswgbgwLgYIKwYBBQUHMAKGImh0
+dHA6Ly90ZXN0LndnZXR0ZXN0LmNvbS9Cb2d1cy5jcnQwLgYIKwYBBQUHMAKGImh0
+dHA6Ly90ZXN0LndnZXR0ZXN0LmNvbS9Cb2d1cy5jcnQwKgYIKwYBBQUHMAGGHmh0
+dHA6Ly90ZXN0LndnZXR0ZXN0LmNvbS9vY3NwLzAqBggrBgEFBQcwAYYeaHR0cDov
+L3Rlc3Qud2dldHRlc3QuY29tL29jc3AvMA0GCSqGSIb3DQEBBQUAA4ICAQBBA9iR
+VPJc5RWAzZaiiZTfjNTOmRr2aQMdqqg9f4plvbI68EYAbcfMehhEy7QX8UCDsReQ
+ZLoiLhh+NSkgTI80FIY0H0JupufXGKMRdz3ssTlZexI/VbCGSp9qHLaeAz05v/Y0
+9ddvRL2aVOX52RSFAdk9DhiJ0L8n35pPOXzsRpLlPp7lEErtA6o7kwLp8xjBX+jL
+FuBUn4sKyWVIMpOQkS6EJhQotVxhODkoPo503QgHZ0GagmdIujvBZnYnepzFlUW1
+nE2Um/Xikzks2BUxJ4JWmxpz5fJqms1HCiv/bl+y+FNP/MMctyUAMHchh5uI1If3
+MHn3vaLfQsSVxOM8lEqHlpRU3v6AE+bsN90zouT3FeeoCMY9O2U0ll9GyEF/zsXK
+OkTS+5w8xyzaErMfYkA4Ess2t1znMlzjKq+1NuiD047aTLVSX/TWVLc7nWKGWibx
+WKgu9kacb5h24bucJ3MPeBFguawTbtnsJF9k6VkUNgLx8FeXzjEKgB7QwMB3YiTF
+2WHp2Vd2ZOEcx1pV4lirL1hvQpEDqm8cm/wKxe4UHQehs+yXb6wvhX/qiBh4hKyv
+2Om3I1yjFKuO7pVbDWzkJb53BFkZVx734Fry/DMSVygRLh8Fa0Nij8DDSpf5anMd
+3cBv1KIjCtKGaN+9rHVhz9g/mtGO6TNZvROaJw==
+-----END CERTIFICATE-----

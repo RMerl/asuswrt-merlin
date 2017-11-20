@@ -1,0 +1,166 @@
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+   obj:*/libcrypto.so.*
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+   obj:*/libssl.so.*
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   ...
+   obj:*/libcrypto.so.*
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   write(buf)
+   ...
+   obj:*/libcrypto.so.*
+}
+
+{
+   Valgrind 3.4 bug suppression
+   Memcheck:Cond
+   fun:memrchr
+   fun:modify_param_name
+   fun:extract_param
+   fun:parse_content_disposition
+   fun:check_file_output
+   fun:gethttp
+   fun:http_loop
+   fun:retrieve_url
+   ...
+}
+
+{
+   Valgrind 3.4 bug suppression
+   Memcheck:Cond
+   fun:memrchr
+   fun:parse_content_disposition
+   fun:check_file_output
+   fun:gethttp
+   fun:http_loop
+   fun:retrieve_url
+   fun:main
+}
+
+{
+   Valgrind 3.4 bug suppression
+   Memcheck:Cond
+   fun:memrchr
+   fun:parse_content_disposition
+   fun:check_file_output
+   fun:gethttp
+   fun:http_loop
+   fun:retrieve_url
+   fun:main
+}
+
+{
+   Valgrind 3.4 bug suppression
+   Memcheck:Cond
+   fun:memrchr
+   fun:modify_param_name
+   fun:extract_param
+   fun:parse_set_cookie
+   fun:cookie_handle_set_cookie
+   fun:gethttp
+   fun:http_loop
+   fun:retrieve_url
+   ...
+}
+
+{
+   Valgrind 3.4 bug suppression
+   Memcheck:Cond
+   fun:memrchr
+   fun:modify_param_name
+   fun:extract_param
+   fun:parse_set_cookie
+   fun:cookie_handle_set_cookie
+   fun:gethttp
+   fun:http_loop
+   fun:retrieve_url
+   ...
+}
+
+{
+   Valgrind 3.4 bug suppression
+   Memcheck:Cond
+   fun:memrchr
+   fun:parse_content_disposition
+   fun:check_file_output
+   fun:gethttp
+   fun:http_loop
+   fun:retrieve_url
+   fun:main
+}
+
+{
+   Valgrind 3.4 bug suppression
+   Memcheck:Cond
+   fun:memrchr
+   fun:parse_content_disposition
+   fun:check_file_output
+   fun:gethttp
+   fun:http_loop
+   fun:retrieve_url
+   fun:main
+}
+
+{
+   Valgrind 3.4 bug suppression
+   Memcheck:Cond
+   fun:memrchr
+   fun:parse_content_disposition
+   fun:check_file_output
+   fun:gethttp
+   fun:http_loop
+   fun:retrieve_url
+   fun:main
+}
+
+{
+   Valgrind 3.4 bug suppression
+   Memcheck:Cond
+   fun:memrchr
+   fun:parse_content_disposition
+   fun:check_file_output
+   fun:gethttp
+   fun:http_loop
+   fun:retrieve_url
+   fun:main
+}
+
+{
+   Valgrind 3.4 bug suppression
+   Memcheck:Cond
+   fun:memrchr
+   fun:parse_content_disposition
+   fun:check_file_output
+   fun:gethttp
+   fun:http_loop
+   fun:retrieve_url
+   fun:main
+}
+
+{
+   Valgrind 3.4 bug suppression
+   Memcheck:Cond
+   fun:memrchr
+   fun:parse_content_disposition
+   fun:check_file_output
+   fun:gethttp
+   fun:http_loop
+   fun:retrieve_url
+   fun:main
+}

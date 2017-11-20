@@ -1,0 +1,56 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use FTPTest;
+
+# This test checks whether Wget *does not* fall back from passive mode to
+# active mode using a PORT command. Wget <= 1.16.3 made a fallback exposing
+# the client's real IP address to the remote FTP server.
+#
+# This behavior circumvents expected privacy when using a proxy / proxy network (e.g. Tor).
+#
+# Wget >= 1.16.4 does it right. This test checks it.
+
+###############################################################################
+
+# From bug report 10.08.2015 from tomtidaly@sigaint.org
+my $afile = <<EOF;
+FTP PORT command code in v1.16.3?
+
+In the past it could be possible for a site over http connection to
+redirect wget to FPT using FTP PORT command so the site gets the real IP
+of the computer even when wget proxy command is in use I believe:
+https://lists.torproject.org/pipermail/tor-talk/2012-April/024040.html
+
+Is that code still present in wget v1.16.3? It was present in v1.13.4.
+EOF
+
+$afile =~ s/\n/\r\n/g;
+
+
+# code, msg, headers, content
+my %urls = (
+    '/afile.txt' => {
+        content => $afile,
+    },
+);
+
+my $cmdline = $WgetTest::WGETPATH . " -S ftp://localhost:{{port}}/afile.txt";
+
+my $expected_error_code = 8;
+
+my %expected_downloaded_files = ();
+
+###############################################################################
+
+my $the_test = FTPTest->new (
+                             server_behavior => {pasv_not_supported => 1},
+                             input => \%urls,
+                             cmdline => $cmdline,
+                             errcode => $expected_error_code,
+                             output => \%expected_downloaded_files);
+exit $the_test->run();
+
+# vim: et ts=4 sw=4
