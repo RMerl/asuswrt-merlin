@@ -230,6 +230,7 @@ nflash_check_id(uint8 *id)
 		name = "Mxic";
 		break;
 	case NFL_VENDOR_WINBOND:
+	case NFL_VENDOR_WINBOND2:
 		name = "Winbond";
 		break;
 	default:
@@ -362,6 +363,24 @@ nflash_init(si_t *sih)
 		/* In unit of MBytes */
 		plane_sz = (8 << ((nflash.id[4] >> 4) & 0x7));
 		plane_num = (1 << ((nflash.id[4] >> 2) & 0x3));
+
+		/* fixup plane size for known parts with different byte 4 definitions */
+		switch (nflash.id[0])
+		{
+			case NFL_VENDOR_AMD: /* AMD/Spansion/Cypress */
+				if (nflash.id[1] == 0xf1)	/* S34ML01G100TF100 */
+					plane_sz <<= 4;		/* byte 4 doesn't apply for 1Gb part */
+				break;
+			case NFL_VENDOR_MXIC:			/* MX30LF1G18AC 4bit ECC required! */
+				if (nflash.id[1] == 0xf1)	/* DO NOT use this flash on 4706!  */
+					plane_sz <<= 4;		/* Plane size 000 indicates 1Gb per  */
+				break;				/* byte 4 definition in datasheet.   */
+			case NFL_VENDOR_WINBOND2:
+				if (nflash.id[1] == 0xf1)	/* W29N01HVSINA */
+					plane_sz <<= 4;		/* no plane information in byte 4 */
+				break;
+		}
+
 		nflash.size = plane_sz * plane_num;
 
 		for (i = 0; i < 32; i++) {

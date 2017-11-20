@@ -122,7 +122,7 @@ ip_conntrack_is_ipc_allowed(struct sk_buff *skb, u_int32_t hooknum)
 		/* Add ipc entry if packet is received on ctf enabled interface
 		 * and the packet is not a defrag'd one.
 		 */
-		if (ctf_isenabled(kcih, dev) && (skb->len <= dev->mtu))
+		if (ctf_isenabled(kcih, dev))
 			skb->nfcache |= NFC_CTF_ENABLED;
 	}
 
@@ -242,6 +242,9 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 		if (ct->proto.tcp.state >= TCP_CONNTRACK_FIN_WAIT &&
 			ct->proto.tcp.state <= TCP_CONNTRACK_TIME_WAIT)
 			return;
+
+		if (skb->len > skb->dev->mtu)
+			return;
 	}
 	else if (protocol != IPPROTO_UDP)
 		return;
@@ -333,17 +336,8 @@ ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
 #endif /* CONFIG_IPV6 */
 	}
 	ipc_entry.tuple.proto = protocol;
-#if defined(CONFIG_IPV6) && 0 /* breaks ICMP error forward */
-	if (ipver == 6 && protocol == IPPROTO_UDP) {
-		ipc_entry.tuple.sp = FRAG_IPV6_UDP_DUMMY_PORT;
-		ipc_entry.tuple.dp = FRAG_IPV6_UDP_DUMMY_PORT;
-	}
-	else
-#endif
-	{
-		ipc_entry.tuple.sp = tcph->source;
-		ipc_entry.tuple.dp = tcph->dest;
-	}
+	ipc_entry.tuple.sp = tcph->source;
+	ipc_entry.tuple.dp = tcph->dest;
 
 	ipc_entry.next = NULL;
 
@@ -600,6 +594,7 @@ ipcp_add:
 
 	if (!manip && IPVERSION_IS_4(ipver))
 		ct->ctf_flags |= CTF_FLAGS_ROUTE_CACHED;
+
 
 	/* Update the attributes flag to indicate a CTF conn */
 	ct->ctf_flags |= (CTF_FLAGS_CACHED | (1 << dir));
