@@ -273,7 +273,7 @@ function cal_panel_block(){
 				<tr>
 					<th>ACS URL</th>
 					<td>
-						<input type="text" maxlength="64" name="tr_acs_url" class="input_32_table" value="<% nvram_get("tr_acs_url"); %>" onKeyPress="return is_string(this,event);" autocorrect="off" autocapitalize="off"/>
+						<input type="text" maxlength="64" name="tr_acs_url" class="input_32_table" value="<% nvram_get("tr_acs_url"); %>" onKeyPress="return validator.isString(this, event);" autocorrect="off" autocapitalize="off"/>
 						<div id="tr_acs_url_text" class="input" style="color:#FFFFFF;margin-left: 8px;height: 23px;padding: 1px;"><% nvram_get("tr_acs_url"); %></div>
 						<span id="cert_text" onclick="set_cert();" style="float:right;margin-right:8px;height: 23px;padding: 1px;text-decoration:underline;cursor:pointer;">Import Certificate</span>
 					</td>
@@ -282,14 +282,14 @@ function cal_panel_block(){
 				<tr>
 					<th>User Name</th>
 					<td>
-						<input type="text" maxlength="32" name="tr_username" class="input_15_table" value="<% nvram_get("tr_username"); %>" onKeyPress="return is_string(this,event);" autocorrect="off" autocapitalize="off"/>
+						<input type="text" maxlength="32" name="tr_username" class="input_15_table" value="<% nvram_get("tr_username"); %>" onKeyPress="return validator.isString(this, event);" autocorrect="off" autocapitalize="off"/>
 					</td>
 				</tr>
 
 				<tr>
 					<th>Password</th>
 					<td>
-						<input type="password" maxlength="32" name="tr_passwd" class="input_15_table" value="<% nvram_get("tr_passwd"); %>" onKeyPress="return is_string(this,event);" autocorrect="off" autocapitalize="off"/>
+						<input type="password" maxlength="32" name="tr_passwd" class="input_15_table" value="<% nvram_get("tr_passwd"); %>" onKeyPress="return validator.isString(this, event);" autocorrect="off" autocapitalize="off"/>
 					</td>
 				</tr>
 			</table>
@@ -304,14 +304,14 @@ function cal_panel_block(){
 				<tr>
 					<th>User Name</th>
 					<td>
-						<input type="text" maxlength="32" name="tr_conn_username" class="input_15_table" value="<% nvram_get("tr_conn_username"); %>" onKeyPress="return is_string(this,event);" autocorrect="off" autocapitalize="off"/>
+						<input type="text" maxlength="32" name="tr_conn_username" class="input_15_table" value="<% nvram_get("tr_conn_username"); %>" onKeyPress="return validator.isString(this, event);" autocorrect="off" autocapitalize="off"/>
 					</td>
 				</tr>
 
 				<tr>
 					<th>Password</th>
 					<td>
-						<input type="password" maxlength="32" name="tr_conn_passwd" class="input_15_table" value="<% nvram_get("tr_conn_passwd"); %>" onKeyPress="return is_string(this,event);" autocorrect="off" autocapitalize="off"/>
+						<input type="password" maxlength="32" name="tr_conn_passwd" class="input_15_table" value="<% nvram_get("tr_conn_passwd"); %>" onKeyPress="return validator.isString(this, event);" autocorrect="off" autocapitalize="off"/>
 					</td>
 				</tr>
 			</table>

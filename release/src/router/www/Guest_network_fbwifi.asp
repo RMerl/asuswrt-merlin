@@ -660,7 +660,7 @@ function agreement_confirm() {
 										<tr>
 											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 1);"><#QIS_finish_wireless_item1#></a></th>
 											<td>
-												<input type="text" maxlength="32" class="input_32_table" name="fbwifi_ssid" value="<% nvram_get("fbwifi_ssid"); %>" onkeypress="return is_string(this, event)">
+												<input type="text" maxlength="32" class="input_32_table" name="fbwifi_ssid" value="<% nvram_get("fbwifi_ssid"); %>" onkeypress="return validator.isString(this, event)">
 											</td>
 										</tr>
 										<tr>
