@@ -15225,7 +15225,7 @@ ej_get_wan_lan_status(int eid, webs_t wp, int argc, char **argv) {
 		while (!feof(p_fp)){
 			if(fgets(out, sizeof(out), p_fp)) {
 				out_len = strlen(out);
-				if (out_len > 0) {
+				if ((out_len > 0) && (strncmp(out, "ATE_ERROR", 9))) {
 					if(out[out_len - 1] == '\n' || out[out_len - 1] == '\r')
 						out[out_len - 1] = '\0';
 
