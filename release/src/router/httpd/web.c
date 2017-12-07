@@ -15202,83 +15202,64 @@ ej_abs_networkmap_page(int eid, webs_t wp, int argc, char **argv)
 }
 
 static int
-ej_get_wan_lan_status(int eid, webs_t wp, int argc, char **argv) {
-	char out[128];
-	char cmd[32];
-	int out_len = 0;
-	int ret = 0;
-	int idx = 0;
-	char item[8];
-	char item_tmp[2];
-	char speed[2];
-	FILE *p_fp;
+ej_get_wan_lan_status(int eid, webs_t wp, int argc, char **argv)
+{
+	FILE *fp;
+	char line[128], name[sizeof("WAN XXXXXXXXXX")], *ptr, *item, *port, *speed;
+	int wan_count, lan_count, ret = 0;
 
-	struct json_object *wanLanStatus = NULL;
-	wanLanStatus = json_object_new_object();
+	struct json_object *wanLanStatus = json_object_new_object();
+	struct json_object *wanLanLinkSpeed = json_object_new_object();
+	struct json_object *wanLanCount = json_object_new_object();
 
-	memset(out, 0, sizeof(out));
-	memset(cmd, 0, sizeof(cmd));
+	if (wanLanStatus == NULL || wanLanLinkSpeed == NULL || wanLanCount == NULL)
+		goto error;
 
-	snprintf(cmd, sizeof(cmd), "%s", "ATE Get_WanLanStatus");
+	fp = popen("ATE Get_WanLanStatus", "r");
+	if (fp == NULL)
+		goto error;
 
-	if((p_fp = popen(cmd, "r")) != NULL) {
-		while (!feof(p_fp)){
-			if(fgets(out, sizeof(out), p_fp)) {
-				out_len = strlen(out);
-				if ((out_len > 0) && (strncmp(out, "ATE_ERROR", 9))) {
-					if(out[out_len - 1] == '\n' || out[out_len - 1] == '\r')
-						out[out_len - 1] = '\0';
+	ptr = fgets(line, sizeof(line), fp);
+	pclose(fp);
 
-					//ex, out is W0=M;L1=X;L2=X;L3=X;L4=G; tranform { "WAN 0": "M", "LAN 1": "X", "LAN 2": "X", "LAN 3": "X", "LAN 4": "G" }
-					for (idx = 0; idx < out_len; idx++) {
-						if(out[idx] != '\0') {
-							if(out[idx] >= '0' && out[idx] <= '9') {
-								memset(item_tmp, 0, sizeof(item_tmp));
-								item_tmp[0] = out[idx];
-								item_tmp[1] = '\0';
-								strlcat(item, item_tmp, sizeof(item));
-								json_object_object_add(wanLanStatus, item, json_object_new_string("X")); //default port speed
-							}
-							else {
-								switch (out[idx]) {
-									case 'W' :
-										memset(item, 0, sizeof(item));
-										strlcat(item, "WAN ", sizeof(item));
-										break;
-									case 'L' :
-										memset(item, 0, sizeof(item));
-										strlcat(item, "LAN ", sizeof(item));
-										break;
-									case 'M' :
-									case 'G' :
-									case 'X' :
-										memset(speed, 0, sizeof(speed));
-										speed[0] = out[idx];
-										speed[1] = '\0';
-										json_object_object_add(wanLanStatus, item, json_object_new_string(speed)); //Update port speed
-										break;
-									default :
-										break;
-								}
-							}
-						}
-					}
-					ret = websWrite(wp, "%s", json_object_get_string(wanLanStatus));
-				}
-				else {
-					ret = websWrite(wp, "{}");
-				}
-			}
+	wan_count = lan_count = 0;
+	while ((item = strsep(&ptr, ";\r\n")) != NULL) {
+		if (vstrsep(item, "=", &port, &speed) < 2)
+			continue;
+		switch (*port++) {
+		case 'W':
+			snprintf(name, sizeof(name), "%s%s%s", "WAN", *port ? " " : "", port);
+			wan_count++;
+			break;
+		case 'L':
+			snprintf(name, sizeof(name), "%s%s%s", "LAN", *port ? " " : "", port);
+			lan_count++;
+			break;
+		default:
+			continue;
 		}
+		json_object_object_add(wanLanLinkSpeed, name, json_object_new_string(speed));
 	}
-	else {
-		ret = websWrite(wp, "{}");
-	}
+	json_object_object_add(wanLanCount, "wanCount", json_object_new_int(wan_count));
+	json_object_object_add(wanLanCount, "lanCount", json_object_new_int(lan_count));
+	json_object_object_add(wanLanStatus, "portSpeed", wanLanLinkSpeed);
+	json_object_object_add(wanLanStatus, "portCount", wanLanCount);
 
-	pclose(p_fp);
-	
-	if(wanLanStatus)
+	ptr = (char *)json_object_get_string(wanLanStatus);
+	if (ptr == NULL)
+		goto error;
+
+	ret = websWrite(wp, "%s", ptr);
+
+error:
+	if (ret == 0)
+		ret = websWrite(wp, "{}");
+	if (wanLanStatus)
 		json_object_put(wanLanStatus);
+	if (wanLanLinkSpeed)
+		json_object_put(wanLanLinkSpeed);
+	if (wanLanCount)
+		json_object_put(wanLanCount);
 
 	return ret;
 }
