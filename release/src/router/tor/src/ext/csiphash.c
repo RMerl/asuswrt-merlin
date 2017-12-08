@@ -122,13 +122,13 @@ uint64_t siphash24(const void *src, unsigned long src_sz, const struct sipkey *k
 	}
 
 	switch (src_sz - blocks) {
-		case 7: last7 |= (uint64_t)m[i + 6] << 48;
-		case 6: last7 |= (uint64_t)m[i + 5] << 40;
-		case 5: last7 |= (uint64_t)m[i + 4] << 32;
-		case 4: last7 |= (uint64_t)m[i + 3] << 24;
-		case 3: last7 |= (uint64_t)m[i + 2] << 16;
-		case 2: last7 |= (uint64_t)m[i + 1] <<  8;
-		case 1: last7 |= (uint64_t)m[i + 0]      ;
+		case 7: last7 |= (uint64_t)m[i + 6] << 48; /* Falls through. */
+		case 6: last7 |= (uint64_t)m[i + 5] << 40; /* Falls through. */
+		case 5:	last7 |= (uint64_t)m[i + 4] << 32; /* Falls through. */
+		case 4: last7 |= (uint64_t)m[i + 3] << 24; /* Falls through. */
+		case 3:	last7 |= (uint64_t)m[i + 2] << 16; /* Falls through. */
+		case 2:	last7 |= (uint64_t)m[i + 1] <<  8; /* Falls through. */
+		case 1: last7 |= (uint64_t)m[i + 0]      ; /* Falls through. */
 		case 0:
 		default:;
 	}

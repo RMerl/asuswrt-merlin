@@ -137,7 +137,8 @@ test_libscrypt_eq_openssl(void *arg)
   uint8_t buf1[64];
   uint8_t buf2[64];
 
-  uint64_t N, r, p;
+  uint64_t N;
+  uint32_t r, p;
   uint64_t maxmem = 0; // --> SCRYPT_MAX_MEM in OpenSSL.
 
   int libscrypt_retval, openssl_retval;

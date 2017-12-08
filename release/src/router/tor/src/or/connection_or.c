@@ -432,9 +432,11 @@ cell_pack(packed_cell_t *dst, const cell_t *src, int wide_circ_ids)
     set_uint32(dest, htonl(src->circ_id));
     dest += 4;
   } else {
+    /* Clear the last two bytes of dest, in case we can accidentally
+     * send them to the network somehow. */
+    memset(dest+CELL_MAX_NETWORK_SIZE-2, 0, 2);
     set_uint16(dest, htons(src->circ_id));
     dest += 2;
-    memset(dest+CELL_MAX_NETWORK_SIZE-2, 0, 2); /*make sure it's clear */
   }
   set_uint8(dest, src->command);
   memcpy(dest+1, src->payload, CELL_PAYLOAD_SIZE);
@@ -2137,7 +2139,9 @@ connection_or_send_netinfo,(or_connection_t *conn))
 int
 connection_or_send_certs_cell(or_connection_t *conn)
 {
-  const tor_x509_cert_t *link_cert = NULL, *id_cert = NULL;
+  const tor_x509_cert_t *global_link_cert = NULL, *id_cert = NULL,
+    *using_link_cert = NULL;
+  tor_x509_cert_t *own_link_cert = NULL;
   const uint8_t *link_encoded = NULL, *id_encoded = NULL;
   size_t link_len, id_len;
   var_cell_t *cell;
@@ -2149,9 +2153,15 @@ connection_or_send_certs_cell(or_connection_t *conn)
   if (! conn->handshake_state)
     return -1;
   const int conn_in_server_mode = ! conn->handshake_state->started_here;
-  if (tor_tls_get_my_certs(conn_in_server_mode, &link_cert, &id_cert) < 0)
+  if (tor_tls_get_my_certs(conn_in_server_mode,
+                           &global_link_cert, &id_cert) < 0)
     return -1;
-  tor_x509_cert_get_der(link_cert, &link_encoded, &link_len);
+  if (conn_in_server_mode) {
+    using_link_cert = own_link_cert = tor_tls_get_own_cert(conn->tls);
+  } else {
+    using_link_cert = global_link_cert;
+  }
+  tor_x509_cert_get_der(using_link_cert, &link_encoded, &link_len);
   tor_x509_cert_get_der(id_cert, &id_encoded, &id_len);
 
   cell_len = 1 /* 1 byte: num certs in cell */ +
@@ -2179,6 +2189,7 @@ connection_or_send_certs_cell(or_connection_t *conn)
 
   connection_or_write_var_cell_to_buf(cell, conn);
   var_cell_free(cell);
+  tor_x509_cert_free(own_link_cert);
 
   return 0;
 }
@@ -2258,10 +2269,10 @@ connection_or_compute_authenticate_cell_body(or_connection_t *conn,
   memcpy(auth1_getarray_type(auth), "AUTH0001", 8);
 
   {
-    const tor_x509_cert_t *id_cert=NULL, *link_cert=NULL;
+    const tor_x509_cert_t *id_cert=NULL;
     const common_digests_t *my_digests, *their_digests;
     const uint8_t *my_id, *their_id, *client_id, *server_id;
-    if (tor_tls_get_my_certs(server, &link_cert, &id_cert))
+    if (tor_tls_get_my_certs(server, NULL, &id_cert))
       goto err;
     my_digests = tor_x509_cert_get_id_digests(id_cert);
     their_digests =
@@ -2300,13 +2311,11 @@ connection_or_compute_authenticate_cell_body(or_connection_t *conn,
 
   {
     /* Digest of cert used on TLS link : 32 octets. */
-    const tor_x509_cert_t *cert = NULL;
-    tor_x509_cert_t *freecert = NULL;
+    tor_x509_cert_t *cert = NULL;
     if (server) {
-      tor_tls_get_my_certs(1, &cert, NULL);
+      cert = tor_tls_get_own_cert(conn->tls);
     } else {
-      freecert = tor_tls_get_peer_cert(conn->tls);
-      cert = freecert;
+      cert = tor_tls_get_peer_cert(conn->tls);
     }
     if (!cert) {
       log_warn(LD_OR, "Unable to find cert when making AUTH1 data.");
@@ -2316,8 +2325,7 @@ connection_or_compute_authenticate_cell_body(or_connection_t *conn,
     memcpy(auth->scert,
            tor_x509_cert_get_cert_digests(cert)->d[DIGEST_SHA256], 32);
 
-    if (freecert)
-      tor_x509_cert_free(freecert);
+    tor_x509_cert_free(cert);
   }
 
   /* HMAC of clientrandom and serverrandom using master key : 32 octets */

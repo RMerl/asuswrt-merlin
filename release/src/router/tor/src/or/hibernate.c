@@ -331,7 +331,7 @@ edge_of_accounting_period_containing(time_t now, int get_end)
     case UNIT_MONTH: {
       /* If this is before the Nth, we want the Nth of last month. */
       if (tm.tm_mday < cfg_start_day ||
-          (tm.tm_mday < cfg_start_day && before)) {
+          (tm.tm_mday == cfg_start_day && before)) {
         --tm.tm_mon;
       }
       /* Otherwise, the month is correct. */

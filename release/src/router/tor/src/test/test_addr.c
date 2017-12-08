@@ -354,6 +354,15 @@ test_addr_ip6_helpers(void *arg)
   test_pton6_bad("1.2.3.4");
   test_pton6_bad(":1.2.3.4");
   test_pton6_bad(".2.3.4");
+  /* Regression tests for 22789. */
+  test_pton6_bad("0xfoo");
+  test_pton6_bad("0x88");
+  test_pton6_bad("0xyxxy");
+  test_pton6_bad("0XFOO");
+  test_pton6_bad("0X88");
+  test_pton6_bad("0XYXXY");
+  test_pton6_bad("0x");
+  test_pton6_bad("0X");
 
   /* test internal checking */
   test_external_ip("fbff:ffff::2:7", 0);

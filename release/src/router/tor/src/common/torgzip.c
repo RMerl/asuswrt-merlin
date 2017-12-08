@@ -181,6 +181,7 @@ tor_gzip_compress(char **out, size_t *out_len,
         /* In case zlib doesn't work as I think .... */
         if (stream->avail_out >= stream->avail_in+16)
           break;
+        /* Falls through. */
       case Z_BUF_ERROR:
         offset = stream->next_out - ((unsigned char*)*out);
         old_size = out_size;
@@ -319,6 +320,7 @@ tor_gzip_uncompress(char **out, size_t *out_len,
         /* In case zlib doesn't work as I think.... */
         if (stream->avail_out >= stream->avail_in+16)
           break;
+        /* Falls through. */
       case Z_BUF_ERROR:
         if (stream->avail_out > 0) {
           log_fn(protocol_warn_level, LD_PROTOCOL,

@@ -260,6 +260,7 @@ connection_edge_process_inbuf(edge_connection_t *conn, int package_partial)
       }
       /* Fall through if the connection is on a circuit without optimistic
        * data support. */
+      /* Falls through. */
     case EXIT_CONN_STATE_CONNECTING:
     case AP_CONN_STATE_RENDDESC_WAIT:
     case AP_CONN_STATE_CIRCUIT_WAIT:
@@ -1910,8 +1911,8 @@ destination_from_socket(entry_connection_t *conn, socks_request_t *req)
   socklen_t orig_dst_len = sizeof(orig_dst);
   tor_addr_t addr;
 
-#ifdef TRANS_TRPOXY
-  if (options->TransProxyType_parsed == TPT_TPROXY) {
+#ifdef TRANS_TPROXY
+  if (get_options()->TransProxyType_parsed == TPT_TPROXY) {
     if (getsockname(ENTRY_TO_CONN(conn)->s, (struct sockaddr*)&orig_dst,
                     &orig_dst_len) < 0) {
       int e = tor_socket_errno(ENTRY_TO_CONN(conn)->s);
@@ -2437,10 +2438,16 @@ connection_ap_handshake_send_begin(entry_connection_t *ap_conn)
   } else if (begin_type == RELAY_COMMAND_BEGIN_DIR) {
     /* This connection is a begindir directory connection.
      * Look at the linked directory connection to access the directory purpose.
-     * (This must be non-NULL, because we're doing begindir.) */
-    tor_assert(base_conn->linked);
+     * If a BEGINDIR connection is ever not linked, that's a bug. */
+    if (BUG(!base_conn->linked)) {
+      return -1;
+    }
     connection_t *linked_dir_conn_base = base_conn->linked_conn;
-    tor_assert(linked_dir_conn_base);
+    /* If the linked connection has been unlinked by other code, we can't send
+     * a begin cell on it. */
+    if (!linked_dir_conn_base) {
+      return -1;
+    }
     /* Sensitive directory connections must have an anonymous path length.
      * Otherwise, directory connections are typically one-hop.
      * This matches the earlier check for directory connection path anonymity

@@ -1632,8 +1632,8 @@ test_config_adding_default_trusted_dir_servers(void *arg)
 
   /* Assume we have eight V3 authorities */
   add_default_trusted_dir_authorities(V3_DIRINFO);
-  tt_int_op(get_n_authorities(V3_DIRINFO), OP_EQ, 8);
-  tt_int_op(smartlist_len(router_get_fallback_dir_servers()), OP_EQ, 9);
+  tt_int_op(get_n_authorities(V3_DIRINFO), OP_EQ, 9);
+  tt_int_op(smartlist_len(router_get_fallback_dir_servers()), OP_EQ, 10);
 
  done:
   clear_dir_servers();

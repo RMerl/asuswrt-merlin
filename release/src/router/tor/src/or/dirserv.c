@@ -383,6 +383,17 @@ dirserv_get_status_impl(const char *id_digest, const char *nickname,
     return FP_REJECT;
   }
 
+  /* Tor 0.2.9.x where x<5 suffers from bug #20499, where relays don't
+   * keep their consensus up to date so they make bad guards.
+   * The simple fix is to just drop them from the network. */
+  if (platform &&
+      tor_version_as_new_as(platform,"0.2.9.0-alpha") &&
+      !tor_version_as_new_as(platform,"0.2.9.5-alpha")) {
+    if (msg)
+      *msg = "Tor version contains bug 20499. Please upgrade!";
+    return FP_REJECT;
+  }
+
   status_by_digest = digestmap_get(fingerprint_list->status_by_digest,
                                    id_digest);
   if (status_by_digest)
@@ -615,7 +626,11 @@ dirserv_add_multiple_descriptors(const char *desc, uint8_t purpose,
  * passed back to the origin of this descriptor, or NULL if there is no such
  * message. Use <b>source</b> to produce better log messages.
  *
- * Return the status of the operation
+ * If <b>ri</b> is not added to the list of server descriptors, free it.
+ * That means the caller must not access <b>ri</b> after this function
+ * returns, since it might have been freed.
+ *
+ * Return the status of the operation.
  *
  * This function is only called when fresh descriptors are posted, not when
  * we re-load the cache.
@@ -643,8 +658,8 @@ dirserv_add_descriptor(routerinfo_t *ri, const char **msg, const char *source)
     control_event_or_authdir_new_descriptor("REJECTED",
                ri->cache_info.signed_descriptor_body,
                                             desclen, *msg);
-    routerinfo_free(ri);
-    return ROUTER_AUTHDIR_REJECTS;
+    r = ROUTER_AUTHDIR_REJECTS;
+    goto fail;
   }
 
   /* Check whether this descriptor is semantically identical to the last one
@@ -664,8 +679,8 @@ dirserv_add_descriptor(routerinfo_t *ri, const char **msg, const char *source)
     control_event_or_authdir_new_descriptor("DROPPED",
                          ri->cache_info.signed_descriptor_body,
                                             desclen, *msg);
-    routerinfo_free(ri);
-    return ROUTER_IS_ALREADY_KNOWN;
+    r = ROUTER_IS_ALREADY_KNOWN;
+    goto fail;
   }
 
   /* Do keypinning again ... this time, to add the pin if appropriate */
@@ -688,7 +703,8 @@ dirserv_add_descriptor(routerinfo_t *ri, const char **msg, const char *source)
              "its key did not match an older RSA/Ed25519 keypair",
              router_describe(ri), source);
     *msg = "Looks like your keypair does not match its older value.";
-    return ROUTER_AUTHDIR_REJECTS;
+    r = ROUTER_AUTHDIR_REJECTS;
+    goto fail;
   }
 
   /* Make a copy of desc, since router_add_to_routerlist might free
@@ -726,6 +742,20 @@ dirserv_add_descriptor(routerinfo_t *ri, const char **msg, const char *source)
   tor_free(desc);
   tor_free(nickname);
   return r;
+ fail:
+  {
+    const char *desc_digest = ri->cache_info.signed_descriptor_digest;
+    download_status_t *dls =
+      router_get_dl_status_by_descriptor_digest(desc_digest);
+    if (dls) {
+      log_info(LD_GENERAL, "Marking router with descriptor %s as rejected, "
+               "and therefore undownloadable",
+               hex_str(desc_digest, DIGEST_LEN));
+      download_status_mark_impossible(dls);
+    }
+    routerinfo_free(ri);
+  }
+  return r;
 }
 
 /** As dirserv_add_descriptor, but for an extrainfo_t <b>ei</b>. */
@@ -734,6 +764,7 @@ dirserv_add_extrainfo(extrainfo_t *ei, const char **msg)
 {
   routerinfo_t *ri;
   int r;
+  was_router_added_t rv;
   tor_assert(msg);
   *msg = NULL;
 
@@ -742,8 +773,8 @@ dirserv_add_extrainfo(extrainfo_t *ei, const char **msg)
   ri = router_get_mutable_by_digest(ei->cache_info.identity_digest);
   if (!ri) {
     *msg = "No corresponding router descriptor for extra-info descriptor";
-    extrainfo_free(ei);
-    return ROUTER_BAD_EI;
+    rv = ROUTER_BAD_EI;
+    goto fail;
   }
 
   /* If it's too big, refuse it now. Otherwise we'll cache it all over the
@@ -755,17 +786,34 @@ dirserv_add_extrainfo(extrainfo_t *ei, const char **msg)
                (int)ei->cache_info.signed_descriptor_len,
                MAX_EXTRAINFO_UPLOAD_SIZE);
     *msg = "Extrainfo document was too large";
-    extrainfo_free(ei);
-    return ROUTER_BAD_EI;
+    rv = ROUTER_BAD_EI;
+    goto fail;
   }
 
   if ((r = routerinfo_incompatible_with_extrainfo(ri->identity_pkey, ei,
                                                   &ri->cache_info, msg))) {
-    extrainfo_free(ei);
-    return r < 0 ? ROUTER_IS_ALREADY_KNOWN : ROUTER_BAD_EI;
+    if (r<0) {
+      extrainfo_free(ei);
+      return ROUTER_IS_ALREADY_KNOWN;
+    }
+    rv = ROUTER_BAD_EI;
+    goto fail;
   }
   router_add_extrainfo_to_routerlist(ei, msg, 0, 0);
   return ROUTER_ADDED_SUCCESSFULLY;
+ fail:
+  {
+    const char *d = ei->cache_info.signed_descriptor_digest;
+    signed_descriptor_t *sd = router_get_by_extrainfo_digest((char*)d);
+    if (sd) {
+      log_info(LD_GENERAL, "Marking extrainfo with descriptor %s as "
+               "rejected, and therefore undownloadable",
+               hex_str((char*)d,DIGEST_LEN));
+      download_status_mark_impossible(&sd->ei_dl_status);
+    }
+    extrainfo_free(ei);
+  }
+  return rv;
 }
 
 /** Remove all descriptors whose nicknames or fingerprints no longer

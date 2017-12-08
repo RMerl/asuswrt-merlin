@@ -1,3 +1,352 @@
+Changes in version 0.2.9.14 - 2017-12-01
+  Tor 0.3.0.13 backports important security and stability bugfixes from
+  later Tor releases. All Tor users should upgrade to this release, or
+  to another of the releases coming out today.
+
+  o Major bugfixes (exit relays, DNS, backport from 0.3.2.4-alpha):
+    - Fix an issue causing DNS to fail on high-bandwidth exit nodes,
+      making them nearly unusable. Fixes bugs 21394 and 18580; bugfix on
+      0.1.2.2-alpha, which introduced eventdns. Thanks to Dhalgren for
+      identifying and finding a workaround to this bug and to Moritz,
+      Arthur Edelstein, and Roger for helping to track it down and
+      analyze it.
+
+  o Major bugfixes (security, backport from 0.3.2.6-alpha):
+    - Fix a denial of service bug where an attacker could use a
+      malformed directory object to cause a Tor instance to pause while
+      OpenSSL would try to read a passphrase from the terminal. (Tor
+      instances run without a terminal, which is the case for most Tor
+      packages, are not impacted.) Fixes bug 24246; bugfix on every
+      version of Tor. Also tracked as TROVE-2017-011 and CVE-2017-8821.
+      Found by OSS-Fuzz as testcase 6360145429790720.
+    - Fix a denial of service issue where an attacker could crash a
+      directory authority using a malformed router descriptor. Fixes bug
+      24245; bugfix on 0.2.9.4-alpha. Also tracked as TROVE-2017-010
+      and CVE-2017-8820.
+    - When checking for replays in the INTRODUCE1 cell data for a
+      (legacy) onion service, correctly detect replays in the RSA-
+      encrypted part of the cell. We were previously checking for
+      replays on the entire cell, but those can be circumvented due to
+      the malleability of Tor's legacy hybrid encryption. This fix helps
+      prevent a traffic confirmation attack. Fixes bug 24244; bugfix on
+      0.2.4.1-alpha. This issue is also tracked as TROVE-2017-009
+      and CVE-2017-8819.
+
+  o Major bugfixes (security, onion service v2, backport from 0.3.2.6-alpha):
+    - Fix a use-after-free error that could crash v2 Tor onion services
+      when they failed to open circuits while expiring introduction
+      points. Fixes bug 24313; bugfix on 0.2.7.2-alpha. This issue is
+      also tracked as TROVE-2017-013 and CVE-2017-8823.
+
+  o Major bugfixes (security, relay, backport from 0.3.2.6-alpha):
+    - When running as a relay, make sure that we never build a path
+      through ourselves, even in the case where we have somehow lost the
+      version of our descriptor appearing in the consensus. Fixes part
+      of bug 21534; bugfix on 0.2.0.1-alpha. This issue is also tracked
+      as TROVE-2017-012 and CVE-2017-8822.
+
+  o Minor features (bridge, backport from 0.3.1.9):
+    - Bridges now include notice in their descriptors that they are
+      bridges, and notice of their distribution status, based on their
+      publication settings. Implements ticket 18329. For more fine-
+      grained control of how a bridge is distributed, upgrade to 0.3.2.x
+      or later.
+
+  o Minor features (directory authority, backport from 0.3.2.6-alpha):
+    - Add an IPv6 address for the "bastet" directory authority. Closes
+      ticket 24394.
+
+  o Minor features (geoip):
+    - Update geoip and geoip6 to the November 6 2017 Maxmind GeoLite2
+      Country database.
+
+  o Minor features (security, windows, backport from 0.3.1.1-alpha):
+    - Enable a couple of pieces of Windows hardening: one
+      (HeapEnableTerminationOnCorruption) that has been on-by-default
+      since Windows 8, and unavailable before Windows 7; and one
+      (PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION) which we believe doesn't
+      affect us, but shouldn't do any harm. Closes ticket 21953.
+
+  o Minor bugfix (relay address resolution, backport from 0.3.2.1-alpha):
+    - Avoid unnecessary calls to directory_fetches_from_authorities() on
+      relays, to prevent spurious address resolutions and descriptor
+      rebuilds. This is a mitigation for bug 21789. Fixes bug 23470;
+      bugfix on in 0.2.8.1-alpha.
+
+  o Minor bugfixes (compilation, backport from 0.3.2.1-alpha):
+    - Fix unused variable warnings in donna's Curve25519 SSE2 code.
+      Fixes bug 22895; bugfix on 0.2.7.2-alpha.
+
+  o Minor bugfixes (logging, relay shutdown, annoyance, backport from 0.3.2.2-alpha):
+    - When a circuit is marked for close, do not attempt to package any
+      cells for channels on that circuit. Previously, we would detect
+      this condition lower in the call stack, when we noticed that the
+      circuit had no attached channel, and log an annoying message.
+      Fixes bug 8185; bugfix on 0.2.5.4-alpha.
+
+  o Minor bugfixes (relay, crash, backport from 0.3.2.4-alpha):
+    - Avoid a crash when transitioning from client mode to bridge mode.
+      Previously, we would launch the worker threads whenever our
+      "public server" mode changed, but not when our "server" mode
+      changed. Fixes bug 23693; bugfix on 0.2.6.3-alpha.
+
+  o Minor bugfixes (testing, backport from 0.3.1.6-rc):
+    - Fix an undersized buffer in test-memwipe.c. Fixes bug 23291;
+      bugfix on 0.2.7.2-alpha. Found and patched by Ties Stuij.
+
+
+Changes in version 0.2.9.13 - 2017-10-25
+  Tor 0.2.9.13 backports a collection of bugfixes from later Tor release
+  series, including a bugfix for a crash issue that had affected relays
+  under memory pressure. It also adds a new directory authority, Bastet.
+
+  o Directory authority changes:
+    - Add "Bastet" as a ninth directory authority to the default list.
+      Closes ticket 23910.
+    - The directory authority "Longclaw" has changed its IP address.
+      Closes ticket 23592.
+
+  o Major bugfixes (relay, crash, assertion failure, backport from 0.3.2.2-alpha):
+    - Fix a timing-based assertion failure that could occur when the
+      circuit out-of-memory handler freed a connection's output buffer.
+      Fixes bug 23690; bugfix on 0.2.6.1-alpha.
+
+  o Minor features (directory authorities, backport from 0.3.2.2-alpha):
+    - Remove longclaw's IPv6 address, as it will soon change. Authority
+      IPv6 addresses were originally added in 0.2.8.1-alpha. This leaves
+      3/8 directory authorities with IPv6 addresses, but there are also
+      52 fallback directory mirrors with IPv6 addresses. Resolves 19760.
+
+  o Minor features (geoip):
+    - Update geoip and geoip6 to the October 4 2017 Maxmind GeoLite2
+      Country database.
+
+  o Minor bugfixes (directory authority, backport from 0.3.1.5-alpha):
+    - When a directory authority rejects a descriptor or extrainfo with
+      a given digest, mark that digest as undownloadable, so that we do
+      not attempt to download it again over and over. We previously
+      tried to avoid downloading such descriptors by other means, but we
+      didn't notice if we accidentally downloaded one anyway. This
+      behavior became problematic in 0.2.7.2-alpha, when authorities
+      began pinning Ed25519 keys. Fixes bug 22349; bugfix
+      on 0.2.1.19-alpha.
+
+  o Minor bugfixes (memory safety, backport from 0.3.2.3-alpha):
+    - Clear the address when node_get_prim_orport() returns early.
+      Fixes bug 23874; bugfix on 0.2.8.2-alpha.
+
+  o Minor bugfixes (Windows service, backport from 0.3.1.6-rc):
+    - When running as a Windows service, set the ID of the main thread
+      correctly. Failure to do so made us fail to send log messages to
+      the controller in 0.2.1.16-rc, slowed down controller event
+      delivery in 0.2.7.3-rc and later, and crash with an assertion
+      failure in 0.3.1.1-alpha. Fixes bug 23081; bugfix on 0.2.1.6-alpha.
+      Patch and diagnosis from "Vort".
+
+
+Changes in version 0.2.9.12 - 2017-09-18
+  Tor 0.2.9.12 backports a collection of bugfixes from later
+  Tor series.
+
+  Most significantly, it includes a fix for TROVE-2017-008, a
+  security bug that affects hidden services running with the
+  SafeLogging option disabled. For more information, see
+  https://trac.torproject.org/projects/tor/ticket/23490
+
+  o Major features (security, backport from 0.3.0.2-alpha):
+    - Change the algorithm used to decide DNS TTLs on client and server
+      side, to better resist DNS-based correlation attacks like the
+      DefecTor attack of Greschbach, Pulls, Roberts, Winter, and
+      Feamster. Now relays only return one of two possible DNS TTL
+      values, and clients are willing to believe DNS TTL values up to 3
+      hours long. Closes ticket 19769.
+
+  o Major bugfixes (crash, directory connections, backport from 0.3.0.5-rc):
+    - Fix a rare crash when sending a begin cell on a circuit whose
+      linked directory connection had already been closed. Fixes bug
+      21576; bugfix on 0.2.9.3-alpha. Reported by Alec Muffett.
+
+  o Major bugfixes (DNS, backport from 0.3.0.2-alpha):
+    - Fix a bug that prevented exit nodes from caching DNS records for
+      more than 60 seconds. Fixes bug 19025; bugfix on 0.2.4.7-alpha.
+
+  o Major bugfixes (linux TPROXY support, backport from 0.3.1.1-alpha):
+    - Fix a typo that had prevented TPROXY-based transparent proxying
+      from working under Linux. Fixes bug 18100; bugfix on 0.2.6.3-alpha.
+      Patch from "d4fq0fQAgoJ".
+
+  o Major bugfixes (openbsd, denial-of-service, backport from 0.3.1.5-alpha):
+    - Avoid an assertion failure bug affecting our implementation of
+      inet_pton(AF_INET6) on certain OpenBSD systems whose strtol()
+      handling of "0xx" differs from what we had expected. Fixes bug
+      22789; bugfix on 0.2.3.8-alpha. Also tracked as TROVE-2017-007.
+
+  o Minor features (code style, backport from 0.3.1.3-alpha):
+    - Add "Falls through" comments to our codebase, in order to silence
+      GCC 7's -Wimplicit-fallthrough warnings. Patch from Andreas
+      Stieger. Closes ticket 22446.
+
+  o Minor features (geoip):
+    - Update geoip and geoip6 to the September 6 2017 Maxmind GeoLite2
+      Country database.
+
+  o Minor bugfixes (bandwidth accounting, backport from 0.3.1.1-alpha):
+    - Roll over monthly accounting at the configured hour and minute,
+      rather than always at 00:00. Fixes bug 22245; bugfix on 0.0.9rc1.
+      Found by Andrey Karpov with PVS-Studio.
+
+  o Minor bugfixes (compilation, backport from 0.3.1.5-alpha):
+    - Suppress -Wdouble-promotion warnings with clang 4.0. Fixes bug 22915;
+      bugfix on 0.2.8.1-alpha.
+    - Fix warnings when building with libscrypt and openssl scrypt support
+      on Clang. Fixes bug 22916; bugfix on 0.2.7.2-alpha.
+    - When building with certain versions the mingw C header files, avoid
+      float-conversion warnings when calling the C functions isfinite(),
+      isnan(), and signbit(). Fixes bug 22801; bugfix on 0.2.8.1-alpha.
+
+  o Minor bugfixes (compilation, backport from 0.3.1.7):
+    - Avoid compiler warnings in the unit tests for running tor_sscanf()
+      with wide string outputs. Fixes bug 15582; bugfix on 0.2.6.2-alpha.
+
+  o Minor bugfixes (compilation, mingw, backport from 0.3.1.1-alpha):
+    - Backport a fix for an "unused variable" warning that appeared
+      in some versions of mingw. Fixes bug 22838; bugfix on
+      0.2.8.1-alpha.
+
+  o Minor bugfixes (controller, backport from 0.3.1.7):
+    - Do not crash when receiving a HSPOST command with an empty body.
+      Fixes part of bug 22644; bugfix on 0.2.7.1-alpha.
+    - Do not crash when receiving a POSTDESCRIPTOR command with an
+      empty body. Fixes part of bug 22644; bugfix on 0.2.0.1-alpha.
+
+  o Minor bugfixes (coverity build support, backport from 0.3.1.5-alpha):
+    - Avoid Coverity build warnings related to our BUG() macro. By
+      default, Coverity treats BUG() as the Linux kernel does: an
+      instant abort(). We need to override that so our BUG() macro
+      doesn't prevent Coverity from analyzing functions that use it.
+      Fixes bug 23030; bugfix on 0.2.9.1-alpha.
+
+  o Minor bugfixes (defensive programming, undefined behavior, backport from 0.3.1.4-alpha):
+    - Fix a memset() off the end of an array when packing cells. This
+      bug should be harmless in practice, since the corrupted bytes are
+      still in the same structure, and are always padding bytes,
+      ignored, or immediately overwritten, depending on compiler
+      behavior. Nevertheless, because the memset()'s purpose is to make
+      sure that any other cell-handling bugs can't expose bytes to the
+      network, we need to fix it. Fixes bug 22737; bugfix on
+      0.2.4.11-alpha. Fixes CID 1401591.
+
+  o Minor bugfixes (file limits, osx, backport from 0.3.1.5-alpha):
+    - When setting the maximum number of connections allowed by the OS,
+      always allow some extra file descriptors for other files. Fixes
+      bug 22797; bugfix on 0.2.0.10-alpha.
+
+  o Minor bugfixes (linux seccomp2 sandbox, backport from 0.3.1.5-alpha):
+    - Avoid a sandbox failure when trying to re-bind to a socket and
+      mark it as IPv6-only. Fixes bug 20247; bugfix on 0.2.5.1-alpha.
+
+  o Minor bugfixes (linux seccomp2 sandbox, backport from 0.3.1.4-alpha):
+    - Permit the fchmod system call, to avoid crashing on startup when
+      starting with the seccomp2 sandbox and an unexpected set of
+      permissions on the data directory or its contents. Fixes bug
+      22516; bugfix on 0.2.5.4-alpha.
+
+  o Minor bugfixes (relay, backport from 0.3.0.5-rc):
+    - Avoid a double-marked-circuit warning that could happen when we
+      receive DESTROY cells under heavy load. Fixes bug 20059; bugfix
+      on 0.1.0.1-rc.
+
+  o Minor bugfixes (voting consistency, backport from 0.3.1.1-alpha):
+    - Reject version numbers with non-numeric prefixes (such as +, -, or
+      whitespace). Disallowing whitespace prevents differential version
+      parsing between POSIX-based and Windows platforms. Fixes bug 21507
+      and part of 21508; bugfix on 0.0.8pre1.
+
+  o Build features (backport from 0.3.1.5-alpha):
+    - Tor's repository now includes a Travis Continuous Integration (CI)
+      configuration file (.travis.yml). This is meant to help new
+      developers and contributors who fork Tor to a Github repository be
+      better able to test their changes, and understand what we expect
+      to pass. To use this new build feature, you must fork Tor to your
+      Github account, then go into the "Integrations" menu in the
+      repository settings for your fork and enable Travis, then push
+      your changes. Closes ticket 22636.
+
+
+Changes in version 0.2.9.11 - 2017-06-08
+  Tor 0.2.9.11 backports a fix for a bug that would allow an attacker to
+  remotely crash a hidden service with an assertion failure. Anyone
+  running a hidden service should upgrade to this version, or to some
+  other version with fixes for TROVE-2017-005. (Versions before 0.3.0
+  are not affected by TROVE-2017-004.)
+
+  Tor 0.2.9.11 also backports fixes for several key management bugs
+  that sometimes made relays unreliable, as well as several other
+  bugfixes described below.
+
+  o Major bugfixes (hidden service, relay, security, backport
+    from 0.3.1.3-alpha):
+    - Fix a remotely triggerable assertion failure caused by receiving a
+      BEGIN_DIR cell on a hidden service rendezvous circuit. Fixes bug
+      22494, tracked as TROVE-2017-005 and CVE-2017-0376; bugfix
+      on 0.2.2.1-alpha.
+
+  o Major bugfixes (relay, link handshake, backport from 0.3.1.3-alpha):
+    - When performing the v3 link handshake on a TLS connection, report
+      that we have the x509 certificate that we actually used on that
+      connection, even if we have changed certificates since that
+      connection was first opened. Previously, we would claim to have
+      used our most recent x509 link certificate, which would sometimes
+      make the link handshake fail. Fixes one case of bug 22460; bugfix
+      on 0.2.3.6-alpha.
+
+  o Minor features (fallback directory list, backport from 0.3.1.3-alpha):
+    - Replace the 177 fallbacks originally introduced in Tor 0.2.9.8 in
+      December 2016 (of which ~126 were still functional) with a list of
+      151 fallbacks (32 new, 119 unchanged, 58 removed) generated in May
+      2017. Resolves ticket 21564.
+
+  o Minor features (future-proofing, backport from 0.3.0.7):
+    - Tor no longer refuses to download microdescriptors or descriptors if
+      they are listed as "published in the future".  This change will
+      eventually allow us to stop listing meaningful "published" dates
+      in microdescriptor consensuses, and thereby allow us to reduce the
+      resources required to download consensus diffs by over 50%.
+      Implements part of ticket 21642; implements part of proposal 275.
+
+  o Minor features (directory authorities, backport from 0.3.0.4-rc)
+    - Directory authorities now reject relays running versions
+      0.2.9.1-alpha through 0.2.9.4-alpha, because those relays
+      suffer from bug 20499 and don't keep their consensus cache
+      up-to-date. Resolves ticket 20509.
+
+  o Minor features (geoip):
+    - Update geoip and geoip6 to the May 2 2017 Maxmind GeoLite2
+      Country database.
+
+  o Minor bugfixes (control port, backport from 0.3.0.6):
+    - The GETINFO extra-info/digest/<digest> command was broken because
+      of a wrong base16 decode return value check, introduced when
+      refactoring that API. Fixes bug 22034; bugfix on 0.2.9.1-alpha.
+
+  o Minor bugfixes (correctness, backport from 0.3.1.3-alpha):
+    - Avoid undefined behavior when parsing IPv6 entries from the geoip6
+      file. Fixes bug 22490; bugfix on 0.2.4.6-alpha.
+
+  o Minor bugfixes (Linux seccomp2 sandbox, backport from 0.3.0.7):
+    - The getpid() system call is now permitted under the Linux seccomp2
+      sandbox, to avoid crashing with versions of OpenSSL (and other
+      libraries) that attempt to learn the process's PID by using the
+      syscall rather than the VDSO code. Fixes bug 21943; bugfix
+      on 0.2.5.1-alpha.
+
+  o Minor bugfixes (memory leak, directory authority, backport
+    from 0.3.1.2-alpha):
+    - When directory authorities reject a router descriptor due to
+      keypinning, free the router descriptor rather than leaking the
+      memory. Fixes bug 22370; bugfix on 0.2.7.2-alpha.
+
+
 Changes in version 0.2.9.10 - 2017-03-01
   Tor 0.2.9.10 backports a security fix for users who build Tor with
   the --enable-expensive-hardening option. It also includes fixes for

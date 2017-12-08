@@ -2829,7 +2829,10 @@ router_choose_random_node(smartlist_t *excludedsmartlist,
       });
   }
 
-  if ((r = routerlist_find_my_routerinfo()))
+  /* If the node_t is not found we won't be to exclude ourself but we
+   * won't be able to pick ourself in router_choose_random_node() so
+   * this is fine to at least try with our routerinfo_t object. */
+  if ((r = router_get_my_routerinfo()))
     routerlist_add_node_and_family(excludednodes, r);
 
   router_add_running_nodes_to_smartlist(sl, allow_invalid,

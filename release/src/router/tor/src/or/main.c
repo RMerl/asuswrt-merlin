@@ -3426,6 +3426,11 @@ tor_main(int argc, char *argv[])
   int result = 0;
 
 #ifdef _WIN32
+#ifndef HeapEnableTerminationOnCorruption
+#define HeapEnableTerminationOnCorruption 1
+#endif
+  /* On heap corruption, just give up; don't try to play along. */
+  HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
   /* Call SetProcessDEPPolicy to permanently enable DEP.
      The function will not resolve on earlier versions of Windows,
      and failure is not dangerous. */
@@ -3434,7 +3439,10 @@ tor_main(int argc, char *argv[])
     typedef BOOL (WINAPI *PSETDEP)(DWORD);
     PSETDEP setdeppolicy = (PSETDEP)GetProcAddress(hMod,
                            "SetProcessDEPPolicy");
-    if (setdeppolicy) setdeppolicy(1); /* PROCESS_DEP_ENABLE */
+    if (setdeppolicy) {
+      /* PROCESS_DEP_ENABLE | PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION */
+      setdeppolicy(3);
+    }
   }
 #endif
 

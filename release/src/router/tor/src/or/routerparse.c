@@ -5621,6 +5621,8 @@ tor_version_parse(const char *s, tor_version_t *out)
 
 #define NUMBER(m)                               \
   do {                                          \
+    if (!cp || *cp < '0' || *cp > '9')          \
+      return -1;                                \
     out->m = (int)tor_parse_uint64(cp, 10, 0, INT32_MAX, &ok, &eos);    \
     if (!ok)                                    \
       return -1;                                \

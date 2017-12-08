@@ -645,11 +645,21 @@ MOCK_IMPL(int,
   return 0;
 }
 
+/** A PEM callback that always reports a failure to get a password */
+static int
+pem_no_password_cb(char *buf, int size, int rwflag, void *u)
+{
+  (void)buf;
+  (void)size;
+  (void)rwflag;
+  (void)u;
+  return 0;
+}
+
 /** Read a PEM-encoded private key from the <b>len</b>-byte string <b>s</b>
  * into <b>env</b>.  Return 0 on success, -1 on failure.  If len is -1,
  * the string is nul-terminated.
  */
-/* Used here, and used for testing. */
 int
 crypto_pk_read_private_key_from_string(crypto_pk_t *env,
                                        const char *s, ssize_t len)
@@ -668,7 +678,7 @@ crypto_pk_read_private_key_from_string(crypto_pk_t *env,
   if (env->key)
     RSA_free(env->key);
 
-  env->key = PEM_read_bio_RSAPrivateKey(b,NULL,NULL,NULL);
+  env->key = PEM_read_bio_RSAPrivateKey(b,NULL,pem_no_password_cb,NULL);
 
   BIO_free(b);
 
@@ -800,7 +810,7 @@ crypto_pk_read_public_key_from_string(crypto_pk_t *env, const char *src,
 
   if (env->key)
     RSA_free(env->key);
-  env->key = PEM_read_bio_RSAPublicKey(b, NULL, NULL, NULL);
+  env->key = PEM_read_bio_RSAPublicKey(b, NULL, pem_no_password_cb, NULL);
   BIO_free(b);
   if (!env->key) {
     crypto_log_errors(LOG_WARN, "reading public key from string");

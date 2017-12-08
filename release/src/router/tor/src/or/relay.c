@@ -383,6 +383,11 @@ circuit_package_relay_cell(cell_t *cell, circuit_t *circ,
 {
   channel_t *chan; /* where to send the cell */
 
+  if (circ->marked_for_close) {
+    /* Circuit is marked; send nothing. */
+    return 0;
+  }
+
   if (cell_direction == CELL_DIRECTION_OUT) {
     crypt_path_t *thishop; /* counter for repeated crypts */
     chan = circ->n_chan;
@@ -696,6 +701,12 @@ connection_edge_send_command(edge_connection_t *fromconn,
     return -1;
   }
 
+  if (circ->marked_for_close) {
+    /* The circuit has been marked, but not freed yet. When it's freed, it
+     * will mark this connection for close. */
+    return -1;
+  }
+
   return relay_send_command_from_edge(fromconn->stream_id, circ,
                                       relay_command, payload,
                                       payload_len, cpath_layer);
@@ -859,6 +870,7 @@ connection_ap_process_end_not_open(
           break; /* break means it'll close, below */
         /* Else fall through: expire this circuit, clear the
          * chosen_exit_name field, and try again. */
+        /* Falls through. */
       case END_STREAM_REASON_RESOLVEFAILED:
       case END_STREAM_REASON_TIMEOUT:
       case END_STREAM_REASON_MISC:
@@ -1499,7 +1511,8 @@ connection_edge_process_relay_cell(cell_t *cell, circuit_t *circ,
                "Begin cell for known stream. Dropping.");
         return 0;
       }
-      if (rh.command == RELAY_COMMAND_BEGIN_DIR) {
+      if (rh.command == RELAY_COMMAND_BEGIN_DIR &&
+          circ->purpose != CIRCUIT_PURPOSE_S_REND_JOINED) {
         /* Assign this circuit and its app-ward OR connection a unique ID,
          * so that we can measure download times. The local edge and dir
          * connection will be assigned the same ID when they are created

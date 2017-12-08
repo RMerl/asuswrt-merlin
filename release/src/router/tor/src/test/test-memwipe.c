@@ -82,7 +82,7 @@ static unsigned
 check_a_buffer(void)
 {
   unsigned int i;
-  volatile char buf[1024];
+  volatile char buf[BUF_LEN];
   unsigned sum = 0;
 
   /* See if this buffer has the string in it.

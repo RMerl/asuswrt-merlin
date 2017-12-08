@@ -293,6 +293,7 @@ nt_service_body(int argc, char **argv)
    * event loop */
   service_status.dwCurrentState = SERVICE_RUNNING;
   service_fns.SetServiceStatus_fn(hStatus, &service_status);
+  set_main_thread();
   do_main_loop();
   tor_cleanup();
 }

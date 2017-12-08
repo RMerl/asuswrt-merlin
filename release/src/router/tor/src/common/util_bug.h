@@ -58,6 +58,19 @@
  *     return -1;
  */
 
+#ifdef __COVERITY__
+#undef BUG
+// Coverity defines this in global headers; let's override it.  This is a
+// magic coverity-only preprocessor thing.
+#nodef BUG(x) ((x)?(__coverity_panic__(),1):0)
+#endif
+
+#if defined(__COVERITY__) || defined(__clang_analyzer__)
+// We're running with a static analysis tool: let's treat even nonfatal
+// assertion failures as something that we need to avoid.
+#define ALL_BUGS_ARE_FATAL
+#endif
+
 #ifdef ALL_BUGS_ARE_FATAL
 #define tor_assert_nonfatal_unreached() tor_assert(0)
 #define tor_assert_nonfatal(cond) tor_assert((cond))

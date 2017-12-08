@@ -235,7 +235,9 @@ onion_pending_add(or_circuit_t *circ, create_cell_t *onionskin)
     onion_queue_entry_remove(head);
     log_info(LD_CIRC,
              "Circuit create request is too old; canceling due to overload.");
-    circuit_mark_for_close(TO_CIRCUIT(circ), END_CIRC_REASON_RESOURCELIMIT);
+    if (! TO_CIRCUIT(circ)->marked_for_close) {
+      circuit_mark_for_close(TO_CIRCUIT(circ), END_CIRC_REASON_RESOURCELIMIT);
+    }
   }
   return 0;
 }

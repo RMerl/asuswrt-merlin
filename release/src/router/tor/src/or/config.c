@@ -974,8 +974,11 @@ static const char *default_authorities[] = {
     "154.35.175.225:80 CF6D 0AAF B385 BE71 B8E1 11FC 5CFF 4B47 9237 33BC",
   "longclaw orport=443 "
     "v3ident=23D15D965BC35114467363C165C4F724B64B4F66 "
-    "ipv6=[2620:13:4000:8000:60:f3ff:fea1:7cff]:443 "
-    "199.254.238.52:80 74A9 1064 6BCE EFBC D2E8 74FC 1DC9 9743 0F96 8145",
+    "199.58.81.140:80 74A9 1064 6BCE EFBC D2E8 74FC 1DC9 9743 0F96 8145",
+  "bastet orport=443 "
+    "v3ident=27102BC123E7AF1D4741AE047E160C91ADC76B21 "
+    "ipv6=[2620:13:4000:6000::1000:118]:443 "
+    "204.13.164.118:80 24E2 F139 121D 4394 C54B 5BCC 368B 3B41 1857 C413",
   NULL
 };
 
@@ -4454,6 +4457,7 @@ options_transition_affects_workers(const or_options_t *old_options,
                                        new_options->ServerDNSSearchDomains ||
       old_options->SafeLogging_ != new_options->SafeLogging_ ||
       old_options->ClientOnly != new_options->ClientOnly ||
+      server_mode(old_options) != server_mode(new_options) ||
       public_server_mode(old_options) != public_server_mode(new_options) ||
       !config_lines_eq(old_options->Logs, new_options->Logs) ||
       old_options->LogMessageDomains != new_options->LogMessageDomains)

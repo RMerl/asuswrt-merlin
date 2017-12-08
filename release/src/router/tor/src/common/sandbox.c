@@ -136,6 +136,9 @@ static int filter_nopar_gen[] = {
 #ifdef HAVE_PIPE
     SCMP_SYS(pipe),
 #endif
+#ifdef __NR_fchmod
+    SCMP_SYS(fchmod),
+#endif
     SCMP_SYS(fcntl),
     SCMP_SYS(fstat),
 #ifdef __NR_fstat64
@@ -155,6 +158,7 @@ static int filter_nopar_gen[] = {
 #ifdef __NR_getgid32
     SCMP_SYS(getgid32),
 #endif
+    SCMP_SYS(getpid),
 #ifdef __NR_getrlimit
     SCMP_SYS(getrlimit),
 #endif
@@ -720,6 +724,14 @@ sb_setsockopt(scmp_filter_ctx ctx, sandbox_cfg_t *filter)
   rc = seccomp_rule_add_2(ctx, SCMP_ACT_ALLOW, SCMP_SYS(setsockopt),
       SCMP_CMP(1, SCMP_CMP_EQ, SOL_IP),
       SCMP_CMP(2, SCMP_CMP_EQ, IP_TRANSPARENT));
+  if (rc)
+    return rc;
+#endif
+
+#ifdef IPV6_V6ONLY
+  rc = seccomp_rule_add_2(ctx, SCMP_ACT_ALLOW, SCMP_SYS(setsockopt),
+      SCMP_CMP(1, SCMP_CMP_EQ, IPPROTO_IPV6),
+      SCMP_CMP(2, SCMP_CMP_EQ, IPV6_V6ONLY));
   if (rc)
     return rc;
 #endif

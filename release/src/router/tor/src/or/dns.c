@@ -243,29 +243,19 @@ has_dns_init_failed(void)
 }
 
 /** Helper: Given a TTL from a DNS response, determine what TTL to give the
- * OP that asked us to resolve it. */
+ * OP that asked us to resolve it, and how long to cache that record
+ * ourselves. */
 uint32_t
 dns_clip_ttl(uint32_t ttl)
 {
-  if (ttl < MIN_DNS_TTL)
-    return MIN_DNS_TTL;
-  else if (ttl > MAX_DNS_TTL)
-    return MAX_DNS_TTL;
+  /* This logic is a defense against "DefectTor" DNS-based traffic
+   * confirmation attacks, as in https://nymity.ch/tor-dns/tor-dns.pdf .
+   * We only give two values: a "low" value and a "high" value.
+   */
+  if (ttl < MIN_DNS_TTL_AT_EXIT)
+    return MIN_DNS_TTL_AT_EXIT;
   else
-    return ttl;
-}
-
-/** Helper: Given a TTL from a DNS response, determine how long to hold it in
- * our cache. */
-STATIC uint32_t
-dns_get_expiry_ttl(uint32_t ttl)
-{
-  if (ttl < MIN_DNS_TTL)
-    return MIN_DNS_TTL;
-  else if (ttl > MAX_DNS_ENTRY_AGE)
-    return MAX_DNS_ENTRY_AGE;
-  else
-    return ttl;
+    return MAX_DNS_TTL_AT_EXIT;
 }
 
 /** Helper: free storage held by an entry in the DNS cache. */
@@ -336,7 +326,7 @@ cached_resolve_add_answer(cached_resolve_t *resolve,
       resolve->result_ipv4.err_ipv4 = dns_result;
       resolve->res_status_ipv4 = RES_STATUS_DONE_ERR;
     }
-
+    resolve->ttl_ipv4 = ttl;
   } else if (query_type == DNS_IPv6_AAAA) {
     if (resolve->res_status_ipv6 != RES_STATUS_INFLIGHT)
       return;
@@ -351,6 +341,7 @@ cached_resolve_add_answer(cached_resolve_t *resolve,
       resolve->result_ipv6.err_ipv6 = dns_result;
       resolve->res_status_ipv6 = RES_STATUS_DONE_ERR;
     }
+    resolve->ttl_ipv6 = ttl;
   }
 }
 
@@ -531,6 +522,7 @@ send_resolved_cell,(edge_connection_t *conn, uint8_t answer_type,
         answer_type = RESOLVED_TYPE_ERROR;
         /* fall through. */
       }
+      /* Falls through. */
     case RESOLVED_TYPE_ERROR_TRANSIENT:
     case RESOLVED_TYPE_ERROR:
       {
@@ -1317,7 +1309,7 @@ make_pending_resolve_cached(cached_resolve_t *resolve)
         resolve->ttl_hostname < ttl)
       ttl = resolve->ttl_hostname;
 
-    set_expiry(new_resolve, time(NULL) + dns_get_expiry_ttl(ttl));
+    set_expiry(new_resolve, time(NULL) + dns_clip_ttl(ttl));
   }
 
   assert_cache_ok();
@@ -1433,13 +1425,30 @@ configure_nameservers(int force)
 
 #define SET(k,v)  evdns_base_set_option(the_evdns_base, (k), (v))
 
+  // If we only have one nameserver, it does not make sense to back off
+  // from it for a timeout. Unfortunately, the value for max-timeouts is
+  // currently clamped by libevent to 255, but it does not hurt to set
+  // it higher in case libevent gets a patch for this.
+  // Reducing attempts in the case of just one name server too, because
+  // it is very likely to be a local one where a network connectivity
+  // issue should not cause an attempt to fail.
   if (evdns_base_count_nameservers(the_evdns_base) == 1) {
-    SET("max-timeouts:", "16");
-    SET("timeout:", "10");
+    SET("max-timeouts:", "1000000");
+    SET("attempts:", "1");
   } else {
     SET("max-timeouts:", "3");
-    SET("timeout:", "5");
   }
+
+  // Elongate the queue of maximum inflight dns requests, so if a bunch
+  // time out at the resolver (happens commonly with unbound) we won't
+  // stall every other DNS request. This potentially means some wasted
+  // CPU as there's a walk over a linear queue involved, but this is a
+  // much better tradeoff compared to just failing DNS requests because
+  // of a full queue.
+  SET("max-inflight:", "8192");
+
+  // Time out after 5 seconds if no reply.
+  SET("timeout:", "5");
 
   if (options->ServerDNSRandomizeCase)
     SET("randomize-case:", "1");

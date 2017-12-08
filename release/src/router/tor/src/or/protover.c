@@ -694,6 +694,11 @@ protocol_list_contains(const smartlist_t *protos,
 const char *
 protover_compute_for_old_tor(const char *version)
 {
+  if (version == NULL) {
+    /* No known version; guess the oldest series that is still supported. */
+    version = "0.2.5.15";
+  }
+
   if (tor_version_as_new_as(version,
                             FIRST_TOR_VERSION_TO_ADVERTISE_PROTOCOLS)) {
     return "";

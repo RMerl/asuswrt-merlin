@@ -2500,7 +2500,7 @@ test_util_sscanf(void *arg)
 {
   unsigned u1, u2, u3;
   unsigned long ulng;
-  char s1[20], s2[10], s3[10], ch;
+  char s1[20], s2[10], s3[10], ch, *huge = NULL;
   int r;
   long lng1,lng2;
   int int1, int2;
@@ -2512,7 +2512,13 @@ test_util_sscanf(void *arg)
   tt_int_op(-1,OP_EQ,
             tor_sscanf("wrong", "%5c", s1)); /* %c cannot have a number. */
   tt_int_op(-1,OP_EQ, tor_sscanf("hello", "%s", s1)); /* %s needs a number. */
-  tt_int_op(-1,OP_EQ, tor_sscanf("prettylongstring", "%999999s", s1));
+  /* this will fail because we don't allow widths longer than 9999 */
+  {
+    huge = tor_malloc(1000000);
+    r = tor_sscanf("prettylongstring", "%99999s", huge);
+    tor_free(huge);
+    tt_int_op(-1,OP_EQ, r);
+  }
 #if 0
   /* GCC thinks these two are illegal. */
   test_eq(-1, tor_sscanf("prettylongstring", "%0s", s1));
@@ -2618,8 +2624,13 @@ test_util_sscanf(void *arg)
   tt_int_op(2,OP_EQ, tor_sscanf("76trombones", "%6u%9s", &u1, s1)); /* %u%s */
   tt_int_op(76,OP_EQ, u1);
   tt_str_op(s1,OP_EQ, "trombones");
-  tt_int_op(1,OP_EQ, tor_sscanf("prettylongstring", "%999s", s1));
-  tt_str_op(s1,OP_EQ, "prettylongstring");
+  {
+    huge = tor_malloc(1000);
+    r = tor_sscanf("prettylongstring", "%999s", huge);
+    tt_int_op(1,OP_EQ, r);
+    tt_str_op(huge,OP_EQ, "prettylongstring");
+    tor_free(huge);
+  }
   /* %s doesn't eat spaces */
   tt_int_op(2,OP_EQ, tor_sscanf("hello world", "%9s %9s", s1, s2));
   tt_str_op(s1,OP_EQ, "hello");
@@ -2843,7 +2854,7 @@ test_util_sscanf(void *arg)
   test_feq(d4, 3.2);
 
  done:
-  ;
+  tor_free(huge);
 }
 
 #define tt_char_op(a,op,b) tt_assert_op_type(a,op,b,char,"%c")

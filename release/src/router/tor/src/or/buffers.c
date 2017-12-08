@@ -1595,6 +1595,7 @@ parse_socks(const char *data, size_t datalen, socks_request_t *req,
           return -1;
       }
       tor_assert(0);
+      break;
     case 4: { /* socks4 */
       enum {socks4, socks4a} socks4_prot = socks4a;
       const char *authstart, *authend;

@@ -143,18 +143,6 @@
 /** Maximum size of a single extrainfo document, as above. */
 #define MAX_EXTRAINFO_UPLOAD_SIZE 50000
 
-/** How long do we keep DNS cache entries before purging them (regardless of
- * their TTL)? */
-#define MAX_DNS_ENTRY_AGE (30*60)
-/** How long do we cache/tell clients to cache DNS records when no TTL is
- * known? */
-#define DEFAULT_DNS_TTL (30*60)
-/** How long can a TTL be before we stop believing it? */
-#define MAX_DNS_TTL (3*60*60)
-/** How small can a TTL be before we stop believing it?  Provides rudimentary
- * pinning. */
-#define MIN_DNS_TTL 60
-
 /** How often do we rotate onion keys? */
 #define MIN_ONION_KEY_LIFETIME (7*24*60*60)
 /** How often do we rotate TLS contexts? */

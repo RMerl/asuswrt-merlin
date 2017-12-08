@@ -3703,26 +3703,24 @@ connection_dir_finished_connecting(dir_connection_t *conn)
 STATIC const smartlist_t *
 find_dl_schedule(download_status_t *dls, const or_options_t *options)
 {
-  const int dir_server = dir_server_mode(options);
-  const int multi_d = networkstatus_consensus_can_use_multiple_directories(
-                                                                    options);
-  const int we_are_bootstrapping = networkstatus_consensus_is_bootstrapping(
-                                                                 time(NULL));
-  const int use_fallbacks = networkstatus_consensus_can_use_extra_fallbacks(
-                                                                    options);
   switch (dls->schedule) {
     case DL_SCHED_GENERIC:
-      if (dir_server) {
+      /* Any other directory document */
+      if (dir_server_mode(options)) {
+        /* A directory authority or directory mirror */
         return options->TestingServerDownloadSchedule;
       } else {
         return options->TestingClientDownloadSchedule;
       }
     case DL_SCHED_CONSENSUS:
-      if (!multi_d) {
+      if (!networkstatus_consensus_can_use_multiple_directories(options)) {
+        /* A public relay */
         return options->TestingServerConsensusDownloadSchedule;
       } else {
-        if (we_are_bootstrapping) {
-          if (!use_fallbacks) {
+        /* A client or bridge */
+        if (networkstatus_consensus_is_bootstrapping(time(NULL))) {
+          /* During bootstrapping */
+          if (!networkstatus_consensus_can_use_extra_fallbacks(options)) {
             /* A bootstrapping client without extra fallback directories */
             return
              options->ClientBootstrapConsensusAuthorityOnlyDownloadSchedule;
@@ -3738,6 +3736,8 @@ find_dl_schedule(download_status_t *dls, const or_options_t *options)
               options->ClientBootstrapConsensusFallbackDownloadSchedule;
           }
         } else {
+          /* A client with a reasonably live consensus, with or without
+           * certificates */
           return options->TestingClientConsensusDownloadSchedule;
         }
       }

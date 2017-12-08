@@ -294,10 +294,10 @@ sub256_modm_batch(bignum256modm out, const bignum256modm a, const bignum256modm 
 	size_t i = 0;
 	bignum256modm_element_t carry = 0;
 	switch (limbsize) {
-		case 4: out[i] = (a[i] - b[i])        ; carry = (out[i] >> 63); out[i] &= 0xffffffffffffff; i++;
-		case 3: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 63); out[i] &= 0xffffffffffffff; i++;
-		case 2: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 63); out[i] &= 0xffffffffffffff; i++;
-		case 1: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 63); out[i] &= 0xffffffffffffff; i++;
+		case 4: out[i] = (a[i] - b[i])        ; carry = (out[i] >> 63); out[i] &= 0xffffffffffffff; i++; /* Falls through. */
+		case 3: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 63); out[i] &= 0xffffffffffffff; i++; /* Falls through. */
+		case 2:	out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 63); out[i] &= 0xffffffffffffff; i++; /* Falls through. */
+		case 1:	out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 63); out[i] &= 0xffffffffffffff; i++; /* Falls through. */
 		case 0: 
 		default: out[i] = (a[i] - b[i]) - carry;
 	}
@@ -310,10 +310,10 @@ lt256_modm_batch(const bignum256modm a, const bignum256modm b, size_t limbsize) 
 	size_t i = 0;
 	bignum256modm_element_t t, carry = 0;
 	switch (limbsize) {
-		case 4: t = (a[i] - b[i])        ; carry = (t >> 63); i++;
-		case 3: t = (a[i] - b[i]) - carry; carry = (t >> 63); i++;
-		case 2: t = (a[i] - b[i]) - carry; carry = (t >> 63); i++;
-		case 1: t = (a[i] - b[i]) - carry; carry = (t >> 63); i++;
+		case 4: t = (a[i] - b[i])        ; carry = (t >> 63); i++; /* Falls through. */
+		case 3: t = (a[i] - b[i]) - carry; carry = (t >> 63); i++; /* Falls through. */
+		case 2: t = (a[i] - b[i]) - carry; carry = (t >> 63); i++; /* Falls through. */
+		case 1: t = (a[i] - b[i]) - carry; carry = (t >> 63); i++; /* Falls through. */
 		case 0: t = (a[i] - b[i]) - carry; carry = (t >> 63);
 	}
 	return (int)carry;
@@ -325,10 +325,10 @@ lte256_modm_batch(const bignum256modm a, const bignum256modm b, size_t limbsize)
 	size_t i = 0;
 	bignum256modm_element_t t, carry = 0;
 	switch (limbsize) {
-		case 4: t = (b[i] - a[i])        ; carry = (t >> 63); i++;
-		case 3: t = (b[i] - a[i]) - carry; carry = (t >> 63); i++;
-		case 2: t = (b[i] - a[i]) - carry; carry = (t >> 63); i++;
-		case 1: t = (b[i] - a[i]) - carry; carry = (t >> 63); i++;
+		case 4: t = (b[i] - a[i])        ; carry = (t >> 63); i++; /* Falls through. */
+		case 3: t = (b[i] - a[i]) - carry; carry = (t >> 63); i++; /* Falls through. */
+		case 2: t = (b[i] - a[i]) - carry; carry = (t >> 63); i++; /* Falls through. */
+		case 1: t = (b[i] - a[i]) - carry; carry = (t >> 63); i++; /* Falls through. */
 		case 0: t = (b[i] - a[i]) - carry; carry = (t >> 63);
 	}
 	return (int)!carry;
