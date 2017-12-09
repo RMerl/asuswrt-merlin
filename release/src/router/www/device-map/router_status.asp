@@ -403,7 +403,7 @@ function get_ethernet_ports() {
 			setTimeout("get_ethernet_ports();", 1000);
 		},
 		success: function(response) {
-			var wanLanStatus = get_wan_lan_status;
+			var wanLanStatus = get_wan_lan_status["portSpeed"]
 			//parse nvram to array
 			var parseStrToArray = function(_array) {
 				var speedMapping = new Array();
