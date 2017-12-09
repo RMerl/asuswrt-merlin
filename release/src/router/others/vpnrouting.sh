@@ -219,11 +219,6 @@ then
 		my_logger "Removing route for $NET to $dev from main routing table"
 	done
 
-# Unsure if necessary, but most policy-based routing scripts disable reverse path filtering
-	for i in /proc/sys/net/ipv4/conf/*/rp_filter ; do
-		echo 0 > $i
-	done
-
 # Update policy rules
         purge_client_list
         create_client_list
