@@ -1,7 +1,12 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.69 Beta (xx-xxx-xxxx)
+380.69 (11-Dec-2017)
+  - NEW: Added option to disable the Asus NAT tunnel service under
+         Other Settings -> Tweak.  Not quite sure what this
+         partly closed source service is for, but it eats a
+         fair amount of CPU and RAM (backport from 382)
+
   - CHANGED: Updated odhcp6c to be in sync with upstream
              (patch by theMIRon)
   - CHANGED: Updated libogg to 1.3.3 and libvorbis to 1.3.5.
