@@ -3316,6 +3316,9 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "data_usage_limit", "8" },
 	{ "data_usage_warning", "6" },
 	{ "modem_idletime", "600" },
+#ifdef RTCONFIG_TUNNEL
+	{ "aae_disable_force", "0" },
+#endif
 	{ NULL, NULL }
 };
 
