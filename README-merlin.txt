@@ -52,6 +52,9 @@ Supported devices on version 380:
 
 Supported devices on version 382:
  * RT-AC86U
+ * RT-AC68U
+ * RT-AC88U
+ * RT-AC3100
 
 Devices that are no longer supported:
  * RT-N16
