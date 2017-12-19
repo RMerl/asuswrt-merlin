@@ -1297,8 +1297,8 @@ function show_cert_details(){
 function check_filename(){
 	var key_file = document.upload_form.file_key.value;
 	var cert_file = document.upload_form.file_cert.value;
-	var key_subname = key_file.substring(key_file.indexOf('.') + 1);
-	var cert_subname = cert_file.substring(cert_file.indexOf('.') + 1);
+	var key_subname = key_file.substring(key_file.lastIndexOf('.') + 1);
+	var cert_subname = cert_file.substring(cert_file.lastIndexOf('.') + 1);
 
 	if(key_subname != 'pem' && key_subname != 'key'){
 		alert("Please select correct private key file.");
