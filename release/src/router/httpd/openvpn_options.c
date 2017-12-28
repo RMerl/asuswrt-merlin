@@ -504,7 +504,7 @@ add_option (char *p[], int line, int unit)
 			fp = fopen(file_path, "w");
 			if(fp) {
 				chmod(file_path, S_IRUSR|S_IWUSR);
-				fprintf(fp, "%s", data);
+				fprintf(fp, "%.3499s", data);
 				fclose(fp);
 			}
 			else
@@ -526,7 +526,7 @@ add_option (char *p[], int line, int unit)
 			fp = fopen(file_path, "w");
 			if(fp) {
 				chmod(file_path, S_IRUSR|S_IWUSR);
-				fprintf(fp, "%s", data);
+				fprintf(fp, "%.3499s", data);
 				fclose(fp);
 			}
 			else
@@ -548,7 +548,7 @@ add_option (char *p[], int line, int unit)
 			fp = fopen(file_path, "w");
 			if(fp) {
 				chmod(file_path, S_IRUSR|S_IWUSR);
-				fprintf(fp, "%s", data);
+				fprintf(fp, "%.3499s", data);
 				fclose(fp);
 			}
 			else
@@ -570,7 +570,7 @@ add_option (char *p[], int line, int unit)
 			fp = fopen(file_path, "w");
 			if(fp) {
 				chmod(file_path, S_IRUSR|S_IWUSR);
-				fprintf(fp, "%s", data);
+				fprintf(fp, "%.3499s", data);
 				fclose(fp);
 			}
 			else
@@ -600,7 +600,7 @@ add_option (char *p[], int line, int unit)
 			fp = fopen(file_path, "w");
 			if(fp) {
 				chmod(file_path, S_IRUSR|S_IWUSR);
-				fprintf(fp, "%s", data);
+				fprintf(fp, "%.3499s", data);
 				fclose(fp);
 			}
 			else
@@ -630,7 +630,7 @@ add_option (char *p[], int line, int unit)
 			fp = fopen(file_path, "w");
 			if(fp) {
 				chmod(file_path, S_IRUSR|S_IWUSR);
-				fprintf(fp, "%s", data);
+				fprintf(fp, "%.3499s", data);
 				fclose(fp);
 			}
 			else
@@ -652,7 +652,7 @@ add_option (char *p[], int line, int unit)
 			fp = fopen(file_path, "w");
 			if(fp) {
 				chmod(file_path, S_IRUSR|S_IWUSR);
-				fprintf(fp, "%s", data);
+				fprintf(fp, "%.3499s", data);
 				fclose(fp);
 			}
 			else
