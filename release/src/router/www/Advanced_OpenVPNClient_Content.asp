@@ -519,7 +519,32 @@ function cal_panel_block(){
 }
 
 
+function validForm(){
+	var addrobj = document.form.vpn_client_addr;
+	var alert_str = validator.domainName(addrobj);
+	if ((addrobj.value != "") && (alert_str != "") && (!validator.ipv4_addr(addrobj.value))) {
+		alert("Invalid remote server address!");
+		addrobj.focus();
+		return false;
+	}
+
+	if (!validator.safeName(document.form.vpn_client_desc) ||
+	    !validator.numberRange(document.form.vpn_client_verb, 0, 6) ||
+	    !validator.numberRange(document.form.vpn_client_poll, 0, 60) ||
+	    !validator.numberRange(document.form.vpn_client_reneg, -1, 2147483647) ||
+	    !validator.numberRange(document.form.vpn_client_retry, -1, 32767) ||
+	    !validator.numberRange(document.form.vpn_client_port, 1, 65535))
+		return false;
+
+	return true;
+}
+
+
 function applyRule(manual_switch){
+	if (!validForm()){
+		return false;
+	}
+
 	if (manual_switch == 0) {
 		showLoading();
 		if (client_state != 0) {
@@ -701,6 +726,9 @@ function addRow_Group(upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
 		return false;
 	}
+
+	if (!validator.safeName(document.form.clientlist_deviceName))
+		return false;
 
 	if(document.form.clientlist_ipAddr.value=="")
 		document.form.clientlist_ipAddr.value="0.0.0.0";
