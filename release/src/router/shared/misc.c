@@ -1742,8 +1742,7 @@ char *get_parsed_crt(const char *name, char *buf, size_t buf_len)
 	int len, i;
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
 	FILE *fp;
-	char tmpBuf[256] = {0};
-	char *p = buf;
+	char filename[256] = {0};
 #endif
 
 	value = nvram_safe_get(name);
@@ -1752,10 +1751,12 @@ char *get_parsed_crt(const char *name, char *buf, size_t buf_len)
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
 	if(!check_if_dir_exist(OVPN_FS_PATH))
 		mkdir(OVPN_FS_PATH, S_IRWXU);
-	snprintf(tmpBuf, sizeof(tmpBuf) -1, "%s/%s", OVPN_FS_PATH, name);
+	snprintf(filename, sizeof(filename), "%s/%s", OVPN_FS_PATH, name);
 #endif
 
 	if(len) {
+		if (len >= buf_len) len = buf_len-1;
+
 		for (i=0; (i < len); i++) {
 			if (value[i] == '>')
 				buf[i] = '\n';
@@ -1766,9 +1767,9 @@ char *get_parsed_crt(const char *name, char *buf, size_t buf_len)
 
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
 		//save to file and then clear nvram value
-		fp = fopen(tmpBuf, "w");
+		fp = fopen(filename, "w");
 		if(fp) {
-			chmod(tmpBuf, S_IRUSR|S_IWUSR);
+			chmod(filename, S_IRUSR|S_IWUSR);
 			fprintf(fp, "%s", buf);
 			fclose(fp);
 			nvram_set(name, "");
@@ -1778,27 +1779,18 @@ char *get_parsed_crt(const char *name, char *buf, size_t buf_len)
 	else {
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
 		//nvram value cleard, get from file
-		fp = fopen(tmpBuf, "r");
-		if(fp) {
-			while(fgets(buf, buf_len, fp)) {
-				if(!strncmp(buf, "-----BEGIN", 10) || !strncmp(buf, "none", 4))
-					break;
-			}
-			if(feof(fp) &&  strncmp(buf, "none", 4)) {
-				fclose(fp);
-				memset(buf, 0, buf_len);
-				return buf;
-			}
-			p += strlen(buf);
-			memset(tmpBuf, 0, sizeof(tmpBuf));
-			while(fgets(tmpBuf, sizeof(tmpBuf), fp)) {
-				strncpy(p, tmpBuf, strlen(tmpBuf));
-				p += strlen(tmpBuf);
-			}
-			fclose(fp);
+
+		snprintf(filename, sizeof(filename), "%s/%s", OVPN_FS_PATH, name);
+
+		len = f_read(filename, buf, buf_len-1);
+		if (len < 0) {
+			buf[0] = '\0';
+		} else {
+			buf[len] = '\0';
 		}
+#else
+		buf[0] = '\0';
 #endif
-		*p = '\0';
 	}
 	return buf;
 }
@@ -1838,12 +1830,12 @@ int set_crt_parsed(const char *name, char *file_path)
 		}
 		p += strlen(buffer);
 		//if( *(p-1) == '\n' )
-			//*(p-1) = '>';
+			// *(p-1) = '>';
 		while(fgets(buffer2, sizeof(buffer2), fp)) {
 			strncpy(p, buffer2, strlen(buffer2));
 			p += strlen(buffer2);
 			//if( *(p-1) == '\n' )
-				//*(p-1) = '>';
+				// *(p-1) = '>';
 		}
 		*p = '\0';
 		nvram_set(name, buffer);
