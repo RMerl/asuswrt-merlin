@@ -26,15 +26,16 @@ performance, and performance over features.
 
 Asuswrt-Merlin is available in two separate branches:
 
-- The original Asuswrt-Merlin (up to version 380.xxx)
-- The new branch (version 382.xxx and newer)
+- The original (legacy) Asuswrt-Merlin (up to version 380.xxx)
+- The new generation (current) branch (version 382.xxx and newer)
 
 
 Supported Devices
 -----------------
 Each branch supports different models.  As Asus upgrades models
-to the new 382_xxxx code base, Asuswrt-Merlin will also migrate 
-them to the new branch.
+to the new 382/384 code base, they will gradually be migrated to 
+Asuswrt-Merlin's new gen branch, with the exception of the 
+RT-N66U and RT-AC66U which will remain on the legacy 380 branch.
 
 
 Supported devices on version 380:
@@ -50,13 +51,15 @@ Supported devices on version 380:
  * RT-AC5300
  * RT-AC1900 & RT-AC1900P (use the RT-AC68U firmware)
 
-Supported devices on version 382:
- * RT-AC86U
+Supported devices on version 382 and newer:
+ * RT-AC56U
  * RT-AC68U
+ * RT-AC3200
  * RT-AC88U
  * RT-AC3100
+ * RT-AC86U
 
-Devices that are no longer supported:
+No longer supported:
  * RT-N16
 
 
@@ -87,7 +90,6 @@ System:
 
 Disk sharing:
    - Enable/disable the use of shorter share names
-   - Disk spindown after user-configurable inactivity timeout
    - NFS sharing (through webui)
    - Allow or disable WAN access to the FTP server
    - Updated Samba version (3.6), with SMB2.0 support
@@ -152,6 +154,7 @@ integrated/enabled/re-implemented in the official firmware:
 - SSHD
 - Improved compatibility with 3TB+ and Advanced Format HDDs
 - Display the Ethernet port states
+- Disk spindown after user-configurable inactivity timeout
 
 
 
@@ -197,13 +200,13 @@ https://github.com/RMerl/asuswrt-merlin/wiki
 
 Source code
 -----------
-The buildable source code can be found on Github.
+The source code can be found on Github.
 
-Original branch:
+Original legacy branch:
 https://github.com/RMerl/asuswrt-merlin
 
-New 382 branch:
-https://github.com/RMerl/asuswrt-merlin.382
+New generation/current branch (382.xx and newer):
+https://github.com/RMerl/asuswrt-merlin.ng
 
    
 Contact information
@@ -213,7 +216,7 @@ Website: https://asuswrt.lostrealm.ca/
 Github: https://github.com/RMerl
 Email: rmerl@lostrealm.ca
 Twitter: https://twitter.com/RMerlinDev
-IRC: #asuswrt on DALnet
+IRC: #asuswrt on Freenode
 Download: https://asuswrt.lostrealm.ca/download
 
 Development news will be posted on Twitter and the support forums.  
@@ -266,8 +269,8 @@ of Good Will.
 Concerning privacy:
 
 The only call back made by this firmware to me is when it checks for the
-availability of a new version, which can be disabled if desired.  More info 
-on the Wiki:
+availability of a new version.  The automated check can be disabled if desired.
+More info on the Wiki:
 
 https://github.com/RMerl/asuswrt-merlin/wiki/RMerl/asuswrt-merlin/wiki/Privacy-disclosure
 

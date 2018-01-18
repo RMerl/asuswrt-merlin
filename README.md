@@ -3,9 +3,9 @@ asuswrt-merlin
 
 Notes
 -----
-This is the legacy 380.xx branch - future development is being gradually moved to the new 382 branch:
+This is the legacy 380.xx branch - future development is being gradually moved to the new NG (New Generation) branch:
 
-[https://github.com/RMerl/asuswrt-merlin.382](https://github.com/RMerl/asuswrt-merlin.382)
+[https://github.com/RMerl/asuswrt-merlin.ng](https://github.com/RMerl/asuswrt-merlin.ng)
 
 
 #### Please do not use Github's Issue tracker for support requests.  Use the support forums at [SNBForums](https://www.snbforums.com/forums/asuswrt-merlin.42/) instead.  The issue tracker is for development/bug tracking purposes only!
