@@ -3234,18 +3234,16 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 #endif
 
 			if (strlen(action_script) > 0) {
-				char *p1, *p2;
+				char *p1, p2[sizeof(notify_cmd)];
 
-				memset(notify_cmd, 0, sizeof(notify_cmd));
 				if((p1 = strstr(action_script, "_wan_if")))
 				{
-					p1 += 7;
-					strncpy(notify_cmd, action_script, p1 - action_script);
-					p2 = notify_cmd + strlen(notify_cmd);
-					sprintf(p2, " %s%s", wan_unit, p1);
+					p1 += sizeof("_wan_if") - 1;
+					strlcpy(p2, action_script, MIN(p1 - action_script + 1, sizeof(p2)));
+					snprintf(notify_cmd, sizeof(notify_cmd), "%s %s%s", p2, wan_unit, p1);
 				}
 				else
-					strncpy(notify_cmd, action_script, 128);
+					strlcpy(notify_cmd, action_script, sizeof(notify_cmd));
 
 				if(strcmp(action_script, "saveNvram"))
 				{
