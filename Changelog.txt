@@ -1,6 +1,23 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.69_2 (28-Jan-2018)
+  - NOTE: The official IRC channel has moved to
+          Freenode (#asuswrt).
+
+  - CHANGED: Quantenna watchdog is less likely now to
+             incorrectly assume the QTN CPU has crashed
+             (which can lead to router reboots). (RT-AC87U)
+  - FIXED: IE11 field validation issues on OpenVPN and
+           DHCP pages.
+  - FIXED: Router crash when importing an OpenVPN certificate
+           longer than 3499 characters (the supported limit)
+  - FIXED: Users were allowed to enter invalid characters on
+           some of the OpenVPN client page fields.
+  - FIXED: CVE-2018-5999 in httpd (backport from 384_10007)
+  - FIXED: CVE-2018-5721 in httpd (Merlin & theMIROn)
+
+
 380.69 (11-Dec-2017)
   - NEW: Added option to disable the Asus NAT tunnel service under
          Other Settings -> Tweak.  Not quite sure what this

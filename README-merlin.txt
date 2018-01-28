@@ -24,21 +24,23 @@ This more conservative approach will also help ensuring the highest
 level of stability possible.  Priority is given to stability over 
 performance, and performance over features.
 
+
+
+Supported Devices
+-----------------
 Asuswrt-Merlin is available in two separate branches:
 
 - The original (legacy) Asuswrt-Merlin (up to version 380.xxx)
 - The new generation (current) branch (version 382.xxx and newer)
 
-
-Supported Devices
------------------
 Each branch supports different models.  As Asus upgrades models
-to the new 382/384 code base, they will gradually be migrated to 
-Asuswrt-Merlin's new gen branch, with the exception of the 
-RT-N66U and RT-AC66U which will remain on the legacy 380 branch.
+to the new 382/384 code base, they will gradually be migrated to
+Asuswrt-Merlin's new gen branch, with the exception of the RT-N66U
+and RT-AC66U which will remain on the legacy 380 branch.
+Development will gradually be abandoned for the legacy branch.
 
 
-Supported devices on version 380:
+Devices supported on the legacy branch (380.xx):
  * RT-N66U
  * RT-AC66U
  * RT-AC66U_B1 (use the RT-AC68U firmware)
@@ -51,13 +53,14 @@ Supported devices on version 380:
  * RT-AC5300
  * RT-AC1900 & RT-AC1900P (use the RT-AC68U firmware)
 
-Supported devices on version 382 and newer:
+Devices supported on the new generation/current branch (382.xx and newer):
+ * RT-AC66U_B1 (use the RT-AC68U firmware)
  * RT-AC56U
- * RT-AC68U
- * RT-AC3200
+ * RT-AC68U, RT-AC68P, RT-AC68UF (including HW revision C1 and E1)
  * RT-AC88U
  * RT-AC3100
  * RT-AC86U
+ * RT-AC1900 & RT-AC1900P (use the RT-AC68U firmware)
 
 No longer supported:
  * RT-N16
