@@ -8,7 +8,7 @@ This is the legacy 380.xx branch - future development is being gradually moved t
 [https://github.com/RMerl/asuswrt-merlin.ng](https://github.com/RMerl/asuswrt-merlin.ng)
 
 
-#### Please do not use Github's Issue tracker for support requests.  Use the support forums at [SNBForums](https://www.snbforums.com/forums/asuswrt-merlin.42/) instead.  The issue tracker is for development/bug tracking purposes only!
+#### I have disabled the issue tracker because apparently people can't read.  The tracker was 90% noise and 10% genuine bug reports, and I grew tired of cleaning it up.
 
 About
 -----
