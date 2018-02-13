@@ -221,7 +221,7 @@ var digestsarray = [
 ];
 
 
-var clientlist_array = '<% nvram_get("vpn_client_clientlist"); %>';
+var clientlist_array = "<% nvram_get("vpn_client_clientlist"); %>";
 
 function initial()
 {
