@@ -1881,6 +1881,15 @@ var validator = {
 		return true;
 	},
 
+	ipv4_addr: function(_value) {
+		//ip address accept is 0.0.0.0~255.255.255.255
+		var ipformat  = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+		if((ipformat.test(_value)))
+			return true;
+		else
+			return false;
+	},
+
 	safeName: function(obj){
 		if (obj.value.length == 0) return true;
 
