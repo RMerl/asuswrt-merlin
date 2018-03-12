@@ -378,10 +378,14 @@ int main(int argc, char *argv[])
 //	fprintf(fp, "preferred master = yes\n");
 	fprintf(fp, "load printers = no\n");
 	fprintf(fp, "printable = no\n");
-	if (nvram_get_int("smbd_enable_smb2"))
-		fprintf(fp, "max protocol = SMB2\n");
-	else
+// 0 - smb1, 1 = smb2, 2 = smb1 + smb2
+	if (nvram_get_int("smbd_protocol") == 0)
 		fprintf(fp, "max protocol = NT1\n");
+	 else
+		fprintf(fp, "max protocol = SMB2\n");
+	if (nvram_get_int("smbd_protocol") == 1)
+		fprintf(fp, "min protocol = SMB2\n");
+
 	fprintf(fp, "smb encrypt = disabled\n");
 	fprintf(fp, "min receivefile size = 16384\n");
 	fprintf(fp, "passdb backend = smbpasswd\n");
