@@ -748,6 +748,7 @@ confpage:
 
 		use_custom_config("smb.conf", SAMBA_CONF);
 		run_postconf("smb", SAMBA_CONF);
+		chmod(SAMBA_CONF, 0644);
 	}
 
 	free_disk_data(&disks_info);

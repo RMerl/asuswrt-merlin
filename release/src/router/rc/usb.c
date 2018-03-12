@@ -2157,14 +2157,18 @@ void create_custom_passwd(void)
 		fprintf(fp, "%s:x:%d:%d:::\n", account_list[i], n, n);
 	}
 	fclose(fp);
+	chmod("/etc/passwd.custom", 0644);
 
 	/* write /etc/group.custom  */
 	fp = fopen("/etc/group.custom", "w+");
-	for (i=0, n=500; i<acc_num; i++, n++)
-	{
-		fprintf(fp, "%s:x:%d:\n", account_list[i], n);
+	if (fp) {
+		for (i=0, n=500; i<acc_num; i++, n++)
+		{
+			fprintf(fp, "%s:x:%d:\n", account_list[i], n);
+		}
+		fclose(fp);
+		chmod("/etc/group.custom", 0644);
 	}
-	fclose(fp);
 	free_2_dimension_list(&acc_num, &account_list);
 }
 

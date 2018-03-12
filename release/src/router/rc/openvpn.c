@@ -1962,26 +1962,30 @@ void create_openvpn_passwd()
 	fp1=fopen("/etc/shadow.openvpn", "w");
 	fp2=fopen("/etc/passwd.openvpn", "w");
 	fp3=fopen("/etc/group.openvpn", "w");
-	if (!fp1 || !fp2 || !fp3) return;
 
-	nv = nvp = strdup(nvram_safe_get("vpn_serverx_clientlist"));
+	if (fp1 && fp2 && fp3) {
+		nv = nvp = strdup(nvram_safe_get("vpn_serverx_clientlist"));
 
-	if(nv) {
-		while ((b = strsep(&nvp, "<")) != NULL) {
-			if((vstrsep(b, ">", &username, &passwd)!=2)) continue;
-			if(strlen(username)==0||strlen(passwd)==0) continue;
+		if(nv) {
+			while ((b = strsep(&nvp, "<")) != NULL) {
+				if((vstrsep(b, ">", &username, &passwd)!=2)) continue;
+				if(strlen(username)==0||strlen(passwd)==0) continue;
 
-			p = crypt(passwd, salt);
-			fprintf(fp1, "%s:%s:0:0:99999:7:0:0:\n", username, p);
-			fprintf(fp2, "%s:x:%d:%d:::\n", username, id, id);
-			fprintf(fp3, "%s:x:%d:\n", username, id);
-			id++;
+				p = crypt(passwd, salt);
+				fprintf(fp1, "%s:%s:0:0:99999:7:0:0:\n", username, p);
+				fprintf(fp2, "%s:x:%d:%d:::\n", username, id, id);
+				fprintf(fp3, "%s:x:%d:\n", username, id);
+				id++;
+			}
+			free(nv);
 		}
-		free(nv);
 	}
-	fclose(fp1);
-	fclose(fp2);
-	fclose(fp3);
+	if (fp1) fclose(fp1);
+	if (fp2) fclose(fp2);
+	if (fp3) fclose(fp3);
+	chmod("/etc/shadow.openvpn", 0600);
+	chmod("/etc/group.openvpn", 0644);
+	chmod("/etc/passwd.openvpn", 0644);
 }
 
 
