@@ -1,6 +1,39 @@
 Asuswrt-Merlin Changelog
 ========================
 
+380.70 (xx-xxx-xxxx)
+  - NOTE: This will be the final 380.xx release for
+          all models.  The RT-N66U and RT-AC66U
+          support will be dropped, and all other
+          models have been migrated to the new gen
+          branch, as of release 384.4.
+
+          People who wish to keep getting updates for
+          these two older models should look at the
+          john9527 fork: https://bit.ly/2EV5Oat
+
+  - CHANGED: Tightened security around some config files.
+  - CHANGED: Samba protocol support can now be set to
+             SMBv1, SMBv2, or SMBv1 + SMBv2 (the new default).
+             This will result in a performance drop on all
+             models, but will be more secure.
+             Ideally, people should change it to SMBv2 only,
+             and then reboot all their client devices to start
+             using only the new protocol.
+             If performance is more important than security to
+             you, then you can switch it back to SMBv1, which is
+             the old default behaviour.
+  - CHANGED: Switched to the new Entware repo for armv7 models.
+             To upgrade, run the following commands TWICE:
+
+             opkg update; opkg upgrade
+
+  - FIXED: Apply button not working on the OpenVPN
+           Client page.
+  - FIXED: Potential racing condition that could lead to two
+           instances of miniupnpd running at boot time.
+
+
 380.69_2 (28-Jan-2018)
   - NOTE: The official IRC channel has moved to
           Freenode (#asuswrt).
