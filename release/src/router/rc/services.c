@@ -5619,8 +5619,6 @@ start_services(void)
 
 	start_ecoguard();
 
-	run_custom_script("services-start", NULL);
-
 //	start_upnp();
 
 	sanity_logs();
@@ -5628,6 +5626,8 @@ start_services(void)
 #if !(defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK) || defined(RTCONFIG_REALTEK))
 	start_erp_monitor();
 #endif
+
+	run_custom_script("services-start", NULL);
 
 	return 0;
 }
