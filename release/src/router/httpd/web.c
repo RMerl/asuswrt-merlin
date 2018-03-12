@@ -14185,7 +14185,11 @@ ej_get_upload_icon_count_list(int eid, webs_t wp, int argc, char **argv) {
 		mkdir(JFFS_USERICON, 0755);
 
 	//Write /jffs/usericon/ file count and list
-	dirp = opendir(JFFS_USERICON); /* There should be error handling after this */
+	dirp = opendir(JFFS_USERICON);
+	if (!dirp) {
+		return 0;
+	}
+
 	while ((entry = readdir(dirp)) != NULL) {
 		if (entry->d_type == DT_REG) { /* If the entry is a regular file */
 			strcat(allMacList, entry->d_name);
