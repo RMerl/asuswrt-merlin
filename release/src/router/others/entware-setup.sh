@@ -108,7 +108,7 @@ echo -e "$INFO Creating /tmp/opt symlink..."
 ln -s "$entFolder" /tmp/opt
 
 echo -e "$INFO Creating /jffs scripts backup..."
-tar -czf "$entPartition/jffs_scripts_backup_$(date +%F_%H-%M).tgz" /jffs/scripts/* >/dev/nul
+tar -czf "$entPartition/jffs_scripts_backup_$(date +%F_%H-%M).tgz" /jffs/scripts/* >/dev/null
 
 echo -e "$INFO Modifying start scripts..."
 cat > /jffs/scripts/services-start << EOF
