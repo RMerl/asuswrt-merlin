@@ -273,7 +273,7 @@ var overhead_presets = [["0", "0", ""],
 			["0", "27", "PPPoE VDSL"],
 			["0", "19", "Bridged/IPoE VDSL"],
 			["1", "32", "RFC2684/RFC1483 Bridged LLC/Snap"],
-			["1", "32", "PPPoE VC/Mux</option"],
+			["1", "32", "PPPoE VC/Mux"],
 			["1", "40", "PPPoE LLC/Snap"]];
 
 if(based_modelid == "RT-AC68A"){	//MODELDEP : Spec special fine tune
