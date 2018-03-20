@@ -181,8 +181,72 @@ function initial(){
 
 	//check DUT is belong to private IP.
 	setTimeout("show_warning_message();", 100);
+
+	//set FAQ URL
+	set_FAQ("faq_windows", "1004469");
+	set_FAQ("faq_macOS", "1004472");
+	set_FAQ("faq_iPhone", "1004471");
+	set_FAQ("faq_android", "1004466");
 }
 
+function set_FAQ(_objID, _faqNum) {
+	var faqLang = {
+		EN : "/",
+		TW : "/",
+		CN : "/",
+		CZ : "/",
+		PL : "/",
+		RU : "/",
+		DE : "/",
+		FR : "/",
+		TR : "/",
+		TH : "/",
+		MS : "/",
+		NO : "/",
+		FI : "/",
+		DA : "/",
+		SV : "/",
+		BR : "/",
+		PT : "/",
+		JP : "/",
+		ES : "/",
+		IT : "/",
+		UK : "/",
+		HU : "/",
+		RO : "/",
+		KR : "/",
+		SL : "/",
+		NL : "/"
+	};
+
+	faqLang.TW = "/TW/";
+	faqLang.CN = "/CN/";
+	faqLang.CZ = "/CZ/";
+	faqLang.PL = "/PL/";
+	faqLang.RU = "/RU/";
+	faqLang.DE = "/DE/";
+	faqLang.FR = "/FR/";
+	faqLang.TR = "/TR/";
+	faqLang.TH = "/TH/";
+	faqLang.PT = "/PT/";
+	faqLang.KR = "/KR/";
+	faqLang.ES = "/ES/";
+	faqLang.IT = "/IT/";
+	faqLang.UK = "/UK/";
+	faqLang.HU = "/HU/";
+	faqLang.RO = "/RO/";
+
+	var preferredLang = "";
+	preferredLang = faqLang.<% nvram_get("preferred_lang"); %>;
+	if(preferredLang == undefined)
+		preferredLang = "/";
+
+	var faqURL = "";
+	faqURL = "https://www.asus.com" + preferredLang;
+	faqURL += "support/FAQ/";
+	faqURL += _faqNum;
+	$("#" + _objID + "").attr("href", faqURL);
+}
 var MAX_RETRY_NUM = 5;
 var external_ip_retry_cnt = MAX_RETRY_NUM;
 function show_warning_message(){
@@ -1342,13 +1406,12 @@ function update_cipher() {
 									</table>
 									<div id="OpenVPN_setting" style="display:none;margin-top:8px;">
 										<div class="formfontdesc">
-											<#vpn_openvpn_desc1#>&nbsp;<#vpn_openvpn_desc3#>&nbsp;<#vpn_openvpn_desc2#> <#menu5#>
-											<br />
+											<#vpn_openvpn_desc1#>&nbsp;<#vpn_openvpn_desc3#>&nbsp;<#vpn_openvpn_desc2#><br>
 											<ol>
-												<li><a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/1A935B95-C237-4281-AE86-C824737D11F9/" target="_blank" style="text-decoration:underline;">Windows</a>
-												<li><a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/C77ADCBF-F5C4-46B4-8A0D-B64F09AB881F/" target="_blank" style="text-decoration:underline;">Mac OS</a>
-												<li><a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/37EC8F08-3F50-4F82-807E-6D2DCFE5146A/" target="_blank" style="text-decoration:underline;">iPhone/iPad</a>
-												<li><a href="http://www.asus.com/support/Knowledge-Detail/11/2/RTAC68U/8DCA7DA6-E5A0-40C2-8AED-B9361E89C844/" target="_blank" style="text-decoration:underline;">Android</a>
+												<li><a id="faq_windows" href="https://www.asus.com/support/FAQ/1004469/" target="_blank" style="text-decoration:underline;">Windows</a>
+												<li><a id="faq_macOS" href="https://www.asus.com/support/FAQ/1004472/" target="_blank" style="text-decoration:underline;">Mac OS</a>
+												<li><a id="faq_iPhone" href="https://www.asus.com/support/FAQ/1004471/" target="_blank" style="text-decoration:underline;">iPhone/iPad</a>
+												<li><a id="faq_android" href="https://www.asus.com/support/FAQ/1004466/" target="_blank" style="text-decoration:underline;">Android</a>
 											<ol>
 										</div>
 
