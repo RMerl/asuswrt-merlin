@@ -15781,66 +15781,34 @@ int is_wlif_up(const char *ifname)
 
 int check_xss_blacklist(char* para, int check_www)
 {
-	int i = 0;
-	int file_len;
-	char *query, *para_t;
-	char para_str[256];
-	char filename[128];
-	char url_str[128];
-	memset(filename, 0, sizeof(filename));
-	memset(para_str, 0, sizeof(para_str));
-
-
-	if(para == NULL || !strcmp(para, "")){
-		//_dprintf("check_xss_blacklist: para is NULL\n");
+	char *ptr, filename[256];
+	if (para == NULL || *para == '\0') {
+	//_dprintf("check_xss_blacklist: para is NULL\n");
 		return 1;
 	}
 
-	para_t = strdup(para);
-	while(*para) {
-		//if(*para=='<' || *para=='>' || *para=='%' || *para=='/' || *para=='(' || *para==')' || *para=='&') {
-		if(*para=='<' || *para=='>' || *para=='%' || *para=='(' || *para==')' || *para=='&') {
-			//_dprintf("check_xss_blacklist: para is Invalid\n");
-			free(para_t);
-			return 1;
-		}
-		else {
-			para_str[i] = tolower(*para);
-			i++;
-			para++;
-		}
+	//  if (strpbrk(para, "<>%/()&") != NULL) {
+	if (strpbrk(para, "<>%()&") != NULL) {
+		//_dprintf("check_xss_blacklist: para is Invalid\n");
+		return 1;
 	}
 
-	if(strstr(para_str, "script") || strstr(para_str, "//") ){
+	if (strcasestr(para, "script") != NULL || strstr(para, "//") != NULL) {
 		//_dprintf("check_xss_blacklist: para include script\n");
-		free(para_t);
 		return 1;
 	}
 
-	if(check_www == 1){
-		memset(url_str, 0, sizeof(url_str));
-		if ((query = index(para_t, '?')) != NULL) {
-			file_len = strlen(para_t)-strlen(query);
-
-			if(file_len > sizeof(url_str))
-				file_len = sizeof(url_str);
-
-			strncpy(url_str, para_t, file_len);
-		}
-		else
-		{
-			strncpy(url_str, para_t, sizeof(url_str)-1);
-		}
-
-		snprintf(filename, sizeof(filename), "/www/%s", url_str);
-		if(!check_if_file_exist(filename)){
-			_dprintf("check_xss_blacklist:%s is not in www\n", url_str);
-			free(para_t);
+	if (check_www) {
+		snprintf(filename, sizeof(filename), "/www/%s", para);
+		ptr = strpbrk(filename, "#?");
+		if (ptr)
+			*ptr = '\0';
+		if (!check_if_file_exist(filename)) {
+			_dprintf("check_xss_blacklist: %s is not in www\n", filename);
 			return 1;
 		}
 	}
 
-	free(para_t);
 	return 0;
 }
 
