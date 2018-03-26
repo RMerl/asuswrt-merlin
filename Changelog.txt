@@ -32,6 +32,8 @@ Asuswrt-Merlin Changelog
            Client page.
   - FIXED: Potential racing condition that could lead to two
            instances of miniupnpd running at boot time.
+  - FIXED: Broken FAQ links (backport from 380_8120)
+  - FIXED: Security issue in httpd (CVE-2018-8879).
 
 
 380.69_2 (28-Jan-2018)
