@@ -34,6 +34,7 @@ Asuswrt-Merlin Changelog
            instances of miniupnpd running at boot time.
   - FIXED: Broken FAQ links (backport from 380_8120)
   - FIXED: Security issue in httpd (CVE-2018-8879).
+  - FIXED: Security issues in httpd (backports from 380_8228)
 
 
 380.69_2 (28-Jan-2018)
