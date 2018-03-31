@@ -1203,7 +1203,7 @@ ej_dump(int eid, webs_t wp, int argc, char_t **argv)
 	//csprintf("Script : %s, File: %s\n", script, file);
 
 	// run scrip first to update some status
-	if (strcmp(script,"")!=0) sys_script(script);
+	if (strcmp(script,"syscmd.sh")==0) sys_script(script);
 
 	if (strcmp(file, "wlan11b.log")==0)
 		return (ej_wl_status(eid, wp, 0, NULL, 0));	/* FIXME */
@@ -1232,14 +1232,6 @@ ej_dump(int eid, webs_t wp, int argc, char_t **argv)
 		return wl_wps_info(eid, wp, argc, argv, nvram_get_int("wps_band_x"));
 #endif
 	}
-#if 0
-	else if (strcmp(file, "apselect.log")==0)
-		return (ej_getSiteSurvey(eid, wp, 0, NULL));
-	else if (strcmp(file, "apscan")==0)
-		return (ej_SiteSurvey(eid, wp, 0, NULL));
-	else if (strcmp(file, "urelease")==0)
-		return (ej_urelease(eid, wp, 0, NULL));
-#endif
 
 	ret = 0;
 
@@ -1350,7 +1342,23 @@ ej_dump(int eid, webs_t wp, int argc, char_t **argv)
 	}
 #endif /* RTCONFIG_DSL */
 #endif /* RTCONFIG_PUSH_EMAIL */
-	else {
+	else if (strcmp(file, "connect.log")==0) {
+		sprintf(filename, "/tmp/%s", file);
+		system("/usr/sbin/netstat-nat -r state -xn > /tmp/connect.log 2>&1");
+		ret += dump_file(wp, filename);
+	}
+	else if ( strcmp(file, "syscmd.log")==0
+		|| strcmp(file, "pptp_connected")==0
+		|| strcmp(file, "release_note0.txt")==0
+		|| strcmp(file, "release_note1.txt")==0
+		|| strcmp(file, "release_note.txt")==0
+#ifdef RTCONFIG_DSL
+		|| strcmp(file, "adsl/tc_fw_ver_short.txt")==0
+		|| strcmp(file, "adsl/tc_ras_ver.txt")==0
+		|| strcmp(file, "adsl/tc_fw_ver.txt")==0
+		|| strcmp(file, "adsl/adsllog.log")==0
+#endif
+	){
 		sprintf(filename, "/tmp/%s", file);
 		ret += dump_file(wp, filename);
 	}
