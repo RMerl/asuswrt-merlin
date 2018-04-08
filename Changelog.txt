@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.70 (xx-xxx-xxxx)
+380.70 (8-Apr-2018)
   - NOTE: This will be the final 380.xx release for
           all models.  The RT-N66U and RT-AC66U
           support will be dropped, and all other
