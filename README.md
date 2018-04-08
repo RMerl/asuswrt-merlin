@@ -3,7 +3,8 @@ asuswrt-merlin
 
 Notes
 -----
-This is the legacy 380.xx branch - future development is being gradually moved to the new NG (New Generation) branch:
+This is the legacy 380.xx branch - this branch is no longer actively developed.
+All development has now been moved to the NG (New Generation) code branch:
 
 [https://github.com/RMerl/asuswrt-merlin.ng](https://github.com/RMerl/asuswrt-merlin.ng)
 
