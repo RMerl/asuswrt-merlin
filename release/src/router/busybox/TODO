@@ -127,20 +127,6 @@ patch
 
   And while we're at it, a new patch filename quoting format is apparently
   coming soon:  http://marc.theaimsgroup.com/?l=git&m=112927316408690&w=2
----
-stty / catv
-  stty's visible() function and catv's guts are identical. Merge them into
-  an appropriate libbb function.
----
-struct suffix_mult
-  Several duplicate users of: grep -r "1024\*1024" * -B2 -A1
-  Merge to a single size_suffixes[] in libbb.
-  Users: head tail od_bloaty hexdump and (partially as it wouldn't hurt) svlogd
----
-tail
-  ./busybox tail -f foo.c~ TODO
-  should not print fmt=header_fmt for subsequent date >> TODO; i.e. only
-  fmt+ if another (not the current) file did change
 
 Architectural issues:
 
@@ -234,8 +220,6 @@ Minor stuff:
   See grep -r strtod
   Alot of duplication that wants cleanup.
 ---
-  in_ether duplicated in network/{interface,ifconfig}.c
----
   unify progress_meter. wget, flash_eraseall, pipe_progress, fbsplash, setfiles.
 ---
   support start-stop-daemon -d <chdir-path>
@@ -274,5 +258,3 @@ vdprintf() -> similar sized functionality
 
 * more support for advanced linux 2.6.x features, see: iotop
   most likely there is more
-
-* even more support for statistics: mpstat, iostat, powertop....

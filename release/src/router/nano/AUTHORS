@@ -1,0 +1,66 @@
+This file lists people who have made significant contributions to the
+nano editor.  Please see the ChangeLog for specific changes by author.
+----------------------------------------------------------------------
+
+Chris Allegretta <chrisa@asty.org>
+	* Original program author and long-time maintainer.
+
+David Lawrence Ramsey <pooka109@gmail.com>
+	* Former stable series maintainer.  Multiple buffer support,
+	  operating dir (-o) option, bug fixes for display routines,
+	  wrapping code, spelling fixes, constantshow mode, parts of
+	  UTF-8 support, softwrap overhaul, and various other fixes.
+
+Jordi Mallach <jordi@gnu.org>
+	* Debian package maintainer, fellow bug squasher.
+	* Internationalization support head, ca.po maintainer.
+
+Adam Rogoyski <rogoyski@cs.utexas.edu>
+	* New write_file() function, read_file() optimization, mouse
+	  support, resize support, nohelp (-x) option, justify function,
+	  follow symlink option and bugfixes, and much more.
+
+Robert Siemborski <rjs3@andrew.cmu.edu>
+	* Miscellaneous cut, display, replace, and other bug fixes,
+	  original and new "magic line" code, read_line() function,
+	  new edit display routines.
+
+Rocco Corsi <rocco.corsi@sympatico.ca>
+	* Internal spelling code, many optimizations and bug fixes for
+	  findnextstr() and search-related functions, various display
+	  and file handling fixes.
+
+David Benbennick <dbenbenn@math.cornell.edu>
+	* Wrap and justify bugfixes/enhancements, new color syntax
+	  code, memleak fixes, parts of the UTF-8 support, and other
+	  miscellaneous fixes.
+
+Mike Frysinger <vapier@gentoo.org>
+	* Gentoo package maintainer.  Whitespace display mode,
+	  --enable-utf8/--disable-utf8 configure options for ncurses,
+	  many new color regexes and improvements to existing color
+	  regexes in syntax/*.nanorc, the move from svn to git, the
+	  conversion to gnulib, and miscellaneous bug fixes.
+
+Mark Majeres <mark@engine12.com>
+	* A functional undo/redo system, and coloring nano's interface.
+
+Mahyar Abbaspour <mahyar.abaspour@gmail.com>
+	* Improved handling of SIGWINCH.
+
+Mike Scalora <mike@scalora.org>
+	* The comment/uncomment feature.
+
+Faissal Bensefia <faissaloo@gmail.com>
+	* Line numbers.
+
+Sumedh Pendurkar <sumedh.pendurkar@gmail.com>
+	* The word-completion feature.
+
+Rishabh Dave <rishabhddave@gmail.com>
+	* Searchable help.
+
+Benno Schulenberg <bensberg@justemail.net>
+	* An array of small bug fixes, the cut-word and block-jump
+	  routines, text selection by holding Shift, and some extra
+	  key bindings.  Current maintainer.

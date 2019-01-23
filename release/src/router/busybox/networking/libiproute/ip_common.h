@@ -24,7 +24,7 @@ int FAST_FUNC ipaddr_list_or_flush(char **argv, int flush);
 int FAST_FUNC do_ipaddr(char **argv);
 int FAST_FUNC do_iproute(char **argv);
 int FAST_FUNC do_iprule(char **argv);
-//int FAST_FUNC do_ipneigh(char **argv);
+int FAST_FUNC do_ipneigh(char **argv);
 int FAST_FUNC do_iptunnel(char **argv);
 int FAST_FUNC do_iplink(char **argv);
 //int FAST_FUNC do_ipmonitor(char **argv);

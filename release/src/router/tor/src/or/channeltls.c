@@ -1,9 +1,33 @@
-/* * Copyright (c) 2012-2015, The Tor Project, Inc. */
+/* * Copyright (c) 2012-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
  * \file channeltls.c
- * \brief channel_t concrete subclass using or_connection_t
+ *
+ * \brief A concrete subclass of channel_t using or_connection_t to transfer
+ * cells between Tor instances.
+ *
+ * This module fills in the various function pointers in channel_t, to
+ * implement the channel_tls_t channels as used in Tor today.  These channels
+ * are created from channel_tls_connect() and
+ * channel_tls_handle_incoming(). Each corresponds 1:1 to or_connection_t
+ * object, as implemented in connection_or.c.  These channels transmit cells
+ * to the underlying or_connection_t by calling
+ * connection_or_write_*_cell_to_buf(), and receive cells from the underlying
+ * or_connection_t when connection_or_process_cells_from_inbuf() calls
+ * channel_tls_handle_*_cell().
+ *
+ * Here we also implement the server (responder) side of the v3+ Tor link
+ * handshake, which uses CERTS and AUTHENTICATE cell to negotiate versions,
+ * exchange expected and observed IP and time information, and bootstrap a
+ * level of authentication higher than we have gotten on the raw TLS
+ * handshake.
+ *
+ * NOTE: Since there is currently only one type of channel, there are probably
+ * more than a few cases where functionality that is currently in
+ * channeltls.c, connection_or.c, and channel.c ought to be divided up
+ * differently.  The right time to do this is probably whenever we introduce
+ * our next channel type.
  **/
 
 /*
@@ -20,6 +44,7 @@
 #include "channeltls.h"
 #include "circuitmux.h"
 #include "circuitmux_ewma.h"
+#include "command.h"
 #include "config.h"
 #include "connection.h"
 #include "connection_or.h"
@@ -49,7 +74,7 @@ uint64_t stats_n_authenticate_cells_processed = 0;
 uint64_t stats_n_authorize_cells_processed = 0;
 
 /** Active listener, if any */
-channel_listener_t *channel_tls_listener = NULL;
+static channel_listener_t *channel_tls_listener = NULL;
 
 /* channel_tls_t method declarations */
 
@@ -114,7 +139,7 @@ channel_tls_common_init(channel_tls_t *tlschan)
   chan->state = CHANNEL_STATE_OPENING;
   chan->close = channel_tls_close_method;
   chan->describe_transport = channel_tls_describe_transport_method;
-  chan->free = channel_tls_free_method;
+  chan->free_fn = channel_tls_free_method;
   chan->get_overhead_estimate = channel_tls_get_overhead_estimate_method;
   chan->get_remote_addr = channel_tls_get_remote_addr_method;
   chan->get_remote_descr = channel_tls_get_remote_descr_method;
@@ -443,7 +468,7 @@ channel_tls_free_method(channel_t *chan)
 static double
 channel_tls_get_overhead_estimate_method(channel_t *chan)
 {
-  double overhead = 1.0f;
+  double overhead = 1.0;
   channel_tls_t *tlschan = BASE_CHAN_TO_TLS(chan);
 
   tor_assert(tlschan);
@@ -460,7 +485,8 @@ channel_tls_get_overhead_estimate_method(channel_t *chan)
      * Never estimate more than 2.0; otherwise we get silly large estimates
      * at the very start of a new TLS connection.
      */
-    if (overhead > 2.0f) overhead = 2.0f;
+    if (overhead > 2.0)
+      overhead = 2.0;
   }
 
   log_debug(LD_CHANNEL,
@@ -552,7 +578,7 @@ channel_tls_get_remote_descr_method(channel_t *chan, int flags)
         break;
       case GRD_FLAG_ORIGINAL:
         /* Actual address with port */
-        addr_str = tor_dup_addr(&(tlschan->conn->real_addr));
+        addr_str = tor_addr_to_str_dup(&(tlschan->conn->real_addr));
         tor_snprintf(buf, MAX_DESCR_LEN + 1,
                      "%s:%u", addr_str, conn->port);
         tor_free(addr_str);
@@ -565,7 +591,7 @@ channel_tls_get_remote_descr_method(channel_t *chan, int flags)
         break;
       case GRD_FLAG_ORIGINAL|GRD_FLAG_ADDR_ONLY:
         /* Actual address, no port */
-        addr_str = tor_dup_addr(&(tlschan->conn->real_addr));
+        addr_str = tor_addr_to_str_dup(&(tlschan->conn->real_addr));
         strlcpy(buf, addr_str, sizeof(buf));
         tor_free(addr_str);
         answer = buf;
@@ -795,6 +821,7 @@ static int
 channel_tls_write_packed_cell_method(channel_t *chan,
                                      packed_cell_t *packed_cell)
 {
+  tor_assert(chan);
   channel_tls_t *tlschan = BASE_CHAN_TO_TLS(chan);
   size_t cell_network_size = get_cell_network_size(chan->wide_circ_ids);
   int written = 0;
@@ -1009,6 +1036,11 @@ channel_tls_time_process_cell(cell_t *cell, channel_tls_t *chan, int *time,
  * for cell types specific to the handshake for this transport protocol and
  * handles them, and queues all other cells to the channel_t layer, which
  * eventually will hand them off to command.c.
+ *
+ * The channel layer itself decides whether the cell should be queued or
+ * can be handed off immediately to the upper-layer code.  It is responsible
+ * for copying in the case that it queues; we merely pass pointers through
+ * which we get from connection_or_process_cells_from_inbuf().
  */
 
 void
@@ -1106,6 +1138,12 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
  * related and live below the channel_t layer, so no variable-length
  * cells ever get delivered in the current implementation, but I've left
  * the mechanism in place for future use.
+ *
+ * If we were handing them off to the upper layer, the channel_t queueing
+ * code would be responsible for memory management, and we'd just be passing
+ * pointers through from connection_or_process_cells_from_inbuf().  That
+ * caller always frees them after this function returns, so this function
+ * should never free var_cell.
  */
 
 void
@@ -1176,6 +1214,8 @@ channel_tls_handle_var_cell(var_cell_t *var_cell, or_connection_t *conn)
        * notice "hey, data arrived!" before we notice "hey, the handshake
        * finished!" And we need to be accepting both at once to handle both
        * the v2 and v3 handshakes. */
+      /* But that should be happening any longer've disabled bufferevents. */
+      tor_assert_nonfatal_unreached_once();
 
       /* fall through */
     case OR_CONN_STATE_TLS_SERVER_RENEGOTIATING:
@@ -1663,30 +1703,9 @@ channel_tls_process_netinfo_cell(cell_t *cell, channel_tls_t *chan)
 #define NETINFO_NOTICE_SKEW 3600
   if (labs(apparent_skew) > NETINFO_NOTICE_SKEW &&
       router_get_by_id_digest(chan->conn->identity_digest)) {
-    char dbuf[64];
-    int severity;
-    /*XXXX be smarter about when everybody says we are skewed. */
-    if (router_digest_is_trusted_dir(chan->conn->identity_digest))
-      severity = LOG_WARN;
-    else
-      severity = LOG_INFO;
-    format_time_interval(dbuf, sizeof(dbuf), apparent_skew);
-    log_fn(severity, LD_GENERAL,
-           "Received NETINFO cell with skewed time from "
-           "server at %s:%d.  It seems that our clock is %s by %s, or "
-           "that theirs is %s. Tor requires an accurate clock to work: "
-           "please check your time and date settings.",
-           chan->conn->base_.address,
-           (int)(chan->conn->base_.port),
-           apparent_skew > 0 ? "ahead" : "behind",
-           dbuf,
-           apparent_skew > 0 ? "behind" : "ahead");
-    if (severity == LOG_WARN) /* only tell the controller if an authority */
-      control_event_general_status(LOG_WARN,
-                          "CLOCK_SKEW SKEW=%ld SOURCE=OR:%s:%d",
-                          apparent_skew,
-                          chan->conn->base_.address,
-                          chan->conn->base_.port);
+    int trusted = router_digest_is_trusted_dir(chan->conn->identity_digest);
+    clock_skew_warning(TO_CONN(chan->conn), apparent_skew, trusted, LD_GENERAL,
+                       "NETINFO cell", "OR");
   }
 
   /* XXX maybe act on my_apparent_addr, if the source is sufficiently
@@ -1840,7 +1859,8 @@ channel_tls_process_certs_cell(var_cell_t *cell, channel_tls_t *chan)
 
     chan->conn->handshake_state->authenticated = 1;
     {
-      const digests_t *id_digests = tor_x509_cert_get_id_digests(id_cert);
+      const common_digests_t *id_digests =
+        tor_x509_cert_get_id_digests(id_cert);
       crypto_pk_t *identity_rcvd;
       if (!id_digests)
         ERR("Couldn't compute digests for key in ID cert");
@@ -1905,8 +1925,8 @@ channel_tls_process_certs_cell(var_cell_t *cell, channel_tls_t *chan)
   }
 
  err:
-  for (unsigned i = 0; i < ARRAY_LENGTH(certs); ++i) {
-    tor_x509_cert_free(certs[i]);
+  for (unsigned u = 0; u < ARRAY_LENGTH(certs); ++u) {
+    tor_x509_cert_free(certs[u]);
   }
   certs_cell_free(cc);
 #undef ERR
@@ -2130,7 +2150,7 @@ channel_tls_process_authenticate_cell(var_cell_t *cell, channel_tls_t *chan)
   {
     crypto_pk_t *identity_rcvd =
       tor_tls_cert_get_key(chan->conn->handshake_state->id_cert);
-    const digests_t *id_digests =
+    const common_digests_t *id_digests =
       tor_x509_cert_get_id_digests(chan->conn->handshake_state->id_cert);
 
     /* This must exist; we checked key type when reading the cert. */

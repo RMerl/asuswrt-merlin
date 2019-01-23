@@ -524,6 +524,9 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
     memcpy(a->d, b->d, sizeof(b->d[0]) * b->top);
 #endif
 
+    if (BN_get_flags(b, BN_FLG_CONSTTIME) != 0)
+        BN_set_flags(a, BN_FLG_CONSTTIME);
+
     a->top = b->top;
     a->neg = b->neg;
     bn_check_top(a);
@@ -569,7 +572,7 @@ void BN_clear(BIGNUM *a)
 {
     bn_check_top(a);
     if (a->d != NULL)
-        memset(a->d, 0, a->dmax * sizeof(a->d[0]));
+        OPENSSL_cleanse(a->d, a->dmax * sizeof(a->d[0]));
     a->top = 0;
     a->neg = 0;
 }

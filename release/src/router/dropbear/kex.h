@@ -22,47 +22,47 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef _KEX_H_
-#define _KEX_H_
+#ifndef DROPBEAR_KEX_H_
+#define DROPBEAR_KEX_H_
 
 #include "includes.h"
 #include "algo.h"
 #include "signkey.h"
 
-void send_msg_kexinit();
-void recv_msg_kexinit();
-void send_msg_newkeys();
-void recv_msg_newkeys();
-void kexfirstinitialise();
+void send_msg_kexinit(void);
+void recv_msg_kexinit(void);
+void send_msg_newkeys(void);
+void recv_msg_newkeys(void);
+void kexfirstinitialise(void);
 
-struct kex_dh_param *gen_kexdh_param();
+struct kex_dh_param *gen_kexdh_param(void);
 void free_kexdh_param(struct kex_dh_param *param);
 void kexdh_comb_key(struct kex_dh_param *param, mp_int *dh_pub_them,
 		sign_key *hostkey);
 
 #ifdef DROPBEAR_ECDH
-struct kex_ecdh_param *gen_kexecdh_param();
+struct kex_ecdh_param *gen_kexecdh_param(void);
 void free_kexecdh_param(struct kex_ecdh_param *param);
 void kexecdh_comb_key(struct kex_ecdh_param *param, buffer *pub_them,
 		sign_key *hostkey);
 #endif
 
 #ifdef DROPBEAR_CURVE25519
-struct kex_curve25519_param *gen_kexcurve25519_param();
+struct kex_curve25519_param *gen_kexcurve25519_param(void);
 void free_kexcurve25519_param(struct kex_curve25519_param *param);
 void kexcurve25519_comb_key(struct kex_curve25519_param *param, buffer *pub_them,
 		sign_key *hostkey);
 #endif
 
 #ifndef DISABLE_ZLIB
-int is_compress_trans();
-int is_compress_recv();
+int is_compress_trans(void);
+int is_compress_recv(void);
 #endif
 
-void recv_msg_kexdh_init(); /* server */
+void recv_msg_kexdh_init(void); /* server */
 
-void send_msg_kexdh_init(); /* client */
-void recv_msg_kexdh_reply(); /* client */
+void send_msg_kexdh_init(void); /* client */
+void recv_msg_kexdh_reply(void); /* client */
 
 struct KEXState {
 
@@ -82,11 +82,6 @@ struct KEXState {
 	unsigned int datarecv; /* data received since last kex */
 
 };
-
-#define DH_P_1_LEN 128
-extern const unsigned char dh_p_1[DH_P_1_LEN];
-#define DH_P_14_LEN 256
-extern const unsigned char dh_p_14[DH_P_14_LEN];
 
 struct kex_dh_param {
 	mp_int pub; /* e */
@@ -113,4 +108,4 @@ int curve25519_donna(unsigned char *out, const unsigned char *secret, const unsi
 
 #define MAX_KEXHASHBUF 2000
 
-#endif /* _KEX_H_ */
+#endif /* DROPBEAR_KEX_H_ */

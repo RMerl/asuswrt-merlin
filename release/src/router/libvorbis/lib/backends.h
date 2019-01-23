@@ -12,7 +12,7 @@
 
  function: libvorbis backend and mapping structures; needed for
            static mode headers
- last mod: $Id: backends.h 16227 2009-07-08 06:58:46Z xiphmont $
+ last mod: $Id: backends.h 16962 2010-03-11 07:30:34Z xiphmont $
 
  ********************************************************************/
 
@@ -93,10 +93,10 @@ typedef struct{
   void (*free_info)    (vorbis_info_residue *);
   void (*free_look)    (vorbis_look_residue *);
   long **(*class)      (struct vorbis_block *,vorbis_look_residue *,
-                        float **,int *,int);
+                        int **,int *,int);
   int  (*forward)      (oggpack_buffer *,struct vorbis_block *,
                         vorbis_look_residue *,
-                        float **,float **,int *,int,long **);
+                        int **,int *,int,long **,int);
   int  (*inverse)      (struct vorbis_block *,vorbis_look_residue *,
                         float **,int *,int);
 } vorbis_func_residue;
@@ -109,12 +109,13 @@ typedef struct vorbis_info_residue0{
   /* first stage (lossless partitioning) */
   int    grouping;         /* group n vectors per partition */
   int    partitions;       /* possible codebooks for a partition */
+  int    partvals;         /* partitions ^ groupbook dim */
   int    groupbook;        /* huffbook for partitioning */
   int    secondstages[64]; /* expanded out to pointers in lookup */
-  int    booklist[256];    /* list of second stage books */
+  int    booklist[512];    /* list of second stage books */
 
-  const float classmetric1[64];
-  const float classmetric2[64];
+  const int classmetric1[64];
+  const int classmetric2[64];
 } vorbis_info_residue0;
 
 /* Mapping backend generic *****************************************/

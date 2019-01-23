@@ -1,6 +1,6 @@
 /* timespec -- System time interface
 
-   Copyright (C) 2000, 2002, 2004-2005, 2007, 2009-2014 Free Software
+   Copyright (C) 2000, 2002, 2004-2005, 2007, 2009-2017 Free Software
    Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -29,7 +29,7 @@ _GL_INLINE_HEADER_BEGIN
 # define _GL_TIMESPEC_INLINE _GL_INLINE
 #endif
 
-/* Resolution of timespec time stamps (in units per second), and log
+/* Resolution of timespec timestamps (in units per second), and log
    base 10 of the resolution.  */
 
 enum { TIMESPEC_RESOLUTION = 1000000000 };
@@ -48,7 +48,7 @@ make_timespec (time_t s, long int ns)
 
 /* Return negative, zero, positive if A < B, A == B, A > B, respectively.
 
-   For each time stamp T, this code assumes that either:
+   For each timestamp T, this code assumes that either:
 
      * T.tv_nsec is in the range 0..999999999; or
      * T.tv_sec corresponds to a valid leap second on a host that supports
@@ -56,7 +56,7 @@ make_timespec (time_t s, long int ns)
      * T.tv_sec is the minimum time_t value and T.tv_nsec is -1; or
        T.tv_sec is the maximum time_t value and T.tv_nsec is 2000000000.
        This allows for special struct timespec values that are less or
-       greater than all possible valid time stamps.
+       greater than all possible valid timestamps.
 
    In all these cases, it is safe to subtract two tv_nsec values and
    convert the result to integer without worrying about overflow on
@@ -74,7 +74,7 @@ make_timespec (time_t s, long int ns)
 
    The (int) cast avoids a gcc -Wconversion warning.  */
 
-_GL_TIMESPEC_INLINE int
+_GL_TIMESPEC_INLINE int _GL_ATTRIBUTE_PURE
 timespec_cmp (struct timespec a, struct timespec b)
 {
   return (a.tv_sec < b.tv_sec ? -1
@@ -84,7 +84,7 @@ timespec_cmp (struct timespec a, struct timespec b)
 
 /* Return -1, 0, 1, depending on the sign of A.  A.tv_nsec must be
    nonnegative.  */
-_GL_TIMESPEC_INLINE int
+_GL_TIMESPEC_INLINE int _GL_ATTRIBUTE_PURE
 timespec_sign (struct timespec a)
 {
   return a.tv_sec < 0 ? -1 : a.tv_sec || a.tv_nsec;

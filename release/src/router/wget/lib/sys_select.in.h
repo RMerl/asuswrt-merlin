@@ -1,5 +1,5 @@
 /* Substitute for <sys/select.h>.
-   Copyright (C) 2007-2014 Free Software Foundation, Inc.
+   Copyright (C) 2007-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@
    On Cygwin, <sys/time.h> includes <sys/select.h>.
    Simply delegate to the system's header in this case.  */
 #if (@HAVE_SYS_SELECT_H@                                                \
+     && !defined _GL_SYS_SELECT_H_REDIRECT_FROM_SYS_TYPES_H             \
      && ((defined __osf__ && defined _SYS_TYPES_H_                      \
-          && !defined _GL_SYS_SELECT_H_REDIRECT_FROM_SYS_TIME_H         \
           && defined _OSF_SOURCE)                                       \
          || (defined __sun && defined _SYS_TYPES_H                      \
              && (! (defined _XOPEN_SOURCE || defined _POSIX_C_SOURCE)   \
@@ -36,12 +36,13 @@
 
 #elif (@HAVE_SYS_SELECT_H@                                              \
        && (defined _CYGWIN_SYS_TIME_H                                   \
-           || (defined __osf__ && defined _SYS_TIME_H_                  \
-               && !defined _GL_SYS_SELECT_H_REDIRECT_FROM_SYS_TIME_H    \
-               && defined _OSF_SOURCE)                                  \
-           || (defined __sun && defined _SYS_TIME_H                     \
-               && (! (defined _XOPEN_SOURCE || defined _POSIX_C_SOURCE) \
-                   || defined __EXTENSIONS__))))
+           || (!defined _GL_SYS_SELECT_H_REDIRECT_FROM_SYS_TIME_H       \
+               && ((defined __osf__ && defined _SYS_TIME_H_             \
+                    && defined _OSF_SOURCE)                             \
+                   || (defined __sun && defined _SYS_TIME_H             \
+                       && (! (defined _XOPEN_SOURCE                     \
+                              || defined _POSIX_C_SOURCE)               \
+                           || defined __EXTENSIONS__))))))
 
 # define _GL_SYS_SELECT_H_REDIRECT_FROM_SYS_TIME_H
 # @INCLUDE_NEXT@ @NEXT_SYS_SELECT_H@
@@ -80,8 +81,9 @@
    of 'struct timeval', and no definition of this type.
    Also, Mac OS X, AIX, HP-UX, IRIX, Solaris, Interix declare select()
    in <sys/time.h>.
-   But avoid namespace pollution on glibc systems.  */
-# ifndef __GLIBC__
+   But avoid namespace pollution on glibc systems and "unknown type
+   name" problems on Cygwin.  */
+# if !(defined __GLIBC__ || defined __CYGWIN__)
 #  include <sys/time.h>
 # endif
 
@@ -99,10 +101,11 @@
 #endif
 
 /* Get definition of 'sigset_t'.
-   But avoid namespace pollution on glibc systems.
+   But avoid namespace pollution on glibc systems and "unknown type
+   name" problems on Cygwin.
    Do this after the include_next (for the sake of OpenBSD 5.0) but before
    the split double-inclusion guard (for the sake of Solaris).  */
-#if !(defined __GLIBC__ && !defined __UCLIBC__)
+#if !((defined __GLIBC__ || defined __CYGWIN__) && !defined __UCLIBC__)
 # include <signal.h>
 #endif
 
@@ -288,12 +291,15 @@ _GL_WARN_ON_USE (pselect, "pselect is not portable - "
 #   define select rpl_select
 #  endif
 _GL_FUNCDECL_RPL (select, int,
-                  (int, fd_set *, fd_set *, fd_set *, struct timeval *));
+                  (int, fd_set *restrict, fd_set *restrict, fd_set *restrict,
+                   struct timeval *restrict));
 _GL_CXXALIAS_RPL (select, int,
-                  (int, fd_set *, fd_set *, fd_set *, struct timeval *));
+                  (int, fd_set *restrict, fd_set *restrict, fd_set *restrict,
+                   struct timeval *restrict));
 # else
 _GL_CXXALIAS_SYS (select, int,
-                  (int, fd_set *, fd_set *, fd_set *, struct timeval *));
+                  (int, fd_set *restrict, fd_set *restrict, fd_set *restrict,
+                   struct timeval *restrict));
 # endif
 _GL_CXXALIASWARN (select);
 #elif @HAVE_WINSOCK2_H@

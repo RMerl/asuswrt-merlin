@@ -249,6 +249,7 @@ function cal_panel_block(obj){
 <input type="hidden" name="action_wait" value="3">
 <input type="hidden" name="flag" value="">
 <input type="hidden" name="bwdpi_wh_enable" value="<% nvram_get("bwdpi_wh_enable"); %>">
+<input type="hidden" name="bwdpi_wh_stamp" value="<% nvram_get("bwdpi_wh_stamp"); %>">
 <input type="hidden" name="TM_EULA" value="<% nvram_get("TM_EULA"); %>">
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
@@ -295,7 +296,9 @@ function cal_panel_block(obj){
 																			$("#agreement_panel").fadeIn(300);
 																			return false;
 																		}
-																			
+																			var t = new Date();
+																			var timestamp = t.getTime().toString().substring(0,10);
+																			document.form.bwdpi_wh_stamp.value = timestamp;
 																			document.form.bwdpi_wh_enable.value = 1;
 																			document.form.submit();
 																	},

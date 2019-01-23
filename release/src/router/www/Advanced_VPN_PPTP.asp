@@ -65,8 +65,9 @@ else{
 	max_shift = parseInt("9");
 }
 
+var wans_mode ='<% nvram_get("wans_mode"); %>';
+
 function initial(){
-	var dualwan_mode = '<% nvram_get("wans_mode"); %>';
 	var pptpd_dns1_orig = '<% nvram_get("pptpd_dns1"); %>';
 	var pptpd_dns2_orig = '<% nvram_get("pptpd_dns2"); %>';
 	var pptpd_wins1_orig = '<% nvram_get("pptpd_wins1"); %>';
@@ -75,9 +76,14 @@ function initial(){
 	
 	show_menu();		
 	addOnlineHelp(document.getElementById("faq"), ["ASUSWRT", "VPN"]);
+
+	//if support pptpd and openvpnd then show switch button
+	if(pptpd_support && openvpnd_support) {
+		document.getElementById("divSwitchMenu").style.display = "";
+	}
 	
 	formShowAndHide(document.form.pptpd_enable.value, document.form.VPNServer_mode.value);	
-	if(dualwan_mode == "lb"){
+	if(wans_mode == "lb"){
 		var wan0_ipaddr = wanlink_ipaddr();
 		var wan1_ipaddr = secondary_wanlink_ipaddr();		document.getElementById("wan_ctrl").style.display = "none";
 		document.getElementById("dualwan_ctrl").style.display = "";	
@@ -88,25 +94,15 @@ function initial(){
 		}
 	}
 	else {
-		var wan_primary = '<% nvram_get("wan_primary"); %>';
-		var wan_ipaddr = "";
-		if(wan_primary == 0) {	//primary
-			wan_ipaddr = wanlink_ipaddr();
-		}
-		else {	//secondary
-			wan_ipaddr = secondary_wanlink_ipaddr();
-		}
-		document.getElementById("wan_ctrl").innerHTML = "<#PPTP_desc2#>" +  wan_ipaddr;
+		
+		var wan_ipaddr = wanlink_ipaddr();
+
+		document.getElementById("wan_ctrl").innerHTML = "<#PPTP_desc2#> " +  wan_ipaddr;
+
 		//check DUT is belong to private IP.
-		if(realip_support){
-			if(!external_ip)
-				document.getElementById("privateIP_notes").style.display = "";
-		}
-		else if(validator.isPrivateIP(wan_ipaddr)){
-			document.getElementById("privateIP_notes").style.display = "";
-		}
+		setTimeout("show_warning_message();", 100);
 	}
-	//setting pptpd_ms_network_option and pptpd_broadcast_option	
+	//setting pptpd_ms_network_option and pptpd_broadcast_option
 	if(document.form.pptpd_ms_network.value == "1") {
 		document.form.pptpd_ms_network_option[0].checked = true;
 		document.form.pptpd_broadcast_option[0].checked = true;
@@ -169,12 +165,49 @@ function initial(){
 	/* Advanced Setting end */
 }
 
+var MAX_RETRY_NUM = 5;
+var external_ip_retry_cnt = MAX_RETRY_NUM;
+function show_warning_message(){
+	if(realip_support && wans_mode != "lb"){
+		if(realip_state != "2" && external_ip_retry_cnt > 0){
+			if( external_ip_retry_cnt == MAX_RETRY_NUM )
+				get_real_ip();
+			else
+				setTimeout("get_real_ip();", 3000);
+		}
+		else if(realip_state != "2"){
+			if(validator.isPrivateIP(wanlink_ipaddr()))
+				document.getElementById("privateIP_notes").style.display = "";
+		}
+		else{
+			if(!external_ip)
+				document.getElementById("privateIP_notes").style.display = "";
+		}
+	}
+	else if(validator.isPrivateIP(wanlink_ipaddr()))
+		document.getElementById("privateIP_notes").style.display = "";
+}
+
+function get_real_ip(){
+	$.ajax({
+		url: 'get_real_ip.asp',
+		dataType: 'script',
+		error: function(xhr){
+			get_real_ip();
+		},
+		success: function(response){
+			external_ip_retry_cnt--;
+			show_warning_message();
+		}
+	});
+}
+
 function formShowAndHide(server_enable, server_type) {
 	if(server_enable == "1"){
 		document.getElementById("trVPNServerMode").style.display = "";
 		document.getElementById('pptp_samba').style.display = "";
 		document.getElementById('PPTP_setting').style.display = "";
-		document.getElementById("tbAdvanced").style.display = "none";	
+		document.getElementById("tbAdvanced").style.display = "none";
 		showpptpd_clientlist();
 		parsePPTPClients();
 		pptpd_connected_status();
@@ -193,12 +226,12 @@ function formShowAndHide(server_enable, server_type) {
 
 function pptpd_connected_status(){
 	var rule_num = document.getElementById('pptpd_clientlist_table').rows.length;
-	var username_status = "";	
+	var username_status = "";
 	for(var x=0; x < rule_num; x++){
 		var ind = x+1;
 		username_status = "status"+ind;
 		if(pptpd_connected_clients.length >0){
-			for(var y=0; y<pptpd_connected_clients.length; y++) {								
+			for(var y=0; y<pptpd_connected_clients.length; y++) {
 				if(document.getElementById('pptpd_clientlist_table').rows[x].cells[1].title == pptpd_connected_clients[y].username){
 					document.getElementById(username_status).innerHTML = '<a class="hintstyle2" href="javascript:void(0);" onClick="showPPTPClients(\''+pptpd_connected_clients[y].username+'\');"><#Connected#></a>';
 					break;
@@ -222,17 +255,20 @@ function applyRule() {
 		var get_group_value = function () {
 			var rule_num = document.getElementById("pptpd_clientlist_table").rows.length;
 			var item_num = document.getElementById("pptpd_clientlist_table").rows[0].cells.length;
-			var tmp_value = "";	
+			var tmp_value = "";
 
 			for(var i = 0; i < rule_num; i += 1) {
-				tmp_value += "<"		
+				tmp_value += "<"
 				for(var j = 1; j < item_num - 2; j += 1) {
-					if(document.getElementById("pptpd_clientlist_table").rows[i].cells[j].innerHTML.lastIndexOf("...") < 0) {
+					if (j == 2) {
+						tmp_value += overlib_str1[i];
+					}
+					else if(document.getElementById("pptpd_clientlist_table").rows[i].cells[j].innerHTML.lastIndexOf("...") < 0) {
 						tmp_value += document.getElementById("pptpd_clientlist_table").rows[i].cells[j].innerHTML;
 					}
 					else {
 						tmp_value += document.getElementById("pptpd_clientlist_table").rows[i].cells[j].title;
-					}					
+					}
 					if(j != item_num - 3)
 						tmp_value += ">";
 				}
@@ -457,17 +493,21 @@ function del_Row(rowdata){
 	var i = rowdata.parentNode.parentNode.rowIndex;
 	var delUserName = rowdata.parentNode.parentNode.cells[1].innerHTML;
 	document.getElementById("pptpd_clientlist_table").deleteRow(i);
+	overlib_str1.splice(i,1);
 	var pptpd_clientlist_value = "";
 	var rowLength = document.getElementById("pptpd_clientlist_table").rows.length;
 	for(var k = 0; k < rowLength; k += 1) {
-		for(var j = 1; j < document.getElementById("pptpd_clientlist_table").rows[k].cells.length - 2; j += 1) {	//cell 1 & 2
-			if(j == 1)
-				pptpd_clientlist_value += "<";				
-			else
-				pptpd_clientlist_value += ">";
-				
-			pptpd_clientlist_value += document.getElementById("pptpd_clientlist_table").rows[k].cells[j].innerHTML;
-		}
+
+		pptpd_clientlist_value += "<";
+
+		if (document.getElementById("pptpd_clientlist_table").rows[k].cells[1].innerHTML.lastIndexOf("...") < 0)
+			pptpd_clientlist_value += document.getElementById("pptpd_clientlist_table").rows[k].cells[1].innerHTML;
+		else
+			pptpd_clientlist_value += document.getElementById("pptpd_clientlist_table").rows[k].cells[1].title;
+
+		pptpd_clientlist_value += ">";
+
+		pptpd_clientlist_value += overlib_str1[k];
 	}
 
 	pptpd_clientlist_array = pptpd_clientlist_value;
@@ -507,17 +547,19 @@ function showpptpd_clientlist(){
 				if(j == 0){
 					pptp_user_name = pptpd_clientlist_col[0];
 					if(pptpd_clientlist_col[0].length >28){
-						overlib_str0[i] += pptpd_clientlist_col[0];
+						overlib_str0[i-1] = pptpd_clientlist_col[0];
 						pptpd_clientlist_col[0]=pptpd_clientlist_col[0].substring(0, 26)+"...";
 						code +='<td width="30%" title="'+overlib_str0[i]+'">'+ pptpd_clientlist_col[0] +'</td>';
 					}else
 						code +='<td width="30%" title="'+pptpd_clientlist_col[0]+'">'+ pptpd_clientlist_col[0] +'</td>';
 				}
 				else if(j == 1){
-					if(pptpd_clientlist_col[1].length >28){
-						overlib_str1[i] += pptpd_clientlist_col[1];
+					overlib_str1[i-1] = pptpd_clientlist_col[1];
+					if (document.getElementById('show_pass').checked == false) {
+						code +='<td width="30%">*****</td>';
+					}else if(pptpd_clientlist_col[1].length >28){
 						pptpd_clientlist_col[1]=pptpd_clientlist_col[1].substring(0, 26)+"...";
-						code +='<td width="30%" title="'+overlib_str1[i]+'">'+ pptpd_clientlist_col[1] +'</td>';
+						code +='<td width="30%" title="'+overlib_str1[i-1]+'">'+ pptpd_clientlist_col[1] +'</td>';
 					}else
 						code +='<td width="30%">'+ pptpd_clientlist_col[1] +'</td>';
 				} 
@@ -812,6 +854,16 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 								<td bgcolor="#4D595D" valign="top">
 									<div>&nbsp;</div>
 									<div id="divVPNTitle" class="formfonttitle"><#BOP_isp_heart_item#> - PPTP</div>
+									<div id="divSwitchMenu" style="margin-top:-40px;float:right;display:none;">
+										<div style="width:173px;height:30px;border-top-left-radius:8px;border-bottom-left-radius:8px;" class="block_filter_pressed">
+											<div style="text-align:center;padding-top:5px;color:#93A9B1;font-size:14px">PPTP</div>
+										</div>
+										<div style="width:172px;height:30px;margin:-32px 0px 0px 173px;border-top-right-radius:8px;border-bottom-right-radius:8px;" class="block_filter">
+											<a href="Advanced_VPN_OpenVPN.asp">	
+												<div class="block_filter_name">OpenVPN</div>
+											</a>
+										</div>
+									</div>
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 									<div id="privateIP_notes" class="formfontdesc" style="display:none;color:#FC0;"><#vpn_privateIP_hint#></div>
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
@@ -868,6 +920,7 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 												</li>
 											</ul>
 										</div>
+										<div style="color:#FFCC00;"><input type="checkbox" name="show_pass" id="show_pass" onclick="showpptpd_clientlist(); parsePPTPClients();pptpd_connected_status();">Show passwords</div>
 										<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 											<thead>
 											<tr>

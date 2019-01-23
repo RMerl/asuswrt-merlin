@@ -31,8 +31,6 @@ window.onresize = function() {
 
 function initial(){
 	show_menu();
-	document.getElementById("_APP_Installation").innerHTML = '<table><tbody><tr><td><div class="_APP_Installation"></div></td><td><div style="width:120px;"><#menu5_4#></div></td></tr></tbody></table>';
-	document.getElementById("_APP_Installation").className = "menu_clicked";
 
 	if('<% nvram_get("tm_device_name"); %>' != '')
 		document.getElementById("tmPath").innerHTML = '/mnt/<% nvram_get("tm_device_name"); %>';
@@ -52,6 +50,22 @@ function initial(){
 		document.form.tm_vol_size.value = document.form.tm_vol_size.value/1024;
 
 	setInterval(show_partition, 2000);
+
+	if('<% nvram_get("tm_device_name"); %>' != ''){
+		for(var x=0; x<usbDevicesList.length;x++){
+			for(var y=0; y<usbDevicesList[x].partition.length;y++){
+				if(usbDevicesList[x].partition[y].partName == '<% nvram_get("tm_device_name"); %>'){
+					//alert(usbDevicesList[x].partition[y].partName +" : "+usbDevicesList[x].partition[y].size +" / "+ usbDevicesList[x].partition[y].used);
+					var selected_accessable_size = simpleNum(usbDevicesList[x].partition[y].size-usbDevicesList[x].partition[y].used);
+					var selected_total_size = simpleNum(usbDevicesList[x].partition[y].size);
+
+					setPart(usbDevicesList[x].partition[y].partName, selected_accessable_size, selected_total_size, true);
+					return;
+				}
+			}
+
+		}
+	}	
 }
 
 function selPartition(){
@@ -115,14 +129,15 @@ function show_partition(){
 
 var totalSpace;
 var availSpace;
-function setPart(_part, _avail, _total){
+function setPart(_part, _avail, _total, _get){
 	document.getElementById("tmPath").innerHTML = "/mnt/" + _part;
 	document.form.tm_device_name.value = _part;
 	cancel_folderTree();
 	totalSpace = _total;
 	availSpace = _avail;
 	document.getElementById("maxVolSize").innerHTML = "<#Availablespace#>: " + _avail + " GB";
-	document.form.tm_vol_size.value = "";
+	if(!_get)	//true: Just read from nvram.	false: Want to setup new partition
+		document.form.tm_vol_size.value = "";
 }
 
 function applyRule(){

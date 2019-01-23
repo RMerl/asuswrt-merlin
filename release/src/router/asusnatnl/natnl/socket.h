@@ -36,6 +36,10 @@
 #include <common.h>
 #include <pjlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BACKLOG 10
 #define ADDRSTRLEN (INET6_ADDRSTRLEN + 9)
 
@@ -105,6 +109,10 @@ static int _inline_ sock_get_ipver(socket_t *s)
     return (s->addr.ss_family == AF_INET) ? SOCK_IPV4 :
         ((s->addr.ss_family == AF_INET6) ? SOCK_IPV6 : 0);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SOCKET_H */
 

@@ -40,6 +40,9 @@
 
 #ifdef HAVE_IFACE_GETIFADDRS
 #define _FOUND_IFACE_ANY
+#elif defined(BCMARM)
+#include "ifaddrs.c"
+#define _FOUND_IFACE_ANY
 #else
 
 void rep_freeifaddrs(struct ifaddrs *ifp)

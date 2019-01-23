@@ -11,7 +11,7 @@
  ********************************************************************
 
  function: toplevel residue templates 16/22kHz
- last mod: $Id: residue_16.h 16227 2009-07-08 06:58:46Z xiphmont $
+ last mod: $Id: residue_16.h 16962 2010-03-11 07:30:34Z xiphmont $
 
  ********************************************************************/
 
@@ -61,25 +61,25 @@ static const static_bookblock _resbook_16s_2={
 };
 
 static const vorbis_residue_template _res_16s_0[]={
-  {2,0,  &_residue_44_mid,
+  {2,0,32,  &_residue_44_mid,
    &_huff_book__16c0_s_single,&_huff_book__16c0_s_single,
    &_resbook_16s_0,&_resbook_16s_0},
 };
 static const vorbis_residue_template _res_16s_1[]={
-  {2,0,  &_residue_44_mid,
+  {2,0,32,  &_residue_44_mid,
    &_huff_book__16c1_s_short,&_huff_book__16c1_s_short,
    &_resbook_16s_1,&_resbook_16s_1},
 
-  {2,0,  &_residue_44_mid,
+  {2,0,32,  &_residue_44_mid,
    &_huff_book__16c1_s_long,&_huff_book__16c1_s_long,
    &_resbook_16s_1,&_resbook_16s_1}
 };
 static const vorbis_residue_template _res_16s_2[]={
-  {2,0,  &_residue_44_high,
+  {2,0,32,  &_residue_44_high,
    &_huff_book__16c2_s_short,&_huff_book__16c2_s_short,
    &_resbook_16s_2,&_resbook_16s_2},
 
-  {2,0,  &_residue_44_high,
+  {2,0,32,  &_residue_44_high,
    &_huff_book__16c2_s_long,&_huff_book__16c2_s_long,
    &_resbook_16s_2,&_resbook_16s_2}
 };
@@ -132,25 +132,25 @@ static const static_bookblock _resbook_16u_2={
 };
 
 static const vorbis_residue_template _res_16u_0[]={
-  {1,0,  &_residue_44_low_un,
+  {1,0,32,  &_residue_44_low_un,
    &_huff_book__16u0__single,&_huff_book__16u0__single,
    &_resbook_16u_0,&_resbook_16u_0},
 };
 static const vorbis_residue_template _res_16u_1[]={
-  {1,0,  &_residue_44_mid_un,
+  {1,0,32,  &_residue_44_mid_un,
    &_huff_book__16u1__short,&_huff_book__16u1__short,
    &_resbook_16u_1,&_resbook_16u_1},
 
-  {1,0,  &_residue_44_mid_un,
+  {1,0,32,  &_residue_44_mid_un,
    &_huff_book__16u1__long,&_huff_book__16u1__long,
    &_resbook_16u_1,&_resbook_16u_1}
 };
 static const vorbis_residue_template _res_16u_2[]={
-  {1,0,  &_residue_44_hi_un,
+  {1,0,32,  &_residue_44_hi_un,
    &_huff_book__16u2__short,&_huff_book__16u2__short,
    &_resbook_16u_2,&_resbook_16u_2},
 
-  {1,0,  &_residue_44_hi_un,
+  {1,0,32,  &_residue_44_hi_un,
    &_huff_book__16u2__long,&_huff_book__16u2__long,
    &_resbook_16u_2,&_resbook_16u_2}
 };

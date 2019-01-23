@@ -117,29 +117,17 @@ static const char xmlver[] =
 static const char root_service[] =
 	"scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"";
 static const char root_device[] = 
-	"root xmlns=\"urn:schemas-upnp-org:device-1-0\""
-#if PNPX
-	" xmlns:pnpx=\"http://schemas.microsoft.com/windows/pnpx/2005/11\""
-	" xmlns:df=\"http://schemas.microsoft.com/windows/2008/09/devicefoundation\""
-#endif
-	;
+	"root xmlns=\"urn:schemas-upnp-org:device-1-0\"";
 
 /* root Description of the UPnP Device */
 static const struct XMLElt rootDesc[] =
 {
 	{root_device, INITHELPER(1,2)},
 	{"specVersion", INITHELPER(3,2)},
-	{"device", INITHELPER(5,(14+PNPX))},
+	{"device", INITHELPER(5,(14))},
 	{"/major", "1"},
 	{"/minor", "0"},
 	{"/deviceType", "urn:schemas-upnp-org:device:MediaServer:1"},
-#if PNPX == 5
-	{"/pnpx:X_hardwareId", pnpx_hwid},
-	{"/pnpx:X_compatibleId", "MS_DigitalMediaDeviceClass_DMS_V001"},
-	{"/pnpx:X_deviceCategory", "MediaDevices"},
-	{"/df:X_deviceCategory", "Multimedia.DMS"},
-	{"/microsoft:magicPacketWakeSupported xmlns:microsoft=\"urn:schemas-microsoft-com:WMPNSS-1-0\"", "0"},
-#endif
 	{"/friendlyName", friendly_name},	/* required */
 	{"/manufacturer", ROOTDEV_MANUFACTURER},		/* required */
 	{"/manufacturerURL", ROOTDEV_MANUFACTURERURL},	/* optional */
@@ -151,12 +139,12 @@ static const struct XMLElt rootDesc[] =
 	{"/UDN", uuidvalue},	/* required */
 	{"/dlna:X_DLNADOC xmlns:dlna=\"urn:schemas-dlna-org:device-1-0\"", "DMS-1.50"},
 	{"/presentationURL", presentationurl},	/* recommended */
-	{"iconList", INITHELPER((19+PNPX),4)},
-	{"serviceList", INITHELPER((43+PNPX),3)},
-	{"icon", INITHELPER((23+PNPX),5)},
-	{"icon", INITHELPER((28+PNPX),5)},
-	{"icon", INITHELPER((33+PNPX),5)},
-	{"icon", INITHELPER((38+PNPX),5)},
+	{"iconList", INITHELPER((19),4)},
+	{"serviceList", INITHELPER((43),3)},
+	{"icon", INITHELPER((23),5)},
+	{"icon", INITHELPER((28),5)},
+	{"icon", INITHELPER((33),5)},
+	{"icon", INITHELPER((38),5)},
 	{"/mimetype", "image/png"},
 	{"/width", "48"},
 	{"/height", "48"},
@@ -177,9 +165,9 @@ static const struct XMLElt rootDesc[] =
 	{"/height", "120"},
 	{"/depth", "24"},
 	{"/url", "/icons/lrg.jpg"},
-	{"service", INITHELPER((46+PNPX),5)},
-	{"service", INITHELPER((51+PNPX),5)},
-	{"service", INITHELPER((56+PNPX),5)},
+	{"service", INITHELPER((46),5)},
+	{"service", INITHELPER((51),5)},
+	{"service", INITHELPER((56),5)},
 	{"/serviceType", "urn:schemas-upnp-org:service:ContentDirectory:1"},
 	{"/serviceId", "urn:upnp-org:serviceId:ContentDirectory"},
 	{"/controlURL", CONTENTDIRECTORY_CONTROLURL},
@@ -206,24 +194,6 @@ static const struct argument GetProtocolInfoArgs[] =
 	{NULL, 0, 0}
 };
 
-static const struct argument PrepareForConnectionArgs[] =
-{
-	{"RemoteProtocolInfo", 1, 6},
-	{"PeerConnectionManager", 1, 4},
-	{"PeerConnectionID", 1, 7},
-	{"Direction", 1, 5},
-	{"ConnectionID", 2, 7},
-	{"AVTransportID", 2, 8},
-	{"RcsID", 2, 9},
-	{NULL, 0, 0}
-};
-
-static const struct argument ConnectionCompleteArgs[] =
-{
-	{"ConnectionID", 1, 7},
-	{NULL, 0, 0}
-};
-
 static const struct argument GetCurrentConnectionIDsArgs[] =
 {
 	{"ConnectionIDs", 2, 2},
@@ -246,8 +216,6 @@ static const struct argument GetCurrentConnectionInfoArgs[] =
 static const struct action ConnectionManagerActions[] =
 {
 	{"GetProtocolInfo", GetProtocolInfoArgs}, /* R */
-	//OPTIONAL {"PrepareForConnection", PrepareForConnectionArgs}, /* R */
-	//OPTIONAL {"ConnectionComplete", ConnectionCompleteArgs}, /* R */
 	{"GetCurrentConnectionIDs", GetCurrentConnectionIDsArgs}, /* R */
 	{"GetCurrentConnectionInfo", GetCurrentConnectionInfoArgs}, /* R */
 	{0, 0}
@@ -270,19 +238,27 @@ static const struct stateVar ConnectionManagerVars[] =
 
 static const struct argument GetSearchCapabilitiesArgs[] =
 {
-	{"SearchCaps", 2, 10},
+	{"SearchCaps", 2, 11},
 	{0, 0}
 };
 
 static const struct argument GetSortCapabilitiesArgs[] =
 {
-	{"SortCaps", 2, 11},
+	{"SortCaps", 2, 12},
 	{0, 0}
 };
 
 static const struct argument GetSystemUpdateIDArgs[] =
 {
-	{"Id", 2, 12},
+	{"Id", 2, 13},
+	{0, 0}
+};
+
+static const struct argument UpdateObjectArgs[] =
+{
+	{"ObjectID", 1, 1},
+	{"CurrentTagValue", 1, 10},
+	{"NewTagValue", 1, 10},
 	{0, 0}
 };
 
@@ -323,10 +299,10 @@ static const struct action ContentDirectoryActions[] =
 	{"GetSystemUpdateID", GetSystemUpdateIDArgs}, /* R */
 	{"Browse", BrowseArgs}, /* R */
 	{"Search", SearchArgs}, /* O */
+	{"UpdateObject", UpdateObjectArgs}, /* O */
 #if 0 // Not implementing optional features yet...
 	{"CreateObject", CreateObjectArgs}, /* O */
 	{"DestroyObject", DestroyObjectArgs}, /* O */
-	{"UpdateObject", UpdateObjectArgs}, /* O */
 	{"ImportResource", ImportResourceArgs}, /* O */
 	{"ExportResource", ExportResourceArgs}, /* O */
 	{"StopTransferResource", StopTransferResourceArgs}, /* O */
@@ -350,6 +326,7 @@ static const struct stateVar ContentDirectoryVars[] =
 	{"A_ARG_TYPE_Index", 3, 0},
 	{"A_ARG_TYPE_Count", 3, 0},
 	{"A_ARG_TYPE_UpdateID", 3, 0},
+	{"A_ARG_TYPE_TagValueList", 0, 0},
 	{"SearchCapabilities", 0, 0},
 	{"SortCapabilities", 0, 0},
 	{"SystemUpdateID", 3|EVENTED, 0, 0, 255},
@@ -586,10 +563,10 @@ genRootDescSamsung(int * len)
 	memcpy(str, xmlver, *len + 1);
 	/* Replace the optional modelURL and manufacturerURL fields with Samsung foo */
 	memcpy(&samsungRootDesc, &rootDesc, sizeof(rootDesc));
-	samsungRootDesc[8+PNPX].eltname = "/sec:ProductCap";
-	samsungRootDesc[8+PNPX].data = "smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec";
-	samsungRootDesc[12+PNPX].eltname = "/sec:X_ProductCap";
-	samsungRootDesc[12+PNPX].data = "smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec";
+	samsungRootDesc[8].eltname = "/sec:ProductCap";
+	samsungRootDesc[8].data = "smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec";
+	samsungRootDesc[12].eltname = "/sec:X_ProductCap";
+	samsungRootDesc[12].data = "smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec";
 	str = genXML(str, len, &tmplen, samsungRootDesc);
 	str[*len] = '\0';
 	return str;

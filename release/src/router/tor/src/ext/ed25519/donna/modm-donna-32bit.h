@@ -385,14 +385,14 @@ sub256_modm_batch(bignum256modm out, const bignum256modm a, const bignum256modm 
 	size_t i = 0;
 	bignum256modm_element_t carry = 0;
 	switch (limbsize) {
-		case 8: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 31); out[i] &= 0x3fffffff; i++;
-		case 7: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 31); out[i] &= 0x3fffffff; i++;
-		case 6: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 31); out[i] &= 0x3fffffff; i++;
-		case 5: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 31); out[i] &= 0x3fffffff; i++;
-		case 4: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 31); out[i] &= 0x3fffffff; i++;
-		case 3: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 31); out[i] &= 0x3fffffff; i++;
-		case 2: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 31); out[i] &= 0x3fffffff; i++;
-		case 1: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 31); out[i] &= 0x3fffffff; i++;
+		case 8: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 31); out[i] &= 0x3fffffff; i++; /* Falls through. */
+		case 7: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 31); out[i] &= 0x3fffffff; i++; /* Falls through. */
+		case 6: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 31); out[i] &= 0x3fffffff; i++; /* Falls through. */
+		case 5: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 31); out[i] &= 0x3fffffff; i++; /* Falls through. */
+		case 4: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 31); out[i] &= 0x3fffffff; i++; /* Falls through. */
+		case 3: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 31); out[i] &= 0x3fffffff; i++; /* Falls through. */
+		case 2: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 31); out[i] &= 0x3fffffff; i++; /* Falls through. */
+		case 1: out[i] = (a[i] - b[i]) - carry; carry = (out[i] >> 31); out[i] &= 0x3fffffff; i++; /* Falls through. */
 		case 0: 
 		default: out[i] = (a[i] - b[i]) - carry;
 	}
@@ -403,14 +403,14 @@ sub256_modm_batch(bignum256modm out, const bignum256modm a, const bignum256modm 
 static int
 lt256_modm_batch(const bignum256modm a, const bignum256modm b, size_t limbsize) {
 	switch (limbsize) {
-		case 8: if (a[8] > b[8]) return 0; if (a[8] < b[8]) return 1;
-		case 7: if (a[7] > b[7]) return 0; if (a[7] < b[7]) return 1;
-		case 6: if (a[6] > b[6]) return 0; if (a[6] < b[6]) return 1;
-		case 5: if (a[5] > b[5]) return 0; if (a[5] < b[5]) return 1;
-		case 4: if (a[4] > b[4]) return 0; if (a[4] < b[4]) return 1;
-		case 3: if (a[3] > b[3]) return 0; if (a[3] < b[3]) return 1;
-		case 2: if (a[2] > b[2]) return 0; if (a[2] < b[2]) return 1;
-		case 1: if (a[1] > b[1]) return 0; if (a[1] < b[1]) return 1;
+		case 8: if (a[8] > b[8]) return 0; if (a[8] < b[8]) return 1; /* Falls through. */
+		case 7: if (a[7] > b[7]) return 0; if (a[7] < b[7]) return 1; /* Falls through. */
+		case 6: if (a[6] > b[6]) return 0; if (a[6] < b[6]) return 1; /* Falls through. */
+		case 5: if (a[5] > b[5]) return 0; if (a[5] < b[5]) return 1; /* Falls through. */
+		case 4: if (a[4] > b[4]) return 0; if (a[4] < b[4]) return 1; /* Falls through. */
+		case 3: if (a[3] > b[3]) return 0; if (a[3] < b[3]) return 1; /* Falls through. */
+		case 2: if (a[2] > b[2]) return 0; if (a[2] < b[2]) return 1; /* Falls through. */
+		case 1: if (a[1] > b[1]) return 0; if (a[1] < b[1]) return 1; /* Falls through. */
 		case 0: if (a[0] > b[0]) return 0; if (a[0] < b[0]) return 1;
 	}
 	return 0;
@@ -420,14 +420,14 @@ lt256_modm_batch(const bignum256modm a, const bignum256modm b, size_t limbsize) 
 static int
 lte256_modm_batch(const bignum256modm a, const bignum256modm b, size_t limbsize) {
 	switch (limbsize) {
-		case 8: if (a[8] > b[8]) return 0; if (a[8] < b[8]) return 1;
-		case 7: if (a[7] > b[7]) return 0; if (a[7] < b[7]) return 1;
-		case 6: if (a[6] > b[6]) return 0; if (a[6] < b[6]) return 1;
-		case 5: if (a[5] > b[5]) return 0; if (a[5] < b[5]) return 1;
-		case 4: if (a[4] > b[4]) return 0; if (a[4] < b[4]) return 1;
-		case 3: if (a[3] > b[3]) return 0; if (a[3] < b[3]) return 1;
-		case 2: if (a[2] > b[2]) return 0; if (a[2] < b[2]) return 1;
-		case 1: if (a[1] > b[1]) return 0; if (a[1] < b[1]) return 1;
+		case 8: if (a[8] > b[8]) return 0; if (a[8] < b[8]) return 1; /* Falls through. */
+		case 7: if (a[7] > b[7]) return 0; if (a[7] < b[7]) return 1; /* Falls through. */
+		case 6: if (a[6] > b[6]) return 0; if (a[6] < b[6]) return 1; /* Falls through. */
+		case 5: if (a[5] > b[5]) return 0; if (a[5] < b[5]) return 1; /* Falls through. */
+		case 4: if (a[4] > b[4]) return 0; if (a[4] < b[4]) return 1; /* Falls through. */
+		case 3: if (a[3] > b[3]) return 0; if (a[3] < b[3]) return 1; /* Falls through. */
+		case 2: if (a[2] > b[2]) return 0; if (a[2] < b[2]) return 1; /* Falls through. */
+		case 1: if (a[1] > b[1]) return 0; if (a[1] < b[1]) return 1; /* Falls through. */
 		case 0: if (a[0] > b[0]) return 0; if (a[0] < b[0]) return 1;
 	}
 	return 1;

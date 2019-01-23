@@ -5,7 +5,7 @@
 #             packet encryption, packet authentication, and
 #             packet compression.
 #
-#  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
+#  Copyright (C) 2002-2017 OpenVPN Technologies, Inc. <sales@openvpn.net>
 #  Copyright (C) 2010      David Sommerseth <dazo@users.sourceforge.net>
 #  Copyright (C) 2006-2012 Alon Bar-Lev <alon.barlev@gmail.com>
 #
@@ -18,10 +18,9 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program (see the file COPYING included with this
-#  distribution); if not, write to the Free Software Foundation, Inc.,
-#  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#  You should have received a copy of the GNU General Public License along
+#  with this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
 # This option prevents autoreconf from overriding our COPYING and
@@ -54,19 +53,19 @@ BUILT_SOURCES = \
 	config-version.h
 endif
 
-SUBDIRS = build distro include src sample doc tests
+SUBDIRS = build distro include src sample doc vendor tests
 
 dist_doc_DATA = \
 	README \
 	README.IPv6 \
 	README.polarssl \
+	Changes.rst \
 	COPYRIGHT.GPL \
 	COPYING
 
 dist_noinst_DATA = \
 	.gitignore \
 	.gitattributes \
-	config-version.h.in \
 	PORTS \
 	README.IPv6 TODO.IPv6 \
 	README.polarssl \
@@ -74,12 +73,6 @@ dist_noinst_DATA = \
 	msvc-env.bat \
 	msvc-dev.bat \
 	msvc-build.bat
-
-if WIN32
-dist_doc_DATA += INSTALL-win32.txt
-else
-dist_noinst_DATA += INSTALL-win32.txt
-endif
 
 dist_noinst_HEADERS = \
 	config-msvc.h \
@@ -91,8 +84,12 @@ root_DATA = version.sh
 endif
 
 config-version.h:
-	@CONFIGURE_GIT_REVISION="`GIT_DIR=\"$(top_srcdir)/.git\" $(GIT) rev-parse --symbolic-full-name HEAD`/`GIT_DIR=\"$(top_srcdir)/.git\" $(GIT) rev-parse --short=16 HEAD`"; \
-		$(SED) "s#@CONFIGURE_GIT_REVISION[@]#$${CONFIGURE_GIT_REVISION}#g" "$(srcdir)/config-version.h.in" > config-version.h.tmp
+	@CONFIGURE_GIT_CHFILES="`GIT_DIR=\"$(top_srcdir)/.git\" $(GIT) diff-files --name-status -r --ignore-submodules --quiet -- || echo \"+\"`"; \
+	CONFIGURE_GIT_UNCOMMITTED="`GIT_DIR=\"$(top_srcdir)/.git\" $(GIT) diff-index --cached  --quiet --ignore-submodules HEAD || echo \"*\"`"; \
+	CONFIGURE_GIT_REVISION="`GIT_DIR=\"$(top_srcdir)/.git\" $(GIT) rev-parse --symbolic-full-name HEAD | cut -d/ -f3-`/`GIT_DIR=\"$(top_srcdir)/.git\" $(GIT) rev-parse --short=16 HEAD`"; \
+	echo "#define CONFIGURE_GIT_REVISION \"$${CONFIGURE_GIT_REVISION}\"" > config-version.h.tmp; \
+	echo "#define CONFIGURE_GIT_FLAGS \"$${CONFIGURE_GIT_CHFILES}$${CONFIGURE_GIT_UNCOMMITTED}\"" >> config-version.h.tmp
+
 	@if ! [ -f config-version.h ] || ! cmp -s config-version.h.tmp config-version.h; then \
 		echo "replacing config-version.h"; \
 		mv config-version.h.tmp config-version.h; \

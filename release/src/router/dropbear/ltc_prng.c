@@ -123,14 +123,14 @@ int dropbear_prng_test(void)
 const struct ltc_prng_descriptor dropbear_prng_desc =
 {
     "dropbear_prng", 0,
-    &dropbear_prng_start,
-    &dropbear_prng_add_entropy,
-    &dropbear_prng_ready,
-    &dropbear_prng_read,
-    &dropbear_prng_done,
-    &dropbear_prng_export,
-    &dropbear_prng_import,
-    &dropbear_prng_test
+    dropbear_prng_start,
+    dropbear_prng_add_entropy,
+    dropbear_prng_ready,
+    dropbear_prng_read,
+    dropbear_prng_done,
+    dropbear_prng_export,
+    dropbear_prng_import,
+    dropbear_prng_test
 };
 
 

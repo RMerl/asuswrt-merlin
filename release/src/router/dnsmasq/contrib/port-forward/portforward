@@ -3,7 +3,7 @@
 # first column of this file, then a DNAT port-forward will be set up 
 # to the address which has just been allocated by DHCP . The second field 
 # is port number(s). If there is only one, then the port-forward goes to 
-# the same port on the DHCP-client, if there are two seperated with a 
+# the same port on the DHCP-client, if there are two separated with a 
 # colon, then the second number is the port to which the connection 
 # is forwarded on the DHCP-client. By default, forwarding is set up 
 # for TCP, but it can done for UDP instead by prefixing the port to "u". 

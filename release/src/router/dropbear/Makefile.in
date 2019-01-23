@@ -24,7 +24,7 @@ CFLAGS+=-I$(srcdir)/libtomcrypt/src/headers/
 LIBTOM_LIBS=$(STATIC_LTC) $(STATIC_LTM) 
 endif
 
-COMMONOBJS=dbutil.o buffer.o \
+COMMONOBJS=dbutil.o buffer.o dbhelpers.o \
 		dss.o bignum.o \
 		signkey.o rsa.o dbrandom.o \
 		queue.o \
@@ -40,12 +40,12 @@ SVROBJS=svr-kex.o svr-auth.o sshpty.o \
 CLIOBJS=cli-main.o cli-auth.o cli-authpasswd.o cli-kex.o \
 		cli-session.o cli-runopts.o cli-chansession.o \
 		cli-authpubkey.o cli-tcpfwd.o cli-channel.o cli-authinteract.o \
-		cli-agentfwd.o list.o
+		cli-agentfwd.o 
 
 CLISVROBJS=common-session.o packet.o common-algo.o common-kex.o \
 			common-channel.o common-chansession.o termcodes.o loginrec.o \
-			tcp-accept.o listener.o process-packet.o \
-			common-runopts.o circbuffer.o curve25519-donna.o
+			tcp-accept.o listener.o process-packet.o dh_groups.o \
+			common-runopts.o circbuffer.o curve25519-donna.o list.o netio.o
 
 KEYOBJS=dropbearkey.o
 
@@ -131,7 +131,7 @@ insmultidropbear: dropbearmulti
 	-rm -f $(DESTDIR)$(sbindir)/dropbear$(EXEEXT)
 	-ln -s $(bindir)/dropbearmulti$(EXEEXT) $(DESTDIR)$(sbindir)/dropbear$(EXEEXT) 
 	$(INSTALL) -d $(DESTDIR)$(mandir)/man8
-	$(INSTALL) -m 644 dropbear.8  $(DESTDIR)$(mandir)/man8/dropbear.8
+	$(INSTALL) -m 644 $(srcdir)/dropbear.8  $(DESTDIR)$(mandir)/man8/dropbear.8
 
 insmulti%: dropbearmulti
 	$(INSTALL) -d $(DESTDIR)$(bindir)
@@ -140,12 +140,12 @@ insmulti%: dropbearmulti
 	$(INSTALL) -d $(DESTDIR)$(mandir)/man1
 	if test -e $*.1; then $(INSTALL) -m 644 $*.1 $(DESTDIR)$(mandir)/man1/$*.1; fi
 
-# dropbear should go in sbin, so it needs a seperate rule
+# dropbear should go in sbin, so it needs a separate rule
 inst_dropbear: dropbear
 	$(INSTALL) -d $(DESTDIR)$(sbindir)
 	$(INSTALL) dropbear$(EXEEXT) $(DESTDIR)$(sbindir)
 	$(INSTALL) -d $(DESTDIR)$(mandir)/man8
-	$(INSTALL) -m 644 dropbear.8 $(DESTDIR)$(mandir)/man8/dropbear.8
+	$(INSTALL) -m 644 $(srcdir)/dropbear.8 $(DESTDIR)$(mandir)/man8/dropbear.8
 
 inst_%: %
 	$(INSTALL) -d $(DESTDIR)$(bindir)

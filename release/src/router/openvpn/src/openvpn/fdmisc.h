@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2017 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -16,10 +16,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifndef FD_MISC_H
@@ -29,18 +28,21 @@
 #include "error.h"
 #include "syshead.h"
 
-bool set_nonblock_action (int fd);
-bool set_cloexec_action (int fd);
+bool set_nonblock_action(int fd);
 
-void set_nonblock (int fd);
-void set_cloexec (int fd);
+bool set_cloexec_action(int fd);
 
-static inline void openvpn_fd_set(int fd, fd_set *setp)
+void set_nonblock(int fd);
+
+void set_cloexec(int fd);
+
+static inline void
+openvpn_fd_set(int fd, fd_set *setp)
 {
-#ifndef WIN32 /* The Windows FD_SET() implementation does not overflow */
-  ASSERT (fd >= 0 && fd < FD_SETSIZE);
+#ifndef _WIN32 /* The Windows FD_SET() implementation does not overflow */
+    ASSERT(fd >= 0 && fd < FD_SETSIZE);
 #endif
-  FD_SET (fd, setp);
+    FD_SET(fd, setp);
 }
 #undef FD_SET /* prevent direct use of FD_SET() */
 

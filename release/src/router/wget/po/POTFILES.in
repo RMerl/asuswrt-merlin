@@ -26,6 +26,7 @@ src/init.c
 src/iri.c
 src/log.c
 src/main.c
+src/metalink.c
 src/mswindows.c
 src/netrc.c
 src/openssl.c
@@ -34,7 +35,6 @@ src/ptimer.c
 src/recur.c
 src/res.c
 src/retr.c
-src/spider.c
 src/url.c
 src/utils.c
 src/warc.c

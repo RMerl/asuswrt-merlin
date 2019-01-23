@@ -69,6 +69,20 @@ ssize_t message_push_string(uint8 **outbuf, const char *str, int flags)
 		DEBUG(0, ("srvstr_push failed\n"));
 		return -1;
 	}
+
+	/*
+	 * Ensure we clear out the extra data we have
+	 * grown the buffer by, but not written to.
+	 */
+	if (buf_size + result < buf_size) {
+		return -1;
+	}
+	if (grow_size < result) {
+		return -1;
+	}
+
+	memset(tmp + buf_size + result, '\0', grow_size - result);
+
 	set_message_bcc((char *)tmp, smb_buflen(tmp) + result);
 
 	*outbuf = tmp;

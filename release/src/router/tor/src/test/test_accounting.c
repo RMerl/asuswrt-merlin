@@ -61,6 +61,32 @@ test_accounting_limits(void *arg)
   fake_time += 1;
   consider_hibernation(fake_time);
   tor_assert(we_are_hibernating() == 1);
+
+  options->AccountingRule = ACCT_OUT;
+
+  accounting_add_bytes(100, 10, 1);
+  fake_time += 1;
+  consider_hibernation(fake_time);
+  tor_assert(we_are_hibernating() == 0);
+
+  accounting_add_bytes(0, 90, 1);
+  fake_time += 1;
+  consider_hibernation(fake_time);
+  tor_assert(we_are_hibernating() == 1);
+
+  options->AccountingMax = 300;
+  options->AccountingRule = ACCT_IN;
+
+  accounting_add_bytes(10, 100, 1);
+  fake_time += 1;
+  consider_hibernation(fake_time);
+  tor_assert(we_are_hibernating() == 0);
+
+  accounting_add_bytes(90, 0, 1);
+  fake_time += 1;
+  consider_hibernation(fake_time);
+  tor_assert(we_are_hibernating() == 1);
+
   goto done;
  done:
   NS_UNMOCK(get_or_state);

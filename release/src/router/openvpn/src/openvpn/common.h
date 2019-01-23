@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2017 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -16,10 +16,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifndef COMMON_H
@@ -29,15 +28,15 @@
  * Statistics counters and associated printf formats.
  */
 #ifdef USE_64_BIT_COUNTERS
-  typedef unsigned long long int counter_type;
-# ifdef WIN32
-#  define counter_format  "%I64u"
-# else
-#  define counter_format  "%llu"
-# endif
+typedef unsigned long long int counter_type;
+#ifdef _WIN32
+#define counter_format  "%I64u"
 #else
-  typedef unsigned int counter_type;
-# define counter_format   "%u"
+#define counter_format  "%llu"
+#endif
+#else  /* ifdef USE_64_BIT_COUNTERS */
+typedef unsigned int counter_type;
+#define counter_format   "%u"
 #endif
 
 /*
@@ -102,4 +101,4 @@ typedef unsigned long ptr_type;
  */
 #define SCRIPT_SECURITY_WARNING "WARNING: External program may not be called unless '--script-security 2' or higher is enabled. See --help text or man page for detailed info."
 
-#endif
+#endif /* ifndef COMMON_H */

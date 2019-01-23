@@ -1,0 +1,9 @@
+Makefile
+autom4te.cache
+libnfnetlink.pc
+libtool
+.deps
+.libs
+*.o
+*.lo
+*.la

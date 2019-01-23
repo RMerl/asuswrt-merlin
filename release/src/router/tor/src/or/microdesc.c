@@ -1,5 +1,12 @@
-/* Copyright (c) 2009-2015, The Tor Project, Inc. */
+/* Copyright (c) 2009-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
+
+/**
+ * \file microdesc.c
+ *
+ * \brief Implements microdescriptors -- an abbreviated description of
+ *  less-frequently-changing router information.
+ */
 
 #include "or.h"
 #include "circuitbuild.h"
@@ -47,21 +54,22 @@ struct microdesc_cache_t {
 static microdesc_cache_t *get_microdesc_cache_noload(void);
 
 /** Helper: computes a hash of <b>md</b> to place it in a hash table. */
-static INLINE unsigned int
+static inline unsigned int
 microdesc_hash_(microdesc_t *md)
 {
   return (unsigned) siphash24g(md->digest, sizeof(md->digest));
 }
 
-/** Helper: compares <b>a</b> and </b> for equality for hash-table purposes. */
-static INLINE int
+/** Helper: compares <b>a</b> and <b>b</b> for equality for hash-table
+ * purposes. */
+static inline int
 microdesc_eq_(microdesc_t *a, microdesc_t *b)
 {
   return tor_memeq(a->digest, b->digest, DIGEST256_LEN);
 }
 
 HT_PROTOTYPE(microdesc_map, microdesc_t, node,
-             microdesc_hash_, microdesc_eq_);
+             microdesc_hash_, microdesc_eq_)
 HT_GENERATE2(microdesc_map, microdesc_t, node,
              microdesc_hash_, microdesc_eq_, 0.6,
              tor_reallocarray_, tor_free_)
@@ -100,6 +108,7 @@ dump_microdescriptor(int fd, microdesc_t *md, size_t *annotation_len_out)
   md->off = tor_fd_getpos(fd);
   written = write_all(fd, md->body, md->bodylen, 0);
   if (written != (ssize_t)md->bodylen) {
+    written = written < 0 ? 0 : written;
     log_warn(LD_DIR,
              "Couldn't dump microdescriptor (wrote %ld out of %lu): %s",
              (long)written, (unsigned long)md->bodylen,
@@ -840,7 +849,7 @@ microdesc_list_missing_digest256(networkstatus_t *ns, microdesc_cache_t *cache,
 /** Launch download requests for microdescriptors as appropriate.
  *
  * Specifically, we should launch download requests if we are configured to
- * download mirodescriptors, and there are some microdescriptors listed the
+ * download mirodescriptors, and there are some microdescriptors listed in the
  * current microdesc consensus that we don't have, and either we never asked
  * for them, or we failed to download them but we're willing to retry.
  */
@@ -917,7 +926,7 @@ we_use_microdescriptors_for_circuits(const or_options_t *options)
       return 0;
     /* Otherwise, we decide that we'll use microdescriptors iff we are
      * not a server, and we're not autofetching everything. */
-    /* XXX023 what does not being a server have to do with it? also there's
+    /* XXXX++ what does not being a server have to do with it? also there's
      * a partitioning issue here where bridges differ from clients. */
     ret = !server_mode(options) && !options->FetchUselessDescriptors;
   }
@@ -947,8 +956,8 @@ we_fetch_router_descriptors(const or_options_t *options)
 }
 
 /** Return the consensus flavor we actually want to use to build circuits. */
-int
-usable_consensus_flavor(void)
+MOCK_IMPL(int,
+usable_consensus_flavor,(void))
 {
   if (we_use_microdescriptors_for_circuits(get_options())) {
     return FLAV_MICRODESC;

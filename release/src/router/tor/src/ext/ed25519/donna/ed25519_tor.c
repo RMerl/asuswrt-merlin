@@ -34,7 +34,7 @@
 #define ED25519_FN2(fn,suffix) ED25519_FN3(fn,suffix)
 #define ED25519_FN(fn)         ED25519_FN2(fn,ED25519_SUFFIX)
 
-
+#include "orconfig.h"
 #include "ed25519-donna.h"
 #include "ed25519_donna_tor.h"
 #include "ed25519-randombytes.h"
@@ -44,7 +44,8 @@ typedef unsigned char ed25519_signature[64];
 typedef unsigned char ed25519_public_key[32];
 typedef unsigned char ed25519_secret_key[32];
 
-static void gettweak(unsigned char *out, const unsigned char *param);
+static void ed25519_donna_gettweak(unsigned char *out,
+                                   const unsigned char *param);
 
 static int ED25519_FN(ed25519_sign_open) (const unsigned char *m, size_t mlen,
   const ed25519_public_key pk, const ed25519_signature RS);
@@ -148,8 +149,7 @@ ed25519_donna_seckey(unsigned char *sk)
 {
   ed25519_secret_key seed;
 
-  if (crypto_strongest_rand(seed, 32))
-    return -1;
+  crypto_strongest_rand(seed, 32);
 
   ed25519_extsk(sk, seed);
 
@@ -169,8 +169,8 @@ ed25519_donna_seckey_expand(unsigned char *sk, const unsigned char *skseed)
 int
 ed25519_donna_pubkey(unsigned char *pk, const unsigned char *sk)
 {
-  bignum256modm a;
-  ge25519 ALIGN(16) A;
+  bignum256modm a = {0};
+  ge25519 ALIGN(16) A = {{0}, {0}, {0}, {0}};
 
   /* A = aB */
   expand256_modm(a, sk, 32);
@@ -205,8 +205,8 @@ ed25519_donna_sign(unsigned char *sig, const unsigned char *m, size_t mlen,
   const unsigned char *sk, const unsigned char *pk)
 {
   ed25519_hash_context ctx;
-  bignum256modm r, S, a;
-  ge25519 ALIGN(16) R;
+  bignum256modm r = {0}, S, a;
+  ge25519 ALIGN(16) R = {{0}, {0}, {0}, {0}};
   hash_512bits hashr, hram;
 
   /* This is equivalent to the removed `ED25519_FN(ed25519_sign)` routine,
@@ -243,7 +243,7 @@ ed25519_donna_sign(unsigned char *sig, const unsigned char *m, size_t mlen,
 }
 
 static void
-gettweak(unsigned char *out, const unsigned char *param)
+ed25519_donna_gettweak(unsigned char *out, const unsigned char *param)
 {
   static const char str[] = "Derive temporary signing key";
   ed25519_hash_context ctx;
@@ -267,7 +267,7 @@ ed25519_donna_blind_secret_key(unsigned char *out, const unsigned char *inp,
   ed25519_hash_context ctx;
   bignum256modm ALIGN(16) sk, t;
 
-  gettweak(tweak, param);
+  ed25519_donna_gettweak(tweak, param);
   expand256_modm(t, tweak, 32);
 
   expand256_modm(sk, inp, 32);
@@ -298,7 +298,7 @@ ed25519_donna_blind_public_key(unsigned char *out, const unsigned char *inp,
   ge25519 ALIGN(16) A, Aprime;
   bignum256modm ALIGN(16) t;
 
-  gettweak(tweak, param);
+  ed25519_donna_gettweak(tweak, param);
   expand256_modm(t, tweak, 32);
 
   /* No "ge25519_unpack", negate the public key. */

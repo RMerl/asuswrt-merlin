@@ -1,4 +1,209 @@
-2015-03-31  Niels Möller  <nisse@diamant.hack.org>
+2016-01-28  Niels Möller  <nisse@lysator.liu.se>
+
+	* Released nettle-3.2.
+
+2016-01-26  Niels Möller  <nisse@lysator.liu.se>
+
+	* tools/nettle-pbkdf2.c (main): Fix handling of unrecognized
+	options. Bug reported by Dongsheng Zhang. Display usage message
+	and exit non-zero. Also added "Usage: "-prefix to the message.
+	* tools/nettle-hash.c (usage): New function, extracted from main.
+	(main): Analogous fix for unrecognized options.
+
+2016-01-23  Niels Möller  <nisse@lysator.liu.se>
+
+	* nettle.texinfo: Set UPDATED-FOR to 3.2.
+
+2016-01-21  Niels Möller  <nisse@lysator.liu.se>
+
+	* .gitlab-ci.yml: New file. Configuration for gitlab's continuous
+	integration system.
+
+2016-01-20  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/dlopen-test.c (main): Mark arguments as UNUSED.
+
+	* testsuite/Makefile.in (clean): Delete dlopen-test.
+
+	* configure.ac: Bump package version, to nettle-3.2.
+	(LIBNETTLE_MINOR, LIBHOGWEED_MINOR): Bump minor versions, to
+	libnettle.so.6.2 and and libhogweed.so.4.2.
+
+2016-01-10  Niels Möller  <nisse@lysator.liu.se>
+
+	* base64-encode.c (encode_raw): Use const uint8_t * for the
+	alphabet argument.
+
+	* nettle.texinfo (RSA): Document the rsa_pkcs1_verify and
+	rsa_pkcs1_sign functions, and the new rsa_*_tr functions.
+
+2015-12-18  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/testutils.h: Fix include order, system headers before
+	nettle headers. Always include version.h, needed by
+	version-test.c. It was included indirectly via bignum.h, but only
+	if configured with publickey support.
+
+	* configure.ac (IF_DLOPEN_TEST): Fixed shell conditional.
+
+	* testsuite/ecc-mod-test.c (test_main): Handle random seeding if
+	NETTLE_TEST_SEED is set in the environment.
+
+2015-12-15  Niels Möller  <nisse@lysator.liu.se>
+
+	* x86_64/ecc-384-modp.asm: Fixed carry propagation bug. Problem
+	reported by Hanno Böck. Simplified the folding to always use
+	non-negative carry, the old code attempted to add in a carry which
+	could be either positive or negative, but didn't get that case
+	right.
+
+2015-12-10  Niels Möller  <nisse@lysator.liu.se>
+
+	* ecc-256.c (ecc_256_modp): Fixed carry propagation bug. Problem
+	reported by Hanno Böck.
+	(ecc_256_modq): Fixed another carry propagation bug.
+
+2015-11-23  Niels Möller  <nisse@lysator.liu.se>
+
+	* nettle.texinfo: Document rsa_encrypt, rsa_decrypt and
+	rsa_decrypt_tr. Text contributed by Andy Lawrence.
+
+2015-11-15  Niels Möller  <nisse@lysator.liu.se>
+
+	* rsa.h (_rsa_blind, _rsa_unblind): Mark as deprecated.
+
+2015-09-17  Niels Möller  <nisse@lysator.liu.se>
+
+	* rsa-md5-sign-tr.c (rsa_md5_sign_tr, rsa_md5_sign_digest_tr): New
+	file, new functions.
+	* rsa-sha1-sign-tr.c (rsa_sha1_sign_tr, rsa_sha1_sign_digest_tr):
+	Likewise.
+	* rsa-sha256-sign-tr.c (rsa_sha256_sign_tr)
+	(rsa_sha256_sign_digest_tr): Likewise.
+	* rsa-sha512-sign-tr.c (rsa_sha512_sign_tr)
+	(rsa_sha512_sign_digest_tr): Likewise.
+	* rsa.h: Added corresponding prototypes.
+	* Makefile.in (hogweed_SOURCES): Added new files.
+
+	* testsuite/testutils.c (SIGN): Extend macro to test new
+	functions, and the rsa_*_sign_digest functions. Updated callers.
+
+2015-09-14  Niels Möller  <nisse@lysator.liu.se>
+
+	* rsa-decrypt-tr.c (rsa_decrypt_tr): Use rsa_compute_root_tr.
+	Mainly for simplicity and consistency, I'm not aware of any CRT
+	fault attacks on RSA decryption.
+
+	* testsuite/rsa-encrypt-test.c (test_main): Added test with
+	invalid private key.
+
+	* rsa-sign-tr.c (rsa_compute_root_tr): New file and function.
+	* rsa.h: Declare it.
+	* rsa-pkcs1-sign-tr.c (rsa_pkcs1_sign_tr): Use rsa_compute_root_tr.
+	(rsa_verify_res): Deleted, replaced by rsa_compute_root_tr.
+	* testsuite/rsa-sign-tr-test.c (test_rsa_sign_tr): Check that
+	signature argument is unchanged on failure.
+	* Makefile.in (hogweed_SOURCES): Added rsa-sign-tr.c.
+
+2015-09-07  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/rsa-sign-tr-test.c: Drop include of nettle-internal.h.
+	(test_main): Fix incorrect use of sizeof, and use LDATA macro.
+
+	From Nikos Mavrogiannopoulos.
+	* rsa-pkcs1-sign-tr.c (rsa_verify_res): New function.
+	(rsa_pkcs1_sign_tr): Check result of private key operation, to
+	protect against hardware or software errors leaking the private
+	key.
+	* testsuite/rsa-sign-tr-test.c: New testcase.
+
+2015-09-06  Niels Möller  <nisse@lysator.liu.se>
+
+	* nettle.texinfo: Updated SHA3 documentation.
+
+2015-09-02  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/dlopen-test.c: New test program, exposing the problem
+	with ifunc and RTLD_NOW.
+
+	* testsuite/Makefile.in (TS_ALL): Conditionally add dlopen-test.
+	(SOURCES): Added dlopen-test.c.
+	(dlopen-test): New target, unlike other test programs, *not*
+	linked with -lnettle.
+
+	* configure.ac: Check for dlfcn.h and the dlopen function.
+	(IF_DLOPEN_TEST): New substituted variable, true if dlopen is
+	available and we are building a shared library.
+
+	* fat-setup.h: Disable use of ifunc, since it breaks dlopen with
+	RTLD_NOW.
+
+2015-08-25  Niels Möller  <nisse@lysator.liu.se>
+
+	* NEWS: Started on entries for Nettle-3.2.
+
+	* sha3.h (NETTLE_SHA3_FIPS202): New preprocessor constant.
+
+2015-08-24  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/sha3.awk: Document origin of test vectors.
+
+	From Nikos Mavrogiannopoulos.
+	* sha3.c (_sha3_pad): Update for NIST version.
+	* testsuite/sha3-224-test.c: Updated test vectors.
+	* testsuite/sha3-256-test.c: Likewise.
+	* testsuite/sha3-384-test.c: Likewise.
+	* testsuite/sha3-512-test.c: Likewise.
+
+2015-06-03  Niels Möller  <nisse@lysator.liu.se>
+
+	* arm/neon/chacha-core-internal.asm: New file. 55% speedup over C
+	version on Cortex-A9.
+
+2015-05-19  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac: ABI detection (n32 or n64) on Irix, and
+	appropriate default for libdir. Patch from Klaus Ziegler.
+
+2015-05-12  Niels Möller  <nisse@lysator.liu.se>
+
+	* version.c (nettle_version_major, nettle_version_minor): New
+	file. New functions, returning the value of the corresponding
+	preprocessor constant.
+	* Makefile.in (nettle_SOURCES): Added version.c.
+	* testsuite/version-test.c: New testcase.
+	* testsuite/Makefile.in (TS_NETTLE_SOURCES): Added version-test.c.
+
+2015-04-29  Niels Möller  <nisse@lysator.liu.se>
+
+	* arm/v6/sha256-compress.asm: Fix syntax error in offset
+	addressing. Spotted by Jukka Ukkonen.
+	* arm/v6/aes-decrypt-internal.asm: Drop %-prefix on r12 register.
+	* arm/v6/aes-encrypt-internal.asm: Likewise.
+
+2015-04-24  Niels Möller  <nisse@lysator.liu.se>
+
+	* Released nettle-3.1.1.
+
+	* configure.ac: Bump package version, to nettle-3.1.1.
+	(LIBNETTLE_MINOR, LIBHOGWEED_MINOR): Bump minor versions, to
+	libnettle.so.6.1 and and libhogweed.so.4.1.
+
+2015-04-22  Niels Möller  <nisse@lysator.liu.se>
+
+	* x86_64/gcm-hash8.asm: Use ".value" instead of ".short", since
+	the latter is not supported by the Sun/Oracle assembler.
+
+2015-04-13  Niels Möller  <nisse@lysator.liu.se>
+
+	* configure.ac: Fix shell quoting in test of GMP_NUMB_BITS asm
+	compatibility. Reported by Edward Sheldrake.
+
+2015-04-07  Niels Möller  <nisse@lysator.liu.se>
+
+	* Released nettle-3.1.
+
+2015-03-31  Niels Möller  <nisse@lysator.liu.se>
 
 	* x86_64/ecc-224-modp.asm: Require that GMP_NUMB_BITS == 64.
 	* x86_64/ecc-521-modp.asm: Likewise. Note that the other
@@ -16,7 +221,7 @@
 	* Makefile.in (clean-here): Unconditionally delete *.a (including
 	stub libraries like *.dll.a).
 
-2015-03-30  Niels Möller  <nisse@diamant.hack.org>
+2015-03-30  Niels Möller  <nisse@lysator.liu.se>
 
 	* version.h.in (GMP_NUMB_BITS) [NETTLE_USE_MINI_GMP]: Move
 	definition here (uses configure substitution).
@@ -29,7 +234,7 @@
 	version.h, not bignum.h. Allow leading underscore on mini-gmp
 	symbols.
 
-2015-03-26  Niels Möller  <nisse@diamant.hack.org>
+2015-03-26  Niels Möller  <nisse@lysator.liu.se>
 
 	* Makefile.in (PRE_CPPFLAGS): Drop -I$(srcdir), no longer needed.
 	(HEADERS): Added bignum.h. Removed version.h.
@@ -46,7 +251,7 @@
 
 	* version.h.in (NETTLE_USE_MINI_GMP): Substitute here.
 
-2015-03-25  Niels Möller  <nisse@diamant.hack.org>
+2015-03-25  Niels Möller  <nisse@lysator.liu.se>
 
 	* configure.ac (MAJOR_VERSION, MINOR_VERSION): Tweak sed
 	expressions, to tolerate version suffixes.
@@ -57,7 +262,7 @@
 	* ed25519-sha512-pubkey.c: Fix stack overwrite. The digest array
 	must have room for a complete sha512 digest.
 
-2015-03-19  Niels Möller  <nisse@diamant.hack.org>
+2015-03-19  Niels Möller  <nisse@lysator.liu.se>
 
 	* Makefile.in (OPT_HOGWEED_SOURCES): Deleted make variable.
 	(nettle_SOURCES, hogweed_SOURCES): Don't include optional sources
@@ -85,7 +290,7 @@
 	variables.
 	* version.h.in: New file, defining version numbers.
 
-2015-03-18  Niels Möller  <nisse@diamant.hack.org>
+2015-03-18  Niels Möller  <nisse@lysator.liu.se>
 
 	EdDSA interface change, use plain strings to represent keys.
 	* eddsa.h (_ED25519_LIMB_SIZE): Deleted constant.
@@ -110,13 +315,13 @@
 	* testsuite/ed25519-test.c (test_one): Test
 	ed25519_sha512_public_key, and adapt to new ed25519 interface.
 
-2015-03-14  Niels Möller  <nisse@diamant.hack.org>
+2015-03-14  Niels Möller  <nisse@lysator.liu.se>
 
 	* ccm.c (memeql_sec): New function, more side-channel silent than
 	memcmp.
 	(ccm_decrypt_message): Use it.
 
-2015-03-12  Niels Möller  <nisse@diamant.hack.org>
+2015-03-12  Niels Möller  <nisse@lysator.liu.se>
 
 	* base64.h (struct base64_encode_ctx): Micro optimization of
 	struct layout, saving a few bytes.
@@ -125,7 +330,7 @@
 
 	* nettle.texinfo (ASCII encoding): Document base64url functions.
 
-2015-03-10  Niels Möller  <nisse@diamant.hack.org>
+2015-03-10  Niels Möller  <nisse@lysator.liu.se>
 
 	* nettle.texinfo: Update documentation of curve25519_mul. Say that
 	the output is undefined for points belonging to the twist rather
@@ -137,7 +342,7 @@
 	of curve25519_mul return value.
 	* testsuite/curve25519-dh-test.c (test_a): Likewise.
 
-2015-02-26  Niels Möller  <nisse@diamant.hack.org>
+2015-02-26  Niels Möller  <nisse@lysator.liu.se>
 
 	* nettle.texinfo: Document curve25519 and eddsa.
 
@@ -188,7 +393,7 @@
 2015-02-05  Niels Möller  <nisse@lysator.liu.se>
 
 	* configure.ac (LIBHOGWEED_MAJOR): Undo latest bump, 4 should be
-	enough (previous release, nettle-3.1, used 3).
+	enough (previous release, nettle-3.0, used 3).
 
 2015-01-30  Niels Möller  <nisse@lysator.liu.se>
 
@@ -1357,7 +1562,7 @@
 
 2014-06-07  Niels Möller  <nisse@lysator.liu.se>
 
-	* Released nettle-3.0
+	* Released nettle-3.0.
 
 2014-06-04  Niels Möller  <nisse@lysator.liu.se>
 

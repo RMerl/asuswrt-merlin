@@ -1,0 +1,10 @@
+Hi,
+I updated the try-all-ns patch to work with the latest version of git. Ended up implementing it on top of master, 2.78test2-7-g63437ff. As that specific if-clause has been changed in the last few commits, it's not compatible for 2.77, sadly.
+
+Find the patch attached.
+
+Regards,
+
+Rasmus Ahlberg
+Software Developer, R&D
+Electrolux Small Appliances

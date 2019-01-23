@@ -1,7 +1,5 @@
 include ../common.mak
 
-#BUILD_READMEM=y
-
 CFLAGS += -Wall -Os $(EXTRACFLAGS)
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include -idirafter$(LINUXDIR)/include
 CFLAGS += -I$(TOP)/openssl/include
@@ -13,7 +11,6 @@ CFLAGS += -ffunction-sections -fdata-sections
 CFLAGS += -DDLM -DASUS_DDNS -DASUS_EXT -DBTN_SETUP -DWEB_REDIRECT -DRTCONFIG_CROND
 
 CFLAGS += -DDEBUG_RCTEST
-CFLAGS += -DQCA_WIFI_INS_RM
 
 ifeq ($(RTCONFIG_WPS),y)
 CFLAGS += -I$(SRCBASE)/wps/brcm_apps/include
@@ -26,11 +23,16 @@ export CFLAGS += -DMAC_REPEATER
 endif
 ifneq ($(findstring CONFIG_RT2860V2_AP_EDCCA_MONITOR=, $(shell cat $(LINUXDIR)/.config)),)
 export CFLAGS += -DCE_ADAPTIVITY
+else
+ifeq (y,$(filter y,$(RTN56UB1) $(RTN56UB2)))
+export CFLAGS += -DCE_ADAPTIVITY
+endif
 endif
 endif
 
 ifeq ($(RTCONFIG_QCA),y)
 CFLAGS += -I$(TOP)/shared/sysdeps/qca -I$(TOP)/wireless_tools
+CFLAGS += $(if $(RTCONFIG_SOC_IPQ8064),-DSMP)
 endif
 
 include $(SRCBASE)/.config
@@ -101,10 +103,18 @@ LDFLAGS += -L$(TOP)/wb -lws
 LDFLAGS += -L$(TOP)/push_log -lpush_log
 endif
 
+ifeq ($(RTCONFIG_FBWIFI),y)
+LDFLAGS += -L$(TOP)/fb_wifi -lfbwifi
+endif
+
 ifeq ($(RTCONFIG_NOTIFICATION_CENTER),y)
 CFLAGS  += -I$(TOP)/sqlite
 CFLAGS  += -I$(TOP)/nt_center/lib
 CFLAGS  += -DASUSWRT_SDK
+endif
+
+ifeq ($(RTCONFIG_PROTECTION_SERVER),y)
+CFLAGS  += -I$(TOP)/protect_srv/include
 endif
 
 #CFLAGS += -DRC_BUILDTIME=$(shell date -d "now" +"%s")
@@ -136,7 +146,8 @@ LDFLAGS += $(EXTRA_LDFLAGS)
 
 OBJS := rc.o init.o interface.o lan.o wireless.o wan.o pppd.o auth.o services.o #mtd.o
 OBJS += firewall.o ppp.o services.o common.o
-OBJS += watchdog.o ntp.o btnsetup.o qos.o udhcpc.o ate.o #cpu.o
+OBJS += watchdog.o ntp.o btnsetup.o qos.o udhcpc.o ate.o
+OBJS += format.o
 ifeq ($(RTAC1200G),y)
 OBJS += mtd_sflash.o
 else
@@ -156,7 +167,7 @@ ifeq ($(RTCONFIG_DSL),y)
 OBJS += init-ralink-dsl.o 
 endif
 else ifeq ($(RTCONFIG_QCA),y)
-OBJS += init-qca.o wps-qca.o qca.o ate-qca.o $(if $(wildcard sysdeps/qca/ctl.c),ctl.o,prebuild/ctl.o)
+OBJS += init-qca.o wps-qca.o qca.o ate-qca.o $(if $(wildcard sysdeps/qca/ctl.c),ctl.obj,prebuild/ctl.obj)
 else
 OBJS += init-broadcom.o wps-broadcom.o broadcom.o ate-broadcom.o
 ifeq ($(BUILD_NAME), RT-AC68U)
@@ -169,13 +180,13 @@ endif
 
 # TODO, speedtest
 ifeq ($(RTCONFIG_SPEEDTEST),y)
-OBJS += speedtest.o
+OBJS += $(if $(wildcard speedtest.c),speedtest.o,prebuild/speedtest.o)
 endif
 
 OBJS += wanduck.o
 OBJS += tcpcheck.o
 
-ifeq ($(BUILD_READMEM),y)
+ifeq ($(RTCONFIG_SOC_IPQ8064),y)
 CFLAGS += -DBUILD_READMEM
 OBJS += readmem.o
 endif
@@ -220,6 +231,10 @@ endif
 ifeq ($(RTCONFIG_OPENVPN),y)
 CFLAGS += -DRTCONFIG_CROND
 OBJS += openvpn.o
+endif
+
+ifeq ($(RTCONFIG_IPSEC),y)
+OBJS += rc_ipsec.o
 endif
 
 ifeq ($(RTCONFIG_PARENTALCTRL),y)
@@ -321,7 +336,7 @@ endif
 
 
 ifeq ($(RTCONFIG_HTTPS),y)
-ifeq ($(RTCONFIG_PUSH_EMAIL),y)
+ifeq ($(or $(RTCONFIG_PUSH_EMAIL),$(RTCONFIG_NOTIFICATION_CENTER)),y)
 OBJS += pwdec.o
 endif
 endif
@@ -365,6 +380,10 @@ ifeq ($(RTCONFIG_PORT_BASED_VLAN),y)
 OBJS += vlan.o
 endif
 
+ifeq ($(RTCONFIG_DNSFILTER),y)
+OBJS += dnsfilter.o
+endif
+
 ifeq ($(RTCONFIG_BCMARM),y)
 ifeq ($(RTCONFIG_QTN),y)
 vpath %.c sysdeps sysdeps/broadcom sysdeps/qtn $(TOP)/libqcsapi_client/qcsapi_rpc_common/client $(TOP)/sysdeps/qtn $(SRCBASE)/shared
@@ -381,6 +400,10 @@ endif
 
 ifeq ($(RTCONFIG_TUNNEL),y)
 OBJS += natnl_api.o
+endif
+
+ifneq ($(RTCONFIG_RALINK)$(RTCONFIG_QCA)$(RTCONFIG_REALTEK),y)
+OBJS += erp_monitor.o
 endif
 
 all: rc
@@ -580,7 +603,7 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc get_phy_status
 	@cd $(INSTALLDIR)/sbin && ln -sf rc get_phy_speed
 	@cd $(INSTALLDIR)/sbin && ln -sf rc firmware_check
-ifeq ($(BUILD_READMEM),y)
+ifeq ($(RTCONFIG_SOC_IPQ8064),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc readmem
 endif
 ifeq ($(RTCONFIG_HTTPS),y)
@@ -624,6 +647,10 @@ endif
 ifeq ($(RTCONFIG_KEY_GUARD),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc keyguard
 endif
+ifneq ($(RTCONFIG_RALINK)$(RTCONFIG_QCA)$(RTCONFIG_REALTEK),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc erp_monitor
+endif
+
 clean:
 	rm -f rc *.o .*.depend
 
@@ -741,7 +768,7 @@ endif
 .%.depend: %.c
 	@$(CC) $(CFLAGS) -M $< > $@
 
-
+-include Makefile.hook
 
 pswatch: pswatch.c
 	$(CC) -o $@ $^

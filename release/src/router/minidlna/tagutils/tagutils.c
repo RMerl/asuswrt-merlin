@@ -21,6 +21,7 @@
 
 /* This file is derived from mt-daapd project */
 
+#include "config.h"
 #include <ctype.h>
 #include <errno.h>
 #include <id3tag.h>
@@ -32,11 +33,12 @@
 #include <time.h>
 #include <sys/time.h>
 #include <netinet/in.h>
+#ifdef HAVE_VORBISFILE
 #include <ogg/ogg.h>
 #include <vorbis/codec.h>
+#endif
 #include <FLAC/metadata.h>
 
-#include "config.h"
 #ifdef HAVE_ICONV
 #include <iconv.h>
 #endif
@@ -102,7 +104,9 @@ char *winamp_genre[] = {
  */
 #include "tagutils-mp3.h"
 #include "tagutils-aac.h"
+#ifdef HAVE_VORBISFILE
 #include "tagutils-ogg.h"
+#endif
 #include "tagutils-flc.h"
 #include "tagutils-asf.h"
 #include "tagutils-wav.h"
@@ -126,7 +130,9 @@ static taghandler taghandlers[] = {
 	{ "aac", _get_aactags, _get_aacfileinfo                                  },
 	{ "mp3", _get_mp3tags, _get_mp3fileinfo                                  },
 	{ "flc", _get_flctags, _get_flcfileinfo                                  },
+#ifdef HAVE_VORBISFILE
 	{ "ogg", 0,            _get_oggfileinfo                                  },
+#endif
 	{ "asf", 0,            _get_asffileinfo                                  },
 	{ "wav", _get_wavtags, _get_wavfileinfo                                  },
 	{ "pcm", 0,            _get_pcmfileinfo                                  },
@@ -139,7 +145,9 @@ static taghandler taghandlers[] = {
 #include "tagutils-misc.c"
 #include "tagutils-mp3.c"
 #include "tagutils-aac.c"
+#ifdef HAVE_VORBISFILE
 #include "tagutils-ogg.c"
+#endif
 #include "tagutils-flc.c"
 #include "tagutils-asf.c"
 #include "tagutils-wav.c"

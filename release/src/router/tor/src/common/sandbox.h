@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -39,12 +39,6 @@ typedef struct sandbox_cfg_elem sandbox_cfg_t;
  */
 #ifdef USE_LIBSECCOMP
 
-#ifndef __USE_GNU
-#define __USE_GNU
-#endif
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
 #include <sys/ucontext.h>
 #include <seccomp.h>
 #include <netdb.h>
@@ -149,7 +143,10 @@ sandbox_cfg_t * sandbox_cfg_new(void);
  */
 int sandbox_cfg_allow_open_filename(sandbox_cfg_t **cfg, char *file);
 
-/**DOCDOC*/
+int sandbox_cfg_allow_chmod_filename(sandbox_cfg_t **cfg, char *file);
+int sandbox_cfg_allow_chown_filename(sandbox_cfg_t **cfg, char *file);
+
+/* DOCDOC */
 int sandbox_cfg_allow_rename(sandbox_cfg_t **cfg, char *file1, char *file2);
 
 /**

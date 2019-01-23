@@ -58,8 +58,7 @@ function initial(){
 				<div id="subMenu"></div>
 			</td>	
 			<td valign="top">
-				<div id="tabMenu" style="*margin-top: -160px;"></div>
-				<br>
+				<div id="tabMenu" class="submenuBlock"></div>
 		<!--=====Beginning of Main Content=====-->
 				<div class="app_table" id="applist_table">
 					<table>

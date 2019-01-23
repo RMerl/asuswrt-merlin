@@ -1,16 +1,19 @@
 #ifndef NETTLE_TESTUTILS_H_INCLUDED
 #define NETTLE_TESTUTILS_H_INCLUDED
 
+/* config.h should usually be first in each .c file. This is an
+   exception, include it here to reduce clutter in the test cases. */
 #if HAVE_CONFIG_H
 # include "config.h"
 #endif
-
-#include "nettle-types.h"
 
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "nettle-types.h"
+#include "version.h"
 
 #if WITH_HOGWEED
 # include "rsa.h"

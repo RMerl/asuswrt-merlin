@@ -1,5 +1,5 @@
 /* dnssec.c is Copyright (c) 2012 Giovanni Bajo <rasky@develer.com>
-           and Copyright (c) 2012-2016 Simon Kelley
+           and Copyright (c) 2012-2017 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -358,7 +358,7 @@ static int verify(struct blockdata *key_data, unsigned int key_len, unsigned cha
    character. In theory, if all the characters in a name were /000 or
    '.' or NAME_ESCAPE then all would have to be escaped, so the 
    presentation format would be twice as long as the spec (1024). 
-   The buffers are all delcared as 2049 (allowing for the trailing zero) 
+   The buffers are all declared as 2049 (allowing for the trailing zero) 
    for this reason.
 */
 static int to_wire(char *name)
@@ -475,7 +475,7 @@ int setup_timestamp(void)
       if (difftime(timestamp_time, time(0)) <=  0)
 	{
 	  /* time already OK, update timestamp, and do key checking from the start. */
-	  if (utime(daemon->timestamp_file, NULL) == -1)
+	  if (utimes(daemon->timestamp_file, NULL) == -1)
 	    my_syslog(LOG_ERR, _("failed to update mtime on %s: %s"), daemon->timestamp_file, strerror(errno));
 	  daemon->back_to_the_future = 1;
 	  return 0;
@@ -489,12 +489,14 @@ int setup_timestamp(void)
       int fd = open(daemon->timestamp_file, O_WRONLY | O_CREAT | O_NONBLOCK | O_EXCL, 0666);
       if (fd != -1)
 	{
-	  struct utimbuf timbuf;
+	  struct timeval tv[2];
 
 	  close(fd);
 	  
-	  timestamp_time = timbuf.actime = timbuf.modtime = 1420070400; /* 1-1-2015 */
-	  if (utime(daemon->timestamp_file, &timbuf) == 0)
+	  timestamp_time = 1420070400; /* 1-1-2015 */
+	  tv[0].tv_sec = tv[1].tv_sec = timestamp_time;
+	  tv[0].tv_usec = tv[1].tv_usec = 0;
+	  if (utimes(daemon->timestamp_file, tv) == 0)
 	    goto check_and_exit;
 	}
     }
@@ -519,18 +521,19 @@ static int check_date_range(u32 date_start, u32 date_end)
     {
       if (daemon->back_to_the_future == 0 && difftime(timestamp_time, curtime) <= 0)
 	{
-	  if (utime(daemon->timestamp_file, NULL) != 0)
+	  if (utimes(daemon->timestamp_file, NULL) != 0)
 	    my_syslog(LOG_ERR, _("failed to update mtime on %s: %s"), daemon->timestamp_file, strerror(errno));
 	  
+	  my_syslog(LOG_INFO, _("system time considered valid, now checking DNSSEC signature timestamps."));
 	  daemon->back_to_the_future = 1;
-	  set_option_bool(OPT_DNSSEC_TIME);
+	  daemon->dnssec_no_time_check = 0;
 	  queue_event(EVENT_RELOAD); /* purge cache */
 	} 
 
       if (daemon->back_to_the_future == 0)
 	return 1;
     }
-  else if (option_bool(OPT_DNSSEC_TIME))
+  else if (daemon->dnssec_no_time_check)
     return 1;
   
   /* We must explicitly check against wanted values, because of SERIAL_UNDEF */
@@ -669,7 +672,7 @@ static void sort_rrset(struct dns_header *header, size_t plen, u16 *rr_desc, int
 
 static unsigned char **rrset = NULL, **sigs = NULL;
 
-/* Get pointers to RRset menbers and signature(s) for same.
+/* Get pointers to RRset members and signature(s) for same.
    Check signatures, and return keyname associated in keyname. */
 static int explore_rrset(struct dns_header *header, size_t plen, int class, int type, 
 			 char *name, char *keyname, int *sigcnt, int *rrcnt)
@@ -1466,7 +1469,7 @@ static int prove_non_existence_nsec(struct dns_header *header, size_t plen, unsi
 		  if (offset < p[1] && (p[offset+2] & mask) != 0)
 		    return 0;
 		  
-		  break; /* finshed checking */
+		  break; /* finished checking */
 		}
 	      
 	      rdlen -= p[1];
@@ -1624,7 +1627,7 @@ static int check_nsec3_coverage(struct dns_header *header, size_t plen, int dige
 			if (offset < p[1] && (p[offset+2] & mask) != 0)
 			  return 0;
 			
-			break; /* finshed checking */
+			break; /* finished checking */
 		      }
 		    
 		    rdlen -= p[1];
@@ -1909,7 +1912,7 @@ static int zone_status(char *name, int class, char *keyname, time_t now)
       if (!(crecp = cache_find_by_name(NULL, keyname, now, F_DS)))
 	return STAT_NEED_DS;
       
-       /* F_DNSSECOK misused in DS cache records to non-existance of NS record.
+       /* F_DNSSECOK misused in DS cache records to non-existence of NS record.
 	  F_NEG && !F_DNSSECOK implies that we've proved there's no DS record here,
 	  but that's because there's no NS record either, ie this isn't the start
 	  of a zone. We only prove that the DNS tree below a node is unsigned when
@@ -2127,7 +2130,7 @@ int dnssec_validate_reply(time_t now, struct dns_header *header, size_t plen, ch
 		   /* An attacker replay a wildcard answer with a different
 		      answer and overlay a genuine RR. To prove this
 		      hasn't happened, the answer must prove that
-		      the gennuine record doesn't exist. Check that here. 
+		      the genuine record doesn't exist. Check that here. 
 		      Note that we may not yet have validated the NSEC/NSEC3 RRsets. 
 		      That's not a problem since if the RRsets later fail
 		      we'll return BOGUS then. */
@@ -2227,7 +2230,7 @@ size_t dnssec_generate_query(struct dns_header *header, unsigned char *end, char
 
   p = (unsigned char *)(header+1);
 	
-  p = do_rfc1035_name(p, name);
+  p = do_rfc1035_name(p, name, NULL);
   *p++ = 0;
   PUTSHORT(type, p);
   PUTSHORT(class, p);

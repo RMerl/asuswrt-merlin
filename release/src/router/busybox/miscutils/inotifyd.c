@@ -47,8 +47,8 @@
 //usage:     "\n	o	Event queue overflowed"
 //usage:     "\n	x	File can't be watched anymore"
 //usage:     "\nIf watching a directory:"
-//usage:     "\n	m	Subfile is moved into dir"
-//usage:     "\n	y	Subfile is moved out of dir"
+//usage:     "\n	y	Subfile is moved into dir"
+//usage:     "\n	m	Subfile is moved out of dir"
 //usage:     "\n	n	Subfile is created"
 //usage:     "\n	d	Subfile is deleted"
 //usage:     "\n"
@@ -56,6 +56,7 @@
 //usage:     "\nWhen x event happens for all FILEs, inotifyd exits."
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 #include <sys/inotify.h>
 
 static const char mask_names[] ALIGN1 =
@@ -161,9 +162,10 @@ int inotifyd_main(int argc, char **argv)
 
 		// read out all pending events
 		// (NB: len must be int, not ssize_t or long!)
-		xioctl(pfd.fd, FIONREAD, &len);
 #define eventbuf bb_common_bufsiz1
-		ie = buf = (len <= sizeof(eventbuf)) ? eventbuf : xmalloc(len);
+		setup_common_bufsiz();
+		xioctl(pfd.fd, FIONREAD, &len);
+		ie = buf = (len <= COMMON_BUFSIZE) ? eventbuf : xmalloc(len);
 		len = full_read(pfd.fd, buf, len);
 		// process events. N.B. events may vary in length
 		while (len > 0) {

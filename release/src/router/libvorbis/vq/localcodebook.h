@@ -11,7 +11,7 @@
  ********************************************************************
 
  function: basic shared codebook operations
- last mod: $Id: localcodebook.h 16037 2009-05-26 21:10:58Z xiphmont $
+ last mod: $Id: localcodebook.h 16959 2010-03-10 16:03:11Z xiphmont $
 
  ********************************************************************/
 
@@ -52,49 +52,8 @@ typedef struct static_codebook{
   long     *quantlist;  /* map == 1: (int)(entries^(1/dim)) element column map
                            map == 2: list of dim*entries quantized entry vals
                         */
-
-  /* encode helpers ********************************************************/
-  struct encode_aux_nearestmatch *nearest_tree;
-  struct encode_aux_threshmatch  *thresh_tree;
-  struct encode_aux_pigeonhole  *pigeon_tree;
-
   int allocedp;
 } static_codebook;
-
-/* this structures an arbitrary trained book to quickly find the
-   nearest cell match */
-typedef struct encode_aux_nearestmatch{
-  /* pre-calculated partitioning tree */
-  long   *ptr0;
-  long   *ptr1;
-
-  long   *p;         /* decision points (each is an entry) */
-  long   *q;         /* decision points (each is an entry) */
-  long   aux;        /* number of tree entries */
-  long   alloc;       
-} encode_aux_nearestmatch;
-
-/* assumes a maptype of 1; encode side only, so that's OK */
-typedef struct encode_aux_threshmatch{
-  float *quantthresh;
-  long   *quantmap;
-  int     quantvals; 
-  int     threshvals; 
-} encode_aux_threshmatch;
-
-typedef struct encode_aux_pigeonhole{
-  float min;
-  float del;
-
-  int  mapentries;
-  int  quantvals;
-  long *pigeonmap;
-
-  long fittotal;
-  long *fitlist;
-  long *fitmap;
-  long *fitlength;
-} encode_aux_pigeonhole;
 
 typedef struct codebook{
   long dim;           /* codebook dimensions (elements per vector) */
@@ -113,6 +72,11 @@ typedef struct codebook{
   ogg_uint32_t *dec_firsttable;
   int           dec_firsttablen;
   int           dec_maxlength;
+
+  /* The current encoder uses only centered, integer-only lattice books. */
+  int           quantvals;
+  int           minval;
+  int           delta;
 
 } codebook;
 
@@ -140,9 +104,6 @@ extern int vorbis_staticbook_pack(const static_codebook *c,oggpack_buffer *b);
 extern int vorbis_staticbook_unpack(oggpack_buffer *b,static_codebook *c);
 
 extern int vorbis_book_encode(codebook *book, int a, oggpack_buffer *b);
-extern int vorbis_book_errorv(codebook *book, float *a);
-extern int vorbis_book_encodev(codebook *book, int best,float *a, 
-                               oggpack_buffer *b);
 
 extern long vorbis_book_decode(codebook *book, oggpack_buffer *b);
 extern long vorbis_book_decodevs_add(codebook *book, float *a, 

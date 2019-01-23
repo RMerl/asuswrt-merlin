@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2017 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -16,10 +16,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /*
@@ -42,14 +41,14 @@
 
 struct interval
 {
-  interval_t refresh;
-  interval_t horizon;
-  time_t future_trigger;
-  time_t last_action;
-  time_t last_test_true;
+    interval_t refresh;
+    interval_t horizon;
+    time_t future_trigger;
+    time_t last_action;
+    time_t last_test_true;
 };
 
-void interval_init (struct interval *top, int horizon, int refresh);
+void interval_init(struct interval *top, int horizon, int refresh);
 
 /*
  * IF
@@ -64,41 +63,41 @@ void interval_init (struct interval *top, int horizon, int refresh);
  */
 
 static inline bool
-interval_test (struct interval* top)
+interval_test(struct interval *top)
 {
-  bool trigger = false;
-  const time_t local_now = now;
+    bool trigger = false;
+    const time_t local_now = now;
 
-  if (top->future_trigger && local_now >= top->future_trigger)
+    if (top->future_trigger && local_now >= top->future_trigger)
     {
-      trigger = true;
-      top->future_trigger = 0;
+        trigger = true;
+        top->future_trigger = 0;
     }
 
-  if (top->last_action + top->horizon > local_now ||
-      top->last_test_true + top->refresh <= local_now ||
-      trigger)
+    if (top->last_action + top->horizon > local_now
+        || top->last_test_true + top->refresh <= local_now
+        || trigger)
     {
-      top->last_test_true = local_now;
+        top->last_test_true = local_now;
 #if INTERVAL_DEBUG
-      dmsg (D_INTERVAL, "INTERVAL interval_test true");
+        dmsg(D_INTERVAL, "INTERVAL interval_test true");
 #endif
-      return true;
+        return true;
     }
-  else
+    else
     {
-      return false;
+        return false;
     }
 }
 
 static inline void
-interval_schedule_wakeup (struct interval* top, interval_t *wakeup)
+interval_schedule_wakeup(struct interval *top, interval_t *wakeup)
 {
-  const time_t local_now = now;
-  interval_earliest_wakeup (wakeup, top->last_test_true + top->refresh, local_now);
-  interval_earliest_wakeup (wakeup, top->future_trigger, local_now);
+    const time_t local_now = now;
+    interval_earliest_wakeup(wakeup, top->last_test_true + top->refresh, local_now);
+    interval_earliest_wakeup(wakeup, top->future_trigger, local_now);
 #if INTERVAL_DEBUG
-  dmsg (D_INTERVAL, "INTERVAL interval_schedule wakeup=%d", (int)*wakeup);
+    dmsg(D_INTERVAL, "INTERVAL interval_schedule wakeup=%d", (int)*wakeup);
 #endif
 }
 
@@ -106,13 +105,14 @@ interval_schedule_wakeup (struct interval* top, interval_t *wakeup)
  * In wakeup seconds, interval_test will return true once.
  */
 static inline void
-interval_future_trigger (struct interval* top, interval_t wakeup) {
-  if (wakeup)
+interval_future_trigger(struct interval *top, interval_t wakeup)
+{
+    if (wakeup)
     {
 #if INTERVAL_DEBUG
-      dmsg (D_INTERVAL, "INTERVAL interval_future_trigger %d", (int)wakeup);
+        dmsg(D_INTERVAL, "INTERVAL interval_future_trigger %d", (int)wakeup);
 #endif
-      top->future_trigger = now + wakeup;
+        top->future_trigger = now + wakeup;
     }
 }
 
@@ -121,12 +121,12 @@ interval_future_trigger (struct interval* top, interval_t wakeup) {
  * horizon seconds.
  */
 static inline void
-interval_action (struct interval* top)
+interval_action(struct interval *top)
 {
 #if INTERVAL_DEBUG
-  dmsg (D_INTERVAL, "INTERVAL action");
+    dmsg(D_INTERVAL, "INTERVAL action");
 #endif
-  top->last_action = now;
+    top->last_action = now;
 }
 
 /*
@@ -135,54 +135,68 @@ interval_action (struct interval* top)
 
 struct event_timeout
 {
-  bool defined;
-  interval_t n;
-  time_t last; /* time of last event */
+    bool defined;
+    interval_t n;
+    time_t last; /* time of last event */
 };
 
 static inline bool
-event_timeout_defined (const struct event_timeout* et)
+event_timeout_defined(const struct event_timeout *et)
 {
-  return et->defined;
+    return et->defined;
 }
 
 static inline void
-event_timeout_clear (struct event_timeout* et)
+event_timeout_clear(struct event_timeout *et)
 {
-  et->defined = false;
-  et->n = 0;
-  et->last = 0;
+    et->defined = false;
+    et->n = 0;
+    et->last = 0;
 }
 
 static inline struct event_timeout
-event_timeout_clear_ret ()
+event_timeout_clear_ret()
 {
-  struct event_timeout ret;
-  event_timeout_clear (&ret);
-  return ret;
+    struct event_timeout ret;
+    event_timeout_clear(&ret);
+    return ret;
 }
 
 static inline void
-event_timeout_init (struct event_timeout* et, interval_t n, const time_t local_now)
+event_timeout_init(struct event_timeout *et, interval_t n, const time_t local_now)
 {
-  et->defined = true;
-  et->n = (n >= 0) ? n : 0;
-  et->last = local_now;
-}
-
-static inline void
-event_timeout_reset (struct event_timeout* et)
-{
-  if (et->defined)
-    et->last = now;
-}
-
-static inline void
-event_timeout_modify_wakeup (struct event_timeout* et, interval_t n)
-{
-  /* note that you might need to call reset_coarse_timers after this */
-  if (et->defined)
+    et->defined = true;
     et->n = (n >= 0) ? n : 0;
+    et->last = local_now;
+}
+
+static inline void
+event_timeout_reset(struct event_timeout *et)
+{
+    if (et->defined)
+    {
+        et->last = now;
+    }
+}
+
+static inline void
+event_timeout_modify_wakeup(struct event_timeout *et, interval_t n)
+{
+    /* note that you might need to call reset_coarse_timers after this */
+    if (et->defined)
+    {
+        et->n = (n >= 0) ? n : 0;
+    }
+}
+
+/*
+ * Will return the time left for a timeout, this function does not check
+ * if the timeout is actually valid
+ */
+static inline interval_t
+event_timeout_remaining(struct event_timeout *et)
+{
+    return (int) et->last + et->n - now;
 }
 
 /*
@@ -198,9 +212,9 @@ event_timeout_modify_wakeup (struct event_timeout* et, interval_t n)
 
 #define ETT_DEFAULT (-1)
 
-bool event_timeout_trigger (struct event_timeout *et,
-			    struct timeval *tv,
-			    const int et_const_retry);
+bool event_timeout_trigger(struct event_timeout *et,
+                           struct timeval *tv,
+                           const int et_const_retry);
 
 /*
  * Measure time intervals in microseconds
@@ -211,37 +225,37 @@ bool event_timeout_trigger (struct event_timeout *et,
 #define USEC_TIMER_MAX_USEC (USEC_TIMER_MAX * 1000000)
 
 struct usec_timer {
-  struct timeval start;
-  struct timeval end;
+    struct timeval start;
+    struct timeval end;
 };
 
 #ifdef HAVE_GETTIMEOFDAY
 
 static inline void
-usec_timer_start (struct usec_timer *obj)
+usec_timer_start(struct usec_timer *obj)
 {
-  CLEAR (*obj);
-  openvpn_gettimeofday (&obj->start, NULL);
+    CLEAR(*obj);
+    openvpn_gettimeofday(&obj->start, NULL);
 }
 
 static inline void
-usec_timer_end (struct usec_timer *obj)
+usec_timer_end(struct usec_timer *obj)
 {
-  openvpn_gettimeofday (&obj->end, NULL);
+    openvpn_gettimeofday(&obj->end, NULL);
 }
 
 #endif /* HAVE_GETTIMEOFDAY */
 
 static inline bool
-usec_timer_interval_defined (struct usec_timer *obj)
+usec_timer_interval_defined(struct usec_timer *obj)
 {
-  return obj->start.tv_sec && obj->end.tv_sec;
+    return obj->start.tv_sec && obj->end.tv_sec;
 }
 
 static inline int
-usec_timer_interval (struct usec_timer *obj)
+usec_timer_interval(struct usec_timer *obj)
 {
-  return tv_subtract (&obj->end, &obj->start, USEC_TIMER_MAX);
+    return tv_subtract(&obj->end, &obj->start, USEC_TIMER_MAX);
 }
 
 #endif /* INTERVAL_H */

@@ -556,7 +556,6 @@ sctp_remove_ifa_from_ifn(struct sctp_ifa *sctp_ifap)
 	}
 }
 
-
 struct sctp_ifa *
 sctp_add_addr_to_vrf(uint32_t vrf_id, void *ifn, uint32_t ifn_index,
 		     uint32_t ifn_type, const char *if_name, void *ifa,

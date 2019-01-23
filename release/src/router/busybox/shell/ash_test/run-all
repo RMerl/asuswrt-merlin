@@ -31,8 +31,9 @@ do_test()
 	    *.orig|*~) ;;
 	    #*) echo $x ; sh $x ;;
 	    *)
+	    echo -n "$1/$x: "
 	    sh "$x" >"$TOPDIR/$noslash-$x.fail" 2>&1 && \
-	    { echo "$1/$x: ok"; rm "$TOPDIR/$noslash-$x.fail"; } || echo "$1/$x: fail";
+	    { echo "ok"; rm "$TOPDIR/$noslash-$x.fail"; } || echo "fail";
 	    ;;
 	esac
     done
@@ -42,11 +43,12 @@ do_test()
 	test -x "$x" || continue
 	name="${x%%.tests}"
 	test -f "$name.right" || continue
+	echo -n "$1/$x: "
 	{
 	    "$THIS_SH" "./$x" >"$name.xx" 2>&1
 	    diff -u "$name.xx" "$name.right" >"$TOPDIR/$noslash-$x.fail" \
 	    && rm -f "$name.xx" "$TOPDIR/$noslash-$x.fail"
-	} && echo "$1/$x: ok" || echo "$1/$x: fail"
+	} && echo "ok" || echo "fail"
     done
     )
 }

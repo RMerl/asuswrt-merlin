@@ -23,15 +23,6 @@ Gmane archives conveniently include messages from both the current
 list, and the previous one. Messages also show up in the Gmane archives
 sooner than they do at `lists.gnu.org'.
 
-Bug Notices List
-----------------
-
-Additionally, there is the <wget-notify@addictivecode.org> mailing
-list. This is a non-discussion list that receives bug report
-notifications from the bug-tracker. To subscribe to this list, send an
-email to <wget-notify-join@addictivecode.org>, or visit
-`http://addictivecode.org/mailman/listinfo/wget-notify'.
-
 Obsolete Lists
 --------------
 

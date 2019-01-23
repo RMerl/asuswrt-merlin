@@ -1,0 +1,13 @@
+f() { echo $1; }
+f 1
+
+f() ( echo $1; )
+f 2
+
+f() ( echo $1 )
+f 3
+
+f() for i in 1 2 3; do
+	echo $i
+done
+f

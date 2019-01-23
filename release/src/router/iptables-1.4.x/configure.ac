@@ -98,10 +98,10 @@ regular_CPPFLAGS="${largefile_cppflags} -D_REENTRANT \
 	-DXTABLES_LIBDIR=\\\"\${xtlibdir}\\\" -DXTABLES_INTERNAL";
 kinclude_CPPFLAGS="";
 if [[ -n "$kbuilddir" ]]; then
-	kinclude_CPPFLAGS="$kinclude_CPPFLAGS -I$kbuilddir/include";
+	kinclude_CPPFLAGS="$kinclude_CPPFLAGS -I$kbuilddir/include/uapi -I$kbuilddir/include";
 fi;
 if [[ -n "$ksourcedir" ]]; then
-	kinclude_CPPFLAGS="$kinclude_CPPFLAGS -I$ksourcedir/include";
+	kinclude_CPPFLAGS="$kinclude_CPPFLAGS -I$ksourcedir/include/uapi -I$ksourcedir/include";
 fi;
 pkgdatadir='${datadir}/xtables';
 

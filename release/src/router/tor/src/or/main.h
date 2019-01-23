@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -25,7 +25,7 @@ int connection_in_array(connection_t *conn);
 void add_connection_to_closeable_list(connection_t *conn);
 int connection_is_on_closeable_list(connection_t *conn);
 
-smartlist_t *get_connection_array(void);
+MOCK_DECL(smartlist_t *, get_connection_array, (void));
 MOCK_DECL(uint64_t,get_bytes_read,(void));
 MOCK_DECL(uint64_t,get_bytes_written,(void));
 
@@ -45,10 +45,14 @@ int connection_is_writing(connection_t *conn);
 MOCK_DECL(void,connection_stop_writing,(connection_t *conn));
 MOCK_DECL(void,connection_start_writing,(connection_t *conn));
 
+void tell_event_loop_to_finish(void);
+
 void connection_stop_reading_from_linked_conn(connection_t *conn);
 
+MOCK_DECL(int, connection_count_moribund, (void));
+
 void directory_all_unreachable(time_t now);
-void directory_info_has_arrived(time_t now, int from_cache);
+void directory_info_has_arrived(time_t now, int from_cache, int suppress_logs);
 
 void ip_address_changed(int at_interface);
 void dns_servers_relaunch_checks(void);
@@ -75,9 +79,19 @@ int tor_main(int argc, char *argv[]);
 int do_main_loop(void);
 int tor_init(int argc, char **argv);
 
+extern time_t time_of_process_start;
+extern long stats_n_seconds_working;
+extern int quiet_level;
+extern int global_read_bucket;
+extern int global_write_bucket;
+extern int global_relayed_read_bucket;
+extern int global_relayed_write_bucket;
+
 #ifdef MAIN_PRIVATE
 STATIC void init_connection_lists(void);
 STATIC void close_closeable_connections(void);
+STATIC void initialize_periodic_events(void);
+STATIC void teardown_periodic_events(void);
 #endif
 
 #endif

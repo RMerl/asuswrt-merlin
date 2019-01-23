@@ -53,7 +53,7 @@
 #define SMIN	60
 #define	SHOUR	(60 * 60)
 #define	SDAY	(60 * 60 * 24)
-#define Y2K		1447240271UL
+#define BOOT_DATESTAMP		1483232400UL
 
 #define INTERVAL		30
 #if defined(RTCONFIG_WANPORT2)
@@ -285,7 +285,7 @@ static void save(int quick)
 	comp(speed_fn, speed, sizeof(speed[0]) * speed_count);
 
 /*
-	if ((now = time(0)) < Y2K) {
+	if ((now = time(0)) < BOOT_DATESTAMP) {
 		_dprintf("%s: time not set\n", __FUNCTION__);
 		return;
 	}
@@ -396,7 +396,7 @@ static int decomp(const char *fname, void *buffer, int size, int max)
 	fclose(fp);
 	if ((size * max) != file_size) {
 #ifdef DEBUG
-		_dprintf("%s: filesize mismatch! (%ld/%ld)\n", (size * max), file_size);
+		_dprintf("%s: filesize mismatch! (%ld/%ld)\n", __func__, (size * max), file_size);
 #endif
 		goto exit_decomp;
 	}
@@ -508,15 +508,7 @@ static void load(int new)
 
 	strlcpy(save_path, nvram_safe_get("rstats_path"), sizeof(save_path) - 32);
 	if (((n = strlen(save_path)) > 0) && (save_path[n - 1] == '/')) {
-#ifdef RTCONFIG_RGMII_BRCM5301X
-		ether_atoe(nvram_safe_get("et1macaddr"), mac);
-#else
-		ether_atoe(nvram_safe_get("et0macaddr"), mac);
-#endif
-#ifdef RTCONFIG_GMAC3
-        	if(nvram_match("gmac3_enable", "1"))
-			ether_atoe(nvram_safe_get("et2macaddr"), mac);
-#endif
+		ether_atoe(get_lan_hwaddr(), mac);
 		sprintf(save_path + n, "tomato_rstats_%02x%02x%02x%02x%02x%02x.gz",
 			mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 	}
@@ -920,7 +912,7 @@ loopagain:
 				c = tmp->counter[i];
 				sc = sp->last[i];
 				if (c < sc) {
-					diff = (0xFFFFFFFF - sc + 1) + c;
+					diff = (0xFFFFFFFFUL - sc + 1) + c;
 					if (diff > MAX_ROLLOVER) diff = 0;
 				}
 				else {
@@ -940,7 +932,7 @@ loopagain:
 
 		// todo: split, delay
 
-		if (now > Y2K && strcmp(tmp->desc, "INTERNET")==0) {
+		if (now > BOOT_DATESTAMP && strcmp(tmp->desc, "INTERNET")==0) {
 			/* Skip this if the time&date is not set yet */
 			/* Skip non-INTERNET interface only 	     */
 			tms = localtime(&now);

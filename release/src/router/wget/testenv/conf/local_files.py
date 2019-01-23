@@ -1,3 +1,6 @@
+from os import utime
+from time import strptime
+from calendar import timegm
 from conf import hook
 
 """ Pre-Test Hook: LocalFiles
@@ -16,3 +19,8 @@ class LocalFiles:
         for f in self.local_files:
             with open(f.name, 'w') as fp:
                 fp.write(f.content)
+            if f.timestamp is not None:
+                tstamp = timegm(strptime(f.timestamp, '%Y-%m-%d %H:%M:%S'))
+                atime = tstamp
+                mtime = tstamp
+                utime(f.name, (atime, mtime))

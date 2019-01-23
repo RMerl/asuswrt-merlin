@@ -7,7 +7,6 @@ from misc.wget_file import WgetFile
     This test ensures that Wget handles Content-Disposition correctly when
     coupled with Authentication
 """
-TEST_NAME = "Authentication with Content Disposition"
 ############# File Definitions ###############################################
 File1 = "Need a cookie?"
 
@@ -45,7 +44,6 @@ post_test = {
 }
 
 err = HTTPTest (
-                name=TEST_NAME,
                 pre_hook=pre_test,
                 test_params=test_options,
                 post_hook=post_test

@@ -11,7 +11,7 @@
  ********************************************************************
 
  function: 11kHz settings
- last mod: $Id: setup_11.h 16227 2009-07-08 06:58:46Z xiphmont $
+ last mod: $Id: setup_11.h 16894 2010-02-12 20:32:12Z xiphmont $
 
  ********************************************************************/
 
@@ -21,8 +21,11 @@ static const int blocksize_11[2]={
   512,512
 };
 
-static const int _floor_mapping_11[2]={
-  6,6,
+static const int _floor_mapping_11a[]={
+  6,6
+};
+static const int *_floor_mapping_11[]={
+  _floor_mapping_11a
 };
 
 static const double rate_mapping_11[3]={
@@ -82,8 +85,8 @@ static const ve_setup_data_template ve_setup_11_stereo={
 
   _floor_books,
   _floor,
+  1,
   _floor_mapping_11,
-  NULL,
 
   _mapres_template_8_stereo
 };
@@ -133,8 +136,8 @@ static const ve_setup_data_template ve_setup_11_uncoupled={
 
   _floor_books,
   _floor,
+  1,
   _floor_mapping_11,
-  NULL,
 
   _mapres_template_8_uncoupled
 };

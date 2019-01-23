@@ -89,7 +89,7 @@ void hm_traffic_limiter_save()
 	eval("traffic_limiter", "-w");
 }
 
-#if 1
+#if 0
 static void hm_networkmap_rescan()
 {
 	nvram_set("client_info_tmp", "");
@@ -113,9 +113,12 @@ int hour_monitor_function_check()
 	if(nvram_get_int("bwdpi_db_enable"))
 		value |= TRAFFIC_ANALYZER;
 
+#if 0
+	//disable for preventing wake up sleep device
 	// networkmap
-	if((pidof("networkmap") != -1) && (nvram_get_int("nmap_hm_scan")))
+	if(pidof("networkmap") != -1)
 		value |= NETWORKMAP;
+#endif
 	
 	if(debug)
 	{
@@ -137,11 +140,6 @@ static void hour_monitor_call_fucntion()
 
 	if((value & TRAFFIC_ANALYZER) != 0)
 		hm_traffic_analyzer_save();
-
-	if(nvram_get_int("nmap_hm_scan")) {
-		if((value & NETWORKMAP) != 0)
-			hm_networkmap_rescan();
-	}
 }
 
 static void hour_monitor_save_database()
@@ -167,8 +165,8 @@ static void catch_sig(int sig)
 	{
 		if (hm_alarm_status == 1)
 			hour_monitor_call_fucntion();
-		else if (hm_alarm_status == 0)
-			logmessage("hour monitor", "ntp sync fail, will retry after 120 sec");
+//		else if (hm_alarm_status == 0)
+//			logmessage("hour monitor", "ntp sync fail, will retry after 120 sec");
 	}
 	else if (sig == SIGTERM)
 	{

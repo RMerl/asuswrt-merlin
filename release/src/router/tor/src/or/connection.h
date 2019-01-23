@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -34,8 +34,8 @@ void connection_about_to_close_connection(connection_t *conn);
 void connection_close_immediate(connection_t *conn);
 void connection_mark_for_close_(connection_t *conn,
                                 int line, const char *file);
-void connection_mark_for_close_internal_(connection_t *conn,
-                                         int line, const char *file);
+MOCK_DECL(void, connection_mark_for_close_internal_,
+          (connection_t *conn, int line, const char *file));
 
 #define connection_mark_for_close(c) \
   connection_mark_for_close_((c), __LINE__, SHORT_FILE__)
@@ -52,13 +52,11 @@ void connection_mark_for_close_internal_(connection_t *conn,
  * For all other cases, use connection_mark_and_flush() instead, which
  * checks for or_connection_t properly, instead.  See below.
  */
-#define connection_mark_and_flush_internal_(c,line,file)                  \
-  do {                                                                    \
-    connection_t *tmp_conn_ = (c);                                        \
-    connection_mark_for_close_internal_(tmp_conn_, (line), (file));       \
-    tmp_conn_->hold_open_until_flushed = 1;                               \
-    IF_HAS_BUFFEREVENT(tmp_conn_,                                         \
-                       connection_start_writing(tmp_conn_));              \
+#define connection_mark_and_flush_internal_(c,line,file)                \
+  do {                                                                  \
+    connection_t *tmp_conn__ = (c);                                     \
+    connection_mark_for_close_internal_(tmp_conn__, (line), (file));    \
+    tmp_conn__->hold_open_until_flushed = 1;                            \
   } while (0)
 
 #define connection_mark_and_flush_internal(c)            \
@@ -146,12 +144,12 @@ static void connection_write_to_buf(const char *string, size_t len,
 /* DOCDOC connection_write_to_buf_zlib */
 static void connection_write_to_buf_zlib(const char *string, size_t len,
                                          dir_connection_t *conn, int done);
-static INLINE void
+static inline void
 connection_write_to_buf(const char *string, size_t len, connection_t *conn)
 {
   connection_write_to_buf_impl_(string, len, conn, 0);
 }
-static INLINE void
+static inline void
 connection_write_to_buf_zlib(const char *string, size_t len,
                              dir_connection_t *conn, int done)
 {
@@ -163,37 +161,72 @@ static size_t connection_get_inbuf_len(connection_t *conn);
 /* DOCDOC connection_get_outbuf_len */
 static size_t connection_get_outbuf_len(connection_t *conn);
 
-static INLINE size_t
+static inline size_t
 connection_get_inbuf_len(connection_t *conn)
 {
-  IF_HAS_BUFFEREVENT(conn, {
-    return evbuffer_get_length(bufferevent_get_input(conn->bufev));
-  }) ELSE_IF_NO_BUFFEREVENT {
-    return conn->inbuf ? buf_datalen(conn->inbuf) : 0;
-  }
+  return conn->inbuf ? buf_datalen(conn->inbuf) : 0;
 }
 
-static INLINE size_t
+static inline size_t
 connection_get_outbuf_len(connection_t *conn)
 {
-  IF_HAS_BUFFEREVENT(conn, {
-    return evbuffer_get_length(bufferevent_get_output(conn->bufev));
-  }) ELSE_IF_NO_BUFFEREVENT {
     return conn->outbuf ? buf_datalen(conn->outbuf) : 0;
-  }
 }
 
 connection_t *connection_get_by_global_id(uint64_t id);
 
 connection_t *connection_get_by_type(int type);
-connection_t *connection_get_by_type_addr_port_purpose(int type,
-                                                   const tor_addr_t *addr,
-                                                   uint16_t port, int purpose);
+MOCK_DECL(connection_t *,connection_get_by_type_addr_port_purpose,(int type,
+                                                  const tor_addr_t *addr,
+                                                  uint16_t port, int purpose));
 connection_t *connection_get_by_type_state(int type, int state);
 connection_t *connection_get_by_type_state_rendquery(int type, int state,
                                                      const char *rendquery);
-dir_connection_t *connection_dir_get_by_purpose_and_resource(
-                                           int state, const char *resource);
+smartlist_t *connection_dir_list_by_purpose_and_resource(
+                                                  int purpose,
+                                                  const char *resource);
+smartlist_t *connection_dir_list_by_purpose_resource_and_state(
+                                                  int purpose,
+                                                  const char *resource,
+                                                  int state);
+
+#define CONN_LEN_AND_FREE_TEMPLATE(sl) \
+  STMT_BEGIN                           \
+    int len = smartlist_len(sl);       \
+    smartlist_free(sl);                \
+    return len;                        \
+  STMT_END
+
+/** Return a count of directory connections that are fetching the item
+ * described by <b>purpose</b>/<b>resource</b>. */
+static inline int
+connection_dir_count_by_purpose_and_resource(
+                                             int purpose,
+                                             const char *resource)
+{
+  smartlist_t *conns = connection_dir_list_by_purpose_and_resource(
+                                                                   purpose,
+                                                                   resource);
+  CONN_LEN_AND_FREE_TEMPLATE(conns);
+}
+
+/** Return a count of directory connections that are fetching the item
+ * described by <b>purpose</b>/<b>resource</b>/<b>state</b>. */
+static inline int
+connection_dir_count_by_purpose_resource_and_state(
+                                                   int purpose,
+                                                   const char *resource,
+                                                   int state)
+{
+  smartlist_t *conns =
+    connection_dir_list_by_purpose_resource_and_state(
+                                                      purpose,
+                                                      resource,
+                                                      state);
+  CONN_LEN_AND_FREE_TEMPLATE(conns);
+}
+
+#undef CONN_LEN_AND_FREE_TEMPLATE
 
 int any_other_active_or_conns(const or_connection_t *this_conn);
 
@@ -210,19 +243,25 @@ int connection_or_nonopen_was_started_here(or_connection_t *conn);
 void connection_dump_buffer_mem_stats(int severity);
 void remove_file_if_very_old(const char *fname, time_t now);
 
-#ifdef USE_BUFFEREVENTS
-int connection_type_uses_bufferevent(connection_t *conn);
-void connection_configure_bufferevent_callbacks(connection_t *conn);
-void connection_handle_read_cb(struct bufferevent *bufev, void *arg);
-void connection_handle_write_cb(struct bufferevent *bufev, void *arg);
-void connection_handle_event_cb(struct bufferevent *bufev, short event,
-                                 void *arg);
-void connection_get_rate_limit_totals(uint64_t *read_out,
-                                      uint64_t *written_out);
-void connection_enable_rate_limiting(connection_t *conn);
-#else
-#define connection_type_uses_bufferevent(c) (0)
-#endif
+void clock_skew_warning(const connection_t *conn, long apparent_skew,
+                        int trusted, log_domain_mask_t domain,
+                        const char *received, const char *source);
+
+/** Check if a connection is on the way out so the OOS handler doesn't try
+ * to kill more than it needs. */
+static inline int
+connection_is_moribund(connection_t *conn)
+{
+  if (conn != NULL &&
+      (conn->conn_array_index < 0 ||
+       conn->marked_for_close)) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+void connection_check_oos(int n_socks, int failed);
 
 #ifdef CONNECTION_PRIVATE
 STATIC void connection_free_(connection_t *conn);
@@ -235,6 +274,16 @@ void connection_buckets_note_empty_ts(uint32_t *timestamp_var,
                                       int tokens_before,
                                       size_t tokens_removed,
                                       const struct timeval *tvnow);
+MOCK_DECL(STATIC int,connection_connect_sockaddr,
+                                            (connection_t *conn,
+                                             const struct sockaddr *sa,
+                                             socklen_t sa_len,
+                                             const struct sockaddr *bindaddr,
+                                             socklen_t bindaddr_len,
+                                             int *socket_error));
+MOCK_DECL(STATIC void, kill_conn_list_for_oos, (smartlist_t *conns));
+MOCK_DECL(STATIC smartlist_t *, pick_oos_victims, (int n));
+
 #endif
 
 #endif

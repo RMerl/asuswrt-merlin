@@ -366,7 +366,7 @@ typedef struct {
 //- Sungmin add
 #ifdef HAVE_LIBSMBCLIENT
 #include <libsmbclient.h>
-#define uint32 unsigned int
+#define uint32 uint32_t
 
 #define NMB_PORT 137
 #define SMB_PORT 445

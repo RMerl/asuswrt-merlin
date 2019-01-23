@@ -22,6 +22,83 @@
 #define MULTICAST_BIT  0x0001
 #define UNIQUE_OUI_BIT 0x0002
 
+static int setAllSpecificColorLedOn(enum led_color color)
+{
+	int i, model = get_model();
+	enum led_color rtk_switch_led_color = LED_COLOR_MAX;
+	enum led_id *all_led[LED_COLOR_MAX], no_led = LED_ID_MAX, *p;
+	enum led_fan_mode_id v;
+
+	if (color < 0 || color >= LED_COLOR_MAX) {
+		puts("0");
+		return EINVAL;
+	}
+
+	for (i = 0; i < LED_COLOR_MAX; ++i)
+		all_led[i] = &no_led;
+
+	switch (model) {
+#if defined(BRTAC828)
+	case MODEL_BRTAC828:
+		{
+			static enum led_id white_led[] = {
+				LED_POWER, LED_WAN, LED_WAN2,
+				LED_USB, LED_USB3, LED_2G, LED_5G,
+				LED_FAILOVER, LED_SATA,
+				LED_ID_MAX
+			};
+			static enum led_id red_led[] = {
+				LED_POWER_RED, LED_WAN_RED,
+				LED_WAN2_RED,
+				LED_ID_MAX
+			};
+			all_led[LED_COLOR_WHITE] = white_led;
+			all_led[LED_COLOR_RED] = red_led;
+			rtk_switch_led_color = LED_COLOR_WHITE;
+		}
+		break;
+#endif
+#if defined(RTAC82U)
+	case MODEL_RTAC82U:
+		{
+			static enum led_id blue_led[] = {
+				LED_POWER, LED_WAN, 
+				LED_2G, LED_5G,
+				LED_LAN1,LED_LAN2,
+				LED_LAN3,LED_LAN4,
+				LED_ID_MAX
+			};
+			static enum led_id red_led[] = {
+				LED_WAN_RED,
+				LED_ID_MAX
+			};
+			all_led[LED_COLOR_BLUE] = blue_led;
+			all_led[LED_COLOR_RED] = red_led;
+		}
+		break;
+#endif
+	}
+
+	for (i = 0; i < LED_COLOR_MAX; ++i) {
+		p = all_led[i];
+		v = (i == color)? LED_ON : LED_OFF;
+		while (*p >= 0 && *p < LED_ID_MAX) {
+			led_control(*p++, v);
+		}
+	}
+
+	if (rtk_switch_led_color >= 0 && rtk_switch_led_color < LED_COLOR_MAX) {
+		if (color == rtk_switch_led_color) {
+			eval("rtkswitch", "100", "3");	/* Turn on GROUP0 LEDs */
+		} else {
+			eval("rtkswitch", "100", "2");	/* Turn off GROUP0 LEDs */
+		}
+	}
+
+
+	puts("1");
+	return 0;
+}
 int isValidMacAddr(const char* mac)
 {
 	int sec_byte;
@@ -326,9 +403,42 @@ int Ej_device(const char *dev_no)
 	return 1;
 }
 
+#if defined(RTCONFIG_EJUSB_BTN)
+#define MAX_NR_EJBTN	2
+void get_usb_port_eject_button(unsigned int port)
+{
+	int i, ejbtn, found = 0;
+	char *v, nv[sizeof("btn_ejusb1_gpioXXX")];
+	char nv2[sizeof("btn_ejusb_btn1XXX")];
+
+	if (!port || port > MAX_NR_EJBTN) {
+		puts("0");
+		return;
+	}
+
+	for (i = 1; i <= MAX_NR_EJBTN; ++i) {
+		snprintf(nv, sizeof(nv), "btn_ejusb%d_gpio", i);
+		v = nvram_get(nv);
+		if (!v)
+			continue;
+		ejbtn = (atoi(v) & GPIO_EJUSB_MASK) >> GPIO_EJUSB_SHIFT;
+		if (ejbtn && ejbtn != (1 << (port - 1)))
+			continue;
+
+		found = 1;
+		snprintf(nv2, sizeof(nv2), "btn_ejusb_btn%d", i);
+		puts(nvram_safe_get(nv2));
+		break;
+	}
+
+	if (!found)
+		puts("0");
+}
+#endif
+
 int asus_ate_command(const char *command, const char *value, const char *value2)
 {
-	_dprintf("===[ATE %s %s]===\n", command, value);
+	//_dprintf("===[ATE %s %s]===\n", command, value);
 #ifdef RTCONFIG_QTN
 	if(!nvram_match("qtn_ready", "1")){
 		_dprintf("ATE Error: wireless 5G not ready\n");
@@ -365,6 +475,15 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		puts("ATE_ERROR"); //Need to implement for EA-N66U
 		return EINVAL;
 	}
+	else if (!strcmp(command, "Set_AllWhiteLedOn")) {
+		return setAllSpecificColorLedOn(LED_COLOR_WHITE);
+	}
+	else if (!strcmp(command, "Set_AllBlueLedOn")) {
+		return setAllSpecificColorLedOn(LED_COLOR_BLUE);
+	}
+	else if (!strcmp(command, "Set_AllRedLedOn")) {
+		return setAllSpecificColorLedOn(LED_COLOR_RED);
+	}
 #ifdef RTCONFIG_BCMARM
 	else if (!strcmp(command, "Set_WanLedMode1")) {
 		return setWanLedMode1();
@@ -382,7 +501,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			return EINVAL;
 #endif
 		//Andy Chiu, 2016/02/04.
-		char *p = (char *) value;
+		const char *p = (char *) value;
 		char UpperMac[20] = {0};
 		int i;
 		for(i = 0; p[i]; ++i)
@@ -408,7 +527,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			return EINVAL;
 #endif
 		//Andy Chiu, 2016/02/04.
-		char *p = (char *) value;
+		const char *p = (char *) value;
 		char UpperMac[20] = {0};
 		int i;
 		for(i = 0; p[i]; ++i)
@@ -811,12 +930,38 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		puts(nvram_safe_get("btn_ez"));
 		return 0;
 	}
+#if defined(RTCONFIG_EJUSB_BTN)
+	else if (!strcmp(command, "Get_EjectUsbButton1Status")) {
+		puts(nvram_safe_get("btn_ejusb_btn1"));
+		return 0;
+	}
+	else if (!strcmp(command, "Get_EjectUsbButton2Status")) {
+		puts(nvram_safe_get("btn_ejusb_btn2"));
+		return 0;
+	}
+	else if (!strcmp(command, "Get_UsbPort1EjectButtonStatus")) {
+		get_usb_port_eject_button(1);
+		return 0;
+	}
+	else if (!strcmp(command, "Get_UsbPort2EjectButtonStatus")) {
+		get_usb_port_eject_button(2);
+		return 0;
+	}
+#endif
 #ifdef RTCONFIG_WIFI_TOG_BTN
 	else if (!strcmp(command, "Get_WirelessButtonStatus")) {
 		puts(nvram_safe_get("btn_wifi_toggle"));
 		return 0;
 	}
 #endif
+	else if (!strcmp(command, "Get_SSID_2G")) {
+		puts(nvram_safe_get("wl0_ssid"));
+		return 0;
+	}
+	else if (!strcmp(command, "Get_SSID_5G")) {
+		puts(nvram_safe_get("wl1_ssid"));
+		return 0;
+	}
 #ifdef RTCONFIG_SWMODE_SWITCH
 #if defined(PLAC66U)
 	else if (!strcmp(command, "Get_SwitchStatus")) {
@@ -871,7 +1016,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #if defined(RTCONFIG_M2_SSD)
-	/* Because M.2 SSD is assigned to port 3 and BRT-AC828M2 doesn't have SD card.
+	/* Because M.2 SSD is assigned to port 3 and BRT-AC828 doesn't have SD card.
 	 * It's safe to call functions for SD card here.
 	 */
 	else if (!strcmp(command, "Get_M2Ssd_Infor")) {
@@ -1100,12 +1245,6 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #endif
-#ifdef RTCONFIG_TURBO
-	else if (!strcmp(command, "Get_Turbo")) {
-		puts(nvram_safe_get("btn_turbo"));
-		return 0;
-	}
-#endif
 #ifdef RTCONFIG_LED_BTN
 	else if (!strcmp(command, "Get_LedButtonStatus")) {
 		puts(nvram_safe_get("btn_led"));
@@ -1220,89 +1359,38 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	}
 #endif
 #ifdef RTCONFIG_QCA
-/*
+#if defined(RTCONFIG_WIFI_QCA9557_QCA9882)
+#if 0
 	else if (!strcmp(command, "Set_ART2")) {
-		// temp solution
-		killall_tk("rstats");
-		stop_wanduck();
-		stop_udhcpc(-1);
-		killall_tk("networkmap");
-		killall_tk("hostapd");
-		ifconfig("ath0", 0, NULL, NULL);
-		ifconfig("ath1", 0, NULL, NULL);
-		eval("brctl", "delif", "br0", "ath0");
-		eval("brctl", "delif", "br0", "ath1");
-		eval("wlanconfig", "ath0", "destroy");
-		eval("wlanconfig", "ath1", "destroy");
-		ifconfig("wifi0", 0, NULL, NULL);
-		ifconfig("wifi1", 0, NULL, NULL);
-		modprobe_r("umac");
-		modprobe_r("ath_dfs");
-		modprobe_r("ath_dev");
-		modprobe_r("ath_rate_atheros");
-		modprobe_r("ath_spectral");
-		modprobe_r("ath_hal");
-		modprobe_r("adf");
-		modprobe_r("asf");
-		modprobe("art");
-		system("nart.out -port 2390 -console &");
-		system("nart.out -port 2391 -console &");
+		Set_ART2();
 		return 0;
 	}
-*/
+#endif
 	else if (!strncmp(command, "Get_EEPROM_", 11)) {
-		unsigned char buffer[2560];
-		unsigned short len;
-		int lret;
-		char *pt;
-		len=sizeof(buffer);
-		pt = (char*) command + 11;
-		if (!strcmp(pt, "2G"))
-			lret=getEEPROM(&buffer[0], &len, pt);
-		else if (!strcmp(pt, "5G"))
-			lret=getEEPROM(&buffer[0], &len, pt);
-		else if (!strcmp(pt, "CAL_2G"))
-			lret=getEEPROM(&buffer[0], &len, pt);
-		else if (!strcmp(pt, "CAL_5G"))
-			lret=getEEPROM(&buffer[0], &len, pt);
-		else {
-			puts("ATE_UNSUPPORT");
-			return EINVAL;
-		}
-		if ( !lret )
-			hexdump(&buffer[0], len);
+		Get_EEPROM_X(command);
 		return 0;
 	}
 	else if (!strcmp(command, "Get_CalCompare")) {
-		unsigned char buffer[2560], buffer2[2560];
-		unsigned short len, len2;
-		int lret=0, cret=0;
-		len=sizeof(buffer);
-		len2=sizeof(buffer2);
-		lret+=getEEPROM(&buffer[0], &len, "2G");
-		lret+=getEEPROM(&buffer2[0], &len2, "CAL_2G");
-		if (lret)
-			return EINVAL;
-		if ((len!=len2) || (memcmp(&buffer[0],&buffer2[0],len)!=0)) {
-			puts("2G EEPROM different!");
-			cret++;
-		}
-		len=sizeof(buffer);
-		len2=sizeof(buffer2);
-		lret+=getEEPROM(&buffer[0], &len, "5G");
-		lret+=getEEPROM(&buffer2[0], &len2, "CAL_5G");
-		if (lret)
-			return EINVAL;
-		if ((len!=len2) || (memcmp(&buffer[0],&buffer2[0],len)!=0)) {
-			puts("5G EEPROM different!");
-			cret++;
-		}
-		if (!cret)
-			puts("1");
-		else
-			puts("0");
+		Get_CalCompare();
 		return 0;
 	}
+#elif defined(RTCONFIG_WIFI_QCA9990_QCA9990) || defined(RTCONFIG_WIFI_QCA9994_QCA9994) || defined(RTCONFIG_SOC_IPQ40XX)
+	else if (!strcmp(command, "Set_Qcmbr")) {
+		Set_Qcmbr(value);
+		return 0;
+	}
+#endif
+#if defined(RTCONFIG_WIFI_QCA9990_QCA9990) || defined(RTCONFIG_WIFI_QCA9994_QCA9994) || defined(RTCONFIG_SOC_IPQ40XX)
+	/* ATE Get_BData_2G / ATE Get_BData_5G
+	 * To prevent whole ATE command strings exposed in rc binary,
+	 * compare these commands in 3 steps instead.
+	 */
+	else if (!strncmp(command, "Get_", 4) && !strncmp(command + 4, "BData", 5) &&
+		 *(command + 9) == '_') {
+		Get_BData_X(command);
+		return 0;
+	}
+#endif
 #ifdef RTCONFIG_ATEUSB3_FORCE
 	else if (!strcmp(command, "Set_ForceUSB3")) {
 		if (setForceU3(value) < 0)
@@ -1592,3 +1680,16 @@ int start_envrams(void){
 }
 
 #endif
+
+int ate_run_arpstrom(void) {
+
+	int ate_arpstorm = 0;
+	ate_arpstorm = nvram_get_int("ate_arpstorm");
+	while(ate_arpstorm) {
+		ate_arpstorm--;
+		doSystem("arpstorm &");
+		sleep(1);
+	}
+
+	return 1;
+}

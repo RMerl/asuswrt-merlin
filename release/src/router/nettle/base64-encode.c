@@ -41,7 +41,7 @@
 #define ENCODE(alphabet,x) ((alphabet)[0x3F & (x)])
 
 static void
-encode_raw(const char *alphabet,
+encode_raw(const uint8_t *alphabet,
 	   uint8_t *dst, size_t length, const uint8_t *src)
 {
   const uint8_t *in = src + length;

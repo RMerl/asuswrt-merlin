@@ -12,6 +12,8 @@
 <link rel="stylesheet" type="text/css" href="tmmenu.css">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
@@ -20,7 +22,7 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/merlin.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script type='text/javascript'>
 monthly_history = [];
 <% backup_nvram("cstats_enable,lan_ipaddr,lan_netmask"); %>;
@@ -30,12 +32,48 @@ var filterip = [];
 var filteripe = [];
 var scale = 2;
 
+var pie_obj_ul, pie_obj_dl;
+var labels_dl_array, labels_ul_array, values_dl_array, values_ul_array;
+
+var color = ["#B3645B","#B98F53","#C6B36A","#849E75","#2B6692","#7C637A","#4C8FC0", "#6C604F",
+             "#683222","#64B35B","#833236","#662B92","#163346","#644726","#384767", "#386040"];
+
+var pieOptions = {
+	segmentShowStroke : false,
+	segmentStrokeColor : "#000",
+	animationEasing : "easeOutQuart",
+	animationSteps : 100,
+	animateScale : true,
+	responsive: false,
+	legend : {
+		display : true,
+		position : "top",
+		labels : {
+			fontColor: "#CCC",
+			boxWidth: 12,
+		},
+	},
+	tooltips: {
+		callbacks: {
+			title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
+			label: function (tooltipItem, data) {
+				var value = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index];
+				var total = eval(data.datasets[tooltipItem.datasetIndex].data.join("+"));
+				if (total == 3.14159)
+					return "N/A";
+				else
+					return comma(value.toFixed(2)) + " " + snames[scale] + ' ( ' + parseFloat(value * 100 / total).toFixed(2) + '% )';
+			},
+		}
+	},
+
+}
 
 function redraw() {
 	var h;
 	var grid;
 	var rows;
-	var i, b, d;
+	var i, b;
 	var fskip;
 	var filtered = 0;
 
@@ -44,6 +82,12 @@ function redraw() {
 	var getYMD = function(n){
 		return [(((n >> 16) & 0xFF) + 1900), ((n >>> 8) & 0xFF), (n & 0xFF)];
 	}
+
+	values_ul_array = [];
+	values_dl_array = [];
+	labels_dl_array = [];
+	labels_ul_array = [];
+	var valuesObj = new Object();
 
 	rows = 0;
 
@@ -117,7 +161,7 @@ function redraw() {
 				}
 			}
 
-			var h = b[1];
+			h = b[1];
 			var clientObj;
 			var clientName;
 
@@ -127,24 +171,99 @@ function redraw() {
 				if (clientObj) {
 					clientName = (clientObj.nickName == "") ? clientObj.hostname : clientObj.nickName;
 					h = "<b>" + clientName.shorter(24) + '</b> <small>(' + b[1] + ')</small>';
+				} else {
+					clientName = b[1];	// fallback for chart labels
 				}
 			}
 
 			var ymd = getYMD(b[0]);
-			d = [ymText(ymd[0], ymd[1]), h, rescale(b[2]), rescale(b[3]), rescale(b[2]+b[3])];
+
+			if (b[1] != fixIP(ntoa(aton(nvram.lan_ipaddr) & aton(nvram.lan_netmask)))) {
+				if (!valuesObj.hasOwnProperty(clientName)){
+					valuesObj[clientName] = [0,0];
+				}
+				valuesObj[clientName][0] += b[2];
+				valuesObj[clientName][1] += b[3];
+			}
 
 			grid += addrow(((rows & 1) ? 'odd' : 'even'), ymText(ymd[0], ymd[1]), style_open + h + style_close, rescale(b[2]), rescale(b[3]), rescale(b[2]+b[3]), b[1]);
 			++rows;
 		}
 	}
 
-	if(filtered > 0)
+	if (filtered > 0)
 		grid +='<tr><td style="color:#FFCC00;" colspan="5">'+ filtered +' entries filtered out.</td></tr>';
 
-	if(rows == 0)
+	if (rows == 0)
 		grid +='<tr><td style="color:#FFCC00;" colspan="5"><#IPConnection_VSList_Norule#></td></tr>';
 
 	E('bwm-monthly-grid').innerHTML = grid + '</table>';
+
+	var max = 15;
+
+	/* Convert object into a (sortable) array */
+	var tmpArray = [];
+
+        for (var property in valuesObj) {
+                if (valuesObj.hasOwnProperty(property)) {
+			tmpArray.push([property, valuesObj[property][0], valuesObj[property][1], valuesObj[property][2]]);
+		}
+	}
+
+	/* Sort by download */
+	tmpArray.sort( function (a,b) {
+		if (a[1] > b[1]) return -1;
+		if (a[1] < b[1]) return 1;
+		return 0;
+	});
+
+	for (var i = 0; i < tmpArray.length; i++) {
+		if (i < max) {
+			labels_dl_array.push(tmpArray[i][0]);
+			values_dl_array.push(tmpArray[i][1] / Math.pow(1024, scale));
+		} else if (i == max) {
+			values_dl_array[max] = tmpArray[i][1];
+			labels_dl_array[max] = "Others";
+		} else {
+			values_dl_array[max] += tmpArray[i][1];
+		}
+	}
+
+	if (tmpArray.length > max) {
+		document.getElementById("trunc_dl").style.display="";
+		values_dl_array[max] = values_dl_array[max] / Math.pow(1024, scale);
+	} else {
+		document.getElementById("trunc_dl").style.display="none";
+	}
+
+
+	/* Sort by upload */
+	tmpArray.sort( function (a,b) {
+		if (a[2] > b[2]) return -1;
+		if (a[2] < b[2]) return 1;
+		return 0;
+	});
+
+	for (var i = 0; i < tmpArray.length; i++) {
+		if (i < max) {
+			labels_ul_array.push(tmpArray[i][0]);
+			values_ul_array.push(tmpArray[i][2] / Math.pow(1024, scale));
+		} else if (i == max) {
+			values_ul_array[max] = tmpArray[i][2];
+			labels_ul_array[max] = "Others";
+		} else {
+			values_ul_array[max] += tmpArray[i][2];
+		}
+	}
+
+	if (tmpArray.length > max) {
+		document.getElementById("trunc_ul").style.display="";
+		values_ul_array[max] = values_ul_array[max] / Math.pow(1024, scale);
+	} else {
+		document.getElementById("trunc_ul").style.display="none";
+	}
+
+	draw_chart();
 }
 
 
@@ -166,7 +285,7 @@ function _validate_iplist(o, event) {
 		update_filter();
 		return true;
 	} else {
-		return validate_iplist(o, event);
+		return validator.ipList(o, event);
 	}
 }
 
@@ -399,8 +518,53 @@ function updateClientList(e){
 				redraw();
 			}
 
-			setTimeout("updateClientList();", 3000);
 		}
+	});
+}
+
+function draw_chart(){
+	if (pie_obj_dl != undefined) pie_obj_dl.destroy();
+	if (pie_obj_ul != undefined) pie_obj_ul.destroy();
+	var ctx_dl = document.getElementById("pie_chart_dl").getContext("2d");
+	var ctx_ul = document.getElementById("pie_chart_ul").getContext("2d");
+
+	if (labels_dl_array.length == 0) {
+		values_dl_array = [3.14159];
+		labels_dl_array = ["No Clients"];
+	}
+	if (labels_ul_array.length == 0) {
+		values_ul_array = [3.14159];
+		labels_ul_array = ["No Clients"];
+	}
+
+	var pieData_dl = {labels: labels_dl_array,
+		datasets: [
+			{data: values_dl_array,
+			backgroundColor: color,
+			hoverBackgroundColor: color,
+			borderColor: "#444",
+			borderWidth: "1"
+		}]
+	};
+	var pieData_ul = {labels: labels_ul_array,
+		datasets: [
+			{data: values_ul_array,
+			backgroundColor: color,
+			hoverBackgroundColor: color,
+			borderColor: "#444",
+			borderWidth: "1"
+		}]
+	};
+
+	pie_obj_dl = new Chart(ctx_dl,{
+		type: 'pie',
+		data: pieData_dl,
+		options: pieOptions
+	});
+	pie_obj_ul = new Chart(ctx_ul,{
+		type: 'pie',
+		data: pieData_ul,
+		options: pieOptions
 	});
 }
 
@@ -436,60 +600,56 @@ function updateClientList(e){
 	 	<div id="subMenu"></div>
 	</td>
 
-    	<td valign="top">
+	<td valign="top">
 		<div id="tabMenu" class="submenuBlock"></div>
 <!--===================================Beginning of Main Content===========================================-->
-      	<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
-	 	<tr>
-         		<td align="left"  valign="top">
+	<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
+		<tr>
+			<td align="left"  valign="top">
 				<table width="100%" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">
 				<tbody>
-				<!--===================================Beginning of QoS Content===========================================-->
-	      		<tr>
-	      			<td bgcolor="#4D595D" valign="top">
-	      				<table width="740px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3">
-						<tr><td><table width="100%" >
-        			<tr>
-
-						<td  class="formfonttitle" align="left">
+				<tr>
+					<td bgcolor="#4D595D" valign="top">
+						<table width="740px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3">
+							<tr><td><table width="100%" >
+								<tr>
+									<td  class="formfonttitle" align="left">
 										<div style="margin-top:5px;"><#Menu_TrafficManager#> - Traffic Monitor per device</div>
 									</td>
-          				<td>
-     							<div align="right">
-			    					<select id="page_select" class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
-											<optgroup label="Global">
-												<option value="1"><#menu4_2_1#></option>
-												<option value="2"><#menu4_2_2#></option>
-												<option value="3"><#menu4_2_3#></option>
-												<option value="4">Monthly</option>
-											</optgroup>
-										</select>
-
-									</div>
+									<td>
+										<div align="right">
+											<select id="page_select" class="input_option" style="width:120px" onchange="switchPage(this.options[this.selectedIndex].value)">
+												<optgroup label="Global">
+													<option value="1"><#menu4_2_1#></option>
+													<option value="2"><#menu4_2_2#></option>
+													<option value="3"><#menu4_2_3#></option>
+													<option value="4">Monthly</option>
+												</optgroup>
+											</select>
+										</div>
+									</td>
+								</tr>
+							</table></td></tr>
+							<tr>
+								<td>
+								<div class="formfontdesc">
+									<p>Click on a host to monitor that host's current activity.
+								</div>
 								</td>
-        			</tr>
-					</table></td></tr>
+							</tr>
 
-					<tr>
-						<td>
-							<div class="formfontdesc">
-								<p>Click on a host to monitor that host's current activity.
-							</div>
-						</td>
-					</tr>
-
-        			<tr>
-          				<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
-        			</tr>
-					<tr>
-						<td bgcolor="#4D595D">
-							<table width="730"  border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-								<thead>
+							<tr>
+								<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
+							</tr>
+							<tr>
+								<td bgcolor="#4D595D">
+									<table width="730"  border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+									<thead>
 									<tr>
 										<td colspan="2">Display Options</td>
 									</tr>
-								</thead>
-								<tbody>
+									</thead>
+									<tbody>
 									<tr class='even'>
 										<th width="40%"><#Date#></th>
 										<td>
@@ -531,7 +691,7 @@ function updateClientList(e){
 											<input type="radio" name="_f_show_options" class="input" value="1" onclick="update_visibility();"><#checkbox_Yes#>
 											<input type="radio" name="_f_show_options" class="input" checked value="0" onclick="update_visibility();"><#checkbox_No#>
 										</td>
-				 					</tr>
+									</tr>
 									<tr id="adv0">
 										<th>List of IPs to display (comma-separated):</th>
 										<td>
@@ -546,38 +706,56 @@ function updateClientList(e){
 									</tr>
 									<tr id="adv2">
 										<th>Display hostnames</th>
-						        		<td>
+										<td>
 											<input type="radio" name="_f_show_hostnames" class="input" value="1" checked onclick="update_display('hostnames',1);"><#checkbox_Yes#>
 											<input type="radio" name="_f_show_hostnames" class="input" value="0" onclick="update_display('hostnames',0);"><#checkbox_No#>
-							   			</td>
+										</td>
 									</tr>
 									<tr id="adv3">
 										<th>Display IPs with no traffic</th>
-						        		<td>
+										<td>
 											<input type="radio" name="_f_show_zero" class="input" value="1" onclick="update_display('zero',1);"><#checkbox_Yes#>
 											<input type="radio" name="_f_show_zero" class="input" value="0" checked onclick="update_display('zero',0);"><#checkbox_No#>
-							   			</td>
+										</td>
 									</tr>
 									<tr id="adv4">
 										<th>Show subnet totals</th>
-						        		<td>
+										<td>
 											<input type="radio" name="_f_show_subnet" class="input" value="1" onclick="update_display('subnet',1);"><#checkbox_Yes#>
 											<input type="radio" name="_f_show_subnet" class="input" value="0" checked onclick="update_display('subnet',0);"><#checkbox_No#>
-							   			</td>
+										</td>
 									</tr>
-								</tbody>
-							</table>
-						</td>
-					</tr>
-					<tr>
-						<td>
-							<div id='bwm-monthly-grid' style='float:left'></div>
-						</td>
-					</tr>
+									</tbody>
+									</table>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<table width="730"  border="0" align="left" cellpadding="4" cellspacing="0" class="FormTable">
+									<thead>
+									<tr>
+										<td colspan="2">Charts</td>
+									</tr>
+									</thead>
+									<tbody>
+									<tr><th>Download</th><th>Upload</th></tr>
+                                                                        <tr>
+                                                                                <td><div id="trunc_dl" style="color:#FFCC00;display:none;">(Chart truncated to 15 items)</div><canvas id="pie_chart_dl" height="300"></canvas></td>
+										<td><div id="trunc_ul" style="color:#FFCC00;display:none;">(Chart truncated to 15 items)</div><canvas id="pie_chart_ul" height="300"></canvas></td>
+									</tr>
+									</tbody>
+									</table>
+								</td>
+							</tr>
+							<tr>
+								<td bgcolor="#4D595D">
+									<div id='bwm-monthly-grid' style='float:left'></div>
+								</td>
+							</tr>
 
-     					</table>
-     				</td>
-     			</tr>
+						</table>
+					</td>
+				</tr>
 				</tbody>
 				</table>
 			</td>
@@ -585,7 +763,7 @@ function updateClientList(e){
 		</table>
 		</div>
 	</td>
-    	<td width="10" align="center" valign="top">&nbsp;</td>
+	<td width="10" align="center" valign="top">&nbsp;</td>
 </tr>
 </table>
 <div id="footer"></div>

@@ -18,10 +18,10 @@ The "ilog(x)" function returns the position number (1 through n) of the highest 
 \varname{[x]}.  Values of \varname{[x]} less than zero are defined to return zero.
 
 \begin{programlisting}
-  1) [return_value] = 0;
+  1) [return\_value] = 0;
   2) if ( [x] is greater than zero ) {
 
-       3) increment [return_value];
+       3) increment [return\_value];
        4) logical shift [x] one bit to the right, padding the MSb with zero
        5) repeat at step 2)
 
@@ -45,9 +45,9 @@ Examples:
 
 
 
-\subsubsection{float32_unpack} \label{vorbis:spec:float32:unpack}
+\subsubsection{float32\_unpack} \label{vorbis:spec:float32:unpack}
 
-"float32_unpack(x)" is intended to translate the packed binary
+"float32\_unpack(x)" is intended to translate the packed binary
 representation of a Vorbis codebook float value into the
 representation used by the decoder for floating point numbers.  For
 purposes of this example, we will unpack a Vorbis float32 into a
@@ -63,40 +63,40 @@ host-native floating point number.
 
 
 
-\subsubsection{lookup1_values} \label{vorbis:spec:lookup1:values}
+\subsubsection{lookup1\_values} \label{vorbis:spec:lookup1:values}
 
-"lookup1_values(codebook_entries,codebook_dimensions)" is used to
+"lookup1\_values(codebook\_entries,codebook\_dimensions)" is used to
 compute the correct length of the value index for a codebook VQ lookup
 table of lookup type 1.  The values on this list are permuted to
 construct the VQ vector lookup table of size
-\varname{[codebook_entries]}.
+\varname{[codebook\_entries]}.
 
 The return value for this function is defined to be 'the greatest
-integer value for which \varname{[return_value]} to the power of
-\varname{[codebook_dimensions]} is less than or equal to
-\varname{[codebook_entries]}'.
+integer value for which \varname{[return\_value]} to the power of
+\varname{[codebook\_dimensions]} is less than or equal to
+\varname{[codebook\_entries]}'.
 
 
 
-\subsubsection{low_neighbor} \label{vorbis:spec:low:neighbor}
+\subsubsection{low\_neighbor} \label{vorbis:spec:low:neighbor}
 
-"low_neighbor(v,x)" finds the position \varname{n} in vector \varname{[v]} of
+"low\_neighbor(v,x)" finds the position \varname{n} in vector \varname{[v]} of
 the greatest value scalar element for which \varname{n} is less than
 \varname{[x]} and vector \varname{[v]} element \varname{n} is less
 than vector \varname{[v]} element \varname{[x]}.
 
-\subsubsection{high_neighbor} \label{vorbis:spec:high:neighbor}
+\subsubsection{high\_neighbor} \label{vorbis:spec:high:neighbor}
 
-"high_neighbor(v,x)" finds the position \varname{n} in vector [v] of
+"high\_neighbor(v,x)" finds the position \varname{n} in vector [v] of
 the lowest value scalar element for which \varname{n} is less than
 \varname{[x]} and vector \varname{[v]} element \varname{n} is greater
 than vector \varname{[v]} element \varname{[x]}.
 
 
 
-\subsubsection{render_point} \label{vorbis:spec:render:point}
+\subsubsection{render\_point} \label{vorbis:spec:render:point}
 
-"render_point(x0,y0,x1,y1,X)" is used to find the Y value at point X
+"render\_point(x0,y0,x1,y1,X)" is used to find the Y value at point X
 along the line specified by x0, x1, y0 and y1.  This function uses an
 integer algorithm to solve for the point directly without calculating
 intervening values along the line.
@@ -122,10 +122,10 @@ intervening values along the line.
 
 
 
-\subsubsection{render_line} \label{vorbis:spec:render:line}
+\subsubsection{render\_line} \label{vorbis:spec:render:line}
 
 Floor decode type one uses the integer line drawing algorithm of
-"render_line(x0, y0, x1, y1, v)" to construct an integer floor
+"render\_line(x0, y0, x1, y1, v)" to construct an integer floor
 curve for contiguous piecewise line segments. Note that it has not
 been relevant elsewhere, but here we must define integer division as
 rounding division of both positive and negative numbers toward zero.

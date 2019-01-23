@@ -89,6 +89,9 @@ struct nf_conn_help {
 #ifdef	HNDCTF
 #define CTF_FLAGS_CACHED	(1 << 31)	/* Indicates cached connection */
 #define CTF_FLAGS_EXCLUDED	(1 << 30)
+#define CTF_FLAGS_DNAT_CACHED	(1 << 29)
+#define CTF_FLAGS_SNAT_CACHED	(1 << 28)
+#define CTF_FLAGS_ROUTE_CACHED	(1 << 27)
 #define CTF_FLAGS_REPLY_CACHED	(1 << 1)
 #define CTF_FLAGS_ORG_CACHED	(1 << 0)
 #endif

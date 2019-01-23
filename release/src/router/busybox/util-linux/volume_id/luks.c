@@ -18,6 +18,17 @@
  *	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+//kbuild:lib-$(CONFIG_FEATURE_VOLUMEID_LUKS) += luks.o
+
+//config:
+//config:config FEATURE_VOLUMEID_LUKS
+//config:	bool "luks filesystem"
+//config:	default y
+//config:	depends on VOLUMEID
+//config:	help
+//config:	  TODO
+//config:
+
 #include "volume_id_internal.h"
 
 #define LUKS_MAGIC_L             6
@@ -29,7 +40,7 @@
 #define LUKS_SALTSIZE           32
 #define LUKS_NUMKEYS             8
 
-static const uint8_t LUKS_MAGIC[] = { 'L','U','K','S', 0xba, 0xbe };
+static const uint8_t LUKS_MAGIC[] ALIGN1 = { 'L','U','K','S', 0xba, 0xbe };
 
 struct luks_phdr {
 	uint8_t		magic[LUKS_MAGIC_L];

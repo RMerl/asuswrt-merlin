@@ -50,7 +50,6 @@ written by
 #include "common.h"
 #include "core.h"
 #include "queue.h"
-//#include "natnl.h"
 #include <pjmedia/natnl_stream.h>
 
 unsigned recvThreadId = 0;

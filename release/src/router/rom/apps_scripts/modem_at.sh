@@ -8,7 +8,21 @@ act_node1="usb_modem_act_int"
 act_node2="usb_modem_act_bulk"
 modem_vid=`nvram get usb_modem_act_vid`
 
-at_ret="/tmp/at_ret"
+atcmd=`nvram get modem_atcmd`
+
+stop_lock=`nvram get stop_atlock`
+if [ -n "$stop_lock" ] && [ "$stop_lock" -eq "1" ]; then
+	at_lock=""
+else
+	at_lock="flock -x /tmp/at_cmd_lock"
+fi
+
+
+if [ "$modem_type" == "" -o "$modem_type" == "ecm" -o "$modem_type" == "rndis" -o "$modem_type" == "asix" -o "$modem_type" == "ncm" ]; then
+	exit 0
+fi
+
+#at_ret="/tmp/at_ret"
 
 if [ -n "$3" -a "$3" == "bulk" ]; then
 	act_node=$act_node2
@@ -31,20 +45,27 @@ if [ "$modem_act_node" == "" ]; then
 		exit 1
 	fi
 fi
-#echo "modem_act_node=$act_node"
 
 if [ -n "$2" ]; then
 	waited_sec=$2
 else
-	waited_sec=1
+	waited_sec=3
 fi
 
 if [ -z "$1" ]; then
-	echo "Didn't input the AT command yet."
-	exit 2
+	ATCMD=$1
+else
+	ATCMD=AT$1
 fi
-chat -t $waited_sec -e '' "AT$1" OK >> /dev/$modem_act_node < /dev/$modem_act_node 2>$at_ret
-ret=$?
-cat $at_ret
+
+if [ -n "$atcmd" ] && [ "$atcmd" -eq "1" ]; then
+	open_tty "$ATCMD"
+	ret=$?
+else
+	#$at_lock chat -t $waited_sec -e '' "$ATCMD" OK >> /dev/$modem_act_node < /dev/$modem_act_node 2>$at_ret
+	$at_lock chat -t $waited_sec -e '' "$ATCMD" OK >> /dev/$modem_act_node < /dev/$modem_act_node
+	ret=$?
+	#cat $at_ret
+fi
 exit $ret
 

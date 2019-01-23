@@ -1,18 +1,17 @@
 #!/bin/sh
 
 CURRENTPATH=`pwd`
-OPENSSL_PATH="${CURRENTPATH}/../openssl/platforms/"
-OPENSSL_LIB_PATH="${CURRENTPATH}/../release/ios/lib/"
-OPENSSL_INC_PATH="${CURRENTPATH}/../openssl-1.0.1p/include/"
+OPENSSL_PATH="${CURRENTPATH}/../openssl/libs/ios-armv7"
+OPENSSL_LIB_PATH="${OPENSSL_PATH}/lib/"
+OPENSSL_INC_PATH="${OPENSSL_PATH}/include/"
 
-echo "${OPENSSL_PATH}"
 SDK_VER="iPhoneOS.sdk"
 DEVELOPER=`xcode-select -print-path`
 SDK_PATH="${DEVELOPER}/Platforms/iPhoneOS.platform/Developer/SDKs/${SDK_VER}"
 export DEVPATH=${DEVELOPER}/Platforms/iPhoneOS.platform/Developer
 export CC=${DEVELOPER}/usr/bin/gcc
-export CFLAGS="-O2 -fembed-bitcode -Wno-unused-label -I${OPENSSL_INC_PATH} -DPJ_CONFIG_IPHONE=1 -isysroot ${SDK_PATH}"
-export LDFLAGS="${OPENSSL_LIB_PATH}/libssl-armv7.a ${OPENSSL_LIB_PATH}/libcrypto-armv7.a" 
+export CFLAGS="-fembed-bitcode -fstack-protector -Wno-unused-label -I${OPENSSL_INC_PATH} -DPJ_CONFIG_IPHONE=1 -isysroot ${SDK_PATH}"
+export LDFLAGS="${OPENSSL_LIB_PATH}/libssl.a ${OPENSSL_LIB_PATH}/libcrypto.a" 
 export ARCH="-arch armv7"
 export CROSS_TYPE=armv7-apple-darwin9
 ./configure-iphone CC=${CC} ARCH=${ARCH}

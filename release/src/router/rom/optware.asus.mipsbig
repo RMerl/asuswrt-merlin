@@ -13,28 +13,28 @@ URL:
 
 
 Package: asuslighttpd
-Version: 3.1.0.83
-Depends: pcre, zlib, uclibc-opt, openssl, spawn-fcgi, bzip2
+Version: 3.1.0.97
+Depends: pcre, zlib, uclibc-opt, spawn-fcgi, bzip2
 OptionalUtility: 1.0.0.2
 Section: net
 Architecture: mipsbig
 Maintainer: ASUS
-Size: 164011
-Filename: asuslighttpd_3.1.0.83_mipsbig.ipk
+Size: 318342
+Filename: asuslighttpd_3.1.0.97_mipsbig.ipk
 Source: http://nw-dlcdnet.asus.com/asusware/mipsbig/stable
 Description: 
 URL: 
 
 
 Package: downloadmaster
-Version: 3.1.0.90
-Depends: uclibc-opt, openssl, zlib, libevent, ncurses, libxml2, pcre, spawn-fcgi, readline, asuslighttpd, wxbase
+Version: 3.1.0.101
+Depends: uclibc-opt, zlib, libevent, ncurses, libxml2, pcre, spawn-fcgi, readline, asuslighttpd, wxbase
 OptionalUtility: 1.0.0.2+
 Section: net
 Architecture: mipsbig
 Maintainer: ASUS
-Size: 3277862
-Filename: downloadmaster_3.1.0.90_mipsbig.ipk
+Size: 3308701
+Filename: downloadmaster_3.1.0.101_mipsbig.ipk
 Source: http://nw-dlcdnet.asus.com/asusware/mipsbig/stable
 Description: Download tools
 URL: http://www.asusnetwork.net:8081/downloadmaster/index.asp
@@ -188,6 +188,17 @@ Source: http://curl.haxx.se/download/curl-7.24.0.tar.gz
 Description: Curl is a command line tool for transferring files with URL syntax, supporting FTP, FTPS, HTTP, HTTPS, GOPHER, TELNET, DICT, FILE and LDAP. Curl supports HTTPS certificates, HTTP POST, HTTP PUT, FTP uploading, kerberos, HTTP form based upload, proxies, cookies, user+password authentication, file transfer resume, http proxy tunneling and a busload of other useful tricks.
 
 
+Package: asuslibcurl
+Version: 7.24.0-1
+Depends: zlib
+Section: libs
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 201179
+Filename: asuslibcurl_7.24.0-1_mipsbig.ipk
+Source: http://curl.haxx.se/download/curl-7.24.0.tar.gz
+Description: Curl is a command line tool for transferring files with URL syntax, supporting FTP, FTPS, HTTP, HTTPS, GOPHER, TELNET, DICT, FILE and LDAP. Curl supports HTTPS certificates, HTTP POST, HTTP PUT, FTP uploading, kerberos, HTTP form based upload, proxies, cookies, user+password authentication, file transfer resume, http proxy tunneling and a busload of other useful tricks.
+
 Package: libevent
 Version: 2.0.20-1
 Section: libs
@@ -325,6 +336,17 @@ Filename: openssl_0.9.8v-2_mipsbig.ipk
 Source: http://www.openssl.org/source/openssl-0.9.7m.tar.gz
 Description: Openssl provides the ssl implementation in libraries libcrypto and libssl, and is needed by many other applications and libraries.
 
+
+
+Package: asusopenssl
+Version: 1.0.2j.v001
+Section: libs
+Architecture: mipsbig
+Maintainer: NSLU2 Linux <nslu2-linux@yahoogroups.com>
+Size: 1164205
+Filename: asusopenssl_1.0.2j.v001_mipsbig.ipk
+Source: http://www.openssl.org/source/openssl-0.9.7m.tar.gz
+Description: Openssl provides the ssl implementation in libraries libcrypto and libssl, and is needed by many other applications and libraries.
 
 Package: pcre
 Version: 8.31-1

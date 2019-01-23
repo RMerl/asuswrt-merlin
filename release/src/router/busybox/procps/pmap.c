@@ -20,7 +20,7 @@
 //usage:#define pmap_trivial_usage
 //usage:       "[-xq] PID"
 //usage:#define pmap_full_usage "\n\n"
-//usage:       "Display detailed process memory usage"
+//usage:       "Display process memory usage"
 //usage:     "\n"
 //usage:     "\n	-x	Show details"
 //usage:     "\n	-q	Quiet"
@@ -66,7 +66,7 @@ static int procps_get_maps(pid_t pid, unsigned opt)
 	int ret;
 	char buf[256];
 
-	read_cmdline(buf, sizeof(buf), pid, "no such process");
+	read_cmdline(buf, sizeof(buf), pid, NULL);
 	printf("%u: %s\n", (int)pid, buf);
 
 	if (!(opt & OPT_q) && (opt & OPT_x))

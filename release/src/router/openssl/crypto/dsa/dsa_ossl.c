@@ -224,7 +224,9 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
 {
     BN_CTX *ctx;
     BIGNUM k, kq, *K, *kinv = NULL, *r = NULL;
+    BIGNUM l, m;
     int ret = 0;
+    int q_bits;
 
     if (!dsa->p || !dsa->q || !dsa->g) {
         DSAerr(DSA_F_DSA_SIGN_SETUP, DSA_R_MISSING_PARAMETERS);
@@ -233,6 +235,8 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
 
     BN_init(&k);
     BN_init(&kq);
+    BN_init(&l);
+    BN_init(&m);
 
     if (ctx_in == NULL) {
         if ((ctx = BN_CTX_new()) == NULL)
@@ -243,14 +247,23 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
     if ((r = BN_new()) == NULL)
         goto err;
 
+    /* Preallocate space */
+    q_bits = BN_num_bits(dsa->q);
+    if (!BN_set_bit(&k, q_bits)
+        || !BN_set_bit(&l, q_bits)
+        || !BN_set_bit(&m, q_bits))
+        goto err;
+
     /* Get random k */
     do
         if (!BN_rand_range(&k, dsa->q))
             goto err;
-    while (BN_is_zero(&k)) ;
+    while (BN_is_zero(&k));
+
     if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0) {
         BN_set_flags(&k, BN_FLG_CONSTTIME);
     }
+
 
     if (dsa->flags & DSA_FLAG_CACHE_MONT_P) {
         if (!BN_MONT_CTX_set_locked(&dsa->method_mont_p,
@@ -261,27 +274,29 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
     /* Compute r = (g^k mod p) mod q */
 
     if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0) {
-        if (!BN_copy(&kq, &k))
-            goto err;
-
         /*
          * We do not want timing information to leak the length of k, so we
-         * compute g^k using an equivalent exponent of fixed length. (This
-         * is a kludge that we need because the BN_mod_exp_mont() does not
-         * let us specify the desired timing behaviour.)
+         * compute G^k using an equivalent scalar of fixed bit-length.
+         *
+         * We unconditionally perform both of these additions to prevent a
+         * small timing information leakage.  We then choose the sum that is
+         * one bit longer than the modulus.
+         *
+         * TODO: revisit the BN_copy aiming for a memory access agnostic
+         * conditional copy.
          */
-
-        if (!BN_add(&kq, &kq, dsa->q))
+        if (!BN_add(&l, &k, dsa->q)
+            || !BN_add(&m, &l, dsa->q)
+            || !BN_copy(&kq, BN_num_bits(&l) > q_bits ? &l : &m))
             goto err;
-        if (BN_num_bits(&kq) <= BN_num_bits(dsa->q)) {
-            if (!BN_add(&kq, &kq, dsa->q))
-                goto err;
-        }
+
+        BN_set_flags(&kq, BN_FLG_CONSTTIME);
 
         K = &kq;
     } else {
         K = &k;
     }
+
     DSA_BN_MOD_EXP(goto err, dsa, r, dsa->g, K, dsa->p, ctx,
                    dsa->method_mont_p);
     if (!BN_mod(r, r, dsa->q, ctx))
@@ -309,7 +324,9 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
         BN_CTX_free(ctx);
     BN_clear_free(&k);
     BN_clear_free(&kq);
-    return (ret);
+    BN_clear_free(&l);
+    BN_clear_free(&m);
+    return ret;
 }
 
 static int dsa_do_verify(const unsigned char *dgst, int dgst_len,

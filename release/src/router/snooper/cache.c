@@ -70,27 +70,30 @@ static struct {
 	int count;
 } members;
 
+static struct {
+	int expire_support:1;
+	int expire_active:1;
+} ports;
+
 struct group_entry {
 	STAILQ_ENTRY(group_entry) link;
 	LIST_ENTRY(group_entry) hash;
 	LIST_HEAD(, member_entry) members[PORT_MAX + 1];
+	unsigned long ptime[PORT_MAX + 1];
 	unsigned long time;
 	int portmap;
+	struct timer_entry timer;
 	unsigned char ea[ETHER_ADDR_LEN];
 };
 static struct {
 	STAILQ_HEAD(, group_entry) pool;
 	LIST_HEAD(, group_entry) hash[HASH_SIZE];
-	struct timer_entry timer;
 	int count;
 #ifdef GROUP_POOL_STATIC
 	struct group_entry entries[GROUP_POOL_SIZE];
 #endif
 } groups;
-static struct {
-	struct group_entry group;
-	struct timer_entry timer;
-} routers;
+static struct group_entry routers;
 
 static void group_timer(struct timer_entry *timer, void *data);
 static void router_timer(struct timer_entry *timer, void *data);
@@ -165,6 +168,7 @@ int get_port(unsigned char *haddr)
 static struct member_entry *get_member(struct group_entry *group, in_addr_t addr, int port, int allocate)
 {
 	struct member_entry *member;
+	int i;
 
 	LIST_FOREACH(member, &group->members[port], link) {
 		if (member->addr == addr)
@@ -172,6 +176,19 @@ static struct member_entry *get_member(struct group_entry *group, in_addr_t addr
 	}
 	if (!allocate)
 		return NULL;
+
+	if (allocate == 2) {
+		for (i = 0; i <= PORT_MAX; i++) {
+			if (i == port)
+				continue;
+			LIST_FOREACH(member, &group->members[i], link) {
+				if (member->addr == addr) {
+					LIST_REMOVE(member, link);
+					goto relink;
+				}
+			}
+		}
+	}
 
 	member = LIST_FIRST(&members.free);
 	if (member) {
@@ -186,6 +203,7 @@ static struct member_entry *get_member(struct group_entry *group, in_addr_t addr
 	if (!member)
 		return NULL;
 
+relink:
 //	member->time = now();
 	member->addr = addr;
 	LIST_INSERT_HEAD(&group->members[port], member, link);
@@ -248,6 +266,7 @@ static struct group_entry *get_group(unsigned char *ea, int allocate)
 	}
 
 	init_group(group);
+	set_timer(&group->timer, group_timer, group);
 	memcpy(group->ea, ea, ETHER_ADDR_LEN);
 	LIST_INSERT_HEAD(&groups.hash[index], group, hash);
 	STAILQ_INSERT_TAIL(&groups.pool, group, link);
@@ -255,16 +274,28 @@ static struct group_entry *get_group(unsigned char *ea, int allocate)
 	return group;
 }
 
-static void consume_group(struct group_entry *group)
+static int isempty_port(struct group_entry *group, int port)
+{
+	return LIST_EMPTY(&group->members[port]);
+}
+
+static void consume_port(struct group_entry *group, int port)
 {
 	struct member_entry *member, *next;
+
+	group->portmap &= ~(1 << port);
+	LIST_FOREACH_SAFE(member, &group->members[port], link, next)
+		consume_member(member);
+}
+
+static void consume_group(struct group_entry *group)
+{
 	int port;
 
+	del_timer(&group->timer);
 	group->portmap = 0;
-	for (port = 0; port <= PORT_MAX; port++) {
-		LIST_FOREACH_SAFE(member, &group->members[port], link, next)
-			consume_member(member);
-	}
+	for (port = 0; port <= PORT_MAX; port++)
+		consume_port(group, port);
 }
 
 static int get_portmap(struct group_entry *group)
@@ -272,8 +303,9 @@ static int get_portmap(struct group_entry *group)
 	int port, portmap = 0;
 
 	for (port = 0; port <= PORT_MAX; port++) {
-		if (!LIST_EMPTY(&group->members[port]))
-			portmap |= 1 << port;
+		if (isempty_port(group, port))
+			continue;
+		portmap |= 1 << port;
 	}
 
 	return portmap;
@@ -285,6 +317,7 @@ int init_cache(void)
 
 	memset(&hosts, 0, sizeof(hosts));
 	memset(&members, 0, sizeof(members));
+	memset(&ports, 0, sizeof(ports));
 	memset(&groups, 0, sizeof(groups));
 	memset(&routers, 0, sizeof(routers));
 
@@ -296,10 +329,8 @@ int init_cache(void)
 		LIST_INIT(&hosts.hash[index]);
 	}
 
-	init_group(&routers.group);
-
-	set_timer(&groups.timer, group_timer, NULL);
-	set_timer(&routers.timer, router_timer, &routers.group);
+	init_group(&routers);
+	set_timer(&routers.timer, router_timer, &routers);
 
 	log_cache("%-6s pool(%u x hash) = %u, entries(%u x %u) = %u", "groups",
 	    HASH_SIZE, sizeof(groups), GROUP_POOL_SIZE, sizeof(struct group_entry),
@@ -307,6 +338,8 @@ int init_cache(void)
 	    0 *
 #endif
 	    GROUP_POOL_SIZE * sizeof(struct group_entry));
+	log_cache("%-6s pool = %u", "ports",
+	    sizeof(ports));
 	log_cache("%-6s pool = %u, entries(%u x %u) = %u", "member",
 	    sizeof(members), MEMBER_POOL_SIZE, sizeof(struct member_entry),
 	    MEMBER_POOL_SIZE * sizeof(struct member_entry));
@@ -317,37 +350,57 @@ int init_cache(void)
 #endif
 	    HOST_POOL_SIZE * sizeof(struct host_entry));
 
+	if (switch_set_floodmap(routers.ea, 0) == 0)
+		ports.expire_support = ports.expire_active = 1;
+
 	return 0;
 }
 
 static void group_timer(struct timer_entry *timer, void *data)
 {
-	struct group_entry *group;
+	struct group_entry *group = data;
 	unsigned long expires, time = now();
-	int portmap;
+	int port, portmap;
 
-	expires = time + ~0UL/2;
-	STAILQ_FOREACH(group, &groups.pool, link) {
-		portmap = group->portmap;
-		if (portmap == 0)
-			continue;
-		if (time_after(group->time, time)) {
+	portmap = group->portmap;
+	if (portmap == 0)
+		return;
+
+	if (time_after(group->time, time)) {
+		expires = time + ~0UL/2;
+		group->portmap = get_portmap(group);
+		if (ports.expire_support && ports.expire_active) {
+			for (port = 0; port <= PORT_MAX; port++) {
+				if (isempty_port(group, port))
+					continue;
+				if (time_after(group->ptime[port], time)) {
+					if (time_after(group->ptime[port], group->time))
+						group->ptime[port] = group->time;
+					else if (time_before(group->ptime[port], expires))
+						expires = group->ptime[port];
+					continue;
+				} else
+					consume_port(group, port);
+			}
+			portmap = (portmap ^ group->portmap) & portmap;
+		} else
+			portmap = (portmap ^ group->portmap) & portmap;
+		if (group->portmap) {
 			if (time_before(group->time, expires))
 				expires = group->time;
-			continue;
+			mod_timer(timer, expires);
 		} else
 			consume_group(group);
+	} else
+		consume_group(group);
 
-		log_cache("%-6s [" FMT_EA "] - " FMT_PORTS, "expire",
-		    ARG_EA(group->ea), ARG_PORTS(portmap));
+	log_cache("%-6s [" FMT_EA "] - " FMT_PORTS, "expire",
+	    ARG_EA(group->ea), ARG_PORTS(portmap));
 
-		portmap &= ~routers.group.portmap;
-		if (portmap)
-			switch_del_portmap(group->ea, portmap);
-	}
+	portmap &= ~routers.portmap;
 
-	if (time_before(expires, time + ~0UL/2))
-		mod_timer(timer, expires);
+	if (portmap)
+		switch_del_portmap(group->ea, portmap);
 }
 
 int add_member(unsigned char *maddr, in_addr_t addr, int port, int timeout)
@@ -355,7 +408,7 @@ int add_member(unsigned char *maddr, in_addr_t addr, int port, int timeout)
 	struct group_entry *group;
 	struct member_entry *member;
 	struct timer_entry *timer;
-	int portmap;
+	int i, portmap;
 
 	if (port < 0 || port > PORT_MAX)
 		return -1;
@@ -365,31 +418,41 @@ int add_member(unsigned char *maddr, in_addr_t addr, int port, int timeout)
 		portmap = group->portmap;
 
 		group->time = now() + timeout;
-		member = get_member(group, addr, port, 1);
-		if (member)
-			member->time = group->time;
-		group->portmap = get_portmap(group);
+		member = get_member(group, addr, port, 2);
+		if (member) {
+			group->ptime[port] = member->time = group->time;
+			if (ports.expire_support && !ports.expire_active) {
+				for (i = 0; i <= PORT_MAX; i++) {
+					if (i == port || isempty_port(group, i))
+						continue;
+					group->ptime[i] = group->time;
+				}
+			}
+		}
+		group->portmap |= get_portmap(group);
 		portmap = (portmap ^ group->portmap) & group->portmap;
 
-		timer = &groups.timer;
+		timer = &group->timer;
 		if (!timer_pending(timer) || time_before(group->time, timer->expires))
 			mod_timer(timer, group->time);
 
-		log_cache("%-6s [" FMT_EA "] + " FMT_PORTS " add " FMT_IP " expires in %d", "member",
+		log_cache("%-6s [" FMT_EA "] + " FMT_PORTS " add " FMT_IP " timeout %d", "member",
 		    ARG_EA(group->ea), ARG_PORTS(portmap), ARG_IP(&addr), timeout / TIMER_HZ);
 	} else
 		portmap = 0;
 
 	if (portmap)
-		switch_add_portmap(maddr, portmap | routers.group.portmap);
+		switch_add_portmap(maddr, portmap | routers.portmap);
 
 	return portmap;
 }
 
-int del_member(unsigned char *maddr, in_addr_t addr, int port)
+int del_member(unsigned char *maddr, in_addr_t addr, int port, int timeout)
 {
 	struct group_entry *group;
 	struct member_entry *member;
+	struct timer_entry *timer;
+	unsigned long time;
 	int portmap;
 
 	if (port < 0 || port > PORT_MAX)
@@ -402,18 +465,28 @@ int del_member(unsigned char *maddr, in_addr_t addr, int port)
 		member = get_member(group, addr, port, 0);
 		if (member)
 			consume_member(member);
-		group->portmap = get_portmap(group);
-		portmap = (portmap ^ group->portmap) & portmap;
-		if (portmap && group->portmap == 0)
-			consume_group(group);
+		if (timeout) {
+			portmap = (portmap ^ get_portmap(group)) & portmap;
+			if (portmap) {
+				timer = &group->timer;
+				time = now() + timeout;
+				if (!timer_pending(timer) || time_after(timer->expires, time))
+					mod_timer(timer, time);
+			}
+		} else {
+			group->portmap = get_portmap(group);
+			portmap = (portmap ^ group->portmap) & portmap;
+			if (portmap && group->portmap == 0)
+				consume_group(group);
+		}
 
 		log_cache("%-6s [" FMT_EA "] - " FMT_PORTS " del " FMT_IP, "member",
 		    ARG_EA(group->ea), ARG_PORTS(portmap), ARG_IP(&addr));
 	} else
 		portmap = 0;
 
-	portmap &= ~routers.group.portmap;
-	if (portmap)
+	portmap &= ~routers.portmap;
+	if (portmap && timeout == 0)
 		switch_del_portmap(maddr, portmap);
 
 	return portmap;
@@ -455,6 +528,11 @@ static void router_timer(struct timer_entry *timer, void *data)
 	    ARG_EA(group->ea), ARG_PORTS(portmap));
 
 	if (portmap) {
+		if (ports.expire_support) {
+			groupmap = switch_set_floodmap(group->ea, group->portmap);
+			if (groupmap >= 0)
+				ports.expire_active = (groupmap == 0);
+		}
 		STAILQ_FOREACH(group, &groups.pool, link) {
 			groupmap = portmap & ~group->portmap;
 			if (groupmap)
@@ -473,14 +551,14 @@ int add_router(in_addr_t addr, int port, int timeout)
 	if (port < 0 || port > PORT_MAX)
 		return -1;
 
-	group = &routers.group;
+	group = &routers;
 	if (group) {
 		portmap = group->portmap;
 
 		group->time = now() + timeout;
 		member = get_member(group, addr, port, 1);
 		if (member)
-			member->time = group->time;
+			group->ptime[port] = member->time = group->time;
 		group->portmap = get_portmap(group);
 		portmap = (portmap ^ group->portmap) & group->portmap;
 
@@ -488,12 +566,17 @@ int add_router(in_addr_t addr, int port, int timeout)
 		if (!timer_pending(timer) || time_after(timer->expires, group->time))
 			mod_timer(timer, group->time);
 
-		log_cache("%-6s [" FMT_EA "] + " FMT_PORTS " add " FMT_IP " expires in %d", "router",
+		log_cache("%-6s [" FMT_EA "] + " FMT_PORTS " add " FMT_IP " timeout %d", "router",
 		    ARG_EA(group->ea), ARG_PORTS(portmap), ARG_IP(&addr), timeout / TIMER_HZ);
 	} else
 		portmap = 0;
 
 	if (portmap) {
+		if (ports.expire_support) {
+			groupmap = switch_set_floodmap(group->ea, group->portmap);
+			if (groupmap >= 0)
+				ports.expire_active = (groupmap == 0);
+		}
 		STAILQ_FOREACH(group, &groups.pool, link) {
 			groupmap = portmap & ~group->portmap;
 			if (groupmap)
@@ -514,14 +597,20 @@ int expire_members(unsigned char *maddr, int timeout)
 		if (!group)
 			return -1;
 		group->time = time;
+		if (!timer_pending(&group->timer) || time_after(group->timer.expires, time))
+			mod_timer(&group->timer, time);
+
+		log_cache("%-6s [" FMT_EA "] = " FMT_PORTS " set timeout %d", "expire",
+		    ARG_EA(group->ea), ARG_PORTS(group->portmap), timeout / TIMER_HZ);
 	} else
 	STAILQ_FOREACH(group, &groups.pool, link) {
 		group->time = time;
-	}
+		if (!timer_pending(&group->timer) || time_after(group->timer.expires, time))
+			mod_timer(&group->timer, time);
 
-	log_cache("%-6s fast expire %s in %d", "expire", maddr ? "group" : "all", timeout / TIMER_HZ);
-	if (!timer_pending(&groups.timer) || time_after(groups.timer.expires, time))
-		mod_timer(&groups.timer, time);
+		log_cache("%-6s [" FMT_EA "] = " FMT_PORTS " set timeout %d", "expire",
+		    ARG_EA(group->ea), ARG_PORTS(group->portmap), timeout / TIMER_HZ);
+	}
 
 	return 0;
 }
@@ -532,9 +621,6 @@ int purge_cache(void)
 	struct member_entry *member, *next_member;
 	struct host_entry *host;
 
-	del_timer(&groups.timer);
-	del_timer(&routers.timer);
-
 	while ((group = STAILQ_FIRST(&groups.pool))) {
 		consume_group(group);
 		LIST_REMOVE(group, hash);
@@ -544,7 +630,10 @@ int purge_cache(void)
 		free(group);
 #endif
 	}
-	consume_group(&routers.group);
+	consume_group(&routers);
+
+	if (ports.expire_support)
+		switch_clr_floodmap(routers.ea);
 
 	LIST_FOREACH_SAFE(member, &members.free, link, next_member) {
 		LIST_REMOVE(member, link);

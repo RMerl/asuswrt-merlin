@@ -1,0 +1,57 @@
+#notiDiv{
+	position: absolute;
+	filter:alpha(opacity=95);
+	opacity:.95;
+	z-index: 98;
+	width:250px;
+	margin-top:10px;
+	margin-left:-210px;
+}
+
+#notiDiv_table3{
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	-moz-box-shadow: 3px 3px 4px #333;
+	-webkit-box-shadow: 3px 3px 4px #333;
+	box-shadow: 3px 3px 4px #000;
+	behavior: url(/PIE.htc);
+	*behavior: !important;
+}
+
+#notiDiv_table4{
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	behavior: url(/PIE.htc);
+}
+
+#notiDiv_table5{
+	behavior: url(/PIE.htc);
+	-webkit-border-bottom-right-radius: 5px;
+	-webkit-border-bottom-left-radius: 5px;
+	-moz-border-radius-bottomright: 5px;
+	-moz-border-radius-bottomleft: 5px;
+	border-radius: 5px 5px 5px 5px ;
+	margin:3px 0px 0px 3px ;
+	behavior: url(/PIE.htc);
+}
+
+.notification_on{
+	background-image:url(images/New_ui/notification.png);
+	background-repeat:no-repeat;	
+	background-position:2px 2px;
+	height:29px;
+	width:30px;
+	cursor: pointer;
+}
+
+.notification_off{
+	visibility: hidden;
+}
+
+.notification_on1{
+	cursor: pointer;
+	width: 30px;
+	height:38px;
+}

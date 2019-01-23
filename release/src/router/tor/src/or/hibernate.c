@@ -1,5 +1,5 @@
 /* Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -8,6 +8,12 @@
  * etc in preparation for closing down or going dormant; and to track
  * bandwidth and time intervals to know when to hibernate and when to
  * stop hibernating.
+ *
+ * Ordinarily a Tor relay is "Live".
+ *
+ * A live relay can stop accepting connections for one of two reasons: either
+ * it is trying to conserve bandwidth because of bandwidth accounting rules
+ * ("soft hibernation"), or it is about to shut down ("exiting").
  **/
 
 /*
@@ -28,12 +34,11 @@ hibernating, phase 2:
 #include "config.h"
 #include "connection.h"
 #include "connection_edge.h"
+#include "control.h"
 #include "hibernate.h"
 #include "main.h"
 #include "router.h"
 #include "statefile.h"
-
-extern long stats_n_seconds_working; /* published uptime */
 
 /** Are we currently awake, asleep, running out of bandwidth, or shutting
  * down? */
@@ -50,8 +55,10 @@ typedef enum {
   UNIT_MONTH=1, UNIT_WEEK=2, UNIT_DAY=3,
 } time_unit_t;
 
-/* Fields for accounting logic.  Accounting overview:
+/*
+ * @file hibernate.c
  *
+ * <h4>Accounting</h4>
  * Accounting is designed to ensure that no more than N bytes are sent in
  * either direction over a given interval (currently, one month, one week, or
  * one day) We could
@@ -65,17 +72,21 @@ typedef enum {
  *
  * Each interval runs as follows:
  *
- * 1. We guess our bandwidth usage, based on how much we used
+ * <ol>
+ * <li>We guess our bandwidth usage, based on how much we used
  *     last time.  We choose a "wakeup time" within the interval to come up.
- * 2. Until the chosen wakeup time, we hibernate.
- * 3. We come up at the wakeup time, and provide bandwidth until we are
+ * <li>Until the chosen wakeup time, we hibernate.
+ * <li> We come up at the wakeup time, and provide bandwidth until we are
  *    "very close" to running out.
- * 4. Then we go into low-bandwidth mode, and stop accepting new
+ * <li> Then we go into low-bandwidth mode, and stop accepting new
  *    connections, but provide bandwidth until we run out.
- * 5. Then we hibernate until the end of the interval.
+ * <li> Then we hibernate until the end of the interval.
  *
  * If the interval ends before we run out of bandwidth, we go back to
  * step one.
+ *
+ * Accounting is controlled by the AccountingMax, AccountingRule, and
+ * AccountingStart options.
  */
 
 /** How many bytes have we read in this accounting interval? */
@@ -111,11 +122,34 @@ static int cfg_start_day = 0,
            cfg_start_min = 0;
 /** @} */
 
+static const char *hibernate_state_to_string(hibernate_state_t state);
 static void reset_accounting(time_t now);
 static int read_bandwidth_usage(void);
 static time_t start_of_accounting_period_after(time_t now);
 static time_t start_of_accounting_period_containing(time_t now);
 static void accounting_set_wakeup_time(void);
+static void on_hibernate_state_change(hibernate_state_t prev_state);
+
+/**
+ * Return the human-readable name for the hibernation state <b>state</b>
+ */
+static const char *
+hibernate_state_to_string(hibernate_state_t state)
+{
+  static char buf[64];
+  switch (state) {
+    case HIBERNATE_STATE_EXITING: return "EXITING";
+    case HIBERNATE_STATE_LOWBANDWIDTH: return "SOFT";
+    case HIBERNATE_STATE_DORMANT: return "HARD";
+    case HIBERNATE_STATE_INITIAL:
+    case HIBERNATE_STATE_LIVE:
+      return "AWAKE";
+    default:
+      log_warn(LD_BUG, "unknown hibernate state %d", state);
+      tor_snprintf(buf, sizeof(buf), "unknown [%d]", state);
+      return buf;
+  }
+}
 
 /* ************
  * Functions for bandwidth accounting.
@@ -297,7 +331,7 @@ edge_of_accounting_period_containing(time_t now, int get_end)
     case UNIT_MONTH: {
       /* If this is before the Nth, we want the Nth of last month. */
       if (tm.tm_mday < cfg_start_day ||
-          (tm.tm_mday < cfg_start_day && before)) {
+          (tm.tm_mday == cfg_start_day && before)) {
         --tm.tm_mon;
       }
       /* Otherwise, the month is correct. */
@@ -412,11 +446,15 @@ configure_accounting(time_t now)
 
 /** Return the relevant number of bytes sent/received this interval
  * based on the set AccountingRule */
-static uint64_t
+uint64_t
 get_accounting_bytes(void)
 {
   if (get_options()->AccountingRule == ACCT_SUM)
     return n_bytes_read_in_interval+n_bytes_written_in_interval;
+  else if (get_options()->AccountingRule == ACCT_IN)
+    return n_bytes_read_in_interval;
+  else if (get_options()->AccountingRule == ACCT_OUT)
+    return n_bytes_written_in_interval;
   else
     return MAX(n_bytes_read_in_interval, n_bytes_written_in_interval);
 }
@@ -490,7 +528,7 @@ reset_accounting(time_t now)
 }
 
 /** Return true iff we should save our bandwidth usage to disk. */
-static INLINE int
+static inline int
 time_to_record_bandwidth_usage(time_t now)
 {
   /* Note every 600 sec */
@@ -666,7 +704,7 @@ read_bandwidth_usage(void)
     int res;
 
     res = unlink(fname);
-    if (res != 0) {
+    if (res != 0 && errno != ENOENT) {
       log_warn(LD_FS,
                "Failed to unlink %s: %s",
                fname, strerror(errno));
@@ -931,6 +969,7 @@ consider_hibernation(time_t now)
 {
   int accounting_enabled = get_options()->AccountingMax != 0;
   char buf[ISO_TIME_LEN+1];
+  hibernate_state_t prev_state = hibernate_state;
 
   /* If we're in 'exiting' mode, then we just shut down after the interval
    * elapses. */
@@ -986,6 +1025,10 @@ consider_hibernation(time_t now)
       hibernate_end_time_elapsed(now);
     }
   }
+
+  /* Dispatch a controller event if the hibernation state changed. */
+  if (hibernate_state != prev_state)
+    on_hibernate_state_change(prev_state);
 }
 
 /** Helper function: called when we get a GETINFO request for an
@@ -1003,14 +1046,10 @@ getinfo_helper_accounting(control_connection_t *conn,
   if (!strcmp(question, "accounting/enabled")) {
     *answer = tor_strdup(accounting_is_enabled(get_options()) ? "1" : "0");
   } else if (!strcmp(question, "accounting/hibernating")) {
-    if (hibernate_state == HIBERNATE_STATE_DORMANT)
-      *answer = tor_strdup("hard");
-    else if (hibernate_state == HIBERNATE_STATE_LOWBANDWIDTH)
-      *answer = tor_strdup("soft");
-    else
-      *answer = tor_strdup("awake");
+    *answer = tor_strdup(hibernate_state_to_string(hibernate_state));
+    tor_strlower(*answer);
   } else if (!strcmp(question, "accounting/bytes")) {
-    tor_asprintf(answer, U64_FORMAT" "U64_FORMAT,
+      tor_asprintf(answer, U64_FORMAT" "U64_FORMAT,
                  U64_PRINTF_ARG(n_bytes_read_in_interval),
                  U64_PRINTF_ARG(n_bytes_written_in_interval));
   } else if (!strcmp(question, "accounting/bytes-left")) {
@@ -1022,6 +1061,18 @@ getinfo_helper_accounting(control_connection_t *conn,
         total_left = limit - total_bytes;
       tor_asprintf(answer, U64_FORMAT" "U64_FORMAT,
                    U64_PRINTF_ARG(total_left), U64_PRINTF_ARG(total_left));
+    } else if (get_options()->AccountingRule == ACCT_IN) {
+      uint64_t read_left = 0;
+      if (n_bytes_read_in_interval < limit)
+        read_left = limit - n_bytes_read_in_interval;
+      tor_asprintf(answer, U64_FORMAT" "U64_FORMAT,
+                   U64_PRINTF_ARG(read_left), U64_PRINTF_ARG(limit));
+    } else if (get_options()->AccountingRule == ACCT_OUT) {
+      uint64_t write_left = 0;
+      if (n_bytes_written_in_interval < limit)
+        write_left = limit - n_bytes_written_in_interval;
+      tor_asprintf(answer, U64_FORMAT" "U64_FORMAT,
+                   U64_PRINTF_ARG(limit), U64_PRINTF_ARG(write_left));
     } else {
       uint64_t read_left = 0, write_left = 0;
       if (n_bytes_read_in_interval < limit)
@@ -1044,6 +1095,20 @@ getinfo_helper_accounting(control_connection_t *conn,
     *answer = NULL;
   }
   return 0;
+}
+
+/**
+ * Helper function: called when the hibernation state changes, and sends a
+ * SERVER_STATUS event to notify interested controllers of the accounting
+ * state change.
+ */
+static void
+on_hibernate_state_change(hibernate_state_t prev_state)
+{
+  (void)prev_state; /* Should we do something with this? */
+  control_event_server_status(LOG_NOTICE,
+                              "HIBERNATION_STATUS STATUS=%s",
+                              hibernate_state_to_string(hibernate_state));
 }
 
 #ifdef TOR_UNIT_TESTS

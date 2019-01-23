@@ -1,0 +1,138 @@
+This example shows how you might set up a (possibly large) internet facing
+FTP site.
+
+The emphasis will be on security and performance.
+
+We will see how by integrating vsftpd with xinetd, we get a powerful
+combination.
+
+Step 1) Set up your xinetd configuration file.
+
+An example xinetd configuration file "vsftpd.xinetd" is supplied.
+To install it:
+
+cp vsftpd.xinetd /etc/xinetd.d/vsftpd
+
+Let's look at the important content in this file and see what it does:
+
+disable                 = no
+socket_type             = stream
+wait                    = no
+
+This says that the service is active, and it is using standard TCP sockets.
+
+user                    = root
+server                  = /usr/local/sbin/vsftpd
+
+The server program /usr/local/sbin/vsftpd is used to handle incoming FTP
+requests, and the program is started as root (vsftpd will of course quickly
+drop as much privilege as possible). NOTE! Make sure that you have the vsftpd
+binary installed in /usr/local/sbin (or change the file path in the xinetd
+file).
+
+per_source              = 5
+instances               = 200
+
+For security, the maximum allowed connections from a single IP address is 5.
+The total maximum concurrent connections is 200.
+
+no_access               = 192.168.1.3
+
+As an example of how to ban certain sites from connecting, 192.168.1.3 will
+be denied access.
+
+banner_fail             = /etc/vsftpd.busy_banner
+
+This is the file to display to users if the connection is refused for whatever
+reason (too many users, IP banned).
+
+Example of how to populate it:
+echo "421 Server busy, please try later." > /etc/vsftpd.busy_banner
+
+log_on_success          += PID HOST DURATION
+log_on_failure          += HOST
+
+This will log the IP address of all connection attempts - successful or not,
+along with the time. If an FTP server is launched for the connection, it's
+process ID and usage duration will be logged too. If you are using RedHat
+like me, this log information will appear in /var/log/secure.
+
+
+Step 2) Set up your vsftpd configuration file.
+
+An example file is supplied. Install it like this:
+
+cp vsftpd.conf /etc
+
+Let's example the contents of the file:
+
+# Access rights
+anonymous_enable=YES
+local_enable=NO
+write_enable=NO
+anon_upload_enable=NO
+anon_mkdir_write_enable=NO
+anon_other_write_enable=NO
+
+This makes sure the FTP server is in anonymous-only mode and that all write
+and upload permissions are disabled. Note that most of these settings are
+the same as the default values anyway - but where security is concerned, it
+is good to be clear.
+
+# Security
+anon_world_readable_only=YES
+connect_from_port_20=YES
+hide_ids=YES
+pasv_min_port=50000
+pasv_max_port=60000
+
+These settings, in order
+- Make sure only world-readable files and directories are served.
+- Originates FTP port connections from a secure port - so users on the FTP
+server cannot try and fake file content.
+- Hide the FTP server user IDs and just display "ftp" in directory listings.
+This is also a performance boost.
+- Set a 50000-60000 port range for passive connections - may enable easier
+firewall setup!
+
+# Features
+xferlog_enable=YES
+ls_recurse_enable=NO
+ascii_download_enable=NO
+async_abor_enable=YES
+
+In order,
+- Enables recording of transfer stats to /var/log/vsftpd.log
+- Disables "ls -R", to prevent it being used as a DoS attack. Note - sites
+wanting to be copied via the "mirror" program might need to enable this.
+- Disables downloading in ASCII mode, to prevent it being used as a DoS
+attack (ASCII downloads are CPU heavy).
+- Enables older FTP clients to cancel in-progress transfers.
+
+# Performance
+one_process_model=YES
+idle_session_timeout=120
+data_connection_timeout=300
+accept_timeout=60
+connect_timeout=60
+anon_max_rate=50000
+
+In order,
+- Activates a faster "one process per connection" model. Note! To maintain
+security, this feature is only available on systems with capabilities - e.g.
+Linux kernel 2.4.
+- Boots off idle users after 2 minutes.
+- Boots off idle downloads after 5 minutes.
+- Boots off hung passive connects after 1 minute.
+- Boots off hung active connects after 1 minute.
+- Limits a single client to ~50kbytes / sec download speed.
+
+
+Step 3) Restart xinetd.
+
+(on RedHat)
+/etc/rc.d/init.d/xinetd restart
+
+If you run into problems, check:
+1) Your /etc/xinetd.d directory only has one FTP service.
+

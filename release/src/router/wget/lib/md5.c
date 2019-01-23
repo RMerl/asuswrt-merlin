@@ -1,6 +1,6 @@
 /* Functions to compute MD5 message digest of files or memory blocks.
    according to the definition of MD5 in RFC 1321 from April 1992.
-   Copyright (C) 1995-1997, 1999-2001, 2005-2006, 2008-2014 Free Software
+   Copyright (C) 1995-1997, 1999-2001, 2005-2006, 2008-2017 Free Software
    Foundation, Inc.
    This file is part of the GNU C Library.
 
@@ -259,7 +259,7 @@ md5_process_bytes (const void *buffer, size_t len, struct md5_ctx *ctx)
   /* Process available complete blocks.  */
   if (len >= 64)
     {
-#if !_STRING_ARCH_unaligned
+#if !(_STRING_ARCH_unaligned || _STRING_INLINE_unaligned)
 # define UNALIGNED_P(p) ((uintptr_t) (p) % alignof (uint32_t) != 0)
       if (UNALIGNED_P (buffer))
         while (len > 64)

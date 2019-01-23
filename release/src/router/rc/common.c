@@ -913,30 +913,21 @@ void set_mac(const char *ifname, const char *nvname, int plus)
 	else {
 		_dprintf("%s: %s %d\n", ifname, __FUNCTION__, __LINE__);
 	}
+
 #ifdef RTCONFIG_RGMII_BRCM5301X
 	et_hwaddr = nvram_safe_get("lan_hwaddr");
-#elif defined(RTCONFIG_GMAC3)
-	if (nvram_match("gmac3_enable", "1"))
-		et_hwaddr = nvram_safe_get("et2macaddr");
-	else
-		et_hwaddr = nvram_safe_get("et0macaddr");
 #else
-	et_hwaddr = nvram_safe_get("et0macaddr");
+	et_hwaddr = get_lan_hwaddr();
 #endif
 
 	if (!ether_atoe(nvram_safe_get(nvname), (unsigned char *)&ifr.ifr_hwaddr.sa_data)) {
 		if (!ether_atoe(et_hwaddr, (unsigned char *)&ifr.ifr_hwaddr.sa_data)) {
-
 			// goofy et0macaddr, make something up
 #ifdef RTCONFIG_RGMII_BRCM5301X 
 			nvram_set("lan_hwaddr", "00:01:23:45:67:89");
-#elif defined(RTCONFIG_GMAC3)
-			if (nvram_match("gmac3_enable", "1"))
-				nvram_set("et2macaddr", "00:01:23:45:67:89");
-			else
-				nvram_set("et0macaddr", "00:01:23:45:67:89");
 #else
-			nvram_set("et0macaddr", "00:01:23:45:67:89");
+			nvram_set("lan_hwaddr", "00:01:23:45:67:89");
+			nvram_set(get_lan_mac_name(), "00:01:23:45:67:89");
 #endif
 			ifr.ifr_hwaddr.sa_data[0] = 0;
 			ifr.ifr_hwaddr.sa_data[1] = 0x01;
@@ -1040,6 +1031,25 @@ void killall_tk(const char *name)
 	}
 }
 
+void killall_tk_period_wait(const char *name, int wait)
+{
+	int n;
+
+	if (killall(name, SIGTERM) == 0) {
+		n = wait;
+		while ((killall(name, 0) == 0) && (n-- > 0)) {
+			_dprintf("%s: waiting name=%s n=%d\n", __FUNCTION__, name, n);
+			sleep(1);
+		}
+		if (n < 0) {
+			n = wait;
+			while ((killall(name, SIGKILL) == 0) && (n-- > 0)) {
+				_dprintf("%s: SIGKILL name=%s n=%d\n", __FUNCTION__, name, n);
+				sleep(1);
+			}
+		}
+	}
+}
 void kill_pidfile_tk(const char *pidfile)
 {
 	FILE *fp;

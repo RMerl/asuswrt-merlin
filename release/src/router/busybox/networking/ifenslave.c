@@ -270,7 +270,7 @@ static int set_if_addr(char *master_ifname, char *slave_ifname)
 		if (res < 0) {
 			ifr.ifr_addr.sa_family = AF_INET;
 			memset(ifr.ifr_addr.sa_data, 0,
-			       sizeof(ifr.ifr_addr.sa_data));
+				sizeof(ifr.ifr_addr.sa_data));
 		}
 
 		res = set_ifrname_and_do_ioctl(ifra[i].s_ioctl, &ifr, slave_ifname);
@@ -546,7 +546,7 @@ int ifenslave_main(int argc UNUSED_PARAM, char **argv)
 #ifdef WHY_BOTHER
 	/* Neither -c[hange] nor -d[etach] -> it's "enslave" then;
 	 * and -f[orce] is not there too. Check that it's ethernet. */
-	if (!(opt & (OPT_d|OPT_c|OPT_f)) {
+	if (!(opt & (OPT_d|OPT_c|OPT_f))) {
 		/* The family '1' is ARPHRD_ETHER for ethernet. */
 		if (master.hwaddr.ifr_hwaddr.sa_family != 1) {
 			bb_error_msg_and_die(
@@ -577,8 +577,8 @@ int ifenslave_main(int argc UNUSED_PARAM, char **argv)
 				/* Can't work with this slave, */
 				/* remember the error and skip it */
 				bb_perror_msg(
-					"skipping %s: can't get flags",
-					slave_ifname);
+					"skipping %s: can't get %s",
+					slave_ifname, "flags");
 				res = rv;
 				continue;
 			}
@@ -595,8 +595,8 @@ int ifenslave_main(int argc UNUSED_PARAM, char **argv)
 				/* Can't work with this slave, */
 				/* remember the error and skip it */
 				bb_perror_msg(
-					"skipping %s: can't get settings",
-					slave_ifname);
+					"skipping %s: can't get %s",
+					slave_ifname, "settings");
 				res = rv;
 				continue;
 			}

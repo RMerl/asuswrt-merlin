@@ -50,7 +50,6 @@
 extern void set_file_integrity(const char *const file_name);
 extern int check_file_integrity(const char *const file_name);
 
-extern int get_account_list(int *, char ***);
 extern int get_folder_list(const char *const, int *, char ***);
 extern int get_all_folder(const char *const, int *, char ***);
 extern int get_var_file_name(const char *const account, const char *const path, char **file_name);
@@ -66,16 +65,17 @@ extern int modify_if_exist_new_folder(const char *const, const char *const);
 extern int get_permission(const char *const, const char *const, const char *const, const char *const);
 extern int set_permission(const char *const, const char *const, const char *const, const char *const, const int);
 
-extern int add_account(const char *const, const char *const);
-extern int del_account(const char *const);
-extern int mod_account(const char *const, const char *const, const char *const);
-extern int test_if_exist_account(const char *const);
-
 extern int add_folder(const char *const, const char *const, const char *const);
 extern int del_folder(const char *const, const char *const);
 extern int mod_folder(const char *const, const char *const, const char *const);
 extern int test_if_exist_share(const char *const, const char *const);
 
 extern int how_many_layer(const char *const, char **, char **);
+
+extern int get_account_list(int *, char ***);
+extern int add_account(const char *const, const char *const);
+extern int del_account(const char *const);
+extern int mod_account(const char *const, const char *const, const char *const);
+extern int test_if_exist_account(const char *const);
 
 #endif // _DISK_SHARE_

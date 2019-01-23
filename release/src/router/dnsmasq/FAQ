@@ -59,7 +59,7 @@ A: Yes, there is explicit support for *BSD and MacOS X and Solaris.
  
 Q: My company's nameserver knows about some names which aren't in the
    public DNS. Even though I put it first in /etc/resolv.conf, it
-   dosen't work: dnsmasq seems not to use the nameservers in the order
+   doesn't work: dnsmasq seems not to use the nameservers in the order
    given. What am I doing wrong?
 
 A: By default, dnsmasq treats all the nameservers it knows about as
@@ -144,19 +144,19 @@ Q: Who are Verisign, what do they have to do with the bogus-nxdomain
    option in dnsmasq and why should I wory about it?
 
 A: [note: this was written in September 2003, things may well change.]
-   Versign run the .com and .net top-level-domains. They have just
+   Verisign run the .com and .net top-level-domains. They have just
    changed the configuration of their servers so that unknown .com and
    .net domains, instead of returning an error code NXDOMAIN, (no such
-   domain) return the address of a host at Versign which runs a web
+   domain) return the address of a host at Verisign which runs a web
    server showing a search page. Most right-thinking people regard
    this new behaviour as broken :-).  You can test to see if you are
-   suffering Versign brokeness by run a command like 
+   suffering Verisign brokenness by run a command like 
    
    host jlsdajkdalld.com
 
    If you get "jlsdajkdalld.com" does not exist, then all is fine, if
    host returns an IP address, then the DNS is broken. (Try a few
-   different unlikely domains, just in case you picked a wierd one
+   different unlikely domains, just in case you picked a weird one
    which really _is_ registered.)
 
    Assuming that your DNS is broken, and you want to fix it, simply
@@ -180,7 +180,7 @@ A: There are a couple of configuration gotchas which have been
    whilst the ISC one works.
 
    The first thing to check is the broadcast address set for the
-   ethernet interface. This is normally the adddress on the connected
+   ethernet interface. This is normally the address on the connected
    network with all ones in the host part. For instance if the 
    address of the ethernet interface is 192.168.55.7 and the netmask
    is 255.255.255.0 then the broadcast address should be
@@ -205,7 +205,7 @@ A: By default, none of the DHCP clients send the host-name when asking
    send with the "hostname" keyword in /etc/network/interfaces. (See
    "man interfaces" for details.) That doesn't work for dhclient, were
    you have to add something like "send host-name daisy" to
-   /etc/dhclient.conf [Update: the lastest dhcpcd packages _do_ send
+   /etc/dhclient.conf [Update: the latest dhcpcd packages _do_ send
    the hostname by default.
 
 Q: I'm network booting my machines, and trying to give them static
@@ -240,7 +240,7 @@ Q: What are these strange "bind-interface" and "bind-dynamic" options?
 
 A: Dnsmasq from v2.63 can operate in one of three different "networking
    modes". This is unfortunate as it requires users configuring dnsmasq
-   to take into account some rather bizzare contraints and select the
+   to take into account some rather bizarre constraints and select the
    mode which best fits the requirements of a particular installation.
    The origin of these are deficiencies in the Unix networking
    model and APIs and each mode has different advantages and
@@ -252,10 +252,10 @@ A: Dnsmasq from v2.63 can operate in one of three different "networking
    The three modes are "wildcard", "bind-interfaces" and "bind-dynamic".
 
    In "wildcard" mode, dnsmasq binds the wildcard IP address (0.0.0.0 or
-   ::). This allows it to recieve all the packets sent to the server on
+   ::). This allows it to receive all the packets sent to the server on
    the relevant port. Access control (--interface, --except-interface,
    --listen-address, etc) is implemented by dnsmasq: it queries the
-   kernel to determine the interface on which a packet was recieved and
+   kernel to determine the interface on which a packet was received and
    the address to which it was sent, and applies the configured
    rules. Wildcard mode is the default if neither of the other modes are
    specified. 
@@ -276,7 +276,7 @@ A: Dnsmasq from v2.63 can operate in one of three different "networking
    The mode chosen has four different effects: co-existence with other
    servers, semantics of --interface access control, effect of new
    interfaces, and legality of --interface specifications for
-   non-existent inferfaces. We will deal with these in order.
+   non-existent interfaces. We will deal with these in order.
 
    A dnsmasq instance running in wildcard mode precludes a machine from
    running a second instance of dnsmasq or any other DNS, TFTP or DHCP
@@ -313,15 +313,25 @@ Q: Can I get email notification when a new version of dnsmasq is
    released?
 
 A: Yes, new releases of dnsmasq are always announced through
-   freshmeat.net, and they allow you to subcribe to email alerts when
+   freshmeat.net, and they allow you to subscribe to email alerts when
    new versions of particular projects are released. New releases are
    also announced in the dnsmasq-discuss mailing list, subscribe at 
    http://lists.thekelleys.org.uk/mailman/listinfo/dnsmasq-discuss
 
 Q: What does the dhcp-authoritative option do? 
 
-A: See http://www.isc.org/files/auth.html - that's
-   for the ISC daemon, but the same applies to dnsmasq.
+A: The DHCP spec says that when a DHCP server recieves a renewal request
+   from a client it has no knowledge of, it should just ignore it.
+   This is because it's supported to have more than one DHCP server
+   on a network, and another DHCP server may be dealing with the client.
+   This has the unfortunate effect that when _no_ DHCP replies to 
+   the client, it takes some time for the client to time-out and start 
+   to get a new lease. Setting this option makes dnsmasq violate the
+   standard to the extent that it will send a NAK reply to the client, 
+   causing it to immediately start to get a new lease. This improves 
+   behaviour when machines move networks, and in the case that the DHCP
+   lease database is lost. As long as there are not more tha one DHCP
+   server on the network, it's safe to enable the option.
 
 Q: Why does my Gentoo box pause for a minute before getting a new
    lease?
@@ -349,17 +359,63 @@ A: By default, the identity of a machine is determined by using the
    method for setting the client-id varies with DHCP client software,
    dhcpcd uses the "-I" flag. Windows uses a registry setting,
    see http://www.jsiinc.com/SUBF/TIP2800/rh2845.htm
+
 Addendum:
    From version 2.46, dnsmasq has a solution to this which doesn't
    involve setting client-IDs. It's possible to put more than one MAC
    address in a --dhcp-host configuration. This tells dnsmasq that it
    should use the specified IP for any of the specified MAC addresses,
-   and furthermore it gives dnsmasq permission to sumarily abandon a
+   and furthermore it gives dnsmasq permission to summarily abandon a
    lease to one of the MAC addresses if another one comes along. Note
    that this will work fine only as longer as only one interface is
    up at any time. There is no way for dnsmasq to enforce this
    constraint: if you configure multiple MAC addresses and violate 
    this rule, bad things will happen.
+
+Addendum-II: The link above is dead, the former contents of the link are:
+
+------------------------------------------------------------------------------
+How can I keep the same DHCP client reservation, if the MAC address changes?
+
+When you reserve an IP address for a DHCP client, you provide the
+MAC address of the client's NIC.
+
+It is possible to use a custom identifier, which is sent as 
+option 61 in the client's DHCP Discover and Request packet.
+
+The DhcpClientIdentifier is a REG_DWORD value that is located at:
+
+Windows NT 4.0 SP2+
+
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\<Adapter Name>'X'\Parameters\Tcpip
+
+where <Adapter Name> is the NIC driver name and 'X' is the number of the NIC.
+
+Windows 2000
+
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\TcpIp\Parameters\Interfaces\<NIC GUID>
+
+where <NIC GUID> is the GUID of the NIC.
+
+The valid range of data is 0x0 - 0xFFFFFFFF. The custom identifier is send as 4 bytes, 
+8 hexadecimal character, in groups of 2 hexadecimal characters, with the groups being 
+sent in reverse order. If the custom identifier is less than 8 hexadeciaml characters, 
+it is zero padded at the end. Examples:
+
+Custom Client                 Client Reservation
+Identifier                    on DHCP Server
+12345678                      78563412
+123456                        56341200
+1234                          34120000
+1234567                       67452301
+12345                         45230100
+123                           23010000
+A18F42                        428FA100
+CF432                         32F40C00
+C32D1BE                       BED1320C
+
+-------------------------------------------------------------------------------------------------------
+
 
 Q: Can dnsmasq do DHCP on IP-alias interfaces?
 
@@ -488,7 +544,7 @@ Q: DHCP doesn't work with windows 7 but everything else is fine.
 
 A: There seems to be a problem if Windows 7 doesn't get a value for
    DHCP option 252 in DHCP packets it gets from the server. The
-   symtoms have beeen variously reported as continual DHCPINFORM
+   symptoms have been variously reported as continual DHCPINFORM
    requests in an attempt to get an option-252, or even ignoring DHCP
    offers completely (and failing to get an IP address) if there is no
    option-252 supplied. DHCP option 252 is for WPAD, WWW Proxy 

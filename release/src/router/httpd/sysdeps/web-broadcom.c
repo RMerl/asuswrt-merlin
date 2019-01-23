@@ -1799,25 +1799,13 @@ int
 ej_wl_control_channel(int eid, webs_t wp, int argc, char_t **argv)
 {
 	int ret = 0;
-	int channel_24 = 0, channel_50 = 0;
-#if defined(RTAC3200) || defined(RTAC5300) || defined(RTAC5300R)
-	int channel_50_2 = 0;
-#endif
-	channel_24 = wl_control_channel(0);
 
-	if (!(channel_50 = wl_control_channel(1)))
-		ret = websWrite(wp, "[\"%d\", \"%d\"]", channel_24, 0);
-	else
-#if !defined(RTAC3200) && !defined(RTAC5300) && !defined(RTAC5300R)
-		ret = websWrite(wp, "[\"%d\", \"%d\"]", channel_24, channel_50);
-#else
-	{
-		if (!(channel_50_2 = wl_control_channel(2)))
-			ret = websWrite(wp, "[\"%d\", \"%d\", \"%d\"]", channel_24, channel_50, 0);
-		else
-			ret = websWrite(wp, "[\"%d\", \"%d\", \"%d\"]", channel_24, channel_50, channel_50_2);
-	}
+	ret = websWrite(wp, "[\"%d\", \"%d\"", wl_control_channel(0), wl_control_channel(1));
+
+#if defined(RTAC3200) || defined(RTAC5300) || defined(RTAC5300R)
+	ret += websWrite(wp, ", \"%d\"", wl_control_channel(2));
 #endif
+	ret += websWrite(wp, "]");
 
 	return ret;
 }
@@ -2338,90 +2326,63 @@ ej_wl_rate_5g_2(int eid, webs_t wp, int argc, char_t **argv)
 	return ej_wl_rate(eid, wp, argc, argv, 2);
 }
 
-static int wps_error_count = 0;
+static int wps_stop_count = 0;
+
+static void reset_wps_status()
+{
+	if (++wps_stop_count > 30)
+	{
+		wps_stop_count = 0;
+		nvram_set("wps_proc_status_x", "0");
+	}
+}
 
 char *
 getWscStatusStr()
 {
-	char *status;
-
-	status = nvram_safe_get("wps_proc_status");
+	char *status = nvram_safe_get("wps_proc_status_x");
 
 	switch (atoi(status)) {
-#if 1	/* AP mode */
 	case 1: /* WPS_ASSOCIATED */
-		wps_error_count = 0;
+		wps_stop_count = 0;
 		return "Start WPS Process";
 		break;
 	case 2: /* WPS_OK */
 	case 7: /* WPS_MSGDONE */
-		wps_error_count = 0;
+		reset_wps_status();
 		return "Success";
 		break;
 	case 3: /* WPS_MSG_ERR */
-		if (++wps_error_count > 60)
-		{
-			wps_error_count = 0;
-			nvram_set("wps_proc_status", "0");
-		}
+		reset_wps_status();
 		return "Fail due to WPS message exchange error!";
 		break;
 	case 4: /* WPS_TIMEOUT */
-		if (++wps_error_count > 60)
-		{
-			wps_error_count = 0;
-			nvram_set("wps_proc_status", "0");
-		}
+		reset_wps_status();
 		return "Fail due to WPS time out!";
 		break;
+	case 5: /* WPS_UI_SENDM2 */
+		return "Send M2";
+		break;
+	case 6: /* WPS_UI_SENDM7 */
+		return "Send M7";
+		break;
 	case 8: /* WPS_PBCOVERLAP */
-		if (++wps_error_count > 60)
-		{
-			wps_error_count = 0;
-			nvram_set("wps_proc_status", "0");
-		}
-		return "Fail due to WPS session overlap!";
+		reset_wps_status();
+		return "Fail due to PBC session overlap!";
+		break;
+	case 9: /* WPS_UI_FIND_PBC_AP */
+		return "Finding a PBC access point...";
+		break;
+	case 10: /* WPS_UI_ASSOCIATING */
+		return "Assciating with access point...";
 		break;
 	default:
-		wps_error_count = 0;
+		wps_stop_count = 0;
 		if (nvram_match("wps_enable", "1"))
 			return "Idle";
 		else
 			return "Not used";
 		break;
-#else	/* STA mode */
-	case 0:
-		return "Idle";
-		break;
-	case 1: /* WPS_ASSOCIATED */
-		return "Start enrolling...";
-		break;
-	case 2: /* WPS_OK */
-		return "Succeeded...";
-		break;
-	case 3: /* WPS_MSG_ERR */
-		return "Failed...";
-		break;
-	case 4: /* WPS_TIMEOUT */
-		return "Failed (timeout)...";
-		break;
-	case 7: /* WPS_MSGDONE */
-		return "Success";
-		break;
-	case 8: /* WPS_PBCOVERLAP */
-		return "Failed (pbc overlap)...";
-		break;
-	case 9: /* WPS_FIND_PBC_AP */
-		return "Finding a pbc access point...";
-		break;
-	case 10: /* WPS_ASSOCIATING */
-		return "Assciating with access point...";
-		break;
-	default:
-//		return "Init...";
-		return "Start WPS Process";
-		break;
-#endif
 	}
 }
 
@@ -2620,6 +2581,7 @@ int wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	}
 
 	//6. WPAKey
+#if 0	//hide for security
 #ifdef RTCONFIG_QTN
 	if (unit)
 	{
@@ -2652,6 +2614,9 @@ int wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		char_to_ascii(tmpstr, nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp)));
 		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
 	}
+#else
+	retval += websWrite(wp, "<wps_info></wps_info>\n");
+#endif
 
 	//7. AP PIN Code
 #ifdef RTCONFIG_QTNBAK
@@ -2679,6 +2644,7 @@ int wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	}
 
 	//8. Saved WPAKey
+#if 0	//hide for security
 #ifdef RTCONFIG_QTN
 	if (unit)
 	{
@@ -2708,7 +2674,9 @@ int wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		char_to_ascii(tmpstr, nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp)));
 		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", tmpstr);
 	}
-
+#else
+	retval += websWrite(wp, "<wps_info></wps_info>\n");
+#endif
 	//9. WPS enable?
 	if (!strcmp(nvram_safe_get(strcat_r(prefix, "wps_mode", tmp)), "enabled"))
 		retval += websWrite(wp, "<wps_info>%s</wps_info>\n", "1");
@@ -2726,7 +2694,7 @@ int wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	retval += websWrite(wp, "<wps_info>%s</wps_info>\n", nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp)));
 
 	//C. WPS band
-	retval += websWrite(wp, "<wps_info>%d</wps_info>\n", nvram_get_int("wps_band"));
+	retval += websWrite(wp, "<wps_info>%d</wps_info>\n", nvram_get_int("wps_band_x"));
 
 	retval += websWrite(wp, "</wps>");
 
@@ -3979,7 +3947,7 @@ int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv) {
 					ret += websWrite(wp, ", ");
 				ret += ej_wl_sta_list_5g(eid, wp, argc, argv);
 			}
-			return ret;
+			goto exit;
 		}
 #endif
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
@@ -4536,6 +4504,10 @@ wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	return retval;
 }
 
+#ifdef RTCONFIG_IPV6
+#define IPV6_CLIENT_LIST        "/tmp/ipv6_client_list"
+#endif
+
 int
 ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 {
@@ -4547,9 +4519,10 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	int i, ii, val = 0, ret = 0;
 	char *arplist = NULL, *arplistptr;
 	char *leaselist = NULL, *leaselistptr;
-	char hostnameentry[32];
-	char ipentry[40], macentry[18];
-	int found, noclients = 0;
+	char *ipv6list = NULL, *ipv6listptr;
+	char hostnameentry[65];
+	char ipentry[42], macentry[18];
+	int found, foundipv6 = 0, noclients = 0;
 	char rxrate[12], txrate[12];
 	char ea[ETHER_ADDR_STR_LEN];
 	scb_val_t scb_val;
@@ -4723,6 +4696,15 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	   cases where a device uses a static IP rather than DHCP */
 	leaselist = read_whole_file("/var/lib/misc/dnsmasq.leases");
 
+#ifdef RTCONFIG_IPV6
+	/* Obtain IPv6 info */
+	if (ipv6_enabled()) {
+		get_ipv6_client_info();
+		get_ipv6_client_list();
+		ipv6list = read_whole_file(IPV6_CLIENT_LIST);
+	}
+#endif
+
 	/* build authenticated sta list */
 	for (i = 0; i < auth->count; i ++) {
 		sta = wl_sta_info(name, &auth->ea[i]);
@@ -4744,7 +4726,7 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			}
 
 			if (found || !leaselist) {
-				ret += websWrite(wp, "\"%s\",", (found ? ipentry : ""));
+				ret += websWrite(wp, "\"%s\",", (found ? ipentry : "<unknown>"));
 			}
 		} else {
 			ret += websWrite(wp, "\"<unknown>\",");
@@ -4754,7 +4736,7 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		if (leaselist) {
 			leaselistptr = leaselist;
 
-			while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %15s %15s %*s", macentry, ipentry, tmp) == 3)) {
+			while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %15s %32s %*s", macentry, ipentry, tmp) == 3)) {
 				if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0) {
 					found += 2;
 					break;
@@ -4782,6 +4764,27 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			ret += websWrite(wp, "\"<unknown>\",");
 		}
 
+#ifdef RTCONFIG_IPV6
+// Retrieve IPv6
+		if (ipv6list) {
+			ipv6listptr = ipv6list;
+			foundipv6 = 0;
+			while ((ipv6listptr < ipv6list+strlen(ipv6list)-2) && (sscanf(ipv6listptr,"%*s %17s %40s", macentry, ipentry) == 2)) {
+				if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0) {
+					ret += websWrite(wp, "\"%s\",", ipentry);
+					foundipv6 = 1;
+					break;
+				} else {
+					ipv6listptr = strstr(ipv6listptr,"\n")+1;
+				}
+			}
+		}
+#endif
+
+		if (foundipv6 == 0) {
+			ret += websWrite(wp, "\"\",");
+		}
+
 // RSSI
 		memcpy(&scb_val.ea, &auth->ea[i], ETHER_ADDR_LEN);
 		if (wl_ioctl(name, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
@@ -4800,7 +4803,7 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			if ((int)sta->tx_rate > 0)
 				sprintf(txrate,"%d", sta->tx_rate / 1000);
 			else
-				sprintf(rxrate,"??");
+				sprintf(txrate,"??");
 
 			ret += websWrite(wp, "\"%s\", \"%s\",", rxrate, txrate);
 
@@ -4813,21 +4816,21 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 // Flags
 #ifdef RTCONFIG_BCMARM
 			ret += websWrite(wp, "\"%s%s%s",
-				(sta->flags & WL_STA_PS) ? "P" : " ",
-				((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "S" : " ",
-				((sta->ht_capabilities & WL_STA_CAP_TX_STBC) || (sta->ht_capabilities & WL_STA_CAP_RX_STBC_MASK)) ? "T" : " ");
+				(sta->flags & WL_STA_PS) ? "P" : "_",
+				((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "S" : "_",
+				((sta->ht_capabilities & WL_STA_CAP_TX_STBC) || (sta->ht_capabilities & WL_STA_CAP_RX_STBC_MASK)) ? "T" : "_");
 #ifdef RTCONFIG_MUMIMO
 			ret += websWrite(wp, "%s",
-				((sta->vht_flags & WL_STA_MU_BEAMFORMER) || (sta->vht_flags & WL_STA_MU_BEAMFORMEE)) ? "M" : " ");
+				((sta->vht_flags & WL_STA_MU_BEAMFORMER) || (sta->vht_flags & WL_STA_MU_BEAMFORMEE)) ? "M" : "_");
 #endif
 #else
 			ret += websWrite(wp, "\"%s",
-				(sta->flags & WL_STA_PS) ? "P" : " ");
+				(sta->flags & WL_STA_PS) ? "P" : "_");
 #endif
 		}
-		ret += websWrite(wp, "%s%s\"],",
-			(sta->flags & WL_STA_ASSOC) ? "A" : " ",
-			(sta->flags & WL_STA_AUTHO) ? "U" : " ");
+		ret += websWrite(wp, "%s%s_\"],",
+			(sta->flags & WL_STA_ASSOC) ? "A" : "_",
+			(sta->flags & WL_STA_AUTHO) ? "U" : "_");
 	}
 
 	for (i = 1; i < 4; i++) {
@@ -4877,7 +4880,7 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 				if (leaselist) {
 					leaselistptr = leaselist;
 
-					while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %15s %15s %*s", macentry, ipentry, tmp) == 3)) {
+					while ((leaselistptr < leaselist+strlen(leaselist)-2) && (sscanf(leaselistptr,"%*s %17s %15s %32s %*s", macentry, ipentry, tmp) == 3)) {
 						if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[ii], ea)) == 0) {
 							found += 2;
 							break;
@@ -4906,6 +4909,26 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 					ret += websWrite(wp, "\"<unknown>\",");
 				}
 
+#ifdef RTCONFIG_IPV6
+// Retrieve IPv6
+				if (ipv6list) {
+					ipv6listptr = ipv6list;
+					foundipv6 = 0;
+					while ((ipv6listptr < ipv6list+strlen(ipv6list)-2) && (sscanf(ipv6listptr,"%*s %17s %40s", macentry, ipentry) == 2)) {
+						if (upper_strcmp(macentry, ether_etoa((void *)&auth->ea[i], ea)) == 0) {
+							ret += websWrite(wp, "\"%s\",", ipentry);
+							foundipv6 = 1;
+							break;
+						} else {
+							ipv6listptr = strstr(ipv6listptr,"\n")+1;
+						}
+					}
+				}
+#endif
+
+				if (foundipv6 == 0) {
+					ret += websWrite(wp, "\"\",");
+				}
 // RSSI
 				memcpy(&scb_val.ea, &auth->ea[ii], ETHER_ADDR_LEN);
 				if (wl_ioctl(name_vif, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
@@ -4924,7 +4947,7 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 					if ((int)sta->tx_rate > 0)
 						sprintf(txrate,"%d", sta->tx_rate / 1000);
 					else
-						sprintf(rxrate,"??");
+						sprintf(txrate,"??");
 
 					ret += websWrite(wp, "\"%s\",\"%s\",", rxrate, txrate);
 
@@ -4937,23 +4960,23 @@ ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 // Flags
 #ifdef RTCONFIG_BCMARM
 					ret += websWrite(wp, "\"%s%s%s",
-						(sta->flags & WL_STA_PS) ? "P" : " ",
-						((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "S" : " ",
-						((sta->ht_capabilities & WL_STA_CAP_TX_STBC) || (sta->ht_capabilities & WL_STA_CAP_RX_STBC_MASK)) ? "T" : " ");
+						(sta->flags & WL_STA_PS) ? "P" : "_",
+						((sta->ht_capabilities & WL_STA_CAP_SHORT_GI_20) || (sta->ht_capabilities & WL_STA_CAP_SHORT_GI_40)) ? "S" : "_",
+						((sta->ht_capabilities & WL_STA_CAP_TX_STBC) || (sta->ht_capabilities & WL_STA_CAP_RX_STBC_MASK)) ? "T" : "_");
 #ifdef RTCONFIG_MUMIMO
 					ret += websWrite(wp, "%s",
 						((sta->vht_flags & WL_STA_MU_BEAMFORMER) || (sta->vht_flags & WL_STA_MU_BEAMFORMEE)) ? "M" : " ");
 #endif
 #else
 					ret += websWrite(wp, "\"%s",
-						(sta->flags & WL_STA_PS) ? "P" : " ");
+						(sta->flags & WL_STA_PS) ? "P" : "_");
 #endif
 				}
 
 // Auth/Ass (and Guest) flags
 				ret += websWrite(wp, "%s%sG\"],",
-					(sta->flags & WL_STA_ASSOC) ? "A" : " ",
-					(sta->flags & WL_STA_AUTHO) ? "U" : " ");
+					(sta->flags & WL_STA_ASSOC) ? "A" : "_",
+					(sta->flags & WL_STA_AUTHO) ? "U" : "_");
 			}
 		}
 	}
@@ -4963,6 +4986,7 @@ exit:
 	if (auth) free(auth);
 	if (arplist) free(arplist);
 	if (leaselist) free(leaselist);
+	if (ipv6list) free(ipv6list);
 
 	return ret;
 }

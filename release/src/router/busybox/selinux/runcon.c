@@ -56,7 +56,7 @@
 #include "libbb.h"
 
 static context_t runcon_compute_new_context(char *user, char *role, char *type, char *range,
-					    char *command, int compute_trans)
+			char *command, int compute_trans)
 {
 	context_t con;
 	security_context_t cur_context;
@@ -69,9 +69,9 @@ static context_t runcon_compute_new_context(char *user, char *role, char *type, 
 
 		if (getfilecon(command, &file_context) < 0)
 			bb_error_msg_and_die("can't retrieve attributes of '%s'",
-					     command);
+					command);
 		if (security_compute_create(cur_context, file_context,
-					    SECCLASS_PROCESS, &new_context))
+					SECCLASS_PROCESS, &new_context))
 			bb_error_msg_and_die("unable to compute a new context");
 		cur_context = new_context;
 	}
@@ -147,11 +147,11 @@ int runcon_main(int argc UNUSED_PARAM, char **argv)
 
 	if (security_check_context(context_str(con)))
 		bb_error_msg_and_die("'%s' is not a valid context",
-				     context_str(con));
+				context_str(con));
 
 	if (setexeccon(context_str(con)))
 		bb_error_msg_and_die("can't set up security context '%s'",
-				     context_str(con));
+				context_str(con));
 
 	BB_EXECVP_or_die(argv);
 }

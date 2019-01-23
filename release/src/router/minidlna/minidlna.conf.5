@@ -141,6 +141,10 @@ album_art_names=Cover.jpg/cover.jpg/AlbumArtSmall.jpg/albumartsmall.jpg/AlbumArt
 Set this to yes to enable support for streaming .jpg and .mp3 files to a TiVo 
 supporting HMO, default is no.
 
+.IP "\fBtivo_discovery\fP"
+Set this to 'beacon' to use the legacy TiVo broadcast discovery method. Defaults to
+using Bonjour if Avahi support is available.
+
 .IP "\fBroot_container\fP" 
 Use a different container as the root of the tree exposed to clients.
 .nf
@@ -162,6 +166,10 @@ Example
 force_sort_criteria=+upnp:class,+upnp:originalTrackNumber,+dc:title
 
 .fi
+
+.IP "\fBwide_links\fP"
+Set to 'yes' to allow symlinks that point outside user-defined media_dirs.
+By default, wide symlinks are not followed.
 
 
 

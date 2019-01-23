@@ -3746,10 +3746,10 @@ void console_app_main(const pj_str_t *uri_to_call)
 
 	    /* Send the IM */
 	    if (i != -1)
-		pjsua_call_send_im(0, i, NULL, &tmp, NULL, NULL, NULL);
+		pjsua_call_send_im(0, i, NULL, &tmp, NULL, NULL, NULL, NULL);
 	    else {
 		pj_str_t tmp_uri = pj_str(uri);
-		pjsua_im_send(0, current_acc, &tmp_uri, NULL, &tmp, NULL, NULL, NULL, NULL);
+		pjsua_im_send(0, current_acc, &tmp_uri, NULL, &tmp, NULL, NULL, NULL, NULL, NULL);
 	    }
 
 	    break;

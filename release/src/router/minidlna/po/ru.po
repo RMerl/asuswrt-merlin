@@ -85,6 +85,10 @@ msgstr "Папки"
 msgid "Playlists"
 msgstr "Списки Воспроизведения"
 
+#: scanner.c:598
+msgid "Recently Added"
+msgstr ""
+
 #: scanner.c:536
 msgid "Video"
 msgstr "Видео"

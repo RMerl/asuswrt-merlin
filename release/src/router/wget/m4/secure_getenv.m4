@@ -1,5 +1,5 @@
 # Look up an environment variable more securely.
-dnl Copyright 2013-2014 Free Software Foundation, Inc.
+dnl Copyright 2013-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -22,4 +22,5 @@ AC_DEFUN([gl_PREREQ_SECURE_GETENV], [
   if test $ac_cv_func___secure_getenv = no; then
     AC_CHECK_FUNCS([issetugid])
   fi
+  AC_CHECK_FUNCS_ONCE([getuid geteuid getgid getegid])
 ])

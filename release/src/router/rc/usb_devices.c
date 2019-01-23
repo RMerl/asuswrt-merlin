@@ -1580,6 +1580,11 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x15cd);
 			fprintf(fp, "HuaweiNewMode=1\n");
 			break;
+		case SN_Huawei_E3531:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x12d1);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x15e7);
+			fprintf(fp, "HuaweiNewMode=1\n");
+			break;
 		case SN_Teracom_LW272:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x230d);
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x0103);
@@ -1698,6 +1703,14 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x1f1e);
 			fprintf(fp, "TargetVendor=0x%04x\n",	0x12d1);
 			fprintf(fp, "TargetProductList=%s\n", "157f,1592");
+			fprintf(fp, "HuaweiNewMode=1");
+			break;
+		case SN_Vodafone_R226:
+			fprintf(fp, "DefaultVendor=0x%04x\n",	0x12d1);
+			fprintf(fp, "DefaultProduct=0x%04x\n",	0x1f07);
+			fprintf(fp, "TargetVendor=0x%04x\n",	0x12d1);
+			fprintf(fp, "TargetProductList=%s\n",	"15bf,15c8");
+			fprintf(fp, "MessageContent=%s\n",      "55534243484e73852400000080000612000000240000000000000000000000");
 			fprintf(fp, "HuaweiNewMode=1");
 			break;
 		default:
@@ -2156,8 +2169,12 @@ usb_dbg("3G: Auto setting.\n");
 			write_3g_conf(fp, SN_Huawei_E303u, 1, vid, pid);
 		else if(vid == 0x12d1 && pid == 0x15cd)
 			write_3g_conf(fp, SN_Huawei_E3531s, 1, vid, pid);
+		else if(vid == 0x12d1 && pid == 0x15e7)
+			write_3g_conf(fp, SN_Huawei_E3531, 1, vid, pid);
 		else if(vid == 0x12d1 && pid == 0x1f1e)
 			write_3g_conf(fp, SN_Huawei_K5160, 1, vid, pid);
+		else if(vid == 0x12d1 && pid == 0x1f07)
+			write_3g_conf(fp, SN_Vodafone_R226, 1, vid, pid);
 		else if(vid == 0x12d1)
 			write_3g_conf(fp, UNKNOWNDEV, 1, vid, pid);
 		else{
@@ -2328,7 +2345,8 @@ usb_dbg("3G: manaul setting.\n");
 	return 1;
 }
 
-int write_3g_ppp_conf(void){
+int write_3g_ppp_conf(void)
+{
 	char modem_node[16];
 	FILE *fp;
 	char usb_node[32];
@@ -2473,7 +2491,8 @@ int write_3g_ppp_conf(void){
 }
 
 #ifdef RTCONFIG_USB_BECEEM
-int write_beceem_conf(const char *eth_node){
+int write_beceem_conf(const char *eth_node)
+{
 	FILE *fp;
 	int retry, lock;
 
@@ -2642,8 +2661,6 @@ int write_gct_conf(void)
 
 #ifdef RTCONFIG_USB
 
-#ifdef RTCONFIG_BCMARM
-
 int hotplug_pid = -1;
 FILE *fp = NULL;
 #define hotplug_dbg(fmt, args...) (\
@@ -2658,6 +2675,8 @@ FILE *fp = NULL;
 	fflush(fp); \
 } \
 )
+
+#ifdef RTCONFIG_BCMARM
 
 #define LOCK_FILE      "/tmp/hotplug_block_lock"
 
@@ -2734,30 +2753,6 @@ hotplug_usb_power_recover(void)
 }
 #endif
 
-/* Optimize performance */
-#define READ_AHEAD_KB_BUF       1024
-#define READ_AHEAD_CONF "/sys/block/%s/queue/read_ahead_kb"
-
-static void
-optimize_block_device(const char *devname)
-{
-        char blkdev[8] = {0};
-        char read_ahead_conf[64] = {0};
-        char cmdbuf[64] = {0};
-        int err;
-
-        memset(blkdev, 0, sizeof(blkdev));
-        strncpy(blkdev, devname, 3);
-        sprintf(read_ahead_conf, READ_AHEAD_CONF, blkdev);
-        sprintf(cmdbuf, "echo %d > %s", READ_AHEAD_KB_BUF, read_ahead_conf);
-        err = system(cmdbuf);
-        hotplug_dbg("err = %d\n", err);
-
-        if (err) {
-                hotplug_dbg("read ahead: unsuccess %d!\n", err);
-        }
-}
-
 int
 hotplug_block(void)
 {
@@ -2815,17 +2810,48 @@ hotplug_block(void)
         return 0;
 }
 #endif  /* RTCONFIG_BCMARM */
+
+#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_SOC_IPQ8064)
+/* Optimize performance */
+#define READ_AHEAD_KB_BUF       1024
+#define READ_AHEAD_CONF "/sys/block/%s/queue/read_ahead_kb"
+static void optimize_block_device(const char *devname)
+{
+        char blkdev[8], *p;
+        char read_ahead_conf[64], valbuf[10];
+        int err;
+
+        memset(blkdev, 0, sizeof(blkdev));
+	strcpy(blkdev, devname);
+	for (p = blkdev; *p; ++p) {
+		if (!isdigit(*p))
+			continue;
+		*p = '\0';
+		break;
+	}
+        sprintf(read_ahead_conf, READ_AHEAD_CONF, blkdev);
+	sprintf(valbuf, "%d", READ_AHEAD_KB_BUF);
+	err = f_write_string(read_ahead_conf, valbuf, 0, 0);
+        hotplug_dbg("err = %d\n", err);
+
+        if (err < 0) {
+                hotplug_dbg("read ahead: unsuccess %d!\n", err);
+        }
+}
 #endif // RTCONFIG_USB
+#endif
 
 // 1: add, 0: remove.
-int check_hotplug_action(const char *action){
+int check_hotplug_action(const char *action)
+{
 	if(!strcmp(action, "remove"))
 		return 0;
 	else
 		return 1;
 }
 
-int set_usb_common_nvram(const char *action, const char *device_name, const char *usb_node, const char *known_type){
+int set_usb_common_nvram(const char *action, const char *device_name, const char *usb_node, const char *known_type)
+{
 	char type[16], vid[8], pid[8], manufacturer[256], product[256], serial[256], speed[256];
 	char been_type[16];
 	char port_path[8];
@@ -2973,6 +2999,25 @@ int set_usb_common_nvram(const char *action, const char *device_name, const char
 			nvram_set(tmp, serial);
 
 		strcat_r(prefix, "_speed", tmp);
+#if defined(RTCONFIG_M2_SSD)
+		if (isM2SSDDevice(device_name)) {
+			char *spd;
+
+			spd = file2str("/sys/class/ata_link/link1/sata_spd");
+			if (spd) {
+				if (!strncmp(spd, "1.5", 3))
+					nvram_set(tmp, "1500");
+				else if (!strncmp(spd, "3.0", 3))
+					nvram_set(tmp, "3000");
+				else if (!strncmp(spd, "6.0", 3))
+					nvram_set(tmp, "6000");
+				else
+					nvram_set(tmp, "0");
+
+				free(spd);
+			}
+		} else
+#endif
 		if(get_usb_speed(usb_node, speed, 256) != NULL && strlen(speed) > 0)
 			nvram_set(tmp, speed);
 
@@ -2984,7 +3029,8 @@ int set_usb_common_nvram(const char *action, const char *device_name, const char
 }
 
 #ifdef BCM_MMC
-int asus_mmc(const char *device_name, const char *action){
+int asus_mmc(const char *device_name, const char *action)
+{
 #ifdef RTCONFIG_USB
 	char usb_port[32];
 	int isLock;
@@ -3112,7 +3158,8 @@ int asus_mmc(const char *device_name, const char *action){
 }
 #endif
 
-int asus_sd(const char *device_name, const char *action){
+int asus_sd(const char *device_name, const char *action)
+{
 #ifdef RTCONFIG_USB
 	char usb_node[32], usb_port[32];
 	int isLock;
@@ -3149,6 +3196,23 @@ int asus_sd(const char *device_name, const char *action){
 		usb_dbg("(%s): Can't set the file lock!\n", device_name);
 		return 0;
 	}
+
+#if defined(RTCONFIG_M2_SSD)
+	if (!check_hotplug_action(action)) {
+		/* It's not possible to use isM2SSDDevice() here due to /sys/block/sda gone! */
+		if (!strcmp(device_name, nvram_safe_get("usb_path3_act")) &&
+		    strstr(nvram_safe_get("usb_path3_node"), get_usb_ehci_port(2)))
+		{
+			nvram_unset("usb_led3");
+			sata_led_control(LED_OFF);
+		}
+	} else {
+		if (isM2SSDDevice(device_name)) {
+			nvram_set("usb_led3", "1");
+			sata_led_control(LED_ON);
+		}
+	}
+#endif
 
 	ptr = (char *)device_name+strlen(device_name)-1;
 
@@ -3404,11 +3468,14 @@ after_change_xhcimode:
 		}
 	}
 
-	if (have_usb3_led(model)) {
+	if (have_usb3_led(model) || have_sata_led(model)) {
+		enum led_id id = LED_USB;
+
 		if (is_usb3_port(usb_node))
-			nvram_set_int("usb_led_id", LED_USB3);
-		else
-			nvram_set_int("usb_led_id", LED_USB);
+			id = LED_USB3;
+		else if (is_m2ssd_port(usb_node))
+			id = LED_SATA;
+		nvram_set_int("usb_led_id", id);
 	}
 
 	kill_pidfile_s("/var/run/usbled.pid", SIGUSR1);	// inform usbled to start blinking USB LED
@@ -3425,8 +3492,6 @@ after_change_xhcimode:
 	eval("hotplug", "block");
 
 	kill_pidfile_s("/var/run/usbled.pid", SIGUSR2); // inform usbled to stop blinking USB LED
-	if (have_usb3_led(model))
-		nvram_unset("usb_led_id");
 
 	unsetenv("INTERFACE");
 	unsetenv("ACTION");
@@ -3435,7 +3500,7 @@ after_change_xhcimode:
 	unsetenv("SUBSYSTEM");
 	unsetenv("USBPORT");
 
-#ifdef RTCONFIG_BCMARM
+#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_SOC_IPQ8064)
 	/* Optimize performance */
 	optimize_block_device(device_name);
 #endif
@@ -3447,7 +3512,8 @@ after_change_xhcimode:
 	return 1;
 }
 
-int asus_lp(const char *device_name, const char *action){
+int asus_lp(const char *device_name, const char *action)
+{
 #ifdef RTCONFIG_USB_PRINTER
 	char usb_node[32];
 	int u2ec_fifo;
@@ -3540,7 +3606,8 @@ int asus_lp(const char *device_name, const char *action){
 	return 1;
 }
 
-int asus_sg(const char *device_name, const char *action){
+int asus_sg(const char *device_name, const char *action)
+{
 #ifdef RTCONFIG_USB_MODEM
 	char usb_node[32];
 	unsigned int vid, pid;
@@ -3668,7 +3735,8 @@ int asus_sg(const char *device_name, const char *action){
 	return 1;
 }
 
-int asus_sr(const char *device_name, const char *action){
+int asus_sr(const char *device_name, const char *action)
+{
 #ifdef RTCONFIG_USB_MODEM
 	char usb_node[32];
 	unsigned int vid, pid;
@@ -3786,7 +3854,8 @@ int asus_sr(const char *device_name, const char *action){
 	return 1;
 }
 
-int asus_tty(const char *device_name, const char *action){
+int asus_tty(const char *device_name, const char *action)
+{
 #ifdef RTCONFIG_USB_MODEM
 	char usb_node[32];
 	unsigned int vid, pid;
@@ -4127,7 +4196,8 @@ usb_dbg("Didn't support the USB connection now...\n");
 }
 
 // Beceem's driver: drxvi314 identifies only one dongle.
-int asus_usbbcm(const char *device_name, const char *action){
+int asus_usbbcm(const char *device_name, const char *action)
+{
 #ifdef RTCONFIG_USB_BECEEM
 	char usb_node[32];
 	int isLock;
@@ -4228,7 +4298,60 @@ int asus_usbbcm(const char *device_name, const char *action){
 	return 1;
 }
 
-int asus_usb_interface(const char *device_name, const char *action){
+/**
+ * Looking for USB Mass-storage, USB modem and USB printer on specific USB port.
+ * @port_num:	USB port number, e.g., 1 or 2.
+ * @return:
+ *    < 0:	invalid parameter or error found.
+ * 	0:	No any USB Mass-storage, USB modem and USB printer are found on specific USB port.
+ *    > 0:	One or more USB Mass-storage, USB modem or USB printer are found.
+ */
+static int find_supported_usb_device(int port_num)
+{
+	DIR *dir;
+	int c = 0, port;	/* port = 1, 2, etc */
+	char *colon, class_path[PATH_MAX], class[10] = "";
+	char usb_port[16];	/* e.g. 1-1, 3-1 */
+	struct dirent *d;
+
+	if (port_num < 0 || port_num > 4)
+		return -1;
+
+	if ((dir = opendir("/sys/bus/usb/devices")) == NULL)
+		return -2;
+
+	while (!c && (d = readdir(dir)) != NULL) {
+		if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
+			continue;
+
+		/* skip non-interface and root-hub*/
+		if (!(colon = strchr(d->d_name, ':')) || !strncmp(d->d_name + 1, "-0:", 3))
+			continue;
+
+		if (!get_usb_port_by_string(d->d_name, usb_port, sizeof(usb_port)))
+			continue;
+		if ((port = get_usb_port_number(usb_port)) != port_num)
+			continue;
+		snprintf(class_path, sizeof(class_path), "/sys/bus/usb/devices/%s/bInterfaceClass", d->d_name);
+		if (f_read_string(class_path, class, sizeof(class)) <=  0)
+		       continue;
+		switch (atoi(class)) {
+		case 2:		/* Communications and CDC Control */
+		case 0xA:	/* CDC-Data */
+		case 7:		/* Printer */
+		case 8:		/* Mass-Storage */
+			c++;
+			break;
+		}
+	}
+
+	closedir(dir);
+
+	return c;
+}
+
+int asus_usb_interface(const char *device_name, const char *action)
+{
 #if defined(RTCONFIG_USB) || defined(RTCONFIG_USB_PRINTER) || defined(RTCONFIG_USB_MODEM)
 	char usb_node[32], usb_port[32];
 #ifdef RTCONFIG_USB_MODEM
@@ -4241,8 +4364,10 @@ int asus_usb_interface(const char *device_name, const char *action){
 	int isLock;
 	char device_type[16];
 	char nvram_usb_path[32];
-	char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_", tmp[100];
-	char conf_file[32];
+	char prefix[] = "usb_pathXXXXXXXXXXXXXXXXX_";
+#ifdef RTCONFIG_USB_MODEM
+	char conf_file[32], tmp[100];
+#endif
 	char port_path[8];
 	int port_num;
 	int turn_on_led = 1;
@@ -4294,22 +4419,10 @@ int asus_usb_interface(const char *device_name, const char *action){
 	// If remove the device? Handle the remove hotplug of the printer and modem.
 	if(!check_hotplug_action(action)){
 		snprintf(nvram_usb_path, 32, "usb_led%d", port_num);
-		if (!strcmp(nvram_safe_get(nvram_usb_path), "1")) {
-			int turn_off_led = 1;
-			disk_info_t *disk_list, *disk_info;
-
-			disk_list = read_disk_data();
-			for (disk_info = disk_list; disk_info != NULL && turn_off_led; disk_info = disk_info->next) {
-				if (port_num != atoi(disk_info->port))
-					continue;
-
-				turn_off_led = 0;
-				_dprintf("Another disk exist on USB port %d, don't turn off USB LED\n", port_num);
-			}
-			free_disk_data(&disk_list);
-
-			if (turn_off_led)
-				nvram_unset(nvram_usb_path);
+		if (nvram_get_int(nvram_usb_path) == 1 &&
+		    find_supported_usb_device(port_num) <= 0)
+		{
+			nvram_unset(nvram_usb_path);
 		}
 
 		strcpy(device_type, nvram_safe_get(prefix));
@@ -4570,10 +4683,17 @@ int asus_usb_interface(const char *device_name, const char *action){
 #if LINUX_KERNEL_VERSION >= KERNEL_VERSION(2,6,36)
 		eval("insmod", "usb_wwan");
 #endif
+#if LINUX_KERNEL_VERSION >= KERNEL_VERSION(3,4,0)
+		/* 2.6.16+ */
+		eval("insmod", "option");
+		snprintf(buf, sizeof(buf), "%x %x", vid, pid);
+		f_write_string("/sys/bus/usb-serial/drivers/option1/new_id", buf, 0, 0);
+#else
 		sleep(2);
 		snprintf(modem_cmd, 128, "vendor=0x%04x", vid);
 		snprintf(buf, 128, "product=0x%04x", pid);
 		eval("insmod", "option", modem_cmd, buf);
+#endif
 		sleep(1);
 	}
 	else if(isACMInterface(device_name, 1, vid, pid)){

@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2015, The Tor Project, Inc. */
+/* Copyright (c) 2013-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #ifndef TOR_TESTSUPPORT_H
@@ -6,8 +6,10 @@
 
 #ifdef TOR_UNIT_TESTS
 #define STATIC
+#define EXTERN(type, name) extern type name;
 #else
 #define STATIC static
+#define EXTERN(type, name)
 #endif
 
 /** Quick and dirty macros to implement test mocking.
@@ -60,6 +62,12 @@
 #define MOCK_IMPL(rv, funcname, arglist)     \
   rv(*funcname) arglist = funcname ##__real; \
   rv funcname ##__real arglist
+#define MOCK_DECL_ATTR(rv, funcname, arglist, attr) \
+  rv funcname ##__real arglist attr;                \
+  extern rv(*funcname) arglist
+#define MOCK_IMPL(rv, funcname, arglist)     \
+  rv(*funcname) arglist = funcname ##__real; \
+  rv funcname ##__real arglist
 #define MOCK(func, replacement)                 \
   do {                                          \
     (func) = (replacement);                     \
@@ -71,6 +79,8 @@
 #else
 #define MOCK_DECL(rv, funcname, arglist) \
   rv funcname arglist
+#define MOCK_DECL_ATTR(rv, funcname, arglist, attr) \
+  rv funcname arglist attr
 #define MOCK_IMPL(rv, funcname, arglist) \
   rv funcname arglist
 #endif

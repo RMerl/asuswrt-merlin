@@ -47,4 +47,9 @@ static inline int handle_add_usbbus_bled(unsigned long arg) { return -EINVAL; }
 static inline void usbbus_led_printer(struct bled_priv *bp, struct seq_file *m) { }
 #endif
 
+/* check-interrupt.c */
+extern unsigned int interrupt_check_traffic(struct bled_priv *bled_priv);
+extern int interrupt_reset_check_traffic(struct bled_priv *bp);
+extern void interrupt_led_printer(struct bled_priv *b, struct seq_file *m);
+
 #endif	/* !_NETDEV_LED_H_ */

@@ -1,6 +1,6 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "or.h"
@@ -12,11 +12,7 @@
 #include "compat_libevent.h"
 
 #include <stdio.h>
-#ifdef HAVE_EVENT2_EVENT_H
 #include <event2/event.h>
-#else
-#include <event.h>
-#endif
 
 #define MAX_INFLIGHT (1<<16)
 
@@ -390,10 +386,19 @@ main(int argc, char **argv)
 
   init_logging(1);
   network_init();
-  crypto_global_init(1, NULL, NULL);
-  crypto_seed_rng();
+  if (crypto_global_init(1, NULL, NULL) < 0) {
+    printf("Couldn't initialize crypto subsystem; exiting.\n");
+    return 1;
+  }
+  if (crypto_seed_rng() < 0) {
+    printf("Couldn't seed RNG; exiting.\n");
+    return 1;
+  }
 
   rq = replyqueue_new(as_flags);
+  if (as_flags && rq == NULL)
+    return 77; // 77 means "skipped".
+
   tor_assert(rq);
   tp = threadpool_new(opt_n_threads,
                       rq, new_state, free_state, NULL);

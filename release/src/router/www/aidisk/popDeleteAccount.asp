@@ -14,7 +14,7 @@
 var selectedAccount = parent.getSelectedAccount();
 
 function initial(){
-	showtext(document.getElementById("selected_account"), decodeURIComponent(selectedAccount));
+	showtext(document.getElementById("selected_account"),  htmlEnDeCode.htmlEncode(decodeURIComponent(selectedAccount)));
 	document.deleteAccountForm.Cancel.focus();	
 	clickevent();
 }

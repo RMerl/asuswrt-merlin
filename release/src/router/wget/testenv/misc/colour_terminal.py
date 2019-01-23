@@ -1,6 +1,7 @@
 from functools import partial
 import platform
 from os import getenv
+import sys
 
 """ This module allows printing coloured output to the terminal when running a
 Wget Test under certain conditions.
@@ -17,22 +18,23 @@ codes on;y add clutter. """
 
 
 T_COLORS = {
-    'PURPLE' : '\033[95m',
-    'BLUE'   : '\033[94m',
-    'GREEN'  : '\033[92m',
-    'YELLOW' : '\033[93m',
-    'RED'    : '\033[91m',
-    'ENDC'   : '\033[0m'
+    'PURPLE': '\033[95m',
+    'BLUE':   '\033[94m',
+    'GREEN':  '\033[92m',
+    'YELLOW': '\033[93m',
+    'RED':    '\033[91m',
+    'ENDC':   '\033[0m'
 }
 
-system = True if platform.system() == 'Linux' else False
+system = True if platform.system() in ('Linux', 'Darwin') else False
 check = False if getenv("MAKE_CHECK") == 'True' else True
 
-def printer (color, string):
-    if system and check:
-        print (T_COLORS.get (color) + string + T_COLORS.get ('ENDC'))
+
+def printer(color, string):
+    if sys.stdout.isatty() and system and check:
+        print(T_COLORS.get(color) + string + T_COLORS.get('ENDC'))
     else:
-        print (string)
+        print(string)
 
 
 print_blue = partial(printer, 'BLUE')

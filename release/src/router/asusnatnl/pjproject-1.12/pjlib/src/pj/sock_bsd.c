@@ -510,7 +510,7 @@ PJ_DEF(pj_status_t) pj_sock_socket(int af,
 
     /* Sanity checks. */
 	PJ_ASSERT_RETURN(sock!=NULL, PJ_EINVAL);	
-    PJ_ASSERT_RETURN(PJ_INVALID_SOCKET==INVALID_SOCKET, 
+    PJ_ASSERT_RETURN((SOCKET)PJ_INVALID_SOCKET==INVALID_SOCKET, 
                      (*sock=PJ_INVALID_SOCKET, PJ_EINVAL));
 
     *sock = WSASocket(af, type, proto, NULL, 0, WSA_FLAG_OVERLAPPED);

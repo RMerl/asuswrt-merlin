@@ -9,5 +9,5 @@ requests.
 
 @rule()
 class RejectHeader:
-    def __init__ (self, header_obj):
+    def __init__(self, header_obj):
         self.headers = header_obj

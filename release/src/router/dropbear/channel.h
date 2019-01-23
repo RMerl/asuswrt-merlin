@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef _CHANNEL_H_
-#define _CHANNEL_H_
+#ifndef DROPBEAR_CHANNEL_H_
+#define DROPBEAR_CHANNEL_H_
 
 #include "includes.h"
 #include "buffer.h"
@@ -73,6 +73,7 @@ struct Channel {
 	 * to ensure we don't run it twice (nor type->checkclose()). */
 	int close_handler_done;
 
+	struct dropbear_progress_connection *conn_pending;
 	int initconn; /* used for TCP forwarding, whether the channel has been
 					 fully initialised */
 
@@ -92,7 +93,7 @@ struct Channel {
 
 struct ChanType {
 
-	int sepfds; /* Whether this channel has seperate pipes for in/out or not */
+	int sepfds; /* Whether this channel has separate pipes for in/out or not */
 	char *name;
 	int (*inithandler)(struct Channel*);
 	int (*check_close)(struct Channel*);
@@ -100,24 +101,27 @@ struct ChanType {
 	void (*closehandler)(struct Channel*);
 };
 
+/* Callback for connect_remote */
+void channel_connect_done(int result, int sock, void* user_data, const char* errstring);
+
 void chaninitialise(const struct ChanType *chantypes[]);
-void chancleanup();
-void setchannelfds(fd_set *readfd, fd_set *writefd);
+void chancleanup(void);
+void setchannelfds(fd_set *readfds, fd_set *writefds, int allow_reads);
 void channelio(fd_set *readfd, fd_set *writefd);
-struct Channel* getchannel();
+struct Channel* getchannel(void);
 /* Returns an arbitrary channel that is in a ready state - not
 being initialised and no EOF in either direction. NULL if none. */
-struct Channel* get_any_ready_channel();
+struct Channel* get_any_ready_channel(void);
 
-void recv_msg_channel_open();
-void recv_msg_channel_request();
+void recv_msg_channel_open(void);
+void recv_msg_channel_request(void);
 void send_msg_channel_failure(struct Channel *channel);
 void send_msg_channel_success(struct Channel *channel);
-void recv_msg_channel_data();
-void recv_msg_channel_extended_data();
-void recv_msg_channel_window_adjust();
-void recv_msg_channel_close();
-void recv_msg_channel_eof();
+void recv_msg_channel_data(void);
+void recv_msg_channel_extended_data(void);
+void recv_msg_channel_window_adjust(void);
+void recv_msg_channel_close(void);
+void recv_msg_channel_eof(void);
 
 void common_recv_msg_channel_data(struct Channel *channel, int fd, 
 		circbuffer * buf);
@@ -128,13 +132,13 @@ extern const struct ChanType clichansess;
 
 #if defined(USING_LISTENERS) || defined(DROPBEAR_CLIENT)
 int send_msg_channel_open_init(int fd, const struct ChanType *type);
-void recv_msg_channel_open_confirmation();
-void recv_msg_channel_open_failure();
+void recv_msg_channel_open_confirmation(void);
+void recv_msg_channel_open_failure(void);
 #endif
-void start_send_channel_request(struct Channel *channel, unsigned char *type);
+void start_send_channel_request(struct Channel *channel, char *type);
 
-void send_msg_request_success();
-void send_msg_request_failure();
+void send_msg_request_success(void);
+void send_msg_request_failure(void);
 
 
-#endif /* _CHANNEL_H_ */
+#endif /* DROPBEAR_CHANNEL_H_ */

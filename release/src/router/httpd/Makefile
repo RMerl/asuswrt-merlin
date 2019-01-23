@@ -5,6 +5,10 @@ CFLAGS += -I$(SRCBASE) -I$(SRCBASE)/include -I. -I$(TOP)/shared -I$(TOP)/zlib
 CFLAGS += -I$(TOP)/push_log
 CFLAGS += -DASUS_DDNS -DTRANSLATE_ON_FLY -DFLASH_EMULATOR -DLinux -DWSC 
 
+#ifeq ($(RTN66U),y)
+#CFLAGS += -DMISSING_HOOKS
+#endif
+
 ifeq ($(RTCONFIG_BCM_7114),y)
 CFLAGS += -I$(SRCBASE)/../dhd/components/shared/
 endif
@@ -82,7 +86,7 @@ ifeq ($(RTCONFIG_HTTPS),y)
 OBJS += pwenc.o
 endif
 
-OBJS += $(if $(wildcard web_hook.c), web_hook.o, prebuild/web_hook$(BCMEX).o)
+OBJS += $(if $(wildcard web_hook.c), web_hook.o, prebuild/web_hook.o)
 
 LIBS = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
 # for ceil()
@@ -178,7 +182,7 @@ all: httpd #test_apps
 
 httpd: $(OBJS)
 	@echo " [httpd] CC $@"
-	$(CC) -o $@ $(OBJS) $(LIBS)
+	@$(CC) -o $@ $(OBJS) $(LIBS)
 
 	$(SIZECHECK)
 	$(CPTMP)
@@ -203,10 +207,10 @@ size: httpd
 ifneq ($(wildcard ./prebuild/),)
 ifeq ($(RTCONFIG_HTTPS),y)
 pwenc.o:
-	@-cp -f ./prebuild/pwenc$(BCMEX).o pwenc.o
+	@-cp -f ./prebuild/pwenc.o pwenc.o
 endif
 web_hook.o:
-	@-cp -f ./prebuild/web_hook$(BCMEX).o web_hook.o
+	@-cp -f ./prebuild/web_hook.o web_hook.o
 endif
 
 %.o: %.c .%.depend

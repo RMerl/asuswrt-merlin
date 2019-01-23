@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2017 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -16,10 +16,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /*
@@ -39,7 +38,7 @@
 
 #include "syshead.h"
 
-#if defined(ENABLE_CRYPTO) && defined(ENABLE_SSL)
+#ifdef ENABLE_CRYPTO
 
 #include "error.h"
 #include "common.h"
@@ -51,17 +50,20 @@
 const struct session_id x_session_id_zero;
 
 void
-session_id_random (struct session_id *sid)
+session_id_random(struct session_id *sid)
 {
-  prng_bytes (sid->id, SID_SIZE);
+    prng_bytes(sid->id, SID_SIZE);
 }
 
 const char *
-session_id_print (const struct session_id *sid, struct gc_arena *gc)
+session_id_print(const struct session_id *sid, struct gc_arena *gc)
 {
-  return format_hex (sid->id, SID_SIZE, 0, gc);
+    return format_hex(sid->id, SID_SIZE, 0, gc);
 }
 
-#else
-static void dummy(void) {}
-#endif /* ENABLE_CRYPTO && ENABLE_SSL*/
+#else  /* ifdef ENABLE_CRYPTO */
+static void
+dummy(void)
+{
+}
+#endif /* ENABLE_CRYPTO */

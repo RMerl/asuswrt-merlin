@@ -28,18 +28,18 @@ codec setup header (third packet).  configuration decode proceeds as
 follows:
 
 \begin{Verbatim}[commandchars=\\\{\}]
-  1) [floor0_order] = read an unsigned integer of 8 bits
-  2) [floor0_rate] = read an unsigned integer of 16 bits
-  3) [floor0_bark_map_size] = read an unsigned integer of 16 bits
-  4) [floor0_amplitude_bits] = read an unsigned integer of six bits
-  5) [floor0_amplitude_offset] = read an unsigned integer of eight bits
-  6) [floor0_number_of_books] = read an unsigned integer of four bits and add 1
-  7) array [floor0_book_list] = read a list of [floor0_number_of_books] unsigned integers of eight bits each;
+  1) [floor0\_order] = read an unsigned integer of 8 bits
+  2) [floor0\_rate] = read an unsigned integer of 16 bits
+  3) [floor0\_bark\_map\_size] = read an unsigned integer of 16 bits
+  4) [floor0\_amplitude\_bits] = read an unsigned integer of six bits
+  5) [floor0\_amplitude\_offset] = read an unsigned integer of eight bits
+  6) [floor0\_number\_of\_books] = read an unsigned integer of four bits and add 1
+  7) array [floor0\_book\_list] = read a list of [floor0\_number\_of\_books] unsigned integers of eight bits each;
 \end{Verbatim}
 
 An end-of-packet condition during any of these bitstream reads renders
 this stream undecodable.  In addition, any element of the array
-\varname{[floor0_book_list]} that is greater than the maximum codebook
+\varname{[floor0\_book\_list]} that is greater than the maximum codebook
 number for this bitstream is an error condition that also renders the
 stream undecodable.
 
@@ -48,24 +48,24 @@ stream undecodable.
 \subsubsection{packet decode} \label{vorbis:spec:floor0-decode}
 
 Extracting a floor0 curve from an audio packet consists of first
-decoding the curve amplitude and \varname{[floor0_order]} LSP
+decoding the curve amplitude and \varname{[floor0\_order]} LSP
 coefficient values from the bitstream, and then computing the floor
 curve, which is defined as the frequency response of the decoded LSP
 filter.
 
 Packet decode proceeds as follows:
 \begin{Verbatim}[commandchars=\\\{\}]
-  1) [amplitude] = read an unsigned integer of [floor0_amplitude_bits] bits
+  1) [amplitude] = read an unsigned integer of [floor0\_amplitude\_bits] bits
   2) if ( [amplitude] is greater than zero ) \{
        3) [coefficients] is an empty, zero length vector
-       4) [booknumber] = read an unsigned integer of \link{vorbis:spec:ilog}{ilog}( [floor0_number_of_books] ) bits
+       4) [booknumber] = read an unsigned integer of \link{vorbis:spec:ilog}{ilog}( [floor0\_number\_of\_books] ) bits
        5) if ( [booknumber] is greater than the highest number decode codebook ) then packet is undecodable
        6) [last] = zero;
-       7) vector [temp_vector] = read vector from bitstream using codebook number [floor0_book_list] element [booknumber] in VQ context.
-       8) add the scalar value [last] to each scalar in vector [temp_vector]
-       9) [last] = the value of the last scalar in vector [temp_vector]
-      10) concatenate [temp_vector] onto the end of the [coefficients] vector
-      11) if (length of vector [coefficients] is less than [floor0_order], continue at step 6
+       7) vector [temp\_vector] = read vector from bitstream using codebook number [floor0\_book\_list] element [booknumber] in VQ context.
+       8) add the scalar value [last] to each scalar in vector [temp\_vector]
+       9) [last] = the value of the last scalar in vector [temp\_vector]
+      10) concatenate [temp\_vector] onto the end of the [coefficients] vector
+      11) if (length of vector [coefficients] is less than [floor0\_order], continue at step 6
 
      \}
 
@@ -82,16 +82,16 @@ operation above, floor decode is to return 'unused' status as if the
 \varname{[amplitude]} value had read zero at the beginning of decode.
 
  \item The book number used for decode
-can, in fact, be stored in the bitstream in \link{vorbis:spec:ilog}{ilog}( \varname{[floor0_number_of_books]} -
+can, in fact, be stored in the bitstream in \link{vorbis:spec:ilog}{ilog}( \varname{[floor0\_number\_of\_books]} -
 1 ) bits.  Nevertheless, the above specification is correct and values
 greater than the maximum possible book value are reserved.
 
  \item The number of scalars read into the vector \varname{[coefficients]}
-may be greater than \varname{[floor0_order]}, the number actually
+may be greater than \varname{[floor0\_order]}, the number actually
 required for curve computation.  For example, if the VQ codebook used
 for the floor currently being decoded has a
-\varname{[codebook_dimensions]} value of three and
-\varname{[floor0_order]} is ten, the only way to fill all the needed
+\varname{[codebook\_dimensions]} value of three and
+\varname{[floor0\_order]} is ten, the only way to fill all the needed
 scalars in \varname{[coefficients]} is to to read a total of twelve
 scalars as four vectors of three scalars each.  This is not an error
 condition, and care must be taken not to allow a buffer overflow in
@@ -104,9 +104,9 @@ decode. The extra values are not used and may be ignored or discarded.
 \subsubsection{curve computation} \label{vorbis:spec:floor0-synth}
 
 Given an \varname{[amplitude]} integer and \varname{[coefficients]}
-vector from packet decode as well as the [floor0_order],
-[floor0_rate], [floor0_bark_map_size], [floor0_amplitude_bits] and
-[floor0_amplitude_offset] values from floor setup, and an output
+vector from packet decode as well as the [floor0\_order],
+[floor0\_rate], [floor0\_bark\_map\_size], [floor0\_amplitude\_bits] and
+[floor0\_amplitude\_offset] values from floor setup, and an output
 vector size \varname{[n]} specified by the decode process, we compute a
 floor output vector.
 
@@ -119,7 +119,7 @@ synthesized:
      \mathrm{map}_i = \left\{
        \begin{array}{ll}
           \min (
-            \mathtt{floor0\_bark\_map\_size} - 1,
+            \mathtt{floor0\texttt{\_}bark\texttt{\_}map\texttt{\_}size} - 1,
             foobar
           ) & \textrm{for } i \in [0,n-1] \\
           -1 & \textrm{for } i = n
@@ -132,14 +132,14 @@ synthesized:
     \begin{displaymath}
     foobar =
       \left\lfloor
-        \mathrm{bark}\left(\frac{\mathtt{floor0\_rate} \cdot i}{2n}\right) \cdot \frac{\mathtt{floor0\_bark\_map\_size}} {\mathrm{bark}(.5 \cdot \mathtt{floor0\_rate})}
+        \mathrm{bark}\left(\frac{\mathtt{floor0\texttt{\_}rate} \cdot i}{2n}\right) \cdot \frac{\mathtt{floor0\texttt{\_}bark\texttt{\_}map\texttt{\_}size}} {\mathrm{bark}(.5 \cdot \mathtt{floor0\texttt{\_}rate})}
       \right\rfloor
     \end{displaymath}
 
     and
 
     \begin{displaymath}
-      \mathrm{bark}(x) = 13.1 \arctan (.00074x) + 2.24 \arctan (.0000000185x^2 + .0001x)
+      \mathrm{bark}(x) = 13.1 \arctan (.00074x) + 2.24 \arctan (.0000000185x^2) + .0001x
     \end{displaymath}
 
 The above is used to synthesize the LSP curve on a Bark-scale frequency
@@ -149,44 +149,54 @@ Similarly, the below calculation synthesizes the output LSP curve \varname{[outp
 
 \begin{enumerate}
  \item  \varname{[i]} = 0
- \item  \varname{[$\omega$]} = $\pi$ * map element \varname{[i]} / \varname{[floor0_bark_map_size]}
- \item if ( \varname{[floor0_order]} is odd ) {
+ \item  \varname{[$\omega$]} = $\pi$ * map element \varname{[i]} / \varname{[floor0\_bark\_map\_size]}
+ \item if ( \varname{[floor0\_order]} is odd ) {
   \begin{enumerate}
    \item calculate \varname{[p]} and \varname{[q]} according to:
            \begin{eqnarray*}
-             p & = & (1 - \cos^2\omega)\prod_{j=0}^{\frac{\mathtt{floor0\_order}-3}{2}} 4 (\cos([\mathtt{coefficients}]_{2j+1}) - \cos \omega)^2 \\
-             q & = & \frac{1}{4} \prod_{j=0}^{\frac{\mathtt{floor0\_order}-1}{2}} 4 (\cos([\mathtt{coefficients}]_{2j}) - \cos \omega)^2
+             p & = & (1 - \cos^2\omega)\prod_{j=0}^{\frac{\mathtt{floor0\texttt{\_}order}-3}{2}} 4 (\cos([\mathtt{coefficients}]_{2j+1}) - \cos \omega)^2 \\
+             q & = & \frac{1}{4} \prod_{j=0}^{\frac{\mathtt{floor0\texttt{\_}order}-1}{2}} 4 (\cos([\mathtt{coefficients}]_{2j}) - \cos \omega)^2
            \end{eqnarray*}
 
   \end{enumerate}
-  } else \varname{[floor0_order]} is even {
-  \begin{enumerate}
+  } else \varname{[floor0\_order]} is even {
+  \begin{enumerate}[resume]
    \item calculate \varname{[p]} and \varname{[q]} according to:
            \begin{eqnarray*}
-             p & = & \frac{(1 - \cos^2\omega)}{2} \prod_{j=0}^{\frac{\mathtt{floor0\_order}-2}{2}} 4 (\cos([\mathtt{coefficients}]_{2j+1}) - \cos \omega)^2 \\
-             q & = & \frac{(1 + \cos^2\omega)}{2} \prod_{j=0}^{\frac{\mathtt{floor0\_order}-2}{2}} 4 (\cos([\mathtt{coefficients}]_{2j}) - \cos \omega)^2
+             p & = & \frac{(1 - \cos\omega)}{2} \prod_{j=0}^{\frac{\mathtt{floor0\texttt{\_}order}-2}{2}} 4 (\cos([\mathtt{coefficients}]_{2j+1}) - \cos \omega)^2 \\
+             q & = & \frac{(1 + \cos\omega)}{2} \prod_{j=0}^{\frac{\mathtt{floor0\texttt{\_}order}-2}{2}} 4 (\cos([\mathtt{coefficients}]_{2j}) - \cos \omega)^2
            \end{eqnarray*}
 
   \end{enumerate}
   }
 
- \item calculate \varname{[linear_floor_value]} according to:
+ \item calculate \varname{[linear\_floor\_value]} according to:
          \begin{displaymath}
-           \exp \left( .11512925 \left(\frac{\mathtt{amplitude} \cdot \mathtt{floor0\_amplitute\_offset}}{(2^{\mathtt{floor0\_amplitude\_bits}}-1)\sqrt{p+q}}
-                  - \mathtt{floor0\_amplitude\_offset} \right) \right)
+           \exp \left( .11512925 \left(\frac{\mathtt{amplitude} \cdot \mathtt{floor0\texttt{\_}amplitute\texttt{\_}offset}}{(2^{\mathtt{floor0\texttt{\_}amplitude\texttt{\_}bits}}-1)\sqrt{p+q}}
+                  - \mathtt{floor0\texttt{\_}amplitude\texttt{\_}offset} \right) \right)
          \end{displaymath}
 
- \item \varname{[iteration_condition]} = map element \varname{[i]}
- \item \varname{[output]} element \varname{[i]} = \varname{[linear_floor_value]}
+ \item \varname{[iteration\_condition]} = map element \varname{[i]}
+ \item \varname{[output]} element \varname{[i]} = \varname{[linear\_floor\_value]}
  \item increment \varname{[i]}
- \item if ( map element \varname{[i]} is equal to \varname{[iteration_condition]} ) continue at step 5
+ \item if ( map element \varname{[i]} is equal to \varname{[iteration\_condition]} ) continue at step 5
  \item if ( \varname{[i]} is less than \varname{[n]} ) continue at step 2
  \item done
 \end{enumerate}
 
+\paragraph{Errata 20150227: Bark scale computation}
 
+Due to a typo when typesetting this version of the specification from the original HTML document, the Bark scale computation previously erroneously read:
 
+    \begin{displaymath}
+      \hbox{\sout{$
+      \mathrm{bark}(x) = 13.1 \arctan (.00074x) + 2.24 \arctan (.0000000185x^2 + .0001x)
+      $}}
+    \end{displaymath}
 
+Note that the last parenthesis is misplaced.  This document now uses the correct equation as it appeared in the original HTML spec document:
 
-
+    \begin{displaymath}
+      \mathrm{bark}(x) = 13.1 \arctan (.00074x) + 2.24 \arctan (.0000000185x^2) + .0001x
+    \end{displaymath}
 

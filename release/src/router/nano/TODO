@@ -1,0 +1,85 @@
+A list of desired features
+--------------------------
+
+Somewhat urgent:
+- Make undo/redo work also for justifying and indenting.
+- Detect when text is being pasted, so that we can handle it faster.
+  See https://savannah.gnu.org/bugs/?40060.
+- Allow to define and execute a macro: a stored sequence of keystrokes.
+  See https://savannah.gnu.org/bugs/?50314.
+- Allow color syntaxes to apply to more than just color, so that we can
+  e.g. specify a different alternate spell checker depending on which
+  file type we have open.
+- Allow piping marked text to an external command and replacing it with
+  the command's output -- that is: generalize the spell-check flow.
+  See also https://savannah.gnu.org/bugs/?28993.
+
+Vague musings:
+- FriBidi support?
+- Allow setting marks (saved positions, not to be confused with the
+  mark set via Ctrl-^) at various lines and/or columns in the buffer,
+  and allow movement between them with a single keystroke?
+- Make matching bracket searches sophisticated enough to skip over
+  brackets inside comments?
+- Allow indentation of marked text by spaces as well as tabs?
+- Allow indentation to add just enough columns to reach the nearest
+  multiple of tabsize, rather than always adding tabsize columns?
+
+For version 2.8:
+- Allow text searches in the help viewer. [DONE]
+
+For version 2.4:
+- Handle window resizes better.  After we've resized, we should stay
+  wherever we were before we resized, as Pico does. [DONE]
+- Allow even better file-type detection than we have currently, e.g.
+  through libmagic. [DONE]
+- Compatibility with vim status files to let other editors know we're
+  in a file. [DONE]
+
+For version 2.2:
+- Rebindable keys? [DONE]
+- Undo/Redo keys (M-U and M-E)? [DONE]
+- Fix problems with color syntaxes highlighting lines too aggressively. [DONE]
+- Allow nano to work like a pager (reading from stdin). [DONE]
+- Allow color syntaxes to be selected based on more than just filename
+  extension. [DONE]
+- Allow soft wrapping as well as hard wrapping? [DONE]
+
+For version 2.0:
+- UTF-8 support. [DONE]
+- Support for paragraph searches. [DONE]
+- Support for justifying the entire file at once. [DONE]
+- Support for filename searches in the file browser. [DONE]
+- Keystroke to implement "Add next sequence as raw" like vi's ^V. [DONE]
+- Spell check selected text only. [DONE]
+- Make "To Line" (^W^T) and "Read from Command" (^R^X) reenter their
+  parent menu when their keystroke is entered a second time (^W^T^T and
+  (^R^X^X) (requires figuring out when to keep cursor position and when
+  not to). [DONE]
+- Fix resetstatuspos global which we shouldn't have. [DONE]
+
+For version 1.2:
+- Single-line scroll up/down? [DONE]
+- Color syntax highlighting? (There seems to be a demand for it.) [DONE]
+- Support for a .nanorc file. [DONE]
+- Backup making (filename~)? [DONE]
+- Search/replace string history. [DONE]
+- Implement Pico's -j and -g flags, as they are pretty easy to do. [DONE]
+- Make mouse support work with clicking on the shortcuts (-m). [DONE]
+- Implement -o (--operatingdir, a chroot of sorts). [DONE]
+- Allow -r to take a negative argument, meaning right margin instead of
+  left (allows resizing that way), formerly -W arg. [DONE]
+
+For version 1.0:
+- Implement Spelling. [DONE]
+- Implement Help. [DONE]
+- Internationalization [In progress, translators welcome!]
+- Allow nano to be resized in X. [DONE]
+- On PageUp/Down, put the cursor on the first line (like Pico), not the
+  center line. [DONE]
+- Implement justify function. [DONE]
+- Cut to end of line. [DONE]
+- Built-in speller command. [DONE]
+- Better statusbar interaction (scrolling, tab completion). [DONE]
+- Unjustify command (^U after ^J). [DONE]
+- Username completion (~user). [DONE]

@@ -1,6 +1,6 @@
 /* strerror.c --- POSIX compatible system error routine
 
-   Copyright (C) 2007-2014 Free Software Foundation, Inc.
+   Copyright (C) 2007-2017 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -66,5 +66,6 @@ strerror (int n)
   if (sizeof buf <= len)
     abort ();
 
-  return memcpy (buf, msg, len + 1);
+  memcpy (buf, msg, len + 1);
+  return buf;
 }

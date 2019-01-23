@@ -1,7 +1,7 @@
 C x86_64/ecc-384-modp.asm
 
 ifelse(<
-   Copyright (C) 2013 Niels Möller
+   Copyright (C) 2013, 2015 Niels Möller
 
    This file is part of GNU Nettle.
 
@@ -33,7 +33,7 @@ ifelse(<
 	.file "ecc-384-modp.asm"
 
 define(<RP>, <%rsi>)
-define(<D4>, <%rax>)
+define(<D5>, <%rax>)
 define(<T0>, <%rbx>)
 define(<T1>, <%rcx>)
 define(<T2>, <%rdx>)
@@ -48,8 +48,8 @@ define(<H4>, <%r13>)
 define(<H5>, <%r14>)
 define(<C2>, <%r15>)
 define(<C0>, H5)	C Overlap
-define(<D0>, RP)	C Overlap
-define(<TMP>, H4)	C Overlap
+define(<TMP>, RP)	C Overlap
+
 
 PROLOGUE(nettle_ecc_384_modp)
 	W64_ENTRY(2, 0)
@@ -61,34 +61,38 @@ PROLOGUE(nettle_ecc_384_modp)
 	push	%r14
 	push	%r15
 
-	C First get top 2 limbs, which need folding twice
+	C First get top 2 limbs, which need folding twice.
+	C B^10 = B^6 + B^4 + 2^32 (B-1)B^4.
+	C We handle the terms as follow:
 	C
-	C   H5 H4
-	C     -H5
-	C  ------
-	C   H0 D4
+	C B^6: Folded immediatly.
 	C
-	C Then shift right, (H1,H0,D4)  <--  (H0,D4) << 32
-	C and add
+	C B^4: Delayed, added in in the next folding.
 	C
-	C     H5 H4
-	C     H1 H0
-	C ----------
-	C  C2 H1 H0
+	C 2^32(B-1) B^4: Low half limb delayed until the next
+	C folding. Top 1.5 limbs subtracted and shifter now, resulting
+	C in 2.5 limbs. The low limb saved in D5, high 1.5 limbs added
+	C in.
 
-	mov	80(RP), D4
-	mov	88(RP), H0
-	mov	D4, H4
-	mov	H0, H5
-	sub	H0, D4
-	sbb	$0, H0
-
-	mov	D4, T2
-	mov	H0, H1
-	shl	$32, H0
-	shr	$32, T2
+	mov	80(RP), H4
+	mov	88(RP), H5
+	C Shift right 32 bits, into H1, H0
+	mov	H4, H0
+	mov	H5, H1
+	mov	H5, D5
 	shr	$32, H1
-	or	T2, H0
+	shl	$32, D5
+	shr	$32, H0
+	or	D5, H0
+
+	C	H1 H0
+	C       -  H1 H0
+	C       --------
+	C       H1 H0 D5
+	mov	H0, D5
+	neg	D5
+	sbb	H1, H0
+	sbb	$0, H1
 
 	xor	C2, C2
 	add	H4, H0
@@ -127,118 +131,95 @@ PROLOGUE(nettle_ecc_384_modp)
 	adc	H3, T5
 	adc	$0, C0
 
-	C   H3 H2 H1 H0  0
-	C - H4 H3 H2 H1 H0
-	C  ---------------
-	C   H3 H2 H1 H0 D0
+	C Shift left, including low half of H4
+	mov	H3, TMP
+	shl	$32, H4
+	shr	$32, TMP
+	or	TMP, H4
 
-	mov	XREG(D4), XREG(D4)
-	mov	H0, D0
-	neg	D0
+	mov	H2, TMP
+	shl	$32, H3
+	shr	$32, TMP
+	or	TMP, H3
+
+	mov	H1, TMP
+	shl	$32, H2
+	shr	$32, TMP
+	or	TMP, H2
+
+	mov	H0, TMP
+	shl	$32, H1
+	shr	$32, TMP
+	or	TMP, H1
+
+	shl	$32, H0
+
+	C   H4 H3 H2 H1 H0  0
+	C  -   H4 H3 H2 H1 H0
+	C  ---------------
+	C   H4 H3 H2 H1 H0 TMP
+
+	mov	H0, TMP
+	neg	TMP
 	sbb	H1, H0
 	sbb	H2, H1
 	sbb	H3, H2
 	sbb	H4, H3
-	sbb	$0, D4
+	sbb	$0, H4
 
-	C Shift right. High bits are sign, to be added to C0.
-	mov	D4, TMP
-	sar	$32, TMP
-	shl	$32, D4
-	add	TMP, C0
-
-	mov	H3, TMP
-	shr	$32, TMP
-	shl	$32, H3
-	or	TMP, D4
-
-	mov	H2, TMP
-	shr	$32, TMP
-	shl	$32, H2
-	or	TMP, H3
-
-	mov	H1, TMP
-	shr	$32, TMP
-	shl	$32, H1
-	or	TMP, H2
-
-	mov	H0, TMP
-	shr	$32, TMP
-	shl	$32, H0
-	or	TMP, H1
-
-	mov	D0, TMP
-	shr	$32, TMP
-	shl	$32, D0
-	or	TMP, H0
-
-	add	D0, T0
+	add	TMP, T0
 	adc	H0, T1
 	adc	H1, T2
 	adc	H2, T3
 	adc	H3, T4
-	adc	D4, T5
+	adc	H4, T5
 	adc	$0, C0
 
 	C Remains to add in C2 and C0
-	C                         C0  C0<<32  (-2^32+1)C0
-	C    C2  C2<<32  (-2^32+1)C2
-	C where C2 is always positive, while C0 may be -1.
+	C Set H1, H0 = (2^96 - 2^32 + 1) C0
 	mov	C0, H0
 	mov	C0, H1
-	mov	C0, H2
-	sar	$63, C0		C Get sign
-	shl	$32, H1
-	sub	H1, H0		C Gives borrow iff C0 > 0
-	sbb	$0, H1
-	add	C0, H2
-
-	add	H0, T0
-	adc	H1, T1
-	adc	$0, H2
-	adc	$0, C0
-
-	C Set (H1 H0)  <-- C2 << 96 - C2 << 32 + 1
-	mov	C2, H0
-	mov	C2, H1
 	shl	$32, H1
 	sub	H1, H0
 	sbb	$0, H1
 
-	add	H2, H0
-	adc	C0, H1
-	adc	C2, C0
-	mov	C0, H2
-	sar	$63, C0
-	add	H0, T2
-	adc	H1, T3
-	adc	H2, T4
-	adc	C0, T5
-	sbb	C0, C0
+	C Set H3, H2 = (2^96 - 2^32 + 1) C2
+	mov	C2, H2
+	mov	C2, H3
+	shl	$32, H3
+	sub	H3, H2
+	sbb	$0, H3
+	add	C0, H2		C No carry. Could use lea trick
+
+	xor	C0, C0
+	add	H0, T0
+	adc	H1, T1
+	adc	H2, T2
+	adc	H3, T3
+	adc	C2, T4
+	adc	D5, T5		C Value delayed from initial folding
+	adc	$0, C0		C Use sbb and switch sign?
 
 	C Final unlikely carry
 	mov	C0, H0
 	mov	C0, H1
-	mov	C0, H2
-	sar	$63, C0
 	shl	$32, H1
 	sub	H1, H0
 	sbb	$0, H1
-	add	C0, H2
 
 	pop	RP
 
-	sub	H0, T0
+	add	H0, T0
 	mov	T0, (RP)
-	sbb	H1, T1
+	adc	H1, T1
 	mov	T1, 8(RP)
-	sbb	H2, T2
+	adc	C0, T2
 	mov	T2, 16(RP)
-	sbb	C0, T3
+	adc	$0, T3
 	mov	T3, 24(RP)
-	sbb	C0, T4
+	adc	$0, T4
 	mov	T4, 32(RP)
-	sbb	C0, T5
+	adc	$0, T5
 	mov	T5, 40(RP)
 
 	pop	%r15

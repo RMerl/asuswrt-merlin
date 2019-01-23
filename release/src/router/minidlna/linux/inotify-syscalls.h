@@ -59,6 +59,16 @@
 # error "Unsupported architecture!"
 #endif
 
+#ifdef MS_IPK
+#ifdef MS_I686
+# define __NR_Linux 4000
+#else
+# define __NR_inotify_init (__NR_Linux + 284)
+# define __NR_inotify_add_watch (__NR_Linux + 285)
+# define __NR_inotify_rm_watch (__NR_Linux + 286)
+#endif
+#endif
+
 static inline int inotify_init (void)
 {
 	return syscall (__NR_inotify_init);

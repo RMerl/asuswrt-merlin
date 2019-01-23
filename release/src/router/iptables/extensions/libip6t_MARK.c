@@ -15,7 +15,7 @@ help(void)
 {
 	printf(
 "MARK target v%s options:\n"
-"  --set-mark value                   Set nfmark value\n"
+"  --set-mark value[/mask]            Clear bits in mask and OR value into nfmark\n"
 "\n",
 IPTABLES_VERSION);
 }
@@ -42,14 +42,22 @@ parse(int c, char **argv, int invert, unsigned int *flags,
 		= (struct ip6t_mark_target_info *)(*target)->data;
 
 	switch (c) {
+		char *end;
 	case '1':
 #ifdef KERNEL_64_USERSPACE_32
-		if (string_to_number_ll(optarg, 0, 0, 
-				     &markinfo->mark))
+		markinfo->mark = strtoull(optarg, &end, 0);
+		if (*end == '/') {
+			markinfo->mask = strtoull(end+1, &end, 0);
+		} else
+			markinfo->mask = 0xffffffffffffffffULL;
 #else
-		if (string_to_number_l(optarg, 0, 0, 
-				     &markinfo->mark))
+		markinfo->mark = strtoul(optarg, &end, 0);
+		if (*end == '/') {
+			markinfo->mask = strtoul(end+1, &end, 0);
+		} else
+			markinfo->mask = 0xffffffff;
 #endif
+		if (*end != '\0' || end == optarg)
 			exit_error(PARAMETER_PROBLEM, "Bad MARK value `%s'", optarg);
 		if (*flags)
 			exit_error(PARAMETER_PROBLEM,
@@ -74,15 +82,21 @@ final_check(unsigned int flags)
 
 #ifdef KERNEL_64_USERSPACE_32
 static void
-print_mark(unsigned long long mark)
+print_mark(unsigned long long mark, unsigned long long mask, int numeric)
 {
-	printf("0x%llx ", mark);
+	if(mask != 0xffffffffffffffffULL)
+		printf("0x%llx/0x%llx ", mark, mask);
+	else
+		printf("0x%llx ", mark);
 }
 #else
 static void
-print_mark(unsigned long mark)
+print_mark(unsigned long mark, unsigned long mask, int numeric)
 {
-	printf("0x%lx ", mark);
+	if(mask != 0xffffffff)
+		printf("0x%lx/0x%lx ", mark, mask);
+	else
+		printf("0x%lx ", mark);
 }
 #endif
 
@@ -96,7 +110,7 @@ print(const struct ip6t_ip6 *ip,
 		(const struct ip6t_mark_target_info *)target->data;
 
 	printf("MARK set ");
-	print_mark(markinfo->mark);
+	print_mark(markinfo->mark, markinfo->mask, numeric);
 }
 
 /* Saves the union ipt_targinfo in parsable form to stdout. */
@@ -107,7 +121,7 @@ save(const struct ip6t_ip6 *ip, const struct ip6t_entry_target *target)
 		(const struct ip6t_mark_target_info *)target->data;
 
 	printf("--set-mark ");
-	print_mark(markinfo->mark);
+	print_mark(markinfo->mark, markinfo->mask, 0);
 }
 
 static

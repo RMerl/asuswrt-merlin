@@ -1,59 +1,114 @@
 /*
- *  md5.c - Compute MD5 checksum of strings according to the
- *          definition of MD5 in RFC 1321 from April 1992.
+ * Copyright (C) 2014 Felix Fietkau <nbd@openwrt.org>
  *
- *  Written by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- *  Copyright (C) 1995-1999 Free Software Foundation, Inc.
- *  Copyright (C) 2001 Manuel Novoa III
- *  Copyright (C) 2003 Glenn L. McGrath
- *  Copyright (C) 2003 Erik Andersen
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+/*
+ * This is an OpenSSL-compatible implementation of the RSA Data Security, Inc.
+ * MD5 Message-Digest Algorithm (RFC 1321).
  *
- *  Licensed under the GPL v2 or later, see the file LICENSE in this tarball.
+ * Homepage:
+ * http://openwall.info/wiki/people/solar/software/public-domain-source-code/md5
+ *
+ * Author:
+ * Alexander Peslyak, better known as Solar Designer <solar at openwall.com>
+ *
+ * This software was written by Alexander Peslyak in 2001.  No copyright is
+ * claimed, and the software is hereby placed in the public domain.
+ * In case this attempt to disclaim copyright and place the software in the
+ * public domain is deemed null and void, then the software is
+ * Copyright (c) 2001 Alexander Peslyak and it is hereby released to the
+ * general public under the following terms:
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted.
+ *
+ * There's ABSOLUTELY NO WARRANTY, express or implied.
+ *
+ * (This is a heavily cut-down "BSD license".)
+ *
+ * This differs from Colin Plumb's older public domain implementation in that
+ * no exactly 32-bit integer data type is required (any 32-bit or wider
+ * unsigned integer data type will do), there's no compile-time endianness
+ * configuration, and the function prototypes match OpenSSL's.  No code from
+ * Colin Plumb's implementation has been reused; this comment merely compares
+ * the properties of the two independent implementations.
+ *
+ * The primary goals of this implementation are portability and ease of use.
+ * It is meant to be fast, but not as fast as possible.  Some known
+ * optimizations are not included to reduce source code size and avoid
+ * compile-time configuration.
  */
 
 #include <byteswap.h>
+#include <endian.h>
 #include <string.h>
 
 #include "md5.h"
 
+#define MD5_SMALL
+
+/*
+ * The basic MD5 functions.
+ *
+ * F and G are optimized compared to their RFC 1321 definitions for
+ * architectures that lack an AND-NOT instruction, just like in Colin Plumb's
+ * implementation.
+ */
+#define F(x, y, z)			((z) ^ ((x) & ((y) ^ (z))))
+#define G(x, y, z)			((y) ^ ((z) & ((x) ^ (y))))
+#define H(x, y, z)			(((x) ^ (y)) ^ (z))
+#define H2(x, y, z)			((x) ^ ((y) ^ (z)))
+#define I(x, y, z)			((y) ^ ((x) | ~(z)))
+
+/*
+ * The MD5 transformation for all four rounds.
+ */
+#define ROTL(a, s) \
+	(((a) << (s)) | (((a) & 0xffffffff) >> (32 - (s))))
+
+#define STEP(f, a, b, c, d, x, t, s) \
+	(a) += f((b), (c), (d)) + (x) + (t); \
+	(a) = ROTL((a), (s)); \
+	(a) += (b);
+
+/*
+ * SET reads 4 input bytes in little-endian byte order and stores them
+ * in a properly aligned word in host byte order.
+ */
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-#define SWAP_LE32(x) (x)
+#define SET(n) \
+	(*(uint32_t *)&ptr[(n) * 4])
+#define GET(n) \
+	SET(n)
 #else
-#define SWAP_LE32(x) bswap_32(x)
+#define SET(n) \
+	(block[(n)] = \
+	(uint32_t)ptr[(n) * 4] | \
+	((uint32_t)ptr[(n) * 4 + 1] << 8) | \
+	((uint32_t)ptr[(n) * 4 + 2] << 16) | \
+	((uint32_t)ptr[(n) * 4 + 3] << 24))
+#define GET(n) \
+	(block[(n)])
 #endif
 
-
-/* Initialize structure containing state of computation.
- * (RFC 1321, 3.3: Step 3)
+/*
+ * This processes one or more 64-byte data blocks, but does NOT update
+ * the bit counters.  There are no alignment requirements.
  */
-void md5_begin(md5_ctx_t *ctx)
+static const void *body(md5_ctx_t *ctx, const void *data, unsigned long size)
 {
-	ctx->A = 0x67452301;
-	ctx->B = 0xefcdab89;
-	ctx->C = 0x98badcfe;
-	ctx->D = 0x10325476;
-
-	ctx->total = 0;
-	ctx->buflen = 0;
-}
-
-/* These are the four functions used in the four steps of the MD5 algorithm
- * and defined in the RFC 1321.  The first function is a little bit optimized
- * (as found in Colin Plumbs public domain implementation).
- * #define FF(b, c, d) ((b & c) | (~b & d))
- */
-# define FF(b, c, d) (d ^ (b & (c ^ d)))
-# define FG(b, c, d) FF (d, b, c)
-# define FH(b, c, d) (b ^ c ^ d)
-# define FI(b, c, d) (c ^ (b | ~d))
-
-/* Hash a single block, 64 bytes long and 4-byte aligned. */
-static void md5_hash_block(const void *buffer, md5_ctx_t *ctx)
-{
-	uint32_t correct_words[16];
-	const uint32_t *words = buffer;
-
+#ifdef MD5_SMALL
 	static const uint32_t C_array[] = {
 		/* round 1 */
 		0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
@@ -62,7 +117,7 @@ static void md5_hash_block(const void *buffer, md5_ctx_t *ctx)
 		0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
 		/* round 2 */
 		0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa,
-		0xd62f105d, 0x2441453, 0xd8a1e681, 0xe7d3fbc8,
+		0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
 		0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed,
 		0xa9e3e905, 0xfcefa3f8, 0x676f02d9, 0x8d2a4c8a,
 		/* round 3 */
@@ -76,170 +131,260 @@ static void md5_hash_block(const void *buffer, md5_ctx_t *ctx)
 		0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
 		0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391
 	};
-
-	static const char P_array[] = {
+	static const char P_array[] __attribute__((aligned(1))) = {
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,	/* 1 */
 		1, 6, 11, 0, 5, 10, 15, 4, 9, 14, 3, 8, 13, 2, 7, 12,	/* 2 */
 		5, 8, 11, 14, 1, 4, 7, 10, 13, 0, 3, 6, 9, 12, 15, 2,	/* 3 */
 		0, 7, 14, 5, 12, 3, 10, 1, 8, 15, 6, 13, 4, 11, 2, 9	/* 4 */
 	};
-
-	static const char S_array[] = {
+	static const char S_array[] __attribute__((aligned(1))) = {
 		7, 12, 17, 22,
 		5, 9, 14, 20,
 		4, 11, 16, 23,
 		6, 10, 15, 21
 	};
-
-	uint32_t A = ctx->A;
-	uint32_t B = ctx->B;
-	uint32_t C = ctx->C;
-	uint32_t D = ctx->D;
-
-	uint32_t *cwp = correct_words;
-
-#  define CYCLIC(w, s) (w = (w << s) | (w >> (32 - s)))
-
 	const uint32_t *pc;
-	const char *pp;
-	const char *ps;
-	int i;
+	const char *pp, *ps;
 	uint32_t temp;
+	int i;
+#endif
+	const unsigned char *ptr;
+	uint32_t a, b, c, d;
+	uint32_t saved_a, saved_b, saved_c, saved_d;
+#if __BYTE_ORDER != __LITTLE_ENDIAN
+	uint32_t block[16];
+#endif
 
-	for (i = 0; i < 16; i++) {
-		cwp[i] = SWAP_LE32(words[i]);
-	}
-	//words += 16;
+	ptr = (const unsigned char *)data;
 
-	pc = C_array;
-	pp = P_array;
-	ps = S_array;
+	a = ctx->a;
+	b = ctx->b;
+	c = ctx->c;
+	d = ctx->d;
 
-	for (i = 0; i < 16; i++) {
-		temp = A + FF(B, C, D) + cwp[(int) (*pp++)] + *pc++;
-		CYCLIC(temp, ps[i & 3]);
-		temp += B;
-		A = D;
-		D = C;
-		C = B;
-		B = temp;
-	}
+	do {
+		saved_a = a;
+		saved_b = b;
+		saved_c = c;
+		saved_d = d;
 
-	ps += 4;
-	for (i = 0; i < 16; i++) {
-		temp = A + FG(B, C, D) + cwp[(int) (*pp++)] + *pc++;
-		CYCLIC(temp, ps[i & 3]);
-		temp += B;
-		A = D;
-		D = C;
-		C = B;
-		B = temp;
-	}
-	ps += 4;
-	for (i = 0; i < 16; i++) {
-		temp = A + FH(B, C, D) + cwp[(int) (*pp++)] + *pc++;
-		CYCLIC(temp, ps[i & 3]);
-		temp += B;
-		A = D;
-		D = C;
-		C = B;
-		B = temp;
-	}
-	ps += 4;
-	for (i = 0; i < 16; i++) {
-		temp = A + FI(B, C, D) + cwp[(int) (*pp++)] + *pc++;
-		CYCLIC(temp, ps[i & 3]);
-		temp += B;
-		A = D;
-		D = C;
-		C = B;
-		B = temp;
-	}
+#ifdef MD5_SMALL
+		pc = C_array;
+		pp = P_array;
+		ps = S_array - 4;
 
+		for (i = 0; i < 64; i++, pp++) {
+			if ((i & 0x0f) == 0)
+				ps += 4;
 
-	ctx->A += A;
-	ctx->B += B;
-	ctx->C += C;
-	ctx->D += D;
-}
+			temp = a;
+			switch (i >> 4) {
+			case 0:
+				temp += F(b, c, d) + SET((int)*pp);
+				break;
+			case 1:
+				temp += G(b, c, d);
+				goto next;
+			case 2:
+				temp += H(b, c, d);
+				goto next;
+			default:
+				temp += I(b, c, d);
+			next:
+				temp += GET((int)*pp);
+				break;
+			}
+			temp += *pc++;
+			temp = ROTL(temp, ps[i & 3]);
 
-/* Feed data through a temporary buffer to call md5_hash_aligned_block()
- * with chunks of data that are 4-byte aligned and a multiple of 64 bytes.
- * This function's internal buffer remembers previous data until it has 64
- * bytes worth to pass on.  Call md5_end() to flush this buffer. */
-
-void md5_hash(const void *buffer, size_t len, md5_ctx_t *ctx)
-{
-	char *buf = (char *)buffer;
-
-	/* RFC 1321 specifies the possible length of the file up to 2^64 bits,
-	 * Here we only track the number of bytes.  */
-
-	ctx->total += len;
-
-	// Process all input.
-
-	while (len) {
-		unsigned i = 64 - ctx->buflen;
-
-		// Copy data into aligned buffer.
-
-		if (i > len)
-			i = len;
-		memcpy(ctx->buffer + ctx->buflen, buf, i);
-		len -= i;
-		ctx->buflen += i;
-		buf += i;
-
-		// When buffer fills up, process it.
-
-		if (ctx->buflen == 64) {
-			md5_hash_block(ctx->buffer, ctx);
-			ctx->buflen = 0;
+			a = d;
+			d = c;
+			c = b;
+			b += temp;
 		}
-	}
+#else
+/* Round 1 */
+		STEP(F, a, b, c, d, SET(0), 0xd76aa478, 7)
+		STEP(F, d, a, b, c, SET(1), 0xe8c7b756, 12)
+		STEP(F, c, d, a, b, SET(2), 0x242070db, 17)
+		STEP(F, b, c, d, a, SET(3), 0xc1bdceee, 22)
+		STEP(F, a, b, c, d, SET(4), 0xf57c0faf, 7)
+		STEP(F, d, a, b, c, SET(5), 0x4787c62a, 12)
+		STEP(F, c, d, a, b, SET(6), 0xa8304613, 17)
+		STEP(F, b, c, d, a, SET(7), 0xfd469501, 22)
+		STEP(F, a, b, c, d, SET(8), 0x698098d8, 7)
+		STEP(F, d, a, b, c, SET(9), 0x8b44f7af, 12)
+		STEP(F, c, d, a, b, SET(10), 0xffff5bb1, 17)
+		STEP(F, b, c, d, a, SET(11), 0x895cd7be, 22)
+		STEP(F, a, b, c, d, SET(12), 0x6b901122, 7)
+		STEP(F, d, a, b, c, SET(13), 0xfd987193, 12)
+		STEP(F, c, d, a, b, SET(14), 0xa679438e, 17)
+		STEP(F, b, c, d, a, SET(15), 0x49b40821, 22)
+
+/* Round 2 */
+		STEP(G, a, b, c, d, GET(1), 0xf61e2562, 5)
+		STEP(G, d, a, b, c, GET(6), 0xc040b340, 9)
+		STEP(G, c, d, a, b, GET(11), 0x265e5a51, 14)
+		STEP(G, b, c, d, a, GET(0), 0xe9b6c7aa, 20)
+		STEP(G, a, b, c, d, GET(5), 0xd62f105d, 5)
+		STEP(G, d, a, b, c, GET(10), 0x02441453, 9)
+		STEP(G, c, d, a, b, GET(15), 0xd8a1e681, 14)
+		STEP(G, b, c, d, a, GET(4), 0xe7d3fbc8, 20)
+		STEP(G, a, b, c, d, GET(9), 0x21e1cde6, 5)
+		STEP(G, d, a, b, c, GET(14), 0xc33707d6, 9)
+		STEP(G, c, d, a, b, GET(3), 0xf4d50d87, 14)
+		STEP(G, b, c, d, a, GET(8), 0x455a14ed, 20)
+		STEP(G, a, b, c, d, GET(13), 0xa9e3e905, 5)
+		STEP(G, d, a, b, c, GET(2), 0xfcefa3f8, 9)
+		STEP(G, c, d, a, b, GET(7), 0x676f02d9, 14)
+		STEP(G, b, c, d, a, GET(12), 0x8d2a4c8a, 20)
+
+/* Round 3 */
+		STEP(H, a, b, c, d, GET(5), 0xfffa3942, 4)
+		STEP(H2, d, a, b, c, GET(8), 0x8771f681, 11)
+		STEP(H, c, d, a, b, GET(11), 0x6d9d6122, 16)
+		STEP(H2, b, c, d, a, GET(14), 0xfde5380c, 23)
+		STEP(H, a, b, c, d, GET(1), 0xa4beea44, 4)
+		STEP(H2, d, a, b, c, GET(4), 0x4bdecfa9, 11)
+		STEP(H, c, d, a, b, GET(7), 0xf6bb4b60, 16)
+		STEP(H2, b, c, d, a, GET(10), 0xbebfbc70, 23)
+		STEP(H, a, b, c, d, GET(13), 0x289b7ec6, 4)
+		STEP(H2, d, a, b, c, GET(0), 0xeaa127fa, 11)
+		STEP(H, c, d, a, b, GET(3), 0xd4ef3085, 16)
+		STEP(H2, b, c, d, a, GET(6), 0x04881d05, 23)
+		STEP(H, a, b, c, d, GET(9), 0xd9d4d039, 4)
+		STEP(H2, d, a, b, c, GET(12), 0xe6db99e5, 11)
+		STEP(H, c, d, a, b, GET(15), 0x1fa27cf8, 16)
+		STEP(H2, b, c, d, a, GET(2), 0xc4ac5665, 23)
+
+/* Round 4 */
+		STEP(I, a, b, c, d, GET(0), 0xf4292244, 6)
+		STEP(I, d, a, b, c, GET(7), 0x432aff97, 10)
+		STEP(I, c, d, a, b, GET(14), 0xab9423a7, 15)
+		STEP(I, b, c, d, a, GET(5), 0xfc93a039, 21)
+		STEP(I, a, b, c, d, GET(12), 0x655b59c3, 6)
+		STEP(I, d, a, b, c, GET(3), 0x8f0ccc92, 10)
+		STEP(I, c, d, a, b, GET(10), 0xffeff47d, 15)
+		STEP(I, b, c, d, a, GET(1), 0x85845dd1, 21)
+		STEP(I, a, b, c, d, GET(8), 0x6fa87e4f, 6)
+		STEP(I, d, a, b, c, GET(15), 0xfe2ce6e0, 10)
+		STEP(I, c, d, a, b, GET(6), 0xa3014314, 15)
+		STEP(I, b, c, d, a, GET(13), 0x4e0811a1, 21)
+		STEP(I, a, b, c, d, GET(4), 0xf7537e82, 6)
+		STEP(I, d, a, b, c, GET(11), 0xbd3af235, 10)
+		STEP(I, c, d, a, b, GET(2), 0x2ad7d2bb, 15)
+		STEP(I, b, c, d, a, GET(9), 0xeb86d391, 21)
+#endif
+
+		a += saved_a;
+		b += saved_b;
+		c += saved_c;
+		d += saved_d;
+
+		ptr += 64;
+	} while (size -= 64);
+
+	ctx->a = a;
+	ctx->b = b;
+	ctx->c = c;
+	ctx->d = d;
+
+	return ptr;
 }
 
-/* Process the remaining bytes in the buffer and put result from CTX
- * in first 16 bytes following RESBUF.  The result is always in little
- * endian byte order, so that a byte-wise output yields to the wanted
- * ASCII representation of the message digest.
- *
- * IMPORTANT: On some systems it is required that RESBUF is correctly
- * aligned for a 32 bits value.
- */
+void md5_begin(md5_ctx_t *ctx)
+{
+	ctx->a = 0x67452301;
+	ctx->b = 0xefcdab89;
+	ctx->c = 0x98badcfe;
+	ctx->d = 0x10325476;
+
+	ctx->lo = 0;
+	ctx->hi = 0;
+}
+
+void md5_hash(const void *data, size_t size, md5_ctx_t *ctx)
+{
+	uint32_t saved_lo;
+	unsigned long used, available;
+
+	saved_lo = ctx->lo;
+	if ((ctx->lo = (saved_lo + size) & 0x1fffffff) < saved_lo)
+		ctx->hi++;
+	ctx->hi += size >> 29;
+
+	used = saved_lo & 0x3f;
+
+	if (used) {
+		available = 64 - used;
+
+		if (size < available) {
+			memcpy(&ctx->buffer[used], data, size);
+			return;
+		}
+
+		memcpy(&ctx->buffer[used], data, available);
+		data = (const unsigned char *)data + available;
+		size -= available;
+		body(ctx, ctx->buffer, 64);
+	}
+
+	if (size >= 64) {
+		data = body(ctx, data, size & ~((size_t) 0x3f));
+		size &= 0x3f;
+	}
+
+	memcpy(ctx->buffer, data, size);
+}
+
 void md5_end(void *resbuf, md5_ctx_t *ctx)
 {
-	char *buf = ctx->buffer;
-	int i;
+	unsigned char *result = resbuf;
+	unsigned long used, available;
 
-	/* Pad data to block size.  */
+	used = ctx->lo & 0x3f;
 
-	buf[ctx->buflen++] = (char)0x80;
-	memset(buf + ctx->buflen, 0, 128 - ctx->buflen);
+	ctx->buffer[used++] = 0x80;
 
-	/* Put the 64-bit file length in *bits* at the end of the buffer.  */
-	ctx->total <<= 3;
-	if (ctx->buflen > 56)
-		buf += 64;
+	available = 64 - used;
 
-	for (i = 0; i < 8; i++)
-		buf[56 + i] = ctx->total >> (i*8);
+	if (available < 8) {
+		memset(&ctx->buffer[used], 0, available);
+		body(ctx, ctx->buffer, 64);
+		used = 0;
+		available = 64;
+	}
 
-	/* Process last bytes.  */
-	if (buf != ctx->buffer)
-		md5_hash_block(ctx->buffer, ctx);
-	md5_hash_block(buf, ctx);
+	memset(&ctx->buffer[used], 0, available - 8);
 
-	/* Put result from CTX in first 16 bytes following RESBUF.  The result is
-	 * always in little endian byte order, so that a byte-wise output yields
-	 * to the wanted ASCII representation of the message digest.
-	 *
-	 * IMPORTANT: On some systems it is required that RESBUF is correctly
-	 * aligned for a 32 bits value.
-	 */
-	((uint32_t *) resbuf)[0] = SWAP_LE32(ctx->A);
-	((uint32_t *) resbuf)[1] = SWAP_LE32(ctx->B);
-	((uint32_t *) resbuf)[2] = SWAP_LE32(ctx->C);
-	((uint32_t *) resbuf)[3] = SWAP_LE32(ctx->D);
+	ctx->lo <<= 3;
+	ctx->buffer[56] = ctx->lo;
+	ctx->buffer[57] = ctx->lo >> 8;
+	ctx->buffer[58] = ctx->lo >> 16;
+	ctx->buffer[59] = ctx->lo >> 24;
+	ctx->buffer[60] = ctx->hi;
+	ctx->buffer[61] = ctx->hi >> 8;
+	ctx->buffer[62] = ctx->hi >> 16;
+	ctx->buffer[63] = ctx->hi >> 24;
+
+	body(ctx, ctx->buffer, 64);
+
+	result[0] = ctx->a;
+	result[1] = ctx->a >> 8;
+	result[2] = ctx->a >> 16;
+	result[3] = ctx->a >> 24;
+	result[4] = ctx->b;
+	result[5] = ctx->b >> 8;
+	result[6] = ctx->b >> 16;
+	result[7] = ctx->b >> 24;
+	result[8] = ctx->c;
+	result[9] = ctx->c >> 8;
+	result[10] = ctx->c >> 16;
+	result[11] = ctx->c >> 24;
+	result[12] = ctx->d;
+	result[13] = ctx->d >> 8;
+	result[14] = ctx->d >> 16;
+	result[15] = ctx->d >> 24;
+
+	memset(ctx, 0, sizeof(*ctx));
 }

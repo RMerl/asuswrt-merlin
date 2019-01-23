@@ -30,6 +30,15 @@
  *        a  directory:  $TMPDIR, if set; else the directory specified via
  *        -p; else /tmp [deprecated]
  */
+//config:config MKTEMP
+//config:	bool "mktemp"
+//config:	default y
+//config:	help
+//config:	  mktemp is used to create unique temporary files
+
+//applet:IF_MKTEMP(APPLET(mktemp, BB_DIR_BIN, BB_SUID_DROP))
+
+//kbuild:lib-$(CONFIG_MKTEMP) += mktemp.o
 
 //usage:#define mktemp_trivial_usage
 //usage:       "[-dt] [-p DIR] [TEMPLATE]"
@@ -38,7 +47,7 @@
 //usage:       "TEMPLATE must end with XXXXXX (e.g. [/dir/]nameXXXXXX).\n"
 //usage:       "Without TEMPLATE, -t tmp.XXXXXX is assumed.\n"
 //usage:     "\n	-d	Make directory, not file"
-////usage:   "\n	-q	Fail silently on errors" - we ignore this opt
+//usage:     "\n	-q	Fail silently on errors"
 //usage:     "\n	-t	Prepend base directory name to TEMPLATE"
 //usage:     "\n	-p DIR	Use DIR as a base directory (implies -t)"
 //usage:     "\n	-u	Do not create anything; print a name"
@@ -71,7 +80,6 @@ int mktemp_main(int argc UNUSED_PARAM, char **argv)
 	if (!path || path[0] == '\0')
 		path = "/tmp";
 
-	/* -q is ignored */
 	opt_complementary = "?1"; /* 1 argument max */
 	opts = getopt32(argv, "dqtp:u", &path);
 
@@ -83,33 +91,32 @@ int mktemp_main(int argc UNUSED_PARAM, char **argv)
 		chp = xstrdup("tmp.XXXXXX");
 		opts |= OPT_t;
 	}
-
-	if (opts & OPT_u) {
-		/* Remove (up to) 6 X's */
-		unsigned len = strlen(chp);
-		int cnt = len > 6 ? 6 : len;
-		while (--cnt >= 0 && chp[--len] == 'X')
-			chp[len] = '\0';
-
-		chp = tempnam(opts & (OPT_t|OPT_p) ? path : "./", chp);
-		if (!chp)
-			return EXIT_FAILURE;
-		if (!(opts & (OPT_t|OPT_p)))
-			chp += 2;
-		goto ret;
+#if 0
+	/* Don't allow directory separator in template */
+	if ((opts & OPT_t) && bb_basename(chp) != chp) {
+		errno = EINVAL;
+		goto error;
 	}
-
+#endif
 	if (opts & (OPT_t|OPT_p))
 		chp = concat_path_file(path, chp);
 
-	if (opts & OPT_d) {
+	if (opts & OPT_u) {
+		chp = mktemp(chp);
+		if (chp[0] == '\0')
+			goto error;
+	} else if (opts & OPT_d) {
 		if (mkdtemp(chp) == NULL)
-			return EXIT_FAILURE;
+			goto error;
 	} else {
 		if (mkstemp(chp) < 0)
-			return EXIT_FAILURE;
+			goto error;
 	}
- ret:
 	puts(chp);
 	return EXIT_SUCCESS;
+ error:
+	if (opts & OPT_q)
+		return EXIT_FAILURE;
+	/* don't use chp as it gets mangled in case of error */
+	bb_perror_nomsg_and_die();
 }

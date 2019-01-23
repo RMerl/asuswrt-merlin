@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: wget 1.9.1\n"
 "Report-Msgid-Bugs-To: bug-wget@gnu.org\n"
-"POT-Creation-Date: 2014-10-27 09:59+0100\n"
+"POT-Creation-Date: 2017-10-26 17:36+0200\n"
 "PO-Revision-Date: 2004-12-15 19:46+0000\n"
 "Last-Translator: Simos Xenitellis <simos74@gmx.net>\n"
 "Language-Team: Greek <nls@tux.hellug.gr>\n"
@@ -14,8 +14,9 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8-bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
 
-#: lib/error.c:188
+#: lib/error.c:191
 #, fuzzy
 msgid "Unknown system error"
 msgstr "Άγνωστο σφάλμα"
@@ -24,7 +25,7 @@ msgstr "Άγνωστο σφάλμα"
 msgid "Address family for hostname not supported"
 msgstr ""
 
-#: lib/gai_strerror.c:58 src/host.c:365
+#: lib/gai_strerror.c:58 src/host.c:373
 msgid "Temporary failure in name resolution"
 msgstr ""
 
@@ -93,61 +94,66 @@ msgstr ""
 msgid "Parameter string not correctly encoded"
 msgstr ""
 
-#: lib/gai_strerror.c:87 src/host.c:367
+#: lib/gai_strerror.c:87 src/host.c:375
 msgid "Unknown error"
 msgstr "Άγνωστο σφάλμα"
 
-#: lib/getopt.c:547 lib/getopt.c:576
+#: lib/getopt.c:575 lib/getopt.c:604
 #, fuzzy, c-format
 msgid "%s: option '%s' is ambiguous; possibilities:"
 msgstr "%s: η επιλογή `%s' είναι αόριστη\n"
 
-#: lib/getopt.c:624 lib/getopt.c:628
+#: lib/getopt.c:619
+#, fuzzy, c-format
+msgid "%s: option '%s' is ambiguous\n"
+msgstr "%s: η επιλογή `%s' είναι αόριστη\n"
+
+#: lib/getopt.c:654 lib/getopt.c:658
 #, fuzzy, c-format
 msgid "%s: option '--%s' doesn't allow an argument\n"
 msgstr "%s: η επιλογή `--%s' δεν επιδέχεται όρισμα\n"
 
-#: lib/getopt.c:637 lib/getopt.c:642
+#: lib/getopt.c:667 lib/getopt.c:672
 #, fuzzy, c-format
 msgid "%s: option '%c%s' doesn't allow an argument\n"
 msgstr "%s: η επιλογή `%c%s' δεν επιδέχεται όρισμα\n"
 
-#: lib/getopt.c:685 lib/getopt.c:704
+#: lib/getopt.c:715 lib/getopt.c:734
 #, fuzzy, c-format
 msgid "%s: option '--%s' requires an argument\n"
 msgstr "%s: η επιλογή `%s' απαιτεί όρισμα\n"
 
-#: lib/getopt.c:742 lib/getopt.c:745
+#: lib/getopt.c:772 lib/getopt.c:775
 #, fuzzy, c-format
 msgid "%s: unrecognized option '--%s'\n"
 msgstr "%s: μη αναγνωρίσημη επιλογή `--%s'\n"
 
-#: lib/getopt.c:753 lib/getopt.c:756
+#: lib/getopt.c:783 lib/getopt.c:786
 #, fuzzy, c-format
 msgid "%s: unrecognized option '%c%s'\n"
 msgstr "%s: μη αναγνωρίσιμη επιλογή `%c%s'\n"
 
-#: lib/getopt.c:805 lib/getopt.c:808
+#: lib/getopt.c:835 lib/getopt.c:838
 #, fuzzy, c-format
 msgid "%s: invalid option -- '%c'\n"
 msgstr "%s: μη αποδεκτή επιλογή -- %c\n"
 
-#: lib/getopt.c:861 lib/getopt.c:878 lib/getopt.c:1088 lib/getopt.c:1106
+#: lib/getopt.c:891 lib/getopt.c:908 lib/getopt.c:1118 lib/getopt.c:1136
 #, fuzzy, c-format
 msgid "%s: option requires an argument -- '%c'\n"
 msgstr "%s: η επιλογή απαιτεί μια παράμετρο -- %c\n"
 
-#: lib/getopt.c:934 lib/getopt.c:950
+#: lib/getopt.c:964 lib/getopt.c:980
 #, fuzzy, c-format
 msgid "%s: option '-W %s' is ambiguous\n"
 msgstr "%s: η επιλογή `%s' είναι αόριστη\n"
 
-#: lib/getopt.c:974 lib/getopt.c:992
+#: lib/getopt.c:1004 lib/getopt.c:1022
 #, fuzzy, c-format
 msgid "%s: option '-W %s' doesn't allow an argument\n"
 msgstr "%s: η επιλογή `--%s' δεν επιδέχεται όρισμα\n"
 
-#: lib/getopt.c:1013 lib/getopt.c:1031
+#: lib/getopt.c:1043 lib/getopt.c:1061
 #, fuzzy, c-format
 msgid "%s: option '-W %s' requires an argument\n"
 msgstr "%s: η επιλογή `%s' απαιτεί όρισμα\n"
@@ -173,107 +179,107 @@ msgstr "%s: η επιλογή `%s' απαιτεί όρισμα\n"
 #. If you don't know what to put here, please see
 #. <http://en.wikipedia.org/wiki/Quotation_marks_in_other_languages>
 #. and use glyphs suitable for your language.
-#: lib/quotearg.c:312
+#: lib/quotearg.c:354
 msgid "`"
 msgstr ""
 
-#: lib/quotearg.c:313
+#: lib/quotearg.c:355
 msgid "'"
 msgstr ""
 
-#: lib/regcomp.c:131
+#: lib/regcomp.c:135
 msgid "Success"
 msgstr ""
 
-#: lib/regcomp.c:134
+#: lib/regcomp.c:138
 msgid "No match"
 msgstr ""
 
-#: lib/regcomp.c:137
+#: lib/regcomp.c:141
 msgid "Invalid regular expression"
 msgstr ""
 
-#: lib/regcomp.c:140
+#: lib/regcomp.c:144
 msgid "Invalid collation character"
 msgstr ""
 
-#: lib/regcomp.c:143
+#: lib/regcomp.c:147
 #, fuzzy
 msgid "Invalid character class name"
 msgstr "Μη έγκυρο όνομα εξυπηρετητή"
 
-#: lib/regcomp.c:146
+#: lib/regcomp.c:150
 msgid "Trailing backslash"
 msgstr ""
 
-#: lib/regcomp.c:149
+#: lib/regcomp.c:153
 #, fuzzy
 msgid "Invalid back reference"
 msgstr "Μη έγκυρο όνομα εξυπηρετητή"
 
-#: lib/regcomp.c:152
-msgid "Unmatched [ or [^"
+#: lib/regcomp.c:156
+msgid "Unmatched [, [^, [:, [., or [="
 msgstr ""
 
-#: lib/regcomp.c:155
+#: lib/regcomp.c:159
 msgid "Unmatched ( or \\("
 msgstr ""
 
-#: lib/regcomp.c:158
+#: lib/regcomp.c:162
 msgid "Unmatched \\{"
 msgstr ""
 
-#: lib/regcomp.c:161
+#: lib/regcomp.c:165
 msgid "Invalid content of \\{\\}"
 msgstr ""
 
-#: lib/regcomp.c:164
+#: lib/regcomp.c:168
 #, fuzzy
 msgid "Invalid range end"
 msgstr "Μη έγκυρο όνομα εξυπηρετητή"
 
-#: lib/regcomp.c:167
+#: lib/regcomp.c:171
 msgid "Memory exhausted"
 msgstr ""
 
-#: lib/regcomp.c:170
+#: lib/regcomp.c:174
 msgid "Invalid preceding regular expression"
 msgstr ""
 
-#: lib/regcomp.c:173
+#: lib/regcomp.c:177
 msgid "Premature end of regular expression"
 msgstr ""
 
-#: lib/regcomp.c:176
+#: lib/regcomp.c:180
 msgid "Regular expression too big"
 msgstr ""
 
-#: lib/regcomp.c:179
+#: lib/regcomp.c:183
 msgid "Unmatched ) or \\)"
 msgstr ""
 
-#: lib/regcomp.c:707
+#: lib/regcomp.c:687
 msgid "No previous regular expression"
 msgstr ""
 
-#: lib/spawn-pipe.c:135 lib/spawn-pipe.c:138 lib/spawn-pipe.c:259
-#: lib/spawn-pipe.c:262
+#: lib/spawn-pipe.c:137 lib/spawn-pipe.c:140 lib/spawn-pipe.c:261
+#: lib/spawn-pipe.c:264
 #, c-format
 msgid "cannot create pipe"
 msgstr ""
 
-#: lib/spawn-pipe.c:229 lib/spawn-pipe.c:343 lib/wait-process.c:282
+#: lib/spawn-pipe.c:231 lib/spawn-pipe.c:345 lib/wait-process.c:282
 #: lib/wait-process.c:356
 #, c-format
 msgid "%s subprocess failed"
 msgstr ""
 
-#: lib/w32spawn.h:43
+#: lib/w32spawn.h:45
 #, c-format
 msgid "_open_osfhandle failed"
 msgstr ""
 
-#: lib/w32spawn.h:84
+#: lib/w32spawn.h:86
 #, c-format
 msgid "cannot restore fd %d: dup2 failed"
 msgstr ""
@@ -292,255 +298,300 @@ msgstr ""
 msgid "memory exhausted"
 msgstr ""
 
-#: src/connect.c:200
+#: src/connect.c:202
 #, c-format
 msgid "%s: unable to resolve bind address %s; disabling bind.\n"
 msgstr ""
 
-#: src/connect.c:284
+#: src/connect.c:283
 #, fuzzy, c-format
 msgid "Connecting to %s|%s|:%d... "
 msgstr "Σύνδεση με %s[%s]:%hu... "
 
-#: src/connect.c:293
+#: src/connect.c:291
 #, fuzzy, c-format
 msgid "Connecting to %s:%d... "
 msgstr "Σύνδεση με %s:%hu... "
 
-#: src/connect.c:296
+#: src/connect.c:294
 #, fuzzy, c-format
 msgid "Connecting to [%s]:%d... "
 msgstr "Σύνδεση με %s[%s]:%hu... "
+
+#: src/connect.c:330
+#, c-format
+msgid "setsockopt SO_RCVBUF failed: %s\n"
+msgstr ""
 
 #: src/connect.c:358
 msgid "connected.\n"
 msgstr "συνδέθηκε.\n"
 
-#: src/connect.c:370 src/host.c:783 src/host.c:812
+#: src/connect.c:377 src/host.c:914 src/host.c:952
 #, c-format
 msgid "failed: %s.\n"
 msgstr "απέτυχε: %s.\n"
 
-#: src/connect.c:394 src/http.c:1990
+#: src/connect.c:401 src/http.c:2096
 #, c-format
 msgid "%s: unable to resolve host address %s\n"
 msgstr ""
 
-#: src/convert.c:196
+#: src/connect.c:471
+#, c-format
+msgid "setsockopt SO_REUSEADDR failed: %s\n"
+msgstr ""
+
+#: src/connect.c:692 src/connect.c:739
+#, c-format
+msgid "Too many fds open.  Cannot use select on a fd >= %d\n"
+msgstr ""
+
+#: src/convert.c:198
 #, fuzzy, c-format
-msgid "Converted %d files in %s seconds.\n"
+msgid "Converted links in %d files in %s seconds.\n"
 msgstr "Μετατράπηκαν %d αρχεία σε %.2f δευτερόλεπτα.\n"
 
-#: src/convert.c:224
-#, c-format
-msgid "Converting %s... "
+#: src/convert.c:227
+#, fuzzy, c-format
+msgid "Converting links in %s... "
 msgstr "Μετατροπή του %s... "
 
-#: src/convert.c:237
+#: src/convert.c:240
 msgid "nothing to do.\n"
 msgstr "τίποτα να κάνω.\n"
 
-#: src/convert.c:245 src/convert.c:269
+#: src/convert.c:248 src/convert.c:272
 #, c-format
 msgid "Cannot convert links in %s: %s\n"
 msgstr "Αδυναμία μετατροπής συνδέσμων στο %s: %s\n"
 
-#: src/convert.c:260
+#: src/convert.c:263
 #, fuzzy, c-format
 msgid "Unable to delete %s: %s\n"
 msgstr "Αποτυχία διαγραφής του `%s': %s\n"
 
-#: src/convert.c:476
+#: src/convert.c:578
 #, c-format
 msgid "Cannot back up %s as %s: %s\n"
 msgstr "Αδύνατη η λήψη αντιγράγου ασφαλείας του %s ως %s: %s\n"
 
-#: src/cookies.c:450
+#: src/cookies.c:311
+#, fuzzy, c-format
+msgid "Unable to get cookie for %s\n"
+msgstr "Αποτυχία διαγραφής του `%s': %s\n"
+
+#: src/cookies.c:458
 #, fuzzy, c-format
 msgid "Syntax error in Set-Cookie: %s at position %d.\n"
 msgstr "Συντακτικό σφάλμα στο Set-Cookie: πρόωρο τέλος αλφαριθμητικού.\n"
 
-#: src/cookies.c:732
+#: src/cookies.c:772
 #, c-format
 msgid "Cookie coming from %s attempted to set domain to "
 msgstr ""
 
-#: src/cookies.c:735 src/spider.c:92
+#: src/cookies.c:775
 #, c-format
 msgid "%s\n"
 msgstr ""
 
-#: src/cookies.c:1183 src/cookies.c:1304
+#: src/cookies.c:1226 src/cookies.c:1347
 #, fuzzy, c-format
 msgid "Cannot open cookies file %s: %s\n"
 msgstr "Αδύνατο το άνοιγμα του αρχείου cookies `%s': %s\n"
 
-#: src/cookies.c:1341
+#: src/cookies.c:1384
 #, fuzzy, c-format
 msgid "Error writing to %s: %s\n"
 msgstr "Σφάλμα στην εγγραφή στο `%s': %s\n"
 
-#: src/cookies.c:1344
+#: src/cookies.c:1387
 #, fuzzy, c-format
 msgid "Error closing %s: %s\n"
 msgstr "Σφάλμα στο κλείσιμο του `%s': %s\n"
 
-#: src/ftp-ls.c:1049
+#: src/ftp-ls.c:1051
 msgid "Unsupported listing type, trying Unix listing parser.\n"
 msgstr ""
 "Μη υποστηριζόμενος τύπος καταλόγου, δοκιμάζω να τον διαβάσω σαν Unix "
 "κατάλογο.\n"
 
-#: src/ftp-ls.c:1100 src/ftp-ls.c:1102
+#: src/ftp-ls.c:1102 src/ftp-ls.c:1104
 #, c-format
 msgid "Index of /%s on %s:%d"
 msgstr "Κατάλογος του /%s στο %s:%d"
 
-#: src/ftp-ls.c:1127
+#: src/ftp-ls.c:1129
 #, c-format
 msgid "time unknown       "
 msgstr "ώρα άγνωστη        "
 
-#: src/ftp-ls.c:1131
+#: src/ftp-ls.c:1133
 #, c-format
 msgid "File        "
 msgstr "Αρχείο      "
 
-#: src/ftp-ls.c:1134
+#: src/ftp-ls.c:1136
 #, c-format
 msgid "Directory   "
 msgstr "Κατάλογος   "
 
-#: src/ftp-ls.c:1137
+#: src/ftp-ls.c:1139
 #, c-format
 msgid "Link        "
 msgstr "Σύνδεση     "
 
-#: src/ftp-ls.c:1140
+#: src/ftp-ls.c:1142
 #, c-format
 msgid "Not sure    "
 msgstr "Όχι απόλυτα σίγουρος   "
 
-#: src/ftp-ls.c:1163
+#: src/ftp-ls.c:1165
 #, c-format
 msgid " (%s bytes)"
 msgstr " (%s byte)"
 
-#: src/ftp.c:222
+#: src/ftp.c:226
 #, c-format
 msgid "Length: %s"
 msgstr "Μήκος: %s"
 
-#: src/ftp.c:228 src/http.c:2810
+#: src/ftp.c:232 src/http.c:4003
 #, c-format
 msgid ", %s (%s) remaining"
 msgstr ""
 
-#: src/ftp.c:232 src/http.c:2814
+#: src/ftp.c:236 src/http.c:4007
 #, c-format
 msgid ", %s remaining"
 msgstr ""
 
-#: src/ftp.c:235
+#: src/ftp.c:239
 msgid " (unauthoritative)\n"
 msgstr " (ανεπίσημο)\n"
 
-#: src/ftp.c:313
+#: src/ftp.c:404
+msgid "Could not initialize SSL. It will be disabled."
+msgstr ""
+
+#: src/ftp.c:486
 #, c-format
 msgid "Logging in as %s ... "
 msgstr "Αυθεντικοποίηση ως %s ... "
 
-#: src/ftp.c:332 src/ftp.c:378 src/ftp.c:445 src/ftp.c:510 src/ftp.c:740
-#: src/ftp.c:793 src/ftp.c:840 src/ftp.c:897 src/ftp.c:958 src/ftp.c:1049
-#: src/ftp.c:1099
+#: src/ftp.c:505 src/ftp.c:591 src/ftp.c:658 src/ftp.c:723 src/ftp.c:957
+#: src/ftp.c:1010 src/ftp.c:1057 src/ftp.c:1120 src/ftp.c:1181 src/ftp.c:1279
+#: src/ftp.c:1329
 msgid "Error in server response, closing control connection.\n"
 msgstr "Σφάλμα στην απάντηση του διακομιστή, κλείνει η σύνδεση ελέγχου.\n"
 
-#: src/ftp.c:339
+#: src/ftp.c:512
 msgid "Error in server greeting.\n"
 msgstr "Σφάλμα στο μήνυμα αποδοχής του διακομιστή.\n"
 
-#: src/ftp.c:346 src/ftp.c:518 src/ftp.c:748 src/ftp.c:848 src/ftp.c:907
-#: src/ftp.c:968 src/ftp.c:1059 src/ftp.c:1109
+#: src/ftp.c:519 src/ftp.c:731 src/ftp.c:965 src/ftp.c:1065 src/ftp.c:1130
+#: src/ftp.c:1191 src/ftp.c:1289 src/ftp.c:1339
 msgid "Write failed, closing control connection.\n"
 msgstr "Αποτυχία στην εγγραφή δεδομένων, κλείνει η σύνδεση ελέγχου.\n"
 
-#: src/ftp.c:352
+#: src/ftp.c:525
 msgid "The server refuses login.\n"
 msgstr "Ο διακομιστής απαγορεύει τη σύνδεση.\n"
 
-#: src/ftp.c:358
+#: src/ftp.c:531
 msgid "Login incorrect.\n"
 msgstr "Σφάλμα στην αυθεντικοποίηση.\n"
 
-#: src/ftp.c:364
+#: src/ftp.c:537
 msgid "Logged in!\n"
 msgstr "Επιτυχής σύνδεση!\n"
 
-#: src/ftp.c:386
+#: src/ftp.c:557
+msgid "Server did not accept the 'PBSZ 0' command.\n"
+msgstr ""
+
+#: src/ftp.c:567
+#, c-format
+msgid "Server did not accept the 'PROT %c' command.\n"
+msgstr ""
+
+#: src/ftp.c:599
 msgid "Server error, can't determine system type.\n"
 msgstr "Σφάλμα διακομιστή, δεν μπορώ να συμπεράνω τον τύπο του συστήματος.\n"
 
-#: src/ftp.c:395 src/ftp.c:884 src/ftp.c:941 src/ftp.c:984
+#: src/ftp.c:608 src/ftp.c:1100 src/ftp.c:1164 src/ftp.c:1207
 msgid "done.    "
 msgstr "έγινε.    "
 
-#: src/ftp.c:498 src/ftp.c:765 src/ftp.c:810 src/ftp.c:1079 src/ftp.c:1128
+#: src/ftp.c:711 src/ftp.c:983 src/ftp.c:1027 src/ftp.c:1309 src/ftp.c:1358
 msgid "done.\n"
 msgstr "έγινε.\n"
 
-#: src/ftp.c:525
+#: src/ftp.c:738
 #, c-format
 msgid "Unknown type `%c', closing control connection.\n"
 msgstr "Άγνωστος τύπος `%c', διακοπή της σύνδεσης.\n"
 
-#: src/ftp.c:537
+#: src/ftp.c:750
 msgid "done.  "
 msgstr "έγινε.  "
 
-#: src/ftp.c:543
+#: src/ftp.c:756
 msgid "==> CWD not needed.\n"
 msgstr "==> CWD δεν απαιτήται.\n"
 
-#: src/ftp.c:754
+#: src/ftp.c:940
+msgid "Logically impossible section reached in getftp()"
+msgstr ""
+
+#: src/ftp.c:941
+#, c-format
+msgid ""
+"cwd_count: %d\n"
+"cwd_start: %d\n"
+"cwd_end: %d\n"
+msgstr ""
+
+#: src/ftp.c:971
 #, fuzzy, c-format
 msgid ""
 "No such directory %s.\n"
 "\n"
 msgstr "Δεν υπάρχει τέτοιος κατάλογος `%s'.\n"
 
-#: src/ftp.c:775
+#: src/ftp.c:992
 msgid "==> CWD not required.\n"
 msgstr "==> CWD δεν απαιτείται.\n"
 
-#: src/ftp.c:818
+#: src/ftp.c:1035
 #, fuzzy
 msgid "File has already been retrieved.\n"
 msgstr "Το αρχείο `%s' υπάρχει ήδη, δεν επανακτάται.\n"
 
-#: src/ftp.c:854
+#: src/ftp.c:1071
 msgid "Cannot initiate PASV transfer.\n"
 msgstr "Δεν είναι δυνατή να ξεκινήσει μεταφορά τύπου PASV.\n"
 
-#: src/ftp.c:858
+#: src/ftp.c:1075
 msgid "Cannot parse PASV response.\n"
 msgstr "Δεν είναι δυνατή η μετάφραση της απάντησης PASV.\n"
 
-#: src/ftp.c:875
+#: src/ftp.c:1092
 #, fuzzy, c-format
 msgid "couldn't connect to %s port %d: %s\n"
 msgstr "αδύνατη η σύνδεση στο %s:%hu: %s\n"
 
-#: src/ftp.c:923
+#: src/ftp.c:1146
 #, c-format
 msgid "Bind error (%s).\n"
 msgstr "Σφάλμα στη σύνδεση (%s).\n"
 
-#: src/ftp.c:929
+#: src/ftp.c:1152
 msgid "Invalid PORT.\n"
 msgstr "Μη έγκυρη ΘΥΡΑ.\n"
 
-#: src/ftp.c:975
+#: src/ftp.c:1198
 msgid ""
 "\n"
 "REST failed, starting from scratch.\n"
@@ -548,19 +599,19 @@ msgstr ""
 "\n"
 "Αποτυχία στην εντολή REST, εκκίνηση από την αρχή.\n"
 
-#: src/ftp.c:1015
+#: src/ftp.c:1241
 #, c-format
 msgid "File %s exists.\n"
 msgstr ""
 
-#: src/ftp.c:1021
+#: src/ftp.c:1247
 #, fuzzy, c-format
 msgid "No such file %s.\n"
 msgstr ""
 "Δεν υπάρχει αρχείο `%s'.\n"
 "\n"
 
-#: src/ftp.c:1067
+#: src/ftp.c:1297
 #, fuzzy, c-format
 msgid ""
 "No such file %s.\n"
@@ -569,7 +620,7 @@ msgstr ""
 "Δεν υπάρχει αρχείο `%s'.\n"
 "\n"
 
-#: src/ftp.c:1117
+#: src/ftp.c:1347
 #, fuzzy, c-format
 msgid ""
 "No such file or directory %s.\n"
@@ -578,47 +629,47 @@ msgstr ""
 "Δεν υπάρχει αρχείο ή κατάλογος `%s'.\n"
 "\n"
 
-#: src/ftp.c:1276 src/http.c:2940
+#: src/ftp.c:1506 src/http.c:2551
 #, c-format
 msgid "%s has sprung into existence.\n"
 msgstr ""
 
-#: src/ftp.c:1328
+#: src/ftp.c:1595
 #, c-format
 msgid "%s: %s, closing control connection.\n"
 msgstr "%s: %s, κλείσιμο σύνδεσης ελέγχου.\n"
 
-#: src/ftp.c:1340
+#: src/ftp.c:1607
 #, c-format
 msgid "%s (%s) - Data connection: %s; "
 msgstr "%s (%s) - Σύνδεση δεδομένων: %s; "
 
-#: src/ftp.c:1356
+#: src/ftp.c:1622
 msgid "Control connection closed.\n"
 msgstr "Η σύνδεση ελέγχου έκλεισε.\n"
 
-#: src/ftp.c:1374
+#: src/ftp.c:1640
 msgid "Data transfer aborted.\n"
 msgstr "Η μεταφορά δεδομένων διακόπηκε ανώμαλα.\n"
 
-#: src/ftp.c:1580
+#: src/ftp.c:1864
 #, fuzzy, c-format
 msgid "File %s already there; not retrieving.\n"
 msgstr "Το αρχείο `%s' υπάρχει ήδη, δεν επανακτάται.\n"
 
-#: src/ftp.c:1663 src/http.c:3107
+#: src/ftp.c:1949 src/http.c:4273
 #, c-format
 msgid "(try:%2d)"
 msgstr "(προσπάθεια:%2d)"
 
-#: src/ftp.c:1745 src/http.c:3493
+#: src/ftp.c:2037 src/http.c:4689
 #, c-format
 msgid ""
 "%s (%s) - written to stdout %s[%s]\n"
 "\n"
 msgstr ""
 
-#: src/ftp.c:1746 src/http.c:3494
+#: src/ftp.c:2038 src/http.c:4690
 #, fuzzy, c-format
 msgid ""
 "%s (%s) - %s saved [%s]\n"
@@ -627,28 +678,28 @@ msgstr ""
 "%s (%s) - `%s' αποθηκεύτηκε [%ld]\n"
 "\n"
 
-#: src/ftp.c:1804 src/main.c:1670 src/recur.c:433 src/recur.c:650
-#: src/retr.c:1102
+#: src/ftp.c:2098 src/main.c:2117 src/metalink.c:1137 src/recur.c:513
+#: src/recur.c:748 src/retr.c:1294
 #, c-format
 msgid "Removing %s.\n"
 msgstr "Διαγραφή του %s.\n"
 
-#: src/ftp.c:1850
+#: src/ftp.c:2152
 #, fuzzy, c-format
 msgid "Using %s as listing tmp file.\n"
 msgstr "Χρήση του `%s' για προσωρινό αρχείο περιεχομένων καταλόγου.\n"
 
-#: src/ftp.c:1867
+#: src/ftp.c:2169
 #, fuzzy, c-format
 msgid "Removed %s.\n"
 msgstr "Διαγραφή του `%s'.\n"
 
-#: src/ftp.c:1904
+#: src/ftp.c:2209
 #, c-format
 msgid "Recursion depth %d exceeded max. depth %d.\n"
 msgstr "Το επίπεδο αναδρομής %d ξεπέρασε το μέγιστο επίπεδο αναδρομής %d.\n"
 
-#: src/ftp.c:1974
+#: src/ftp.c:2279
 #, fuzzy, c-format
 msgid "Remote file no newer than local file %s -- not retrieving.\n"
 msgstr ""
@@ -656,7 +707,7 @@ msgstr ""
 "ανάκτηση.\n"
 "\n"
 
-#: src/ftp.c:1981
+#: src/ftp.c:2287
 #, fuzzy, c-format
 msgid ""
 "Remote file is newer than local file %s -- retrieving.\n"
@@ -666,18 +717,18 @@ msgstr ""
 "ανάκτηση.\n"
 "\n"
 
-#: src/ftp.c:1988
+#: src/ftp.c:2294
 #, fuzzy, c-format
 msgid ""
 "The sizes do not match (local %s) -- retrieving.\n"
 "\n"
 msgstr "Τα μεγέθη δεν είναι ίσα (τοπικό %ld) -- γίνεται ανάκτηση.\n"
 
-#: src/ftp.c:2006
+#: src/ftp.c:2312
 msgid "Invalid name of the symlink, skipping.\n"
 msgstr "Μη έγκυρο όνομα συμβολικού συνδέσμου, παρακάμπτεται.\n"
 
-#: src/ftp.c:2023
+#: src/ftp.c:2329
 #, c-format
 msgid ""
 "Already have correct symlink %s -> %s\n"
@@ -686,280 +737,384 @@ msgstr ""
 "Υπάρχει ήδη ο ορθός σύνδεσμος %s -> %s\n"
 "\n"
 
-#: src/ftp.c:2032
+#: src/ftp.c:2338
 #, c-format
 msgid "Creating symlink %s -> %s\n"
 msgstr "Δημιουργία συνδέσμου %s -> %s\n"
 
-#: src/ftp.c:2042
+#: src/ftp.c:2348
 #, fuzzy, c-format
 msgid "Symlinks not supported, skipping symlink %s.\n"
 msgstr "Δεν υποστηρίζονται σύνδεσμοι, παράκαμψη συνδέσμου `%s'.\n"
 
-#: src/ftp.c:2054
+#: src/ftp.c:2363
 #, fuzzy, c-format
 msgid "Skipping directory %s.\n"
 msgstr "Παράκαμψη καταλόγου `%s'.\n"
 
-#: src/ftp.c:2063
+#: src/ftp.c:2376
 #, c-format
 msgid "%s: unknown/unsupported file type.\n"
 msgstr "%s: άγνωστο/μη υποστηριζόμενο είδος αρχείου.\n"
 
-#: src/ftp.c:2103
+#: src/ftp.c:2400
+#, fuzzy, c-format
+msgid "Failed to set permissions for %s.\n"
+msgstr "Αποτυχία λήψης κλειδιού πιστοποιητικού από %s\n"
+
+#: src/ftp.c:2421
 #, c-format
 msgid "%s: corrupt time-stamp.\n"
 msgstr "%s: εσφαλμένη ημερομηνία αρχείου.\n"
 
-#: src/ftp.c:2127
+#: src/ftp.c:2445
 #, c-format
 msgid "Will not retrieve dirs since depth is %d (max %d).\n"
 msgstr "Δεν θα ανακτηθούν κατάλογοι διότι το βάθος είναι %d (μέγιστο %d).\n"
 
-#: src/ftp.c:2177
+#: src/ftp.c:2496
 #, fuzzy, c-format
 msgid "Not descending to %s as it is excluded/not-included.\n"
 msgstr ""
 "Δεν επεκτεινόμαστε στο `%s' διότι είναι εξαιρούμενο/μη-συμπεριλαμβανόμενο\n"
 
-#: src/ftp.c:2266 src/ftp.c:2280
+#: src/ftp.c:2586 src/ftp.c:2600
 #, fuzzy, c-format
 msgid "Rejecting %s.\n"
 msgstr "Απόρριψη του `%s'.\n"
 
-#: src/ftp.c:2303
+#: src/ftp.c:2623
 #, fuzzy, c-format
 msgid "Error matching %s against %s: %s\n"
 msgstr "Σφάλμα στην εγγραφή στο `%s': %s\n"
 
-#: src/ftp.c:2359
+#: src/ftp.c:2679
 #, fuzzy, c-format
 msgid "No matches on pattern %s.\n"
 msgstr "Δεν βρέθηκαν ταιριάσματα στη μορφή `%s'.\n"
 
-#: src/ftp.c:2430
+#: src/ftp.c:2751
 #, fuzzy, c-format
 msgid "Wrote HTML-ized index to %s [%s].\n"
 msgstr "Γράφτηκε αρχείο καταλόγου σε HTML στο `%s' [%ld].\n"
 
-#: src/ftp.c:2435
+#: src/ftp.c:2756
 #, fuzzy, c-format
 msgid "Wrote HTML-ized index to %s.\n"
 msgstr "Γράφτηκε αρχείο καταλόγου σε HTML στο `%s'.\n"
 
-#: src/gnutls.c:110
+#: src/gnutls.c:115
 #, c-format
 msgid "ERROR: Cannot open directory %s.\n"
 msgstr ""
 
-#: src/gnutls.c:141
+#: src/gnutls.c:165
 #, c-format
 msgid "ERROR: Failed to open cert %s: (%d).\n"
 msgstr ""
 
-#: src/gnutls.c:173
+#: src/gnutls.c:170
+#, fuzzy, c-format
+msgid "Loaded CA certificate '%s'\n"
+msgstr "Αποτυχία φόρτωσης πιστοποιητικών από %s\n"
+
+#: src/gnutls.c:180
+#, c-format
+msgid "ERROR: Failed to load CRL file '%s': (%d)\n"
+msgstr ""
+
+#: src/gnutls.c:184
+#, c-format
+msgid "Loaded CRL file '%s'\n"
+msgstr ""
+
+#: src/gnutls.c:208
 msgid "ERROR: GnuTLS requires the key and the cert to be of the same type.\n"
-msgstr ""
-
-#: src/gnutls.c:589 src/openssl.c:599
-msgid "ERROR"
-msgstr ""
-
-#: src/gnutls.c:589 src/openssl.c:599
-msgid "WARNING"
-msgstr ""
-
-#: src/gnutls.c:595 src/openssl.c:608
-#, c-format
-msgid "%s: No certificate presented by %s.\n"
-msgstr ""
-
-#: src/gnutls.c:601
-#, c-format
-msgid "%s: The certificate of %s is not trusted.\n"
 msgstr ""
 
 #: src/gnutls.c:602
 #, c-format
+msgid "GnuTLS: unimplemented 'secure-protocol' option value %u\n"
+msgstr ""
+
+#: src/gnutls.c:604 src/gnutls.c:641 src/host.c:159 src/openssl.c:255
+#, fuzzy
+msgid "Please report this issue to bug-wget@gnu.org\n"
+msgstr "Στείλτε αναφορές σφαλμάτων και προτάσεις στο <bug-wget@gnu.org>.\n"
+
+#: src/gnutls.c:640
+#, c-format
+msgid "GnuTLS: unimplemented 'secure-protocol' option value %d\n"
+msgstr ""
+
+#: src/gnutls.c:769 src/openssl.c:763
+msgid "ERROR"
+msgstr ""
+
+#: src/gnutls.c:769 src/openssl.c:763
+msgid "WARNING"
+msgstr ""
+
+#: src/gnutls.c:780 src/openssl.c:776
+#, c-format
+msgid "%s: No certificate presented by %s.\n"
+msgstr ""
+
+#: src/gnutls.c:786
+#, c-format
+msgid "%s: The certificate of %s is not trusted.\n"
+msgstr ""
+
+#: src/gnutls.c:787
+#, c-format
 msgid "%s: The certificate of %s hasn't got a known issuer.\n"
 msgstr ""
 
-#: src/gnutls.c:603
+#: src/gnutls.c:788
 #, c-format
 msgid "%s: The certificate of %s has been revoked.\n"
 msgstr ""
 
-#: src/gnutls.c:604
+#: src/gnutls.c:789
 #, c-format
 msgid "%s: The certificate signer of %s was not a CA.\n"
 msgstr ""
 
-#: src/gnutls.c:605
+#: src/gnutls.c:790
 #, c-format
 msgid "%s: The certificate of %s was signed using an insecure algorithm.\n"
 msgstr ""
 
-#: src/gnutls.c:606
+#: src/gnutls.c:791
 #, c-format
 msgid "%s: The certificate of %s is not yet activated.\n"
 msgstr ""
 
-#: src/gnutls.c:607
+#: src/gnutls.c:792
 #, c-format
 msgid "%s: The certificate of %s has expired.\n"
 msgstr ""
 
-#: src/gnutls.c:618
+#: src/gnutls.c:804
 #, c-format
 msgid "Error initializing X509 certificate: %s\n"
 msgstr ""
 
-#: src/gnutls.c:627
+#: src/gnutls.c:813
 msgid "No certificate found\n"
 msgstr ""
 
-#: src/gnutls.c:634
+#: src/gnutls.c:820
 #, fuzzy, c-format
 msgid "Error parsing certificate: %s\n"
 msgstr "Σφάλμα στην ανάλυση του URL του διαμεσολαβητή %s: %s.\n"
 
-#: src/gnutls.c:641
+#: src/gnutls.c:827
 msgid "The certificate has not yet been activated\n"
 msgstr ""
 
-#: src/gnutls.c:646
+#: src/gnutls.c:832
 msgid "The certificate has expired\n"
 msgstr ""
 
-#: src/gnutls.c:652
+#: src/gnutls.c:839
 #, c-format
 msgid "The certificate's owner does not match hostname %s\n"
 msgstr ""
 
-#: src/gnutls.c:661
+#: src/gnutls.c:848 src/openssl.c:972
+msgid "The public key does not match pinned public key!\n"
+msgstr ""
+
+#: src/gnutls.c:857
 msgid "Certificate must be X.509\n"
 msgstr ""
 
-#: src/host.c:361
+#: src/host.c:158
+msgid "Error in handling the address list.\n"
+msgstr ""
+
+#: src/host.c:369
 #, fuzzy
 msgid "Unknown host"
 msgstr "Άγνωστο σφάλμα"
 
-#: src/host.c:740
+#: src/host.c:849
 #, c-format
 msgid "Resolving %s... "
 msgstr "Εύρεση του %s... "
 
-#: src/host.c:792
+#: src/host.c:925
 msgid "failed: No IPv4/IPv6 addresses for host.\n"
 msgstr ""
 
-#: src/host.c:815
+#: src/host.c:955
 #, fuzzy
 msgid "failed: timed out.\n"
 msgstr "απέτυχε: %s.\n"
 
-#: src/html-url.c:303
+#: src/html-url.c:307
 #, c-format
 msgid "%s: Cannot resolve incomplete link %s.\n"
 msgstr "%s: Αδύνατη η ανάλυση μη ολοκληρωμένου συνδέσμου %s.\n"
 
-#: src/html-url.c:836
+#: src/html-url.c:931
 #, fuzzy, c-format
 msgid "%s: Invalid URL %s: %s\n"
 msgstr "%s: %s: Μη έγκυρη ρύθμιση `%s'.\n"
 
-#: src/http.c:371
+#: src/http.c:376
 #, c-format
 msgid "Failed writing HTTP request: %s.\n"
 msgstr "Σφάλμα στην εγγραφή της αίτησης HTTP: %s.\n"
 
-#: src/http.c:767
+#: src/http.c:781
 msgid "No headers, assuming HTTP/0.9"
 msgstr ""
 
-#: src/http.c:1495
+#: src/http.c:1611
 #, fuzzy, c-format
 msgid ""
 "File %s already there; not retrieving.\n"
 "\n"
 msgstr "Το αρχείο `%s' υπάρχει ήδη, δεν επανακτάται.\n"
 
-#: src/http.c:1747
-msgid "Disabling SSL due to encountered errors.\n"
+#: src/http.c:1821
+msgid "gmtime failed. This is probably a bug.\n"
 msgstr ""
 
-#: src/http.c:1869
+#: src/http.c:1882
+msgid ""
+"Cannot convert timestamp to http format. Falling back to time 0 as last "
+"modification time.\n"
+msgstr ""
+
+#: src/http.c:1986
 #, c-format
 msgid "BODY data file %s missing: %s\n"
 msgstr ""
 
-#: src/http.c:1971
+#: src/http.c:2078
 #, fuzzy, c-format
 msgid "Reusing existing connection to [%s]:%d.\n"
 msgstr "Χρήση ξανά της σύνδεσης στο %s:%hu.\n"
 
-#: src/http.c:1976
+#: src/http.c:2083
 #, fuzzy, c-format
 msgid "Reusing existing connection to %s:%d.\n"
 msgstr "Χρήση ξανά της σύνδεσης στο %s:%hu.\n"
 
-#: src/http.c:2048
+#: src/http.c:2149
 #, fuzzy, c-format
 msgid "Failed reading proxy response: %s\n"
 msgstr "Σφάλμα στην εγγραφή της αίτησης HTTP: %s.\n"
 
-#: src/http.c:2068 src/http.c:2235 src/http.c:3287
+#: src/http.c:2168 src/http.c:3407 src/http.c:4483
 #, c-format
 msgid "%s ERROR %d: %s.\n"
 msgstr "%s ΣΦΑΛΜΑ %d: %s.\n"
 
-#: src/http.c:2070 src/http.c:2237 src/http.c:2572
+#: src/http.c:2170 src/http.c:3409 src/http.c:3597
 msgid "Malformed status line"
 msgstr "Εσφαλμένη γραμμή κατάστασης"
 
-#: src/http.c:2081
+#: src/http.c:2181
 #, c-format
 msgid "Proxy tunneling failed: %s"
 msgstr ""
 
-#: src/http.c:2175
+#: src/http.c:2417
+msgid "Unknown authentication scheme.\n"
+msgstr "Άγνωστο σχήμα αυθεντικοποίησης.\n"
+
+#: src/http.c:2435
+#, fuzzy, c-format
+msgid "Authentication selected: %s\n"
+msgstr "Άγνωστο σχήμα αυθεντικοποίησης.\n"
+
+#: src/http.c:2566
+#, c-format
+msgid "Saving to: %s\n"
+msgstr ""
+
+#: src/http.c:2785
+#, c-format
+msgid ""
+"When downloading signature:\n"
+"%s: %s.\n"
+msgstr ""
+
+#: src/http.c:2821
+msgid "Unable to read signature content from temporary file. Skipping.\n"
+msgstr ""
+
+#: src/http.c:2844
+msgid "Could not create temporary file. Skipping signature download.\n"
+msgstr ""
+
+#: src/http.c:2878 src/http.c:2960
+#, c-format
+msgid "Invalid pri value. Assuming %d.\n"
+msgstr ""
+
+#: src/http.c:3064
+msgid ""
+"Could not find acceptable digest for Metalink resources.\n"
+"Ignoring them.\n"
+msgstr ""
+
+#: src/http.c:3201
+msgid "Disabling SSL due to encountered errors.\n"
+msgstr ""
+
+#: src/http.c:3343
 #, c-format
 msgid "%s request sent, awaiting response... "
 msgstr "Η αίτηση για %s στάλθηκε, αναμονή απάντησης... "
 
-#: src/http.c:2210
+#: src/http.c:3383
 #, fuzzy
 msgid "No data received.\n"
 msgstr "Δεν ελήφθησαν δεδομένα"
 
-#: src/http.c:2217
+#: src/http.c:3389
 #, c-format
 msgid "Read error (%s) in headers.\n"
 msgstr "Σφάλμα ανάγνωσης (%s) στις κεφαλίδες.\n"
 
-#: src/http.c:2389
-msgid "Unknown authentication scheme.\n"
-msgstr "Άγνωστο σχήμα αυθεντικοποίησης.\n"
-
-#: src/http.c:2574
+#: src/http.c:3599
 msgid "(no description)"
 msgstr "(χωρίς περιγραφή)"
 
-#: src/http.c:2650
+#: src/http.c:3768
 #, c-format
 msgid "Location: %s%s\n"
 msgstr "Τοποθεσία: %s%s\n"
 
-#: src/http.c:2651 src/http.c:2820
+#: src/http.c:3769 src/http.c:4013
 msgid "unspecified"
 msgstr "μη ορισμένο"
 
-#: src/http.c:2652
+#: src/http.c:3770
 msgid " [following]"
 msgstr " [ακολουθεί]"
 
-#: src/http.c:2765
+#: src/http.c:3853
+#, c-format
+msgid ""
+"File %s not modified on server. Omitting download.\n"
+"\n"
+msgstr ""
+
+#: src/http.c:3924
+#, c-format
+msgid ""
+"Server ignored If-Modified-Since header for file %s.\n"
+"You might want to add --no-if-modified-since option.\n"
+"\n"
+msgstr ""
+
+#: src/http.c:3954
 msgid ""
 "\n"
 "    The file is already fully retrieved; nothing to do.\n"
@@ -968,79 +1123,84 @@ msgstr ""
 "\n"
 "    Το αρχείο έχει ήδη ανακτηθεί πλήρως· τίποτα να κάνω.\n"
 
-#: src/http.c:2800
+#: src/http.c:3993
 msgid "Length: "
 msgstr "Μήκος: "
 
-#: src/http.c:2820
+#: src/http.c:4013
 msgid "ignored"
 msgstr "αγνοείται"
 
-#: src/http.c:2961
-#, c-format
-msgid "Saving to: %s\n"
-msgstr ""
-
-#: src/http.c:3031
+#: src/http.c:4181
 msgid "Warning: wildcards not supported in HTTP.\n"
 msgstr ""
 "Προειδοποίηση: μεταχαρακτήρες (wildcards) δεν υποστηρίζονται στο HTTP.\n"
 
-#: src/http.c:3096
+#: src/http.c:4263
 msgid "Spider mode enabled. Check if remote file exists.\n"
 msgstr ""
 
-#: src/http.c:3185
+#: src/http.c:4353
 #, fuzzy, c-format
 msgid "Cannot write to %s (%s).\n"
 msgstr "Αδυναμία στην εγγραφή στο `%s' (%s).\n"
 
-#: src/http.c:3196
+#: src/http.c:4364
 msgid "Required attribute missing from Header received.\n"
 msgstr ""
 
-#: src/http.c:3201
+#: src/http.c:4369
 msgid "Username/Password Authentication Failed.\n"
 msgstr ""
 
-#: src/http.c:3207
+#: src/http.c:4375
 #, fuzzy
 msgid "Cannot write to WARC file.\n"
 msgstr "Αδυναμία στην εγγραφή στο `%s' (%s).\n"
 
-#: src/http.c:3213
+#: src/http.c:4381
 msgid "Cannot write to temporary WARC file.\n"
 msgstr ""
 
-#: src/http.c:3218
+#: src/http.c:4386
 msgid "Unable to establish SSL connection.\n"
 msgstr "Αδύνατη η σύσταση σύνδεσης SSL.\n"
 
-#: src/http.c:3224
+#: src/http.c:4392
 #, fuzzy, c-format
 msgid "Cannot unlink %s (%s).\n"
 msgstr "Αδυναμία στην εγγραφή στο `%s' (%s).\n"
 
-#: src/http.c:3234
+#: src/http.c:4402
 #, c-format
 msgid "ERROR: Redirection (%d) without location.\n"
 msgstr "ΣΦΑΛΜΑ: Μετάσταση (%d) χωρίς τοποθεσία.\n"
 
-#: src/http.c:3282
+#: src/http.c:4424
+msgid ""
+"Could not find Metalink data in HTTP response. Downloading file using HTTP "
+"GET.\n"
+msgstr ""
+
+#: src/http.c:4433
+msgid "Metalink headers found. Switching to Metalink mode.\n"
+msgstr ""
+
+#: src/http.c:4473
 msgid "Remote file does not exist -- broken link!!!\n"
 msgstr ""
 
-#: src/http.c:3304
+#: src/http.c:4500
 msgid "Last-modified header missing -- time-stamps turned off.\n"
 msgstr ""
 "Κεφαλίδα Last-modified δεν υπάρχει -- χρονικές αναφορές απενεργοποιήθηκαν.\n"
 
-#: src/http.c:3312
+#: src/http.c:4508
 msgid "Last-modified header invalid -- time-stamp ignored.\n"
 msgstr ""
 "Κεφαλίδα Last-modified δεν είναι έγκυρη -- χρονικές αναφορές αγνοούνται.\n"
 
-#: src/http.c:3342
+#: src/http.c:4538
 #, fuzzy, c-format
 msgid ""
 "Server file no newer than local file %s -- not retrieving.\n"
@@ -1050,16 +1210,16 @@ msgstr ""
 "γίνεται ανάκτηση.\n"
 "\n"
 
-#: src/http.c:3350
+#: src/http.c:4546
 #, fuzzy, c-format
 msgid "The sizes do not match (local %s) -- retrieving.\n"
 msgstr "Τα μεγέθη δεν είναι ίσα (τοπικό %ld) -- γίνεται ανάκτηση ξανά.\n"
 
-#: src/http.c:3359
+#: src/http.c:4555
 msgid "Remote file is newer, retrieving.\n"
 msgstr "Απομακρυσμένο αρχείο είναι νεότερο, έναρξη ανάκτησης.\n"
 
-#: src/http.c:3377
+#: src/http.c:4573
 #, fuzzy
 msgid ""
 "Remote file exists and could contain links to other resources -- "
@@ -1070,7 +1230,7 @@ msgstr ""
 "ανάκτηση.\n"
 "\n"
 
-#: src/http.c:3383
+#: src/http.c:4579
 #, fuzzy
 msgid ""
 "Remote file exists but does not contain any link -- not retrieving.\n"
@@ -1080,33 +1240,33 @@ msgstr ""
 "ανάκτηση.\n"
 "\n"
 
-#: src/http.c:3392
+#: src/http.c:4588
 msgid ""
 "Remote file exists and could contain further links,\n"
 "but recursion is disabled -- not retrieving.\n"
 "\n"
 msgstr ""
 
-#: src/http.c:3398
+#: src/http.c:4594
 #, fuzzy
 msgid ""
 "Remote file exists.\n"
 "\n"
 msgstr "Απομακρυσμένο αρχείο είναι νεότερο, έναρξη ανάκτησης.\n"
 
-#: src/http.c:3407
+#: src/http.c:4603
 #, fuzzy, c-format
 msgid "%s URL: %s %2d %s\n"
 msgstr "%s ΣΦΑΛΜΑ %d: %s.\n"
 
-#: src/http.c:3457
+#: src/http.c:4653
 #, c-format
 msgid ""
 "%s (%s) - written to stdout %s[%s/%s]\n"
 "\n"
 msgstr ""
 
-#: src/http.c:3458
+#: src/http.c:4654
 #, fuzzy, c-format
 msgid ""
 "%s (%s) - %s saved [%s/%s]\n"
@@ -1115,57 +1275,58 @@ msgstr ""
 "%s (%s) - `%s' αποθηκεύτηκε [%ld/%ld]\n"
 "\n"
 
-#: src/http.c:3519
+#: src/http.c:4715
 #, fuzzy, c-format
 msgid "%s (%s) - Connection closed at byte %s. "
 msgstr "%s (%s) - Η σύνδεση διακόπηκε στο byte %ld. "
 
-#: src/http.c:3542
+#: src/http.c:4738
 #, fuzzy, c-format
 msgid "%s (%s) - Read error at byte %s (%s)."
 msgstr "%s (%s) - Σφάλμα ανάγνωσης στο byte %ld (%s)."
 
-#: src/http.c:3551
+#: src/http.c:4747
 #, fuzzy, c-format
 msgid "%s (%s) - Read error at byte %s/%s (%s). "
 msgstr "%s (%s) - Σφάλμα ανάγνωσης στο byte %ld/%ld (%s). "
 
-#: src/http.c:3786
+#: src/http.c:4985
 #, c-format
 msgid "Unsupported quality of protection '%s'.\n"
 msgstr ""
 
-#: src/http.c:3792
+#: src/http.c:4990
 #, c-format
 msgid "Unsupported algorithm '%s'.\n"
 msgstr ""
 
-#: src/init.c:500
+#: src/init.c:582
 #, c-format
-msgid "%s: WGETRC points to %s, which doesn't exist.\n"
+msgid ""
+"%s: WGETRC points to %s, which couldn't be accessed because of error: %s.\n"
 msgstr ""
 
-#: src/init.c:605 src/netrc.c:246
+#: src/init.c:683 src/netrc.c:246
 #, c-format
 msgid "%s: Cannot read %s (%s).\n"
 msgstr "%s: Αδυναμία ανάγνωσης %s (%s).\n"
 
-#: src/init.c:622
+#: src/init.c:700
 #, c-format
 msgid "%s: Error in %s at line %d.\n"
 msgstr "%s: Σφάλμα στο %s στη γραμμή %d.\n"
 
-#: src/init.c:628
+#: src/init.c:706
 #, fuzzy, c-format
 msgid "%s: Syntax error in %s at line %d.\n"
 msgstr "%s: Σφάλμα στο %s στη γραμμή %d.\n"
 
-#: src/init.c:633
+#: src/init.c:711
 #, fuzzy, c-format
 msgid "%s: Unknown command %s in %s at line %d.\n"
 msgstr "%s: ΣΦΑΛΜΑ: Άγνωστη εντολή `%s', τιμή `%s'.\n"
 
-#: src/init.c:670
+#: src/init.c:750
 #, c-format
 msgid ""
 "Parsing system wgetrc file (env SYSTEM_WGETRC) failed.  Please check\n"
@@ -1173,7 +1334,7 @@ msgid ""
 "or specify a different file using --config.\n"
 msgstr ""
 
-#: src/init.c:685
+#: src/init.c:765
 #, c-format
 msgid ""
 "Parsing system wgetrc file failed.  Please check\n"
@@ -1181,131 +1342,136 @@ msgid ""
 "or specify a different file using --config.\n"
 msgstr ""
 
-#: src/init.c:701
+#: src/init.c:781
 #, fuzzy, c-format
 msgid "%s: Warning: Both system and user wgetrc point to %s.\n"
 msgstr ""
 "%s: Προειδοποίηση: Το wgetrc του συστήματος και του χρήστη δείχνουν στο ίδιο "
 "αρχείο `%s'.\n"
 
-#: src/init.c:891
+#: src/init.c:976
 #, fuzzy, c-format
 msgid "%s: Invalid --execute command %s\n"
 msgstr "%s: Μη έγκυρη ρύθμιση `%s'.\n"
 
-#: src/init.c:936
+#: src/init.c:1037
 #, fuzzy, c-format
 msgid "%s: %s: Invalid boolean %s; use `on' or `off'.\n"
 msgstr "%s: %s: Παρακαλώ ορίστε on ή off.\n"
 
-#: src/init.c:953
+#: src/init.c:1070
+#, fuzzy, c-format
+msgid "%s: %s: Invalid %s; use `on', `off' or `quiet'.\n"
+msgstr "%s: %s: Παρακαλώ ορίστε on ή off.\n"
+
+#: src/init.c:1088
 #, fuzzy, c-format
 msgid "%s: %s: Invalid number %s.\n"
 msgstr "%s: %s: Μη έγκυρη ρύθμιση `%s'.\n"
 
-#: src/init.c:1175 src/init.c:1194
+#: src/init.c:1169
+#, c-format
+msgid "%s: %s must only be used once\n"
+msgstr ""
+
+#: src/init.c:1324 src/init.c:1343
 #, fuzzy, c-format
 msgid "%s: %s: Invalid byte value %s\n"
 msgstr "%s: %s: Μη έγκυρος τύπος προόδου `%s'.\n"
 
-#: src/init.c:1219
+#: src/init.c:1368
 #, fuzzy, c-format
 msgid "%s: %s: Invalid time period %s\n"
 msgstr "%s: %s: Μη έγκυρη ρύθμιση `%s'.\n"
 
-#: src/init.c:1273 src/init.c:1384 src/init.c:1440 src/init.c:1504
-#: src/init.c:1523 src/init.c:1548
+#: src/init.c:1430 src/main.c:1859
+#, c-format
+msgid ""
+"use-askpass requires a string or either environment variable WGET_ASKPASS or "
+"SSH_ASKPASS to be set.\n"
+msgstr ""
+
+#: src/init.c:1448 src/init.c:1470 src/init.c:1578 src/init.c:1634
+#: src/init.c:1700 src/init.c:1719 src/init.c:1744
 #, fuzzy, c-format
 msgid "%s: %s: Invalid value %s.\n"
 msgstr "%s: %s: Μη έγκυρη ρύθμιση `%s'.\n"
 
-#: src/init.c:1310
+#: src/init.c:1504
 #, fuzzy, c-format
 msgid "%s: %s: Invalid header %s.\n"
 msgstr "%s: %s: Μη έγκυρη ρύθμιση `%s'.\n"
 
-#: src/init.c:1331
+#: src/init.c:1525
 #, fuzzy, c-format
 msgid "%s: %s: Invalid WARC header %s.\n"
 msgstr "%s: %s: Μη έγκυρη ρύθμιση `%s'.\n"
 
-#: src/init.c:1397
+#: src/init.c:1591
 #, fuzzy, c-format
 msgid "%s: %s: Invalid progress type %s.\n"
 msgstr "%s: %s: Μη έγκυρος τύπος προόδου `%s'.\n"
 
-#: src/init.c:1477
+#: src/init.c:1673
 #, fuzzy, c-format
 msgid ""
 "%s: %s: Invalid restriction %s,\n"
-"    use [unix|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
+"    use [unix|vms|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
 msgstr "%s: %s: Μη έγκυρη ρύθμιση `%s'.\n"
 
-#: src/iri.c:101
+#: src/iri.c:114
 #, c-format
 msgid "Encoding %s isn't valid\n"
 msgstr ""
 
-#: src/iri.c:126
+#: src/iri.c:140 src/url.c:1572
 #, c-format
 msgid "Conversion from %s to %s isn't supported\n"
 msgstr ""
 
-#: src/iri.c:149 src/iri.c:190
-#, c-format
-msgid "converted '%s' (%s) -> '%s' (%s)\n"
-msgstr ""
-
-#: src/iri.c:158
+#: src/iri.c:180 src/url.c:1600
 msgid "Incomplete or invalid multibyte sequence encountered\n"
 msgstr ""
 
-#: src/iri.c:183
+#: src/iri.c:199 src/url.c:1617
 #, c-format
 msgid "Unhandled errno %d\n"
 msgstr ""
 
-#: src/iri.c:204
+#: src/iri.c:236
 msgid "locale_to_utf8: locale is unset\n"
 msgstr ""
 
-#: src/iri.c:238
+#: src/iri.c:282 src/iri.c:297
 #, c-format
 msgid "idn_encode failed (%d): %s\n"
 msgstr ""
 
-#: src/iri.c:257
-#, c-format
-msgid "idn_decode failed (%d): %s\n"
-msgstr ""
+#: src/iri.c:289
+#, fuzzy, c-format
+msgid "Failed to convert to lower: %d: %s\n"
+msgstr "αδύνατη η σύνδεση στο %s:%hu: %s\n"
 
-#: src/log.c:867
+#: src/log.c:921 src/log.c:940
 #, fuzzy, c-format
 msgid ""
 "\n"
-"%s received, redirecting output to %s.\n"
+"Redirecting output to %s.\n"
 msgstr ""
 "\n"
 "%s λήφθηκε, ανακατεύθυνση εξόδου στο `%s'.\n"
 
-#: src/log.c:877
-#, fuzzy, c-format
-msgid ""
-"\n"
-"%s received.\n"
-msgstr "Δεν ελήφθησαν δεδομένα"
-
-#: src/log.c:878
+#: src/log.c:933
 #, c-format
 msgid "%s: %s; disabling logging.\n"
 msgstr "%s: %s; απενεργοποίηση λήψης καταγραφών.\n"
 
-#: src/main.c:414
+#: src/main.c:557
 #, c-format
 msgid "Usage: %s [OPTION]... [URL]...\n"
 msgstr "Χρήση: %s [ΕΠΙΛΟΓΗ]... [URL]...\n"
 
-#: src/main.c:426
+#: src/main.c:569
 #, fuzzy
 msgid ""
 "Mandatory arguments to long options are mandatory for short options too.\n"
@@ -1316,822 +1482,991 @@ msgstr ""
 "τα σύντομα ορίσματα.\n"
 "\n"
 
-#: src/main.c:428
+#: src/main.c:571
 msgid "Startup:\n"
 msgstr ""
 
-#: src/main.c:430
-msgid ""
-"  -V,  --version                   display the version of Wget and exit.\n"
-msgstr ""
-
-#: src/main.c:432
-msgid "  -h,  --help                      print this help.\n"
-msgstr ""
-
-#: src/main.c:434
-msgid "  -b,  --background                go to background after startup.\n"
-msgstr ""
-
-#: src/main.c:436
-msgid "  -e,  --execute=COMMAND           execute a `.wgetrc'-style command.\n"
-msgstr ""
-
-#: src/main.c:440
-msgid "Logging and input file:\n"
-msgstr ""
-
-#: src/main.c:442
-msgid "  -o,  --output-file=FILE          log messages to FILE.\n"
-msgstr ""
-
-#: src/main.c:444
-msgid "  -a,  --append-output=FILE        append messages to FILE.\n"
-msgstr ""
-
-#: src/main.c:447
-msgid ""
-"  -d,  --debug                     print lots of debugging information.\n"
-msgstr ""
-
-#: src/main.c:451
-msgid "       --wdebug                    print Watt-32 debug output.\n"
-msgstr ""
-
-#: src/main.c:454
-msgid "  -q,  --quiet                     quiet (no output).\n"
-msgstr ""
-
-#: src/main.c:456
-msgid "  -v,  --verbose                   be verbose (this is the default).\n"
-msgstr ""
-
-#: src/main.c:458
-msgid ""
-"  -nv, --no-verbose                turn off verboseness, without being "
-"quiet.\n"
-msgstr ""
-
-#: src/main.c:460
-msgid ""
-"       --report-speed=TYPE         Output bandwidth as TYPE.  TYPE can be "
-"bits.\n"
-msgstr ""
-
-#: src/main.c:462
-msgid ""
-"  -i,  --input-file=FILE           download URLs found in local or external "
-"FILE.\n"
-msgstr ""
-
-#: src/main.c:464
-msgid "  -F,  --force-html                treat input file as HTML.\n"
-msgstr ""
-
-#: src/main.c:466
-msgid ""
-"  -B,  --base=URL                  resolves HTML input-file links (-i -F)\n"
-"                                   relative to URL.\n"
-msgstr ""
-
-#: src/main.c:469
-msgid "       --config=FILE               Specify config file to use.\n"
-msgstr ""
-
-#: src/main.c:471
-msgid "       --no-config                 Do not read any config file.\n"
-msgstr ""
-
-#: src/main.c:475
-msgid "Download:\n"
-msgstr ""
-
-#: src/main.c:477
-msgid ""
-"  -t,  --tries=NUMBER              set number of retries to NUMBER (0 "
-"unlimits).\n"
-msgstr ""
-
-#: src/main.c:479
-msgid ""
-"       --retry-connrefused         retry even if connection is refused.\n"
-msgstr ""
-
-#: src/main.c:481
-msgid "  -O,  --output-document=FILE      write documents to FILE.\n"
-msgstr ""
-
-#: src/main.c:483
-msgid ""
-"  -nc, --no-clobber                skip downloads that would download to\n"
-"                                   existing files (overwriting them).\n"
-msgstr ""
-
-#: src/main.c:486
-msgid ""
-"  -c,  --continue                  resume getting a partially-downloaded "
-"file.\n"
-msgstr ""
-
-#: src/main.c:488
-msgid ""
-"       --start-pos=OFFSET          start downloading from zero-based "
-"position OFFSET.\n"
-msgstr ""
-
-#: src/main.c:490
-msgid "       --progress=TYPE             select progress gauge type.\n"
-msgstr ""
-
-#: src/main.c:492
-msgid ""
-"       --show-progress             display the progress bar in any verbosity "
-"mode.\n"
-msgstr ""
-
-#: src/main.c:494
-msgid ""
-"  -N,  --timestamping              don't re-retrieve files unless newer "
-"than\n"
-"                                   local.\n"
-msgstr ""
-
-#: src/main.c:497
-msgid ""
-"  --no-use-server-timestamps       don't set the local file's timestamp by\n"
-"                                   the one on the server.\n"
-msgstr ""
-
-#: src/main.c:500
-msgid "  -S,  --server-response           print server response.\n"
-msgstr ""
-
-#: src/main.c:502
-msgid "       --spider                    don't download anything.\n"
-msgstr ""
-
-#: src/main.c:504
-msgid "  -T,  --timeout=SECONDS           set all timeout values to SECONDS.\n"
-msgstr ""
-
-#: src/main.c:506
-msgid ""
-"       --dns-timeout=SECS          set the DNS lookup timeout to SECS.\n"
-msgstr ""
-
-#: src/main.c:508
-msgid "       --connect-timeout=SECS      set the connect timeout to SECS.\n"
-msgstr ""
-
-#: src/main.c:510
-msgid "       --read-timeout=SECS         set the read timeout to SECS.\n"
-msgstr ""
-
-#: src/main.c:512
-msgid "  -w,  --wait=SECONDS              wait SECONDS between retrievals.\n"
-msgstr ""
-
-#: src/main.c:514
-msgid ""
-"       --waitretry=SECONDS         wait 1..SECONDS between retries of a "
-"retrieval.\n"
-msgstr ""
-
-#: src/main.c:516
-msgid ""
-"       --random-wait               wait from 0.5*WAIT...1.5*WAIT secs "
-"between retrievals.\n"
-msgstr ""
-
-#: src/main.c:518
-msgid "       --no-proxy                  explicitly turn off proxy.\n"
-msgstr ""
-
-#: src/main.c:520
-msgid "  -Q,  --quota=NUMBER              set retrieval quota to NUMBER.\n"
-msgstr ""
-
-#: src/main.c:522
-msgid ""
-"       --bind-address=ADDRESS      bind to ADDRESS (hostname or IP) on local "
-"host.\n"
-msgstr ""
-
-#: src/main.c:524
-msgid "       --limit-rate=RATE           limit download rate to RATE.\n"
-msgstr ""
-
-#: src/main.c:526
-msgid "       --no-dns-cache              disable caching DNS lookups.\n"
-msgstr ""
-
-#: src/main.c:528
-msgid ""
-"       --restrict-file-names=OS    restrict chars in file names to ones OS "
-"allows.\n"
-msgstr ""
-
-#: src/main.c:530
-msgid ""
-"       --ignore-case               ignore case when matching files/"
-"directories.\n"
-msgstr ""
-
-#: src/main.c:533
-msgid "  -4,  --inet4-only                connect only to IPv4 addresses.\n"
-msgstr ""
-
-#: src/main.c:535
-msgid "  -6,  --inet6-only                connect only to IPv6 addresses.\n"
-msgstr ""
-
-#: src/main.c:537
-msgid ""
-"       --prefer-family=FAMILY      connect first to addresses of specified "
-"family,\n"
-"                                   one of IPv6, IPv4, or none.\n"
-msgstr ""
-
-#: src/main.c:541
-msgid ""
-"       --user=USER                 set both ftp and http user to USER.\n"
-msgstr ""
-
-#: src/main.c:543
-msgid ""
-"       --password=PASS             set both ftp and http password to PASS.\n"
-msgstr ""
-
-#: src/main.c:545
-msgid "       --ask-password              prompt for passwords.\n"
-msgstr ""
-
-#: src/main.c:547
-msgid "       --no-iri                    turn off IRI support.\n"
-msgstr ""
-
-#: src/main.c:549
-msgid ""
-"       --local-encoding=ENC        use ENC as the local encoding for IRIs.\n"
-msgstr ""
-
-#: src/main.c:551
-msgid ""
-"       --remote-encoding=ENC       use ENC as the default remote encoding.\n"
-msgstr ""
-
-#: src/main.c:553
-msgid "       --unlink                    remove file before clobber.\n"
-msgstr ""
-
-#: src/main.c:557
-#, fuzzy
-msgid "Directories:\n"
-msgstr "Κατάλογος   "
-
-#: src/main.c:559
-msgid "  -nd, --no-directories            don't create directories.\n"
-msgstr ""
-
-#: src/main.c:561
-msgid "  -x,  --force-directories         force creation of directories.\n"
-msgstr ""
-
-#: src/main.c:563
-msgid "  -nH, --no-host-directories       don't create host directories.\n"
-msgstr ""
-
-#: src/main.c:565
-msgid "       --protocol-directories      use protocol name in directories.\n"
-msgstr ""
-
-#: src/main.c:567
-msgid "  -P,  --directory-prefix=PREFIX   save files to PREFIX/...\n"
-msgstr ""
-
-#: src/main.c:569
-msgid ""
-"       --cut-dirs=NUMBER           ignore NUMBER remote directory "
-"components.\n"
-msgstr ""
-
 #: src/main.c:573
-msgid "HTTP options:\n"
+msgid ""
+"  -V,  --version                   display the version of Wget and exit\n"
 msgstr ""
 
 #: src/main.c:575
-msgid "       --http-user=USER            set http user to USER.\n"
+msgid "  -h,  --help                      print this help\n"
 msgstr ""
 
 #: src/main.c:577
-msgid "       --http-password=PASS        set http password to PASS.\n"
+msgid "  -b,  --background                go to background after startup\n"
 msgstr ""
 
 #: src/main.c:579
-msgid "       --no-cache                  disallow server-cached data.\n"
+msgid "  -e,  --execute=COMMAND           execute a `.wgetrc'-style command\n"
 msgstr ""
 
-#: src/main.c:581
-msgid ""
-"       --default-page=NAME         Change the default page name (normally\n"
-"                                   this is `index.html'.).\n"
+#: src/main.c:583
+msgid "Logging and input file:\n"
 msgstr ""
 
-#: src/main.c:584
-msgid ""
-"  -E,  --adjust-extension          save HTML/CSS documents with proper "
-"extensions.\n"
+#: src/main.c:585
+msgid "  -o,  --output-file=FILE          log messages to FILE\n"
 msgstr ""
 
-#: src/main.c:586
-msgid ""
-"       --ignore-length             ignore `Content-Length' header field.\n"
-msgstr ""
-
-#: src/main.c:588
-msgid "       --header=STRING             insert STRING among the headers.\n"
+#: src/main.c:587
+msgid "  -a,  --append-output=FILE        append messages to FILE\n"
 msgstr ""
 
 #: src/main.c:590
 msgid ""
-"       --max-redirect              maximum redirections allowed per page.\n"
-msgstr ""
-
-#: src/main.c:592
-msgid "       --proxy-user=USER           set USER as proxy username.\n"
+"  -d,  --debug                     print lots of debugging information\n"
 msgstr ""
 
 #: src/main.c:594
-msgid "       --proxy-password=PASS       set PASS as proxy password.\n"
+msgid "       --wdebug                    print Watt-32 debug output\n"
 msgstr ""
 
-#: src/main.c:596
+#: src/main.c:597
+msgid "  -q,  --quiet                     quiet (no output)\n"
+msgstr ""
+
+#: src/main.c:599
+msgid "  -v,  --verbose                   be verbose (this is the default)\n"
+msgstr ""
+
+#: src/main.c:601
 msgid ""
-"       --referer=URL               include `Referer: URL' header in HTTP "
-"request.\n"
+"  -nv, --no-verbose                turn off verboseness, without being "
+"quiet\n"
 msgstr ""
 
-#: src/main.c:598
-msgid "       --save-headers              save the HTTP headers to file.\n"
-msgstr ""
-
-#: src/main.c:600
+#: src/main.c:603
 msgid ""
-"  -U,  --user-agent=AGENT          identify as AGENT instead of Wget/"
-"VERSION.\n"
+"       --report-speed=TYPE         output bandwidth as TYPE.  TYPE can be "
+"bits\n"
 msgstr ""
 
-#: src/main.c:602
+#: src/main.c:605
 msgid ""
-"       --no-http-keep-alive        disable HTTP keep-alive (persistent "
-"connections).\n"
-msgstr ""
-
-#: src/main.c:604
-msgid "       --no-cookies                don't use cookies.\n"
-msgstr ""
-
-#: src/main.c:606
-msgid ""
-"       --load-cookies=FILE         load cookies from FILE before session.\n"
+"  -i,  --input-file=FILE           download URLs found in local or external "
+"FILE\n"
 msgstr ""
 
 #: src/main.c:608
 msgid ""
-"       --save-cookies=FILE         save cookies to FILE after session.\n"
+"       --input-metalink=FILE       download files covered in local Metalink "
+"FILE\n"
 msgstr ""
 
-#: src/main.c:610
-msgid ""
-"       --keep-session-cookies      load and save session (non-permanent) "
-"cookies.\n"
+#: src/main.c:611
+msgid "  -F,  --force-html                treat input file as HTML\n"
 msgstr ""
 
-#: src/main.c:612
+#: src/main.c:613
 msgid ""
-"       --post-data=STRING          use the POST method; send STRING as the "
-"data.\n"
-msgstr ""
-
-#: src/main.c:614
-msgid ""
-"       --post-file=FILE            use the POST method; send contents of "
-"FILE.\n"
+"  -B,  --base=URL                  resolves HTML input-file links (-i -F)\n"
+"                                     relative to URL\n"
 msgstr ""
 
 #: src/main.c:616
-msgid ""
-"       --method=HTTPMethod         use method \"HTTPMethod\" in the "
-"request.\n"
+msgid "       --config=FILE               specify config file to use\n"
 msgstr ""
 
 #: src/main.c:618
-msgid ""
-"       --body-data=STRING          Send STRING as data. --method MUST be "
-"set.\n"
+msgid "       --no-config                 do not read any config file\n"
 msgstr ""
 
 #: src/main.c:620
 msgid ""
-"       --body-file=FILE            Send contents of FILE. --method MUST be "
-"set.\n"
+"       --rejected-log=FILE         log reasons for URL rejection to FILE\n"
 msgstr ""
 
-#: src/main.c:622
+#: src/main.c:624
+msgid "Download:\n"
+msgstr ""
+
+#: src/main.c:626
 msgid ""
-"       --content-disposition       honor the Content-Disposition header "
-"when\n"
-"                                   choosing local file names "
-"(EXPERIMENTAL).\n"
+"  -t,  --tries=NUMBER              set number of retries to NUMBER (0 "
+"unlimits)\n"
 msgstr ""
 
-#: src/main.c:625
+#: src/main.c:628
 msgid ""
-"       --content-on-error          output the received content on server "
-"errors.\n"
+"       --retry-connrefused         retry even if connection is refused\n"
 msgstr ""
 
-#: src/main.c:627
+#: src/main.c:630
+msgid "  -O,  --output-document=FILE      write documents to FILE\n"
+msgstr ""
+
+#: src/main.c:632
 msgid ""
-"       --auth-no-challenge         send Basic HTTP authentication "
-"information\n"
-"                                   without first waiting for the server's\n"
-"                                   challenge.\n"
+"  -nc, --no-clobber                skip downloads that would download to\n"
+"                                     existing files (overwriting them)\n"
 msgstr ""
 
-#: src/main.c:634
-msgid "HTTPS (SSL/TLS) options:\n"
-msgstr ""
-
-#: src/main.c:636
+#: src/main.c:635
 msgid ""
-"       --secure-protocol=PR        choose secure protocol, one of auto, "
-"SSLv2,\n"
-"                                   SSLv3, TLSv1 and PFS.\n"
+"       --no-netrc                  don't try to obtain credentials from ."
+"netrc\n"
+msgstr ""
+
+#: src/main.c:637
+msgid ""
+"  -c,  --continue                  resume getting a partially-downloaded "
+"file\n"
 msgstr ""
 
 #: src/main.c:639
-msgid "       --https-only                only follow secure HTTPS links\n"
+msgid ""
+"       --start-pos=OFFSET          start downloading from zero-based "
+"position OFFSET\n"
 msgstr ""
 
 #: src/main.c:641
-msgid ""
-"       --no-check-certificate      don't validate the server's certificate.\n"
+msgid "       --progress=TYPE             select progress gauge type\n"
 msgstr ""
 
 #: src/main.c:643
-msgid "       --certificate=FILE          client certificate file.\n"
+msgid ""
+"       --show-progress             display the progress bar in any verbosity "
+"mode\n"
 msgstr ""
 
 #: src/main.c:645
 msgid ""
-"       --certificate-type=TYPE     client certificate type, PEM or DER.\n"
+"  -N,  --timestamping              don't re-retrieve files unless newer "
+"than\n"
+"                                     local\n"
 msgstr ""
 
-#: src/main.c:647
-msgid "       --private-key=FILE          private key file.\n"
-msgstr ""
-
-#: src/main.c:649
-msgid "       --private-key-type=TYPE     private key type, PEM or DER.\n"
+#: src/main.c:648
+msgid ""
+"       --no-if-modified-since      don't use conditional if-modified-since "
+"get\n"
+"                                     requests in timestamping mode\n"
 msgstr ""
 
 #: src/main.c:651
-msgid "       --ca-certificate=FILE       file with the bundle of CA's.\n"
-msgstr ""
-
-#: src/main.c:653
 msgid ""
-"       --ca-directory=DIR          directory where hash list of CA's is "
-"stored.\n"
+"       --no-use-server-timestamps  don't set the local file's timestamp by\n"
+"                                     the one on the server\n"
 msgstr ""
 
-#: src/main.c:655
+#: src/main.c:654
+msgid "  -S,  --server-response           print server response\n"
+msgstr ""
+
+#: src/main.c:656
+msgid "       --spider                    don't download anything\n"
+msgstr ""
+
+#: src/main.c:658
+msgid "  -T,  --timeout=SECONDS           set all timeout values to SECONDS\n"
+msgstr ""
+
+#: src/main.c:661
 msgid ""
-"       --random-file=FILE          file with random data for seeding the SSL "
-"PRNG.\n"
+"       --dns-servers=ADDRESSES     list of DNS servers to query (comma "
+"separated)\n"
 msgstr ""
 
-#: src/main.c:657
+#: src/main.c:663
 msgid ""
-"       --egd-file=FILE             file naming the EGD socket with random "
-"data.\n"
+"       --bind-dns-address=ADDRESS  bind DNS resolver to ADDRESS (hostname or "
+"IP) on local host\n"
 msgstr ""
 
-#: src/main.c:662
-msgid "FTP options:\n"
-msgstr ""
-
-#: src/main.c:665
-msgid ""
-"       --ftp-stmlf                 Use Stream_LF format for all binary FTP "
-"files.\n"
+#: src/main.c:666
+msgid "       --dns-timeout=SECS          set the DNS lookup timeout to SECS\n"
 msgstr ""
 
 #: src/main.c:668
-msgid "       --ftp-user=USER             set ftp user to USER.\n"
+msgid "       --connect-timeout=SECS      set the connect timeout to SECS\n"
 msgstr ""
 
 #: src/main.c:670
-msgid "       --ftp-password=PASS         set ftp password to PASS.\n"
+msgid "       --read-timeout=SECS         set the read timeout to SECS\n"
 msgstr ""
 
 #: src/main.c:672
-msgid "       --no-remove-listing         don't remove `.listing' files.\n"
+msgid "  -w,  --wait=SECONDS              wait SECONDS between retrievals\n"
 msgstr ""
 
 #: src/main.c:674
-msgid "       --no-glob                   turn off FTP file name globbing.\n"
+msgid ""
+"       --waitretry=SECONDS         wait 1..SECONDS between retries of a "
+"retrieval\n"
 msgstr ""
 
 #: src/main.c:676
 msgid ""
-"       --no-passive-ftp            disable the \"passive\" transfer mode.\n"
+"       --random-wait               wait from 0.5*WAIT...1.5*WAIT secs "
+"between retrievals\n"
 msgstr ""
 
 #: src/main.c:678
-msgid "       --preserve-permissions      preserve remote file permissions.\n"
+msgid "       --no-proxy                  explicitly turn off proxy\n"
 msgstr ""
 
 #: src/main.c:680
+msgid "  -Q,  --quota=NUMBER              set retrieval quota to NUMBER\n"
+msgstr ""
+
+#: src/main.c:682
 msgid ""
-"       --retr-symlinks             when recursing, get linked-to files (not "
-"dir).\n"
+"       --bind-address=ADDRESS      bind to ADDRESS (hostname or IP) on local "
+"host\n"
 msgstr ""
 
 #: src/main.c:684
-msgid "WARC options:\n"
+msgid "       --limit-rate=RATE           limit download rate to RATE\n"
 msgstr ""
 
 #: src/main.c:686
-msgid ""
-"       --warc-file=FILENAME        save request/response data to a .warc.gz "
-"file.\n"
+msgid "       --no-dns-cache              disable caching DNS lookups\n"
 msgstr ""
 
 #: src/main.c:688
 msgid ""
-"       --warc-header=STRING        insert STRING into the warcinfo record.\n"
+"       --restrict-file-names=OS    restrict chars in file names to ones OS "
+"allows\n"
 msgstr ""
 
 #: src/main.c:690
 msgid ""
-"       --warc-max-size=NUMBER      set maximum size of WARC files to "
-"NUMBER.\n"
+"       --ignore-case               ignore case when matching files/"
+"directories\n"
 msgstr ""
 
-#: src/main.c:692
-msgid "       --warc-cdx                  write CDX index files.\n"
+#: src/main.c:693
+msgid "  -4,  --inet4-only                connect only to IPv4 addresses\n"
 msgstr ""
 
-#: src/main.c:694
-msgid ""
-"       --warc-dedup=FILENAME       do not store records listed in this CDX "
-"file.\n"
+#: src/main.c:695
+msgid "  -6,  --inet6-only                connect only to IPv6 addresses\n"
 msgstr ""
 
 #: src/main.c:697
 msgid ""
-"       --no-warc-compression       do not compress WARC files with GZIP.\n"
+"       --prefer-family=FAMILY      connect first to addresses of specified "
+"family,\n"
+"                                     one of IPv6, IPv4, or none\n"
 msgstr ""
 
-#: src/main.c:700
-msgid "       --no-warc-digests           do not calculate SHA1 digests.\n"
+#: src/main.c:701
+msgid "       --user=USER                 set both ftp and http user to USER\n"
 msgstr ""
 
-#: src/main.c:702
+#: src/main.c:703
 msgid ""
-"       --no-warc-keep-log          do not store the log file in a WARC "
-"record.\n"
+"       --password=PASS             set both ftp and http password to PASS\n"
 msgstr ""
 
-#: src/main.c:704
+#: src/main.c:705
+msgid "       --ask-password              prompt for passwords\n"
+msgstr ""
+
+#: src/main.c:707
 msgid ""
-"       --warc-tempdir=DIRECTORY    location for temporary files created by "
-"the\n"
-"                                   WARC writer.\n"
+"       --use-askpass=COMMAND       specify credential handler for "
+"requesting \n"
+"                                     username and password.  If no COMMAND "
+"is \n"
+"                                     specified the WGET_ASKPASS or the "
+"SSH_ASKPASS \n"
+"                                     environment variable is used.\n"
 msgstr ""
 
-#: src/main.c:709
-msgid "Recursive download:\n"
+#: src/main.c:712
+msgid "       --no-iri                    turn off IRI support\n"
 msgstr ""
 
-#: src/main.c:711
-msgid "  -r,  --recursive                 specify recursive download.\n"
-msgstr ""
-
-#: src/main.c:713
+#: src/main.c:714
 msgid ""
-"  -l,  --level=NUMBER              maximum recursion depth (inf or 0 for "
-"infinite).\n"
+"       --local-encoding=ENC        use ENC as the local encoding for IRIs\n"
 msgstr ""
 
-#: src/main.c:715
+#: src/main.c:716
 msgid ""
-"       --delete-after              delete files locally after downloading "
-"them.\n"
+"       --remote-encoding=ENC       use ENC as the default remote encoding\n"
 msgstr ""
 
-#: src/main.c:717
-msgid ""
-"  -k,  --convert-links             make links in downloaded HTML or CSS "
-"point to\n"
-"                                   local files.\n"
+#: src/main.c:718
+msgid "       --unlink                    remove file before clobber\n"
 msgstr ""
 
-#: src/main.c:720
+#: src/main.c:721
 msgid ""
-"       --backups=N                 before writing file X, rotate up to N "
-"backup files.\n"
+"       --keep-badhash              keep files with checksum mismatch "
+"(append .badhash)\n"
 msgstr ""
 
-#: src/main.c:724
+#: src/main.c:723
 msgid ""
-"  -K,  --backup-converted          before converting file X, back up as "
-"X_orig.\n"
+"       --metalink-index=NUMBER     Metalink application/metalink4+xml "
+"metaurl ordinal NUMBER\n"
+msgstr ""
+
+#: src/main.c:725
+msgid ""
+"       --metalink-over-http        use Metalink metadata from HTTP response "
+"headers\n"
 msgstr ""
 
 #: src/main.c:727
 msgid ""
-"  -K,  --backup-converted          before converting file X, back up as X."
-"orig.\n"
+"       --preferred-location        preferred location for Metalink "
+"resources\n"
 msgstr ""
 
-#: src/main.c:730
+#: src/main.c:731
 msgid ""
-"  -m,  --mirror                    shortcut for -N -r -l inf --no-remove-"
-"listing.\n"
+"       --no-xattr                  turn off storage of metadata in extended "
+"file attributes\n"
 msgstr ""
 
-#: src/main.c:732
-msgid ""
-"  -p,  --page-requisites           get all images, etc. needed to display "
-"HTML page.\n"
-msgstr ""
-
-#: src/main.c:734
-msgid ""
-"       --strict-comments           turn on strict (SGML) handling of HTML "
-"comments.\n"
-msgstr ""
+#: src/main.c:736
+#, fuzzy
+msgid "Directories:\n"
+msgstr "Κατάλογος   "
 
 #: src/main.c:738
-msgid "Recursive accept/reject:\n"
+msgid "  -nd, --no-directories            don't create directories\n"
 msgstr ""
 
 #: src/main.c:740
-msgid ""
-"  -A,  --accept=LIST               comma-separated list of accepted "
-"extensions.\n"
+msgid "  -x,  --force-directories         force creation of directories\n"
 msgstr ""
 
 #: src/main.c:742
-msgid ""
-"  -R,  --reject=LIST               comma-separated list of rejected "
-"extensions.\n"
+msgid "  -nH, --no-host-directories       don't create host directories\n"
 msgstr ""
 
 #: src/main.c:744
-msgid "       --accept-regex=REGEX        regex matching accepted URLs.\n"
+msgid "       --protocol-directories      use protocol name in directories\n"
 msgstr ""
 
 #: src/main.c:746
-msgid "       --reject-regex=REGEX        regex matching rejected URLs.\n"
+msgid "  -P,  --directory-prefix=PREFIX   save files to PREFIX/..\n"
 msgstr ""
 
-#: src/main.c:749
-msgid "       --regex-type=TYPE           regex type (posix|pcre).\n"
+#: src/main.c:748
+msgid ""
+"       --cut-dirs=NUMBER           ignore NUMBER remote directory "
+"components\n"
 msgstr ""
 
 #: src/main.c:752
-msgid "       --regex-type=TYPE           regex type (posix).\n"
+msgid "HTTP options:\n"
 msgstr ""
 
-#: src/main.c:755
-msgid ""
-"  -D,  --domains=LIST              comma-separated list of accepted "
-"domains.\n"
+#: src/main.c:754
+msgid "       --http-user=USER            set http user to USER\n"
 msgstr ""
 
-#: src/main.c:757
-msgid ""
-"       --exclude-domains=LIST      comma-separated list of rejected "
-"domains.\n"
+#: src/main.c:756
+msgid "       --http-password=PASS        set http password to PASS\n"
 msgstr ""
 
-#: src/main.c:759
-msgid ""
-"       --follow-ftp                follow FTP links from HTML documents.\n"
+#: src/main.c:758
+msgid "       --no-cache                  disallow server-cached data\n"
 msgstr ""
 
-#: src/main.c:761
+#: src/main.c:760
 msgid ""
-"       --follow-tags=LIST          comma-separated list of followed HTML "
-"tags.\n"
+"       --default-page=NAME         change the default page name (normally\n"
+"                                     this is 'index.html'.)\n"
 msgstr ""
 
 #: src/main.c:763
 msgid ""
-"       --ignore-tags=LIST          comma-separated list of ignored HTML "
-"tags.\n"
+"  -E,  --adjust-extension          save HTML/CSS documents with proper "
+"extensions\n"
 msgstr ""
 
 #: src/main.c:765
 msgid ""
-"  -H,  --span-hosts                go to foreign hosts when recursive.\n"
+"       --ignore-length             ignore 'Content-Length' header field\n"
 msgstr ""
 
 #: src/main.c:767
-msgid "  -L,  --relative                  follow relative links only.\n"
+msgid "       --header=STRING             insert STRING among the headers\n"
 msgstr ""
 
-#: src/main.c:769
-msgid "  -I,  --include-directories=LIST  list of allowed directories.\n"
-msgstr ""
-
-#: src/main.c:771
+#: src/main.c:770
 msgid ""
-"       --trust-server-names        use the name specified by the "
-"redirection\n"
-"                                   url last component.\n"
+"       --compression=TYPE          choose compression, one of auto, gzip and "
+"none\n"
 msgstr ""
 
-#: src/main.c:774
-msgid "  -X,  --exclude-directories=LIST  list of excluded directories.\n"
-msgstr ""
-
-#: src/main.c:776
+#: src/main.c:773
 msgid ""
-"  -np, --no-parent                 don't ascend to the parent directory.\n"
+"       --max-redirect              maximum redirections allowed per page\n"
+msgstr ""
+
+#: src/main.c:775
+msgid "       --proxy-user=USER           set USER as proxy username\n"
+msgstr ""
+
+#: src/main.c:777
+msgid "       --proxy-password=PASS       set PASS as proxy password\n"
 msgstr ""
 
 #: src/main.c:779
-msgid "Mail bug reports and suggestions to <bug-wget@gnu.org>.\n"
+msgid ""
+"       --referer=URL               include 'Referer: URL' header in HTTP "
+"request\n"
+msgstr ""
+
+#: src/main.c:781
+msgid "       --save-headers              save the HTTP headers to file\n"
+msgstr ""
+
+#: src/main.c:783
+msgid ""
+"  -U,  --user-agent=AGENT          identify as AGENT instead of Wget/"
+"VERSION\n"
+msgstr ""
+
+#: src/main.c:785
+msgid ""
+"       --no-http-keep-alive        disable HTTP keep-alive (persistent "
+"connections)\n"
+msgstr ""
+
+#: src/main.c:787
+msgid "       --no-cookies                don't use cookies\n"
+msgstr ""
+
+#: src/main.c:789
+msgid ""
+"       --load-cookies=FILE         load cookies from FILE before session\n"
+msgstr ""
+
+#: src/main.c:791
+msgid "       --save-cookies=FILE         save cookies to FILE after session\n"
+msgstr ""
+
+#: src/main.c:793
+msgid ""
+"       --keep-session-cookies      load and save session (non-permanent) "
+"cookies\n"
+msgstr ""
+
+#: src/main.c:795
+msgid ""
+"       --post-data=STRING          use the POST method; send STRING as the "
+"data\n"
+msgstr ""
+
+#: src/main.c:797
+msgid ""
+"       --post-file=FILE            use the POST method; send contents of "
+"FILE\n"
+msgstr ""
+
+#: src/main.c:799
+msgid ""
+"       --method=HTTPMethod         use method \"HTTPMethod\" in the request\n"
+msgstr ""
+
+#: src/main.c:801
+msgid ""
+"       --body-data=STRING          send STRING as data. --method MUST be "
+"set\n"
+msgstr ""
+
+#: src/main.c:803
+msgid ""
+"       --body-file=FILE            send contents of FILE. --method MUST be "
+"set\n"
+msgstr ""
+
+#: src/main.c:805
+msgid ""
+"       --content-disposition       honor the Content-Disposition header "
+"when\n"
+"                                     choosing local file names "
+"(EXPERIMENTAL)\n"
+msgstr ""
+
+#: src/main.c:808
+msgid ""
+"       --content-on-error          output the received content on server "
+"errors\n"
+msgstr ""
+
+#: src/main.c:810
+msgid ""
+"       --auth-no-challenge         send Basic HTTP authentication "
+"information\n"
+"                                     without first waiting for the server's\n"
+"                                     challenge\n"
+msgstr ""
+
+#: src/main.c:817
+msgid "HTTPS (SSL/TLS) options:\n"
+msgstr ""
+
+#: src/main.c:819
+msgid ""
+"       --secure-protocol=PR        choose secure protocol, one of auto, "
+"SSLv2,\n"
+"                                     SSLv3, TLSv1, TLSv1_1, TLSv1_2 and PFS\n"
+msgstr ""
+
+#: src/main.c:822
+msgid "       --https-only                only follow secure HTTPS links\n"
+msgstr ""
+
+#: src/main.c:824
+msgid ""
+"       --no-check-certificate      don't validate the server's certificate\n"
+msgstr ""
+
+#: src/main.c:826
+msgid "       --certificate=FILE          client certificate file\n"
+msgstr ""
+
+#: src/main.c:828
+msgid ""
+"       --certificate-type=TYPE     client certificate type, PEM or DER\n"
+msgstr ""
+
+#: src/main.c:830
+msgid "       --private-key=FILE          private key file\n"
+msgstr ""
+
+#: src/main.c:832
+msgid "       --private-key-type=TYPE     private key type, PEM or DER\n"
+msgstr ""
+
+#: src/main.c:834
+msgid "       --ca-certificate=FILE       file with the bundle of CAs\n"
+msgstr ""
+
+#: src/main.c:836
+msgid ""
+"       --ca-directory=DIR          directory where hash list of CAs is "
+"stored\n"
+msgstr ""
+
+#: src/main.c:838
+msgid "       --crl-file=FILE             file with bundle of CRLs\n"
+msgstr ""
+
+#: src/main.c:840
+msgid ""
+"       --pinnedpubkey=FILE/HASHES  Public key (PEM/DER) file, or any number\n"
+"                                   of base64 encoded sha256 hashes preceded "
+"by\n"
+"                                   'sha256//' and separated by ';', to "
+"verify\n"
+"                                   peer against\n"
+msgstr ""
+
+#: src/main.c:846
+msgid ""
+"       --random-file=FILE          file with random data for seeding the SSL "
+"PRNG\n"
+msgstr ""
+
+#: src/main.c:850
+msgid ""
+"       --egd-file=FILE             file naming the EGD socket with random "
+"data\n"
+msgstr ""
+
+#: src/main.c:857
+msgid "HSTS options:\n"
+msgstr ""
+
+#: src/main.c:859
+msgid "       --no-hsts                   disable HSTS\n"
+msgstr ""
+
+#: src/main.c:861
+msgid ""
+"       --hsts-file                 path of HSTS database (will override "
+"default)\n"
+msgstr ""
+
+#: src/main.c:866
+msgid "FTP options:\n"
+msgstr ""
+
+#: src/main.c:869
+msgid ""
+"       --ftp-stmlf                 use Stream_LF format for all binary FTP "
+"files\n"
+msgstr ""
+
+#: src/main.c:872
+msgid "       --ftp-user=USER             set ftp user to USER\n"
+msgstr ""
+
+#: src/main.c:874
+msgid "       --ftp-password=PASS         set ftp password to PASS\n"
+msgstr ""
+
+#: src/main.c:876
+msgid "       --no-remove-listing         don't remove '.listing' files\n"
+msgstr ""
+
+#: src/main.c:878
+msgid "       --no-glob                   turn off FTP file name globbing\n"
+msgstr ""
+
+#: src/main.c:880
+msgid ""
+"       --no-passive-ftp            disable the \"passive\" transfer mode\n"
+msgstr ""
+
+#: src/main.c:882
+msgid "       --preserve-permissions      preserve remote file permissions\n"
+msgstr ""
+
+#: src/main.c:884
+msgid ""
+"       --retr-symlinks             when recursing, get linked-to files (not "
+"dir)\n"
+msgstr ""
+
+#: src/main.c:889
+msgid "FTPS options:\n"
+msgstr ""
+
+#: src/main.c:891
+msgid ""
+"       --ftps-implicit                 use implicit FTPS (default port is "
+"990)\n"
+msgstr ""
+
+#: src/main.c:893
+msgid ""
+"       --ftps-resume-ssl               resume the SSL/TLS session started in "
+"the control connection when\n"
+"                                         opening a data connection\n"
+msgstr ""
+
+#: src/main.c:896
+msgid ""
+"       --ftps-clear-data-connection    cipher the control channel only; all "
+"the data will be in plaintext\n"
+msgstr ""
+
+#: src/main.c:898
+msgid ""
+"       --ftps-fallback-to-ftp          fall back to FTP if FTPS is not "
+"supported in the target server\n"
+msgstr ""
+
+#: src/main.c:902
+msgid "WARC options:\n"
+msgstr ""
+
+#: src/main.c:904
+msgid ""
+"       --warc-file=FILENAME        save request/response data to a .warc.gz "
+"file\n"
+msgstr ""
+
+#: src/main.c:906
+msgid ""
+"       --warc-header=STRING        insert STRING into the warcinfo record\n"
+msgstr ""
+
+#: src/main.c:908
+msgid ""
+"       --warc-max-size=NUMBER      set maximum size of WARC files to NUMBER\n"
+msgstr ""
+
+#: src/main.c:910
+msgid "       --warc-cdx                  write CDX index files\n"
+msgstr ""
+
+#: src/main.c:912
+msgid ""
+"       --warc-dedup=FILENAME       do not store records listed in this CDX "
+"file\n"
+msgstr ""
+
+#: src/main.c:915
+msgid ""
+"       --no-warc-compression       do not compress WARC files with GZIP\n"
+msgstr ""
+
+#: src/main.c:918
+msgid "       --no-warc-digests           do not calculate SHA1 digests\n"
+msgstr ""
+
+#: src/main.c:920
+msgid ""
+"       --no-warc-keep-log          do not store the log file in a WARC "
+"record\n"
+msgstr ""
+
+#: src/main.c:922
+msgid ""
+"       --warc-tempdir=DIRECTORY    location for temporary files created by "
+"the\n"
+"                                     WARC writer\n"
+msgstr ""
+
+#: src/main.c:927
+msgid "Recursive download:\n"
+msgstr ""
+
+#: src/main.c:929
+msgid "  -r,  --recursive                 specify recursive download\n"
+msgstr ""
+
+#: src/main.c:931
+msgid ""
+"  -l,  --level=NUMBER              maximum recursion depth (inf or 0 for "
+"infinite)\n"
+msgstr ""
+
+#: src/main.c:933
+msgid ""
+"       --delete-after              delete files locally after downloading "
+"them\n"
+msgstr ""
+
+#: src/main.c:935
+msgid ""
+"  -k,  --convert-links             make links in downloaded HTML or CSS "
+"point to\n"
+"                                     local files\n"
+msgstr ""
+
+#: src/main.c:938
+msgid ""
+"       --convert-file-only         convert the file part of the URLs only "
+"(usually known as the basename)\n"
+msgstr ""
+
+#: src/main.c:940
+msgid ""
+"       --backups=N                 before writing file X, rotate up to N "
+"backup files\n"
+msgstr ""
+
+#: src/main.c:944
+msgid ""
+"  -K,  --backup-converted          before converting file X, back up as "
+"X_orig\n"
+msgstr ""
+
+#: src/main.c:947
+msgid ""
+"  -K,  --backup-converted          before converting file X, back up as X."
+"orig\n"
+msgstr ""
+
+#: src/main.c:950
+msgid ""
+"  -m,  --mirror                    shortcut for -N -r -l inf --no-remove-"
+"listing\n"
+msgstr ""
+
+#: src/main.c:952
+msgid ""
+"  -p,  --page-requisites           get all images, etc. needed to display "
+"HTML page\n"
+msgstr ""
+
+#: src/main.c:954
+msgid ""
+"       --strict-comments           turn on strict (SGML) handling of HTML "
+"comments\n"
+msgstr ""
+
+#: src/main.c:958
+msgid "Recursive accept/reject:\n"
+msgstr ""
+
+#: src/main.c:960
+msgid ""
+"  -A,  --accept=LIST               comma-separated list of accepted "
+"extensions\n"
+msgstr ""
+
+#: src/main.c:962
+msgid ""
+"  -R,  --reject=LIST               comma-separated list of rejected "
+"extensions\n"
+msgstr ""
+
+#: src/main.c:964
+msgid "       --accept-regex=REGEX        regex matching accepted URLs\n"
+msgstr ""
+
+#: src/main.c:966
+msgid "       --reject-regex=REGEX        regex matching rejected URLs\n"
+msgstr ""
+
+#: src/main.c:969
+msgid "       --regex-type=TYPE           regex type (posix|pcre)\n"
+msgstr ""
+
+#: src/main.c:972
+msgid "       --regex-type=TYPE           regex type (posix)\n"
+msgstr ""
+
+#: src/main.c:975
+msgid ""
+"  -D,  --domains=LIST              comma-separated list of accepted domains\n"
+msgstr ""
+
+#: src/main.c:977
+msgid ""
+"       --exclude-domains=LIST      comma-separated list of rejected domains\n"
+msgstr ""
+
+#: src/main.c:979
+msgid ""
+"       --follow-ftp                follow FTP links from HTML documents\n"
+msgstr ""
+
+#: src/main.c:981
+msgid ""
+"       --follow-tags=LIST          comma-separated list of followed HTML "
+"tags\n"
+msgstr ""
+
+#: src/main.c:983
+msgid ""
+"       --ignore-tags=LIST          comma-separated list of ignored HTML "
+"tags\n"
+msgstr ""
+
+#: src/main.c:985
+msgid "  -H,  --span-hosts                go to foreign hosts when recursive\n"
+msgstr ""
+
+#: src/main.c:987
+msgid "  -L,  --relative                  follow relative links only\n"
+msgstr ""
+
+#: src/main.c:989
+msgid "  -I,  --include-directories=LIST  list of allowed directories\n"
+msgstr ""
+
+#: src/main.c:991
+msgid ""
+"       --trust-server-names        use the name specified by the "
+"redirection\n"
+"                                     URL's last component\n"
+msgstr ""
+
+#: src/main.c:994
+msgid "  -X,  --exclude-directories=LIST  list of excluded directories\n"
+msgstr ""
+
+#: src/main.c:996
+msgid ""
+"  -np, --no-parent                 don't ascend to the parent directory\n"
+msgstr ""
+
+#: src/main.c:999
+#, fuzzy
+msgid "Mail bug reports and suggestions to <bug-wget@gnu.org>\n"
 msgstr "Στείλτε αναφορές σφαλμάτων και προτάσεις στο <bug-wget@gnu.org>.\n"
 
-#: src/main.c:784
+#: src/main.c:1004
 #, c-format
 msgid "GNU Wget %s, a non-interactive network retriever.\n"
 msgstr "GNU Wget %s, ένα μη-διαλογικό δικτυακό πρόγραμμα ανάκτησης αρχείων.\n"
 
-#: src/main.c:827
+#: src/main.c:1047
 #, c-format
 msgid "Password for user %s: "
 msgstr ""
 
-#: src/main.c:829
+#: src/main.c:1049
 #, c-format
 msgid "Password: "
 msgstr ""
 
-#: src/main.c:885
+#: src/main.c:1068
+#, c-format
+msgid "Cannot create pipe\n"
+msgstr ""
+
+#: src/main.c:1076
+#, c-format
+msgid "Error initializing spawn file actions for use-askpass: %d\n"
+msgstr ""
+
+#: src/main.c:1085
+#, c-format
+msgid "Error setting spawn file actions for use-askpass: %d\n"
+msgstr ""
+
+#: src/main.c:1109
+#, c-format
+msgid "Error reading response from command \"%s %s\": %s\n"
+msgstr ""
+
+#: src/main.c:1132
+#, c-format
+msgid "Username for '%s%s': "
+msgstr ""
+
+#: src/main.c:1142
+#, c-format
+msgid "Password for '%s%s@%s': "
+msgstr ""
+
+#: src/main.c:1214
 msgid "Wgetrc: "
 msgstr ""
 
-#: src/main.c:886
+#: src/main.c:1215
 msgid "Locale: "
 msgstr ""
 
-#: src/main.c:887
+#: src/main.c:1216
 msgid "Compile: "
 msgstr ""
 
-#: src/main.c:888
+#: src/main.c:1217
 msgid "Link: "
 msgstr ""
 
-#: src/main.c:892
+#: src/main.c:1221
 #, c-format
 msgid ""
 "GNU Wget %s built on %s.\n"
 "\n"
 msgstr ""
 
-#: src/main.c:919
+#: src/main.c:1248
 #, c-format
 msgid "    %s (env)\n"
 msgstr ""
 
-#: src/main.c:926
+#: src/main.c:1255
 #, c-format
 msgid "    %s (user)\n"
 msgstr ""
 
-#: src/main.c:931
+#: src/main.c:1260
 #, c-format
 msgid "    %s (system)\n"
 msgstr ""
 
 #. TRANSLATORS: When available, an actual copyright character
 #. (circle-c) should be used in preference to "(C)".
-#: src/main.c:959
+#: src/main.c:1288
 #, fuzzy, c-format
 msgid "Copyright (C) %s Free Software Foundation, Inc.\n"
 msgstr ""
 "Πνευματικά Δικαιώματα (C) 1995, 1996, 1997, 1998, 2000, 2001 Free Software "
 "Foundation, Inc.\n"
 
-#: src/main.c:962
+#: src/main.c:1291
 msgid ""
 "License GPLv3+: GNU GPL version 3 or later\n"
 "<http://www.gnu.org/licenses/gpl.html>.\n"
@@ -2141,7 +2476,7 @@ msgstr ""
 
 #. TRANSLATORS: When available, please use the proper diacritics for
 #. names such as this one. See en_US.po for reference.
-#: src/main.c:970
+#: src/main.c:1299
 #, fuzzy
 msgid ""
 "\n"
@@ -2150,174 +2485,227 @@ msgstr ""
 "\n"
 "Γράφτηκε αρχικά από τον Hrvoje Niksic <hniksic@arsdigita.com>.\n"
 
-#: src/main.c:973
+#: src/main.c:1302
 #, fuzzy
 msgid "Please send bug reports and questions to <bug-wget@gnu.org>.\n"
 msgstr "Στείλτε αναφορές σφαλμάτων και προτάσεις στο <bug-wget@gnu.org>.\n"
 
-#: src/main.c:1024 src/main.c:1515
+#: src/main.c:1351 src/main.c:1882
 #, c-format
 msgid "Memory allocation problem\n"
 msgstr ""
 
-#: src/main.c:1075
+#: src/main.c:1401
 #, c-format
 msgid "Exiting due to error in %s\n"
 msgstr ""
 
-#: src/main.c:1104 src/main.c:1174 src/main.c:1376
+#: src/main.c:1430 src/main.c:1501 src/main.c:1733
 #, c-format
 msgid "Try `%s --help' for more options.\n"
 msgstr "Δοκιμάστε `%s --help' για περισσότερες επιλογές ρυθμίσεων.\n"
 
-#: src/main.c:1170
+#: src/main.c:1497
 #, c-format
 msgid "%s: illegal option -- `-n%c'\n"
 msgstr "%s: μη αποδεκτή επιλογή -- `-n%c'\n"
 
-#: src/main.c:1213
+#: src/main.c:1540
 #, fuzzy, c-format
 msgid "Debugging support not compiled in. Ignoring --debug flag.\n"
 msgstr ""
 "%s: η υποστήριξη εκσφαλμάτωσης δεν έχει συμπεριληφθεί στη μεταγλώττιση.\n"
 
-#: src/main.c:1225
+#: src/main.c:1553
 #, c-format
 msgid ""
 "Both --no-clobber and --convert-links were specified, only --convert-links "
 "will be used.\n"
 msgstr ""
 
-#: src/main.c:1255
+#: src/main.c:1555
+#, c-format
+msgid ""
+"Both --no-clobber and --convert-file-only were specified, only --convert-"
+"file-only will be used.\n"
+msgstr ""
+
+#: src/main.c:1588
 #, c-format
 msgid "Can't be verbose and quiet at the same time.\n"
 msgstr "Δεν μπορώ να είμαι επεξηγηματικός και ταυτόχρονα σιωπηλός.\n"
 
-#: src/main.c:1261
+#: src/main.c:1594
 #, c-format
 msgid "Can't timestamp and not clobber old files at the same time.\n"
 msgstr ""
 "Δεν μπορώ να χρησιμοποιώ χρονικές αναφορές και ταυτόχρονα να μην υποκαθιστώ "
 "τα αρχεία βάση των αναφορών.\n"
 
-#: src/main.c:1270
+#: src/main.c:1603
 #, c-format
 msgid "Cannot specify both --inet4-only and --inet6-only.\n"
 msgstr ""
 
-#: src/main.c:1280
+#: src/main.c:1613
 msgid ""
-"Cannot specify both -k and -O if multiple URLs are given, or in combination\n"
+"Cannot specify both -k or --convert-file-only and -O if multiple URLs are "
+"given, or in combination\n"
 "with -p or -r. See the manual for details.\n"
 "\n"
 msgstr ""
 
-#: src/main.c:1289
+#: src/main.c:1622
 msgid ""
 "WARNING: combining -O with -r or -p will mean that all downloaded content\n"
 "will be placed in the single file you specified.\n"
 "\n"
 msgstr ""
 
-#: src/main.c:1295
+#: src/main.c:1628
 msgid ""
 "WARNING: timestamping does nothing in combination with -O. See the manual\n"
 "for details.\n"
 "\n"
 msgstr ""
 
-#: src/main.c:1304
+#: src/main.c:1637
 #, fuzzy, c-format
 msgid "File `%s' already there; not retrieving.\n"
 msgstr "Το αρχείο `%s' υπάρχει ήδη, δεν επανακτάται.\n"
 
-#: src/main.c:1315
+#: src/main.c:1648
 #, c-format
 msgid ""
 "WARC output does not work with --no-clobber, --no-clobber will be disabled.\n"
 msgstr ""
 
-#: src/main.c:1322
+#: src/main.c:1655
 #, c-format
 msgid ""
 "WARC output does not work with timestamping, timestamping will be disabled.\n"
 msgstr ""
 
-#: src/main.c:1329
+#: src/main.c:1662
 #, c-format
 msgid "WARC output does not work with --spider.\n"
 msgstr ""
 
-#: src/main.c:1335
+#: src/main.c:1668
 #, c-format
 msgid ""
 "WARC output does not work with --continue or --start-pos, they will be "
 "disabled.\n"
 msgstr ""
 
-#: src/main.c:1343
+#: src/main.c:1676
 #, c-format
 msgid ""
 "Digests are disabled; WARC deduplication will not find duplicate records.\n"
 msgstr ""
 
-#: src/main.c:1355
+#: src/main.c:1697
+#, c-format
+msgid ""
+"Compression does not work with --continue or --start-pos, they will be "
+"disabled.\n"
+msgstr ""
+
+#: src/main.c:1708
 #, c-format
 msgid "Cannot specify both --ask-password and --password.\n"
 msgstr ""
 
-#: src/main.c:1363
+#: src/main.c:1716
 #, c-format
 msgid ""
 "Specifying both --start-pos and --continue is not recommended; --continue "
 "will be disabled.\n"
 msgstr ""
 
-#: src/main.c:1371
+#: src/main.c:1728
 #, c-format
 msgid "%s: missing URL\n"
 msgstr "%s: παραλείφθηκε το URL\n"
 
-#: src/main.c:1412
+#: src/main.c:1769
 #, c-format
 msgid "You cannot specify both --post-data and --post-file.\n"
 msgstr ""
 
-#: src/main.c:1417
+#: src/main.c:1774
 #, c-format
 msgid ""
 "You cannot use --post-data or --post-file along with --method. --method "
-"expects data through --body-data and --body-file options"
+"expects data through --body-data and --body-file options\n"
 msgstr ""
 
-#: src/main.c:1426
+#: src/main.c:1783
 #, c-format
 msgid ""
 "You must specify a method through --method=HTTPMethod to use with --body-"
 "data or --body-file.\n"
 msgstr ""
 
-#: src/main.c:1432
+#: src/main.c:1789
 #, c-format
 msgid "You cannot specify both --body-data and --body-file.\n"
 msgstr ""
 
-#: src/main.c:1484
+#: src/main.c:1841
 #, c-format
 msgid "This version does not have support for IRIs\n"
 msgstr ""
 
-#: src/main.c:1584
+#: src/main.c:1951
 #, c-format
-msgid "-k can be used together with -O only if outputting to a regular file.\n"
+msgid ""
+"-k or -r can be used together with -O only if outputting to a regular file.\n"
 msgstr ""
 
-#: src/main.c:1689
+#: src/main.c:1957
+#, c-format
+msgid ""
+"--convert-links or --convert-file-only can be used together only if "
+"outputting to a regular file.\n"
+msgstr ""
+
+#: src/main.c:1968
+#, c-format
+msgid "Failed to init libcares\n"
+msgstr ""
+
+#: src/main.c:1974
+#, c-format
+msgid "Failed to init c-ares channel\n"
+msgstr ""
+
+#: src/main.c:1997
+#, c-format
+msgid "Failed to parse IP address '%s'\n"
+msgstr ""
+
+#: src/main.c:2008
+#, c-format
+msgid "Failed to set DNS server(s) '%s' (%d)\n"
+msgstr ""
+
+#: src/main.c:2136
 #, c-format
 msgid "No URLs found in %s.\n"
 msgstr "Δεν βρέθηκαν URL στο %s.\n"
 
-#: src/main.c:1710
+#: src/main.c:2152
+#, fuzzy, c-format
+msgid "Unable to parse metalink file %s.\n"
+msgstr "Αποτυχία διαγραφής του `%s': %s\n"
+
+#: src/main.c:2182 src/metalink.c:337
+#, fuzzy, c-format
+msgid "Could not download all resources from %s.\n"
+msgstr "Αποτυχία φόρτωσης πιστοποιητικών από %s\n"
+
+#: src/main.c:2209
 #, fuzzy, c-format
 msgid ""
 "FINISHED --%s--\n"
@@ -2328,116 +2716,280 @@ msgstr ""
 "ΤΕΡΜΑΤΙΣΜΟΣ  --%s--\n"
 "Μεταφορτώθηκαν: %s byte σε %d αρχεία\n"
 
-#: src/main.c:1724
+#: src/main.c:2223
 #, fuzzy, c-format
 msgid "Download quota of %s EXCEEDED!\n"
 msgstr ""
 "Το όριο χώρου στο δίσκο για αρχεία από μεταφορτώσεις (%s bytes) έχει "
 "ΞΕΠΕΡΑΣΤΕΪ!\n"
 
-#: src/mswindows.c:100
+#: src/metalink.c:93
+msgid "-O not supported for metalink download. Ignoring.\n"
+msgstr ""
+
+#: src/metalink.c:172
+#, c-format
+msgid "[--trust-server-names %s, --directory-prefix=%s]\n"
+msgstr ""
+
+#: src/metalink.c:176
+#, c-format
+msgid "Planned metalink file: %s\n"
+msgstr ""
+
+#: src/metalink.c:179
+#, c-format
+msgid "Secured metalink file: %s\n"
+msgstr ""
+
+#: src/metalink.c:184
+msgid "Rejecting metalink file. Unsafe name.\n"
+msgstr ""
+
+#: src/metalink.c:238
+#, c-format
+msgid "Processing metaurl %s...\n"
+msgstr ""
+
+#: src/metalink.c:251
+#, c-format
+msgid "Rejecting metaurl file %s. Unsafe name.\n"
+msgstr ""
+
+#: src/metalink.c:268
+#, c-format
+msgid "Failed to download %s. Skipping metaurl.\n"
+msgstr ""
+
+#: src/metalink.c:285
+#, fuzzy, c-format
+msgid "Unable to parse metaurl file %s.\n"
+msgstr "Αποτυχία διαγραφής του `%s': %s\n"
+
+#: src/metalink.c:354
+msgid "Metaurls processing returned with error.\n"
+msgstr ""
+
+#: src/metalink.c:386
+#, c-format
+msgid "Resource type %s not supported, ignoring...\n"
+msgstr ""
+
+#: src/metalink.c:509
+msgid "Could not open downloaded file.\n"
+msgstr ""
+
+#: src/metalink.c:514
+#, c-format
+msgid "Computing size for %s\n"
+msgstr ""
+
+#: src/metalink.c:519
+msgid "File size not declared. Skipping check.\n"
+msgstr ""
+
+#: src/metalink.c:527
+msgid "Could not get downloaded file's size.\n"
+msgstr ""
+
+#: src/metalink.c:539
+#, c-format
+msgid "Size mismatch for file %s.\n"
+msgstr ""
+
+#: src/metalink.c:547
+msgid "Size matches.\n"
+msgstr ""
+
+#: src/metalink.c:600
+#, c-format
+msgid "Computing checksum for %s\n"
+msgstr ""
+
+#: src/metalink.c:678
+msgid "Checksum matches.\n"
+msgstr ""
+
+#: src/metalink.c:683
+#, c-format
+msgid "Checksum mismatch for file %s.\n"
+msgstr ""
+
+#: src/metalink.c:723
+msgid "Could not open downloaded file for signature verification.\n"
+msgstr ""
+
+#: src/metalink.c:782
+#, c-format
+msgid "GPGME data_new_from_mem: %s\n"
+msgstr ""
+
+#: src/metalink.c:794
+#, c-format
+msgid "GPGME op_verify: %s\n"
+msgstr ""
+
+#: src/metalink.c:807
+msgid "GPGME op_verify_result: NULL\n"
+msgstr ""
+
+#: src/metalink.c:823
+msgid "Signature validation succeeded.\n"
+msgstr ""
+
+#: src/metalink.c:831
+msgid "Invalid signature. Rejecting resource.\n"
+msgstr ""
+
+#: src/metalink.c:840
+msgid "Data matches signature, but signature is not trusted.\n"
+msgstr ""
+
+#: src/metalink.c:867
+msgid "No checksums found.\n"
+msgstr ""
+
+#: src/metalink.c:873
+#, c-format
+msgid "Failed to download %s. Skipping resource.\n"
+msgstr ""
+
+#: src/metalink.c:880
+#, c-format
+msgid "File %s retrieved but size does not match. \n"
+msgstr ""
+
+#: src/metalink.c:887
+#, c-format
+msgid "File %s retrieved but checksum does not match. \n"
+msgstr ""
+
+#: src/metalink.c:896
+#, c-format
+msgid "File %s retrieved but signature does not match. \n"
+msgstr ""
+
+#: src/metalink.c:1115
+#, fuzzy, c-format
+msgid "Renaming %s to %s.\n"
+msgstr "Διαγραφή του %s.\n"
+
+#: src/mswindows.c:97
 #, c-format
 msgid "Continuing in background.\n"
 msgstr "Εκτέλεση στο παρασκήνιο.\n"
 
-#: src/mswindows.c:293
+#: src/mswindows.c:290
 #, fuzzy, c-format
 msgid "Continuing in background, pid %lu.\n"
 msgstr ""
 "Συνέχιση στο παρασκήνιο, ταυτότητα διεργασίας (pid) %d.\n"
 "\n"
 
-#: src/mswindows.c:295 src/utils.c:481
+#: src/mswindows.c:292 src/utils.c:510
 #, fuzzy, c-format
 msgid "Output will be written to %s.\n"
 msgstr "Η έξοδος θα γραφτεί στο `%s'.\n"
 
-#: src/mswindows.c:327
+#: src/mswindows.c:324
 #, c-format
 msgid "fake_fork_child() failed\n"
 msgstr ""
 
-#: src/mswindows.c:335
+#: src/mswindows.c:332
 #, c-format
 msgid "fake_fork() failed\n"
 msgstr ""
 
-#: src/mswindows.c:463 src/mswindows.c:470
+#: src/mswindows.c:460 src/mswindows.c:467
 #, c-format
 msgid "%s: Couldn't find usable socket driver.\n"
 msgstr "%s: Αδυναμία εύρεσης έγκυρου οδηγού δικτύου.\n"
 
-#: src/mswindows.c:650
+#: src/mswindows.c:647
 #, c-format
 msgid "ioctl() failed.  The socket could not be set as blocking.\n"
 msgstr ""
 
-#: src/netrc.c:354
+#: src/netrc.c:366
 #, fuzzy, c-format
 msgid "%s: %s:%d: warning: %s token appears before any machine name\n"
 msgstr ""
 "%s: %s:%d: προειδοποίηση: το τμήμα \"%s\" εμφανίζεται πριν από τα ονόματα "
 "των μηχανημάτων\n"
 
-#: src/netrc.c:385
+#: src/netrc.c:407
 #, c-format
 msgid "%s: %s:%d: unknown token \"%s\"\n"
 msgstr "%s: %s:%d: άγνωστος τελεσταίος \"%s\"\n"
 
-#: src/netrc.c:448
+#: src/netrc.c:470
 #, c-format
 msgid "Usage: %s NETRC [HOSTNAME]\n"
 msgstr "Χρήση: %s NETRC [ΟΝΟΜΑ ΜΗΧΑΝΗΜΑΤΟΣ]\n"
 
-#: src/netrc.c:466
+#: src/netrc.c:488
 #, c-format
 msgid "%s: cannot stat %s: %s\n"
 msgstr "%s: αδυναμία πρόσβασης στο %s: %s\n"
 
-#: src/openssl.c:118
+#: src/openssl.c:123
 msgid "WARNING: using a weak random seed.\n"
 msgstr ""
 
-#: src/openssl.c:189
+#: src/openssl.c:195
 #, fuzzy
 msgid "Could not seed PRNG; consider using --random-file.\n"
 msgstr "Αδύνατη η αρχικοποίηση της PRNG της OpenSSL· απενεργοποίηση του SSL.\n"
 
-#: src/openssl.c:630
+#: src/openssl.c:245
+msgid "Your OpenSSL version is too old to support TLSv1.1\n"
+msgstr ""
+
+#: src/openssl.c:249
+msgid "Your OpenSSL version is too old to support TLSv1.2\n"
+msgstr ""
+
+#: src/openssl.c:254
+#, c-format
+msgid "OpenSSL: unimplemented 'secure-protocol' option value %d\n"
+msgstr ""
+
+#: src/openssl.c:798
 #, c-format
 msgid "%s: cannot verify %s's certificate, issued by %s:\n"
 msgstr ""
 
-#: src/openssl.c:639
+#: src/openssl.c:809
 msgid "  Unable to locally verify the issuer's authority.\n"
 msgstr ""
 
-#: src/openssl.c:644
+#: src/openssl.c:814
 msgid "  Self-signed certificate encountered.\n"
 msgstr ""
 
-#: src/openssl.c:647
+#: src/openssl.c:817
 msgid "  Issued certificate not yet valid.\n"
 msgstr ""
 
-#: src/openssl.c:650
+#: src/openssl.c:820
 msgid "  Issued certificate has expired.\n"
 msgstr ""
 
-#: src/openssl.c:735
+#: src/openssl.c:908
 #, c-format
 msgid ""
 "%s: no certificate subject alternative name matches\n"
 "\trequested host name %s.\n"
 msgstr ""
 
-#: src/openssl.c:752
+#: src/openssl.c:927
 #, c-format
 msgid ""
 "    %s: certificate common name %s doesn't match requested host name %s.\n"
 msgstr ""
 
-#: src/openssl.c:784
+#: src/openssl.c:959
 #, c-format
 msgid ""
 "    %s: certificate common name is invalid (contains a NUL character).\n"
@@ -2445,12 +2997,12 @@ msgid ""
 "    (that is, it is not the real %s).\n"
 msgstr ""
 
-#: src/openssl.c:802
+#: src/openssl.c:984
 #, c-format
 msgid "To connect to %s insecurely, use `--no-check-certificate'.\n"
 msgstr ""
 
-#: src/progress.c:244
+#: src/progress.c:245
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -2459,20 +3011,20 @@ msgstr ""
 "\n"
 "%*s[ παράκαμψη %dK ]"
 
-#: src/progress.c:465
+#: src/progress.c:466
 #, fuzzy, c-format
 msgid "Invalid dot style specification %s; leaving unchanged.\n"
 msgstr "Μη έγκυρη ρύθμιση στυλ τελείας `%s'· παραμένει χωρίς αλλαγή.\n"
 
 #. TRANSLATORS: "ETA" is English-centric, but this must
 #. be short, ideally 3 chars.  Abbreviate if necessary.
-#: src/progress.c:854
+#: src/progress.c:858
 #, c-format
-msgid "   eta %s"
+msgid "    eta %s"
 msgstr ""
 
-#: src/progress.c:1150
-msgid "   in "
+#: src/progress.c:1148
+msgid "    in "
 msgstr ""
 
 #: src/ptimer.c:158
@@ -2480,37 +3032,37 @@ msgstr ""
 msgid "Cannot get REALTIME clock frequency: %s\n"
 msgstr ""
 
-#: src/recur.c:434
+#: src/recur.c:514
 #, c-format
 msgid "Removing %s since it should be rejected.\n"
 msgstr "Διαγραφή του %s αφού θα έπρεπε να απορριφθεί.\n"
 
-#: src/res.c:391
+#: src/res.c:392
 #, fuzzy, c-format
 msgid "Cannot open %s: %s"
 msgstr "Αδυναμία μετατροπής συνδέσμων στο %s: %s\n"
 
-#: src/res.c:550
+#: src/res.c:551
 msgid "Loading robots.txt; please ignore errors.\n"
 msgstr ""
 "Ανάγνωση του robots.txt; παρακαλώ αγνοείστε τυχόν μηνύματα σφαλμάτων.\n"
 
-#: src/retr.c:768
+#: src/retr.c:913
 #, c-format
 msgid "Error parsing proxy URL %s: %s.\n"
 msgstr "Σφάλμα στην ανάλυση του URL του διαμεσολαβητή %s: %s.\n"
 
-#: src/retr.c:778
+#: src/retr.c:925
 #, c-format
 msgid "Error in proxy URL %s: Must be HTTP.\n"
 msgstr "Σφάλμα στο URL διαμεσολαβητή %s: Πρέπει να είναι HTTP.\n"
 
-#: src/retr.c:879
+#: src/retr.c:1054
 #, c-format
 msgid "%d redirections exceeded.\n"
 msgstr "Υπέρβαση %d επανακατευθύνσεων.\n"
 
-#: src/retr.c:1126
+#: src/retr.c:1318
 msgid ""
 "Giving up.\n"
 "\n"
@@ -2518,7 +3070,7 @@ msgstr ""
 "Εγκαταλείπω.\n"
 "\n"
 
-#: src/retr.c:1126
+#: src/retr.c:1318
 msgid ""
 "Retrying.\n"
 "\n"
@@ -2526,139 +3078,168 @@ msgstr ""
 "Προσπάθεια ξανά.\n"
 "\n"
 
-#: src/spider.c:75
-msgid ""
-"Found no broken links.\n"
-"\n"
-msgstr ""
-
-#: src/spider.c:82
-#, c-format
-msgid ""
-"Found %d broken link.\n"
-"\n"
-msgid_plural ""
-"Found %d broken links.\n"
-"\n"
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/url.c:639
+#: src/url.c:676
 #, fuzzy
 msgid "No error"
 msgstr "Άγνωστο σφάλμα"
 
-#: src/url.c:641
+#: src/url.c:678
 #, c-format
 msgid "Unsupported scheme %s"
 msgstr ""
 
-#: src/url.c:643
+#: src/url.c:680
 msgid "Scheme missing"
 msgstr ""
 
-#: src/url.c:645
+#: src/url.c:682
 #, fuzzy
 msgid "Invalid host name"
 msgstr "Μη έγκυρο όνομα εξυπηρετητή"
 
-#: src/url.c:647
+#: src/url.c:684
 msgid "Bad port number"
 msgstr ""
 
-#: src/url.c:649
+#: src/url.c:686
 #, fuzzy
 msgid "Invalid user name"
 msgstr "Μη έγκυρο όνομα εξυπηρετητή"
 
-#: src/url.c:651
+#: src/url.c:688
 msgid "Unterminated IPv6 numeric address"
 msgstr ""
 
-#: src/url.c:653
+#: src/url.c:690
 msgid "IPv6 addresses not supported"
 msgstr ""
 
-#: src/url.c:655
+#: src/url.c:692
 msgid "Invalid IPv6 numeric address"
 msgstr ""
 
-#: src/url.c:959
+#: src/url.c:1008
 #, fuzzy
 msgid "HTTPS support not compiled in"
 msgstr ""
 "%s: η υποστήριξη εκσφαλμάτωσης δεν έχει συμπεριληφθεί στη μεταγλώττιση.\n"
 
-#: src/utils.c:116
+#: src/url.c:1603
+msgid "Unconvertable multibyte sequence encountered\n"
+msgstr ""
+
+#: src/utils.c:130
 #, c-format
 msgid "%s: %s: Failed to allocate enough memory; memory exhausted.\n"
 msgstr ""
 
-#: src/utils.c:122
+#: src/utils.c:136
 #, c-format
 msgid "%s: %s: Failed to allocate %ld bytes; memory exhausted.\n"
 msgstr ""
 
-#: src/utils.c:336
+#: src/utils.c:356
 #, c-format
-msgid "%s: aprintf: text buffer is too big (%ld bytes), aborting.\n"
+msgid "%s: aprintf: text buffer is too big (%d bytes), aborting.\n"
 msgstr ""
 
-#: src/utils.c:479
+#: src/utils.c:508
 #, c-format
 msgid "Continuing in background, pid %d.\n"
 msgstr ""
 "Συνέχιση στο παρασκήνιο, ταυτότητα διεργασίας (pid) %d.\n"
 "\n"
 
-#: src/utils.c:555
+#: src/utils.c:584
 #, fuzzy, c-format
 msgid "Failed to unlink symlink %s: %s\n"
 msgstr "Αποτυχία διαγραφής συμβολικού συνδέσμου `%s': %s\n"
 
-#: src/utils.c:2273 src/utils.c:2292
+#: src/utils.c:884
+#, fuzzy, c-format
+msgid "Failed to Fopen file %s\n"
+msgstr "Αποτυχία λήψης κλειδιού πιστοποιητικού από %s\n"
+
+#: src/utils.c:890
+#, fuzzy, c-format
+msgid "Failed to get FD for file %s\n"
+msgstr "Αποτυχία λήψης κλειδιού πιστοποιητικού από %s\n"
+
+#: src/utils.c:897
+#, fuzzy, c-format
+msgid "Failed to stat file %s, (check permissions)\n"
+msgstr "Αποτυχία λήψης κλειδιού πιστοποιητικού από %s\n"
+
+#: src/utils.c:907
+#, c-format
+msgid "File %s changed since the last check. Security check failed."
+msgstr ""
+
+#: src/utils.c:942
+#, fuzzy, c-format
+msgid "Failed to open file %s, reason :%s\n"
+msgstr "Αποτυχία λήψης κλειδιού πιστοποιητικού από %s\n"
+
+#: src/utils.c:948
+#, fuzzy, c-format
+msgid "Failed to stat file %s, error: %s\n"
+msgstr "Αποτυχία λήψης κλειδιού πιστοποιητικού από %s\n"
+
+#: src/utils.c:957
+#, c-format
+msgid ""
+"Trying to open file %s but it changed since last check. Security check "
+"failed."
+msgstr ""
+
+#: src/utils.c:2461 src/utils.c:2480
 #, c-format
 msgid "Invalid regular expression %s, %s\n"
 msgstr ""
 
-#: src/utils.c:2315 src/utils.c:2339
+#: src/utils.c:2504 src/utils.c:2528
 #, fuzzy, c-format
 msgid "Error while matching %s: %d\n"
 msgstr "Σφάλμα στην εγγραφή στο `%s': %s\n"
 
-#: src/warc.c:222
+#: src/utils.c:2821
+#, c-format
+msgid "Skipping key with wrong size (%d/%d): %s\n"
+msgstr ""
+
+#: src/warc.c:223
 msgid "Error opening GZIP stream to WARC file.\n"
 msgstr ""
 
-#: src/warc.c:710
+#: src/warc.c:798
 msgid "Error writing warcinfo record to WARC file.\n"
 msgstr ""
 
-#: src/warc.c:771
+#: src/warc.c:861
 #, c-format
 msgid ""
 "Opening WARC file %s.\n"
 "\n"
 msgstr ""
 
-#: src/warc.c:777
+#: src/warc.c:867
 #, fuzzy, c-format
 msgid "Error opening WARC file %s.\n"
 msgstr "Σφάλμα στην ανάλυση του URL του διαμεσολαβητή %s: %s.\n"
 
-#: src/warc.c:974
+#: src/warc.c:1064
 msgid "CDX file does not list original urls. (Missing column 'a'.)\n"
 msgstr ""
 
-#: src/warc.c:977
+#: src/warc.c:1067
 msgid "CDX file does not list checksums. (Missing column 'k'.)\n"
 msgstr ""
 
-#: src/warc.c:980
+#: src/warc.c:1070
 msgid "CDX file does not list record ids. (Missing column 'u'.)\n"
 msgstr ""
 
-#: src/warc.c:1002
+#: src/warc.c:1094
 #, c-format
 msgid ""
 "Loaded %d record from CDX.\n"
@@ -2669,35 +3250,41 @@ msgid_plural ""
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/warc.c:1047
+#: src/warc.c:1140
 #, c-format
 msgid "Could not read CDX file %s for deduplication.\n"
 msgstr ""
 
-#: src/warc.c:1057
+#: src/warc.c:1150
 msgid "Could not open temporary WARC manifest file.\n"
 msgstr ""
 
-#: src/warc.c:1067
+#: src/warc.c:1160
 msgid "Could not open temporary WARC log file.\n"
 msgstr ""
 
-#: src/warc.c:1076
+#: src/warc.c:1169
 msgid "Could not open WARC file.\n"
 msgstr ""
 
-#: src/warc.c:1085
+#: src/warc.c:1178
 #, fuzzy
 msgid "Could not open CDX file for output.\n"
 msgstr "Αδυναμία εύρεσης διαμεσολαβητή.\n"
 
-#: src/warc.c:1113
+#: src/warc.c:1208
 msgid "Could not open temporary WARC file.\n"
 msgstr ""
 
-#: src/warc.c:1370
+#: src/warc.c:1476
 msgid "Found exact match in CDX file. Saving revisit record to WARC.\n"
 msgstr ""
+
+#, fuzzy
+#~ msgid ""
+#~ "\n"
+#~ "%s received.\n"
+#~ msgstr "Δεν ελήφθησαν δεδομένα"
 
 #~ msgid "Error in Set-Cookie, field `%s'"
 #~ msgstr "Σφάλμα στο Set-Cookie, πεδίο `%s'"
@@ -2721,14 +3308,8 @@ msgstr ""
 #~ msgid "Failed to set up an SSL context\n"
 #~ msgstr "Αποτυχία δημιουργίας περιβάλλοντος SSL\n"
 
-#~ msgid "Failed to load certificates from %s\n"
-#~ msgstr "Αποτυχία φόρτωσης πιστοποιητικών από %s\n"
-
 #~ msgid "Trying without the specified certificate\n"
 #~ msgstr "Προσπάθεια χωρίς το καθορισμένο πιστοποιητικό\n"
-
-#~ msgid "Failed to get certificate key from %s\n"
-#~ msgstr "Αποτυχία λήψης κλειδιού πιστοποιητικού από %s\n"
 
 #~ msgid "End of file while parsing headers.\n"
 #~ msgstr "Τέλος αρχείου ενώ γινόταν επεξεργασία των κεφαλίδων.\n"

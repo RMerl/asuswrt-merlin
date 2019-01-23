@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2017 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -16,28 +16,27 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifndef SYSHEAD_H
 #define SYSHEAD_H
 
 #include "compat.h"
-#include "compat-stdbool.h"
+#include <stdbool.h>
 
 /* branch prediction hints */
 #if defined(__GNUC__)
-# define likely(x)       __builtin_expect((x),1)
-# define unlikely(x)     __builtin_expect((x),0)
+#define likely(x)       __builtin_expect((x),1)
+#define unlikely(x)     __builtin_expect((x),0)
 #else
-# define likely(x)      (x)
-# define unlikely(x)    (x)
+#define likely(x)      (x)
+#define unlikely(x)    (x)
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #include <winsock2.h>
 #define sleep(x) Sleep((x)*1000)
@@ -45,7 +44,7 @@
 #define srandom srand
 #endif
 
-#ifdef _MSC_VER // Visual Studio
+#ifdef _MSC_VER /* Visual Studio */
 #define __func__ __FUNCTION__
 #define __attribute__(x)
 #endif
@@ -61,15 +60,15 @@
 #endif
 
 #ifdef HAVE_SYS_WAIT_H
-# include <sys/wait.h>
+#include <sys/wait.h>
 #endif
 
-#ifndef WIN32
+#ifndef _WIN32
 #ifndef WEXITSTATUS
-# define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
+#define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
 #endif
 #ifndef WIFEXITED
-# define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
+#define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
 #endif
 #endif
 
@@ -217,7 +216,7 @@
 #include <net/if_tap.h>
 #endif
 
-#ifdef TARGET_LINUX
+#if defined(TARGET_LINUX) || defined (TARGET_ANDROID)
 
 #ifdef HAVE_LINUX_IF_TUN_H
 #include <linux/if_tun.h>
@@ -286,6 +285,10 @@
 
 #ifdef HAVE_NETINET_IP_H
 #include <netinet/ip.h>
+#endif
+
+#ifdef HAVE_NETINET_TCP_H
+#include <netinet/tcp.h>
 #endif
 
 #ifdef HAVE_NET_IF_TUN_H
@@ -358,9 +361,14 @@
 
 #endif /* TARGET_DARWIN */
 
-#ifdef WIN32
-#include <iphlpapi.h>
+#ifdef _WIN32
+/* Missing declarations for MinGW 32. */
+/* #if !defined(__MINGW64_VERSION_MAJOR) || __MINGW64_VERSION_MAJOR < 2 */
+typedef int MIB_TCP_STATE;
+/* #endif */
+#include <naptypes.h>
 #include <ntddndis.h>
+#include <iphlpapi.h>
 #include <wininet.h>
 #include <shellapi.h>
 /* The following two headers are needed of PF_INET6 */
@@ -379,16 +387,13 @@
  * Pedantic mode is meant to accomplish lint-style program checking,
  * not to build a working executable.
  */
-#ifdef __STRICT_ANSI__
-# define PEDANTIC 1
-# undef HAVE_CPP_VARARG_MACRO_GCC
-# undef HAVE_CPP_VARARG_MACRO_ISO
-# undef EMPTY_ARRAY_SIZE
-# define EMPTY_ARRAY_SIZE 1
-# undef inline
-# define inline
-#else
-# define PEDANTIC 0
+#ifdef PEDANTIC
+#undef HAVE_CPP_VARARG_MACRO_GCC
+#undef HAVE_CPP_VARARG_MACRO_ISO
+#undef EMPTY_ARRAY_SIZE
+#define EMPTY_ARRAY_SIZE 1
+#undef inline
+#define inline
 #endif
 
 /*
@@ -403,15 +408,8 @@
 /*
  * Do we have nanoseconds gettimeofday?
  */
-#if defined(HAVE_GETTIMEOFDAY) || defined(WIN32)
+#if defined(HAVE_GETTIMEOFDAY) || defined(_WIN32)
 #define HAVE_GETTIMEOFDAY_NANOSECONDS 1
-#endif
-
-/*
- * do we have the MIN() macro?
- */
-#ifndef MIN
-#define MIN(a,b) (((a)<(b))?(a):(b))
 #endif
 
 /*
@@ -427,7 +425,7 @@
  * Does this platform support linux-style IP_PKTINFO
  * or bsd-style IP_RECVDSTADDR ?
  */
-#if defined(ENABLE_MULTIHOME) && ((defined(HAVE_IN_PKTINFO)&&defined(IP_PKTINFO)) || defined(IP_RECVDSTADDR)) && defined(HAVE_MSGHDR) && defined(HAVE_CMSGHDR) && defined(HAVE_IOVEC) && defined(CMSG_FIRSTHDR) && defined(CMSG_NXTHDR) && defined(HAVE_RECVMSG) && defined(HAVE_SENDMSG)
+#if defined(ENABLE_MULTIHOME) && ((defined(HAVE_IN_PKTINFO) && defined(IP_PKTINFO)) || defined(IP_RECVDSTADDR)) && defined(HAVE_MSGHDR) && defined(HAVE_CMSGHDR) && defined(HAVE_IOVEC) && defined(CMSG_FIRSTHDR) && defined(CMSG_NXTHDR) && defined(HAVE_RECVMSG) && defined(HAVE_SENDMSG)
 #define ENABLE_IP_PKTINFO 1
 #else
 #define ENABLE_IP_PKTINFO 0
@@ -439,6 +437,13 @@
  */
 #ifndef SOL_IP
 #define SOL_IP IPPROTO_IP
+#endif
+
+/*
+ * Define type sa_family_t if it isn't defined in the socket headers
+ */
+#ifndef HAVE_SA_FAMILY_T
+typedef unsigned short sa_family_t;
 #endif
 
 /*
@@ -468,26 +473,16 @@
 /*
  * Directory separation char
  */
-#ifdef WIN32
+#ifdef _WIN32
 #define OS_SPECIFIC_DIRSEP '\\'
 #else
 #define OS_SPECIFIC_DIRSEP '/'
 #endif
 
 /*
- * Define a boolean value based
- * on Win32 status.
- */
-#ifdef WIN32
-#define WIN32_0_1 1
-#else
-#define WIN32_0_1 0
-#endif
-
-/*
  * Our socket descriptor type.
  */
-#ifdef WIN32
+#ifdef _WIN32
 #define SOCKET_UNDEFINED (INVALID_SOCKET)
 typedef SOCKET socket_descriptor_t;
 #else
@@ -496,9 +491,9 @@ typedef int socket_descriptor_t;
 #endif
 
 static inline int
-socket_defined (const socket_descriptor_t sd)
+socket_defined(const socket_descriptor_t sd)
 {
-  return sd != SOCKET_UNDEFINED;
+    return sd != SOCKET_UNDEFINED;
 }
 
 /*
@@ -518,7 +513,7 @@ socket_defined (const socket_descriptor_t sd)
  * Do we have point-to-multipoint capability?
  */
 
-#if defined(ENABLE_CLIENT_SERVER) && defined(ENABLE_CRYPTO) && defined(ENABLE_SSL) && defined(HAVE_GETTIMEOFDAY_NANOSECONDS)
+#if defined(ENABLE_CLIENT_SERVER) && defined(ENABLE_CRYPTO) && defined(HAVE_GETTIMEOFDAY_NANOSECONDS)
 #define P2MP 1
 #else
 #define P2MP 0
@@ -555,14 +550,14 @@ socket_defined (const socket_descriptor_t sd)
 /*
  * Enable external private key
  */
-#if defined(ENABLE_MANAGEMENT) && defined(ENABLE_SSL)
+#if defined(ENABLE_MANAGEMENT) && defined(ENABLE_CRYPTO)
 #define MANAGMENT_EXTERNAL_KEY
 #endif
 
-/* Enable PolarSSL RNG prediction resistance support */
-#ifdef ENABLE_CRYPTO_POLARSSL
+/* Enable mbed TLS RNG prediction resistance support */
+#ifdef ENABLE_CRYPTO_MBEDTLS
 #define ENABLE_PREDICTION_RESISTANCE
-#endif /* ENABLE_CRYPTO_POLARSSL */
+#endif /* ENABLE_CRYPTO_MBEDTLS */
 
 /*
  * MANAGEMENT_IN_EXTRA allows the management interface to
@@ -588,28 +583,21 @@ socket_defined (const socket_descriptor_t sd)
 /*
  * Do we support Unix domain sockets?
  */
-#if defined(PF_UNIX) && !defined(WIN32)
+#if defined(PF_UNIX) && !defined(_WIN32)
 #define UNIX_SOCK_SUPPORT 1
 #else
 #define UNIX_SOCK_SUPPORT 0
 #endif
 
 /*
- * Compile the struct buffer_list code
- */
-#define ENABLE_BUFFER_LIST
-
-/*
  * Should we include OCC (options consistency check) code?
  */
-#ifndef ENABLE_SMALL
 #define ENABLE_OCC
-#endif
 
 /*
  * Should we include NTLM proxy functionality
  */
-#if defined(ENABLE_CRYPTO) && defined(ENABLE_HTTP_PROXY)
+#if defined(ENABLE_CRYPTO)
 #define NTLM 1
 #else
 #define NTLM 0
@@ -618,31 +606,17 @@ socket_defined (const socket_descriptor_t sd)
 /*
  * Should we include proxy digest auth functionality
  */
-#if defined(ENABLE_CRYPTO) && defined(ENABLE_HTTP_PROXY)
+#if defined(ENABLE_CRYPTO)
 #define PROXY_DIGEST_AUTH 1
 #else
 #define PROXY_DIGEST_AUTH 0
 #endif
 
 /*
- * Should we include code common to all proxy methods?
- */
-#if defined(ENABLE_HTTP_PROXY) || defined(ENABLE_SOCKS)
-#define GENERAL_PROXY_SUPPORT
-#endif
-
-/*
  * Do we have CryptoAPI capability?
  */
-#if defined(WIN32) && defined(ENABLE_CRYPTO) && defined(ENABLE_SSL) && defined(ENABLE_CRYPTO_OPENSSL)
+#if defined(_WIN32) && defined(ENABLE_CRYPTO) && defined(ENABLE_CRYPTO_OPENSSL)
 #define ENABLE_CRYPTOAPI
-#endif
-
-/*
- * Enable x509-track feature?
- */
-#if defined(ENABLE_CRYPTO) && defined(ENABLE_SSL) && defined (ENABLE_CRYPTO_OPENSSL)
-#define ENABLE_X509_TRACK
 #endif
 
 /*
@@ -670,15 +644,6 @@ socket_defined (const socket_descriptor_t sd)
 #endif
 
 /*
- * Should we include http proxy override functionality
- */
-#if defined(ENABLE_MANAGEMENT) && defined(ENABLE_HTTP_PROXY)
-#define HTTP_PROXY_OVERRIDE 1
-#else
-#define HTTP_PROXY_OVERRIDE 0
-#endif
-
-/*
  * Reduce sensitivity to system clock instability
  * and backtracks.
  */
@@ -701,7 +666,7 @@ socket_defined (const socket_descriptor_t sd)
 #endif
 
 /*
- * Do we have the capability to support the AUTO_USERID feature? 
+ * Do we have the capability to support the AUTO_USERID feature?
  */
 #if defined(ENABLE_AUTO_USERID)
 #define AUTO_USERID 1
@@ -719,14 +684,17 @@ socket_defined (const socket_descriptor_t sd)
 /*
  * Do we support pushing peer info?
  */
-#if defined(ENABLE_CRYPTO) && defined(ENABLE_SSL)
+#if defined(ENABLE_CRYPTO)
 #define ENABLE_PUSH_PEER_INFO
 #endif
 
 /*
- * Do we support internal client-side NAT?
+ * Compression support
  */
-#define ENABLE_CLIENT_NAT
+#if defined(ENABLE_LZO) || defined(ENABLE_LZ4)    \
+    || defined(ENABLE_COMP_STUB)
+#define USE_COMP
+#endif
 
 /*
  * Enable --memstats option
@@ -735,4 +703,4 @@ socket_defined (const socket_descriptor_t sd)
 #define ENABLE_MEMSTATS
 #endif
 
-#endif
+#endif /* ifndef SYSHEAD_H */

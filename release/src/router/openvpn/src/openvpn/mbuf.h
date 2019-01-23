@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2017 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -16,10 +16,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifndef MBUF_H
@@ -43,67 +42,74 @@ struct multi_instance;
 
 struct mbuf_buffer
 {
-  struct buffer buf;
-  int refcount;
+    struct buffer buf;
+    int refcount;
 
-# define MF_UNICAST (1<<0)
-  unsigned int flags;
+#define MF_UNICAST (1<<0)
+    unsigned int flags;
 };
 
 struct mbuf_item
 {
-  struct mbuf_buffer *buffer;
-  struct multi_instance *instance;
+    struct mbuf_buffer *buffer;
+    struct multi_instance *instance;
 };
 
 struct mbuf_set
 {
-  unsigned int head;
-  unsigned int len;
-  unsigned int capacity;
-  unsigned int max_queued;
-  struct mbuf_item *array;
+    unsigned int head;
+    unsigned int len;
+    unsigned int capacity;
+    unsigned int max_queued;
+    struct mbuf_item *array;
 };
 
-struct mbuf_set *mbuf_init (unsigned int size);
-void mbuf_free (struct mbuf_set *ms);
+struct mbuf_set *mbuf_init(unsigned int size);
 
-struct mbuf_buffer *mbuf_alloc_buf (const struct buffer *buf);
-void mbuf_free_buf (struct mbuf_buffer *mb);
+void mbuf_free(struct mbuf_set *ms);
 
-void mbuf_add_item (struct mbuf_set *ms, const struct mbuf_item *item);
+struct mbuf_buffer *mbuf_alloc_buf(const struct buffer *buf);
 
-bool mbuf_extract_item (struct mbuf_set *ms, struct mbuf_item *item);
+void mbuf_free_buf(struct mbuf_buffer *mb);
 
-void mbuf_dereference_instance (struct mbuf_set *ms, struct multi_instance *mi);
+void mbuf_add_item(struct mbuf_set *ms, const struct mbuf_item *item);
+
+bool mbuf_extract_item(struct mbuf_set *ms, struct mbuf_item *item);
+
+void mbuf_dereference_instance(struct mbuf_set *ms, struct multi_instance *mi);
 
 static inline bool
-mbuf_defined (const struct mbuf_set *ms)
+mbuf_defined(const struct mbuf_set *ms)
 {
-  return ms && ms->len;
+    return ms && ms->len;
 }
 
 static inline unsigned int
-mbuf_len (const struct mbuf_set *ms)
+mbuf_len(const struct mbuf_set *ms)
 {
-  return ms->len;
+    return ms->len;
 }
 
 static inline int
-mbuf_maximum_queued (const struct mbuf_set *ms)
+mbuf_maximum_queued(const struct mbuf_set *ms)
 {
-  return (int) ms->max_queued;
+    return (int) ms->max_queued;
 }
 
 static inline struct multi_instance *
-mbuf_peek (struct mbuf_set *ms)
+mbuf_peek(struct mbuf_set *ms)
 {
-  struct multi_instance *mbuf_peek_dowork (struct mbuf_set *ms);
-  if (mbuf_defined (ms))
-    return mbuf_peek_dowork (ms);
-  else
-    return NULL;
+    struct multi_instance *mbuf_peek_dowork(struct mbuf_set *ms);
+
+    if (mbuf_defined(ms))
+    {
+        return mbuf_peek_dowork(ms);
+    }
+    else
+    {
+        return NULL;
+    }
 }
 
-#endif
-#endif
+#endif /* if P2MP */
+#endif /* ifndef MBUF_H */

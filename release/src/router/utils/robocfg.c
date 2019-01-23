@@ -449,7 +449,7 @@ main(int argc, char *argv[])
 		if (strcasecmp(argv[i], "showmacs") == 0)
 		{
 			/* show MAC table of switch */
-			u16 buf[6];
+			u16 buf[6], r;
 			int idx, off, base_vlan;
 
 			base_vlan = 0; /*get_vid_by_idx(&robo, 0);*/
@@ -461,25 +461,36 @@ main(int argc, char *argv[])
 			robo_write16(&robo, ROBO_ARLIO_PAGE, ROBO_ARL_RW_CTRL, 0x81);
 			robo_write16(&robo, ROBO_ARLIO_PAGE, (robo535x >= 4) ?
 			    ROBO_ARL_SEARCH_CTRL_53115 : ROBO_ARL_SEARCH_CTRL, 0x80);
+
 			for (idx = 0; idx < ((robo535x >= 4) ?
 				NUM_ARL_TABLE_ENTRIES_53115 : robo535x ?
 				NUM_ARL_TABLE_ENTRIES_5350 : NUM_ARL_TABLE_ENTRIES); idx++)
 			{
-				if (robo535x >= 4)
-				{
+				if (robo535x >= 4) {
 					off = (idx & 0x01) << 4;
-					if (!off && (robo_read16(&robo, ROBO_ARLIO_PAGE,
-					    ROBO_ARL_SEARCH_CTRL_53115) & 0x80) == 0) break;
+					if (!off) {
+						j = 0;
+					again:
+						r = robo_read16(&robo, ROBO_ARLIO_PAGE,
+								ROBO_ARL_SEARCH_CTRL_53115);
+						if ((r & 0x80) == 0) break;
+						if ((r & 0x01) == 0) {
+							if (++j >= 10) break;
+							usleep(200);
+							goto again;
+						}
+					}
 					robo_read(&robo, ROBO_ARLIO_PAGE,
 					    ROBO_ARL_SEARCH_RESULT_53115 + off, buf, 4);
 					robo_read(&robo, ROBO_ARLIO_PAGE,
 					    ROBO_ARL_SEARCH_RESULT_EXT_53115 + off, &buf[4], 2);
-				} else
-					robo_read(&robo, ROBO_ARLIO_PAGE, ROBO_ARL_SEARCH_RESULT, 
-					    buf, robo535x ? 4 : 5);
+				} else {
+					robo_read(&robo, ROBO_ARLIO_PAGE, ROBO_ARL_SEARCH_RESULT_EXT,  &buf[4], 1);
+					robo_read(&robo, ROBO_ARLIO_PAGE, ROBO_ARL_SEARCH_RESULT,  buf, 4);
+				}
 				if ((robo535x >= 4) ? (buf[5] & 0x01) : (buf[3] & 0x8000) /* valid */)
 				{
-					printf("%04i  %02x:%02x:%02x:%02x:%02x:%02x  %7s  %c\n",
+					printf("%04i  %02x:%02x:%02x:%02x:%02x:%02x  %-7s  ",
 						(base_vlan | (robo535x >= 4) ?
 						    (base_vlan | (buf[3] & 0xfff)) :
 						    ((buf[3] >> 5) & 0x0f) |
@@ -488,10 +499,22 @@ main(int argc, char *argv[])
 						buf[1] >> 8, buf[1] & 255,
 						buf[0] >> 8, buf[0] & 255,
 						((robo535x >= 4 ?
-						    (buf[4] & 0x8000) : (buf[3] & 0x4000)) ? "STATIC" : "DYNAMIC"),
-						((robo535x >= 4) ?
-						    '0'+(buf[4] & 0x0f) : ports[buf[3] & 0x0f])
+						    (buf[4] & 0x8000) : (buf[3] & 0x4000)) ? "STATIC" : "DYNAMIC")
 					);
+					if (buf[2] & 0x100) {
+						val16 = (robo535x >= 4) ? (buf[4] & 0x1ff) :
+							(buf[3] & 0x1f) | ((buf[4] & 4) << 3);
+						if (val16 == 0)
+							printf("-");
+						else
+						for (j = 0; val16; val16 >>= 1, j++) {
+							if (val16 & 1)
+								printf("%d ", j);
+						}
+					} else
+						printf("%d", (robo535x >= 4) ? buf[4] & 0x0f :
+						       ports[buf[3] & 0x0f] - '0');
+					printf("\n");
 				}
 			}
 			i++;
@@ -767,25 +790,28 @@ main(int argc, char *argv[])
 	printf("Switch: %sabled %s\n", robo_read16(&robo, ROBO_CTRL_PAGE, ROBO_SWITCH_MODE) & 2 ? "en" : "dis",
 		    robo.gmii ? "gigabit" : "");
 
-	for (i = 0; i < 6; i++) {
-		printf(robo_read16(&robo, ROBO_STAT_PAGE, ROBO_LINK_STAT_SUMMARY) & (1 << port[i]) ?
+	for (i = 0; i <= 8; i++) {
+		if (i < 8 && ((robo535x < 4 && i > 4) || (robo535x < 5 && i > 5) || (robo535x == 5 && i == 6)))
+			continue;
+		printf(robo_read16(&robo, ROBO_STAT_PAGE, ROBO_LINK_STAT_SUMMARY) & (1 << i) ?
 			"Port %d: %4s%s " : "Port %d:   DOWN ",
-			(robo535x >= 4) ? port[i] : i,
+			(robo535x >= 4) ? i : ports[i] - '0',
 			speed[(robo535x >= 4) ?
-				(robo_read32(&robo, ROBO_STAT_PAGE, ROBO_SPEED_STAT_SUMMARY) >> port[i] * 2) & 3 :
-				(robo_read16(&robo, ROBO_STAT_PAGE, ROBO_SPEED_STAT_SUMMARY) >> port[i]) & 1],
+				(robo_read32(&robo, ROBO_STAT_PAGE, ROBO_SPEED_STAT_SUMMARY) >> i * 2) & 3 :
+				(robo_read16(&robo, ROBO_STAT_PAGE, ROBO_SPEED_STAT_SUMMARY) >> i) & 1],
 			robo_read16(&robo, ROBO_STAT_PAGE, (robo535x >= 4) ?
-				ROBO_DUPLEX_STAT_SUMMARY_53115 : ROBO_DUPLEX_STAT_SUMMARY) & (1 << port[i]) ? "FD" : "HD");
+				ROBO_DUPLEX_STAT_SUMMARY_53115 : ROBO_DUPLEX_STAT_SUMMARY) & (1 << i) ? "FD" : "HD");
 
-		val16 = robo_read16(&robo, ROBO_CTRL_PAGE, port[i]);
+		val16 = robo_read16(&robo, ROBO_CTRL_PAGE, i);
 
 		printf("%s stp: %s vlan: %d ", rxtx[val16 & 3], stp[(val16 >> 5) & 7],
-			robo_read16(&robo, ROBO_VLAN_PAGE, ROBO_VLAN_PORT0_DEF_TAG + (i << 1)));
+			robo_read16(&robo, ROBO_VLAN_PAGE, ROBO_VLAN_PORT0_DEF_TAG +
+				(((robo535x >= 4) ? i : ports[i] - '0') << 1)));
 
 		if (robo535x >= 4)
-			printf("jumbo: %s ", jumbo[(robo_read32(&robo, ROBO_JUMBO_PAGE, ROBO_JUMBO_CTRL) >> port[i]) & 1]);
+			printf("jumbo: %s ", jumbo[(robo_read32(&robo, ROBO_JUMBO_PAGE, ROBO_JUMBO_CTRL) >> i) & 1]);
 
-		robo_read(&robo, ROBO_STAT_PAGE, ROBO_LSA_PORT0 + port[i] * 6, mac, 3);
+		robo_read(&robo, ROBO_STAT_PAGE, ROBO_LSA_PORT0 + i * 6, mac, 3);
 
 		printf("mac: %02x:%02x:%02x:%02x:%02x:%02x\n",
 			mac[2] >> 8, mac[2] & 255, mac[1] >> 8, mac[1] & 255, mac[0] >> 8, mac[0] & 255);

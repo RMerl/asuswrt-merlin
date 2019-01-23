@@ -45,6 +45,11 @@
 #define BLED_NAME		"bled"
 #define BLED_DEVNAME	"/dev/" BLED_NAME
 
+#define BLED_MAX_NR_NETDEV_IF		(8)
+#define BLED_MAX_NR_SWPORTS		(8)
+#define BLED_MAX_NR_USBBUS		(8)
+#define BLED_MAX_NR_INTERRUPT		(8)
+
 enum bled_state {
 	BLED_STATE_STOP = 0,
 	BLED_STATE_RUN,
@@ -63,6 +68,7 @@ enum bled_type {
 	BLED_TYPE_NETDEV_BLED = 0,		/* interface(s). */
 	BLED_TYPE_SWPORTS_BLED,			/* switch port(s). */
 	BLED_TYPE_USBBUS_BLED,			/* USB bus(s). */
+	BLED_TYPE_INTERRUPT_BLED,		/* interrupt(s) */
 
 	BLED_TYPE_MAX
 };
@@ -114,6 +120,12 @@ struct usbbus_bled {
 	unsigned int bus_mask;		/* bit0=bus1, bit1=bus2, etc. bus1~BLED_MAX_NR_USBBUS only */
 };
 
+struct interrupt_bled {
+	struct bled_common bled;
+	unsigned int nr_interrupt;
+	unsigned int interrupt[BLED_MAX_NR_INTERRUPT];	/* interrupt number. */
+};
+
 #define BLED_CTL_CHG_STATE		_IOW('B', 0, struct bled_common)	/* gpio_nr, state */
 #define BLED_CTL_ADD_NETDEV_BLED	_IOW('B', 1, struct ndev_bled)		/* all fields; except mode, state */
 #define BLED_CTL_DEL_BLED		_IOW('B', 2, struct bled_common)	/* gpio_nr */
@@ -125,6 +137,7 @@ struct usbbus_bled {
 #define BLED_CTL_GET_BLED_TYPE		_IOWR('B', 8, int)			/* input: gpio_nr; output: enum bled_type */
 #define BLED_CTL_SET_UDEF_PATTERN	_IOW('B', 9, struct bled_common)	/* gpio_nr, pattern_interval, nr_pattern, pattern[] */
 #define BLED_CTL_SET_MODE		_IOW('B',10, struct bled_common)	/* gpio_nr, mode */
+#define BLED_CTL_ADD_INTERRUPT_BLED	_IOW('B',11, struct interrupt_bled)	/* all fields; except mode, state */
 
 #define BLED_TIMER_CHECK_INTERVAL	(HZ / 5)				/* unit: jiffies */
 #define BLED_HYBRID_CHECK_INTERVAL	(HZ / 2)				/* unit: jiffies */
@@ -145,10 +158,6 @@ struct usbbus_bled {
 #endif
 
 #define BLED_FLAGS_DBG_CHECK_FUNC	(1U << 0)
-
-#define BLED_MAX_NR_NETDEV_IF		(8)
-#define BLED_MAX_NR_SWPORTS		(8)
-#define BLED_MAX_NR_USBBUS		(8)
 
 #define TFMT	"%-30s: "
 
@@ -184,6 +193,16 @@ struct usbbus_bled_priv {
 	unsigned int nr_bus;
 	unsigned int bus_mask;
 	struct usbbus_bled_stat busstat[BLED_MAX_NR_USBBUS];
+};
+
+struct interrupt_bled_stat {
+	unsigned int interrupt;
+	unsigned long last_nr_interrupts;
+};
+
+struct interrupt_bled_priv {
+	unsigned int nr_interrupt;
+	struct interrupt_bled_stat interrupt_stat[BLED_MAX_NR_USBBUS];
 };
 
 struct udef_pattern_s {

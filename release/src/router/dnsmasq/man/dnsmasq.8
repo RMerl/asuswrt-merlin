@@ -30,7 +30,7 @@ DHCPv4 server, and in addition, it includes router advertisements and
 a neat feature which allows nameing for clients which use DHCPv4 and
 stateless autoconfiguration only for IPv6 configuration. There is support for doing address allocation (both DHCPv6 and RA) from subnets which are dynamically delegated via DHCPv6 prefix delegation.
 .PP
-Dnsmasq is coded with small embedded systems in mind. It aims for the smallest possible memory footprint compatible with the supported functions,  and allows uneeded functions to be omitted from the compiled binary.  
+Dnsmasq is coded with small embedded systems in mind. It aims for the smallest possible memory footprint compatible with the supported functions,  and allows unneeded functions to be omitted from the compiled binary.  
 .SH OPTIONS
 Note that in general missing parameters are allowed and switch off
 functions, for instance "--pid-file" disables writing a PID file. On
@@ -203,12 +203,17 @@ or
 options are given dnsmasq listens on all available interfaces except any
 given in
 .B \--except-interface
-options. IP alias interfaces (eg "eth1:0") cannot be used with
-.B --interface
+options. On Linux, when
+.B \--bind-interfaces
 or
-.B --except-interface
-options, use --listen-address instead. A simple wildcard, consisting
-of a trailing '*', can be used in 
+.B \--bind-dynamic
+are in effect, IP alias interface labels (eg "eth1:0") are checked, rather than
+interface names. In the degenerate case when an interface has one address, this amounts to the same thing but when an interface has multiple addresses it
+allows control over which of those addresses are accepted.
+The same effect is achievable in default mode by using
+.B \--listen-address.
+A simple wildcard, consisting of a trailing '*',
+can be used in
 .B \--interface 
 and
 .B \--except-interface
@@ -222,7 +227,9 @@ and
 .B --except-interface
 options does not matter and that 
 .B --except-interface
-options always override the others.
+options always override the others. The comments about interface labels for
+.B --listen-address
+apply here.
 .TP
 .B --auth-server=<domain>,<interface>|<ip-address>
 Enable DNS authoritative mode for queries arriving at an interface or address. Note that the interface or address
@@ -232,7 +239,7 @@ or
 .B --listen-address
 configuration, indeed
 .B --auth-server
-will overide these and provide a different DNS service on the
+will override these and provide a different DNS service on the
 specified interface. The <domain> is the "glue record". It should
 resolve in the global DNS to a A and/or AAAA record which points to
 the address dnsmasq is listening on. When an interface is specified,
@@ -242,7 +249,7 @@ addresses associated with the interface.
 .B --local-service
 Accept DNS queries only from hosts whose address is on a local subnet,
 ie a subnet for which an interface exists on the server. This option
-only has effect is there are no --interface --except-interface,
+only has effect if there are no --interface --except-interface,
 --listen-address or --auth-server options. It is intended to be set as
 a default on installation, to allow unconfigured installations to be
 useful but also safe from being used for DNS amplification attacks.
@@ -289,8 +296,8 @@ option requires non-standard networking APIs and it is only available
 under Linux. On other platforms it falls-back to --bind-interfaces mode.
 .TP
 .B \-y, --localise-queries
-Return answers to DNS queries from /etc/hosts which depend on the interface over which the query was
-received. If a name in /etc/hosts has more than one address associated with
+Return answers to DNS queries from /etc/hosts and --interface-name which depend on the interface over which the query was
+received. If a name has more than one address associated with
 it, and at least one of those addresses is on the same subnet as the
 interface to which the query was sent, then return only the
 address(es) on that subnet. This allows for a server  to have multiple
@@ -301,7 +308,8 @@ attached to. Currently this facility is limited to IPv4.
 .B \-b, --bogus-priv
 Bogus private reverse lookups. All reverse lookups for private IP ranges (ie 192.168.x.x, etc)
 which are not found in /etc/hosts or the DHCP leases file are answered
-with "no such domain" rather than being forwarded upstream.
+with "no such domain" rather than being forwarded upstream. The 
+set of prefixes affected is the list given in RFC6303, for IPv4 and IPv6.
 .TP
 .B \-V, --alias=[<old-ip>]|[<start-ip>-<end-ip>],<new-ip>[,<mask>]
 Modify IPv4 addresses returned from upstream nameservers; old-ip is
@@ -434,7 +442,7 @@ address using a # character.
 More than one -S flag is allowed, with
 repeated domain or ipaddr parts as required.
 
-More specific domains take precendence over less specific domains, so:
+More specific domains take precedence over less specific domains, so:
 .B --server=/google.com/1.2.3.4
 .B --server=/www.google.com/2.3.4.5
 will send queries for *.google.com to 1.2.3.4, except *www.google.com,
@@ -459,14 +467,14 @@ to make configuration files clearer in this case.
 IPv6 addresses may include a %interface scope-id, eg
 fe80::202:a412:4512:7bbf%eth0.
 
-The optional string after the @ character tells
-dnsmasq how to set the source of the queries to this
-nameserver. It should be an ip-address, which should belong to the machine on which
-dnsmasq is running otherwise this server line will be logged and then
-ignored, or an interface name. If an interface name is given, then
-queries to the server will be forced via that interface; if an
-ip-address is given then the source address of the queries will be set
-to that address.
+The optional string after the @ character tells dnsmasq how to set the source of
+the queries to this nameserver. It can either be an ip-address, an interface
+name or both. The ip-address should belong to the machine on which dnsmasq is
+running, otherwise this server line will be logged and then ignored. If an
+interface name is given, then queries to the server will be forced via that
+interface; if an ip-address is given then the source address of the queries will
+be set to that address; and if both are given then a combination of ip-address
+and interface name will be used to steer requests to the server.
 The query-port flag is ignored for any servers which have a
 source address specified but the port may be specified directly as
 part of the source address. Forcing queries to an interface is not
@@ -480,28 +488,36 @@ but provides some syntactic sugar to make specifying address-to-name queries eas
 is exactly equivalent to 
 .B --server=/3.2.1.in-addr.arpa/192.168.0.1
 .TP
-.B \-A, --address=/<domain>/[domain/][<ipaddr>]
+.B \-A, --address=/<domain>[/<domain>...]/[<ipaddr>]
 Specify an IP address to return for any host in the given domains.
 Queries in the domains are never forwarded and always replied to
 with the specified IP address which may be IPv4 or IPv6. To give
-both IPv4 and IPv6 addresses for a domain, use repeated -A flags.
+both IPv4 and IPv6 addresses for a domain, use repeated \fB-A\fP flags.
+To include multiple IP addresses for a single query, use
+\fB--addn-hosts=<path>\fP instead.
 Note that /etc/hosts and DHCP leases override this for individual
 names. A common use of this is to redirect the entire doubleclick.net
 domain to some friendly local web server to avoid banner ads. The
-domain specification works in the same was as for --server, with the
-additional facility that /#/ matches any domain. Thus
---address=/#/1.2.3.4 will always return 1.2.3.4 for any query not
-answered from /etc/hosts or DHCP and not sent to an upstream
-nameserver by a more specific --server directive. As for --server,
-one or more domains with no address returns a no-such-domain answer, so
---address=/example.com/ is equivalent to --server=/example.com/ and returns 
-NXDOMAIN for example.com and all its subdomains.
+domain specification works in the same was as for \fB--server\fP, with
+the additional facility that \fB/#/\fP matches any domain. Thus
+\fB--address=/#/1.2.3.4\fP will always return \fB1.2.3.4\fP for any
+query not answered from \fB/etc/hosts\fP or DHCP and not sent to an
+upstream nameserver by a more specific \fB--server\fP directive. As for
+\fB--server\fP, one or more domains with no address returns a
+no-such-domain answer, so \fB--address=/example.com/\fP is equivalent to
+\fB--server=/example.com/\fP and returns NXDOMAIN for example.com and
+all its subdomains.
 .TP
-.B --ipset=/<domain>/[domain/]<ipset>[,<ipset>]
-Places the resolved IP addresses of queries for the specified domains
-in the specified netfilter ip sets. Domains and subdomains are matched
-in the same way as --address. These ip sets must already exist. See
-ipset(8) for more details.
+.B --ipset=/<domain>[/<domain>...]/<ipset>[,<ipset>...]
+Places the resolved IP addresses of queries for one or more domains in
+the specified Netfilter IP set. If multiple setnames are given, then the
+addresses are placed in each of them, subject to the limitations of an
+IP set (IPv4 addresses cannot be stored in an IPv6 IP set and vice
+versa).  Domains and subdomains are matched in the same way as
+\fB--address\fP.
+These IP sets must already exist. See
+.BR ipset (8)
+for more details.
 .TP
 .B \-m, --mx-host=<mx name>[[,<hostname>],<preference>]
 Return an MX record named <mx name> pointing to the given hostname (if
@@ -573,7 +589,7 @@ Return a PTR DNS record.
 .B --naptr-record=<name>,<order>,<preference>,<flags>,<service>,<regexp>[,<replacement>]
 Return an NAPTR DNS record, as specified in RFC3403.
 .TP
-.B --cname=<cname>,<target>[,<TTL>]
+.B --cname=<cname>,[<cname>,]<target>[,<TTL>]
 Return a CNAME record which indicates that <cname> is really
 <target>. There are significant limitations on the target; it must be a
 DNS name which is known to dnsmasq from /etc/hosts (or additional
@@ -581,7 +597,9 @@ hosts files), from DHCP, from --interface-name or from another
 .B --cname.
 If the target does not satisfy this
 criteria, the whole cname is ignored. The cname must be unique, but it
-is permissable to have more than one cname pointing to the same target.
+is permissable to have more than one cname pointing to the same target. Indeed
+it's possible to declare multiple cnames to a target in a single line, like so:
+.B --cname=cname1,cname2,target
 
 If the time-to-live is given, it overrides the default, which is zero
 or the value of -local-ttl. The value is a positive integer and gives 
@@ -594,7 +612,7 @@ given by the hex data, which may be of the form 01:23:45 or 01 23 45 or
 012345 or any mixture of these.
 .TP
 .B --interface-name=<name>,<interface>[/4|/6]
-Return a DNS record associating the name with the primary address on
+Return DNS records associating the name with the address(es) of
 the given interface. This flag specifies an A or AAAA record for the given
 name in the same way as an /etc/hosts line, except that the address is
 not constant, but taken from the given interface. The interface may be
@@ -604,7 +622,8 @@ down, not configured or non-existent, an empty record is returned. The
 matching PTR record is also created, mapping the interface address to
 the name. More than one name may be associated with an interface
 address by repeating the flag; in that case the first instance is used
-for the reverse address-to-name mapping.
+for the reverse address-to-name mapping. Note that a name used in 
+--interface-name may not appear in /etc/hosts.
 .TP
 .B --synth-domain=<domain>,<address range>[,<prefix>]
 Create artificial A/AAAA and PTR records for an address range. The
@@ -618,6 +637,8 @@ will result in a query for internal-192-168-0-56.thekelleys.org.uk returning
 but IPv6 addresses may start with '::'
 but DNS labels may not start with '-' so in this case if no prefix is
 configured a zero is added in front of the label. ::1 becomes 0--1.
+
+V4 mapped IPv6 addresses, which have a representation like ::ffff:1.2.3.4 are handled specially, and become like 0--ffff-1-2-3-4
 
 The address range can be of the form
 <ip address>,<ip address> or <ip address>/<netmask>
@@ -687,7 +708,7 @@ permitted to reduce the cache size below the default when DNSSEC is
 enabled. The nameservers upstream of dnsmasq must be DNSSEC-capable,
 ie capable of returning DNSSEC records with data. If they are not,
 then dnsmasq will not be able to determine the trusted status of
-answers. In the default mode, this menas that all replies will be
+answers. In the default mode, this means that all replies will be
 marked as untrusted. If 
 .B --dnssec-check-unsigned
 is set and the upstream servers don't support DNSSEC, then DNS service will be entirely broken.
@@ -739,7 +760,7 @@ a return code of SERVFAIL. Note that
 setting this may affect DNS behaviour in bad ways, it is not an
 extra-logging flag and should not be set in production.
 .TP
-.B --auth-zone=<domain>[,<subnet>[/<prefix length>][,<subnet>[/<prefix length>].....]]
+.B --auth-zone=<domain>[,<subnet>[/<prefix length>][,<subnet>[/<prefix length>].....][,exclude:<subnet>[/<prefix length>]].....]
 Define a DNS zone for which dnsmasq acts as authoritative server. Locally defined DNS records which are in the domain
 will be served. If subnet(s) are given, A and AAAA records must be in one of the
 specified subnets.
@@ -755,6 +776,10 @@ an interface has dynamically determined global IPv6 addresses which should
 appear in the zone, but RFC1918 IPv4 addresses which should not.
 Interface-name and address-literal subnet specifications may be used
 freely in the same --auth-zone declaration.
+
+It's possible to exclude certain IP addresses from responses. It can be
+used, to make sure that answers contain only global routeable IP
+addresses (by excluding loopback, RFC1918 and ULA addresses).
 
 The subnet(s) are also used to define in-addr.arpa and
 ip6.arpa domains which are served for reverse-DNS queries. If not
@@ -822,7 +847,7 @@ For IPv6, the parameters are slightly different: instead of netmask
 and broadcast address, there is an optional prefix length which must
 be equal to or larger then the prefix length on the local interface. If not
 given, this defaults to 64. Unlike the IPv4 case, the prefix length is not
-automatically derived from the interface configuration. The mimimum
+automatically derived from the interface configuration. The minimum
 size of the prefix length is 64.
 
 IPv6 (only) supports another type of range. In this, the start address and optional end address contain only the network part (ie ::1) and they are followed by
@@ -944,7 +969,7 @@ subnets which don't need a pool of dynamically allocated addresses,
 use the "static" keyword in the dhcp-range declaration.
 
 It is allowed to use client identifiers (called client
-DUID in IPv6-land rather than
+DUID in IPv6-land) rather than
 hardware addresses to identify hosts by prefixing with 'id:'. Thus: 
 .B --dhcp-host=id:01:02:03:04,..... 
 refers to the host with client identifier 01:02:03:04. It is also
@@ -996,6 +1021,8 @@ dhcp-host directive (or one implied by /etc/ethers) then the special
 tag "known" is set. This allows dnsmasq to be configured to
 ignore requests from unknown machines using
 .B --dhcp-ignore=tag:!known
+If the host matches only a dhcp-host directive which cannot
+be used because it specifies an address on different subnet, the tag "known-othernet" is set.
 Ethernet addresses (but not client-ids) may have
 wildcard bytes, so for example 
 .B --dhcp-host=00:20:e0:3b:13:*,ignore 
@@ -1037,22 +1064,21 @@ is given, then read all the files contained in that directory. The advantage of
 using this option is the same as for --dhcp-hostsfile: the
 dhcp-optsfile will be re-read when dnsmasq receives SIGHUP. Note that
 it is possible to encode the information in a
+.B --dhcp-boot
+flag as DHCP options, using the options names bootfile-name,
+server-ip-address and tftp-server. This allows these to be included
+in a dhcp-optsfile.
 .TP
 .B --dhcp-hostsdir=<path>
 This is equivalent to dhcp-hostsfile, except for the following. The path MUST be a
 directory, and not an individual file. Changed or new files within
 the directory are read automatically, without the need to send SIGHUP.
 If a file is deleted for changed after it has been read by dnsmasq, then the
-host record it contained will remain until dnsmasq recieves a SIGHUP, or 
+host record it contained will remain until dnsmasq receives a SIGHUP, or 
 is restarted; ie host records are only added dynamically.
 .TP
 .B --dhcp-optsdir=<path>
 This is equivalent to dhcp-optsfile, with the differences noted for --dhcp-hostsdir.
-.TP
-.B --dhcp-boot
-flag as DHCP options, using the options names bootfile-name,
-server-ip-address and tftp-server. This allows these to be included
-in a dhcp-optsfile.
 .TP 
 .B \-Z, --read-ethers
 Read /etc/ethers for information about hosts for the DHCP server. The
@@ -1460,7 +1486,7 @@ DUID automatically when it is first needed. When given, this option
 provides dnsmasq the data required to create a DUID-EN type DUID. Note
 that once set, the DUID is stored in the lease database, so to change between DUID-EN and
 automatically created DUIDs or vice-versa, the lease database must be
-re-intialised. The enterprise-id is assigned by IANA, and the uid is a
+re-initialised. The enterprise-id is assigned by IANA, and the uid is a
 string of hex octets unique to a particular device.
 .TP
 .B \-6 --dhcp-script=<path>
@@ -1528,6 +1554,8 @@ DHCP relay-agent added any of these options.
  
 If the client provides vendor-class, DNSMASQ_VENDOR_CLASS.
 
+DNSMASQ_REQUESTED_OPTIONS a string containing the decimal values in the Parameter Request List option, comma separated, if the parameter request list option is provided by the client.
+
 For IPv6 only:
 
 If the client provides vendor-class, DNSMASQ_VENDOR_CLASS_ID,
@@ -1551,8 +1579,8 @@ database.
 
 
 All file descriptors are
-closed except stdin, stdout and stderr which are open to /dev/null
-(except in debug mode).
+closed except stdin, which is open to /dev/null, and stdout and stderr which capture output for logging by dnsmasq. 
+(In debug mode, stdio, stdout and stderr file are left as those inherited from the invoker of dnsmasq).
 
 The script is not invoked concurrently: at most one instance
 of the script is ever running (dnsmasq waits for an instance of script to exit
@@ -1588,7 +1616,7 @@ the arrival of a new entry in the ARP or neighbour table, and "arp-del" indicate
 .B --dhcp-luascript=<path>
 Specify a script written in Lua, to be run when leases are created,
 destroyed or changed. To use this option, dnsmasq must be compiled
-with the correct support. The Lua interpreter is intialised once, when
+with the correct support. The Lua interpreter is initialised once, when
 dnsmasq starts, so that global variables persist between lease
 events. The Lua code must define a
 .B lease
@@ -1638,7 +1666,7 @@ and
 functions are called only when enabled with
 .B --script-arp
 and have a table which holds the tags
-.B mac_addres
+.B mac_address
 and
 .B client_address.
 .TP
@@ -1748,9 +1776,9 @@ subnets with the mode keywords described in
 RFC6106 DNS parameters are included in the advertisements. By default,
 the relevant link-local address of the machine running dnsmasq is sent
 as recursive DNS server. If provided, the DHCPv6 options dns-server and
-domain-search are used for the DNS server (RDNSS) and the domain serach list (DNSSL).
+domain-search are used for the DNS server (RDNSS) and the domain search list (DNSSL).
 .TP
-.B --ra-param=<interface>,[high|low],[[<ra-interval>],<router lifetime>]
+.B --ra-param=<interface>,[mtu:<integer>|<interface>|off,][high,|low,]<ra-interval>[,<router lifetime>]
 Set non-default values for router advertisements sent via an
 interface. The priority field for the router may be altered from the
 default of medium with eg
@@ -1760,16 +1788,26 @@ The interval between router advertisements may be set (in seconds) with
 The lifetime of the route may be changed or set to zero, which allows
 a router to advertise prefixes but not a route via itself. 
 .B --ra-parm=eth0,0,0
-(A value of zero for the interval means the default value.) All three parameters may be set at once.
-.B --ra-param=low,60,1200
+(A value of zero for the interval means the default value.) All four parameters may be set at once.
+.B --ra-param=eth0,mtu:1280,low,60,1200
+
 The interface field may include a wildcard.
+
+The mtu: parameter may be an arbitrary interface name, in which case the MTU value for that interface is used. This is useful
+for (eg) advertising the MTU of a WAN interface on the other interfaces of a router.
+.TP
+.B --dhcp-reply-delay=[tag:<tag>,]<integer>
+Delays sending DHCPOFFER and proxydhcp replies for at least the specified number of seconds.
+This can be used as workaround for bugs in PXE boot firmware that does not function properly when
+receiving an instant reply.
+This option takes into account the time already spent waiting (e.g. performing ping check) if any.
 .TP
 .B --enable-tftp[=<interface>[,<interface>]]
 Enable the TFTP server function. This is deliberately limited to that
 needed to net-boot a client. Only reading is allowed; the tsize and
 blksize extensions are supported (tsize is only supported in octet
 mode). Without an argument, the TFTP service is provided to the same set of interfaces as DHCP service. 
-If the list of interfaces is provided, that defines which interfaces recieve TFTP service.
+If the list of interfaces is provided, that defines which interfaces receive TFTP service.
 .TP
 .B --tftp-root=<directory>[,<interface>]
 Look for files to transfer using TFTP relative to the given
@@ -1782,12 +1820,16 @@ directory is only used for TFTP requests via that interface.
 .B --tftp-no-fail
 Do not abort startup if specified tftp root directories are inaccessible.
 .TP
-.B --tftp-unique-root
-Add the IP address of the TFTP client as a path component on the end
-of the TFTP-root (in standard dotted-quad format). Only valid if a
-tftp-root is set and the directory exists. For instance, if tftp-root is "/tftp" and client 
-1.2.3.4 requests file "myfile" then the effective path will be
-"/tftp/1.2.3.4/myfile" if /tftp/1.2.3.4 exists or /tftp/myfile otherwise.
+.B --tftp-unique-root[=ip|mac]
+Add the IP or hardware address of the TFTP client as a path component on the end
+of the TFTP-root. Only valid if a tftp-root is set and the directory exists.
+Defaults to adding IP address (in standard dotted-quad format).
+For instance, if tftp-root is "/tftp" and client 1.2.3.4 requests file "myfile"
+then the effective path will be "/tftp/1.2.3.4/myfile" if /tftp/1.2.3.4 exists or /tftp/myfile otherwise.
+When "=mac" is specified it will append the MAC address instead, using lowercase zero padded digits
+separated by dashes, e.g.: 01-02-03-04-aa-bb
+Note that resolving MAC addresses is only possible if the client is in the local network or obtained
+a DHCP lease from us.
 .TP
 .B --tftp-secure
 Enable TFTP secure mode: without this, any file which is readable by
@@ -1857,7 +1899,7 @@ A special case of
 .B --conf-file
 which differs in two respects. Firstly, only --server and --rev-server are allowed 
 in the configuration file included. Secondly, the file is re-read and the configuration
-therein is updated when dnsmasq recieves SIGHUP.
+therein is updated when dnsmasq receives SIGHUP.
 .SH CONFIG FILE
 At startup, dnsmasq reads
 .I /etc/dnsmasq.conf,
@@ -2006,7 +2048,7 @@ include set:<tag>, including one from the
 .B dhcp-range
 used to allocate the address, one from any matching 
 .B dhcp-host
-(and "known" if a dhcp-host matches) 
+(and "known" or "known-othernet" if a dhcp-host matches) 
 The tag "bootp" is set for BOOTP requests, and a tag whose name is the 
 name of the interface on which the request arrived is also set.
 
@@ -2193,7 +2235,12 @@ following data is used to populate the authoritative zone.
 .B --cname
 as long as the record name is in  the authoritative domain. If the
 target of the CNAME is unqualified, then it  is qualified with the
-authoritative zone name.
+authoritative zone name. CNAME used in this way (only) may be wildcards, as in
+
+.nf
+.B cname=*.example.com,default.example.com
+.fi
+
 .PP
 IPv4 and IPv6 addresses from /etc/hosts (and 
 .B --addn-hosts
@@ -2206,7 +2253,7 @@ provided the address falls into one of the subnets specified in the
 .PP
 Addresses of DHCP leases, provided the address falls into one of the subnets specified in the
 .B --auth-zone.
-(If contructed DHCP ranges are is use, which depend on the address dynamically 
+(If constructed DHCP ranges are is use, which depend on the address dynamically 
 assigned to an interface, then the form of
 .B --auth-zone
 which defines subnets by the dynamic address of an interface should

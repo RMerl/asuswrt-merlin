@@ -5,8 +5,8 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
- *  Copyright (C) 2010 Fox Crypto B.V. <openvpn@fox-it.com>
+ *  Copyright (C) 2002-2017 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2010-2017 Fox Crypto B.V. <openvpn@fox-it.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -17,10 +17,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /**
@@ -35,14 +34,13 @@
 /**
  * SSL_OP_NO_TICKET tells OpenSSL to disable "stateless session resumption",
  * as this is something we do not want nor need, but could potentially be
- * used for a future attack.  For compatibility reasons, in the 2.3.x
- * series, we keep building if the OpenSSL version is too old to support
- * this.  2.4 requires it and will fail configure if not present.
+ * used for a future attack.  For compatibility reasons we keep building if the
+ * OpenSSL version is too old (pre-0.9.8f) to support stateless session
+ * resumption (and the accompanying SSL_OP_NO_TICKET flag).
  */
 #ifndef SSL_OP_NO_TICKET
-# define SSL_OP_NO_TICKET 0
+#define SSL_OP_NO_TICKET 0
 #endif
-
 
 /**
  * Structure that wraps the TLS context. Contents differ depending on the
@@ -50,13 +48,15 @@
  */
 struct tls_root_ctx {
     SSL_CTX *ctx;
+    time_t crl_last_mtime;
+    off_t crl_last_size;
 };
 
 struct key_state_ssl {
-    SSL *ssl;			/* SSL object -- new obj created for each new key */
-    BIO *ssl_bio;			/* read/write plaintext from here */
-    BIO *ct_in;			/* write ciphertext to here */
-    BIO *ct_out;			/* read ciphertext from here */
+    SSL *ssl;                   /* SSL object -- new obj created for each new key */
+    BIO *ssl_bio;                       /* read/write plaintext from here */
+    BIO *ct_in;                 /* write ciphertext to here */
+    BIO *ct_out;                        /* read ciphertext from here */
 };
 
 /**
@@ -65,6 +65,6 @@ struct key_state_ssl {
  */
 extern int mydata_index; /* GLOBAL */
 
-void openssl_set_mydata_index (void);
+void openssl_set_mydata_index(void);
 
 #endif /* SSL_OPENSSL_H_ */

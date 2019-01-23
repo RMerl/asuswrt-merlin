@@ -1,7 +1,7 @@
 /*
  * Driver O/S-independent utility routines
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
  *
  * <<Broadcom-WL-IPTag/Open:>>
  *
- * $Id: bcmxtlv.c 534840 2015-02-16 06:44:15Z $
+ * $Id: bcmxtlv.c 629929 2016-04-06 23:05:49Z $
  */
 
 #ifndef __FreeBSD__
@@ -242,7 +242,8 @@ bcm_pack_xtlv_entry(uint8 **tlv_buf, uint16 *buflen, uint16 type, uint16 len, vo
 	size = bcm_xtlv_size_for_data(len, opts);
 
 	/* copy data from tlv buffer to dst provided by user */
-	if (size > *buflen) {
+
+	if (size > *buflen - BCM_XTLV_HDR_SIZE) {
 		printf("bcm_pack_xtlv_entry: no space tlv_buf: requested:%d, available:%d\n",
 			size, *buflen);
 		return BCME_BADLEN;

@@ -61,9 +61,14 @@ enum {
 	MINIX_ROOT_INO          = 1,
 	MINIX_BAD_INO           = 2,
 
+#undef  MINIX1_SUPER_MAGIC
 	MINIX1_SUPER_MAGIC      = 0x137F,       /* original minix fs */
+#undef  MINIX1_SUPER_MAGIC2
 	MINIX1_SUPER_MAGIC2     = 0x138F,       /* minix fs, 30 char names */
+/* bionic has this define */
+#undef  MINIX2_SUPER_MAGIC
 	MINIX2_SUPER_MAGIC      = 0x2468,       /* minix V2 fs */
+#undef  MINIX2_SUPER_MAGIC2
 	MINIX2_SUPER_MAGIC2     = 0x2478,       /* minix V2 fs, 30 char names */
 	MINIX_VALID_FS          = 0x0001,       /* clean fs */
 	MINIX_ERROR_FS          = 0x0002,       /* fs has errors */

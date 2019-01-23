@@ -4,7 +4,7 @@ OBJS = push_log.o
 PROGS = libpush_log.so push_log
 
 CFLAGS += -fPIC $(EXTRACFLAGS) -Wall
-CFLAGS += -I. -I$(LINUXDIR)/include -I$(TOP)/shared -I$(SRCBASE)/include -I$(TOP)/wb/ws_src
+CFLAGS += -I. -I$(KERNEL_HEADER_DIR) -I$(TOP)/shared -I$(SRCBASE)/include -I$(TOP)/wb/ws_src
 
 LDFLAGS = -L. -lpush_log -lpthread -ldl -lm
 LDFLAGS += -L$(TOP)/nvram$(BCMEX) -lnvram

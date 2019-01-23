@@ -14,13 +14,14 @@
 
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
-<script type="text/javascript" src="/validator.js"></script>
+<script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/merlin.js"></script>
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
-<script type="text/javascript" src="/js/jquery.js"></script>
-<script type="text/javascript" src="/disk_functions.js"></script>
+<script language="JavaSCript" type="text/javascript" src="/js/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/disk_functions.js"></script>
+
 <style type="text/css">
 /* folder tree */
 .mask_bg{
@@ -75,6 +76,8 @@ var _layer_order = "";
 var FromObject = "0";
 var lastClickedObj = 0;
 var disk_flag=0;
+var machine_name = '<% get_machine_name(); %>';
+
 window.onresize = cal_panel_block;
 
 
@@ -104,11 +107,19 @@ function initial() {
 	if (document.form.usb_idle_exclude.value.indexOf("i") != -1)
 		document.form.usb_idle_exclude_i.checked = true;
 
-	if ((productid == "RT-AC56U") || (productid == "RT-AC68U") || (productid == "RT-AC87U") ||
-	    (productid == "RT-AC3200") || (productid == "RT-AC88U") || (productid == "RT-AC3100") || (productid == "RT-AC5300")) {
+	if(!live_update_support)
+		document.getElementById("fwcheck").style.display="none";
+
+	if (machine_name.search("arm") != -1) {
 		document.getElementById("ct_established_default").innerHTML = "Default: 2400";
 		showhide("memory_mgmt_tr" ,1);
 	}
+
+	if (document.form.dns_probe_content.value == "")
+		setRadioValue(document.form.dns_probe, 0);
+	else
+		setRadioValue(document.form.dns_probe, 1);
+
 	document.aidiskForm.protocol.value = PROTOCOL;
 	initial_dir();
 }
@@ -148,14 +159,14 @@ function get_disk_tree(){
 }
 function get_layer_items(layer_order){
 	$.ajax({
-    		url: '/gettree.asp?layer_order='+layer_order,
-    		dataType: 'script',
-    		error: function(xhr){
-    			;
-    		},
-    		success: function(){
+		url: '/gettree.asp?layer_order='+layer_order,
+		dataType: 'script',
+		error: function(xhr){
+			;
+		},
+		success: function(){
 				get_tree_items(treeitems);
-  			}
+			}
 		});
 }
 function get_tree_items(treeitems){
@@ -206,9 +217,9 @@ function BuildTree(){
 		layer = get_layer(ItemBarCode.substring(1));
 		if(layer == 3){
 			if(ItemText.length > 21)
-		 		short_ItemText = ItemText.substring(0,30)+"...";
-		 	else
-		 		short_ItemText = ItemText;
+				short_ItemText = ItemText.substring(0,30)+"...";
+			else
+				short_ItemText = ItemText;
 		}
 		else
 			short_ItemText = ItemText;
@@ -578,6 +589,12 @@ function applyRule(){
 	} else {
 		document.form.action_script.value += ";restart_cstats";
 	}
+
+	if (getRadioValue(document.form.dns_probe) == 0)
+		document.form.dns_probe_content.value = "";
+	else if ("<% nvram_get("dns_probe_content"); %>" != "1" )	// We just enabled it
+		document.form.dns_probe_content.value = "<% nvram_default_get("dns_probe_content"); %>";
+
 	document.form.submit();
 }
 
@@ -669,7 +686,7 @@ function done_validating(action){
 <input type="hidden" name="ct_tcp_timeout" value="<% nvram_get("ct_tcp_timeout"); %>">
 <input type="hidden" name="ct_udp_timeout" value="<% nvram_get("ct_udp_timeout"); %>">
 <input type="hidden" name="usb_idle_exclude" value="<% nvram_get("usb_idle_exclude"); %>">
-
+<input type="hidden" name="dns_probe_content" value="<% nvram_get("dns_probe_content"); %>">
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>
@@ -688,9 +705,9 @@ function done_validating(action){
                 <tbody>
                 <tr bgcolor="#4D595D">
                 <td valign="top">
-                	<div>&nbsp;</div>
-                	<div class="formfonttitle">Tools - Other Settings</div>
-                	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+			<div>&nbsp;</div>
+			<div class="formfonttitle">Tools - Other Settings</div>
+			<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
@@ -700,14 +717,14 @@ function done_validating(action){
 					</thead>
 					<tr>
 						<th>Traffic history location</th>
-			        	<td>
-						<select name="rstats_location" class="input_option" onchange="hide_rstats_storage(this.value);">
+						<td>
+							<select name="rstats_location" class="input_option" onchange="hide_rstats_storage(this.value);">
 								<option value="0">RAM (Default)</option>
 								<option value="1">Custom location</option>
 								<option value="2">NVRAM</option>
 							</select>
 							<span id="invalid_location" style="display:none;" class="formfontdesc">Cannot use NVRAM if IPTraffic is enabled!</span>
-			   			</td>
+						</td>
 					</tr>
 
 					<tr id="rstats_stime_tr">
@@ -715,11 +732,11 @@ function done_validating(action){
 						<td>
 							<select name="rstats_stime" class="input_option" >
 								<option value="1" <% nvram_match("rstats_stime", "1","selected"); %>>Every 1 hour</option>
-			           				<option value="6" <% nvram_match("rstats_stime", "6","selected"); %>>Every 6 hours</option>
-			           				<option value="12" <% nvram_match("rstats_stime", "12","selected"); %>>Every 12 hours</option>
-			           				<option value="24" <% nvram_match("rstats_stime", "24","selected"); %>>Every 1 day</option>
-			           				<option value="72" <% nvram_match("rstats_stime", "72","selected"); %>>Every 3 days</option>
-			           				<option value="168" <% nvram_match("rstats_stime", "168","selected"); %>>Every 1 week</option>
+								<option value="6" <% nvram_match("rstats_stime", "6","selected"); %>>Every 6 hours</option>
+								<option value="12" <% nvram_match("rstats_stime", "12","selected"); %>>Every 12 hours</option>
+								<option value="24" <% nvram_match("rstats_stime", "24","selected"); %>>Every 1 day</option>
+								<option value="72" <% nvram_match("rstats_stime", "72","selected"); %>>Every 3 days</option>
+								<option value="168" <% nvram_match("rstats_stime", "168","selected"); %>>Every 1 week</option>
 							</select>
 						</td>
 					</tr>
@@ -729,20 +746,20 @@ function done_validating(action){
 						<button id="pathPicker" onclick="get_disk_tree(); return false;">Select...</button></td>
 					</tr>
 					<tr id="rstats_new_tr">
-		        			<th>Create or reset data files:<br><i>Enable if using a new location</i></th>
+						<th>Create or reset data files:<br><i>Enable if using a new location</i></th>
 						<td>
-       		       					<input type="radio" name="rstats_new" class="input" value="1" <% nvram_match_x("", "rstats_new", "1", "checked"); %>><#checkbox_Yes#>
-	        		        		<input type="radio" name="rstats_new" class="input" value="0" <% nvram_match_x("", "rstats_new", "0", "checked"); %>><#checkbox_No#>
+							<input type="radio" name="rstats_new" class="input" value="1" <% nvram_match_x("", "rstats_new", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="rstats_new" class="input" value="0" <% nvram_match_x("", "rstats_new", "0", "checked"); %>><#checkbox_No#>
 						</td>
 					</tr>
 					<tr>
-				        	<th>Starting day of monthly cycle</th>
-			        		<td><input type="text" maxlength="2" class="input_3_table" name="rstats_offset" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 31)" value="<% nvram_get("rstats_offset"); %>"></td>
-			        	</tr>
+						<th>Starting day of monthly cycle</th>
+						<td><input type="text" maxlength="2" class="input_3_table" name="rstats_offset" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 1, 31)" value="<% nvram_get("rstats_offset"); %>"></td>
+					</tr>
 					<tr id="cstats_enable_tr">
-			        		<th>Enable IPTraffic (per IP monitoring)</i></th>
-				        	<td>
-	       		       				<input type="radio" name="cstats_enable" class="input" value="1" <% nvram_match_x("", "cstats_enable", "1", "checked"); %> onclick="hide_cstats(this.value);"><#checkbox_Yes#>
+						<th>Enable IPTraffic (per IP monitoring)</i></th>
+						<td>
+							<input type="radio" name="cstats_enable" class="input" value="1" <% nvram_match_x("", "cstats_enable", "1", "checked"); %> onclick="hide_cstats(this.value);"><#checkbox_Yes#>
 							<input type="radio" name="cstats_enable" class="input" value="0" <% nvram_match_x("", "cstats_enable", "0", "checked"); %> onclick="hide_cstats(this.value);"><#checkbox_No#>
 						</td>
 					</tr>
@@ -759,17 +776,17 @@ function done_validating(action){
 							<input type="radio" name="cstats_all" class="input" value="1" <% nvram_match_x("", "cstats_all", "1", "checked"); %> onclick="hide_cstats_ip(this.value);"><#checkbox_Yes#>
 							<input type="radio" name="cstats_all" class="input" value="0" <% nvram_match_x("", "cstats_all", "0", "checked"); %> onclick="hide_cstats_ip(this.value);"><#checkbox_No#>
 						</td>
-        				</tr>
+					</tr>
 					<tr id="cstats_inc_tr">
 						<th>List of IPs to monitor (comma-separated):</th>
 						<td>
-							<input type="text" maxlength="512" class="input_32_table" name="cstats_include" onKeyPress="return validate_iplist(this,event);" onchange="update_filter(this,this.value);" value="<% nvram_get("cstats_include"); %>">
+							<input type="text" maxlength="512" class="input_32_table" name="cstats_include" onKeyPress="return validator.ipList(this,event);" onchange="update_filter(this,this.value);" value="<% nvram_get("cstats_include"); %>">
 						</td>
 					</tr>
 					<tr id="cstats_exc_tr">
 						<th>List of IPs to exclude (comma-separated):</th>
 						<td>
-							<input type="text" maxlength="512" class="input_32_table" name="cstats_exclude" onKeyPress="return validate_iplist(this,event);" onchange="update_filter(this,this.value);" value="<% nvram_get("cstats_exclude"); %>">
+							<input type="text" maxlength="512" class="input_32_table" name="cstats_exclude" onKeyPress="return validator.ipList(this,event);" onchange="update_filter(this,this.value);" value="<% nvram_get("cstats_exclude"); %>">
 						</td>
 					</tr>
 
@@ -817,6 +834,14 @@ function done_validating(action){
 							<input type="radio" name="led_disable" class="input" value="0" <% nvram_match_x("", "led_disable", "0", "checked"); %>><#checkbox_No#>
 						</td>
 					</tr>
+					<tr id="fwcheck">
+						<th><a name="fwcheck"></a><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,15);">New firmware version check</a></th>
+						<td>
+							<input type="radio" name="firmware_check_enable" class="input" value="1" <% nvram_match("firmware_check_enable", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="firmware_check_enable" class="input" value="0" <% nvram_match("firmware_check_enable", "0", "checked"); %>><#checkbox_No#>
+						</td>
+					</tr>
+
 				</table>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -825,7 +850,7 @@ function done_validating(action){
 							<td colspan="2">TCP/IP settings</td>
 						</tr>
 					</thead>
- 					<tr>
+					<tr>
 						<th>TCP connections limit</th>
 						<td>
 							<input type="text" maxlength="6" class="input_12_table" name="ct_max" onKeyPress="return validator.isNumber(this,event);" onblur="validate_number_range(this, 256, 300000)" value="<% nvram_get("ct_max"); %>">
@@ -919,46 +944,39 @@ function done_validating(action){
 							<td colspan="2">Advanced Tweaks and Hacks</td>
 						</tr>
 					</thead>
-					<tr>
-						<th>Networkmap: Hourly full network rescans (default: Yes)</th>
-						<td>
-							<input type="radio" name="nmap_hm_scan" class="input" value="1" <% nvram_match_x("", "nmap_hm_scan", "1", "checked"); %>><#checkbox_Yes#>
-							<input type="radio" name="nmap_hm_scan" class="input" value="0" <% nvram_match_x("", "nmap_hm_scan", "0", "checked"); %>><#checkbox_No#>
-						</td>
-					</tr>
-					<tr>
-						<th>Samba: Enable SMB2 protocol (default: No)</th>
-						<td>
-							<input type="radio" name="smbd_enable_smb2" class="input" value="1" <% nvram_match_x("", "smbd_enable_smb2", "1", "checked"); %>><#checkbox_Yes#>
-							<input type="radio" name="smbd_enable_smb2" class="input" value="0" <% nvram_match_x("", "smbd_enable_smb2", "0", "checked"); %>><#checkbox_No#>
-						</td>
-	                                </tr>
 					<tr id="memory_mgmt_tr" style="display:none;">
-						<th>Memory Management: Regularly flush caches (default: Yes)</th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,2);">Memory Management: Regularly flush caches (default: Yes)</a></th>
 						<td>
 							<input type="radio" name="drop_caches" class="input" value="1" <% nvram_match_x("", "drop_caches", "1", "checked"); %>><#checkbox_Yes#>
 							<input type="radio" name="drop_caches" class="input" value="0" <% nvram_match_x("", "drop_caches", "0", "checked"); %>><#checkbox_No#>
 						</td>
 					</tr>
 					<tr>
-						<th>Miniupnp: Enable secure mode (default: Yes)</th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,3);">Miniupnp: Enable secure mode (default: Yes)</a></th>
 						<td>
 							<input type="radio" name="upnp_secure" class="input" value="1" <% nvram_match_x("", "upnp_secure", "1", "checked"); %>><#checkbox_Yes#>
 							<input type="radio" name="upnp_secure" class="input" value="0" <% nvram_match_x("", "upnp_secure", "0", "checked"); %>><#checkbox_No#>
 						</td>
 					</tr>
 					<tr>
-						<th>DLNA: Rebuild entire database at start (default: No)</th>
-						<td>
-							<input type="radio" name="dms_rebuild" class="input" value="1" <% nvram_match_x("", "dms_rebuild", "1", "checked"); %>><#checkbox_Yes#>
-							<input type="radio" name="dms_rebuild" class="input" value="0" <% nvram_match_x("", "dms_rebuild", "0", "checked"); %>><#checkbox_No#>
-						</td>
-					</tr>
-					<tr>
-						<th>Firewall: Drop IPv6 neighbour solicitation broadcasts (Comcast fix) (default: No)</th>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,4);">Firewall: Drop IPv6 neighbour solicitation broadcasts (default: No)</a></th>
 						<td>
 							<input type="radio" name="ipv6_ns_drop" class="input" value="1" <% nvram_match_x("", "ipv6_ns_drop", "1", "checked"); %>><#checkbox_Yes#>
 							<input type="radio" name="ipv6_ns_drop" class="input" value="0" <% nvram_match_x("", "ipv6_ns_drop", "0", "checked"); %>><#checkbox_No#>
+						</td>
+					</tr>
+					<tr>
+						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,18);">Wan: Use DNS probes to determine if WAN is up (default: Yes)</a></th>
+						<td>
+							<input type="radio" name="dns_probe" class="input" value="1"><#checkbox_Yes#>
+							<input type="radio" name="dns_probe" class="input" value="0"><#checkbox_No#>
+						</td>
+					</tr>
+					<tr>
+						<th>Disable Asusnat tunnel</th>
+						<td>
+							<input type="radio" name="aae_disable_force" class="input" value="1" <% nvram_match_x("", "aae_disable_force", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="aae_disable_force" class="input" value="0" <% nvram_match_x("", "aae_disable_force", "0", "checked"); %>><#checkbox_No#>
 						</td>
 					</tr>
 

@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2017 Simon Kelley
  
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -104,7 +104,7 @@ void inotify_dnsmasq_init()
 
       strcpy(path, res->name);
 
-      /* Follow symlinks until we reach a non-symlink, or a non-existant file. */
+      /* Follow symlinks until we reach a non-symlink, or a non-existent file. */
       while ((new_path = my_readlink(path)))
 	{
 	  if (links-- == 0)
@@ -260,7 +260,7 @@ int inotify_check(time_t now)
 #ifdef HAVE_DHCP
 			if (daemon->dhcp || daemon->doing_dhcp6) 
 			  {
-			    /* Propogate the consequences of loading a new dhcp-host */
+			    /* Propagate the consequences of loading a new dhcp-host */
 			    dhcp_update_configs(daemon->dhcp_conf);
 			    lease_update_from_configs(); 
 			    lease_update_file(now); 
@@ -273,7 +273,7 @@ int inotify_check(time_t now)
 		      {
 			if (option_read_dynfile(path, AH_DHCP_HST))
 			  {
-			    /* Propogate the consequences of loading a new dhcp-host */
+			    /* Propagate the consequences of loading a new dhcp-host */
 			    dhcp_update_configs(daemon->dhcp_conf);
 			    lease_update_from_configs(); 
 			    lease_update_file(now); 

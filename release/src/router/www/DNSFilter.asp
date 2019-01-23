@@ -324,6 +324,9 @@ function changeRow_main(r){
 		<div id="dnsfilter_desc" style="margin-bottom:10px;">
 			<table width="700px" style="margin-left:25px;">
 				<tr>
+					<td>
+						<img id="guest_image" src="/images/New_ui/DnsFiltering.png">
+					</td>
 					<td>&nbsp;&nbsp;</td>
 					<td style="font-style: italic;font-size: 14px;">
 						<div>

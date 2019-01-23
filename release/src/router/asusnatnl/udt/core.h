@@ -338,6 +338,8 @@ private: // Status
    CHandShake m_ConnRes;			// connection response
    uint64_t m_llLastReqTime;			// last time when a connection request is sent
 
+   int m_retryCount;				// UDT handshake retry count
+
 private: // Sending related data
    CSndBuffer* m_pSndBuffer;                    // Sender buffer
    CSndLossList* m_pSndLossList;                // Sender loss list

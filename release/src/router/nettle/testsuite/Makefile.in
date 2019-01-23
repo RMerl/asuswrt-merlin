@@ -23,7 +23,7 @@ TS_NETTLE_SOURCES = aes-test.c arcfour-test.c arctwo-test.c \
 		    sha384-test.c sha512-test.c sha512-224-test.c sha512-256-test.c \
 		    sha3-permute-test.c sha3-224-test.c sha3-256-test.c \
 		    sha3-384-test.c sha3-512-test.c \
-		    serpent-test.c twofish-test.c \
+		    serpent-test.c twofish-test.c version-test.c \
 		    knuth-lfib-test.c \
 		    cbc-test.c ctr-test.c gcm-test.c eax-test.c ccm-test.c \
 		    poly1305-test.c chacha-poly1305-test.c \
@@ -35,7 +35,7 @@ TS_NETTLE_SOURCES = aes-test.c arcfour-test.c arctwo-test.c \
 TS_HOGWEED_SOURCES = sexp-test.c sexp-format-test.c \
 		     rsa2sexp-test.c sexp2rsa-test.c \
 		     bignum-test.c random-prime-test.c \
-		     pkcs1-test.c \
+		     pkcs1-test.c rsa-sign-tr-test.c \
 		     rsa-test.c rsa-encrypt-test.c rsa-keygen-test.c \
 		     dsa-test.c dsa-keygen-test.c \
 		     curve25519-dh-test.c \
@@ -57,12 +57,13 @@ TS_C = $(TS_NETTLE) @IF_HOGWEED@ $(TS_HOGWEED)
 TS_CXX = @IF_CXX@ $(CXX_SOURCES:.cxx=$(EXEEXT))
 TARGETS = $(TS_C) $(TS_CXX)
 TS_SH = sexp-conv-test pkcs1-conv-test nettle-pbkdf2-test symbols-test
-TS_ALL = $(TARGETS) $(TS_SH)
+TS_ALL = $(TARGETS) $(TS_SH) @IF_DLOPEN_TEST@ dlopen-test$(EXEEXT)
 EXTRA_SOURCES = sha1-huge-test.c
 EXTRA_TARGETS = $(EXTRA_SOURCES:.c=$(EXEEXT))
 
+
 # Includes all C source files, regardless of configuration
-SOURCES = $(TS_SOURCES) $(EXTRA_SOURCES) testutils.c
+SOURCES = $(TS_SOURCES) $(EXTRA_SOURCES) testutils.c dlopen-test.c
 
 DISTFILES = $(SOURCES) $(CXX_SOURCES) Makefile.in .test-rules.make \
 	    $(TS_SH) setup-env teardown-env \
@@ -88,6 +89,10 @@ TEST_OBJS = testutils.$(OBJEXT) ../nettle-internal.$(OBJEXT) \
 
 ../nettle-internal.$(OBJEXT):
 	( cd .. && $(MAKE) nettle-internal.$(OBJEXT) )
+
+# Special target, to omit linking with libnettle
+dlopen-test$(EXEEXT): dlopen-test.$(OBJEXT) testutils.$(OBJEXT)
+	$(LINK) dlopen-test.$(OBJEXT) -ldl -o dlopen-test$(EXEEXT)
 
 .PHONY: test-rules
 test-rules:
@@ -133,7 +138,8 @@ distdir: $(DISTFILES)
 	cp $? $(distdir)
 
 clean:
-	-rm -f $(TARGETS) $(EXTRA_TARGETS) *.o test.in test1.out test2.out
+	-rm -f $(TARGETS) $(EXTRA_TARGETS) dlopen-test$(EXEEXT) \
+		*.o test.in test1.out test2.out
 
 distclean: clean
 	-rm -f Makefile *.d

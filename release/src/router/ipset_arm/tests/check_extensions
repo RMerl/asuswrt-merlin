@@ -1,0 +1,12 @@
+#!/bin/bash
+
+ipset=${IPSET_BIN:-../src/ipset}
+
+read ip t timeout p packets b bytes <<< $($ipset l $1 | grep ^$2)
+test -z "$timeout" -o -z "$packets" -o -z "$bytes" && exit 1
+test $timeout -gt $3 -o $timeout -lt $(($3 - 10)) && exit 1
+test $packets -ne $4 -o $bytes -ne $5 && exit 1
+exit 0
+
+
+

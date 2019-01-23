@@ -1,0 +1,12 @@
+Name: test
+Type: hash:net,port
+Header: family inet hashsize 128 maxelem 65536 timeout x
+Size in memory: 1024
+References: 0
+Number of entries: 5
+Members:
+1.1.1.1,tcp:5 timeout x
+192.168.68.64/27,tcp:8 timeout x
+2.0.0.0/24,icmp:echo-request timeout x
+2.0.0.1,icmp:echo-request timeout x
+2.0.0.255,icmp:host-prohibited timeout x

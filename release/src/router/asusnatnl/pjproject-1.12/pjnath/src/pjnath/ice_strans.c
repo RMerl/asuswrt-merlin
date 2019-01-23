@@ -267,6 +267,8 @@ struct pj_ice_strans
 
 	// 2013-10-17 DEAN, for tunnel cache
 	pj_str_t dest_uri;
+
+	int transmit_count;
 };
 
 
@@ -2324,6 +2326,8 @@ static void on_ice_complete(pj_ice_sess *ice, pj_status_t status)
 		    pj_sockaddr_print(&check->rcand->addr, rip, 
 				sizeof(rip), 3);
 
+			ice_st->transmit_count = check->transmit_count;
+
 		    if (check->lcand->transport_id == TP_TURN) {
 				//DEAN, set tunnel type, if will be used in natnl_adapter.
 				if (i == 0)
@@ -2478,6 +2482,9 @@ static void on_ice_complete(pj_ice_sess *ice, pj_status_t status)
 
 	ice_st->state = (status==PJ_SUCCESS) ? PJ_ICE_STRANS_STATE_RUNNING :
 					       PJ_ICE_STRANS_STATE_FAILED;
+	if (status==PJ_SUCCESS) {
+		PJ_LOG(4,(ice_st->obj_name, "PJ_ICE_STRANS_STATE_RUNNING"));
+	}
 
 	(*ice_st->cb.on_ice_complete)(ice_st, PJ_ICE_STRANS_OP_NEGOTIATION, 
 				      status, turn_mapped_addr);
@@ -3441,6 +3448,11 @@ PJ_DEF(pj_bool_t) pj_ice_strans_tp_is_turn(unsigned transport_id)
 PJ_DEF(natnl_tunnel_type) pj_ice_strans_get_use_tunnel_type(struct pj_ice_strans *ice_st)
 {
 	return ice_st->tunnel_type;
+}
+
+PJ_DEF(int) pj_ice_strans_get_transmit_count(struct pj_ice_strans *ice_st)
+{
+	return ice_st->transmit_count;
 }
 
 PJ_DEF(void) pj_ice_strans_set_use_upnp_flag(void *user_data, int use_upnp_flag)

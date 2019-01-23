@@ -46,8 +46,6 @@ var ddns_enable = '<% nvram_get("ddns_enable_x"); %>';
 
 function initial(){
 	show_menu();
-	document.getElementById("_APP_Installation").innerHTML = '<table><tbody><tr><td><div class="_APP_Installation"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
-	document.getElementById("_APP_Installation").className = "menu_clicked";
 	
 	document.aidiskForm.protocol.value = PROTOCOL;
 	
@@ -196,12 +194,12 @@ function showAccountMenu(){
 			account_menu_code += '<div class="userIcon" id="';
 			account_menu_code += "account"+i;		
 			if(decodeURIComponent(this.accounts[i]).length > 18){
-				account_menu_code += '" onClick="setSelectAccount('+i+');" style="white-space:nowrap;font-family:Courier New, Courier, mono;" title="'+decodeURIComponent(this.accounts[i])+'">'
-				account_menu_code += decodeURIComponent(this.accounts[i]).substring(0,15) + '...';
+				account_menu_code += '" onClick="setSelectAccount('+i+');" style="white-space:nowrap;font-family:Courier New, Courier, mono;" title="'+htmlEnDeCode.htmlEncode(decodeURIComponent(this.accounts[i]))+'">'
+				account_menu_code += htmlEnDeCode.htmlEncode(decodeURIComponent(this.accounts[i])).substring(0,15) + '...';
 			}	
 			else{
 				account_menu_code += '" onClick="setSelectAccount('+i+');" style="white-space:nowrap;font-family:Courier New, Courier, mono;">'
-				account_menu_code += decodeURIComponent(this.accounts[i]);		
+				account_menu_code += htmlEnDeCode.htmlEncode(decodeURIComponent(this.accounts[i]));
 			}
 			
 			account_menu_code += '</div>\n';	
@@ -759,6 +757,13 @@ function validForm(){
 						</div>	
 					</td>
 				</tr>										
+				<tr>
+					<th>Enable TLS support</th>
+					<td>
+						<input type="radio" name="ftp_tls" class="input" value="1" <% nvram_match_x("", "ftp_tls", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="ftp_tls" class="input" value="0" <% nvram_match_x("", "ftp_tls", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
 				<tr>
 					<th>
 						<a class="hintstyle" href="javascript:void(0);" onClick="openHint(17,1);"><#ShareNode_MaximumLoginUser_itemname#></a>

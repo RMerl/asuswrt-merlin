@@ -33,7 +33,8 @@ struct xid_item {
 	struct xid_item *next;
 } FIX_ALIASING;
 
-#define dhcprelay_xid_list (*(struct xid_item*)&bb_common_bufsiz1)
+#define dhcprelay_xid_list (*(struct xid_item*)bb_common_bufsiz1)
+#define INIT_G() do { setup_common_bufsiz(); } while (0)
 
 static struct xid_item *xid_add(uint32_t xid, struct sockaddr_in *ip, int client)
 {
@@ -256,6 +257,8 @@ int dhcprelay_main(int argc, char **argv)
 	int *fds;
 	int num_sockets, max_socket;
 	uint32_t our_nip;
+
+	INIT_G();
 
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);

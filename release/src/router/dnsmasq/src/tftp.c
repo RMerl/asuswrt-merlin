@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2017 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 
 static struct tftp_file *check_tftp_fileperm(ssize_t *len, char *prefix);
 static void free_transfer(struct tftp_transfer *transfer);
-static ssize_t tftp_err(int err, char *packet, char *mess, char *file);
+static ssize_t tftp_err(int err, char *packet, char *message, char *file);
 static ssize_t tftp_err_oops(char *packet, char *file);
 static ssize_t get_block(char *packet, struct tftp_transfer *transfer);
 static char *next(char **p, char *end);
@@ -382,7 +382,7 @@ void tftp_request(struct listener *listen, time_t now)
 	  if (prefix[strlen(prefix)-1] != '/')
 	    strncat(daemon->namebuff, "/", (MAXDNAME-1) - strlen(daemon->namebuff));
 
-	  if (option_bool(OPT_TFTP_APREF))
+	  if (option_bool(OPT_TFTP_APREF_IP))
 	    {
 	      size_t oldlen = strlen(daemon->namebuff);
 	      struct stat statbuf;
@@ -394,7 +394,40 @@ void tftp_request(struct listener *listen, time_t now)
 	      if (stat(daemon->namebuff, &statbuf) == -1 || !S_ISDIR(statbuf.st_mode))
 		daemon->namebuff[oldlen] = 0;
 	    }
-		
+	  
+	  if (option_bool(OPT_TFTP_APREF_MAC))
+	    {
+	      unsigned char *macaddr = NULL;
+	      unsigned char macbuf[DHCP_CHADDR_MAX];
+	      
+#ifdef HAVE_DHCP
+	      if (daemon->dhcp && peer.sa.sa_family == AF_INET)
+	        {
+		  /* Check if the client IP is in our lease database */
+		  struct dhcp_lease *lease = lease_find_by_addr(peer.in.sin_addr);
+		  if (lease && lease->hwaddr_type == ARPHRD_ETHER && lease->hwaddr_len == ETHER_ADDR_LEN)
+		    macaddr = lease->hwaddr;
+		}
+#endif
+	      
+	      /* If no luck, try to find in ARP table. This only works if client is in same (V)LAN */
+	      if (!macaddr && find_mac(&peer, macbuf, 1, now) > 0)
+		macaddr = macbuf;
+	      
+	      if (macaddr)
+	        {
+		  size_t oldlen = strlen(daemon->namebuff);
+		  struct stat statbuf;
+
+		  snprintf(daemon->namebuff + oldlen, (MAXDNAME-1) - oldlen, "%.2x-%.2x-%.2x-%.2x-%.2x-%.2x/",
+			   macaddr[0], macaddr[1], macaddr[2], macaddr[3], macaddr[4], macaddr[5]);
+		  
+		  /* remove unique-directory if it doesn't exist */
+		  if (stat(daemon->namebuff, &statbuf) == -1 || !S_ISDIR(statbuf.st_mode))
+		    daemon->namebuff[oldlen] = 0;
+		}
+	    }
+	  
 	  /* Absolute pathnames OK if they match prefix */
 	  if (filename[0] == '/')
 	    {
@@ -407,7 +440,7 @@ void tftp_request(struct listener *listen, time_t now)
       else if (filename[0] == '/')
 	daemon->namebuff[0] = 0;
       strncat(daemon->namebuff, filename, (MAXDNAME-1) - strlen(daemon->namebuff));
-
+      
       /* check permissions and open file */
       if ((transfer->file = check_tftp_fileperm(&len, prefix)))
 	{
@@ -470,7 +503,7 @@ static struct tftp_file *check_tftp_fileperm(ssize_t *len, char *prefix)
   else if (option_bool(OPT_TFTP_SECURE) && uid != statbuf.st_uid)
     goto perm;
       
-  /* If we're doing many tranfers from the same file, only 
+  /* If we're doing many transfers from the same file, only 
      open it once this saves lots of file descriptors 
      when mass-booting a big cluster, for instance. 
      Be conservative and only share when inode and name match
@@ -652,20 +685,24 @@ static void sanitise(char *buf)
 
 }
 
+#define MAXMESSAGE 500 /* limit to make packet < 512 bytes and definitely smaller than buffer */ 
 static ssize_t tftp_err(int err, char *packet, char *message, char *file)
 {
   struct errmess {
     unsigned short op, err;
     char message[];
   } *mess = (struct errmess *)packet;
-  ssize_t ret = 4;
+  ssize_t len, ret = 4;
   char *errstr = strerror(errno);
   
+  memset(packet, 0, daemon->packet_buff_sz);
   sanitise(file);
-
+  
   mess->op = htons(OP_ERR);
   mess->err = htons(err);
-  ret += (snprintf(mess->message, 500,  message, file, errstr) + 1);
+  len = snprintf(mess->message, MAXMESSAGE,  message, file, errstr);
+  ret += (len < MAXMESSAGE) ? len + 1 : MAXMESSAGE; /* include terminating zero */
+  
   my_syslog(MS_TFTP | LOG_ERR, "%s", mess->message);
   
   return  ret;
@@ -681,6 +718,8 @@ static ssize_t tftp_err_oops(char *packet, char *file)
 /* return -1 for error, zero for done. */
 static ssize_t get_block(char *packet, struct tftp_transfer *transfer)
 {
+  memset(packet, 0, daemon->packet_buff_sz);
+  
   if (transfer->block == 0)
     {
       /* send OACK */
@@ -695,7 +734,7 @@ static ssize_t get_block(char *packet, struct tftp_transfer *transfer)
       if (transfer->opt_blocksize)
 	{
 	  p += (sprintf(p, "blksize") + 1);
-	  p += (sprintf(p, "%d", transfer->blocksize) + 1);
+	  p += (sprintf(p, "%u", transfer->blocksize) + 1);
 	}
       if (transfer->opt_transize)
 	{

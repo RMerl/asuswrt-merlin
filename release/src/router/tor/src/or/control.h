@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -117,6 +117,9 @@ MOCK_DECL(const char *, node_describe_longname_by_id,(const char *id_digest));
 void control_event_hs_descriptor_requested(const rend_data_t *rend_query,
                                            const char *desc_id_base32,
                                            const char *hs_dir);
+void control_event_hs_descriptor_created(const char *service_id,
+                                         const char *desc_id_base32,
+                                         int replica);
 void control_event_hs_descriptor_upload(const char *service_id,
                                         const char *desc_id_base32,
                                         const char *hs_dir);
@@ -126,16 +129,19 @@ void control_event_hs_descriptor_receive_end(const char *action,
                                              const char *id_digest,
                                              const char *reason);
 void control_event_hs_descriptor_upload_end(const char *action,
+                                            const char *onion_address,
                                             const char *hs_dir,
                                             const char *reason);
 void control_event_hs_descriptor_received(const char *onion_address,
                                           const rend_data_t *rend_data,
                                           const char *id_digest);
-void control_event_hs_descriptor_uploaded(const char *hs_dir);
+void control_event_hs_descriptor_uploaded(const char *hs_dir,
+                                          const char *onion_address);
 void control_event_hs_descriptor_failed(const rend_data_t *rend_data,
                                         const char *id_digest,
                                         const char *reason);
 void control_event_hs_descriptor_upload_failed(const char *hs_dir,
+                                               const char *onion_address,
                                                const char *reason);
 void control_event_hs_descriptor_content(const char *onion_address,
                                          const char *desc_id,
@@ -253,6 +259,33 @@ STATIC crypto_pk_t *add_onion_helper_keyarg(const char *arg, int discard_pk,
                                             const char **key_new_alg_out,
                                             char **key_new_blob_out,
                                             char **err_msg_out);
+STATIC rend_authorized_client_t *
+add_onion_helper_clientauth(const char *arg, int *created, char **err_msg_out);
+
+STATIC void getinfo_helper_downloads_networkstatus(
+    const char *flavor,
+    download_status_t **dl_to_emit,
+    const char **errmsg);
+STATIC void getinfo_helper_downloads_cert(
+    const char *fp_sk_req,
+    download_status_t **dl_to_emit,
+    smartlist_t **digest_list,
+    const char **errmsg);
+STATIC void getinfo_helper_downloads_desc(
+    const char *desc_req,
+    download_status_t **dl_to_emit,
+    smartlist_t **digest_list,
+    const char **errmsg);
+STATIC void getinfo_helper_downloads_bridge(
+    const char *bridge_req,
+    download_status_t **dl_to_emit,
+    smartlist_t **digest_list,
+    const char **errmsg);
+STATIC int getinfo_helper_downloads(
+    control_connection_t *control_conn,
+    const char *question, char **answer,
+    const char **errmsg);
+
 #endif
 
 #endif

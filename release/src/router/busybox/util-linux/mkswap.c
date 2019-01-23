@@ -13,6 +13,7 @@
 //usage:     "\n	-L LBL	Label"
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 
 #if ENABLE_SELINUX
 static void mkswap_selinux_setcontext(int fd, const char *path)
@@ -66,7 +67,7 @@ struct swap_header_v1 {
 	uint32_t version;        /* second kbyte, word 0 */
 	uint32_t last_page;      /* 1 */
 	uint32_t nr_badpages;    /* 2 */
-	uint8_t  sws_uuid[16];   /* 3,4,5,6 */
+	char     sws_uuid[16];   /* 3,4,5,6 */
 	char     sws_volume[16]; /* 7,8,9,10 */
 	uint32_t padding[117];   /* 11..127 */
 	uint32_t badpages[1];    /* 128 */
@@ -75,6 +76,7 @@ struct swap_header_v1 {
 
 #define NWORDS 129
 #define hdr ((struct swap_header_v1*)bb_common_bufsiz1)
+#define INIT_G() do { setup_common_bufsiz(); } while (0)
 
 struct BUG_sizes {
 	char swap_header_v1_wrong[sizeof(*hdr)  != (NWORDS * 4) ? -1 : 1];
@@ -91,6 +93,8 @@ int mkswap_main(int argc UNUSED_PARAM, char **argv)
 	unsigned pagesize;
 	off_t len;
 	const char *label = "";
+
+	INIT_G();
 
 	opt_complementary = "-1"; /* at least one param */
 	/* TODO: -p PAGESZ, -U UUID */
@@ -121,9 +125,17 @@ int mkswap_main(int argc UNUSED_PARAM, char **argv)
 	hdr->last_page = (uoff_t)len / pagesize;
 
 	if (ENABLE_FEATURE_MKSWAP_UUID) {
-		char uuid_string[37];
+		char uuid_string[32];
 		generate_uuid((void*)hdr->sws_uuid);
-		printf("UUID=%s\n", unparse_uuid(hdr->sws_uuid, uuid_string));
+		bin2hex(uuid_string, hdr->sws_uuid, 16);
+		/* f.e. UUID=dfd9c173-be52-4d27-99a5-c34c6c2ff55f */
+		printf("UUID=%.8s"  "-%.4s-%.4s-%.4s-%.12s\n",
+			uuid_string,
+			uuid_string+8,
+			uuid_string+8+4,
+			uuid_string+8+4+4,
+			uuid_string+8+4+4+4
+		);
 	}
 	safe_strncpy(hdr->sws_volume, label, 16);
 

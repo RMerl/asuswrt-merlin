@@ -1,7 +1,7 @@
 /* Declarations for url.c.
    Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation,
-   Inc.
+   2005, 2006, 2007, 2008, 2009, 2010, 2011, 2015 Free Software
+   Foundation, Inc.
 
 This file is part of GNU Wget.
 
@@ -36,6 +36,7 @@ as that of the covered work.  */
 #define DEFAULT_HTTP_PORT 80
 #define DEFAULT_FTP_PORT 21
 #define DEFAULT_HTTPS_PORT 443
+#define DEFAULT_FTPS_IMPLICIT_PORT 990
 
 /* This represents how many characters less than the OS max name length a file
  * should be.  More precisely, a file name should be at most
@@ -70,6 +71,9 @@ enum url_scheme {
   SCHEME_HTTPS,
 #endif
   SCHEME_FTP,
+#ifdef HAVE_SSL
+  SCHEME_FTPS,
+#endif
   SCHEME_INVALID
 };
 
@@ -102,6 +106,7 @@ struct url
 char *url_escape (const char *);
 char *url_escape_unsafe_and_reserved (const char *);
 void url_unescape (char *);
+void url_unescape_except_reserved (char *);
 
 struct url *url_parse (const char *, int *, struct iri *iri, bool percent_encode);
 char *url_error (const char *, int);
@@ -115,6 +120,7 @@ bool url_has_scheme (const char *);
 bool url_valid_scheme (const char *);
 int scheme_default_port (enum url_scheme);
 void scheme_disable (enum url_scheme);
+const char *scheme_leading_string (enum url_scheme);
 
 char *url_string (const struct url *, enum url_auth_mode);
 char *url_file_name (const struct url *, char *);

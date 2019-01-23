@@ -10,9 +10,11 @@
 <title></title>
 <link href="/NM_style.css" rel="stylesheet" type="text/css" />
 <link href="/form_style.css" rel="stylesheet" type="text/css" />
+<link href="/js/table/table.css" rel="stylesheet" type="text/css" >
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/table/table.js"></script>
 <style type="text/css">
 .title{
 	font-size:16px;
@@ -87,6 +89,13 @@
   transition: all 0.5s ease-in-out;
 
 }
+.tableApi_table th {
+	height: 20px;
+}
+.data_tr {
+	height: 30px;
+}
+
 </style>
 <script>
 if(parent.location.pathname.search("index") === -1) top.location.href = "../index.asp";
@@ -150,6 +159,8 @@ function initial(){
 	}
 
 	detect_CPU_RAM();
+
+	get_ethernet_ports();
 }
 
 function tabclickhandler(wl_unit){
@@ -162,7 +173,7 @@ function tabclickhandler(wl_unit){
 		else
 			document.form.wl_subunit.value = -1;
 
-		if(parent.wlc_express != '0')
+		if(parent.wlc_express != '0' && parent.wlc_express != '')
 			document.form.wl_subunit.value = 1;
 
 		document.form.wl_unit.value = wl_unit;
@@ -321,10 +332,11 @@ function tab_reset(v){
 			document.getElementById("t2").style.display = "none";
 		}
 	}else if(v == 1){	//Smart Connect
-		if(based_modelid == "RT-AC5300")
+		if(based_modelid == "RT-AC5300" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC5300R")
 			document.getElementById("span0").innerHTML = "2.4GHz, 5GHz-1 and 5GHz-2";
-		else
-			document.getElementById("span0").innerHTML = "Tri-band Smart Connect";
+		else if(based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100")
+			document.getElementById("span0").innerHTML = "2.4GHz and 5GHz";
+		
 		document.getElementById("t1").style.display = "none";
 		document.getElementById("t2").style.display = "none";				
 		document.getElementById("t0").style.width = (tab_width*wl_info.wl_if_total+10) +'px';
@@ -380,6 +392,60 @@ function generate_cpu_field(){
 		document.getElementById('cpu_field').outerHTML = code;
 	else
 		document.getElementById('cpu_field').innerHTML = code;
+}
+
+function get_ethernet_ports() {
+	$.ajax({
+		url: '/ajax_ethernet_ports.asp',
+		async: false,
+		dataType: 'script',
+		error: function(xhr) {
+			setTimeout("get_ethernet_ports();", 1000);
+		},
+		success: function(response) {
+			var wanLanStatus = get_wan_lan_status["portSpeed"];
+			//parse nvram to array
+			var parseStrToArray = function(_array) {
+				var speedMapping = new Array();
+				speedMapping["M"] = "100 Mbps";
+				speedMapping["G"] = "1 Gbps";
+				speedMapping["X"] = "Unplugged"; /*untranslated*/
+				var parseArray = [];
+				for (var prop in _array) {
+					if (_array.hasOwnProperty(prop)) {
+						var newRuleArray = new Array();
+						newRuleArray.push(prop);
+						newRuleArray.push(speedMapping[_array[prop]]);
+						parseArray.push(newRuleArray);
+					}
+				}
+				return parseArray;
+			};
+
+			//set table Struct
+			var tableStruct = {
+				data: parseStrToArray(wanLanStatus),
+				container: "tableContainer",
+				header: [ 
+					{
+						"title" : "Port", /*untranslated*/
+						"width" : "50%"
+					},
+					{
+						"title" : "Link State", /*untranslated*/
+						"width" : "50%"
+					}
+				]
+			}
+
+			if(tableStruct.data.length) {
+				$("#tr_ethernet_ports").css("display", "");
+				tableApi.genTableAPI(tableStruct);
+			}
+
+			setTimeout("get_ethernet_ports();", 3000);
+		}
+	});
 }
 
 </script>
@@ -563,6 +629,30 @@ function generate_cpu_field(){
 				</td>
 			</tr>
 			
+			</table>
+		</div>
+	</td>
+</tr>
+<tr id="tr_ethernet_ports" style="display:none;">
+	<td> 
+		<div>
+			<table width="98%" border="1" align="center" cellpadding="4" cellspacing="0" class="table1px">	
+				<tr>
+					<td style="border-bottom:5px #2A3539 solid;padding:0px 10px 5px 10px;"></td>
+				</tr>
+				<tr>
+					<td>
+						<div class="title">Ethernet Ports<!--untranslated--></div>
+						<img class="line_image" src="/images/New_ui/networkmap/linetwo2.png">
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<div style="overflow-x:hidden;height:190px;">
+							<div id="tableContainer" style="margin-top:-10px;"></div>
+						</div>
+					</td>
+				</tr>
 			</table>
 		</div>
 	</td>

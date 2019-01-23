@@ -1,7 +1,7 @@
 /* Miscellaneous declarations.
    Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation,
-   Inc.
+   2005, 2006, 2007, 2008, 2009, 2010, 2011, 2015 Free Software
+   Foundation, Inc.
 
 This file is part of GNU Wget.
 
@@ -48,18 +48,21 @@ as that of the covered work.  */
 
 /* Disable assertions when debug support is not compiled in. */
 #ifndef ENABLE_DEBUG
+#ifndef NDEBUG
 # define NDEBUG
+#endif
 #endif
 
 /* Is OpenSSL or GNUTLS available? */
 #if defined HAVE_LIBSSL || defined HAVE_LIBSSL32 || defined HAVE_LIBGNUTLS
 # define HAVE_SSL
+# define HAVE_HSTS /* There's no sense in enabling HSTS without SSL */
 #endif
 
 /* `gettext (FOO)' is long to write, so we use `_(FOO)'.  If NLS is
    unavailable, _(STRING) simply returns STRING.  */
 #include "gettext.h"
-#define _(string)   gettext (string)
+#define _(STRING) gettext(STRING)
 
 /* A pseudo function call that serves as a marker for the automated
    extraction of messages, but does not call gettext().  The run-time
@@ -266,7 +269,7 @@ typedef double SUM_SIZE_INT;
 /* The same as above, except the comparison is case-insensitive. */
 #define BOUNDED_EQUAL_NO_CASE(beg, end, string_literal)         \
   ((end) - (beg) == sizeof (string_literal) - 1                 \
-   && !strncasecmp (beg, string_literal, sizeof (string_literal) - 1))
+   && !c_strncasecmp (beg, string_literal, sizeof (string_literal) - 1))
 
 /* Like ptr=strdup(str), but allocates the space for PTR on the stack.
    This cannot be an expression because this is not portable:
@@ -312,8 +315,15 @@ typedef double SUM_SIZE_INT;
    in base 10. 24082 / 10000 = 8*log_{10}(2).  */
 #define MAX_INT_TO_STRING_LEN(x) ((sizeof(x) * 24082 / 10000) + 2)
 
+/* Find the minimum or maximum of two provided values */
+# define MIN(i, j) ((i) <= (j) ? (i) : (j))
+# define MAX(i, j) ((i) >= (j) ? (i) : (j))
+
+
 extern const char *exec_name;
-
+extern const char *program_name;
+extern const char *program_argstring;
+
 /* Document type ("dt") flags */
 enum
 {
@@ -324,7 +334,9 @@ enum
   SEND_NOCACHE         = 0x0008,        /* send Pragma: no-cache directive */
   ACCEPTRANGES         = 0x0010,        /* Accept-ranges header was found */
   ADDED_HTML_EXTENSION = 0x0020,        /* added ".html" extension due to -E */
-  TEXTCSS              = 0x0040         /* document is of type text/css */
+  TEXTCSS              = 0x0040,        /* document is of type text/css */
+  IF_MODIFIED_SINCE    = 0x0080,        /* use if-modified-since header */
+  METALINK_METADATA    = 0x0100         /* use HTTP response for Metalink metadata */
 };
 
 /* Universal error type -- used almost everywhere.  Error reporting of
@@ -337,14 +349,20 @@ typedef enum
   FTPOK, FTPLOGINC, FTPLOGREFUSED, FTPPORTERR, FTPSYSERR,
   FTPNSFOD, FTPUNKNOWNTYPE, FTPRERR,
   FTPSRVERR, FTPRETRINT, FTPRESTFAIL, URLERROR, FOPENERR,
-  FOPEN_EXCL_ERR, FWRITEERR, HEOF,
+  FOPEN_EXCL_ERR, FWRITEERR, HEOF, GATEWAYTIMEOUT,
   HERR, RETROK, RECLEVELEXC, WRONGCODE,
-  FTPINVPASV, FTPNOPASV, CONTNOTSUPPORTED, RETRUNNEEDED, RETRFINISHED,
+  FTPINVPASV, FTPNOPASV, FTPNOPBSZ, FTPNOPROT, FTPNOAUTH,
+  CONTNOTSUPPORTED, RETRUNNEEDED, RETRFINISHED,
   READERR, TRYLIMEXC, FILEBADFILE, RANGEERR,
   RETRBADPATTERN, PROXERR,
   AUTHFAILED, QUOTEXC, WRITEFAILED, SSLINITFAILED, VERIFCERTERR,
   UNLINKERR, NEWLOCATION_KEEP_POST, CLOSEFAILED, ATTRMISSING, UNKNOWNATTR,
-  WARC_ERR, WARC_TMP_FOPENERR, WARC_TMP_FWRITEERR
+  WARC_ERR, WARC_TMP_FOPENERR, WARC_TMP_FWRITEERR,
+  TIMECONV_ERR,
+  METALINK_PARSE_ERROR, METALINK_RETR_ERROR,
+  METALINK_CHKSUM_ERROR, METALINK_SIG_ERROR, METALINK_MISSING_RESOURCE,
+  RETR_WITH_METALINK,
+  METALINK_SIZE_ERROR
 } uerr_t;
 
 /* 2005-02-19 SMS.

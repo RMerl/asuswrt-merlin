@@ -104,29 +104,29 @@ function initial(){
 	show_menu();
 
 	default_apps_array = [["AiDisk", "aidisk.asp", "<#AiDiskWelcome_desp1#>", "Aidisk_png", ""],
-			["<#Servers_Center#>", tablink[4][1], "<#UPnPMediaServer_Help#>", "server_png", ""],
+			["<#Servers_Center#>", "mediaserver.asp", "<#UPnPMediaServer_Help#>", "server_png", ""],
 			["<#Network_Printer_Server#>", "PrinterServer.asp", "<#Network_Printer_desc#>", "PrinterServer_png", ""],
 			["3G/4G", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem_png", ""],
 			["<#TimeMach#>", "Advanced_TimeMachine.asp", "<#TimeMach_enable_hint#>", "TimeMachine_png", "1.0.0.1"]];
 	
 	if(!media_support){
+		default_apps_array[1][1] = "Advanced_AiDisk_samba.asp";
 		default_apps_array[1].splice(2,1,"<#MediaServer_Help#>");
 	}
 	
 	if(sw_mode == 2 || sw_mode == 3 || sw_mode == 4 || noaidisk_support)
 		default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("AiDisk")[0]);
 
-	if(!printer_support)
+	if(!printer_support || noprinter_support)
 		default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("<#Network_Printer_Server#>")[0]);
 
-	if(sw_mode == 2 || sw_mode == 3 || sw_mode == 4 || !modem_support || based_modelid == "4G-AC55U")
+	if(sw_mode == 2 || sw_mode == 3 || sw_mode == 4 || !modem_support || nomodem_support || based_modelid == "4G-AC55U")
 		default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("3G/4G")[0]);
 
 	if(!timemachine_support)
 		default_apps_array = default_apps_array.del(default_apps_array.getIndexByValue2D("<#TimeMach#>")[0]);
 
 	trNum = default_apps_array.length;
-	calHeight(0);
 	
 	if(_apps_action == '' && 
 		(apps_state_upgrade == 4 || apps_state_upgrade == "") && 
@@ -144,23 +144,6 @@ function initial(){
 
 }
 
-function calHeight(_trNum){
-	document.getElementById("applist_table").style.height = "auto";
-
-	if(_trNum != 0)
-		_trNum = document.getElementById("applist_table").clientHeight;
-
-	var optionHeight = 52;
-	var manualOffSet = 28;
-	menu_height = Math.round(optionHeight*calculate_height - manualOffSet*calculate_height/14 - document.getElementById("tabMenu").clientHeight) - 18;
-	if(menu_height > _trNum){
-		if(menu_height < 580)
-			document.getElementById("applist_table").style.height = "580px";
-		else	
-			document.getElementById("applist_table").style.height = menu_height + "px";
-	}	
-}
-
 function update_appstate(e){
   $.ajax({
     url: '/update_appstate.asp',
@@ -174,7 +157,6 @@ function update_appstate(e){
 				return false;
 			else if(!check_appstate()){
       			setTimeout("update_appstate();", 1000);
-				calHeight(0);
 			}
 			else
       			setTimeout("update_applist();", 3000);
@@ -533,10 +515,12 @@ function show_apps(){
 		if(apps_array[i][0] != "downloadmaster" && apps_array[i][0] != "mediaserver" && apps_array[i][0] != "mediaserver2" && apps_array[i][0] != "aicloud") // discard unneeded apps
 			continue;
 		else if((apps_array[i][0] == "downloadmaster" || apps_array[i][0] == "mediaserver" || apps_array[i][0] == "mediaserver2" || apps_array[i][0] == "aicloud") && apps_array[i][3] == "yes" && apps_array[i][4] == "yes"){
-			if(location.host.split(":").length > 1)
-				apps_array[i][6] = "http://" + location.host.split(":")[0] + ":" + dm_http_port;
-			else
-				apps_array[i][6] = "http://" + location.host + ":" + dm_http_port;
+
+			var header_info = [<% get_header_info(); %>];
+			var host_name = header_info[0].host;
+			if(host_name.split(":").length > 1)
+				host_name = host_name.split(":")[0];
+			apps_array[i][6] = "http://" + host_name + ":" + dm_http_port;
 
 			if(apps_array[i][0] == "aicloud") // append URL
 				apps_array[i][6] = "/cloud_main.asp";
@@ -678,7 +662,6 @@ function show_apps(){
 	document.getElementById("app_table").innerHTML = htmlcode;
 	divdisplayctrl("", "none", "none", "none");
 	stoppullstate = 1;
-	calHeight(1);
 	cookie.set("hwaddr", '<% nvram_get("lan_hwaddr"); %>', 1000);
 	cookie.set("apps_last", "", 1000);
 }
@@ -776,7 +759,6 @@ function show_partition(){
 
 		document.getElementById("partition_div").innerHTML = htmlcode;
 		document.getElementById("usbHint").innerHTML = "<#DM_Install_partition#> :";
-		calHeight(1);
 	});
 }
 
@@ -802,13 +784,13 @@ function divdisplayctrl(flag1, flag2, flag3, flag4){
 	 	setInterval(show_partition, 2000);
 		show_partition()
 		document.getElementById("return_btn").style.display = "";
-		calHeight(1);
 	}
 	else if(flag4 != "none"){ // help
-		if(location.host.split(":").length > 1)
-			var _quick_dmlink = "http://" + location.host.split(":")[0] + ":" + dm_http_port;
-		else
-			var _quick_dmlink = "http://" + location.host + ":" + dm_http_port;
+		var header_info = [<% get_header_info(); %>];
+		var host_name = header_info[0].host;
+		if(host_name.split(":").length > 1)
+			host_name = host_name.split(":")[0];
+		var _quick_dmlink = "http://" + host_name + ":" + dm_http_port;
 		
 		if(_dm_enable == "yes"){
 			document.getElementById("realLink").href = _quick_dmlink;
@@ -818,7 +800,6 @@ function divdisplayctrl(flag1, flag2, flag3, flag4){
 		}	
 			
 		document.getElementById("return_btn").style.display = "";
-		calHeight(1);
 	}
 	else{ // status
 		calHeight(0);
@@ -879,8 +860,7 @@ function go_modem_page(usb_unit_flag){
 	</td>
 	
     <td valign="top">
-		<div id="tabMenu" style="*margin-top: -160px;"></div>
-		<br>
+		<div id="tabMenu" class="submenuBlock"></div>
 <!--=====Beginning of Main Content=====-->
 <div class="app_table" id="applist_table">
 <table>

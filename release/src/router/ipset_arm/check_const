@@ -1,0 +1,8 @@
+#! /usr/bin/awk -f
+
+# include/linux/nfnetlink.h: nfnl_callback
+# include/linux/netlink.h: netlink_dump_start
+{ if (/^(struct nfnl_callback|extern int netlink_dump)/) { check=1 } }
+{ if (check == 1 && /(^};|...\);)/) { check=0 } }
+
+{ if (check == 1 && /const struct nlmsghdr/) { print "const" } }

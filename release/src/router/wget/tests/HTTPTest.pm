@@ -9,9 +9,8 @@ use WgetTests;
 our @ISA = qw(WgetTest);
 my $VERSION = 0.01;
 
-
 {
-    my %_attr_data = ( # DEFAULT
+    my %_attr_data = (    # DEFAULT
     );
 
     sub _default_for
@@ -28,26 +27,27 @@ my $VERSION = 0.01;
     }
 }
 
-
-sub _setup_server {
+sub _setup_server
+{
     my $self = shift;
-    $self->{_server} = HTTPServer->new (LocalAddr => 'localhost',
-                                        ReuseAddr => 1)
-                                    or die "Cannot create server!!!";
+    $self->{_server} = HTTPServer->new(LocalAddr => 'localhost',
+                                       ReuseAddr => 1)
+      or die "Cannot create server!!!";
 }
 
-
-sub _launch_server {
-    my $self = shift;
+sub _launch_server
+{
+    my $self       = shift;
     my $synch_func = shift;
 
-    $self->{_server}->run ($self->{_input}, $synch_func);
+    $self->{_server}->run($self->{_input}, $synch_func);
 }
 
-sub _substitute_port {
+sub _substitute_port
+{
     my $self = shift;
-    my $ret = shift;
-    $ret =~ s/{{port}}/$self->{_server}->sockport/eg;
+    my $ret  = shift;
+    $ret =~ s/\Q{{port}}/$self->{_server}->sockport/eg;
     return $ret;
 }
 

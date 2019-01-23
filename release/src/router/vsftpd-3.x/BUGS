@@ -1,0 +1,18 @@
+BUGS
+====
+
+This file, surprisingly enough, contains a list of known outstanding bugs
+in the program. Bugs that get documented here are typically not particularly
+serious, and may never get fixed. Serious bugs will get fixed immediately.
+
+- RFC compliance: if we get no PORT or PASV, looks like we're supposed to
+assume a PORT to the same IP as control connection, and port 20.
+- RFC compliance: shouldn't include directories in NLST. Note that wu-ftpd
+complies here, almost all other FTPd's don't
+- ls <existing but unreadable dir> should list nothing, but it lists the
+directory name itself
+- In ASCII mode, the SIZE command needs to take into account the size of
+the file _after_ ASCII linefeed mangling?
+- If someone has one of the timeouts (command, data) setup, but not the other,
+then timeout will behave whackily.
+

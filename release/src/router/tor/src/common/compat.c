@@ -1,27 +1,16 @@
 /* Copyright (c) 2003-2004, Roger Dingledine
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
  * \file compat.c
  * \brief Wrappers to make calls more portable.  This code defines
- * functions such as tor_malloc, tor_snprintf, get/set various data types,
+ * functions such as tor_snprintf, get/set various data types,
  * renaming, setting socket options, switching user IDs.  It is basically
  * where the non-portable items are conditionally included depending on
  * the platform.
  **/
-
-/* This is required on rh7 to make strptime not complain.
- * We also need it to make memmem get defined (where available)
- */
-/* XXXX024 We should just  use AC_USE_SYSTEM_EXTENSIONS in our autoconf,
- * and get this (and other important stuff!) automatically. Once we do that,
- * make sure to also change the extern char **environ detection in
- * configure.ac, because whether that is declared or not depends on whether
- * we have _GNU_SOURCE defined! Maybe that means that once we take this out,
- * we can also take out the configure check. */
-#define _GNU_SOURCE
 
 #define COMPAT_PRIVATE
 #include "compat.h"
@@ -43,6 +32,12 @@
 #endif
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
+#ifdef HAVE_UTIME_H
+#include <utime.h>
+#endif
+#ifdef HAVE_SYS_UTIME_H
+#include <sys/utime.h>
 #endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -71,6 +66,9 @@
 #ifdef HAVE_SYS_STATVFS_H
 #include <sys/statvfs.h>
 #endif
+#ifdef HAVE_SYS_CAPABILITY_H
+#include <sys/capability.h>
+#endif
 
 #ifdef _WIN32
 #include <conio.h>
@@ -97,12 +95,6 @@ SecureZeroMemory(PVOID ptr, SIZE_T cnt)
 #include "tor_readpassphrase.h"
 #endif
 
-#ifndef HAVE_GETTIMEOFDAY
-#ifdef HAVE_FTIME
-#include <sys/timeb.h>
-#endif
-#endif
-
 /* Includes for the process attaching prevention */
 #if defined(HAVE_SYS_PRCTL_H) && defined(__linux__)
 /* Only use the linux prctl;  the IRIX prctl is totally different */
@@ -124,12 +116,6 @@ SecureZeroMemory(PVOID ptr, SIZE_T cnt)
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
 #endif
-#ifdef HAVE_UTIME_H
-#include <utime.h>
-#endif
-#ifdef HAVE_SYS_UTIME_H
-#include <sys/utime.h>
-#endif
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
@@ -138,12 +124,6 @@ SecureZeroMemory(PVOID ptr, SIZE_T cnt)
 #endif
 #ifdef HAVE_SYS_FILE_H
 #include <sys/file.h>
-#endif
-#ifdef TOR_UNIT_TESTS
-#if !defined(HAVE_USLEEP) && defined(HAVE_SYS_SELECT_H)
-/* as fallback implementation for tor_sleep_msec */
-#include <sys/select.h>
-#endif
 #endif
 
 #include "torlog.h"
@@ -522,8 +502,10 @@ tor_asprintf(char **strp, const char *fmt, ...)
   r = tor_vasprintf(strp, fmt, args);
   va_end(args);
   if (!*strp || r < 0) {
+    /* LCOV_EXCL_START */
     log_err(LD_BUG, "Internal error in asprintf");
     tor_assert(0);
+    /* LCOV_EXCL_STOP */
   }
   return r;
 }
@@ -550,7 +532,10 @@ tor_vasprintf(char **strp, const char *fmt, va_list args)
   /* On Windows, _vsnprintf won't tell us the length of the string if it
    * overflows, so we need to use _vcsprintf to tell how much to allocate */
   int len, r;
-  len = _vscprintf(fmt, args);
+  va_list tmp_args;
+  va_copy(tmp_args, args);
+  len = _vscprintf(fmt, tmp_args);
+  va_end(tmp_args);
   if (len < 0) {
     *strp = NULL;
     return -1;
@@ -573,14 +558,17 @@ tor_vasprintf(char **strp, const char *fmt, va_list args)
   int len, r;
   va_list tmp_args;
   va_copy(tmp_args, args);
-  len = vsnprintf(buf, sizeof(buf), fmt, tmp_args);
+  /* vsnprintf() was properly checked but tor_vsnprintf() available so
+   * why not use it? */
+  len = tor_vsnprintf(buf, sizeof(buf), fmt, tmp_args);
   va_end(tmp_args);
   if (len < (int)sizeof(buf)) {
     *strp = tor_strdup(buf);
     return len;
   }
   strp_tmp = tor_malloc(len+1);
-  r = vsnprintf(strp_tmp, len+1, fmt, args);
+  /* use of tor_vsnprintf() will ensure string is null terminated */
+  r = tor_vsnprintf(strp_tmp, len+1, fmt, args);
   if (r != len) {
     tor_free(strp_tmp);
     *strp = NULL;
@@ -660,7 +648,7 @@ const uint32_t TOR_ISLOWER_TABLE[8] = { 0, 0, 0, 0x7fffffe, 0, 0, 0, 0 };
 /** Upper-casing and lowercasing tables to map characters to upper/lowercase
  * equivalents.  Used by tor_toupper() and tor_tolower(). */
 /**@{*/
-const char TOR_TOUPPER_TABLE[256] = {
+const uint8_t TOR_TOUPPER_TABLE[256] = {
   0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
   16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
   32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,
@@ -678,7 +666,7 @@ const char TOR_TOUPPER_TABLE[256] = {
   224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,
   240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255,
 };
-const char TOR_TOLOWER_TABLE[256] = {
+const uint8_t TOR_TOLOWER_TABLE[256] = {
   0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
   16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
   32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,
@@ -714,7 +702,8 @@ strtok_helper(char *cp, const char *sep)
 }
 
 /** Implementation of strtok_r for platforms whose coders haven't figured out
- * how to write one.  Hey guys!  You can use this code here for free! */
+ * how to write one.  Hey, retrograde libc developers!  You can use this code
+ * here for free! */
 char *
 tor_strtok_r_impl(char *str, const char *sep, char **lasts)
 {
@@ -1078,7 +1067,7 @@ static int n_sockets_open = 0;
 static tor_mutex_t *socket_accounting_mutex = NULL;
 
 /** Helper: acquire the socket accounting lock. */
-static INLINE void
+static inline void
 socket_accounting_lock(void)
 {
   if (PREDICT_UNLIKELY(!socket_accounting_mutex))
@@ -1087,7 +1076,7 @@ socket_accounting_lock(void)
 }
 
 /** Helper: release the socket accounting lock. */
-static INLINE void
+static inline void
 socket_accounting_unlock(void)
 {
   tor_mutex_release(socket_accounting_mutex);
@@ -1124,8 +1113,8 @@ tor_close_socket_simple(tor_socket_t s)
 
 /** As tor_close_socket_simple(), but keeps track of the number
  * of open sockets. Returns 0 on success, -1 on failure. */
-int
-tor_close_socket(tor_socket_t s)
+MOCK_IMPL(int,
+tor_close_socket,(tor_socket_t s))
 {
   int r = tor_close_socket_simple(s);
 
@@ -1147,14 +1136,12 @@ tor_close_socket(tor_socket_t s)
       --n_sockets_open;
 #else
     if (r != EBADF)
-      --n_sockets_open;
+      --n_sockets_open; // LCOV_EXCL_LINE -- EIO and EINTR too hard to force.
 #endif
     r = -1;
   }
 
-  if (n_sockets_open < 0)
-    log_warn(LD_BUG, "Our socket count is below zero: %d. Please submit a "
-             "bug report.", n_sockets_open);
+  tor_assert_nonfatal(n_sockets_open >= 0);
   socket_accounting_unlock();
   return r;
 }
@@ -1163,7 +1150,7 @@ tor_close_socket(tor_socket_t s)
 #ifdef DEBUG_SOCKET_COUNTING
 /** Helper: if DEBUG_SOCKET_COUNTING is enabled, remember that <b>s</b> is
  * now an open socket. */
-static INLINE void
+static inline void
 mark_socket_open(tor_socket_t s)
 {
   /* XXXX This bitarray business will NOT work on windows: sockets aren't
@@ -1197,10 +1184,10 @@ tor_open_socket,(int domain, int type, int protocol))
 
 /** Mockable wrapper for connect(). */
 MOCK_IMPL(tor_socket_t,
-tor_connect_socket,(tor_socket_t socket,const struct sockaddr *address,
+tor_connect_socket,(tor_socket_t sock, const struct sockaddr *address,
                      socklen_t address_len))
 {
-  return connect(socket,address,address_len);
+  return connect(sock,address,address_len);
 }
 
 /** As socket(), but creates a nonblocking socket and
@@ -1375,31 +1362,31 @@ get_n_open_sockets(void)
 
 /** Mockable wrapper for getsockname(). */
 MOCK_IMPL(int,
-tor_getsockname,(tor_socket_t socket, struct sockaddr *address,
+tor_getsockname,(tor_socket_t sock, struct sockaddr *address,
                  socklen_t *address_len))
 {
-   return getsockname(socket, address, address_len);
+   return getsockname(sock, address, address_len);
 }
 
 /** Turn <b>socket</b> into a nonblocking socket. Return 0 on success, -1
  * on failure.
  */
 int
-set_socket_nonblocking(tor_socket_t socket)
+set_socket_nonblocking(tor_socket_t sock)
 {
 #if defined(_WIN32)
   unsigned long nonblocking = 1;
-  ioctlsocket(socket, FIONBIO, (unsigned long*) &nonblocking);
+  ioctlsocket(sock, FIONBIO, (unsigned long*) &nonblocking);
 #else
   int flags;
 
-  flags = fcntl(socket, F_GETFL, 0);
+  flags = fcntl(sock, F_GETFL, 0);
   if (flags == -1) {
     log_warn(LD_NET, "Couldn't get file status flags: %s", strerror(errno));
     return -1;
   }
   flags |= O_NONBLOCK;
-  if (fcntl(socket, F_SETFL, flags) == -1) {
+  if (fcntl(sock, F_SETFL, flags) == -1) {
     log_warn(LD_NET, "Couldn't set file status flags: %s", strerror(errno));
     return -1;
   }
@@ -1486,6 +1473,20 @@ tor_socketpair(int family, int type, int protocol, tor_socket_t fd[2])
 }
 
 #ifdef NEED_ERSATZ_SOCKETPAIR
+
+static inline socklen_t
+SIZEOF_SOCKADDR(int domain)
+{
+  switch (domain) {
+    case AF_INET:
+      return sizeof(struct sockaddr_in);
+    case AF_INET6:
+      return sizeof(struct sockaddr_in6);
+    default:
+      return 0;
+  }
+}
+
 /**
  * Helper used to implement socketpair on systems that lack it, by
  * making a direct connection to localhost.
@@ -1501,13 +1502,21 @@ tor_ersatz_socketpair(int family, int type, int protocol, tor_socket_t fd[2])
     tor_socket_t listener = TOR_INVALID_SOCKET;
     tor_socket_t connector = TOR_INVALID_SOCKET;
     tor_socket_t acceptor = TOR_INVALID_SOCKET;
-    struct sockaddr_in listen_addr;
-    struct sockaddr_in connect_addr;
+    tor_addr_t listen_tor_addr;
+    struct sockaddr_storage connect_addr_ss, listen_addr_ss;
+    struct sockaddr *listen_addr = (struct sockaddr *) &listen_addr_ss;
+    uint16_t listen_port = 0;
+    tor_addr_t connect_tor_addr;
+    uint16_t connect_port = 0;
+    struct sockaddr *connect_addr = (struct sockaddr *) &connect_addr_ss;
     socklen_t size;
     int saved_errno = -1;
+    int ersatz_domain = AF_INET;
 
-    memset(&connect_addr, 0, sizeof(connect_addr));
-    memset(&listen_addr, 0, sizeof(listen_addr));
+    memset(&connect_tor_addr, 0, sizeof(connect_tor_addr));
+    memset(&connect_addr_ss, 0, sizeof(connect_addr_ss));
+    memset(&listen_tor_addr, 0, sizeof(listen_tor_addr));
+    memset(&listen_addr_ss, 0, sizeof(listen_addr_ss));
 
     if (protocol
 #ifdef AF_UNIX
@@ -1524,47 +1533,71 @@ tor_ersatz_socketpair(int family, int type, int protocol, tor_socket_t fd[2])
       return -EINVAL;
     }
 
-    listener = tor_open_socket(AF_INET, type, 0);
-    if (!SOCKET_OK(listener))
-      return -tor_socket_errno(-1);
-    memset(&listen_addr, 0, sizeof(listen_addr));
-    listen_addr.sin_family = AF_INET;
-    listen_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    listen_addr.sin_port = 0;   /* kernel chooses port.  */
-    if (bind(listener, (struct sockaddr *) &listen_addr, sizeof (listen_addr))
-        == -1)
+    listener = tor_open_socket(ersatz_domain, type, 0);
+    if (!SOCKET_OK(listener)) {
+      int first_errno = tor_socket_errno(-1);
+      if (first_errno == SOCK_ERRNO(EPROTONOSUPPORT)
+          && ersatz_domain == AF_INET) {
+        /* Assume we're on an IPv6-only system */
+        ersatz_domain = AF_INET6;
+        listener = tor_open_socket(ersatz_domain, type, 0);
+        if (!SOCKET_OK(listener)) {
+          /* Keep the previous behaviour, which was to return the IPv4 error.
+           * (This may be less informative on IPv6-only systems.)
+           * XX/teor - is there a better way to decide which errno to return?
+           * (I doubt we care much either way, once there is an error.)
+           */
+          return -first_errno;
+        }
+      }
+    }
+    /* If there is no 127.0.0.1 or ::1, this will and must fail. Otherwise, we
+     * risk exposing a socketpair on a routable IP address. (Some BSD jails
+     * use a routable address for localhost. Fortunately, they have the real
+     * AF_UNIX socketpair.) */
+    if (ersatz_domain == AF_INET) {
+      tor_addr_from_ipv4h(&listen_tor_addr, INADDR_LOOPBACK);
+    } else {
+      tor_addr_parse(&listen_tor_addr, "[::1]");
+    }
+    tor_assert(tor_addr_is_loopback(&listen_tor_addr));
+    size = tor_addr_to_sockaddr(&listen_tor_addr,
+                         0 /* kernel chooses port.  */,
+                         listen_addr,
+                         sizeof(listen_addr_ss));
+    if (bind(listener, listen_addr, size) == -1)
       goto tidy_up_and_fail;
     if (listen(listener, 1) == -1)
       goto tidy_up_and_fail;
 
-    connector = tor_open_socket(AF_INET, type, 0);
+    connector = tor_open_socket(ersatz_domain, type, 0);
     if (!SOCKET_OK(connector))
       goto tidy_up_and_fail;
     /* We want to find out the port number to connect to.  */
-    size = sizeof(connect_addr);
-    if (getsockname(listener, (struct sockaddr *) &connect_addr, &size) == -1)
+    size = sizeof(connect_addr_ss);
+    if (getsockname(listener, connect_addr, &size) == -1)
       goto tidy_up_and_fail;
-    if (size != sizeof (connect_addr))
+    if (size != SIZEOF_SOCKADDR (connect_addr->sa_family))
       goto abort_tidy_up_and_fail;
-    if (connect(connector, (struct sockaddr *) &connect_addr,
-                sizeof(connect_addr)) == -1)
+    if (connect(connector, connect_addr, size) == -1)
       goto tidy_up_and_fail;
 
-    size = sizeof(listen_addr);
-    acceptor = tor_accept_socket(listener,
-                                 (struct sockaddr *) &listen_addr, &size);
+    size = sizeof(listen_addr_ss);
+    acceptor = tor_accept_socket(listener, listen_addr, &size);
     if (!SOCKET_OK(acceptor))
       goto tidy_up_and_fail;
-    if (size != sizeof(listen_addr))
+    if (size != SIZEOF_SOCKADDR(listen_addr->sa_family))
       goto abort_tidy_up_and_fail;
     /* Now check we are talking to ourself by matching port and host on the
        two sockets.  */
-    if (getsockname(connector, (struct sockaddr *) &connect_addr, &size) == -1)
+    if (getsockname(connector, connect_addr, &size) == -1)
       goto tidy_up_and_fail;
-    if (size != sizeof (connect_addr)
-        || listen_addr.sin_family != connect_addr.sin_family
-        || listen_addr.sin_addr.s_addr != connect_addr.sin_addr.s_addr
-        || listen_addr.sin_port != connect_addr.sin_port) {
+    /* Set *_tor_addr and *_port to the address and port that was used */
+    tor_addr_from_sockaddr(&listen_tor_addr, listen_addr, &listen_port);
+    tor_addr_from_sockaddr(&connect_tor_addr, connect_addr, &connect_port);
+    if (size != SIZEOF_SOCKADDR (connect_addr->sa_family)
+        || tor_addr_compare(&listen_tor_addr, &connect_tor_addr, CMP_SEMANTIC)
+        || listen_port != connect_port) {
       goto abort_tidy_up_and_fail;
     }
     tor_close_socket(listener);
@@ -1590,6 +1623,9 @@ tor_ersatz_socketpair(int family, int type, int protocol, tor_socket_t fd[2])
       tor_close_socket(acceptor);
     return -saved_errno;
 }
+
+#undef SIZEOF_SOCKADDR
+
 #endif
 
 /* Return the maximum number of allowed sockets. */
@@ -1682,19 +1718,24 @@ set_max_file_descriptors(rlim_t limit, int *max_out)
   if (setrlimit(RLIMIT_NOFILE, &rlim) != 0) {
     int bad = 1;
 #ifdef OPEN_MAX
-    if (errno == EINVAL && OPEN_MAX < rlim.rlim_cur) {
+    uint64_t try_limit = OPEN_MAX - ULIMIT_BUFFER;
+    if (errno == EINVAL && try_limit < (uint64_t) rlim.rlim_cur) {
       /* On some platforms, OPEN_MAX is the real limit, and getrlimit() is
        * full of nasty lies.  I'm looking at you, OSX 10.5.... */
-      rlim.rlim_cur = OPEN_MAX;
+      rlim.rlim_cur = try_limit;
       if (setrlimit(RLIMIT_NOFILE, &rlim) == 0) {
         if (rlim.rlim_cur < (rlim_t)limit) {
           log_warn(LD_CONFIG, "We are limited to %lu file descriptors by "
-                 "OPEN_MAX, and ConnLimit is %lu.  Changing ConnLimit; sorry.",
-                   (unsigned long)OPEN_MAX, (unsigned long)limit);
+                   "OPEN_MAX (%lu), and ConnLimit is %lu.  Changing "
+                   "ConnLimit; sorry.",
+                   (unsigned long)try_limit, (unsigned long)OPEN_MAX,
+                   (unsigned long)limit);
         } else {
-          log_info(LD_CONFIG, "Dropped connection limit to OPEN_MAX (%lu); "
-                   "Apparently, %lu was too high and rlimit lied to us.",
-                   (unsigned long)OPEN_MAX, (unsigned long)rlim.rlim_max);
+          log_info(LD_CONFIG, "Dropped connection limit to %lu based on "
+                   "OPEN_MAX (%lu); Apparently, %lu was too high and rlimit "
+                   "lied to us.",
+                   (unsigned long)try_limit, (unsigned long)OPEN_MAX,
+                   (unsigned long)rlim.rlim_max);
         }
         bad = 0;
       }
@@ -1885,7 +1926,7 @@ tor_getpwnam(const char *username)
     return NULL;
 
   if (! strcmp(username, passwd_cached->pw_name))
-    return passwd_cached;
+    return passwd_cached; // LCOV_EXCL_LINE - would need to make getpwnam flaky
 
   return NULL;
 }
@@ -1911,23 +1952,105 @@ tor_getpwuid(uid_t uid)
     return NULL;
 
   if (uid == passwd_cached->pw_uid)
-    return passwd_cached;
+    return passwd_cached; // LCOV_EXCL_LINE - would need to make getpwnam flaky
 
   return NULL;
 }
 #endif
 
+/** Return true iff we were compiled with capability support, and capabilities
+ * seem to work. **/
+int
+have_capability_support(void)
+{
+#ifdef HAVE_LINUX_CAPABILITIES
+  cap_t caps = cap_get_proc();
+  if (caps == NULL)
+    return 0;
+  cap_free(caps);
+  return 1;
+#else
+  return 0;
+#endif
+}
+
+#ifdef HAVE_LINUX_CAPABILITIES
+/** Helper. Drop all capabilities but a small set, and set PR_KEEPCAPS as
+ * appropriate.
+ *
+ * If pre_setuid, retain only CAP_NET_BIND_SERVICE, CAP_SETUID, and
+ * CAP_SETGID, and use PR_KEEPCAPS to ensure that capabilities persist across
+ * setuid().
+ *
+ * If not pre_setuid, retain only CAP_NET_BIND_SERVICE, and disable
+ * PR_KEEPCAPS.
+ *
+ * Return 0 on success, and -1 on failure.
+ */
+static int
+drop_capabilities(int pre_setuid)
+{
+  /* We keep these three capabilities, and these only, as we setuid.
+   * After we setuid, we drop all but the first. */
+  const cap_value_t caplist[] = {
+    CAP_NET_BIND_SERVICE, CAP_SETUID, CAP_SETGID
+  };
+  const char *where = pre_setuid ? "pre-setuid" : "post-setuid";
+  const int n_effective = pre_setuid ? 3 : 1;
+  const int n_permitted = pre_setuid ? 3 : 1;
+  const int n_inheritable = 1;
+  const int keepcaps = pre_setuid ? 1 : 0;
+
+  /* Sets whether we keep capabilities across a setuid. */
+  if (prctl(PR_SET_KEEPCAPS, keepcaps) < 0) {
+    log_warn(LD_CONFIG, "Unable to call prctl() %s: %s",
+             where, strerror(errno));
+    return -1;
+  }
+
+  cap_t caps = cap_get_proc();
+  if (!caps) {
+    log_warn(LD_CONFIG, "Unable to call cap_get_proc() %s: %s",
+             where, strerror(errno));
+    return -1;
+  }
+  cap_clear(caps);
+
+  cap_set_flag(caps, CAP_EFFECTIVE, n_effective, caplist, CAP_SET);
+  cap_set_flag(caps, CAP_PERMITTED, n_permitted, caplist, CAP_SET);
+  cap_set_flag(caps, CAP_INHERITABLE, n_inheritable, caplist, CAP_SET);
+
+  int r = cap_set_proc(caps);
+  cap_free(caps);
+  if (r < 0) {
+    log_warn(LD_CONFIG, "No permission to set capabilities %s: %s",
+             where, strerror(errno));
+    return -1;
+  }
+
+  return 0;
+}
+#endif
+
 /** Call setuid and setgid to run as <b>user</b> and switch to their
  * primary group.  Return 0 on success.  On failure, log and return -1.
+ *
+ * If SWITCH_ID_KEEP_BINDLOW is set in 'flags', try to use the capability
+ * system to retain the abilitity to bind low ports.
+ *
+ * If SWITCH_ID_WARN_IF_NO_CAPS is set in flags, also warn if we have
+ * don't have capability support.
  */
 int
-switch_id(const char *user)
+switch_id(const char *user, const unsigned flags)
 {
 #ifndef _WIN32
   const struct passwd *pw = NULL;
   uid_t old_uid;
   gid_t old_gid;
   static int have_already_switched_id = 0;
+  const int keep_bindlow = !!(flags & SWITCH_ID_KEEP_BINDLOW);
+  const int warn_if_no_caps = !!(flags & SWITCH_ID_WARN_IF_NO_CAPS);
 
   tor_assert(user);
 
@@ -1950,6 +2073,20 @@ switch_id(const char *user)
     log_warn(LD_CONFIG, "Error setting configured user: %s not found", user);
     return -1;
   }
+
+#ifdef HAVE_LINUX_CAPABILITIES
+  (void) warn_if_no_caps;
+  if (keep_bindlow) {
+    if (drop_capabilities(1))
+      return -1;
+  }
+#else
+  (void) keep_bindlow;
+  if (warn_if_no_caps) {
+    log_warn(LD_CONFIG, "KeepBindCapabilities set, but no capability support "
+             "on this system.");
+  }
+#endif
 
   /* Properly switch egid,gid,euid,uid here or bail out */
   if (setgroups(1, &pw->pw_gid)) {
@@ -2004,6 +2141,12 @@ switch_id(const char *user)
 
   /* We've properly switched egid, gid, euid, uid, and supplementary groups if
    * we're here. */
+#ifdef HAVE_LINUX_CAPABILITIES
+  if (keep_bindlow) {
+    if (drop_capabilities(0))
+      return -1;
+  }
+#endif
 
 #if !defined(CYGWIN) && !defined(__CYGWIN__)
   /* If we tried to drop privilege to a group/user other than root, attempt to
@@ -2051,9 +2194,9 @@ switch_id(const char *user)
 
 #else
   (void)user;
+  (void)flags;
 
-  log_warn(LD_CONFIG,
-           "User specified but switching users is unsupported on your OS.");
+  log_warn(LD_CONFIG, "Switching users is unsupported on your OS.");
   return -1;
 #endif
 }
@@ -2192,28 +2335,15 @@ get_parent_directory(char *fname)
 static char *
 alloc_getcwd(void)
 {
-    int saved_errno = errno;
-/* We use this as a starting path length. Not too large seems sane. */
-#define START_PATH_LENGTH 128
-/* Nobody has a maxpath longer than this, as far as I know.  And if they
- * do, they shouldn't. */
-#define MAX_SANE_PATH_LENGTH 4096
-    size_t path_length = START_PATH_LENGTH;
-    char *path = tor_malloc(path_length);
+#ifdef PATH_MAX
+#define MAX_CWD PATH_MAX
+#else
+#define MAX_CWD 4096
+#endif
 
-    errno = 0;
-    while (getcwd(path, path_length) == NULL) {
-      if (errno == ERANGE && path_length < MAX_SANE_PATH_LENGTH) {
-        path_length*=2;
-        path = tor_realloc(path, path_length);
-      } else {
-        tor_free(path);
-        path = NULL;
-        break;
-      }
-    }
-    errno = saved_errno;
-    return path;
+  char path_buf[MAX_CWD];
+  char *path = getcwd(path_buf, sizeof(path_buf));
+  return path ? tor_strdup(path) : NULL;
 }
 #endif
 
@@ -2228,7 +2358,7 @@ make_path_absolute(char *fname)
   /* We don't want to assume that tor_free can free a string allocated
    * with malloc.  On failure, return fname (it's better than nothing). */
   char *absfname = tor_strdup(absfname_malloced ? absfname_malloced : fname);
-  if (absfname_malloced) free(absfname_malloced);
+  if (absfname_malloced) raw_free(absfname_malloced);
 
   return absfname;
 #else
@@ -2244,11 +2374,13 @@ make_path_absolute(char *fname)
       tor_asprintf(&absfname, "%s/%s", path, fname);
       tor_free(path);
     } else {
+      /* LCOV_EXCL_START Can't make getcwd fail. */
       /* If getcwd failed, the best we can do here is keep using the
        * relative path.  (Perhaps / isn't readable by this UID/GID.) */
       log_warn(LD_GENERAL, "Unable to find current working directory: %s",
                strerror(errno));
       absfname = tor_strdup(fname);
+      /* LCOV_EXCL_STOP */
     }
   }
   return absfname;
@@ -2452,8 +2584,12 @@ tor_inet_pton(int af, const char *src, void *dst)
         char *next;
         ssize_t len;
         long r = strtol(src, &next, 16);
-        tor_assert(next != NULL);
-        tor_assert(next != src);
+        if (next == NULL || next == src) {
+          /* The 'next == src' error case can happen on versions of openbsd
+           * where treats "0xfoo" as an error, rather than as "0" followed by
+           * "xfoo". */
+          return 0;
+        }
 
         len = *next == '\0' ? eow - src : next - src;
         if (len > 4)
@@ -2537,8 +2673,7 @@ static int uname_result_is_set = 0;
 
 /** Return a pointer to a description of our platform.
  */
-const char *
-get_uname(void)
+MOCK_IMPL(const char *, get_uname, (void))
 {
 #ifdef HAVE_UNAME
   struct utsname u;
@@ -2613,7 +2748,9 @@ get_uname(void)
       }
 #endif
 #else
+        /* LCOV_EXCL_START -- can't provoke uname failure */
         strlcpy(uname_result, "Unknown platform", sizeof(uname_result));
+        /* LCOV_EXCL_STOP */
 #endif
       }
     uname_result_is_set = 1;
@@ -2687,57 +2824,17 @@ compute_num_cpus(void)
   if (num_cpus == -2) {
     num_cpus = compute_num_cpus_impl();
     tor_assert(num_cpus != -2);
-    if (num_cpus > MAX_DETECTABLE_CPUS)
+    if (num_cpus > MAX_DETECTABLE_CPUS) {
+      /* LCOV_EXCL_START */
       log_notice(LD_GENERAL, "Wow!  I detected that you have %d CPUs. I "
                  "will not autodetect any more than %d, though.  If you "
                  "want to configure more, set NumCPUs in your torrc",
                  num_cpus, MAX_DETECTABLE_CPUS);
+      num_cpus = MAX_DETECTABLE_CPUS;
+      /* LCOV_EXCL_STOP */
+    }
   }
   return num_cpus;
-}
-
-/** Set *timeval to the current time of day.  On error, log and terminate.
- * (Same as gettimeofday(timeval,NULL), but never returns -1.)
- */
-void
-tor_gettimeofday(struct timeval *timeval)
-{
-#ifdef _WIN32
-  /* Epoch bias copied from perl: number of units between windows epoch and
-   * Unix epoch. */
-#define EPOCH_BIAS U64_LITERAL(116444736000000000)
-#define UNITS_PER_SEC U64_LITERAL(10000000)
-#define USEC_PER_SEC U64_LITERAL(1000000)
-#define UNITS_PER_USEC U64_LITERAL(10)
-  union {
-    uint64_t ft_64;
-    FILETIME ft_ft;
-  } ft;
-  /* number of 100-nsec units since Jan 1, 1601 */
-  GetSystemTimeAsFileTime(&ft.ft_ft);
-  if (ft.ft_64 < EPOCH_BIAS) {
-    log_err(LD_GENERAL,"System time is before 1970; failing.");
-    exit(1);
-  }
-  ft.ft_64 -= EPOCH_BIAS;
-  timeval->tv_sec = (unsigned) (ft.ft_64 / UNITS_PER_SEC);
-  timeval->tv_usec = (unsigned) ((ft.ft_64 / UNITS_PER_USEC) % USEC_PER_SEC);
-#elif defined(HAVE_GETTIMEOFDAY)
-  if (gettimeofday(timeval, NULL)) {
-    log_err(LD_GENERAL,"gettimeofday failed.");
-    /* If gettimeofday dies, we have either given a bad timezone (we didn't),
-       or segfaulted.*/
-    exit(1);
-  }
-#elif defined(HAVE_FTIME)
-  struct timeb tb;
-  ftime(&tb);
-  timeval->tv_sec = tb.time;
-  timeval->tv_usec = tb.millitm * 1000;
-#else
-#error "No way to get time."
-#endif
-  return;
 }
 
 #if !defined(_WIN32)
@@ -2766,6 +2863,7 @@ correct_tm(int islocal, const time_t *timep, struct tm *resultbuf,
       r->tm_mon = 11;
       r->tm_mday = 31;
       r->tm_yday = 364;
+      r->tm_wday = 6;
       r->tm_hour = 23;
       r->tm_min = 59;
       r->tm_sec = 59;
@@ -2774,6 +2872,7 @@ correct_tm(int islocal, const time_t *timep, struct tm *resultbuf,
       r->tm_mon = 0;
       r->tm_mday = 1;
       r->tm_yday = 0;
+      r->tm_wday = 0;
       r->tm_hour = 0;
       r->tm_min = 0;
       r->tm_sec = 0;
@@ -2791,6 +2890,7 @@ correct_tm(int islocal, const time_t *timep, struct tm *resultbuf,
       r->tm_mon = 0;
       r->tm_mday = 1;
       r->tm_yday = 0;
+      r->tm_wday = 0;
       r->tm_hour = 0;
       r->tm_min = 0 ;
       r->tm_sec = 0;
@@ -2804,6 +2904,7 @@ correct_tm(int islocal, const time_t *timep, struct tm *resultbuf,
       r->tm_mon = 11;
       r->tm_mday = 31;
       r->tm_yday = 364;
+      r->tm_wday = 6;
       r->tm_hour = 23;
       r->tm_min = 59;
       r->tm_sec = 59;
@@ -2814,11 +2915,12 @@ correct_tm(int islocal, const time_t *timep, struct tm *resultbuf,
 
   /* If we get here, then gmtime/localtime failed without getting an extreme
    * value for *timep */
-
+  /* LCOV_EXCL_START */
   tor_fragile_assert();
   r = resultbuf;
   memset(resultbuf, 0, sizeof(struct tm));
   outcome="can't recover";
+  /* LCOV_EXCL_STOP */
  done:
   log_warn(LD_BUG, "%s("I64_FORMAT") failed with error %s: %s",
            islocal?"localtime":"gmtime",
@@ -3212,9 +3314,11 @@ get_total_system_memory_impl(void)
   return result * 1024;
 
  err:
+  /* LCOV_EXCL_START Can't reach this unless proc is broken. */
   tor_free(s);
   close(fd);
   return 0;
+  /* LCOV_EXCL_STOP */
 #elif defined (_WIN32)
   /* Windows has MEMORYSTATUSEX; pretty straightforward. */
   MEMORYSTATUSEX ms;
@@ -3263,6 +3367,7 @@ get_total_system_memory(size_t *mem_out)
   static size_t mem_cached=0;
   uint64_t m = get_total_system_memory_impl();
   if (0 == m) {
+    /* LCOV_EXCL_START -- can't make this happen without mocking. */
     /* We couldn't find our memory total */
     if (0 == mem_cached) {
       /* We have no cached value either */
@@ -3272,6 +3377,7 @@ get_total_system_memory(size_t *mem_out)
 
     *mem_out = mem_cached;
     return 0;
+    /* LCOV_EXCL_STOP */
   }
 
 #if SIZE_MAX != UINT64_MAX
@@ -3287,26 +3393,6 @@ get_total_system_memory(size_t *mem_out)
 
   return 0;
 }
-
-#ifdef TOR_UNIT_TESTS
-/** Delay for <b>msec</b> milliseconds.  Only used in tests. */
-void
-tor_sleep_msec(int msec)
-{
-#ifdef _WIN32
-  Sleep(msec);
-#elif defined(HAVE_USLEEP)
-  sleep(msec / 1000);
-  /* Some usleep()s hate sleeping more than 1 sec */
-  usleep((msec % 1000) * 1000);
-#elif defined(HAVE_SYS_SELECT_H)
-  struct timeval tv = { msec / 1000, (msec % 1000) * 1000};
-  select(0, NULL, NULL, NULL, &tv);
-#else
-  sleep(CEIL_DIV(msec, 1000));
-#endif
-}
-#endif
 
 /** Emit the password prompt <b>prompt</b>, then read up to <b>buflen</b>
  * bytes of passphrase into <b>output</b>. Return the number of bytes in

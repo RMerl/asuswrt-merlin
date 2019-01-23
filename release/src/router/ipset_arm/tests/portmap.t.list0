@@ -1,0 +1,9 @@
+Name: test
+Type: bitmap:port
+Header: range 1-1024
+Size in memory: 276
+References: 0
+Number of entries: 2
+Members:
+1
+1024

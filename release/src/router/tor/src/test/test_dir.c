@@ -1,32 +1,44 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "orconfig.h"
 #include <math.h>
 
+#define CONFIG_PRIVATE
 #define DIRSERV_PRIVATE
 #define DIRVOTE_PRIVATE
 #define ROUTER_PRIVATE
 #define ROUTERLIST_PRIVATE
+#define ROUTERPARSE_PRIVATE
 #define HIBERNATE_PRIVATE
 #define NETWORKSTATUS_PRIVATE
+#define RELAY_PRIVATE
+
 #include "or.h"
+#include "confparse.h"
 #include "config.h"
 #include "crypto_ed25519.h"
 #include "directory.h"
 #include "dirserv.h"
 #include "dirvote.h"
 #include "hibernate.h"
+#include "memarea.h"
 #include "networkstatus.h"
 #include "router.h"
 #include "routerkeys.h"
 #include "routerlist.h"
 #include "routerparse.h"
 #include "routerset.h"
+#include "shared_random_state.h"
 #include "test.h"
+#include "test_dir_common.h"
 #include "torcert.h"
+#include "relay.h"
+#include "log_test_helpers.h"
+
+#define NS_MODULE dir
 
 static void
 test_dir_nicknames(void *arg)
@@ -76,6 +88,15 @@ test_dir_nicknames(void *arg)
   ;
 }
 
+static smartlist_t *mocked_configured_ports = NULL;
+
+/** Returns mocked_configured_ports */
+static const smartlist_t *
+mock_get_configured_ports(void)
+{
+  return mocked_configured_ports;
+}
+
 /** Run unit tests for router descriptor generation logic. */
 static void
 test_dir_formats(void *arg)
@@ -95,6 +116,8 @@ test_dir_formats(void *arg)
   or_options_t *options = get_options_mutable();
   const addr_policy_t *p;
   time_t now = time(NULL);
+  port_cfg_t orport, dirport;
+  char cert_buf[256];
 
   (void)arg;
   pk1 = pk_generate(0);
@@ -110,9 +133,15 @@ test_dir_formats(void *arg)
   r1->cache_info.published_on = 0;
   r1->or_port = 9000;
   r1->dir_port = 9003;
+  r1->supports_tunnelled_dir_requests = 1;
   tor_addr_parse(&r1->ipv6_addr, "1:2:3:4::");
   r1->ipv6_orport = 9999;
   r1->onion_pkey = crypto_pk_dup_key(pk1);
+  /* Fake just enough of an ntor key to get by */
+  curve25519_keypair_t r1_onion_keypair;
+  curve25519_keypair_generate(&r1_onion_keypair, 0);
+  r1->onion_curve25519_pkey = tor_memdup(&r1_onion_keypair.pubkey,
+                                         sizeof(curve25519_public_key_t));
   r1->identity_pkey = crypto_pk_dup_key(pk2);
   r1->bandwidthrate = 1000;
   r1->bandwidthburst = 5000;
@@ -140,20 +169,16 @@ test_dir_formats(void *arg)
   ed25519_secret_key_from_seed(&kp2.seckey,
                           (const uint8_t*)"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
   ed25519_public_key_generate(&kp2.pubkey, &kp2.seckey);
-  r2->signing_key_cert = tor_cert_create(&kp1,
+  r2->cache_info.signing_key_cert = tor_cert_create(&kp1,
                                          CERT_TYPE_ID_SIGNING,
                                          &kp2.pubkey,
                                          now, 86400,
                                          CERT_FLAG_INCLUDE_SIGNING_KEY);
-  char cert_buf[256];
-  base64_encode(cert_buf, sizeof(cert_buf),
-                (const char*)r2->signing_key_cert->encoded,
-                r2->signing_key_cert->encoded_len,
-                BASE64_ENCODE_MULTILINE);
   r2->platform = tor_strdup(platform);
   r2->cache_info.published_on = 5;
   r2->or_port = 9005;
   r2->dir_port = 0;
+  r2->supports_tunnelled_dir_requests = 1;
   r2->onion_pkey = crypto_pk_dup_key(pk2);
   curve25519_keypair_t r2_onion_keypair;
   curve25519_keypair_generate(&r2_onion_keypair, 0);
@@ -171,10 +196,34 @@ test_dir_formats(void *arg)
   tt_assert(!crypto_pk_write_public_key_to_string(pk2 , &pk2_str,
                                                     &pk2_str_len));
 
-  /* XXXX025 router_dump_to_string should really take this from ri.*/
+  /* XXXX+++ router_dump_to_string should really take this from ri.*/
   options->ContactInfo = tor_strdup("Magri White "
                                     "<magri@elsewhere.example.com>");
+  /* Skip reachability checks for DirPort and tunnelled-dir-server */
+  options->AssumeReachable = 1;
+
+  /* Fake just enough of an ORPort and DirPort to get by */
+  MOCK(get_configured_ports, mock_get_configured_ports);
+  mocked_configured_ports = smartlist_new();
+
+  memset(&orport, 0, sizeof(orport));
+  orport.type = CONN_TYPE_OR_LISTENER;
+  orport.addr.family = AF_INET;
+  orport.port = 9000;
+  smartlist_add(mocked_configured_ports, &orport);
+
+  memset(&dirport, 0, sizeof(dirport));
+  dirport.type = CONN_TYPE_DIR_LISTENER;
+  dirport.addr.family = AF_INET;
+  dirport.port = 9003;
+  smartlist_add(mocked_configured_ports, &dirport);
+
   buf = router_dump_router_to_string(r1, pk2, NULL, NULL, NULL);
+
+  UNMOCK(get_configured_ports);
+  smartlist_free(mocked_configured_ports);
+  mocked_configured_ports = NULL;
+
   tor_free(options->ContactInfo);
   tt_assert(buf);
 
@@ -183,7 +232,6 @@ test_dir_formats(void *arg)
           "platform Tor "VERSION" on ", sizeof(buf2));
   strlcat(buf2, get_uname(), sizeof(buf2));
   strlcat(buf2, "\n"
-          "protocols Link 1 2 Circuit 1\n"
           "published 1970-01-01 00:00:00\n"
           "fingerprint ", sizeof(buf2));
   tt_assert(!crypto_pk_get_fingerprint(pk2, fingerprint, 1));
@@ -200,7 +248,13 @@ test_dir_formats(void *arg)
   strlcat(buf2, "hidden-service-dir\n", sizeof(buf2));
   strlcat(buf2, "contact Magri White <magri@elsewhere.example.com>\n",
           sizeof(buf2));
-  strlcat(buf2, "reject *:*\nrouter-signature\n", sizeof(buf2));
+  strlcat(buf2, "ntor-onion-key ", sizeof(buf2));
+  base64_encode(cert_buf, sizeof(cert_buf),
+                (const char*)r1_onion_keypair.pubkey.public_key, 32,
+                BASE64_ENCODE_MULTILINE);
+  strlcat(buf2, cert_buf, sizeof(buf2));
+  strlcat(buf2, "reject *:*\n", sizeof(buf2));
+  strlcat(buf2, "tunnelled-dir-server\nrouter-signature\n", sizeof(buf2));
   buf[strlen(buf2)] = '\0'; /* Don't compare the sig; it's never the same
                              * twice */
 
@@ -214,12 +268,13 @@ test_dir_formats(void *arg)
   tt_assert(rp1);
   tt_int_op(rp1->addr,OP_EQ, r1->addr);
   tt_int_op(rp1->or_port,OP_EQ, r1->or_port);
-  //test_eq(rp1->dir_port, r1->dir_port);
+  tt_int_op(rp1->dir_port,OP_EQ, r1->dir_port);
   tt_int_op(rp1->bandwidthrate,OP_EQ, r1->bandwidthrate);
   tt_int_op(rp1->bandwidthburst,OP_EQ, r1->bandwidthburst);
   tt_int_op(rp1->bandwidthcapacity,OP_EQ, r1->bandwidthcapacity);
   tt_assert(crypto_pk_cmp_keys(rp1->onion_pkey, pk1) == 0);
   tt_assert(crypto_pk_cmp_keys(rp1->identity_pkey, pk2) == 0);
+  tt_assert(rp1->supports_tunnelled_dir_requests);
   //tt_assert(rp1->exit_policy == NULL);
   tor_free(buf);
 
@@ -227,12 +282,17 @@ test_dir_formats(void *arg)
           "router Fred 10.3.2.1 9005 0 0\n"
           "identity-ed25519\n"
           "-----BEGIN ED25519 CERT-----\n", sizeof(buf2));
+  base64_encode(cert_buf, sizeof(cert_buf),
+                (const char*)r2->cache_info.signing_key_cert->encoded,
+                r2->cache_info.signing_key_cert->encoded_len,
+                BASE64_ENCODE_MULTILINE);
   strlcat(buf2, cert_buf, sizeof(buf2));
   strlcat(buf2, "-----END ED25519 CERT-----\n", sizeof(buf2));
   strlcat(buf2, "master-key-ed25519 ", sizeof(buf2));
   {
     char k[ED25519_BASE64_LEN+1];
-    tt_assert(ed25519_public_to_base64(k, &r2->signing_key_cert->signing_key)
+    tt_assert(ed25519_public_to_base64(k,
+                                &r2->cache_info.signing_key_cert->signing_key)
               >= 0);
     strlcat(buf2, k, sizeof(buf2));
     strlcat(buf2, "\n", sizeof(buf2));
@@ -240,7 +300,6 @@ test_dir_formats(void *arg)
   strlcat(buf2, "platform Tor "VERSION" on ", sizeof(buf2));
   strlcat(buf2, get_uname(), sizeof(buf2));
   strlcat(buf2, "\n"
-          "protocols Link 1 2 Circuit 1\n"
           "published 1970-01-01 00:00:05\n"
           "fingerprint ", sizeof(buf2));
   tt_assert(!crypto_pk_get_fingerprint(pk1, fingerprint, 1));
@@ -290,7 +349,18 @@ test_dir_formats(void *arg)
                 BASE64_ENCODE_MULTILINE);
   strlcat(buf2, cert_buf, sizeof(buf2));
   strlcat(buf2, "accept *:80\nreject 18.0.0.0/8:24\n", sizeof(buf2));
+  strlcat(buf2, "tunnelled-dir-server\n", sizeof(buf2));
   strlcat(buf2, "router-sig-ed25519 ", sizeof(buf2));
+
+  /* Fake just enough of an ORPort to get by */
+  MOCK(get_configured_ports, mock_get_configured_ports);
+  mocked_configured_ports = smartlist_new();
+
+  memset(&orport, 0, sizeof(orport));
+  orport.type = CONN_TYPE_OR_LISTENER;
+  orport.addr.family = AF_INET;
+  orport.port = 9005;
+  smartlist_add(mocked_configured_ports, &orport);
 
   buf = router_dump_router_to_string(r2, pk1, pk2, &r2_onion_keypair, &kp2);
   tt_assert(buf);
@@ -301,6 +371,12 @@ test_dir_formats(void *arg)
   tor_free(buf);
 
   buf = router_dump_router_to_string(r2, pk1, NULL, NULL, NULL);
+
+  UNMOCK(get_configured_ports);
+  smartlist_free(mocked_configured_ports);
+  mocked_configured_ports = NULL;
+
+  /* Reset for later */
   cp = buf;
   rp2 = router_parse_entry_from_string((const char*)cp,NULL,1,0,NULL,NULL);
   tt_assert(rp2);
@@ -315,6 +391,7 @@ test_dir_formats(void *arg)
              CURVE25519_PUBKEY_LEN);
   tt_assert(crypto_pk_cmp_keys(rp2->onion_pkey, pk2) == 0);
   tt_assert(crypto_pk_cmp_keys(rp2->identity_pkey, pk1) == 0);
+  tt_assert(rp2->supports_tunnelled_dir_requests);
 
   tt_int_op(smartlist_len(rp2->exit_policy),OP_EQ, 2);
 
@@ -514,7 +591,7 @@ test_dir_extrainfo_parsing(void *arg)
     crypto_pk_t *pk = ri->identity_pkey = crypto_pk_new();              \
     tt_assert(! crypto_pk_read_public_key_from_string(pk,               \
                                       name##_KEY, strlen(name##_KEY))); \
-    tt_int_op(0,OP_EQ,base16_decode(d, 20, name##_FP, strlen(name##_FP))); \
+    tt_int_op(20,OP_EQ,base16_decode(d, 20, name##_FP, strlen(name##_FP))); \
     digestmap_set((digestmap_t*)map, d, ri);                            \
     ri = NULL;                                                          \
   } while (0)
@@ -580,6 +657,7 @@ test_dir_extrainfo_parsing(void *arg)
 #undef CHECK_FAIL
 
  done:
+  escaped(NULL);
   extrainfo_free(ei);
   routerinfo_free(ri);
   digestmap_free((digestmap_t*)map, routerinfo_free_wrapper_);
@@ -635,8 +713,8 @@ test_dir_parse_router_list(void *arg)
                  "9a651ee03b64325959e8f1b46f2b689b30750b4c");
 
   /* Now tidy up */
-  SMARTLIST_FOREACH(dest, routerinfo_t *, ri, routerinfo_free(ri));
-  SMARTLIST_FOREACH(invalid, uint8_t *, d, tor_free(d));
+  SMARTLIST_FOREACH(dest, routerinfo_t *, rinfo, routerinfo_free(rinfo));
+  SMARTLIST_FOREACH(invalid, uint8_t *, dig, tor_free(dig));
   smartlist_clear(dest);
   smartlist_clear(invalid);
 
@@ -672,9 +750,9 @@ test_dir_parse_router_list(void *arg)
   else
     SMARTLIST_FOREACH(dest, extrainfo_t *, ei, extrainfo_free(ei));
   smartlist_free(dest);
-  SMARTLIST_FOREACH(invalid, uint8_t *, d, tor_free(d));
+  SMARTLIST_FOREACH(invalid, uint8_t *, dig, tor_free(dig));
   smartlist_free(invalid);
-  SMARTLIST_FOREACH(chunks, char *, cp, tor_free(cp));
+  SMARTLIST_FOREACH(chunks, char *, chunk, tor_free(chunk));
   smartlist_free(chunks);
   routerinfo_free(ri);
   if (map) {
@@ -1100,7 +1178,7 @@ test_dir_fp_pairs(void *arg)
   tt_mem_op(pair->second,OP_EQ, "Use AES-256 instead.", DIGEST_LEN);
 
  done:
-  SMARTLIST_FOREACH(sl, fp_pair_t *, pair, tor_free(pair));
+  SMARTLIST_FOREACH(sl, fp_pair_t *, pair_to_free, tor_free(pair_to_free));
   smartlist_free(sl);
 }
 
@@ -1368,6 +1446,20 @@ test_dir_measured_bw_kb_cache(void *arg)
   return;
 }
 
+static char *
+my_dirvote_compute_params(smartlist_t *votes, int method,
+                          int total_authorities)
+{
+  smartlist_t *s = dirvote_compute_params(votes, method, total_authorities);
+  tor_assert(s);
+  char *res = smartlist_join_strings(s, " ", 0, NULL);
+  SMARTLIST_FOREACH(s, char *, cp, tor_free(cp));
+  smartlist_free(s);
+  return res;
+}
+
+#define dirvote_compute_params my_dirvote_compute_params
+
 static void
 test_dir_param_voting(void *arg)
 {
@@ -1477,12 +1569,66 @@ test_dir_param_voting(void *arg)
   return;
 }
 
-extern const char AUTHORITY_CERT_1[];
-extern const char AUTHORITY_SIGNKEY_1[];
-extern const char AUTHORITY_CERT_2[];
-extern const char AUTHORITY_SIGNKEY_2[];
-extern const char AUTHORITY_CERT_3[];
-extern const char AUTHORITY_SIGNKEY_3[];
+static void
+test_dir_param_voting_lookup(void *arg)
+{
+  (void)arg;
+  smartlist_t *lst = smartlist_new();
+
+  smartlist_split_string(lst,
+                         "moomin=9 moomin=10 moomintroll=5 fred "
+                         "jack= electricity=sdk opa=6z abc=9 abcd=99",
+                         NULL, 0, 0);
+
+  tt_int_op(1000,
+            OP_EQ, dirvote_get_intermediate_param_value(lst, "ab", 1000));
+  tt_int_op(9, OP_EQ, dirvote_get_intermediate_param_value(lst, "abc", 1000));
+  tt_int_op(99, OP_EQ,
+            dirvote_get_intermediate_param_value(lst, "abcd", 1000));
+
+  /* moomin appears twice. That's a bug. */
+  tor_capture_bugs_(1);
+  tt_int_op(-100, OP_EQ,
+            dirvote_get_intermediate_param_value(lst, "moomin", -100));
+  tt_int_op(smartlist_len(tor_get_captured_bug_log_()), OP_EQ, 1);
+  tt_str_op(smartlist_get(tor_get_captured_bug_log_(), 0), OP_EQ,
+            "!(n_found > 1)");
+  tor_end_capture_bugs_();
+  /* There is no 'fred=', so that is treated as not existing. */
+  tt_int_op(-100, OP_EQ,
+            dirvote_get_intermediate_param_value(lst, "fred", -100));
+  /* jack is truncated */
+  tor_capture_bugs_(1);
+  tt_int_op(-100, OP_EQ,
+            dirvote_get_intermediate_param_value(lst, "jack", -100));
+  tt_int_op(smartlist_len(tor_get_captured_bug_log_()), OP_EQ, 1);
+  tt_str_op(smartlist_get(tor_get_captured_bug_log_(), 0), OP_EQ,
+            "!(! ok)");
+  tor_end_capture_bugs_();
+  /* electricity and opa aren't integers. */
+  tor_capture_bugs_(1);
+  tt_int_op(-100, OP_EQ,
+            dirvote_get_intermediate_param_value(lst, "electricity", -100));
+  tt_int_op(smartlist_len(tor_get_captured_bug_log_()), OP_EQ, 1);
+  tt_str_op(smartlist_get(tor_get_captured_bug_log_(), 0), OP_EQ,
+            "!(! ok)");
+  tor_end_capture_bugs_();
+
+  tor_capture_bugs_(1);
+  tt_int_op(-100, OP_EQ,
+            dirvote_get_intermediate_param_value(lst, "opa", -100));
+  tt_int_op(smartlist_len(tor_get_captured_bug_log_()), OP_EQ, 1);
+  tt_str_op(smartlist_get(tor_get_captured_bug_log_(), 0), OP_EQ,
+            "!(! ok)");
+  tor_end_capture_bugs_();
+
+ done:
+  SMARTLIST_FOREACH(lst, char *, cp, tor_free(cp));
+  smartlist_free(lst);
+  tor_end_capture_bugs_();
+}
+
+#undef dirvote_compute_params
 
 /** Helper: Test that two networkstatus_voter_info_t do in fact represent the
  * same voting authority, and that they do in fact have all the same
@@ -1503,42 +1649,6 @@ test_same_voter(networkstatus_voter_info_t *v1,
   ;
 }
 
-/** Helper: Make a new routerinfo containing the right information for a
- * given vote_routerstatus_t. */
-static routerinfo_t *
-generate_ri_from_rs(const vote_routerstatus_t *vrs)
-{
-  routerinfo_t *r;
-  const routerstatus_t *rs = &vrs->status;
-  static time_t published = 0;
-
-  r = tor_malloc_zero(sizeof(routerinfo_t));
-  r->cert_expiration_time = TIME_MAX;
-  memcpy(r->cache_info.identity_digest, rs->identity_digest, DIGEST_LEN);
-  memcpy(r->cache_info.signed_descriptor_digest, rs->descriptor_digest,
-         DIGEST_LEN);
-  r->cache_info.do_not_cache = 1;
-  r->cache_info.routerlist_index = -1;
-  r->cache_info.signed_descriptor_body =
-    tor_strdup("123456789012345678901234567890123");
-  r->cache_info.signed_descriptor_len =
-    strlen(r->cache_info.signed_descriptor_body);
-  r->exit_policy = smartlist_new();
-  r->cache_info.published_on = ++published + time(NULL);
-  if (rs->has_bandwidth) {
-    /*
-     * Multiply by 1000 because the routerinfo_t and the routerstatus_t
-     * seem to use different units (*sigh*) and because we seem stuck on
-     * icky and perverse decimal kilobytes (*double sigh*) - see
-     * router_get_advertised_bandwidth_capped() of routerlist.c and
-     * routerstatus_format_entry() of dirserv.c.
-     */
-    r->bandwidthrate = rs->bandwidth_kb * 1000;
-    r->bandwidthcapacity = rs->bandwidth_kb * 1000;
-  }
-  return r;
-}
-
 /** Helper: get a detached signatures document for one or two
  * consensuses. */
 static char *
@@ -1554,100 +1664,6 @@ get_detached_sigs(networkstatus_t *ns, networkstatus_t *ns2)
   r = networkstatus_get_detached_signatures(sl);
   smartlist_free(sl);
   return r;
-}
-
-/**
- * Generate a routerstatus for v3_networkstatus test
- */
-static vote_routerstatus_t *
-gen_routerstatus_for_v3ns(int idx, time_t now)
-{
-  vote_routerstatus_t *vrs=NULL;
-  routerstatus_t *rs;
-  tor_addr_t addr_ipv6;
-
-  switch (idx) {
-    case 0:
-      /* Generate the first routerstatus. */
-      vrs = tor_malloc_zero(sizeof(vote_routerstatus_t));
-      rs = &vrs->status;
-      vrs->version = tor_strdup("0.1.2.14");
-      rs->published_on = now-1500;
-      strlcpy(rs->nickname, "router2", sizeof(rs->nickname));
-      memset(rs->identity_digest, 3, DIGEST_LEN);
-      memset(rs->descriptor_digest, 78, DIGEST_LEN);
-      rs->addr = 0x99008801;
-      rs->or_port = 443;
-      rs->dir_port = 8000;
-      /* all flags but running cleared */
-      rs->is_flagged_running = 1;
-      break;
-    case 1:
-      /* Generate the second routerstatus. */
-      vrs = tor_malloc_zero(sizeof(vote_routerstatus_t));
-      rs = &vrs->status;
-      vrs->version = tor_strdup("0.2.0.5");
-      rs->published_on = now-1000;
-      strlcpy(rs->nickname, "router1", sizeof(rs->nickname));
-      memset(rs->identity_digest, 5, DIGEST_LEN);
-      memset(rs->descriptor_digest, 77, DIGEST_LEN);
-      rs->addr = 0x99009901;
-      rs->or_port = 443;
-      rs->dir_port = 0;
-      tor_addr_parse(&addr_ipv6, "[1:2:3::4]");
-      tor_addr_copy(&rs->ipv6_addr, &addr_ipv6);
-      rs->ipv6_orport = 4711;
-      rs->is_exit = rs->is_stable = rs->is_fast = rs->is_flagged_running =
-        rs->is_valid = rs->is_possible_guard = 1;
-      break;
-    case 2:
-      /* Generate the third routerstatus. */
-      vrs = tor_malloc_zero(sizeof(vote_routerstatus_t));
-      rs = &vrs->status;
-      vrs->version = tor_strdup("0.1.0.3");
-      rs->published_on = now-1000;
-      strlcpy(rs->nickname, "router3", sizeof(rs->nickname));
-      memset(rs->identity_digest, 33, DIGEST_LEN);
-      memset(rs->descriptor_digest, 79, DIGEST_LEN);
-      rs->addr = 0xAA009901;
-      rs->or_port = 400;
-      rs->dir_port = 9999;
-      rs->is_authority = rs->is_exit = rs->is_stable = rs->is_fast =
-        rs->is_flagged_running = rs->is_valid =
-        rs->is_possible_guard = 1;
-      break;
-    case 3:
-      /* Generate a fourth routerstatus that is not running. */
-      vrs = tor_malloc_zero(sizeof(vote_routerstatus_t));
-      rs = &vrs->status;
-      vrs->version = tor_strdup("0.1.6.3");
-      rs->published_on = now-1000;
-      strlcpy(rs->nickname, "router4", sizeof(rs->nickname));
-      memset(rs->identity_digest, 34, DIGEST_LEN);
-      memset(rs->descriptor_digest, 47, DIGEST_LEN);
-      rs->addr = 0xC0000203;
-      rs->or_port = 500;
-      rs->dir_port = 1999;
-      /* Running flag (and others) cleared */
-      break;
-    case 4:
-      /* No more for this test; return NULL */
-      vrs = NULL;
-      break;
-    default:
-      /* Shouldn't happen */
-      tt_assert(0);
-  }
-  if (vrs) {
-    vrs->microdesc = tor_malloc_zero(sizeof(vote_microdesc_hash_t));
-    tor_asprintf(&vrs->microdesc->microdesc_hash_line,
-                 "m 9,10,11,12,13,14,15,16,17 "
-                 "sha256=xyzajkldsdsajdadlsdjaslsdksdjlsdjsdaskdaaa%d\n",
-                 idx);
-  }
-
- done:
-  return vrs;
 }
 
 /** Apply tweaks to the vote list for each voter */
@@ -1681,7 +1697,7 @@ vote_tweaks_for_v3ns(networkstatus_t *v, int voter, time_t now)
       vrs = smartlist_get(v->routerstatus_list, 0);
       memset(vrs->status.descriptor_digest, (int)'Z', DIGEST_LEN);
       tt_assert(router_add_to_routerlist(
-                  generate_ri_from_rs(vrs), &msg,0,0) >= 0);
+                  dir_common_generate_ri_from_rs(vrs), &msg,0,0) >= 0);
     }
   }
 
@@ -1720,8 +1736,8 @@ test_vrs_for_v3ns(vote_routerstatus_t *vrs, int voter, time_t now)
     tt_int_op(rs->addr,OP_EQ, 0x99008801);
     tt_int_op(rs->or_port,OP_EQ, 443);
     tt_int_op(rs->dir_port,OP_EQ, 8000);
-    /* no flags except "running" (16) and "v2dir" (64) */
-    tt_u64_op(vrs->flags, OP_EQ, U64_LITERAL(80));
+    /* no flags except "running" (16) and "v2dir" (64) and "valid" (128) */
+    tt_u64_op(vrs->flags, OP_EQ, U64_LITERAL(0xd0));
   } else if (tor_memeq(rs->identity_digest,
                        "\x5\x5\x5\x5\x5\x5\x5\x5\x5\x5\x5\x5\x5\x5\x5\x5"
                        "\x5\x5\x5\x5",
@@ -1746,11 +1762,11 @@ test_vrs_for_v3ns(vote_routerstatus_t *vrs, int voter, time_t now)
     tt_assert(tor_addr_eq(&rs->ipv6_addr, &addr_ipv6));
     tt_int_op(rs->ipv6_orport,OP_EQ, 4711);
     if (voter == 1) {
-      /* all except "authority" (1) and "v2dir" (64) */
-      tt_u64_op(vrs->flags, OP_EQ, U64_LITERAL(190));
+      /* all except "authority" (1) */
+      tt_u64_op(vrs->flags, OP_EQ, U64_LITERAL(254));
     } else {
-      /* 1023 - authority(1) - madeofcheese(16) - madeoftin(32) - v2dir(256) */
-      tt_u64_op(vrs->flags, OP_EQ, U64_LITERAL(718));
+      /* 1023 - authority(1) - madeofcheese(16) - madeoftin(32) */
+      tt_u64_op(vrs->flags, OP_EQ, U64_LITERAL(974));
     }
   } else if (tor_memeq(rs->identity_digest,
                        "\x33\x33\x33\x33\x33\x33\x33\x33\x33\x33"
@@ -1818,8 +1834,9 @@ test_routerstatus_for_v3ns(routerstatus_t *rs, time_t now)
     tt_assert(!rs->is_stable);
     /* (If it wasn't running it wouldn't be here) */
     tt_assert(rs->is_flagged_running);
-    tt_assert(!rs->is_valid);
+    tt_assert(rs->is_valid);
     tt_assert(!rs->is_named);
+    tt_assert(rs->is_v2_dir);
     /* XXXX check version */
   } else if (tor_memeq(rs->identity_digest,
                        "\x5\x5\x5\x5\x5\x5\x5\x5\x5\x5\x5\x5\x5\x5\x5\x5"
@@ -1845,6 +1862,7 @@ test_routerstatus_for_v3ns(routerstatus_t *rs, time_t now)
     tt_assert(rs->is_stable);
     tt_assert(rs->is_flagged_running);
     tt_assert(rs->is_valid);
+    tt_assert(rs->is_v2_dir);
     tt_assert(!rs->is_named);
     /* XXXX check version */
   } else {
@@ -1854,6 +1872,15 @@ test_routerstatus_for_v3ns(routerstatus_t *rs, time_t now)
 
  done:
   return;
+}
+
+static authority_cert_t *mock_cert;
+
+static authority_cert_t *
+get_my_v3_authority_cert_m(void)
+{
+  tor_assert(mock_cert);
+  return mock_cert;
 }
 
 /** Run a unit tests for generating and parsing networkstatuses, with
@@ -1869,7 +1896,6 @@ test_a_networkstatus(
   authority_cert_t *cert1=NULL, *cert2=NULL, *cert3=NULL;
   crypto_pk_t *sign_skey_1=NULL, *sign_skey_2=NULL, *sign_skey_3=NULL;
   crypto_pk_t *sign_skey_leg1=NULL;
-  const char *msg=NULL;
   /*
    * Sum the non-zero returns from vote_tweaks() we've seen; if vote_tweaks()
    * returns non-zero, it changed net_params and we should skip the tests for
@@ -1885,8 +1911,7 @@ test_a_networkstatus(
   vote_routerstatus_t *vrs;
   routerstatus_t *rs;
   int idx, n_rs, n_vrs;
-  char *v1_text=NULL, *v2_text=NULL, *v3_text=NULL, *consensus_text=NULL,
-    *cp=NULL;
+  char *consensus_text=NULL, *cp=NULL;
   smartlist_t *votes = smartlist_new();
 
   /* For generating the two other consensuses. */
@@ -1901,8 +1926,10 @@ test_a_networkstatus(
   tt_assert(rs_test);
   tt_assert(vrs_test);
 
+  MOCK(get_my_v3_authority_cert, get_my_v3_authority_cert_m);
+
   /* Parse certificates and keys. */
-  cert1 = authority_cert_parse_from_string(AUTHORITY_CERT_1, NULL);
+  cert1 = mock_cert = authority_cert_parse_from_string(AUTHORITY_CERT_1, NULL);
   tt_assert(cert1);
   cert2 = authority_cert_parse_from_string(AUTHORITY_CERT_2, NULL);
   tt_assert(cert2);
@@ -1912,6 +1939,7 @@ test_a_networkstatus(
   sign_skey_2 = crypto_pk_new();
   sign_skey_3 = crypto_pk_new();
   sign_skey_leg1 = pk_generate(4);
+  sr_state_init(0, 0);
 
   tt_assert(!crypto_pk_read_private_key_from_string(sign_skey_1,
                                                    AUTHORITY_SIGNKEY_1, -1));
@@ -1923,57 +1951,8 @@ test_a_networkstatus(
   tt_assert(!crypto_pk_cmp_keys(sign_skey_1, cert1->signing_key));
   tt_assert(!crypto_pk_cmp_keys(sign_skey_2, cert2->signing_key));
 
-  /*
-   * Set up a vote; generate it; try to parse it.
-   */
-  vote = tor_malloc_zero(sizeof(networkstatus_t));
-  vote->type = NS_TYPE_VOTE;
-  vote->published = now;
-  vote->valid_after = now+1000;
-  vote->fresh_until = now+2000;
-  vote->valid_until = now+3000;
-  vote->vote_seconds = 100;
-  vote->dist_seconds = 200;
-  vote->supported_methods = smartlist_new();
-  smartlist_split_string(vote->supported_methods, "1 2 3", NULL, 0, -1);
-  vote->client_versions = tor_strdup("0.1.2.14,0.1.2.15");
-  vote->server_versions = tor_strdup("0.1.2.14,0.1.2.15,0.1.2.16");
-  vote->known_flags = smartlist_new();
-  smartlist_split_string(vote->known_flags,
-                     "Authority Exit Fast Guard Running Stable V2Dir Valid",
-                     0, SPLIT_SKIP_SPACE|SPLIT_IGNORE_BLANK, 0);
-  vote->voters = smartlist_new();
-  voter = tor_malloc_zero(sizeof(networkstatus_voter_info_t));
-  voter->nickname = tor_strdup("Voter1");
-  voter->address = tor_strdup("1.2.3.4");
-  voter->addr = 0x01020304;
-  voter->dir_port = 80;
-  voter->or_port = 9000;
-  voter->contact = tor_strdup("voter@example.com");
-  crypto_pk_get_digest(cert1->identity_key, voter->identity_digest);
-  smartlist_add(vote->voters, voter);
-  vote->cert = authority_cert_dup(cert1);
-  vote->net_params = smartlist_new();
-  smartlist_split_string(vote->net_params, "circuitwindow=101 foo=990",
-                         NULL, 0, 0);
-  vote->routerstatus_list = smartlist_new();
-  /* add routerstatuses */
-  idx = 0;
-  do {
-    vrs = vrs_gen(idx, now);
-    if (vrs) {
-      smartlist_add(vote->routerstatus_list, vrs);
-      tt_assert(router_add_to_routerlist(generate_ri_from_rs(vrs),
-                                           &msg,0,0)>=0);
-      ++idx;
-    }
-  } while (vrs);
-  n_vrs = idx;
-
-  /* dump the vote and try to parse it. */
-  v1_text = format_networkstatus_vote(sign_skey_1, vote);
-  tt_assert(v1_text);
-  v1 = networkstatus_parse_vote_from_string(v1_text, NULL, NS_TYPE_VOTE);
+  tt_assert(!dir_common_construct_vote_1(&vote, cert1, sign_skey_1, vrs_gen,
+                                         &v1, &n_vrs, now, 1));
   tt_assert(v1);
 
   /* Make sure the parsed thing was right. */
@@ -2000,6 +1979,8 @@ test_a_networkstatus(
   tt_str_op(cp,OP_EQ, "Authority:Exit:Fast:Guard:Running:Stable:V2Dir:Valid");
   tor_free(cp);
   tt_int_op(smartlist_len(v1->routerstatus_list),OP_EQ, n_vrs);
+  networkstatus_vote_free(vote);
+  vote = NULL;
 
   if (vote_tweaks) params_tweaked += vote_tweaks(v1, 1, now);
 
@@ -2011,33 +1992,10 @@ test_a_networkstatus(
   }
 
   /* Generate second vote. It disagrees on some of the times,
-   * and doesn't list versions, and knows some crazy flags */
-  vote->published = now+1;
-  vote->fresh_until = now+3005;
-  vote->dist_seconds = 300;
-  authority_cert_free(vote->cert);
-  vote->cert = authority_cert_dup(cert2);
-  SMARTLIST_FOREACH(vote->net_params, char *, c, tor_free(c));
-  smartlist_clear(vote->net_params);
-  smartlist_split_string(vote->net_params, "bar=2000000000 circuitwindow=20",
-                         NULL, 0, 0);
-  tor_free(vote->client_versions);
-  tor_free(vote->server_versions);
-  voter = smartlist_get(vote->voters, 0);
-  tor_free(voter->nickname);
-  tor_free(voter->address);
-  voter->nickname = tor_strdup("Voter2");
-  voter->address = tor_strdup("2.3.4.5");
-  voter->addr = 0x02030405;
-  crypto_pk_get_digest(cert2->identity_key, voter->identity_digest);
-  smartlist_add(vote->known_flags, tor_strdup("MadeOfCheese"));
-  smartlist_add(vote->known_flags, tor_strdup("MadeOfTin"));
-  smartlist_sort_strings(vote->known_flags);
-
-  /* generate and parse v2. */
-  v2_text = format_networkstatus_vote(sign_skey_2, vote);
-  tt_assert(v2_text);
-  v2 = networkstatus_parse_vote_from_string(v2_text, NULL, NS_TYPE_VOTE);
+   * and doesn't list versions, and knows some crazy flags.
+   * Generate and parse v2. */
+  tt_assert(!dir_common_construct_vote_2(&vote, cert2, sign_skey_2, vrs_gen,
+                                         &v2, &n_vrs, now, 1));
   tt_assert(v2);
 
   if (vote_tweaks) params_tweaked += vote_tweaks(v2, 2, now);
@@ -2055,34 +2013,12 @@ test_a_networkstatus(
     tt_assert(vrs);
     vrs_test(vrs, 2, now);
   }
+  networkstatus_vote_free(vote);
+  vote = NULL;
 
-  /* Generate the third vote. */
-  vote->published = now;
-  vote->fresh_until = now+2003;
-  vote->dist_seconds = 250;
-  authority_cert_free(vote->cert);
-  vote->cert = authority_cert_dup(cert3);
-  SMARTLIST_FOREACH(vote->net_params, char *, c, tor_free(c));
-  smartlist_clear(vote->net_params);
-  smartlist_split_string(vote->net_params, "circuitwindow=80 foo=660",
-                         NULL, 0, 0);
-  smartlist_add(vote->supported_methods, tor_strdup("4"));
-  vote->client_versions = tor_strdup("0.1.2.14,0.1.2.17");
-  vote->server_versions = tor_strdup("0.1.2.10,0.1.2.15,0.1.2.16");
-  voter = smartlist_get(vote->voters, 0);
-  tor_free(voter->nickname);
-  tor_free(voter->address);
-  voter->nickname = tor_strdup("Voter3");
-  voter->address = tor_strdup("3.4.5.6");
-  voter->addr = 0x03040506;
-  crypto_pk_get_digest(cert3->identity_key, voter->identity_digest);
-  /* This one has a legacy id. */
-  memset(voter->legacy_id_digest, (int)'A', DIGEST_LEN);
-
-  v3_text = format_networkstatus_vote(sign_skey_3, vote);
-  tt_assert(v3_text);
-
-  v3 = networkstatus_parse_vote_from_string(v3_text, NULL, NS_TYPE_VOTE);
+  /* Generate the third vote with a legacy id. */
+  tt_assert(!dir_common_construct_vote_3(&vote, cert3, sign_skey_3, vrs_gen,
+                                         &v3, &n_vrs, now, 1));
   tt_assert(v3);
 
   if (vote_tweaks) params_tweaked += vote_tweaks(v3, 3, now);
@@ -2138,9 +2074,9 @@ test_a_networkstatus(
 
   tt_int_op(4,OP_EQ, smartlist_len(con->voters)); /*3 voters, 1 legacy key.*/
   /* The voter id digests should be in this order. */
-  tt_assert(memcmp(cert2->cache_info.identity_digest,
+  tt_assert(fast_memcmp(cert2->cache_info.identity_digest,
                      cert1->cache_info.identity_digest,DIGEST_LEN)<0);
-  tt_assert(memcmp(cert1->cache_info.identity_digest,
+  tt_assert(fast_memcmp(cert1->cache_info.identity_digest,
                      cert3->cache_info.identity_digest,DIGEST_LEN)<0);
   test_same_voter(smartlist_get(con->voters, 1),
                   smartlist_get(v2->voters, 0));
@@ -2153,10 +2089,18 @@ test_a_networkstatus(
 
   /* Check the routerstatuses. */
   n_rs = smartlist_len(con->routerstatus_list);
+  tt_assert(n_rs);
   for (idx = 0; idx < n_rs; ++idx) {
     rs = smartlist_get(con->routerstatus_list, idx);
     tt_assert(rs);
     rs_test(rs, now);
+  }
+
+  n_rs = smartlist_len(con_md->routerstatus_list);
+  tt_assert(n_rs);
+  for (idx = 0; idx < n_rs; ++idx) {
+    rs = smartlist_get(con_md->routerstatus_list, idx);
+    tt_assert(rs);
   }
 
   /* Check signatures.  the first voter is a pseudo-entry with a legacy key.
@@ -2215,11 +2159,13 @@ test_a_networkstatus(
     tt_assert(con_md3);
 
     /* All three should have the same digest. */
-    tt_mem_op(&con->digests,OP_EQ, &con2->digests, sizeof(digests_t));
-    tt_mem_op(&con->digests,OP_EQ, &con3->digests, sizeof(digests_t));
+    tt_mem_op(&con->digests,OP_EQ, &con2->digests, sizeof(common_digests_t));
+    tt_mem_op(&con->digests,OP_EQ, &con3->digests, sizeof(common_digests_t));
 
-    tt_mem_op(&con_md->digests,OP_EQ, &con_md2->digests, sizeof(digests_t));
-    tt_mem_op(&con_md->digests,OP_EQ, &con_md3->digests, sizeof(digests_t));
+    tt_mem_op(&con_md->digests,OP_EQ, &con_md2->digests,
+              sizeof(common_digests_t));
+    tt_mem_op(&con_md->digests,OP_EQ, &con_md3->digests,
+              sizeof(common_digests_t));
 
     /* Extract a detached signature from con3. */
     detached_text1 = get_detached_sigs(con3, con_md3);
@@ -2233,7 +2179,7 @@ test_a_networkstatus(
     tt_int_op(dsig1->fresh_until,OP_EQ, con3->fresh_until);
     tt_int_op(dsig1->valid_until,OP_EQ, con3->valid_until);
     {
-      digests_t *dsig_digests = strmap_get(dsig1->digests, "ns");
+      common_digests_t *dsig_digests = strmap_get(dsig1->digests, "ns");
       tt_assert(dsig_digests);
       tt_mem_op(dsig_digests->d[DIGEST_SHA1], OP_EQ,
                 con3->digests.d[DIGEST_SHA1], DIGEST_LEN);
@@ -2309,38 +2255,22 @@ test_a_networkstatus(
  done:
   tor_free(cp);
   smartlist_free(votes);
-  tor_free(v1_text);
-  tor_free(v2_text);
-  tor_free(v3_text);
   tor_free(consensus_text);
   tor_free(consensus_text_md);
 
-  if (vote)
-    networkstatus_vote_free(vote);
-  if (v1)
-    networkstatus_vote_free(v1);
-  if (v2)
-    networkstatus_vote_free(v2);
-  if (v3)
-    networkstatus_vote_free(v3);
-  if (con)
-    networkstatus_vote_free(con);
-  if (con_md)
-    networkstatus_vote_free(con_md);
-  if (sign_skey_1)
-    crypto_pk_free(sign_skey_1);
-  if (sign_skey_2)
-    crypto_pk_free(sign_skey_2);
-  if (sign_skey_3)
-    crypto_pk_free(sign_skey_3);
-  if (sign_skey_leg1)
-    crypto_pk_free(sign_skey_leg1);
-  if (cert1)
-    authority_cert_free(cert1);
-  if (cert2)
-    authority_cert_free(cert2);
-  if (cert3)
-    authority_cert_free(cert3);
+  networkstatus_vote_free(vote);
+  networkstatus_vote_free(v1);
+  networkstatus_vote_free(v2);
+  networkstatus_vote_free(v3);
+  networkstatus_vote_free(con);
+  networkstatus_vote_free(con_md);
+  crypto_pk_free(sign_skey_1);
+  crypto_pk_free(sign_skey_2);
+  crypto_pk_free(sign_skey_3);
+  crypto_pk_free(sign_skey_leg1);
+  authority_cert_free(cert1);
+  authority_cert_free(cert2);
+  authority_cert_free(cert3);
 
   tor_free(consensus_text2);
   tor_free(consensus_text3);
@@ -2348,18 +2278,13 @@ test_a_networkstatus(
   tor_free(consensus_text_md3);
   tor_free(detached_text1);
   tor_free(detached_text2);
-  if (con2)
-    networkstatus_vote_free(con2);
-  if (con3)
-    networkstatus_vote_free(con3);
-  if (con_md2)
-    networkstatus_vote_free(con_md2);
-  if (con_md3)
-    networkstatus_vote_free(con_md3);
-  if (dsig1)
-    ns_detached_signatures_free(dsig1);
-  if (dsig2)
-    ns_detached_signatures_free(dsig2);
+
+  networkstatus_vote_free(con2);
+  networkstatus_vote_free(con3);
+  networkstatus_vote_free(con_md2);
+  networkstatus_vote_free(con_md3);
+  ns_detached_signatures_free(dsig1);
+  ns_detached_signatures_free(dsig2);
 }
 
 /** Run unit tests for generating and parsing V3 consensus networkstatus
@@ -2368,7 +2293,7 @@ static void
 test_dir_v3_networkstatus(void *arg)
 {
   (void)arg;
-  test_a_networkstatus(gen_routerstatus_for_v3ns,
+  test_a_networkstatus(dir_common_gen_routerstatus_for_v3ns,
                        vote_tweaks_for_v3ns,
                        test_vrs_for_v3ns,
                        test_consensus_for_v3ns,
@@ -2386,56 +2311,57 @@ test_dir_scale_bw(void *testdata)
                   1.0/7,
                   12.0,
                   24.0 };
-  u64_dbl_t vals[8];
+  double vals_dbl[8];
+  uint64_t vals_u64[8];
   uint64_t total;
   int i;
 
   (void) testdata;
 
   for (i=0; i<8; ++i)
-    vals[i].dbl = v[i];
+    vals_dbl[i] = v[i];
 
-  scale_array_elements_to_u64(vals, 8, &total);
+  scale_array_elements_to_u64(vals_u64, vals_dbl, 8, &total);
 
   tt_int_op((int)total, OP_EQ, 48);
   total = 0;
   for (i=0; i<8; ++i) {
-    total += vals[i].u64;
+    total += vals_u64[i];
   }
   tt_assert(total >= (U64_LITERAL(1)<<60));
   tt_assert(total <= (U64_LITERAL(1)<<62));
 
   for (i=0; i<8; ++i) {
     /* vals[2].u64 is the scaled value of 1.0 */
-    double ratio = ((double)vals[i].u64) / vals[2].u64;
+    double ratio = ((double)vals_u64[i]) / vals_u64[2];
     tt_double_op(fabs(ratio - v[i]), OP_LT, .00001);
   }
 
   /* test handling of no entries */
   total = 1;
-  scale_array_elements_to_u64(vals, 0, &total);
+  scale_array_elements_to_u64(vals_u64, vals_dbl, 0, &total);
   tt_assert(total == 0);
 
   /* make sure we don't read the array when we have no entries
    * may require compiler flags to catch NULL dereferences */
   total = 1;
-  scale_array_elements_to_u64(NULL, 0, &total);
+  scale_array_elements_to_u64(NULL, NULL, 0, &total);
   tt_assert(total == 0);
 
-  scale_array_elements_to_u64(NULL, 0, NULL);
+  scale_array_elements_to_u64(NULL, NULL, 0, NULL);
 
   /* test handling of zero totals */
   total = 1;
-  vals[0].dbl = 0.0;
-  scale_array_elements_to_u64(vals, 1, &total);
+  vals_dbl[0] = 0.0;
+  scale_array_elements_to_u64(vals_u64, vals_dbl, 1, &total);
   tt_assert(total == 0);
-  tt_assert(vals[0].u64 == 0);
+  tt_assert(vals_u64[0] == 0);
 
-  vals[0].dbl = 0.0;
-  vals[1].dbl = 0.0;
-  scale_array_elements_to_u64(vals, 2, NULL);
-  tt_assert(vals[0].u64 == 0);
-  tt_assert(vals[1].u64 == 0);
+  vals_dbl[0] = 0.0;
+  vals_dbl[1] = 0.0;
+  scale_array_elements_to_u64(vals_u64, vals_dbl, 2, NULL);
+  tt_assert(vals_u64[0] == 0);
+  tt_assert(vals_u64[1] == 0);
 
  done:
   ;
@@ -2446,7 +2372,7 @@ test_dir_random_weighted(void *testdata)
 {
   int histogram[10];
   uint64_t vals[10] = {3,1,2,4,6,0,7,5,8,9}, total=0;
-  u64_dbl_t inp[10];
+  uint64_t inp_u64[10];
   int i, choice;
   const int n = 50000;
   double max_sq_error;
@@ -2456,12 +2382,12 @@ test_dir_random_weighted(void *testdata)
    * in a scrambled order to make sure we don't depend on order. */
   memset(histogram,0,sizeof(histogram));
   for (i=0; i<10; ++i) {
-    inp[i].u64 = vals[i];
+    inp_u64[i] = vals[i];
     total += vals[i];
   }
   tt_u64_op(total, OP_EQ, 45);
   for (i=0; i<n; ++i) {
-    choice = choose_array_element_by_weight(inp, 10);
+    choice = choose_array_element_by_weight(inp_u64, 10);
     tt_int_op(choice, OP_GE, 0);
     tt_int_op(choice, OP_LT, 10);
     histogram[choice]++;
@@ -2488,16 +2414,16 @@ test_dir_random_weighted(void *testdata)
 
   /* Now try a singleton; do we choose it? */
   for (i = 0; i < 100; ++i) {
-    choice = choose_array_element_by_weight(inp, 1);
+    choice = choose_array_element_by_weight(inp_u64, 1);
     tt_int_op(choice, OP_EQ, 0);
   }
 
   /* Now try an array of zeros.  We should choose randomly. */
   memset(histogram,0,sizeof(histogram));
   for (i = 0; i < 5; ++i)
-    inp[i].u64 = 0;
+    inp_u64[i] = 0;
   for (i = 0; i < n; ++i) {
-    choice = choose_array_element_by_weight(inp, 5);
+    choice = choose_array_element_by_weight(inp_u64, 5);
     tt_int_op(choice, OP_GE, 0);
     tt_int_op(choice, OP_LT, 5);
     histogram[choice]++;
@@ -2965,6 +2891,7 @@ test_dir_fmt_control_ns(void *arg)
   rs.is_fast = 1;
   rs.is_flagged_running = 1;
   rs.has_bandwidth = 1;
+  rs.is_v2_dir = 1;
   rs.bandwidth_kb = 1000;
 
   s = networkstatus_getinfo_helper_single(&rs);
@@ -3036,7 +2963,7 @@ test_dir_dirserv_set_routerstatus_testing(void *arg)
   (void)arg;
 
   /* Init options */
-  mock_options = malloc(sizeof(or_options_t));
+  mock_options = tor_malloc(sizeof(or_options_t));
   reset_options(mock_options, &mock_get_options_calls);
 
   MOCK(get_options, mock_get_options);
@@ -3054,10 +2981,10 @@ test_dir_dirserv_set_routerstatus_testing(void *arg)
   routerset_parse(routerset_none, ROUTERSET_NONE_STR, "No routers");
 
   /* Init routerstatuses */
-  routerstatus_t *rs_a = malloc(sizeof(routerstatus_t));
+  routerstatus_t *rs_a = tor_malloc(sizeof(routerstatus_t));
   reset_routerstatus(rs_a, ROUTER_A_ID_STR, ROUTER_A_IPV4);
 
-  routerstatus_t *rs_b = malloc(sizeof(routerstatus_t));
+  routerstatus_t *rs_b = tor_malloc(sizeof(routerstatus_t));
   reset_routerstatus(rs_b, ROUTER_B_ID_STR, ROUTER_B_IPV4);
 
   /* Sanity check that routersets correspond to routerstatuses.
@@ -3242,7 +3169,7 @@ test_dir_dirserv_set_routerstatus_testing(void *arg)
   tt_assert(rs_b->is_hs_dir == 1);
 
  done:
-  free(mock_options);
+  tor_free(mock_options);
   mock_options = NULL;
 
   UNMOCK(get_options);
@@ -3251,8 +3178,8 @@ test_dir_dirserv_set_routerstatus_testing(void *arg)
   routerset_free(routerset_a);
   routerset_free(routerset_none);
 
-  free(rs_a);
-  free(rs_b);
+  tor_free(rs_a);
+  tor_free(rs_b);
 }
 
 static void
@@ -3340,13 +3267,40 @@ static void
 test_dir_fetch_type(void *arg)
 {
   (void)arg;
-  tt_assert(dir_fetch_type(DIR_PURPOSE_FETCH_MICRODESC, ROUTER_PURPOSE_GENERAL,
-                           NULL) == MICRODESC_DIRINFO);
-  tt_assert(dir_fetch_type(DIR_PURPOSE_FETCH_SERVERDESC, ROUTER_PURPOSE_BRIDGE,
-                           NULL) == BRIDGE_DIRINFO);
-  tt_assert(dir_fetch_type(DIR_PURPOSE_FETCH_CONSENSUS, ROUTER_PURPOSE_GENERAL,
-                           "microdesc") == (V3_DIRINFO | MICRODESC_DIRINFO));
- done: ;
+
+  tt_int_op(dir_fetch_type(DIR_PURPOSE_FETCH_EXTRAINFO, ROUTER_PURPOSE_BRIDGE,
+                           NULL), OP_EQ, EXTRAINFO_DIRINFO | BRIDGE_DIRINFO);
+  tt_int_op(dir_fetch_type(DIR_PURPOSE_FETCH_EXTRAINFO, ROUTER_PURPOSE_GENERAL,
+                           NULL), OP_EQ, EXTRAINFO_DIRINFO | V3_DIRINFO);
+
+  tt_int_op(dir_fetch_type(DIR_PURPOSE_FETCH_SERVERDESC, ROUTER_PURPOSE_BRIDGE,
+                           NULL), OP_EQ, BRIDGE_DIRINFO);
+  tt_int_op(dir_fetch_type(DIR_PURPOSE_FETCH_SERVERDESC,
+                           ROUTER_PURPOSE_GENERAL, NULL), OP_EQ, V3_DIRINFO);
+
+  tt_int_op(dir_fetch_type(DIR_PURPOSE_FETCH_STATUS_VOTE,
+                           ROUTER_PURPOSE_GENERAL, NULL), OP_EQ, V3_DIRINFO);
+  tt_int_op(dir_fetch_type(DIR_PURPOSE_FETCH_DETACHED_SIGNATURES,
+                           ROUTER_PURPOSE_GENERAL, NULL), OP_EQ, V3_DIRINFO);
+  tt_int_op(dir_fetch_type(DIR_PURPOSE_FETCH_CERTIFICATE,
+                           ROUTER_PURPOSE_GENERAL, NULL), OP_EQ, V3_DIRINFO);
+
+  tt_int_op(dir_fetch_type(DIR_PURPOSE_FETCH_CONSENSUS, ROUTER_PURPOSE_GENERAL,
+                           "microdesc"), OP_EQ, V3_DIRINFO|MICRODESC_DIRINFO);
+  tt_int_op(dir_fetch_type(DIR_PURPOSE_FETCH_CONSENSUS, ROUTER_PURPOSE_GENERAL,
+                           NULL), OP_EQ, V3_DIRINFO);
+
+  tt_int_op(dir_fetch_type(DIR_PURPOSE_FETCH_MICRODESC, ROUTER_PURPOSE_GENERAL,
+                           NULL), OP_EQ, MICRODESC_DIRINFO);
+
+  /* This will give a warning, because this function isn't supposed to be
+   * used for HS descriptors. */
+  setup_full_capture_of_logs(LOG_WARN);
+  tt_int_op(dir_fetch_type(DIR_PURPOSE_FETCH_RENDDESC_V2,
+                           ROUTER_PURPOSE_GENERAL, NULL), OP_EQ, NO_DIRINFO);
+  expect_single_log_msg_containing("Unexpected purpose");
+ done:
+  teardown_capture_of_logs();
 }
 
 static void
@@ -3453,7 +3407,7 @@ test_dir_packages(void *arg)
   ADD(4, "clownshoes 22alpha4 http://quumble.example.cam/ blake2=fooa");
   ADD(5, "clownshoes 22alpha4 http://quumble.example.cam/ blake2=fooa");
 
-  /* Five votes for A ... all from the same guy.  Three for B. */
+  /* Five votes for A ... all from the same authority.  Three for B. */
   ADD(0, "cbc 99.1.11.1.1 http://example.com/cbc/ cubehash=ahooy sha512=m");
   ADD(1, "cbc 99.1.11.1.1 http://example.com/cbc/ cubehash=ahooy sha512=m");
   ADD(3, "cbc 99.1.11.1.1 http://example.com/cbc/ cubehash=ahooy sha512=m");
@@ -3494,11 +3448,2004 @@ test_dir_packages(void *arg)
   tor_free(res);
 }
 
-#define DIR_LEGACY(name)                                                   \
+static void
+test_dir_download_status_schedule(void *arg)
+{
+  (void)arg;
+  download_status_t dls_failure = { 0, 0, 0, DL_SCHED_GENERIC,
+                                             DL_WANT_AUTHORITY,
+                                             DL_SCHED_INCREMENT_FAILURE,
+                                             DL_SCHED_DETERMINISTIC, 0, 0 };
+  download_status_t dls_attempt = { 0, 0, 0, DL_SCHED_CONSENSUS,
+                                             DL_WANT_ANY_DIRSERVER,
+                                             DL_SCHED_INCREMENT_ATTEMPT,
+                                             DL_SCHED_DETERMINISTIC, 0, 0 };
+  download_status_t dls_bridge  = { 0, 0, 0, DL_SCHED_BRIDGE,
+                                             DL_WANT_AUTHORITY,
+                                             DL_SCHED_INCREMENT_FAILURE,
+                                             DL_SCHED_DETERMINISTIC, 0, 0 };
+  int increment = -1;
+  int expected_increment = -1;
+  time_t current_time = time(NULL);
+  int delay1 = -1;
+  int delay2 = -1;
+  smartlist_t *schedule = smartlist_new();
+
+  /* Make a dummy schedule */
+  smartlist_add(schedule, (void *)&delay1);
+  smartlist_add(schedule, (void *)&delay2);
+
+  /* check a range of values */
+  delay1 = 1000;
+  increment = download_status_schedule_get_delay(&dls_failure,
+                                                 schedule,
+                                                 0, INT_MAX,
+                                                 TIME_MIN);
+  expected_increment = delay1;
+  tt_assert(increment == expected_increment);
+  tt_assert(dls_failure.next_attempt_at == TIME_MIN + expected_increment);
+
+  delay1 = INT_MAX;
+  increment =  download_status_schedule_get_delay(&dls_failure,
+                                                  schedule,
+                                                  0, INT_MAX,
+                                                  -1);
+  expected_increment = delay1;
+  tt_assert(increment == expected_increment);
+  tt_assert(dls_failure.next_attempt_at == TIME_MAX);
+
+  delay1 = 0;
+  increment = download_status_schedule_get_delay(&dls_attempt,
+                                                 schedule,
+                                                 0, INT_MAX,
+                                                 0);
+  expected_increment = delay1;
+  tt_assert(increment == expected_increment);
+  tt_assert(dls_attempt.next_attempt_at == 0 + expected_increment);
+
+  delay1 = 1000;
+  increment = download_status_schedule_get_delay(&dls_attempt,
+                                                 schedule,
+                                                 0, INT_MAX,
+                                                 1);
+  expected_increment = delay1;
+  tt_assert(increment == expected_increment);
+  tt_assert(dls_attempt.next_attempt_at == 1 + expected_increment);
+
+  delay1 = INT_MAX;
+  increment = download_status_schedule_get_delay(&dls_bridge,
+                                                 schedule,
+                                                 0, INT_MAX,
+                                                 current_time);
+  expected_increment = delay1;
+  tt_assert(increment == expected_increment);
+  tt_assert(dls_bridge.next_attempt_at == TIME_MAX);
+
+  delay1 = 1;
+  increment = download_status_schedule_get_delay(&dls_bridge,
+                                                 schedule,
+                                                 0, INT_MAX,
+                                                 TIME_MAX);
+  expected_increment = delay1;
+  tt_assert(increment == expected_increment);
+  tt_assert(dls_bridge.next_attempt_at == TIME_MAX);
+
+  /* see what happens when we reach the end */
+  dls_attempt.n_download_attempts++;
+  dls_bridge.n_download_failures++;
+
+  delay2 = 100;
+  increment = download_status_schedule_get_delay(&dls_attempt,
+                                                 schedule,
+                                                 0, INT_MAX,
+                                                 current_time);
+  expected_increment = delay2;
+  tt_assert(increment == expected_increment);
+  tt_assert(dls_attempt.next_attempt_at == current_time + delay2);
+
+  delay2 = 1;
+  increment = download_status_schedule_get_delay(&dls_bridge,
+                                                 schedule,
+                                                 0, INT_MAX,
+                                                 current_time);
+  expected_increment = delay2;
+  tt_assert(increment == expected_increment);
+  tt_assert(dls_bridge.next_attempt_at == current_time + delay2);
+
+  /* see what happens when we try to go off the end */
+  dls_attempt.n_download_attempts++;
+  dls_bridge.n_download_failures++;
+
+  delay2 = 5;
+  increment = download_status_schedule_get_delay(&dls_attempt,
+                                                 schedule,
+                                                 0, INT_MAX,
+                                                 current_time);
+  expected_increment = delay2;
+  tt_assert(increment == expected_increment);
+  tt_assert(dls_attempt.next_attempt_at == current_time + delay2);
+
+  delay2 = 17;
+  increment = download_status_schedule_get_delay(&dls_bridge,
+                                                 schedule,
+                                                 0, INT_MAX,
+                                                 current_time);
+  expected_increment = delay2;
+  tt_assert(increment == expected_increment);
+  tt_assert(dls_bridge.next_attempt_at == current_time + delay2);
+
+  /* see what happens when we reach IMPOSSIBLE_TO_DOWNLOAD */
+  dls_attempt.n_download_attempts = IMPOSSIBLE_TO_DOWNLOAD;
+  dls_bridge.n_download_failures = IMPOSSIBLE_TO_DOWNLOAD;
+
+  delay2 = 35;
+  increment = download_status_schedule_get_delay(&dls_attempt,
+                                                 schedule,
+                                                 0, INT_MAX,
+                                                 current_time);
+  expected_increment = INT_MAX;
+  tt_assert(increment == expected_increment);
+  tt_assert(dls_attempt.next_attempt_at == TIME_MAX);
+
+  delay2 = 99;
+  increment = download_status_schedule_get_delay(&dls_bridge,
+                                                 schedule,
+                                                 0, INT_MAX,
+                                                 current_time);
+  expected_increment = INT_MAX;
+  tt_assert(increment == expected_increment);
+  tt_assert(dls_bridge.next_attempt_at == TIME_MAX);
+
+ done:
+  /* the pointers in schedule are allocated on the stack */
+  smartlist_free(schedule);
+}
+
+static void
+test_dir_download_status_random_backoff(void *arg)
+{
+  download_status_t dls_random =
+    { 0, 0, 0, DL_SCHED_GENERIC, DL_WANT_AUTHORITY,
+               DL_SCHED_INCREMENT_FAILURE, DL_SCHED_RANDOM_EXPONENTIAL, 0, 0 };
+  int increment = -1;
+  int old_increment;
+  time_t current_time = time(NULL);
+  const int min_delay = 0;
+  const int max_delay = 1000000;
+
+  (void)arg;
+
+  /* Check the random backoff cases */
+  old_increment = 0;
+  do {
+    increment = download_status_schedule_get_delay(&dls_random,
+                                                   NULL,
+                                                   min_delay, max_delay,
+                                                   current_time);
+    /* Test */
+    tt_int_op(increment, OP_GE, min_delay);
+    tt_int_op(increment, OP_LE, max_delay);
+    tt_int_op(increment, OP_GE, old_increment);
+    /* We at most quadruple, and maybe add one */
+    tt_int_op(increment, OP_LE, 4 * old_increment + 1);
+
+    /* Advance */
+    current_time += increment;
+    ++(dls_random.n_download_attempts);
+    ++(dls_random.n_download_failures);
+
+    /* Try another maybe */
+    old_increment = increment;
+  } while (increment < max_delay);
+
+ done:
+  return;
+}
+
+static void
+test_dir_download_status_increment(void *arg)
+{
+  (void)arg;
+  download_status_t dls_failure = { 0, 0, 0, DL_SCHED_GENERIC,
+    DL_WANT_AUTHORITY,
+    DL_SCHED_INCREMENT_FAILURE,
+    DL_SCHED_DETERMINISTIC, 0, 0 };
+  download_status_t dls_attempt = { 0, 0, 0, DL_SCHED_BRIDGE,
+    DL_WANT_ANY_DIRSERVER,
+    DL_SCHED_INCREMENT_ATTEMPT,
+    DL_SCHED_DETERMINISTIC, 0, 0 };
+  int delay0 = -1;
+  int delay1 = -1;
+  int delay2 = -1;
+  smartlist_t *schedule = smartlist_new();
+  or_options_t test_options;
+  time_t next_at = TIME_MAX;
+  time_t current_time = time(NULL);
+
+  /* Provide some values for the schedule */
+  delay0 = 10;
+  delay1 = 99;
+  delay2 = 20;
+
+  /* Make the schedule */
+  smartlist_add(schedule, (void *)&delay0);
+  smartlist_add(schedule, (void *)&delay1);
+  smartlist_add(schedule, (void *)&delay2);
+
+  /* Put it in the options */
+  mock_options = &test_options;
+  reset_options(mock_options, &mock_get_options_calls);
+  mock_options->TestingClientDownloadSchedule = schedule;
+  mock_options->TestingBridgeDownloadSchedule = schedule;
+
+  MOCK(get_options, mock_get_options);
+
+  /* Check that a failure reset works */
+  mock_get_options_calls = 0;
+  download_status_reset(&dls_failure);
+  /* we really want to test that it's equal to time(NULL) + delay0, but that's
+   * an unrealiable test, because time(NULL) might change. */
+  tt_assert(download_status_get_next_attempt_at(&dls_failure)
+            >= current_time + delay0);
+  tt_assert(download_status_get_next_attempt_at(&dls_failure)
+            != TIME_MAX);
+  tt_assert(download_status_get_n_failures(&dls_failure) == 0);
+  tt_assert(download_status_get_n_attempts(&dls_failure) == 0);
+  tt_assert(mock_get_options_calls >= 1);
+
+  /* avoid timing inconsistencies */
+  dls_failure.next_attempt_at = current_time + delay0;
+
+  /* check that a reset schedule becomes ready at the right time */
+  tt_assert(download_status_is_ready(&dls_failure,
+                                     current_time + delay0 - 1,
+                                     1) == 0);
+  tt_assert(download_status_is_ready(&dls_failure,
+                                     current_time + delay0,
+                                     1) == 1);
+  tt_assert(download_status_is_ready(&dls_failure,
+                                     current_time + delay0 + 1,
+                                     1) == 1);
+
+  /* Check that a failure increment works */
+  mock_get_options_calls = 0;
+  next_at = download_status_increment_failure(&dls_failure, 404, "test", 0,
+                                              current_time);
+  tt_assert(next_at == current_time + delay1);
+  tt_assert(download_status_get_n_failures(&dls_failure) == 1);
+  tt_assert(download_status_get_n_attempts(&dls_failure) == 1);
+  tt_assert(mock_get_options_calls >= 1);
+
+  /* check that an incremented schedule becomes ready at the right time */
+  tt_assert(download_status_is_ready(&dls_failure,
+                                     current_time + delay1 - 1,
+                                     1) == 0);
+  tt_assert(download_status_is_ready(&dls_failure,
+                                     current_time + delay1,
+                                     1) == 1);
+  tt_assert(download_status_is_ready(&dls_failure,
+                                     current_time + delay1 + 1,
+                                     1) == 1);
+
+  /* check that a schedule isn't ready if it's had too many failures */
+  tt_assert(download_status_is_ready(&dls_failure,
+                                     current_time + delay1 + 10,
+                                     0) == 0);
+
+  /* Check that failure increments do happen on 503 for clients, and
+   * attempt increments do too. */
+  mock_get_options_calls = 0;
+  next_at = download_status_increment_failure(&dls_failure, 503, "test", 0,
+                                              current_time);
+  tt_i64_op(next_at, ==, current_time + delay2);
+  tt_int_op(download_status_get_n_failures(&dls_failure), ==, 2);
+  tt_int_op(download_status_get_n_attempts(&dls_failure), ==, 2);
+  tt_assert(mock_get_options_calls >= 1);
+
+  /* Check that failure increments do happen on 503 for servers */
+  mock_get_options_calls = 0;
+  next_at = download_status_increment_failure(&dls_failure, 503, "test", 1,
+                                              current_time);
+  tt_assert(next_at == current_time + delay2);
+  tt_assert(download_status_get_n_failures(&dls_failure) == 3);
+  tt_assert(download_status_get_n_attempts(&dls_failure) == 3);
+  tt_assert(mock_get_options_calls >= 1);
+
+  /* Check what happens when we run off the end of the schedule */
+  mock_get_options_calls = 0;
+  next_at = download_status_increment_failure(&dls_failure, 404, "test", 0,
+                                              current_time);
+  tt_assert(next_at == current_time + delay2);
+  tt_assert(download_status_get_n_failures(&dls_failure) == 4);
+  tt_assert(download_status_get_n_attempts(&dls_failure) == 4);
+  tt_assert(mock_get_options_calls >= 1);
+
+  /* Check what happens when we hit the failure limit */
+  mock_get_options_calls = 0;
+  download_status_mark_impossible(&dls_failure);
+  next_at = download_status_increment_failure(&dls_failure, 404, "test", 0,
+                                              current_time);
+  tt_assert(next_at == TIME_MAX);
+  tt_assert(download_status_get_n_failures(&dls_failure)
+            == IMPOSSIBLE_TO_DOWNLOAD);
+  tt_assert(download_status_get_n_attempts(&dls_failure)
+            == IMPOSSIBLE_TO_DOWNLOAD);
+  tt_assert(mock_get_options_calls >= 1);
+
+  /* Check that a failure reset doesn't reset at the limit */
+  mock_get_options_calls = 0;
+  download_status_reset(&dls_failure);
+  tt_assert(download_status_get_next_attempt_at(&dls_failure)
+            == TIME_MAX);
+  tt_assert(download_status_get_n_failures(&dls_failure)
+            == IMPOSSIBLE_TO_DOWNLOAD);
+  tt_assert(download_status_get_n_attempts(&dls_failure)
+            == IMPOSSIBLE_TO_DOWNLOAD);
+  tt_assert(mock_get_options_calls == 0);
+
+  /* Check that a failure reset resets just before the limit */
+  mock_get_options_calls = 0;
+  dls_failure.n_download_failures = IMPOSSIBLE_TO_DOWNLOAD - 1;
+  dls_failure.n_download_attempts = IMPOSSIBLE_TO_DOWNLOAD - 1;
+  download_status_reset(&dls_failure);
+  /* we really want to test that it's equal to time(NULL) + delay0, but that's
+   * an unrealiable test, because time(NULL) might change. */
+  tt_assert(download_status_get_next_attempt_at(&dls_failure)
+            >= current_time + delay0);
+  tt_assert(download_status_get_next_attempt_at(&dls_failure)
+            != TIME_MAX);
+  tt_assert(download_status_get_n_failures(&dls_failure) == 0);
+  tt_assert(download_status_get_n_attempts(&dls_failure) == 0);
+  tt_assert(mock_get_options_calls >= 1);
+
+  /* Check that failure increments do happen on attempt-based schedules,
+   * but that the retry is set at the end of time */
+  mock_get_options_calls = 0;
+  next_at = download_status_increment_failure(&dls_attempt, 404, "test", 0,
+                                              current_time);
+  tt_assert(next_at == TIME_MAX);
+  tt_assert(download_status_get_n_failures(&dls_attempt) == 1);
+  tt_assert(download_status_get_n_attempts(&dls_attempt) == 0);
+  tt_assert(mock_get_options_calls == 0);
+
+  /* Check that an attempt reset works */
+  mock_get_options_calls = 0;
+  download_status_reset(&dls_attempt);
+  /* we really want to test that it's equal to time(NULL) + delay0, but that's
+   * an unrealiable test, because time(NULL) might change. */
+  tt_assert(download_status_get_next_attempt_at(&dls_attempt)
+            >= current_time + delay0);
+  tt_assert(download_status_get_next_attempt_at(&dls_attempt)
+            != TIME_MAX);
+  tt_assert(download_status_get_n_failures(&dls_attempt) == 0);
+  tt_assert(download_status_get_n_attempts(&dls_attempt) == 0);
+  tt_assert(mock_get_options_calls >= 1);
+
+  /* avoid timing inconsistencies */
+  dls_attempt.next_attempt_at = current_time + delay0;
+
+  /* check that a reset schedule becomes ready at the right time */
+  tt_assert(download_status_is_ready(&dls_attempt,
+                                     current_time + delay0 - 1,
+                                     1) == 0);
+  tt_assert(download_status_is_ready(&dls_attempt,
+                                     current_time + delay0,
+                                     1) == 1);
+  tt_assert(download_status_is_ready(&dls_attempt,
+                                     current_time + delay0 + 1,
+                                     1) == 1);
+
+  /* Check that an attempt increment works */
+  mock_get_options_calls = 0;
+  next_at = download_status_increment_attempt(&dls_attempt, "test",
+                                              current_time);
+  tt_assert(next_at == current_time + delay1);
+  tt_assert(download_status_get_n_failures(&dls_attempt) == 0);
+  tt_assert(download_status_get_n_attempts(&dls_attempt) == 1);
+  tt_assert(mock_get_options_calls >= 1);
+
+  /* check that an incremented schedule becomes ready at the right time */
+  tt_assert(download_status_is_ready(&dls_attempt,
+                                     current_time + delay1 - 1,
+                                     1) == 0);
+  tt_assert(download_status_is_ready(&dls_attempt,
+                                     current_time + delay1,
+                                     1) == 1);
+  tt_assert(download_status_is_ready(&dls_attempt,
+                                     current_time + delay1 + 1,
+                                     1) == 1);
+
+  /* check that a schedule isn't ready if it's had too many attempts */
+  tt_assert(download_status_is_ready(&dls_attempt,
+                                     current_time + delay1 + 10,
+                                     0) == 0);
+
+  /* Check what happens when we reach then run off the end of the schedule */
+  mock_get_options_calls = 0;
+  next_at = download_status_increment_attempt(&dls_attempt, "test",
+                                              current_time);
+  tt_assert(next_at == current_time + delay2);
+  tt_assert(download_status_get_n_failures(&dls_attempt) == 0);
+  tt_assert(download_status_get_n_attempts(&dls_attempt) == 2);
+  tt_assert(mock_get_options_calls >= 1);
+
+  mock_get_options_calls = 0;
+  next_at = download_status_increment_attempt(&dls_attempt, "test",
+                                              current_time);
+  tt_assert(next_at == current_time + delay2);
+  tt_assert(download_status_get_n_failures(&dls_attempt) == 0);
+  tt_assert(download_status_get_n_attempts(&dls_attempt) == 3);
+  tt_assert(mock_get_options_calls >= 1);
+
+  /* Check what happens when we hit the attempt limit */
+  mock_get_options_calls = 0;
+  download_status_mark_impossible(&dls_attempt);
+  next_at = download_status_increment_attempt(&dls_attempt, "test",
+                                              current_time);
+  tt_assert(next_at == TIME_MAX);
+  tt_assert(download_status_get_n_failures(&dls_attempt)
+            == IMPOSSIBLE_TO_DOWNLOAD);
+  tt_assert(download_status_get_n_attempts(&dls_attempt)
+            == IMPOSSIBLE_TO_DOWNLOAD);
+  tt_assert(mock_get_options_calls >= 1);
+
+  /* Check that an attempt reset doesn't reset at the limit */
+  mock_get_options_calls = 0;
+  download_status_reset(&dls_attempt);
+  tt_assert(download_status_get_next_attempt_at(&dls_attempt)
+            == TIME_MAX);
+  tt_assert(download_status_get_n_failures(&dls_attempt)
+            == IMPOSSIBLE_TO_DOWNLOAD);
+  tt_assert(download_status_get_n_attempts(&dls_attempt)
+            == IMPOSSIBLE_TO_DOWNLOAD);
+  tt_assert(mock_get_options_calls == 0);
+
+  /* Check that an attempt reset resets just before the limit */
+  mock_get_options_calls = 0;
+  dls_attempt.n_download_failures = IMPOSSIBLE_TO_DOWNLOAD - 1;
+  dls_attempt.n_download_attempts = IMPOSSIBLE_TO_DOWNLOAD - 1;
+  download_status_reset(&dls_attempt);
+  /* we really want to test that it's equal to time(NULL) + delay0, but that's
+   * an unrealiable test, because time(NULL) might change. */
+  tt_assert(download_status_get_next_attempt_at(&dls_attempt)
+            >= current_time + delay0);
+  tt_assert(download_status_get_next_attempt_at(&dls_attempt)
+            != TIME_MAX);
+  tt_assert(download_status_get_n_failures(&dls_attempt) == 0);
+  tt_assert(download_status_get_n_attempts(&dls_attempt) == 0);
+  tt_assert(mock_get_options_calls >= 1);
+
+  /* Check that attempt increments don't happen on failure-based schedules,
+   * and that the attempt is set at the end of time */
+  mock_get_options_calls = 0;
+  setup_full_capture_of_logs(LOG_WARN);
+  next_at = download_status_increment_attempt(&dls_failure, "test",
+                                              current_time);
+  expect_single_log_msg_containing(
+    "Tried to launch an attempt-based connection on a failure-based "
+    "schedule.");
+  teardown_capture_of_logs();
+  tt_assert(next_at == TIME_MAX);
+  tt_assert(download_status_get_n_failures(&dls_failure) == 0);
+  tt_assert(download_status_get_n_attempts(&dls_failure) == 0);
+  tt_assert(mock_get_options_calls == 0);
+
+ done:
+  /* the pointers in schedule are allocated on the stack */
+  smartlist_free(schedule);
+  UNMOCK(get_options);
+  mock_options = NULL;
+  mock_get_options_calls = 0;
+  teardown_capture_of_logs();
+}
+
+static void
+test_dir_authdir_type_to_string(void *data)
+{
+  (void)data;
+  char *res;
+
+  tt_str_op(res = authdir_type_to_string(NO_DIRINFO), OP_EQ,
+            "[Not an authority]");
+  tor_free(res);
+
+  tt_str_op(res = authdir_type_to_string(EXTRAINFO_DIRINFO), OP_EQ,
+            "[Not an authority]");
+  tor_free(res);
+
+  tt_str_op(res = authdir_type_to_string(MICRODESC_DIRINFO), OP_EQ,
+            "[Not an authority]");
+  tor_free(res);
+
+  tt_str_op(res = authdir_type_to_string(V3_DIRINFO), OP_EQ, "V3");
+  tor_free(res);
+
+  tt_str_op(res = authdir_type_to_string(BRIDGE_DIRINFO), OP_EQ, "Bridge");
+  tor_free(res);
+
+  tt_str_op(res = authdir_type_to_string(
+            V3_DIRINFO | BRIDGE_DIRINFO | EXTRAINFO_DIRINFO), OP_EQ,
+            "V3, Bridge");
+  done:
+  tor_free(res);
+}
+
+static void
+test_dir_conn_purpose_to_string(void *data)
+{
+  (void)data;
+
+#define EXPECT_CONN_PURPOSE(purpose, expected) \
+  tt_str_op(dir_conn_purpose_to_string(purpose), OP_EQ, expected);
+
+  EXPECT_CONN_PURPOSE(DIR_PURPOSE_UPLOAD_DIR, "server descriptor upload");
+  EXPECT_CONN_PURPOSE(DIR_PURPOSE_UPLOAD_VOTE, "server vote upload");
+  EXPECT_CONN_PURPOSE(DIR_PURPOSE_UPLOAD_SIGNATURES,
+                      "consensus signature upload");
+  EXPECT_CONN_PURPOSE(DIR_PURPOSE_FETCH_SERVERDESC, "server descriptor fetch");
+  EXPECT_CONN_PURPOSE(DIR_PURPOSE_FETCH_EXTRAINFO, "extra-info fetch");
+  EXPECT_CONN_PURPOSE(DIR_PURPOSE_FETCH_CONSENSUS,
+                      "consensus network-status fetch");
+  EXPECT_CONN_PURPOSE(DIR_PURPOSE_FETCH_CERTIFICATE, "authority cert fetch");
+  EXPECT_CONN_PURPOSE(DIR_PURPOSE_FETCH_STATUS_VOTE, "status vote fetch");
+  EXPECT_CONN_PURPOSE(DIR_PURPOSE_FETCH_DETACHED_SIGNATURES,
+                      "consensus signature fetch");
+  EXPECT_CONN_PURPOSE(DIR_PURPOSE_FETCH_RENDDESC_V2,
+                      "hidden-service v2 descriptor fetch");
+  EXPECT_CONN_PURPOSE(DIR_PURPOSE_UPLOAD_RENDDESC_V2,
+                      "hidden-service v2 descriptor upload");
+  EXPECT_CONN_PURPOSE(DIR_PURPOSE_FETCH_MICRODESC, "microdescriptor fetch");
+
+  /* This will give a warning, because there is no purpose 1024. */
+  setup_full_capture_of_logs(LOG_WARN);
+  EXPECT_CONN_PURPOSE(1024, "(unknown)");
+  expect_single_log_msg_containing("Called with unknown purpose 1024");
+
+ done:
+  teardown_capture_of_logs();
+}
+
+NS_DECL(int,
+public_server_mode, (const or_options_t *options));
+
+static int
+NS(public_server_mode)(const or_options_t *options)
+{
+  (void)options;
+
+  if (CALLED(public_server_mode)++ == 0) {
+    return 1;
+  }
+
+  return 0;
+}
+
+static void
+test_dir_should_use_directory_guards(void *data)
+{
+  or_options_t *options;
+  char *errmsg = NULL;
+  (void)data;
+
+  NS_MOCK(public_server_mode);
+
+  options = options_new();
+  options_init(options);
+
+  tt_int_op(should_use_directory_guards(options), OP_EQ, 0);
+  tt_int_op(CALLED(public_server_mode), OP_EQ, 1);
+
+  options->UseEntryGuardsAsDirGuards = 1;
+  options->UseEntryGuards = 1;
+  options->DownloadExtraInfo = 0;
+  options->FetchDirInfoEarly = 0;
+  options->FetchDirInfoExtraEarly = 0;
+  options->FetchUselessDescriptors = 0;
+  tt_int_op(should_use_directory_guards(options), OP_EQ, 1);
+  tt_int_op(CALLED(public_server_mode), OP_EQ, 2);
+
+  options->UseEntryGuards = 0;
+  tt_int_op(should_use_directory_guards(options), OP_EQ, 0);
+  tt_int_op(CALLED(public_server_mode), OP_EQ, 3);
+  options->UseEntryGuards = 1;
+
+  options->UseEntryGuardsAsDirGuards = 0;
+  tt_int_op(should_use_directory_guards(options), OP_EQ, 0);
+  tt_int_op(CALLED(public_server_mode), OP_EQ, 4);
+  options->UseEntryGuardsAsDirGuards = 1;
+
+  options->DownloadExtraInfo = 1;
+  tt_int_op(should_use_directory_guards(options), OP_EQ, 0);
+  tt_int_op(CALLED(public_server_mode), OP_EQ, 5);
+  options->DownloadExtraInfo = 0;
+
+  options->FetchDirInfoEarly = 1;
+  tt_int_op(should_use_directory_guards(options), OP_EQ, 0);
+  tt_int_op(CALLED(public_server_mode), OP_EQ, 6);
+  options->FetchDirInfoEarly = 0;
+
+  options->FetchDirInfoExtraEarly = 1;
+  tt_int_op(should_use_directory_guards(options), OP_EQ, 0);
+  tt_int_op(CALLED(public_server_mode), OP_EQ, 7);
+  options->FetchDirInfoExtraEarly = 0;
+
+  options->FetchUselessDescriptors = 1;
+  tt_int_op(should_use_directory_guards(options), OP_EQ, 0);
+  tt_int_op(CALLED(public_server_mode), OP_EQ, 8);
+  options->FetchUselessDescriptors = 0;
+
+  done:
+    NS_UNMOCK(public_server_mode);
+    or_options_free(options);
+    tor_free(errmsg);
+}
+
+NS_DECL(void,
+directory_initiate_command_routerstatus, (const routerstatus_t *status,
+                                          uint8_t dir_purpose,
+                                          uint8_t router_purpose,
+                                          dir_indirection_t indirection,
+                                          const char *resource,
+                                          const char *payload,
+                                          size_t payload_len,
+                                          time_t if_modified_since));
+
+static void
+test_dir_should_not_init_request_to_ourselves(void *data)
+{
+  char digest[DIGEST_LEN];
+  dir_server_t *ourself = NULL;
+  crypto_pk_t *key = pk_generate(2);
+  (void) data;
+
+  NS_MOCK(directory_initiate_command_routerstatus);
+
+  clear_dir_servers();
+  routerlist_free_all();
+
+  set_server_identity_key(key);
+  crypto_pk_get_digest(key, (char*) &digest);
+  ourself = trusted_dir_server_new("ourself", "127.0.0.1", 9059, 9060,
+                                   NULL, digest,
+                                   NULL, V3_DIRINFO, 1.0);
+
+  tt_assert(ourself);
+  dir_server_add(ourself);
+
+  directory_get_from_all_authorities(DIR_PURPOSE_FETCH_STATUS_VOTE, 0, NULL);
+  tt_int_op(CALLED(directory_initiate_command_routerstatus), OP_EQ, 0);
+
+  directory_get_from_all_authorities(DIR_PURPOSE_FETCH_DETACHED_SIGNATURES, 0,
+                                     NULL);
+
+  tt_int_op(CALLED(directory_initiate_command_routerstatus), OP_EQ, 0);
+
+  done:
+    NS_UNMOCK(directory_initiate_command_routerstatus);
+    clear_dir_servers();
+    routerlist_free_all();
+    crypto_pk_free(key);
+}
+
+static void
+test_dir_should_not_init_request_to_dir_auths_without_v3_info(void *data)
+{
+  dir_server_t *ds = NULL;
+  dirinfo_type_t dirinfo_type = BRIDGE_DIRINFO | EXTRAINFO_DIRINFO \
+                                | MICRODESC_DIRINFO;
+  (void) data;
+
+  NS_MOCK(directory_initiate_command_routerstatus);
+
+  clear_dir_servers();
+  routerlist_free_all();
+
+  ds = trusted_dir_server_new("ds", "10.0.0.1", 9059, 9060, NULL,
+                              "12345678901234567890", NULL, dirinfo_type, 1.0);
+  tt_assert(ds);
+  dir_server_add(ds);
+
+  directory_get_from_all_authorities(DIR_PURPOSE_FETCH_STATUS_VOTE, 0, NULL);
+  tt_int_op(CALLED(directory_initiate_command_routerstatus), OP_EQ, 0);
+
+  directory_get_from_all_authorities(DIR_PURPOSE_FETCH_DETACHED_SIGNATURES, 0,
+                                     NULL);
+  tt_int_op(CALLED(directory_initiate_command_routerstatus), OP_EQ, 0);
+
+  done:
+    NS_UNMOCK(directory_initiate_command_routerstatus);
+    clear_dir_servers();
+    routerlist_free_all();
+}
+
+static void
+test_dir_should_init_request_to_dir_auths(void *data)
+{
+  dir_server_t *ds = NULL;
+  (void) data;
+
+  NS_MOCK(directory_initiate_command_routerstatus);
+
+  clear_dir_servers();
+  routerlist_free_all();
+
+  ds = trusted_dir_server_new("ds", "10.0.0.1", 9059, 9060, NULL,
+                              "12345678901234567890", NULL, V3_DIRINFO, 1.0);
+  tt_assert(ds);
+  dir_server_add(ds);
+
+  directory_get_from_all_authorities(DIR_PURPOSE_FETCH_STATUS_VOTE, 0, NULL);
+  tt_int_op(CALLED(directory_initiate_command_routerstatus), OP_EQ, 1);
+
+  directory_get_from_all_authorities(DIR_PURPOSE_FETCH_DETACHED_SIGNATURES, 0,
+                                     NULL);
+  tt_int_op(CALLED(directory_initiate_command_routerstatus), OP_EQ, 2);
+
+  done:
+    NS_UNMOCK(directory_initiate_command_routerstatus);
+    clear_dir_servers();
+    routerlist_free_all();
+}
+
+void
+NS(directory_initiate_command_routerstatus)(const routerstatus_t *status,
+                                            uint8_t dir_purpose,
+                                            uint8_t router_purpose,
+                                            dir_indirection_t indirection,
+                                            const char *resource,
+                                            const char *payload,
+                                            size_t payload_len,
+                                            time_t if_modified_since)
+{
+  (void)status;
+  (void)dir_purpose;
+  (void)router_purpose;
+  (void)indirection;
+  (void)resource;
+  (void)payload;
+  (void)payload_len;
+  (void)if_modified_since;
+  CALLED(directory_initiate_command_routerstatus)++;
+}
+
+static void
+test_dir_choose_compression_level(void* data)
+{
+  (void)data;
+
+  /* It starts under_memory_pressure */
+  tt_int_op(have_been_under_memory_pressure(), OP_EQ, 1);
+
+  tt_assert(HIGH_COMPRESSION == choose_compression_level(-1));
+  tt_assert(LOW_COMPRESSION == choose_compression_level(1024-1));
+  tt_assert(MEDIUM_COMPRESSION == choose_compression_level(2048-1));
+  tt_assert(HIGH_COMPRESSION == choose_compression_level(2048));
+
+  /* Reset under_memory_pressure timer */
+  cell_queues_check_size();
+  tt_int_op(have_been_under_memory_pressure(), OP_EQ, 0);
+
+  tt_assert(HIGH_COMPRESSION == choose_compression_level(-1));
+  tt_assert(HIGH_COMPRESSION == choose_compression_level(1024-1));
+  tt_assert(HIGH_COMPRESSION == choose_compression_level(2048-1));
+  tt_assert(HIGH_COMPRESSION == choose_compression_level(2048));
+
+  done: ;
+}
+
+/*
+ * Mock check_private_dir(), and always succeed - no need to actually
+ * look at or create anything on the filesystem.
+ */
+
+static int
+mock_check_private_dir(const char *dirname, cpd_check_t check,
+                       const char *effective_user)
+{
+  (void)dirname;
+  (void)check;
+  (void)effective_user;
+
+  return 0;
+}
+
+/*
+ * This really mocks options_get_datadir_fname2_suffix(), but for testing
+ * dump_desc(), we only care about get_datadir_fname(sub1), which is defined
+ * in config.h as:
+ *
+ * options_get_datadir_fname2_suffix(get_options(), sub1, NULL, NULL)
+ */
+
+static char *
+mock_get_datadir_fname(const or_options_t *options,
+                       const char *sub1, const char *sub2,
+                       const char *suffix)
+{
+  char *rv = NULL;
+
+  /*
+   * Assert we were called like get_datadir_fname2() or get_datadir_fname(),
+   * since that's all we implement here.
+   */
+  tt_assert(options != NULL);
+  tt_assert(sub1 != NULL);
+  /*
+   * No particular assertions about sub2, since we could be in the
+   * get_datadir_fname() or get_datadir_fname2() case.
+   */
+  tt_assert(suffix == NULL);
+
+  /* Just duplicate the basename and return it for this mock */
+  if (sub2) {
+    /* If we have sub2, it's the basename, otherwise sub1 */
+    rv = tor_strdup(sub2);
+  } else {
+    rv = tor_strdup(sub1);
+  }
+
+ done:
+  return rv;
+}
+
+static char *last_unlinked_path = NULL;
+static int unlinked_count = 0;
+
+static void
+mock_unlink_reset(void)
+{
+  tor_free(last_unlinked_path);
+  unlinked_count = 0;
+}
+
+static int
+mock_unlink(const char *path)
+{
+  tt_assert(path != NULL);
+
+  tor_free(last_unlinked_path);
+  last_unlinked_path = tor_strdup(path);
+  ++unlinked_count;
+
+ done:
+  return 0;
+}
+
+static char *last_write_str_path = NULL;
+static uint8_t last_write_str_hash[DIGEST256_LEN];
+static int write_str_count = 0;
+
+static void
+mock_write_str_to_file_reset(void)
+{
+  tor_free(last_write_str_path);
+  write_str_count = 0;
+}
+
+static int
+mock_write_str_to_file(const char *path, const char *str, int bin)
+{
+  size_t len;
+  uint8_t hash[DIGEST256_LEN];
+
+  (void)bin;
+
+  tt_assert(path != NULL);
+  tt_assert(str != NULL);
+
+  len = strlen(str);
+  crypto_digest256((char *)hash, str, len, DIGEST_SHA256);
+
+  tor_free(last_write_str_path);
+  last_write_str_path = tor_strdup(path);
+  memcpy(last_write_str_hash, hash, sizeof(last_write_str_hash));
+  ++write_str_count;
+
+ done:
+  return 0;
+}
+
+static void
+test_dir_dump_unparseable_descriptors(void *data)
+{
+  /*
+   * These bogus descriptors look nothing at all like real bogus descriptors
+   * we might see, but we're only testing dump_desc() here, not the parser.
+   */
+  const char *test_desc_type = "squamous";
+  /* strlen(test_desc_1) = 583 bytes */
+  const char *test_desc_1 =
+    "The most merciful thing in the world, I think, is the inability of the "
+    "human mind to correlate all its contents. We live on a placid island of"
+    " ignorance in the midst of black seas of infinity, and it was not meant"
+    " that we should voyage far. The sciences, each straining in its own dir"
+    "ection, have hitherto harmed us little; but some day the piecing togeth"
+    "er of dissociated knowledge will open up such terrifying vistas of real"
+    "ity, and of our frightful position therein, that we shall either go mad"
+    "from the revelation or flee from the light into the peace and safety of"
+    "a new dark age.";
+  uint8_t test_desc_1_hash[DIGEST256_LEN];
+  char test_desc_1_hash_str[HEX_DIGEST256_LEN+1];
+  /* strlen(test_desc_2) = 650 bytes */
+  const char *test_desc_2 =
+    "I think their predominant colour was a greyish-green, though they had w"
+    "hite bellies. They were mostly shiny and slippery, but the ridges of th"
+    "eir backs were scaly. Their forms vaguely suggested the anthropoid, whi"
+    "le their heads were the heads of fish, with prodigious bulging eyes tha"
+    "t never closed. At the sides of their necks were palpitating gills, and"
+    "their long paws were webbed. They hopped irregularly, sometimes on two "
+    "legs and sometimes on four. I was somehow glad that they had no more th"
+    "an four limbs. Their croaking, baying voices, clearly wed tar articulat"
+    "e speech, held all the dark shades of expression which their staring fa"
+    "ces lacked.";
+  uint8_t test_desc_2_hash[DIGEST256_LEN];
+  char test_desc_2_hash_str[HEX_DIGEST256_LEN+1];
+  /* strlen(test_desc_3) = 700 bytes */
+  const char *test_desc_3 =
+    "Without knowing what futurism is like, Johansen achieved something very"
+    "close to it when he spoke of the city; for instead of describing any de"
+    "finite structure or building, he dwells only on broad impressions of va"
+    "st angles and stone surfaces - surfaces too great to belong to anything"
+    "right or proper for this earth, and impious with horrible images and hi"
+    "eroglyphs. I mention his talk about angles because it suggests somethin"
+    "g Wilcox had told me of his awful dreams. He said that the geometry of "
+    "the dream-place he saw was abnormal, non-Euclidean, and loathsomely red"
+    "olent of spheres and dimensions apart from ours. Now an unlettered seam"
+    "an felt the same thing whilst gazing at the terrible reality.";
+  uint8_t test_desc_3_hash[DIGEST256_LEN];
+  char test_desc_3_hash_str[HEX_DIGEST256_LEN+1];
+  /* strlen(test_desc_3) = 604 bytes */
+  const char *test_desc_4 =
+    "So we glanced back simultaneously, it would appear; though no doubt the"
+    "incipient motion of one prompted the imitation of the other. As we did "
+    "so we flashed both torches full strength at the momentarily thinned mis"
+    "t; either from sheer primitive anxiety to see all we could, or in a les"
+    "s primitive but equally unconscious effort to dazzle the entity before "
+    "we dimmed our light and dodged among the penguins of the labyrinth cent"
+    "er ahead. Unhappy act! Not Orpheus himself, or Lot's wife, paid much mo"
+    "re dearly for a backward glance. And again came that shocking, wide-ran"
+    "ged piping - \"Tekeli-li! Tekeli-li!\"";
+  uint8_t test_desc_4_hash[DIGEST256_LEN];
+  char test_desc_4_hash_str[HEX_DIGEST256_LEN+1];
+  (void)data;
+
+  /*
+   * Set up options mock so we can force a tiny FIFO size and generate
+   * cleanups.
+   */
+  mock_options = tor_malloc(sizeof(or_options_t));
+  reset_options(mock_options, &mock_get_options_calls);
+  mock_options->MaxUnparseableDescSizeToLog = 1536;
+  MOCK(get_options, mock_get_options);
+  MOCK(check_private_dir, mock_check_private_dir);
+  MOCK(options_get_datadir_fname2_suffix,
+       mock_get_datadir_fname);
+
+  /*
+   * Set up unlink and write mocks
+   */
+  MOCK(tor_unlink, mock_unlink);
+  mock_unlink_reset();
+  MOCK(write_str_to_file, mock_write_str_to_file);
+  mock_write_str_to_file_reset();
+
+  /*
+   * Compute hashes we'll need to recognize which descriptor is which
+   */
+  crypto_digest256((char *)test_desc_1_hash, test_desc_1,
+                   strlen(test_desc_1), DIGEST_SHA256);
+  base16_encode(test_desc_1_hash_str, sizeof(test_desc_1_hash_str),
+                (const char *)test_desc_1_hash,
+                sizeof(test_desc_1_hash));
+  crypto_digest256((char *)test_desc_2_hash, test_desc_2,
+                   strlen(test_desc_2), DIGEST_SHA256);
+  base16_encode(test_desc_2_hash_str, sizeof(test_desc_2_hash_str),
+                (const char *)test_desc_2_hash,
+                sizeof(test_desc_2_hash));
+  crypto_digest256((char *)test_desc_3_hash, test_desc_3,
+                   strlen(test_desc_3), DIGEST_SHA256);
+  base16_encode(test_desc_3_hash_str, sizeof(test_desc_3_hash_str),
+                (const char *)test_desc_3_hash,
+                sizeof(test_desc_3_hash));
+  crypto_digest256((char *)test_desc_4_hash, test_desc_4,
+                   strlen(test_desc_4), DIGEST_SHA256);
+  base16_encode(test_desc_4_hash_str, sizeof(test_desc_4_hash_str),
+                (const char *)test_desc_4_hash,
+                sizeof(test_desc_4_hash));
+
+  /*
+   * Reset the FIFO and check its state
+   */
+  dump_desc_fifo_cleanup();
+  tt_u64_op(len_descs_dumped, ==, 0);
+  tt_assert(descs_dumped == NULL || smartlist_len(descs_dumped) == 0);
+
+  /*
+   * (1) Fire off dump_desc() once; these descriptors should all be safely
+   * smaller than configured FIFO size.
+   */
+
+  dump_desc(test_desc_1, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_1));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 1);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 1);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_1_hash, DIGEST_SHA256);
+
+  /*
+   * Reset the FIFO and check its state
+   */
+  dump_desc_fifo_cleanup();
+  tt_u64_op(len_descs_dumped, ==, 0);
+  tt_assert(descs_dumped == NULL || smartlist_len(descs_dumped) == 0);
+
+  /*
+   * Reset the mocks and check their state
+   */
+  mock_unlink_reset();
+  mock_write_str_to_file_reset();
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 0);
+
+  /*
+   * (2) Fire off dump_desc() twice; this still should trigger no cleanup.
+   */
+
+  /* First time */
+  dump_desc(test_desc_2, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_2));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 1);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 1);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_2_hash, DIGEST_SHA256);
+
+  /* Second time */
+  dump_desc(test_desc_3, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_2) + strlen(test_desc_3));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 2);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 2);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_3_hash, DIGEST_SHA256);
+
+  /*
+   * Reset the FIFO and check its state
+   */
+  dump_desc_fifo_cleanup();
+  tt_u64_op(len_descs_dumped, ==, 0);
+  tt_assert(descs_dumped == NULL || smartlist_len(descs_dumped) == 0);
+
+  /*
+   * Reset the mocks and check their state
+   */
+  mock_unlink_reset();
+  mock_write_str_to_file_reset();
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 0);
+
+  /*
+   * (3) Three calls to dump_desc cause a FIFO cleanup
+   */
+
+  /* First time */
+  dump_desc(test_desc_4, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_4));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 1);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 1);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_4_hash, DIGEST_SHA256);
+
+  /* Second time */
+  dump_desc(test_desc_1, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_4) + strlen(test_desc_1));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 2);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 2);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_1_hash, DIGEST_SHA256);
+
+  /* Third time - we should unlink the dump of test_desc_4 here */
+  dump_desc(test_desc_2, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_1) + strlen(test_desc_2));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 2);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 1);
+  tt_int_op(write_str_count, ==, 3);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_2_hash, DIGEST_SHA256);
+
+  /*
+   * Reset the FIFO and check its state
+   */
+  dump_desc_fifo_cleanup();
+  tt_u64_op(len_descs_dumped, ==, 0);
+  tt_assert(descs_dumped == NULL || smartlist_len(descs_dumped) == 0);
+
+  /*
+   * Reset the mocks and check their state
+   */
+  mock_unlink_reset();
+  mock_write_str_to_file_reset();
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 0);
+
+  /*
+   * (4) But repeating one (A B B) doesn't overflow and cleanup
+   */
+
+  /* First time */
+  dump_desc(test_desc_3, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_3));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 1);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 1);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_3_hash, DIGEST_SHA256);
+
+  /* Second time */
+  dump_desc(test_desc_4, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_3) + strlen(test_desc_4));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 2);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 2);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_4_hash, DIGEST_SHA256);
+
+  /* Third time */
+  dump_desc(test_desc_4, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_3) + strlen(test_desc_4));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 2);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 2);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_4_hash, DIGEST_SHA256);
+
+  /*
+   * Reset the FIFO and check its state
+   */
+  dump_desc_fifo_cleanup();
+  tt_u64_op(len_descs_dumped, ==, 0);
+  tt_assert(descs_dumped == NULL || smartlist_len(descs_dumped) == 0);
+
+  /*
+   * Reset the mocks and check their state
+   */
+  mock_unlink_reset();
+  mock_write_str_to_file_reset();
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 0);
+
+  /*
+   * (5) Same for the (A B A) repetition
+   */
+
+  /* First time */
+  dump_desc(test_desc_1, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_1));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 1);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 1);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_1_hash, DIGEST_SHA256);
+
+  /* Second time */
+  dump_desc(test_desc_2, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_1) + strlen(test_desc_2));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 2);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 2);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_2_hash, DIGEST_SHA256);
+
+  /* Third time */
+  dump_desc(test_desc_1, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_1) + strlen(test_desc_2));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 2);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 2);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_2_hash, DIGEST_SHA256);
+
+  /*
+   * Reset the FIFO and check its state
+   */
+  dump_desc_fifo_cleanup();
+  tt_u64_op(len_descs_dumped, ==, 0);
+  tt_assert(descs_dumped == NULL || smartlist_len(descs_dumped) == 0);
+
+  /*
+   * Reset the mocks and check their state
+   */
+  mock_unlink_reset();
+  mock_write_str_to_file_reset();
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 0);
+
+  /*
+   * (6) (A B B C) triggering overflow on C causes A, not B to be unlinked
+   */
+
+  /* First time */
+  dump_desc(test_desc_3, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_3));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 1);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 1);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_3_hash, DIGEST_SHA256);
+
+  /* Second time */
+  dump_desc(test_desc_4, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_3) + strlen(test_desc_4));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 2);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 2);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_4_hash, DIGEST_SHA256);
+
+  /* Third time */
+  dump_desc(test_desc_4, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_3) + strlen(test_desc_4));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 2);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 2);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_4_hash, DIGEST_SHA256);
+
+  /* Fourth time - we should unlink the dump of test_desc_3 here */
+  dump_desc(test_desc_1, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_4) + strlen(test_desc_1));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 2);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 1);
+  tt_int_op(write_str_count, ==, 3);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_1_hash, DIGEST_SHA256);
+
+  /*
+   * Reset the FIFO and check its state
+   */
+  dump_desc_fifo_cleanup();
+  tt_u64_op(len_descs_dumped, ==, 0);
+  tt_assert(descs_dumped == NULL || smartlist_len(descs_dumped) == 0);
+
+  /*
+   * Reset the mocks and check their state
+   */
+  mock_unlink_reset();
+  mock_write_str_to_file_reset();
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 0);
+
+  /*
+   * (7) (A B A C) triggering overflow on C causes B, not A to be unlinked
+   */
+
+  /* First time */
+  dump_desc(test_desc_2, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_2));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 1);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 1);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_2_hash, DIGEST_SHA256);
+
+  /* Second time */
+  dump_desc(test_desc_3, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_2) + strlen(test_desc_3));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 2);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 2);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_3_hash, DIGEST_SHA256);
+
+  /* Third time */
+  dump_desc(test_desc_2, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_2) + strlen(test_desc_3));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 2);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 2);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_3_hash, DIGEST_SHA256);
+
+  /* Fourth time - we should unlink the dump of test_desc_3 here */
+  dump_desc(test_desc_4, test_desc_type);
+
+  /*
+   * Assert things about the FIFO state
+   */
+  tt_u64_op(len_descs_dumped, ==, strlen(test_desc_2) + strlen(test_desc_4));
+  tt_assert(descs_dumped != NULL && smartlist_len(descs_dumped) == 2);
+
+  /*
+   * Assert things about the mocks
+   */
+  tt_int_op(unlinked_count, ==, 1);
+  tt_int_op(write_str_count, ==, 3);
+  tt_mem_op(last_write_str_hash, OP_EQ, test_desc_4_hash, DIGEST_SHA256);
+
+  /*
+   * Reset the FIFO and check its state
+   */
+  dump_desc_fifo_cleanup();
+  tt_u64_op(len_descs_dumped, ==, 0);
+  tt_assert(descs_dumped == NULL || smartlist_len(descs_dumped) == 0);
+
+  /*
+   * Reset the mocks and check their state
+   */
+  mock_unlink_reset();
+  mock_write_str_to_file_reset();
+  tt_int_op(unlinked_count, ==, 0);
+  tt_int_op(write_str_count, ==, 0);
+
+ done:
+
+  /* Clean up the fifo */
+  dump_desc_fifo_cleanup();
+
+  /* Remove mocks */
+  UNMOCK(tor_unlink);
+  mock_unlink_reset();
+  UNMOCK(write_str_to_file);
+  mock_write_str_to_file_reset();
+  UNMOCK(options_get_datadir_fname2_suffix);
+  UNMOCK(check_private_dir);
+  UNMOCK(get_options);
+  tor_free(mock_options);
+  mock_options = NULL;
+
+  return;
+}
+
+/* Variables for reset_read_file_to_str_mock() */
+
+static int enforce_expected_filename = 0;
+static char *expected_filename = NULL;
+static char *file_content = NULL;
+static size_t file_content_len = 0;
+static struct stat file_stat;
+static int read_count = 0, read_call_count = 0;
+
+static void
+reset_read_file_to_str_mock(void)
+{
+  tor_free(expected_filename);
+  tor_free(file_content);
+  file_content_len = 0;
+  memset(&file_stat, 0, sizeof(file_stat));
+  read_count = 0;
+  read_call_count = 0;
+}
+
+static char *
+read_file_to_str_mock(const char *filename, int flags,
+                      struct stat *stat_out) {
+  char *result = NULL;
+
+  /* Insist we got a filename */
+  tt_assert(filename != NULL);
+
+  /* We ignore flags */
+  (void)flags;
+
+  /* Bump the call count */
+  ++read_call_count;
+
+  if (enforce_expected_filename) {
+    tt_assert(expected_filename);
+    tt_str_op(filename, OP_EQ, expected_filename);
+  }
+
+  if (expected_filename != NULL &&
+      file_content != NULL &&
+      strcmp(filename, expected_filename) == 0) {
+    /* You asked for it, you got it */
+
+    /*
+     * This is the same behavior as the real read_file_to_str();
+     * if there's a NUL, the real size ends up in stat_out.
+     */
+    result = tor_malloc(file_content_len + 1);
+    if (file_content_len > 0) {
+      memcpy(result, file_content, file_content_len);
+    }
+    result[file_content_len] = '\0';
+
+    /* Do we need to set up stat_out? */
+    if (stat_out != NULL) {
+      memcpy(stat_out, &file_stat, sizeof(file_stat));
+      /* We always return the correct length here */
+      stat_out->st_size = file_content_len;
+    }
+
+    /* Wooo, we have a return value - bump the counter */
+    ++read_count;
+  }
+  /* else no match, return NULL */
+
+ done:
+  return result;
+}
+
+/* This one tests dump_desc_populate_one_file() */
+static void
+test_dir_populate_dump_desc_fifo(void *data)
+{
+  const char *dirname = "foo";
+  const char *fname = NULL;
+  dumped_desc_t *ent;
+
+  (void)data;
+
+  /*
+   * Set up unlink and read_file_to_str mocks
+   */
+  MOCK(tor_unlink, mock_unlink);
+  mock_unlink_reset();
+  MOCK(read_file_to_str, read_file_to_str_mock);
+  reset_read_file_to_str_mock();
+
+  /* Check state of unlink mock */
+  tt_int_op(unlinked_count, ==, 0);
+
+  /* Some cases that should fail before trying to read the file */
+  ent = dump_desc_populate_one_file(dirname, "bar");
+  tt_assert(ent == NULL);
+  tt_int_op(unlinked_count, ==, 1);
+  tt_int_op(read_count, ==, 0);
+  tt_int_op(read_call_count, ==, 0);
+
+  ent = dump_desc_populate_one_file(dirname, "unparseable-desc");
+  tt_assert(ent == NULL);
+  tt_int_op(unlinked_count, ==, 2);
+  tt_int_op(read_count, ==, 0);
+  tt_int_op(read_call_count, ==, 0);
+
+  ent = dump_desc_populate_one_file(dirname, "unparseable-desc.baz");
+  tt_assert(ent == NULL);
+  tt_int_op(unlinked_count, ==, 3);
+  tt_int_op(read_count, ==, 0);
+  tt_int_op(read_call_count, ==, 0);
+
+  ent = dump_desc_populate_one_file(
+      dirname,
+      "unparseable-desc.08AE85E90461F59E");
+  tt_assert(ent == NULL);
+  tt_int_op(unlinked_count, ==, 4);
+  tt_int_op(read_count, ==, 0);
+  tt_int_op(read_call_count, ==, 0);
+
+  ent = dump_desc_populate_one_file(
+      dirname,
+      "unparseable-desc.08AE85E90461F59EDF0981323F3A70D02B55AB54B44B04F"
+      "287D72F7B72F242E85C8CB0EDA8854A99");
+  tt_assert(ent == NULL);
+  tt_int_op(unlinked_count, ==, 5);
+  tt_int_op(read_count, ==, 0);
+  tt_int_op(read_call_count, ==, 0);
+
+  /* This is a correct-length digest but base16_decode() will fail */
+  ent = dump_desc_populate_one_file(
+      dirname,
+      "unparseable-desc.68219B8BGE64B705A6FFC728C069DC596216D60A7D7520C"
+      "D5ECE250D912E686B");
+  tt_assert(ent == NULL);
+  tt_int_op(unlinked_count, ==, 6);
+  tt_int_op(read_count, ==, 0);
+  tt_int_op(read_call_count, ==, 0);
+
+  /* This one has a correctly formed filename and should try reading */
+
+  /* Read fails */
+  ent = dump_desc_populate_one_file(
+      dirname,
+      "unparseable-desc.DF0981323F3A70D02B55AB54B44B04F287D72F7B72F242E"
+      "85C8CB0EDA8854A99");
+  tt_assert(ent == NULL);
+  tt_int_op(unlinked_count, ==, 7);
+  tt_int_op(read_count, ==, 0);
+  tt_int_op(read_call_count, ==, 1);
+
+  /* This read will succeed but the digest won't match the file content */
+  fname =
+    "unparseable-desc."
+    "DF0981323F3A70D02B55AB54B44B04F287D72F7B72F242E85C8CB0EDA8854A99";
+  enforce_expected_filename = 1;
+  tor_asprintf(&expected_filename, "%s%s%s", dirname, PATH_SEPARATOR, fname);
+  file_content = tor_strdup("hanc culpam maiorem an illam dicam?");
+  file_content_len = strlen(file_content);
+  file_stat.st_mtime = 123456;
+  ent = dump_desc_populate_one_file(dirname, fname);
+  enforce_expected_filename = 0;
+  tt_assert(ent == NULL);
+  tt_int_op(unlinked_count, ==, 8);
+  tt_int_op(read_count, ==, 1);
+  tt_int_op(read_call_count, ==, 2);
+  tor_free(expected_filename);
+  tor_free(file_content);
+
+  /* This one will match */
+  fname =
+    "unparseable-desc."
+    "0786C7173447B7FB033FFCA2FC47C3CF71C30DD47CA8236D3FC7FF35853271C6";
+  tor_asprintf(&expected_filename, "%s%s%s", dirname, PATH_SEPARATOR, fname);
+  file_content = tor_strdup("hanc culpam maiorem an illam dicam?");
+  file_content_len = strlen(file_content);
+  file_stat.st_mtime = 789012;
+  ent = dump_desc_populate_one_file(dirname, fname);
+  tt_assert(ent != NULL);
+  tt_int_op(unlinked_count, ==, 8);
+  tt_int_op(read_count, ==, 2);
+  tt_int_op(read_call_count, ==, 3);
+  tt_str_op(ent->filename, OP_EQ, expected_filename);
+  tt_int_op(ent->len, ==, file_content_len);
+  tt_int_op(ent->when, ==, file_stat.st_mtime);
+  tor_free(ent->filename);
+  tor_free(ent);
+  tor_free(expected_filename);
+
+  /*
+   * Reset the mocks and check their state
+   */
+  mock_unlink_reset();
+  tt_int_op(unlinked_count, ==, 0);
+  reset_read_file_to_str_mock();
+  tt_int_op(read_count, ==, 0);
+
+ done:
+
+  UNMOCK(tor_unlink);
+  mock_unlink_reset();
+  UNMOCK(read_file_to_str);
+  reset_read_file_to_str_mock();
+
+  tor_free(file_content);
+
+  return;
+}
+
+static smartlist_t *
+listdir_mock(const char *dname)
+{
+  smartlist_t *l;
+
+  /* Ignore the name, always return this list */
+  (void)dname;
+
+  l = smartlist_new();
+  smartlist_add(l, tor_strdup("foo"));
+  smartlist_add(l, tor_strdup("bar"));
+  smartlist_add(l, tor_strdup("baz"));
+
+  return l;
+}
+
+static dumped_desc_t *
+pop_one_mock(const char *dirname, const char *f)
+{
+  dumped_desc_t *ent = NULL;
+
+  if (dirname != NULL && strcmp(dirname, "d") == 0) {
+    if (f != NULL && strcmp(f, "foo") == 0) {
+      ent = tor_malloc_zero(sizeof(*ent));
+      ent->filename = tor_strdup("d/foo");
+      ent->len = 123;
+      ent->digest_sha256[0] = 1;
+      ent->when = 1024;
+    } else if (f != NULL && strcmp(f, "bar") == 0) {
+      ent = tor_malloc_zero(sizeof(*ent));
+      ent->filename = tor_strdup("d/bar");
+      ent->len = 456;
+      ent->digest_sha256[0] = 2;
+      /*
+       * Note that the timestamps are in a different order than
+       * listdir_mock() returns; we're testing the sort order.
+       */
+      ent->when = 512;
+    } else if (f != NULL && strcmp(f, "baz") == 0) {
+      ent = tor_malloc_zero(sizeof(*ent));
+      ent->filename = tor_strdup("d/baz");
+      ent->len = 789;
+      ent->digest_sha256[0] = 3;
+      ent->when = 768;
+    }
+  }
+
+  return ent;
+}
+
+/* This one tests dump_desc_populate_fifo_from_directory() */
+static void
+test_dir_populate_dump_desc_fifo_2(void *data)
+{
+  dumped_desc_t *ent = NULL;
+
+  (void)data;
+
+  /* Set up the mocks */
+  MOCK(tor_listdir, listdir_mock);
+  MOCK(dump_desc_populate_one_file, pop_one_mock);
+
+  /* Run dump_desc_populate_fifo_from_directory() */
+  descs_dumped = NULL;
+  len_descs_dumped = 0;
+  dump_desc_populate_fifo_from_directory("d");
+  tt_assert(descs_dumped != NULL);
+  tt_int_op(smartlist_len(descs_dumped), OP_EQ, 3);
+  tt_u64_op(len_descs_dumped, OP_EQ, 1368);
+  ent = smartlist_get(descs_dumped, 0);
+  tt_str_op(ent->filename, OP_EQ, "d/bar");
+  tt_int_op(ent->len, OP_EQ, 456);
+  tt_int_op(ent->when, OP_EQ, 512);
+  ent = smartlist_get(descs_dumped, 1);
+  tt_str_op(ent->filename, OP_EQ, "d/baz");
+  tt_int_op(ent->len, OP_EQ, 789);
+  tt_int_op(ent->when, OP_EQ, 768);
+  ent = smartlist_get(descs_dumped, 2);
+  tt_str_op(ent->filename, OP_EQ, "d/foo");
+  tt_int_op(ent->len, OP_EQ, 123);
+  tt_int_op(ent->when, OP_EQ, 1024);
+
+ done:
+  dump_desc_fifo_cleanup();
+
+  UNMOCK(dump_desc_populate_one_file);
+  UNMOCK(tor_listdir);
+
+  return;
+}
+
+static int mock_networkstatus_consensus_is_bootstrapping_value = 0;
+static int
+mock_networkstatus_consensus_is_bootstrapping(time_t now)
+{
+  (void)now;
+  return mock_networkstatus_consensus_is_bootstrapping_value;
+}
+
+static int mock_networkstatus_consensus_can_use_extra_fallbacks_value = 0;
+static int
+mock_networkstatus_consensus_can_use_extra_fallbacks(
+                                                  const or_options_t *options)
+{
+  (void)options;
+  return mock_networkstatus_consensus_can_use_extra_fallbacks_value;
+}
+
+/* data is a 2 character nul-terminated string.
+ * If data[0] is 'b', set bootstrapping, anything else means not bootstrapping
+ * If data[1] is 'f', set extra fallbacks, anything else means no extra
+ * fallbacks.
+ */
+static void
+test_dir_find_dl_schedule(void* data)
+{
+  const char *str = (const char *)data;
+
+  tt_assert(strlen(data) == 2);
+
+  if (str[0] == 'b') {
+    mock_networkstatus_consensus_is_bootstrapping_value = 1;
+  } else {
+    mock_networkstatus_consensus_is_bootstrapping_value = 0;
+  }
+
+  if (str[1] == 'f') {
+    mock_networkstatus_consensus_can_use_extra_fallbacks_value = 1;
+  } else {
+    mock_networkstatus_consensus_can_use_extra_fallbacks_value = 0;
+  }
+
+  MOCK(networkstatus_consensus_is_bootstrapping,
+       mock_networkstatus_consensus_is_bootstrapping);
+  MOCK(networkstatus_consensus_can_use_extra_fallbacks,
+       mock_networkstatus_consensus_can_use_extra_fallbacks);
+
+  download_status_t dls;
+  smartlist_t server, client, server_cons, client_cons;
+  smartlist_t client_boot_auth_only_cons, client_boot_auth_cons;
+  smartlist_t client_boot_fallback_cons, bridge;
+
+  mock_options = tor_malloc(sizeof(or_options_t));
+  reset_options(mock_options, &mock_get_options_calls);
+  MOCK(get_options, mock_get_options);
+
+  mock_options->TestingServerDownloadSchedule = &server;
+  mock_options->TestingClientDownloadSchedule = &client;
+  mock_options->TestingServerConsensusDownloadSchedule = &server_cons;
+  mock_options->TestingClientConsensusDownloadSchedule = &client_cons;
+  mock_options->ClientBootstrapConsensusAuthorityOnlyDownloadSchedule =
+    &client_boot_auth_only_cons;
+  mock_options->ClientBootstrapConsensusAuthorityDownloadSchedule =
+    &client_boot_auth_cons;
+  mock_options->ClientBootstrapConsensusFallbackDownloadSchedule =
+    &client_boot_fallback_cons;
+  mock_options->TestingBridgeDownloadSchedule = &bridge;
+
+  dls.schedule = DL_SCHED_GENERIC;
+  /* client */
+  mock_options->ClientOnly = 1;
+  tt_ptr_op(find_dl_schedule(&dls, mock_options), OP_EQ, &client);
+  mock_options->ClientOnly = 0;
+
+  /* dir mode */
+  mock_options->DirPort_set = 1;
+  mock_options->DirCache = 1;
+  tt_ptr_op(find_dl_schedule(&dls, mock_options), OP_EQ, &server);
+  mock_options->DirPort_set = 0;
+  mock_options->DirCache = 0;
+
+  dls.schedule = DL_SCHED_CONSENSUS;
+  /* public server mode */
+  mock_options->ORPort_set = 1;
+  tt_ptr_op(find_dl_schedule(&dls, mock_options), OP_EQ, &server_cons);
+  mock_options->ORPort_set = 0;
+
+  /* client and bridge modes */
+  if (networkstatus_consensus_is_bootstrapping(time(NULL))) {
+    if (networkstatus_consensus_can_use_extra_fallbacks(mock_options)) {
+      dls.want_authority = 1;
+      /* client */
+      mock_options->ClientOnly = 1;
+      tt_ptr_op(find_dl_schedule(&dls, mock_options), OP_EQ,
+                &client_boot_auth_cons);
+      mock_options->ClientOnly = 0;
+
+      /* bridge relay */
+      mock_options->ORPort_set = 1;
+      mock_options->BridgeRelay = 1;
+      tt_ptr_op(find_dl_schedule(&dls, mock_options), OP_EQ,
+                &client_boot_auth_cons);
+      mock_options->ORPort_set = 0;
+      mock_options->BridgeRelay = 0;
+
+      dls.want_authority = 0;
+      /* client */
+      mock_options->ClientOnly = 1;
+      tt_ptr_op(find_dl_schedule(&dls, mock_options), OP_EQ,
+                &client_boot_fallback_cons);
+      mock_options->ClientOnly = 0;
+
+      /* bridge relay */
+      mock_options->ORPort_set = 1;
+      mock_options->BridgeRelay = 1;
+      tt_ptr_op(find_dl_schedule(&dls, mock_options), OP_EQ,
+                &client_boot_fallback_cons);
+      mock_options->ORPort_set = 0;
+      mock_options->BridgeRelay = 0;
+
+    } else {
+      /* dls.want_authority is ignored */
+      /* client */
+      mock_options->ClientOnly = 1;
+      tt_ptr_op(find_dl_schedule(&dls, mock_options), OP_EQ,
+                &client_boot_auth_only_cons);
+      mock_options->ClientOnly = 0;
+
+      /* bridge relay */
+      mock_options->ORPort_set = 1;
+      mock_options->BridgeRelay = 1;
+      tt_ptr_op(find_dl_schedule(&dls, mock_options), OP_EQ,
+                &client_boot_auth_only_cons);
+      mock_options->ORPort_set = 0;
+      mock_options->BridgeRelay = 0;
+    }
+  } else {
+    /* client */
+    mock_options->ClientOnly = 1;
+    tt_ptr_op(find_dl_schedule(&dls, mock_options), OP_EQ,
+              &client_cons);
+    mock_options->ClientOnly = 0;
+
+    /* bridge relay */
+    mock_options->ORPort_set = 1;
+    mock_options->BridgeRelay = 1;
+    tt_ptr_op(find_dl_schedule(&dls, mock_options), OP_EQ,
+              &client_cons);
+    mock_options->ORPort_set = 0;
+    mock_options->BridgeRelay = 0;
+  }
+
+  dls.schedule = DL_SCHED_BRIDGE;
+  /* client */
+  mock_options->ClientOnly = 1;
+  tt_ptr_op(find_dl_schedule(&dls, mock_options), OP_EQ, &bridge);
+
+ done:
+  UNMOCK(networkstatus_consensus_is_bootstrapping);
+  UNMOCK(networkstatus_consensus_can_use_extra_fallbacks);
+  UNMOCK(get_options);
+  tor_free(mock_options);
+  mock_options = NULL;
+}
+
+static void
+test_dir_assumed_flags(void *arg)
+{
+  (void)arg;
+  smartlist_t *tokens = smartlist_new();
+  memarea_t *area = memarea_new();
+  routerstatus_t *rs = NULL;
+
+  /* First, we should always assume that the Running flag is set, even
+   * when it isn't listed, since the consensus method is always
+   * higher than 4. */
+  const char *str1 =
+    "r example hereiswhereyouridentitygoes 2015-08-30 12:00:00 "
+       "192.168.0.1 9001 0\n"
+    "m thisoneislongerbecauseitisa256bitmddigest33\n"
+    "s Fast Guard Stable\n";
+
+  const char *cp = str1;
+  rs = routerstatus_parse_entry_from_string(area, &cp, tokens, NULL, NULL,
+                                            23, FLAV_MICRODESC);
+  tt_assert(rs);
+  tt_assert(rs->is_flagged_running);
+  tt_assert(! rs->is_valid);
+  tt_assert(! rs->is_exit);
+  tt_assert(rs->is_fast);
+  routerstatus_free(rs);
+
+  /* With method 24 or later, we can assume "valid" is set. */
+  cp = str1;
+  rs = routerstatus_parse_entry_from_string(area, &cp, tokens, NULL, NULL,
+                                            24, FLAV_MICRODESC);
+  tt_assert(rs);
+  tt_assert(rs->is_flagged_running);
+  tt_assert(rs->is_valid);
+  tt_assert(! rs->is_exit);
+  tt_assert(rs->is_fast);
+
+ done:
+  smartlist_free(tokens);
+  memarea_drop_all(area);
+  routerstatus_free(rs);
+}
+
+#define DIR_LEGACY(name)                             \
   { #name, test_dir_ ## name , TT_FORK, NULL, NULL }
 
 #define DIR(name,flags)                              \
   { #name, test_dir_##name, (flags), NULL, NULL }
+
+/* where arg is a string constant */
+#define DIR_ARG(name,flags,arg)                      \
+  { #name "_" arg, test_dir_##name, (flags), &passthrough_setup, (void*) arg }
 
 struct testcase_t dir_tests[] = {
   DIR_LEGACY(nicknames),
@@ -3514,6 +5461,7 @@ struct testcase_t dir_tests[] = {
   DIR_LEGACY(measured_bw_kb),
   DIR_LEGACY(measured_bw_kb_cache),
   DIR_LEGACY(param_voting),
+  DIR(param_voting_lookup, 0),
   DIR_LEGACY(v3_networkstatus),
   DIR(random_weighted, 0),
   DIR(scale_bw, 0),
@@ -3525,6 +5473,24 @@ struct testcase_t dir_tests[] = {
   DIR(purpose_needs_anonymity, 0),
   DIR(fetch_type, 0),
   DIR(packages, 0),
+  DIR(download_status_schedule, 0),
+  DIR(download_status_random_backoff, 0),
+  DIR(download_status_increment, 0),
+  DIR(authdir_type_to_string, 0),
+  DIR(conn_purpose_to_string, 0),
+  DIR(should_use_directory_guards, 0),
+  DIR(should_not_init_request_to_ourselves, TT_FORK),
+  DIR(should_not_init_request_to_dir_auths_without_v3_info, 0),
+  DIR(should_init_request_to_dir_auths, 0),
+  DIR(choose_compression_level, 0),
+  DIR(dump_unparseable_descriptors, 0),
+  DIR(populate_dump_desc_fifo, 0),
+  DIR(populate_dump_desc_fifo_2, 0),
+  DIR_ARG(find_dl_schedule, TT_FORK, "bf"),
+  DIR_ARG(find_dl_schedule, TT_FORK, "ba"),
+  DIR_ARG(find_dl_schedule, TT_FORK, "cf"),
+  DIR_ARG(find_dl_schedule, TT_FORK, "ca"),
+  DIR(assumed_flags, 0),
   END_OF_TESTCASES
 };
 

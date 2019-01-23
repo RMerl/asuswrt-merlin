@@ -16,10 +16,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -37,14 +36,15 @@
  * This version is extended to handle both / and \ in path names
  */
 char *
-basename (char *filename)
+basename(char *filename)
 {
-  char *p = strrchr (filename, '/');
-  if (!p) {
-    /* If NULL, check for \ instead ... might be Windows a path */
-    p = strrchr (filename, '\\');
-  }
-  return p ? p + 1 : (char *) filename;
+    char *p = strrchr(filename, '/');
+    if (!p)
+    {
+        /* If NULL, check for \ instead ... might be Windows a path */
+        p = strrchr(filename, '\\');
+    }
+    return p ? p + 1 : (char *) filename;
 }
 
 #endif /* HAVE_BASENAME */

@@ -40,6 +40,7 @@
 extern "C" {
 #endif
 
+/* Name mangling */
 #define sha3_permute nettle_sha3_permute
 #define _sha3_update _nettle_sha3_update
 #define _sha3_pad _nettle_sha3_pad
@@ -55,6 +56,9 @@ extern "C" {
 #define sha3_512_init nettle_sha3_512_init
 #define sha3_512_update nettle_sha3_512_update
 #define sha3_512_digest nettle_sha3_512_digest
+
+/* Indicates that SHA3 is the NIST FIPS 202 version. */
+#define NETTLE_SHA3_FIPS202 1
 
 /* The sha3 state is a 5x5 matrix of 64-bit words. In the notation of
    Keccak description, S[x,y] is element x + 5*y, so if x is

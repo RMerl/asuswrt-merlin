@@ -1,6 +1,6 @@
 /* sockets.c --- wrappers for Windows socket functions
 
-   Copyright (C) 2008-2014 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -121,8 +121,11 @@ gl_sockets_startup (int version _GL_UNUSED)
       if (err != 0)
         return 1;
 
-      if (data.wVersion < version)
-        return 2;
+      if (data.wVersion != version)
+        {
+          WSACleanup ();
+          return 2;
+        }
 
       if (initialized_sockets_version == 0)
         register_fd_hook (close_fd_maybe_socket, ioctl_fd_maybe_socket,

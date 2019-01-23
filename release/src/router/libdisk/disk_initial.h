@@ -24,6 +24,7 @@
 
 #define USB_DISK_MAJOR 8
 #define DEFAULT_USB_TAG "USB disk"
+#define DEFAULT_M2_SSD_TAG	"M.2 SSD"
 
 #ifdef BCM_MMC
 #define MMC_DISK_MAJOR 179

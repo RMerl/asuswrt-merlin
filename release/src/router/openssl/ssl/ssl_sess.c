@@ -261,7 +261,6 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
 #ifndef OPENSSL_NO_SRP
     dest->srp_username = NULL;
 #endif
-    memset(&dest->ex_data, 0, sizeof(dest->ex_data));
 
     /* We deliberately don't copy the prev and next pointers */
     dest->prev = NULL;
@@ -274,6 +273,9 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
 
     if (src->peer != NULL)
         CRYPTO_add(&src->peer->references, 1, CRYPTO_LOCK_X509);
+
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, dest, &dest->ex_data))
+        goto err;
 
 #ifndef OPENSSL_NO_PSK
     if (src->psk_identity_hint) {
@@ -325,7 +327,7 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     }
 # endif
 
-    if (ticket != 0) {
+    if (ticket != 0 && src->tlsext_tick != NULL) {
         dest->tlsext_tick = BUF_memdup(src->tlsext_tick, src->tlsext_ticklen);
         if(dest->tlsext_tick == NULL)
             goto err;
@@ -382,7 +384,7 @@ static int def_generate_session_id(const SSL *ssl, unsigned char *id,
 {
     unsigned int retry = 0;
     do
-        if (RAND_pseudo_bytes(id, *id_len) <= 0)
+        if (RAND_bytes(id, *id_len) <= 0)
             return 0;
     while (SSL_has_matching_session_id(ssl, id, *id_len) &&
            (++retry < MAX_SESS_ID_ATTEMPTS)) ;
@@ -573,7 +575,7 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
     int r;
 #endif
 
-    if (session_id + len > limit) {
+    if (limit - session_id < len) {
         fatal = 1;
         goto err;
     }
@@ -769,6 +771,15 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
          * obtain the same session from an external cache)
          */
         s = NULL;
+    } else if (s == NULL &&
+               lh_SSL_SESSION_retrieve(ctx->sessions, c) == NULL) {
+        /* s == NULL can also mean OOM error in lh_SSL_SESSION_insert ... */
+
+        /*
+         * ... so take back the extra reference and also don't add
+         * the session to the SSL_SESSION_list at this time
+         */
+        s = c;
     }
 
     /* Put at the head of the queue unless it is already in the cache */
@@ -919,6 +930,10 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
             session->krb5_client_princ_len > 0) {
             s->kssl_ctx->client_princ =
                 (char *)OPENSSL_malloc(session->krb5_client_princ_len + 1);
+            if (s->kssl_ctx->client_princ == NULL) {
+                SSLerr(SSL_F_SSL_SET_SESSION, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
             memcpy(s->kssl_ctx->client_princ, session->krb5_client_princ,
                    session->krb5_client_princ_len);
             s->kssl_ctx->client_princ[session->krb5_client_princ_len] = '\0';
@@ -993,7 +1008,8 @@ int SSL_SESSION_set1_id_context(SSL_SESSION *s, const unsigned char *sid_ctx,
         return 0;
     }
     s->sid_ctx_length = sid_ctx_len;
-    memcpy(s->sid_ctx, sid_ctx, sid_ctx_len);
+    if (s->sid_ctx != sid_ctx)
+        memcpy(s->sid_ctx, sid_ctx, sid_ctx_len);
 
     return 1;
 }
@@ -1123,7 +1139,7 @@ int ssl_clear_bad_session(SSL *s)
     if ((s->session != NULL) &&
         !(s->shutdown & SSL_SENT_SHUTDOWN) &&
         !(SSL_in_init(s) || SSL_in_before(s))) {
-        SSL_CTX_remove_session(s->ctx, s->session);
+        SSL_CTX_remove_session(s->session_ctx, s->session);
         return (1);
     } else
         return (0);

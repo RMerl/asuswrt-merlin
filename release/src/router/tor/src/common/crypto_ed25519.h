@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Tor Project, Inc. */
+/* Copyright (c) 2012-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #ifndef TOR_CRYPTO_ED25519_H
@@ -55,6 +55,17 @@ int ed25519_checksig(const ed25519_signature_t *signature,
                      const uint8_t *msg, size_t len,
                      const ed25519_public_key_t *pubkey);
 
+int
+ed25519_sign_prefixed(ed25519_signature_t *signature_out,
+                      const uint8_t *msg, size_t len,
+                      const char *prefix_str,
+                      const ed25519_keypair_t *keypair);
+int
+ed25519_checksig_prefixed(const ed25519_signature_t *signature,
+                          const uint8_t *msg, size_t len,
+                          const char *prefix_str,
+                          const ed25519_public_key_t *pubkey);
+
 /**
  * A collection of information necessary to check an Ed25519 signature. Used
  * for batch verification.
@@ -110,6 +121,11 @@ int ed25519_pubkey_eq(const ed25519_public_key_t *key1,
 
 void ed25519_set_impl_params(int use_donna);
 void ed25519_init(void);
+
+#ifdef TOR_UNIT_TESTS
+void crypto_ed25519_testing_force_impl(const char *name);
+void crypto_ed25519_testing_restore_impl(void);
+#endif
 
 #endif
 

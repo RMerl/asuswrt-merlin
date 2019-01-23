@@ -85,19 +85,26 @@
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script>
 var isFirst = ('<% nvram_get("x_Setting"); %>' == '1') ? false : true;;
+var header_info = [<% get_header_info(); %>][0];
 var ROUTERHOSTNAME = '<% nvram_get("local_domain"); %>';
-var iAmAlive = function(ret){if(ret.isdomain) top.location.href="http://" + ROUTERHOSTNAME + "/QIS_default.cgi?flag=welcome";};
+var domainNameUrl = ((header_info.host.split(":").length==2)?"https":"http")+"://"+header_info.host.replace(header_info.host.split(":")[0], ROUTERHOSTNAME);
+var chdom = function(){window.location.href=domainNameUrl};
 (function(){
-	var locationOrigin = window.location.protocol + "//" + ROUTERHOSTNAME + (window.location.port ? ':' + window.location.port : '');
-	if(location.hostname !== ROUTERHOSTNAME && ROUTERHOSTNAME != "" && isFirst){
+	if(ROUTERHOSTNAME !== header_info.host && ROUTERHOSTNAME != "" && isFirst){
 		setTimeout(function(){
-			var s=document.createElement("script");s.type="text/javascript";s.src=locationOrigin+"/httpd_check.json?hostname="+location.hostname;var h=document.getElementsByTagName("script")[0];h.parentNode.insertBefore(s,h);
+			var s=document.createElement("script");s.type="text/javascript";s.src=domainNameUrl+"/chdom.json?hostname="+header_info.host.split(":")[0];var h=document.getElementsByTagName("script")[0];h.parentNode.insertBefore(s,h);
 		}, 1);
 	}
 })();
 
 var sw_mode = '<% nvram_get("sw_mode"); %>';
 var based_modelid = '<% nvram_get("productid"); %>';
+// parsing rc_support
+var rc_support = '<% nvram_get("rc_support"); %>';
+function isSupport(_ptn){
+	return (rc_support.search(_ptn) == -1) ? false : true;
+}
+var spirit_logo_support = isSupport("spirit");
 if(((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1) || (sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 3))
 	sw_mode = 4;
 if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
@@ -146,6 +153,7 @@ var new_FW = false;
 var retry = 0;
 var isStatic = false;
 var staticIP = false;
+var isModem = false;
 
 var changeSubnet = false;
 var restartTime = false;
@@ -155,6 +163,64 @@ var rebootTime = eval("<% get_default_reboot_time(); %>");
 
 var wan_autodet_state = "";
 var usb_connected = 0;
+
+var htmlEnDeCode = (function() {
+	var charToEntityRegex,
+		entityToCharRegex,
+		charToEntity,
+		entityToChar;
+
+	function resetCharacterEntities() {
+		charToEntity = {};
+		entityToChar = {};
+		// add the default set
+		addCharacterEntities({
+		'&amp;'		: 	'&',
+		'&gt;'		: 	'>',
+		'&lt;'		: 	'<',
+		'&quot;'	: 	'"',
+		'&#39;'		: 	"'"
+		});
+	}
+
+	function addCharacterEntities(newEntities) {
+		var charKeys = [],
+		entityKeys = [],
+		key, echar;
+		for (key in newEntities) {
+			echar = newEntities[key];
+			entityToChar[key] = echar;
+			charToEntity[echar] = key;
+			charKeys.push(echar);
+			entityKeys.push(key);
+		}
+		charToEntityRegex = new RegExp('(' + charKeys.join('|') + ')', 'g');
+		entityToCharRegex = new RegExp('(' + entityKeys.join('|') + '|&#[0-9]{1,5};' + ')', 'g');
+	}
+
+	function htmlEncode(value){
+		var htmlEncodeReplaceFn = function(match, capture) {
+			return charToEntity[capture];
+		};
+
+		return (!value) ? value : String(value).replace(charToEntityRegex, htmlEncodeReplaceFn);
+	}
+
+	function htmlDecode(value) {
+		var htmlDecodeReplaceFn = function(match, capture) {
+			return (capture in entityToChar) ? entityToChar[capture] : String.fromCharCode(parseInt(capture.substr(2), 10));
+		};
+
+		return (!value) ? value : String(value).replace(entityToCharRegex, htmlDecodeReplaceFn);
+	}
+
+	resetCharacterEntities();
+
+	return {
+		htmlEncode: htmlEncode,
+		htmlDecode: htmlDecode
+	};
+})();
 
 function add_options_x2(o, arr, varr, orig){
 	free_options(o);
@@ -168,11 +234,6 @@ function add_options_x2(o, arr, varr, orig){
 }
 
 function detect_firmware(){
-        
-	// Disable FW check
-	liveUpdateFinish = true;
-	return;
-
 	$.ajax({
 		url: '/detect_firmware.asp',
 		dataType: 'script',
@@ -190,28 +251,7 @@ function detect_firmware(){
 			}
 			else{
 				if(webs_state_error == 0){
-					/*var Latest_firmver = webs_state_info.split("_");
-					var Latest_firm = parseInt(Latest_firmver[0]);
-					var Latest_buildno = parseInt(Latest_firmver[1]);
-					var Latest_extendno = Latest_firmver[2];
-					var Latest_extendno_split = Latest_extendno.split("-g");
-	      			var Latest_extendno_comp = parseInt(Latest_extendno_split[0]);
-
-					if(Latest_firm && Latest_buildno && Latest_extendno){	//match model FW
-						current_firm = parseInt(exist_firmver.replace(/[.]/gi,""));
-      					current_buildno = parseInt("<% nvram_get("buildno"); %>");
-      					current_extendno = "<% nvram_get("extendno"); %>";
-      					current_extendno_split = current_extendno.split("-g");
-      					current_extendno_comp = parseInt(current_extendno_split[0]);
-
-						if((current_buildno < Latest_buildno) || 
-      					(current_firm < Latest_firm && current_buildno == Latest_buildno) ||
-      					(current_extendno_comp < Latest_extendno_comp && current_buildno == Latest_buildno && current_firm == Latest_firm))
-      			{
-							new_FW = true;
-						}
-					}*/
-					if(isNewFW(webs_state_info, 0, current_firmware_path) && exist_firmver[0] != 9){
+					if(isNewFW(webs_state_info, current_firmware_path, current_firmware_path) && exist_firmver[0] != 9){
 						new_FW = true;
 					}
 				}
@@ -285,6 +325,16 @@ function QIS_load_body(){
 	showCase = (document.getElementById("flag").value == "") ? "welcome" : document.getElementById("flag").value;
 	winW_H();
 	
+	var banner_code = "";
+	if (spirit_logo_support)
+		banner_code += '<img src="images/New_ui/asus_spirit_title.png" width="214" height="31" align="left" style="margin-top:13px;margin-left:30px;">'
+	else {
+		banner_code += '<img src="images/New_ui/asustitle.png" width="218" height="54" align="left">'
+		banner_code += '<span class="modelName_top" style="margin-top:20px;"><#Web_Title2#></span>'
+	}
+	banner_code += '<ul id="language_menu" class="navigation"></ul>'
+	document.getElementById("QIS_banner").innerHTML = banner_code;
+
 	document.getElementById("language_menu").innerHTML = '<% shown_language_css(); %>';
 	show_selected_language();
 	
@@ -579,11 +629,7 @@ function detect_httpd(){
 
 <!--For content in ifame-->	
 <!--[if !lte IE 6]>-->
-<div class="banner1" align="center">
-	<img src="images/New_ui/asustitle.png" width="218" height="54" align="left">
-	<span class="modelName_top" style="margin-top:20px;"><#Web_Title2#></span>
-	<ul id="language_menu" class="navigation"></ul>
-</div>
+<div class="banner1" align="center" id="QIS_banner"></div>
 <!--<![endif]-->
 <!--[if lte IE 6]>
 <div class="banner1" align="center">
@@ -601,7 +647,7 @@ function detect_httpd(){
 <table width="998px"  border="0" align="center" cellpadding="0" cellspacing="0" background="/images/New_ui/middown_bg.png">
   <tr>
 		<td style="width:210px;*width:263px;" valign="top">
-			<div class="m_qis_r" id="btn_gotoindex" style="margin-left: 15px;margin-top: -160px;cursor:pointer;" onclick="gotoIndex();"><table><tbody><tr><td><div class="_index"></div></td><td><div><#CTL_Setting#></div></td></tr></tbody></table></div>
+			<div style="margin-left: 15px;margin-top: -160px;cursor:pointer;" class="menu menu_QIS_title" onclick="gotoIndex();" id="QIS_wizard_menu"><table><tbody><tr><td><div class="menu_Icon menu_QIS"></div></td><td class="menu_Desc" sytle=""><#CTL_Setting#></td></tr></tbody></table></div>
 			<div class="lefttabhead" style="margin-left:15px;" id="option0"><table width="192px" height="37px"><tbody><tr><td><#QIS_title#></td></tr></tbody></table></div>
 			<div class="lefttabmid" id="t1" style="margin-left:15px;"><table height="52px"><tbody><tr><td><img style="margin-left:3px;" border="0" src="/images/qis/qisStep1.png"></td><td><div class="qismenu"><#QIS_step2#></div></td></tr></tbody></table></div>
 			<div class="lefttabmid" id="t2" style="margin-left:15px;"><table height="52px"><tbody><tr><td><img style="margin-left:3px;" border="0" src="/images/qis/qisStep2.png"></td><td><div class="qismenu"><#QIS_step3#></div></td></tr></tbody></table></div>
@@ -616,7 +662,29 @@ function detect_httpd(){
 		</td>
 
 		<td>
-      <div class="_contentM_qis"><iframe name="contentM" style="background-color:#4D595D;" id="contentM" class="contentM_qis" scrolling="auto" width="99%" height="540" frameborder="0"></iframe></div>
+		<div class="_contentM_qis">
+			<iframe name="contentM" style="" id="contentM" class="contentM_qis" scrolling="auto" width="100%" height="540px" frameborder="0"></iframe> 
+		</div>
+		<script>
+			(function(){
+				var $iframe = $("#contentM");
+				$iframe.on("load", function(){
+					$iframe.fadeIn(100);
+					document.getElementById("contentM").contentWindow.onbeforeunload = function(){
+						$iframe.css("display", "none");
+
+						if(wl_info.band5g_2_support && document.getElementById("contentM").contentWindow.location.pathname.search("QIS_wireless.htm") != -1){
+							$iframe.css("height", "650px");
+							$("._contentM_qis").css("height", "650px");
+						}
+						else{
+							$iframe.css("height", "540px");
+							$("._contentM_qis").css("height", "540px");
+						}
+					};
+				});
+			})()
+		</script>
     </td>
     <td width="8" height="365" valign="top"></td>
   </tr>
@@ -699,6 +767,8 @@ function detect_httpd(){
 	<!--USB Modem-->
 	<input type="hidden" name="wans_dualwan" value="wan usb" disabled>
 	<input type="hidden" name="modem_enable" value="<% nvram_get("modem_enable"); %>">
+	<input type="hidden" name="modem_android" value="<% nvram_get("modem_android"); %>">
+	<input type="hidden" name="modem_autoapn" value="<% nvram_get("modem_autoapn"); %>">
 	<input type="hidden" name="modem_country" value="<% nvram_get("modem_country"); %>">
 	<input type="hidden" name="modem_isp" value="<% nvram_get("modem_isp"); %>">
 	<input type="hidden" name="modem_apn" value="<% nvram_get("modem_apn"); %>">
@@ -708,6 +778,8 @@ function detect_httpd(){
 	<input type="hidden" name="modem_pass" value="<% nvram_get("modem_pass"); %>">
 	<input type="hidden" name="modem_ttlsid" value="<% nvram_get("modem_ttlsid"); %>">
 	<input type="hidden" name="Dev3G" value="<% nvram_get("Dev3G"); %>">
+	<input type="hidden" name="modem_authmode" value="<% nvram_get("modem_authmode"); %>">
+	<input type="hidden" name="modem_mtu" value="<% nvram_get("modem_mtu"); %>">
 </form>
 
 <form method="post" name="redirectForm" action="" target="contentM">

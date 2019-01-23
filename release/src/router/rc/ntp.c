@@ -42,7 +42,7 @@
 
 static char server[32];
 static int sig_cur = -1;
-static int server_idx = 0;
+
 
 static void ntp_service()
 {
@@ -56,17 +56,20 @@ static void ntp_service()
 
 		setup_timezone();
 
-		if (is_routing_enabled())
-			notify_rc_and_period_wait("restart_upnp", 25);
 #ifdef RTCONFIG_DISK_MONITOR
 		notify_rc("restart_diskmon");
 #endif
 
 #ifdef RTCONFIG_DNSSEC
-		if (nvram_match("dnssec_enable", "1")) {
+		if (nvram_get_int("dnssec_enable")) {
 			reload_dnsmasq();
 		}
 #endif
+
+		if (is_routing_enabled()) {
+			sleep(10);
+			notify_rc_and_period_wait("restart_upnp", 25);
+		}
 	}
 }
 
@@ -184,14 +187,9 @@ int ntp_main(int argc, char *argv[])
 			sleep(SECONDS_TO_WAIT);
 
 			if (strlen(nvram_safe_get("ntp_server0")))
-			{
-				if (server_idx)
-					strlcpy(server, nvram_safe_get("ntp_server1"), sizeof (server));
-				else
-					strlcpy(server, nvram_safe_get("ntp_server0"), sizeof (server));
-
-				server_idx = (server_idx + 1) % 2;
-			}
+				strlcpy(server, nvram_safe_get("ntp_server0"), sizeof (server));
+			else if (strlen(nvram_safe_get("ntp_server1")))
+				strlcpy(server, nvram_safe_get("ntp_server1"), sizeof (server));
 			else
 				strcpy(server, "");
 			args[2] = server;

@@ -1,0 +1,8 @@
+Name: test
+Type: bitmap:ip
+Header: range 10.0.0.0-10.255.255.255 netmask 24 timeout 5
+Size in memory: 532640
+References: 0
+Number of entries: 1
+Members:
+10.255.255.0 timeout 0

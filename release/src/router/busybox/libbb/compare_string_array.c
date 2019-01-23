@@ -5,6 +5,49 @@
 
 #include "libbb.h"
 
+/*
+ * Return NULL if string is not prefixed with key. Return pointer to the
+ * first character in string after the prefix key. If key is an empty string,
+ * return pointer to the beginning of string.
+ */
+char* FAST_FUNC is_prefixed_with(const char *string, const char *key)
+{
+#if 0	/* Two passes over key - probably slower */
+	int len = strlen(key);
+	if (strncmp(string, key, len) == 0)
+		return string + len;
+	return NULL;
+#else	/* Open-coded */
+	while (*key != '\0') {
+		if (*key != *string)
+			return NULL;
+		key++;
+		string++;
+	}
+	return (char*)string;
+#endif
+}
+
+/*
+ * Return NULL if string is not suffixed with key. Return pointer to the
+ * beginning of prefix key in string. If key is an empty string return pointer
+ * to the end of string.
+ */
+char* FAST_FUNC is_suffixed_with(const char *string, const char *key)
+{
+	size_t key_len = strlen(key);
+	ssize_t len_diff = strlen(string) - key_len;
+
+	if (len_diff >= 0) {
+		string += len_diff;
+		if (strcmp(string, key) == 0) {
+			return (char*)string;
+		}
+	}
+
+	return NULL;
+}
+
 /* returns the array index of the string */
 /* (index of first match is returned, or -1) */
 int FAST_FUNC index_in_str_array(const char *const string_array[], const char *key)
@@ -39,10 +82,9 @@ int FAST_FUNC index_in_strings(const char *strings, const char *key)
 int FAST_FUNC index_in_substr_array(const char *const string_array[], const char *key)
 {
 	int i;
-	int len = strlen(key);
-	if (len) {
+	if (key[0]) {
 		for (i = 0; string_array[i] != 0; i++) {
-			if (strncmp(string_array[i], key, len) == 0) {
+			if (is_prefixed_with(string_array[i], key)) {
 				return i;
 			}
 		}
@@ -93,3 +135,37 @@ smallint FAST_FUNC yesno(const char *str)
 	return ret / 3;
 }
 #endif
+
+#if ENABLE_UNIT_TEST
+
+BBUNIT_DEFINE_TEST(is_prefixed_with)
+{
+	BBUNIT_ASSERT_STREQ(" bar", is_prefixed_with("foo bar", "foo"));
+	BBUNIT_ASSERT_STREQ("bar", is_prefixed_with("foo bar", "foo "));
+	BBUNIT_ASSERT_STREQ("", is_prefixed_with("foo", "foo"));
+	BBUNIT_ASSERT_STREQ("foo", is_prefixed_with("foo", ""));
+	BBUNIT_ASSERT_STREQ("", is_prefixed_with("", ""));
+
+	BBUNIT_ASSERT_NULL(is_prefixed_with("foo", "bar foo"));
+	BBUNIT_ASSERT_NULL(is_prefixed_with("foo foo", "bar"));
+	BBUNIT_ASSERT_NULL(is_prefixed_with("", "foo"));
+
+	BBUNIT_ENDTEST;
+}
+
+BBUNIT_DEFINE_TEST(is_suffixed_with)
+{
+	BBUNIT_ASSERT_STREQ("bar", is_suffixed_with("foo bar", "bar"));
+	BBUNIT_ASSERT_STREQ("foo", is_suffixed_with("foo", "foo"));
+	BBUNIT_ASSERT_STREQ("", is_suffixed_with("foo", ""));
+	BBUNIT_ASSERT_STREQ("", is_suffixed_with("", ""));
+	BBUNIT_ASSERT_STREQ("foo", is_suffixed_with("barfoofoo", "foo"));
+
+	BBUNIT_ASSERT_NULL(is_suffixed_with("foo", "bar foo"));
+	BBUNIT_ASSERT_NULL(is_suffixed_with("foo foo", "bar"));
+	BBUNIT_ASSERT_NULL(is_suffixed_with("", "foo"));
+
+	BBUNIT_ENDTEST;
+}
+
+#endif /* ENABLE_UNIT_TEST */

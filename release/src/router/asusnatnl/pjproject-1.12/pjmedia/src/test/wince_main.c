@@ -46,13 +46,13 @@ int WINAPI WinMain(HINSTANCE hInstance,
     PJ_UNUSED_ARG(lpCmdLine);
     PJ_UNUSED_ARG(nCmdShow);
 
-    rc = MessageBox(0, TEXT(CAPTION), TEXT(TITLE), MB_OKCANCEL);
+    /*rc = MessageBox(0, TEXT(CAPTION), TEXT(TITLE), MB_OKCANCEL);
     if (rc != IDOK)
-	return TRUE;
+	return TRUE;*/
 
     fLog = fopen("\\pjmedia-test.txt", "wt");
     if (fLog == NULL) {
-	MessageBox(0, TEXT("Unable to create result file"), TEXT(TITLE), MB_OK);
+	//MessageBox(0, TEXT("Unable to create result file"), TEXT(TITLE), MB_OK);
 	return TRUE;
     }
     pj_log_set_log_func(&log_writer_cb);
@@ -61,12 +61,12 @@ int WINAPI WinMain(HINSTANCE hInstance,
     fclose(fLog);
 
     if (rc != 0) {
-	MessageBox(0, TEXT("Test failed"), TEXT(TITLE), MB_OK);
+	//MessageBox(0, TEXT("Test failed"), TEXT(TITLE), MB_OK);
 	return TRUE;
     }
 
-    MessageBox(0, TEXT("Test has been successful. Please see the result in \"\\pjmedia-test.txt\" file"),
-		  TEXT(TITLE), 0);
+    //MessageBox(0, TEXT("Test has been successful. Please see the result in \"\\pjmedia-test.txt\" file"),
+	//	  TEXT(TITLE), 0);
     return TRUE;
 }
 

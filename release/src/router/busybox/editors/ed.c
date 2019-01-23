@@ -7,10 +7,23 @@
  * The "ed" built-in command (much simplified)
  */
 
+//config:config ED
+//config:	bool "ed"
+//config:	default y
+//config:	help
+//config:	  The original 1970's Unix text editor, from the days of teletypes.
+//config:	  Small, simple, evil. Part of SUSv3. If you're not already using
+//config:	  this, you don't need it.
+
+//kbuild:lib-$(CONFIG_ED) += ed.o
+
+//applet:IF_ED(APPLET(ed, BB_DIR_BIN, BB_SUID_DROP))
+
 //usage:#define ed_trivial_usage ""
 //usage:#define ed_full_usage ""
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 
 typedef struct LINE {
 	struct LINE *next;
@@ -23,8 +36,8 @@ typedef struct LINE {
 #define searchString bb_common_bufsiz1
 
 enum {
-	USERSIZE = sizeof(searchString) > 1024 ? 1024
-	         : sizeof(searchString) - 1, /* max line length typed in by user */
+	USERSIZE = COMMON_BUFSIZE > 1024 ? 1024
+	         : COMMON_BUFSIZE - 1, /* max line length typed in by user */
 	INITBUF_SIZE = 1024, /* initial buffer size */
 };
 
@@ -54,6 +67,7 @@ struct globals {
 #define lines              (G.lines             )
 #define marks              (G.marks             )
 #define INIT_G() do { \
+	setup_common_bufsiz(); \
 	SET_PTR_TO_GLOBALS(xzalloc(sizeof(G))); \
 } while (0)
 
@@ -194,7 +208,7 @@ static void doCommands(void)
 				if (fileName)
 					printf("\"%s\"\n", fileName);
 				else
-					printf("No file name\n");
+					puts("No file name");
 				break;
 			}
 			free(fileName);
@@ -720,7 +734,6 @@ static int readLines(const char *file, int num)
 		cc = safe_read(fd, bufPtr, bufSize - bufUsed);
 		bufUsed += cc;
 		bufPtr = bufBase;
-
 	} while (cc > 0);
 
 	if (cc < 0) {

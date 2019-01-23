@@ -59,7 +59,7 @@ int mknod_main(int argc, char **argv)
 					/* Autodetect what the system supports; these macros should
 					 * optimize out to two constants. */
 					dev = makedev(xatoul_range(argv[2], 0, major(UINT_MAX)),
-					              xatoul_range(argv[3], 0, minor(UINT_MAX)));
+							xatoul_range(argv[3], 0, minor(UINT_MAX)));
 				}
 			}
 

@@ -37,7 +37,6 @@
 */
 
 #include "igmpproxy.h"
-#include <sys/sysinfo.h>
 
 static const char Usage[] = 
 "Usage: igmpproxy [-h] [-d] [-v [-v]] <configfile>\n"
@@ -235,14 +234,24 @@ void igmpProxyCleanUp() {
 
 }
 
-static void getuptime(struct timeval *tv)
+/**
+*   Get current time.
+*/
+int igmpProxyTime(struct timeval *tv)
 {
-    struct sysinfo si;
+#ifdef HAVE_CLOCK_MONOTONIC
+	struct timespec tp;
 
-    sysinfo(&si);
+	if (clock_gettime(CLOCK_MONOTONIC, &tp) < 0)
+		return -1;
 
-    tv->tv_sec = si.uptime;
-    tv->tv_usec = 0;
+	tv->tv_sec = tp.tv_sec;
+	tv->tv_usec = tp.tv_nsec / 1000;
+
+	return 0;
+#else
+	return gettimeofday(tv, NULL);
+#endif
 }
 
 /**
@@ -262,7 +271,7 @@ void igmpProxyRun() {
 
     // Initialize timer vars
     difftime.tv_usec = 0;
-    getuptime(&curtime);
+    igmpProxyTime(&curtime);
     lasttime = curtime;
 
     // First thing we send a membership query in downstream VIF's...
@@ -325,14 +334,14 @@ void igmpProxyRun() {
             /*
              * If the select timed out, then there's no other
              * activity to account for and we don't need to
-             * call getuptime.
+             * call igmpProxyTime.
              */
             if (Rt == 0) {
                 curtime.tv_sec = lasttime.tv_sec + secs;
                 curtime.tv_usec = lasttime.tv_usec;
                 Rt = -1; /* don't do this next time through the loop */
             } else {
-                getuptime(&curtime);
+                igmpProxyTime(&curtime);
             }
             difftime.tv_sec = curtime.tv_sec - lasttime.tv_sec;
             difftime.tv_usec += curtime.tv_usec - lasttime.tv_usec;

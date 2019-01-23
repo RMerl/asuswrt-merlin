@@ -1,12 +1,30 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
  * \file onion_fast.c
  * \brief Functions implement the CREATE_FAST circuit handshake.
+ *
+ * The "CREATE_FAST" handshake is an unauthenticated, non-forward-secure
+ * key derivation mechanism based on SHA1.  We used to use it for the
+ * first hop of each circuit, since the TAP handshake provided no
+ * additional security beyond the security already provided by the TLS
+ * handshake [*].
+ *
+ * When we switched to ntor, we deprecated CREATE_FAST, since ntor is
+ * stronger than our TLS handshake was, and fast enough to not be worrisome.
+ *
+ * This handshake, like the other circuit-extension handshakes, is
+ * invoked from onion.c.
+ *
+ * [*]Actually, it's possible that TAP _was_ a little better than TLS with
+ * RSA1024 certificates and EDH1024 for forward secrecy, if you
+ * hypothesize an adversary who can compute discrete logarithms on a
+ * small number of targetted DH1024 fields, but who can't break all that
+ * many RSA1024 keys.
  **/
 
 #include "or.h"
@@ -30,10 +48,7 @@ fast_onionskin_create(fast_handshake_state_t **handshake_state_out,
 {
   fast_handshake_state_t *s;
   *handshake_state_out = s = tor_malloc(sizeof(fast_handshake_state_t));
-  if (crypto_rand((char*)s->state, sizeof(s->state)) < 0) {
-    tor_free(s);
-    return -1;
-  }
+  crypto_rand((char*)s->state, sizeof(s->state));
   memcpy(handshake_out, s->state, DIGEST_LEN);
   return 0;
 }
@@ -56,15 +71,14 @@ fast_server_handshake(const uint8_t *key_in, /* DIGEST_LEN bytes */
   size_t out_len;
   int r = -1;
 
-  if (crypto_rand((char*)handshake_reply_out, DIGEST_LEN)<0)
-    return -1;
+  crypto_rand((char*)handshake_reply_out, DIGEST_LEN);
 
   memcpy(tmp, key_in, DIGEST_LEN);
   memcpy(tmp+DIGEST_LEN, handshake_reply_out, DIGEST_LEN);
   out_len = key_out_len+DIGEST_LEN;
   out = tor_malloc(out_len);
-  if (crypto_expand_key_material_TAP(tmp, sizeof(tmp), out, out_len)) {
-    goto done;
+  if (BUG(crypto_expand_key_material_TAP(tmp, sizeof(tmp), out, out_len))) {
+    goto done; // LCOV_EXCL_LINE
   }
   memcpy(handshake_reply_out+DIGEST_LEN, out, DIGEST_LEN);
   memcpy(key_out, out+DIGEST_LEN, key_out_len);
@@ -104,10 +118,12 @@ fast_client_handshake(const fast_handshake_state_t *handshake_state,
   memcpy(tmp+DIGEST_LEN, handshake_reply_out, DIGEST_LEN);
   out_len = key_out_len+DIGEST_LEN;
   out = tor_malloc(out_len);
-  if (crypto_expand_key_material_TAP(tmp, sizeof(tmp), out, out_len)) {
+  if (BUG(crypto_expand_key_material_TAP(tmp, sizeof(tmp), out, out_len))) {
+    /* LCOV_EXCL_START */
     if (msg_out)
       *msg_out = "Failed to expand key material";
     goto done;
+    /* LCOV_EXCL_STOP */
   }
   if (tor_memneq(out, handshake_reply_out+DIGEST_LEN, DIGEST_LEN)) {
     /* H(K) does *not* match. Something fishy. */

@@ -27,7 +27,7 @@
 # as that of the covered work.
 
 #
-# Version: $(VERSION)
+# Version: @VERSION@
 #
 
 
@@ -41,10 +41,10 @@ distuninstallcheck_listfiles = find . -type f | \
 ACLOCAL_AMFLAGS = -I m4
 
 # subdirectories in the distribution
-SUBDIRS = lib src po tests util testenv
+SUBDIRS = lib src doc po tests util testenv
 
-EXTRA_DIST = ChangeLog.README MAILING-LIST \
-             msdos/ChangeLog msdos/config.h msdos/Makefile.DJ \
+EXTRA_DIST = MAILING-LIST \
+             msdos/config.h msdos/Makefile.DJ \
              msdos/Makefile.WC ABOUT-NLS \
              build-aux/build_info.pl build-aux/git-version-gen .version
 
@@ -60,5 +60,23 @@ clean-generic:
 
 # Arrange so that .tarball-version appears only in the distribution
 # tarball, and never in a checked-out repository.
-dist-hook:
+dist-hook: gen-ChangeLog
 	$(AM_V_GEN)echo $(VERSION) > $(distdir)/.tarball-version
+
+gen_start_date = 2014-12-10
+.PHONY: gen-ChangeLog
+gen-ChangeLog:
+	$(AM_V_GEN)if test -d .git; then				\
+	  log_fix="$(srcdir)/build-aux/git-log-fix";			\
+	  test -e "$$log_fix"						\
+	    || amend_git_log=;						\
+	  $(top_srcdir)/build-aux/gitlog-to-changelog			\
+	    $$amend_git_log --since=$(gen_start_date) > $(distdir)/cl-t && \
+            echo >>  $(distdir)/cl-t &&                                 \
+            cat ChangeLog-2014-12-10 >>  $(distdir)/cl-t &&             \
+	    { rm -f $(distdir)/ChangeLog &&				\
+	      mv $(distdir)/cl-t $(distdir)/ChangeLog; }		\
+	fi
+
+check-valgrind:
+	TESTS_ENVIRONMENT="VALGRIND_TESTS=1" $(MAKE) check

@@ -3572,7 +3572,7 @@ write_switchFrequencyTo5g(int      action,
 				if(!strcmp(nmp_safe_get("wl_wps_mode"), "disabled"))
 				{
 					if(value == 1)
-						nmp_set("wps_band", "1"); /* 0: 2.4g  1: 5g */			
+						nmp_set("wps_band_x", "1"); /* 0: 2.4g  1: 5g */			
 				}
 				else
 					return SNMP_ERR_WRONGVALUE; /* Frequency can't be switched when wps is enabled. */
@@ -7082,7 +7082,7 @@ write_switchFrequencyTo2g(int      action,
 				if(!strcmp(nmp_safe_get("wl_wps_mode"), "disabled"))
 				{
 					if(value == 1)
-						nmp_set("wps_band", "0"); /* 0: 2.4g  1: 5g */			
+						nmp_set("wps_band_x", "0"); /* 0: 2.4g  1: 5g */			
 				}
 				else
 					return SNMP_ERR_WRONGVALUE; /* Frequency can't be switched when wps is enabled. */

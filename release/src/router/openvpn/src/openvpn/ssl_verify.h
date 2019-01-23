@@ -5,8 +5,8 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
- *  Copyright (C) 2010 Fox Crypto B.V. <openvpn@fox-it.com>
+ *  Copyright (C) 2002-2017 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2010-2017 Fox Crypto B.V. <openvpn@fox-it.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -17,10 +17,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /**
@@ -30,17 +29,18 @@
 #ifndef SSL_VERIFY_H_
 #define SSL_VERIFY_H_
 
+#ifdef ENABLE_CRYPTO
+
 #include "syshead.h"
 #include "misc.h"
-#include "manage.h"
 #include "ssl_common.h"
 
 /* Include OpenSSL-specific code */
 #ifdef ENABLE_CRYPTO_OPENSSL
 #include "ssl_verify_openssl.h"
 #endif
-#ifdef ENABLE_CRYPTO_POLARSSL
-#include "ssl_verify_polarssl.h"
+#ifdef ENABLE_CRYPTO_MBEDTLS
+#include "ssl_verify_mbedtls.h"
 #endif
 
 #include "ssl_verify_backend.h"
@@ -54,20 +54,18 @@
 
 /** Structure containing the hash for a single certificate */
 struct cert_hash {
-  unsigned char sha1_hash[SHA_DIGEST_LENGTH]; /**< The SHA1 hash for a certificate */
+    unsigned char sha256_hash[256/8];
 };
 
 /** Structure containing the hashes for a full certificate chain */
 struct cert_hash_set {
-  struct cert_hash *ch[MAX_CERT_DEPTH]; /**< Array of certificate hashes */
+    struct cert_hash *ch[MAX_CERT_DEPTH]; /**< Array of certificate hashes */
 };
 
 #define VERIFY_X509_NONE                0
 #define VERIFY_X509_SUBJECT_DN          1
 #define VERIFY_X509_SUBJECT_RDN         2
 #define VERIFY_X509_SUBJECT_RDN_PREFIX  3
-#define TLS_REMOTE_SUBJECT_DN           1 + 0x100
-#define TLS_REMOTE_SUBJECT_RDN_PREFIX   3 + 0x100
 
 #define TLS_AUTHENTICATION_SUCCEEDED  0
 #define TLS_AUTHENTICATION_FAILED     1
@@ -80,7 +78,7 @@ struct cert_hash_set {
  *
  * TODO: document this function
  */
-int tls_authentication_status (struct tls_multi *multi, const int latency);
+int tls_authentication_status(struct tls_multi *multi, const int latency);
 
 /** Check whether the \a ks \c key_state is ready to receive data channel
  *   packets.
@@ -95,94 +93,83 @@ int tls_authentication_status (struct tls_multi *multi, const int latency);
 /**
  * Remove the given key state's auth control file, if it exists.
  *
- * @param ks	The key state the remove the file for
+ * @param ks    The key state the remove the file for
  */
-void key_state_rm_auth_control_file (struct key_state *ks);
+void key_state_rm_auth_control_file(struct key_state *ks);
 
 /**
  * Frees the given set of certificate hashes.
  *
- * @param chs	The certificate hash set to free.
+ * @param chs   The certificate hash set to free.
  */
-void cert_hash_free (struct cert_hash_set *chs);
+void cert_hash_free(struct cert_hash_set *chs);
 
 /**
  * Locks the certificate hash set used in the given tunnel
  *
- * @param multi	The tunnel to lock
+ * @param multi The tunnel to lock
  */
-void tls_lock_cert_hash_set (struct tls_multi *multi);
+void tls_lock_cert_hash_set(struct tls_multi *multi);
 
 /**
  * Locks the common name field for the given tunnel
  *
- * @param multi	The tunnel to lock
+ * @param multi The tunnel to lock
  */
-void tls_lock_common_name (struct tls_multi *multi);
+void tls_lock_common_name(struct tls_multi *multi);
 
 /**
  * Returns the common name field for the given tunnel
  *
- * @param multi	The tunnel to return the common name for
- * @param null	Whether null may be returned. If not, "UNDEF" will be returned.
+ * @param multi The tunnel to return the common name for
+ * @param null  Whether null may be returned. If not, "UNDEF" will be returned.
  */
-const char *tls_common_name (const struct tls_multi* multi, const bool null);
+const char *tls_common_name(const struct tls_multi *multi, const bool null);
 
 /**
  * Returns the username field for the given tunnel
  *
- * @param multi	The tunnel to return the username for
- * @param null	Whether null may be returned. If not, "UNDEF" will be returned.
+ * @param multi The tunnel to return the username for
+ * @param null  Whether null may be returned. If not, "UNDEF" will be returned.
  */
-const char *tls_username (const struct tls_multi *multi, const bool null);
+const char *tls_username(const struct tls_multi *multi, const bool null);
+
+/**
+ * Compares certificates hashes, returns true if hashes are equal.
+ *
+ * @param chs1 cert 1 hash set
+ * @param chs2 cert 2 hash set
+ */
+bool cert_hash_compare(const struct cert_hash_set *chs1, const struct cert_hash_set *chs2);
 
 #ifdef ENABLE_PF
 
 /**
  * Retrieve the given tunnel's common name and its hash value.
  *
- * @param multi		The tunnel to use
- * @param cn		Common name's string
- * @param cn_hash	Common name's hash value
+ * @param multi         The tunnel to use
+ * @param cn            Common name's string
+ * @param cn_hash       Common name's hash value
  *
  * @return true if the common name was set, false otherwise.
  */
 static inline bool
-tls_common_name_hash (const struct tls_multi *multi, const char **cn, uint32_t *cn_hash)
+tls_common_name_hash(const struct tls_multi *multi, const char **cn, uint32_t *cn_hash)
 {
-  if (multi)
+    if (multi)
     {
-      const struct tls_session *s = &multi->session[TM_ACTIVE];
-      if (s->common_name && s->common_name[0] != '\0')
-	{
-	  *cn = s->common_name;
-	  *cn_hash = s->common_name_hashval;
-	  return true;
-	}
+        const struct tls_session *s = &multi->session[TM_ACTIVE];
+        if (s->common_name && s->common_name[0] != '\0')
+        {
+            *cn = s->common_name;
+            *cn_hash = s->common_name_hashval;
+            return true;
+        }
     }
-  return false;
+    return false;
 }
 
 #endif
-
-/**
- * Returns whether or not the server should check for username/password
- *
- * @param session	The current TLS session
- *
- * @return 		true if username and password verification is enabled,
- * 			false if not.
- *
- */
-static inline bool verify_user_pass_enabled(struct tls_session *session)
-{
-  return (session->opt->auth_user_pass_verify_script
-        || plugin_defined (session->opt->plugins, OPENVPN_PLUGIN_AUTH_USER_PASS_VERIFY)
-#ifdef MANAGEMENT_DEF_AUTH
-        || management_enable_def_auth (management)
-#endif
-        );
-}
 
 /**
  * Verify the given username and password, using either an external script, a
@@ -192,39 +179,33 @@ static inline bool verify_user_pass_enabled(struct tls_session *session)
  * session's primary key state's authenticated field. Authentication may also
  * be deferred, in which case the key state's auth_deferred field is filled in.
  *
- * @param up		The username and password to verify.
- * @param multi		The TLS multi structure to verify usernames against.
- * @param session	The current TLS session
+ * @param up            The username and password to verify.
+ * @param multi         The TLS multi structure to verify usernames against.
+ * @param session       The current TLS session
  *
  */
 void verify_user_pass(struct user_pass *up, struct tls_multi *multi,
-    struct tls_session *session);
+                      struct tls_session *session);
 
 /**
  * Perform final authentication checks, including locking of the cn, the allowed
  * certificate hashes, and whether a client config entry exists in the
  * client config directory.
  *
- * @param multi		The TLS multi structure to verify locked structures.
- * @param session	The current TLS session
+ * @param multi         The TLS multi structure to verify locked structures.
+ * @param session       The current TLS session
  *
  */
 void verify_final_auth_checks(struct tls_multi *multi, struct tls_session *session);
 
-#ifdef ENABLE_X509_TRACK
-
 struct x509_track
 {
-  const struct x509_track *next;
-  const char *name;
-# define XT_FULL_CHAIN (1<<0)
-  unsigned int flags;
-  int nid;
+    const struct x509_track *next;
+    const char *name;
+#define XT_FULL_CHAIN (1<<0)
+    unsigned int flags;
+    int nid;
 };
-
-void x509_track_add (const struct x509_track **ll_head, const char *name, int msglevel, struct gc_arena *gc);
-
-#endif
 
 /*
  * Certificate checking for verify_nsCertType
@@ -236,23 +217,32 @@ void x509_track_add (const struct x509_track **ll_head, const char *name, int ms
 /** Do not perform Netscape certificate type verification */
 #define NS_CERT_CHECK_CLIENT (1<<1)
 
+/** Require keyUsage to be present in cert (0xFFFF is an invalid KU value) */
+#define OPENVPN_KU_REQUIRED (0xFFFF)
+
 /*
  * TODO: document
  */
 #ifdef MANAGEMENT_DEF_AUTH
-bool tls_authenticate_key (struct tls_multi *multi, const unsigned int mda_key_id, const bool auth, const char *client_reason);
-void man_def_auth_set_client_reason (struct tls_multi *multi, const char *client_reason);
+bool tls_authenticate_key(struct tls_multi *multi, const unsigned int mda_key_id, const bool auth, const char *client_reason);
+
+void man_def_auth_set_client_reason(struct tls_multi *multi, const char *client_reason);
+
 #endif
 
 static inline const char *
-tls_client_reason (struct tls_multi *multi)
+tls_client_reason(struct tls_multi *multi)
 {
 #ifdef ENABLE_DEF_AUTH
-  return multi->client_reason;
+    return multi->client_reason;
 #else
-  return NULL;
+    return NULL;
 #endif
 }
 
-#endif /* SSL_VERIFY_H_ */
+/** Remove any X509_ env variables from env_set es */
+void tls_x509_clear_env(struct env_set *es);
 
+#endif /* ENABLE_CRYPTO */
+
+#endif /* SSL_VERIFY_H_ */

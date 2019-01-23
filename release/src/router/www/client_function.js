@@ -86,6 +86,11 @@ var isJsonChanged = function(objNew, objOld){
 	// window object
 	var win = window.top || window;
 	
+	// Browser sometimes contain random characters here, breaking the JSON parser
+	if ((typeof(win.name) != "string") || (win.name.substring(2, 7) != "ouiDB") && (win.name.substring(2,6) != "menu")) {
+		win.name = "";
+	}
+
 	// session store
 	var store = (win.name ? JSON.parse(win.name) : {});
 	
@@ -444,7 +449,7 @@ function genClientList(){
 			clientList[thisClientMacAddr].defaultType = "5";
 		}
 		clientList[thisClientMacAddr].ip = thisClient[2];
-		clientList[thisClientMacAddr].mac = thisClient[3];
+		clientList[thisClientMacAddr].mac = thisClient[3].toUpperCase();
 		clientList[thisClientMacAddr].isGateway = (thisClient[2] == '<% nvram_get("lan_ipaddr"); %>') ? true : false;
 		clientList[thisClientMacAddr].isWebServer = true;
 		clientList[thisClientMacAddr].ssid = thisClient[5];
@@ -498,7 +503,7 @@ function genClientList(){
 		}
 		
 		clientList[thisClientMacAddr].ip = thisClient[2];
-		clientList[thisClientMacAddr].mac = thisClient[3];
+		clientList[thisClientMacAddr].mac = thisClient[3].toUpperCase();
 
 		var ori_name = (thisClient[1].trim() != "") ? thisClient[1].trim() : retHostName(clientList[thisClientMacAddr].mac);
 		if(clientList[thisClientMacAddr].name == ""){
@@ -661,7 +666,7 @@ function genClientList(){
 			clientList[thisClientMacAddr].nickName = thisClient[0];
 		}
 
-		clientList[thisClientMacAddr].mac = thisClient[1];
+		clientList[thisClientMacAddr].mac = thisClient[1].toUpperCase();
 		clientList[thisClientMacAddr].group = thisClient[2];
 		clientList[thisClientMacAddr].type = thisClient[3];
 		clientList[thisClientMacAddr].callback = thisClient[4];
@@ -831,6 +836,7 @@ function genClientList(){
 		}
 	});
 
+	var nmpCount = 0;
 	for(var i = 0; i < originData.nmpClient.length; i += 1) {
 
 		var thisClient = originData.nmpClient[i].split(">");
@@ -841,6 +847,10 @@ function genClientList(){
 		if(!thisClientMacAddr) {
 			continue;
 		}
+
+		nmpCount++;
+		if(nmpCount > 100)
+			break;
 
 		if(typeof clientList[thisClientMacAddr] == "undefined") {
 			var thisClientType = (typeof thisClient[4] == "undefined") ? "0" : thisClient[4];
@@ -1053,6 +1063,7 @@ var card_custom_usericon_del = "";
 var userIconBase64 = "NoIcon";
 function popClientListEditTable(mac, obj, name, ip, callBack) {
 	card_firstTimeOpenBlock = false;
+	mac = mac.toUpperCase();
 	var clientInfo = clientList[mac];
 	if(clientInfo == undefined) {
 		clientInfo = new setClientAttr();
@@ -1436,14 +1447,6 @@ function popClientListEditTable(mac, obj, name, ip, callBack) {
 	formObj.action = "/start_apply2.htm";
 	formObj.target = "hidden_frame";
 
-	var currentURL = "";
-	if(location.pathname == "/")
-		currentURL = "index.asp";
-	else
-		currentURL = location.pathname.substring(location.pathname.lastIndexOf('/') + 1);
-
-	formHTML += '<input type="hidden" name="current_page" value=' + currentURL + '>';
-	formHTML += '<input type="hidden" name="next_page" value=' + currentURL + '>';
 	formHTML += '<input type="hidden" name="modified" value="0">';
 	formHTML += '<input type="hidden" name="flag" value="background">';
 	formHTML += '<input type="hidden" name="action_mode" value="apply">';
@@ -1562,10 +1565,12 @@ function card_confirm(callBack) {
 		onEditClient[5] = "";
 
 		for(var i=0; i<originalCustomListArray.length; i++){
-			if(originalCustomListArray[i].split('>')[1] == onEditClient[1]){
-				onEditClient[4] = originalCustomListArray[i].split('>')[4]; // set back callback for ROG device
-				onEditClient[5] = originalCustomListArray[i].split('>')[5]; // set back keeparp for ROG device
-				originalCustomListArray.splice(i, 1); // remove the selected client from original list
+			if(originalCustomListArray[i].split('>')[1] != undefined) {
+				if(originalCustomListArray[i].split('>')[1].toUpperCase() == onEditClient[1].toUpperCase()){
+					onEditClient[4] = originalCustomListArray[i].split('>')[4]; // set back callback for ROG device
+					onEditClient[5] = originalCustomListArray[i].split('>')[5]; // set back keeparp for ROG device
+					originalCustomListArray.splice(i, 1); // remove the selected client from original list
+				}
 			}
 		}
 
@@ -1634,6 +1639,9 @@ function card_confirm(callBack) {
 							case "WTFast" :
 								showDropdownClientList('setClientmac', 'mac', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');
 								show_rulelist();
+							case "ATF" :
+								showWLMACList();
+								show_wl_atf_by_client();
 								break;
 							default :
 								refreshpage();
@@ -2044,6 +2052,12 @@ var sorter = {
 			b_num = (b[sorter.indexFlag] == "") ? 0 : b[sorter.indexFlag];
 			return parseInt(a_num) - parseInt(b_num);
 		}
+		else if(sorter.indexFlag == 8) { // Time string in (h)hh:mm:ss format
+			var a_num = 0, b_num = 0;
+			a_num = a[sorter.indexFlag].replace(/:/g, "");
+			b_num = b[sorter.indexFlag].replace(/:/g, "");
+			return parseInt(a_num) - parseInt(b_num);
+		}
 		else {
 			return parseInt(a[sorter.indexFlag]) - parseInt(b[sorter.indexFlag]);
 		}
@@ -2060,6 +2074,12 @@ var sorter = {
 			var a_num = 0, b_num = 0;
 			a_num = (a[sorter.indexFlag] == "") ? 0 : a[sorter.indexFlag];
 			b_num = (b[sorter.indexFlag] == "") ? 0 : b[sorter.indexFlag];
+			return parseInt(b_num) - parseInt(a_num);
+		}
+		else if(sorter.indexFlag == 8) { // Time string in (h)hh:mm:ss format
+			var a_num = 0, b_num = 0;
+			a_num = a[sorter.indexFlag].replace(/:/g, "");
+			b_num = b[sorter.indexFlag].replace(/:/g, "");
 			return parseInt(b_num) - parseInt(a_num);
 		}
 		else {
@@ -2343,7 +2363,7 @@ function exportClientListLog() {
 
 function sorterClientList() {
 	//initial sort ip
-	var indexMapType = ["", "", "str", "num", "str", "num", "num", "num", "str"];
+	var indexMapType = ["", "", "str", "num", "str", "num", "num", "num", "num"];
 	switch (clienlistViewMode) {
 		case "All" :
 			sorter.doSorter(sorter.all_index, indexMapType[sorter.all_index], 'all_list');
@@ -2482,7 +2502,9 @@ function create_clientlist_listview() {
 			break;
 	}
 
-	code += "<div style='text-align:center;margin-top:15px;'><input  type='button' class='button_gen' onclick='exportClientListLog();' value='<#btn_Export#>'></div>";
+	if(!top.isIE8)
+		code += "<div style='text-align:center;margin-top:15px;'><input  type='button' class='button_gen' onclick='exportClientListLog();' value='<#btn_Export#>'></div>";
+	
 	code += "</td></tr></tbody>";
 	code += "</table>";
 
@@ -2923,10 +2945,12 @@ function saveClientName(index, type, obj) {
 	document.getElementById("div_clientName_"+index).innerHTML = document.getElementById("client_name_"+index).value.trim();
 
 	for(var i = 0; i < originalCustomListArray.length; i += 1) {
-		if(originalCustomListArray[i].split('>')[1] == onEditClient[1]){
-			onEditClient[4] = originalCustomListArray[i].split('>')[4]; // set back callback for ROG device
-			onEditClient[5] = originalCustomListArray[i].split('>')[5]; // set back keeparp for ROG device
-			originalCustomListArray.splice(i, 1); // remove the selected client from original list
+		if(originalCustomListArray[i].split('>')[1] != undefined) {
+			if(originalCustomListArray[i].split('>')[1].toUpperCase() == onEditClient[1].toUpperCase()){
+				onEditClient[4] = originalCustomListArray[i].split('>')[4]; // set back callback for ROG device
+				onEditClient[5] = originalCustomListArray[i].split('>')[5]; // set back keeparp for ROG device
+				originalCustomListArray.splice(i, 1); // remove the selected client from original list
+			}
 		}
 	}
 	originalCustomListArray.push(onEditClient.join('>'));
@@ -2973,14 +2997,6 @@ function removeClient(_mac, _controlObj, _controlPanel) {
 	formObj.action = "/deleteOfflineClient.cgi";
 	formObj.target = "hidden_frame";
 
-	var currentURL = "";
-	if(location.pathname == "/")
-		currentURL = "index.asp";
-	else
-		currentURL = location.pathname.substring(location.pathname.lastIndexOf('/') + 1);
-
-	formHTML += '<input type="hidden" name="current_page" value=' + currentURL + '>';
-	formHTML += '<input type="hidden" name="next_page" value=' + currentURL + '>';
 	formHTML += '<input type="hidden" name="modified" value="0">';
 	formHTML += '<input type="hidden" name="flag" value="">';
 	formHTML += '<input type="hidden" name="action_mode" value="">';
@@ -3023,9 +3039,9 @@ function expand_hide_Client(_obj, _controlObj) {
 	}
 }
 
-function control_dropdown_client_block(_containerID, _pullArrowID) {
-	event.stopPropagation(); //cancel bubbling
-	var element = event.target || event.srcElement;
+function control_dropdown_client_block(_containerID, _pullArrowID, _evt) {
+	_evt.stopPropagation(); //cancel bubbling
+	var element = _evt.target || _evt.srcElement;
 	if(element.id == "") {
 		if(document.getElementById(_containerID) != null && document.getElementById(_pullArrowID) != null) {
 			var container_state = document.getElementById(_containerID).style.display;
@@ -3040,7 +3056,7 @@ function control_dropdown_client_block(_containerID, _pullArrowID) {
 
 //_callBackFunParam = mac>ip>..., _interfaceMode = all(wired, wll), wired, wl, _clientState = all, online, offline
 function showDropdownClientList(_callBackFun, _callBackFunParam, _interfaceMode, _containerID, _pullArrowID, _clientState) {
-	document.body.onclick = function() {control_dropdown_client_block(_containerID, _pullArrowID);}
+	document.body.addEventListener("click", function(_evt) {control_dropdown_client_block(_containerID, _pullArrowID, _evt);})
 	if(clientList.length == 0){
 		setTimeout(function() {
 			genClientList();
@@ -3050,9 +3066,9 @@ function showDropdownClientList(_callBackFun, _callBackFunParam, _interfaceMode,
 	}
 
 	var htmlCode = "";
-	htmlCode += "<div id='clientlist_online'></div>";
-	htmlCode += "<div id='clientlist_dropdown_expand' class='clientlist_dropdown_expand' onclick='expand_hide_Client(\"clientlist_dropdown_expand\", \"clientlist_offline\");' onmouseover='over_var=1;' onmouseout='over_var=0;'>Show Offline Client List</div>";
-	htmlCode += "<div id='clientlist_offline'></div>";
+	htmlCode += "<div id='" + _containerID + "_clientlist_online'></div>";
+	htmlCode += "<div id='" + _containerID + "_clientlist_dropdown_expand' class='clientlist_dropdown_expand' onclick='expand_hide_Client(\"" + _containerID + "_clientlist_dropdown_expand\", \"" + _containerID + "_clientlist_offline\");' onmouseover='over_var=1;' onmouseout='over_var=0;'>Show Offline Client List</div>";
+	htmlCode += "<div id='" + _containerID + "_clientlist_offline'></div>";
 	document.getElementById(_containerID).innerHTML = htmlCode;
 
 	var param = _callBackFunParam.split(">");
@@ -3070,7 +3086,10 @@ function showDropdownClientList(_callBackFun, _callBackFunParam, _interfaceMode,
 				}
 				break;
 			case "name" :
-				attribute_value = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
+				attribute_value = (clientObj.nickName == "") ? clientObj.name.replace(/'/g, "\\'") : clientObj.nickName.replace(/'/g, "\\'");
+				break;
+			default :
+				attribute_value = _attribute;
 				break;
 		}
 		return attribute_value;
@@ -3104,7 +3123,7 @@ function showDropdownClientList(_callBackFun, _callBackFunParam, _interfaceMode,
 		}
 		code += '</strong>';
 		if(_state == "offline")
-			code += '<strong title="Remove this client" style="float:right;margin-right:5px;cursor:pointer;" onclick="removeClient(\'' + clientObj.mac + '\', \'clientlist_dropdown_expand\', \'clientlist_offline\')">×</strong>';
+			code += '<strong title="Remove this client" style="float:right;margin-right:5px;cursor:pointer;" onclick="removeClient(\'' + clientObj.mac + '\', \'' + _containerID  + '_clientlist_dropdown_expand\', \'' + _containerID  + '_clientlist_offline\')">×</strong>';
 		code += '</div><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]--></a>';
 		return code;
 	};
@@ -3120,10 +3139,10 @@ function showDropdownClientList(_callBackFun, _callBackFunParam, _interfaceMode,
 					continue;
 				}
 				if(clientObj.isOnline) {
-					document.getElementById("clientlist_online").innerHTML += genClientItem("online");
+					document.getElementById("" + _containerID + "_clientlist_online").innerHTML += genClientItem("online");
 				}
 				else if(clientObj.from == "nmpClient") {
-					document.getElementById("clientlist_offline").innerHTML += genClientItem("offline");
+					document.getElementById("" + _containerID + "_clientlist_offline").innerHTML += genClientItem("offline");
 				}
 				break;
 			case "online" :
@@ -3134,7 +3153,7 @@ function showDropdownClientList(_callBackFun, _callBackFunParam, _interfaceMode,
 					continue;
 				}
 				if(clientObj.isOnline) {
-					document.getElementById("clientlist_online").innerHTML += genClientItem("online");
+					document.getElementById("" + _containerID + "_clientlist_online").innerHTML += genClientItem("online");
 				}
 				break;
 			case "offline" :
@@ -3145,31 +3164,31 @@ function showDropdownClientList(_callBackFun, _callBackFunParam, _interfaceMode,
 					continue;
 				}
 				if(clientObj.from == "nmpClient") {
-					document.getElementById("clientlist_offline").innerHTML += genClientItem("offline");
+					document.getElementById("" + _containerID + "_clientlist_offline").innerHTML += genClientItem("offline");
 				}
 				break;
 		}		
 	}
 	
-	if(document.getElementById("clientlist_offline").childNodes.length == "0") {
-		if(document.getElementById("clientlist_dropdown_expand") != null) {
-			removeElement(document.getElementById("clientlist_dropdown_expand"));
+	if(document.getElementById("" + _containerID + "_clientlist_offline").childNodes.length == "0") {
+		if(document.getElementById("" + _containerID + "_clientlist_dropdown_expand") != null) {
+			removeElement(document.getElementById("" + _containerID + "_clientlist_dropdown_expand"));
 		}
-		if(document.getElementById("clientlist_offline") != null) {
-			removeElement(document.getElementById("clientlist_offline"));
+		if(document.getElementById("" + _containerID + "_clientlist_offline") != null) {
+			removeElement(document.getElementById("" + _containerID + "_clientlist_offline"));
 		}
 	}
 	else {
-		if(document.getElementById("clientlist_dropdown_expand").innerText == "Show Offline Client List") {
-			document.getElementById("clientlist_offline").style.display = "none";
+		if(document.getElementById("" + _containerID + "_clientlist_dropdown_expand").innerText == "Show Offline Client List") {
+			document.getElementById("" + _containerID + "_clientlist_offline").style.display = "none";
 		}
 		else {
-			document.getElementById("clientlist_offline").style.display = "";
+			document.getElementById("" + _containerID + "_clientlist_offline").style.display = "";
 		}
 	}
-	if(document.getElementById("clientlist_online").childNodes.length == "0") {
-		if(document.getElementById("clientlist_online") != null) {
-			removeElement(document.getElementById("clientlist_online"));
+	if(document.getElementById("" + _containerID + "_clientlist_online").childNodes.length == "0") {
+		if(document.getElementById("" + _containerID + "_clientlist_online") != null) {
+			removeElement(document.getElementById("" + _containerID + "_clientlist_online"));
 		}
 	}
 
@@ -3224,7 +3243,7 @@ function oui_query_full_vendor(mac){
 				var overlibStrTmp = retOverLibStr(clientList[mac]);
 			else
 				var overlibStrTmp = "<p><#MAC_Address#>:</p>" + mac.toUpperCase();
-			overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
+			overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#>:</p>";
 			overlibStrTmp += ouiClientListArray[manufacturer_id];  //transformManufacturerName(ouiClientListArray[manufacturer_id]);
 			return overlib(overlibStrTmp);
 		} else {
@@ -3250,7 +3269,7 @@ function oui_query_web(mac){
 				if(response.search("Sorry!") == -1) {
 					if(response.search(queryStr) != -1) {
 						var retData = response.split("pre")[1].split("(base 16)")[1].replace("PROVINCE OF CHINA", "R.O.C").split("</");
-						overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
+						overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#>:</p>";
 						overlibStrTmp += retData[0].slice(0,retData[0].indexOf("\n"))
 					}
 				}

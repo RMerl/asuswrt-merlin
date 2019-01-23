@@ -1,4 +1,4 @@
-/* * Copyright (c) 2012-2015, The Tor Project, Inc. */
+/* * Copyright (c) 2012-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -12,12 +12,7 @@
 #include "or.h"
 #include "circuitmux.h"
 
-/* Everything but circuitmux_ewma.c should see this extern */
-#ifndef TOR_CIRCUITMUX_EWMA_C_
-
 extern circuitmux_policy_t ewma_policy;
-
-#endif /* !(TOR_CIRCUITMUX_EWMA_C_) */
 
 /* Externally visible EWMA functions */
 int cell_ewma_enabled(void);

@@ -185,7 +185,7 @@ function init()
 	watchdogReset();
 
 	ref.start();
-	document.getElementById("faq0").href = "http://www.asus.com"+ href_lang +"support/Search-Result-Detail/69B50762-C9C0-15F1-A5B8-C7B652F50ACF/?keyword=ASUSWRT%20Traffic%20Monitor" ;
+	document.getElementById("faq0").href = "https://www.asus.com/support/FAQ/114483/" ;
 
 	var ctf_disable = '<% nvram_get("ctf_disable"); %>';
 	if(ctf_disable == "0"){
@@ -195,9 +195,6 @@ function init()
 		document.getElementById("ctfLevelDesc").style.display = "none";
 	}
 	
-	if(bwdpi_support){
-		document.getElementById('content_title').innerHTML = "<#menu5_3_2#> - <#traffic_monitor#>";
-	}	
 }
 
 function switchPage(page){
@@ -264,7 +261,7 @@ function switchPage(page){
 							<table width="100%" >
 							<tr>
 							<td  class="formfonttitle" align="left">
-										<div id="content_title" style="margin-top:5px;"><#Menu_TrafficManager#> - <#traffic_monitor#></div>
+										<div style="margin-top:5px;"><#Menu_TrafficManager#> - <#traffic_monitor#></div>
 									</td>
 							<td>
      						<div align="right">

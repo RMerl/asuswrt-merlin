@@ -15,7 +15,7 @@ default_p_opt="-p 0.$pool -p 1.$pool -p 2.$pool -p 3.$pool"
 
 # Make sure rundir/ exists
 mkdir -p "$rundir" 2>/dev/null
-chown -R "$user:" "$rundir"
+chown -R "$user": "$rundir"
 chmod -R a=rX "$rundir"
 rm -rf rundir 2>/dev/null
 ln -s "$rundir" rundir

@@ -97,13 +97,13 @@ endif
 endif
 ifeq ($(or $(RTCONFIG_TFAT),$(RTCONFIG_TUXERA_NTFS),$(RTCONFIG_TUXERA_HFS)),y)
 	install  -m 0644 -D $(SRCFILE)/VERSION-INFO $(INSTALLDIR)/rom/Tuxera-VERSION-INFO
-ifeq ($(and $(RTCONFIG_BCMARM),$(RTCONFIG_SAMBA3)),y)
+#ifeq ($(and $(RTCONFIG_BCMARM),$(RTCONFIG_SAMBA3)),y)
 #	install -D $(SRCFILE)/samba/lib/libstdc++.so.6.0.14 $(INSTALLDIR)/usr/lib/libstdc++.so.6.0.14
 #	cd $(INSTALLDIR)/usr/lib && ln -sf libstdc++.so.6.0.14 libstdc++.so.6 && ln -sf libstdc++.so.6.0.14 libstdc++.so
-ifeq ($(RTCONFIG_BCM_7114),y)
-	install -D $(SRCFILE)/samba/smbd $(INSTALLDIR)/usr/bin/smbd
-endif
-endif
+#ifeq ($(RTCONFIG_BCM_7114),y)
+#	install -D $(SRCFILE)/samba/smbd $(INSTALLDIR)/usr/bin/smbd
+#endif
+#endif
 endif
 
 .phony: all clean install

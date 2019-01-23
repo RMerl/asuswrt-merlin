@@ -21,10 +21,15 @@ testing "readlink on a link" "readlink ./$TESTLINK" "./$TESTFILE\n" "" ""
 
 optional FEATURE_READLINK_FOLLOW
 
-testing "readlink -f on a file" "readlink -f ./$TESTFILE" "$PWD/$TESTFILE\n" "" ""
-testing "readlink -f on a link" "readlink -f ./$TESTLINK" "$PWD/$TESTFILE\n" "" ""
+# shell's $PWD may leave symlinks unresolved.
+# "pwd" may be a built-in and have the same problem.
+# External pwd _can't_ have that problem (current dir on Unix is physical).
+pwd=`which pwd`
+pwd=`$pwd`
+testing "readlink -f on a file" "readlink -f ./$TESTFILE" "$pwd/$TESTFILE\n" "" ""
+testing "readlink -f on a link" "readlink -f ./$TESTLINK" "$pwd/$TESTFILE\n" "" ""
 testing "readlink -f on an invalid link" "readlink -f ./$FAILLINK" "" "" ""
-testing "readlink -f on a wierd dir" "readlink -f $TESTDIR/../$TESTFILE" "$PWD/$TESTFILE\n" "" ""
+testing "readlink -f on a wierd dir" "readlink -f $TESTDIR/../$TESTFILE" "$pwd/$TESTFILE\n" "" ""
 
 
 # clean up

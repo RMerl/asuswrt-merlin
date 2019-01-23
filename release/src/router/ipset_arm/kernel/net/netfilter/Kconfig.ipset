@@ -1,0 +1,22 @@
+menu "Core Netfilter Configuration"
+	depends on NET && INET && NETFILTER
+
+if NETFILTER_XTABLES
+
+config NETFILTER_XT_SET
+	tristate 'set target and match support'
+	depends on IP_SET
+	depends on NETFILTER_ADVANCED
+	help
+	  This option adds the "SET" target and "set" match.
+
+	  Using this target and match, you can add/delete and match
+	  elements in the sets created by ipset(8).
+
+	  To compile it as a module, choose M here.  If unsure, say N.
+
+endif # NETFILTER_XTABLES
+
+endmenu
+
+source "net/netfilter/ipset/Kconfig"

@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef _INCLUDES_H_
-#define _INCLUDES_H_
+#ifndef DROPBEAR_INCLUDES_H_
+#define DROPBEAR_INCLUDES_H_
 
 
 #include "config.h"
@@ -57,6 +57,10 @@
 #include <stdarg.h>
 #include <dirent.h>
 #include <time.h>
+
+#ifdef RTCONFIG_PROTECTION_SERVER
+#include <libptcsrv.h>
+#endif
 
 #ifdef HAVE_UTMP_H
 #include <utmp.h>
@@ -177,4 +181,4 @@ typedef u_int32_t uint32_t;
 # define UNUSED(x) x 
 #endif
 
-#endif /* _INCLUDES_H_ */
+#endif /* DROPBEAR_INCLUDES_H_ */

@@ -1,6 +1,6 @@
 The script reads stdin and replaces all IP addresses with names before
 outputting it again. IPs from private networks are reverse looked  up
-via dns. Other IP adresses are searched for in the dnsmasq query log.
+via dns. Other IP addresses are searched for in the dnsmasq query log.
 This gives names (CNAMEs if I understand DNS correctly) that are closer
 to the name the client originally asked for then the names obtained by
 reverse lookup. Just run

@@ -7,6 +7,8 @@ use HTTPTest;
 
 
 ###############################################################################
+my $osname = $^O;
+print "OS=$osname\n";
 
 my $index = <<EOF;
 <html>
@@ -25,7 +27,7 @@ my $converted = <<EOF;
     <title>Index</title>
   </head>
   <body>
-    <a href="site%3Bsub:.html">Site</a>
+    <a href="./site%3Bsub:.html">Site</a>
   </body>
 </html>
 EOF
@@ -61,7 +63,12 @@ my %urls = (
     },
 );
 
-my $cmdline = $WgetTest::WGETPATH . " -k -r -nH http://localhost:{{port}}/index.html";
+my $restrict = "unix";
+if ($osname eq "MSWin32") {
+  $restrict = "windows";
+}
+
+my $cmdline = $WgetTest::WGETPATH . " -k -r -nH --restrict-file-names=$restrict http://localhost:{{port}}/index.html";
 
 my $expected_error_code = 0;
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Tor Project, Inc. */
+/* Copyright (c) 2012-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #define REPLAYCACHE_PRIVATE
@@ -16,6 +16,20 @@ static const char *test_buffer =
   " velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint"
   " occaecat cupidatat non proident, sunt in culpa qui officia deserunt"
   " mollit anim id est laborum.";
+
+static const char *test_buffer_2 =
+  "At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis"
+  " praesentium voluptatum deleniti atque corrupti quos dolores et quas"
+  " molestias excepturi sint occaecati cupiditate non provident, similique"
+  " sunt in culpa qui officia deserunt mollitia animi, id est laborum et"
+  " dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio."
+  " Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil"
+  " impedit quo minus id quod maxime placeat facere possimus, omnis voluptas"
+  " assumenda est, omnis dolor repellendus. Temporibus autem quibusdam et aut"
+  " officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates"
+  " repudiandae sint et molestiae non recusandae. Itaque earum rerum hic"
+  " tenetur a sapiente delectus, ut aut reiciendis voluptatibus maiores alias"
+  " consequatur aut perferendis doloribus asperiores repellat.";
 
 static void
 test_replaycache_alloc(void *arg)
@@ -83,6 +97,12 @@ test_replaycache_miss(void *arg)
         strlen(test_buffer), NULL);
   tt_int_op(result,OP_EQ, 0);
 
+  /* make sure a different buffer misses as well */
+  result =
+  replaycache_add_and_test_internal(1200, NULL, test_buffer_2,
+                                    strlen(test_buffer_2), NULL);
+  tt_int_op(result,OP_EQ, 0);
+
   /* poke the bad-parameter error case too */
   result =
     replaycache_add_and_test_internal(1200, NULL, test_buffer,
@@ -113,6 +133,18 @@ test_replaycache_hit(void *arg)
   result =
     replaycache_add_and_test_internal(1300, r, test_buffer,
         strlen(test_buffer), NULL);
+  tt_int_op(result,OP_EQ, 1);
+
+  /* make sure a different buffer misses then hits as well */
+
+  result =
+  replaycache_add_and_test_internal(1200, r, test_buffer_2,
+                                    strlen(test_buffer_2), NULL);
+  tt_int_op(result,OP_EQ, 0);
+
+  result =
+  replaycache_add_and_test_internal(1300, r, test_buffer_2,
+                                    strlen(test_buffer_2), NULL);
   tt_int_op(result,OP_EQ, 1);
 
  done:
@@ -245,7 +277,7 @@ test_replaycache_scrub(void *arg)
   /* Make sure we hit the aging-out case too */
   replaycache_scrub_if_needed_internal(1500, r);
   /* Assert that we aged it */
-  tt_int_op(digestmap_size(r->digests_seen),OP_EQ, 0);
+  tt_int_op(digest256map_size(r->digests_seen),OP_EQ, 0);
 
  done:
   if (r) replaycache_free(r);

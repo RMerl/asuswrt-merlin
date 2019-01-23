@@ -19,7 +19,7 @@ srcdir=@srcdir@
 
 # Compilation flags. Note the += does not write over the user's CFLAGS!
 # The rest of the flags come from the parent Dropbear makefile
-CFLAGS += -c -I$(srcdir)/src/headers/ -I$(srcdir)/../ -DLTC_SOURCE -I$(srcdir)/../libtommath/
+CFLAGS += -c -Isrc/headers/ -I$(srcdir)/src/headers/ -I../ -I$(srcdir)/../ -DLTC_SOURCE -I../libtommath/ -I$(srcdir)/../libtommath/
 
 # additional warnings (newer GCC 3.4 and higher)
 ifdef GCC_34

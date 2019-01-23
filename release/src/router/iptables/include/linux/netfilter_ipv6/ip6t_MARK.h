@@ -3,9 +3,9 @@
 
 struct ip6t_mark_target_info {
 #ifdef KERNEL_64_USERSPACE_32
-	unsigned long long mark;
+	unsigned long long mark, mask;
 #else
-	unsigned long mark;
+	unsigned long mark, mask;
 #endif
 };
 

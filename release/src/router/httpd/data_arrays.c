@@ -50,6 +50,7 @@
 
 #include "data_arrays.h"
 #include "httpd.h"
+#include "iptraffic.h"
 
 #include <net/route.h>
 
@@ -238,8 +239,8 @@ ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv)
 	char *nat_argv[] = {"iptables", "-t", "nat", "-nxL", NULL};
 	char line[256], tmp[256];
 	char target[16], proto[16];
-	char src[sizeof("255.255.255.255")];
-	char dst[sizeof("255.255.255.255")];
+	char src[19];
+	char dst[19];
 	char *range, *host, *port, *ptr, *val;
 	int ret = 0;
 	char chain[16];
@@ -269,10 +270,10 @@ ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv)
 		    "%15s%*[ \t]"		// target
 		    "%15s%*[ \t]"		// prot
 		    "%*s%*[ \t]"		// opt
-		    "%15[^/]/%*d%*[ \t]"	// source
+		    "%18s%*[ \t]"		// source
 		    "%15[^/]/%*d%*[ \t]"	// destination
 		    "%255[^\n]",		// options
-		    target, proto, src, dst, tmp) < 4) continue;
+		    target, proto, src, dst, tmp) < 5) continue;
 
 		/* TODO: add port trigger, portmap, etc support */
 		if (strcmp(target, "DNAT") != 0)
@@ -285,13 +286,11 @@ ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv)
 		/* uppercase proto */
 		for (ptr = proto; *ptr; ptr++)
 			*ptr = toupper(*ptr);
-#ifdef NATSRC_SUPPORT
 		/* parse source */
-		if (strcmp(src, "0.0.0.0") == 0)
+		if (strcmp(src, "0.0.0.0/0") == 0)
 			strcpy(src, "ALL");
-#endif
 		/* parse destination */
-		if (strcmp(dst, "0.0.0.0") == 0)
+		if (strcmp(dst, "0.0.0.0/0") == 0)
 			strcpy(dst, "ALL");
 
 		/* parse options */
@@ -309,13 +308,9 @@ ej_get_vserver_array(int eid, webs_t wp, int argc, char_t **argv)
 		}
 
 		ret += websWrite(wp, "["
-#ifdef NATSRC_SUPPORT
 			"\"%s\", "
-#endif
 			"\"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\"],\n",
-#ifdef NATSRC_SUPPORT
 			src,
-#endif
 			dst, proto, range, host, port ? : range, chain);
 	}
 	fclose(fp);
@@ -664,4 +659,386 @@ ej_lan_ipv6_network_array(int eid, webs_t wp, int argc, char_t **argv)
 	return ret;
 }
 #endif
+
+
+int ej_tcclass_dump_array(int eid, webs_t wp, int argc, char_t **argv) {
+	FILE *fp;
+	int ret = 0;
+#if 0
+	int len = 0;
+#endif
+	char tmp[64];
+	char wan_ifname[12];
+
+	if (nvram_get_int("qos_enable") == 0) {
+		ret += websWrite(wp, "var tcdata_lan_array = [[]];\nvar tcdata_wan_array = [[]];\n");
+		return ret;
+	}
+
+	if (nvram_get_int("qos_type") == 1) {
+		system("tc -s class show dev br0 > /tmp/tcclass.txt");
+
+		ret += websWrite(wp, "var tcdata_lan_array = [\n");
+
+		fp = fopen("/tmp/tcclass.txt","r");
+		if (fp) {
+			ret += tcclass_dump(fp, wp);
+			fclose(fp);
+		} else {
+			ret += websWrite(wp, "[]];\n");
+		}
+		unlink("/tmp/tcclass.txt");
+
+#if 0	// tc classes don't seem to use this interface as would be expected
+		fp = fopen("/sys/module/bw_forward/parameters/dev_wan", "r");
+		if (fp) {
+			if (fgets(tmp, sizeof(tmp), fp) != NULL) {
+				len = strlen(tmp);
+				if (len && tmp[len-1] == '\n')
+					tmp[len-1] = '\0';
+			}
+			fclose(fp);
+		}
+		if (len)
+			strncpy(wan_ifname, tmp, sizeof(wan_ifname));
+		else
+#endif
+			strcpy(wan_ifname, "eth0");     // Default fallback
+
+	} else {
+		strncpy(wan_ifname, get_wan_ifname(wan_primary_ifunit()), sizeof (wan_ifname));
+	}
+
+	if (nvram_get_int("qos_type") != 2) {	// Must not be BW Limiter
+		snprintf(tmp, sizeof(tmp), "tc -s class show dev %s > /tmp/tcclass.txt", wan_ifname);
+		system(tmp);
+
+	        ret += websWrite(wp, "var tcdata_wan_array = [\n");
+
+	        fp = fopen("/tmp/tcclass.txt","r");
+	        if (fp) {
+	                ret += tcclass_dump(fp, wp);
+			fclose(fp);
+		} else {
+			ret += websWrite(wp, "[]];\n");
+	        }
+		unlink("/tmp/tcclass.txt");
+	}
+	return ret;
+}
+
+
+int tcclass_dump(FILE *fp, webs_t wp) {
+	char buf[256], ratebps[16], ratepps[16];
+	int tcclass = 0;
+	int stage = 0;
+	unsigned long long traffic;
+	int ret = 0;
+
+	while (fgets(buf, sizeof(buf) , fp)) {
+		switch (stage) {
+			case 0:	// class
+				if (sscanf(buf, "class htb 1:%d %*s", &tcclass) == 1) {
+					// Skip roots 1:1 and 1:2, and skip 1:60 in tQoS since it's BCM's download class
+					if ( (tcclass < 10) || ((nvram_get_int("qos_type") == 0) && (tcclass == 60))) {
+						continue;
+					}
+					ret += websWrite(wp, "[\"%d\",", tcclass);
+					stage = 1;
+				}
+				break;
+			case 1: // Total data
+				if (sscanf(buf, " Sent %llu bytes %*d pkt %*s)", &traffic) == 1) {
+					ret += websWrite(wp, " \"%llu\",", traffic);
+					stage = 2;
+				}
+				break;
+			case 2: // Rates
+				if (sscanf(buf, " rate %15s %15s backlog %*s", ratebps, ratepps) == 2) {
+					ret += websWrite(wp, " \"%s\", \"%s\"],\n", ratebps, ratepps);
+					stage = 0;
+				}
+				break;
+			default:
+				break;
+		}
+	}
+	ret += websWrite(wp, "[]];\n");
+	return ret;
+}
+
+#if 0
+void wo_iptbackup(char *url, webs_t wp)
+{
+	static const char *ifn = "/var/lib/misc/cstats-history.gz";
+	struct stat st;
+	time_t t;
+	int i;
+
+	if (stat(ifn, &st) == 0) {
+		t = st.st_mtime;
+		sleep(1);
+	}
+	else {
+		t = 0;
+	}
+	killall("cstats", SIGHUP);
+	for (i = 20; i > 0; --i) { // may take a long time for gzip to complete
+		if ((stat(ifn, &st) == 0) && (st.st_mtime != t)) break;
+		sleep(1);
+	}
+	if (i == 0) {
+//		send_error(500, NULL, NULL);
+		return;
+	}
+//	send_header(200, NULL, mime_binary, 0);
+	do_f((char *)ifn, wp);
+}
+#endif
+
+int ej_iptmon(int eid, webs_t wp, int argc, char **argv) {
+
+	char comma;
+	char sa[256];
+	FILE *a;
+	char *exclude;
+	char *include;
+
+	char ip[INET6_ADDRSTRLEN];
+
+	int64_t tx, rx;
+
+	exclude = nvram_safe_get("cstats_exclude");
+	include = nvram_safe_get("cstats_include");
+
+	websWrite(wp, "\n\niptmon={");
+	comma = ' ';
+
+	char wholenetstatsline = 1;
+
+	if ((a = fopen("/proc/net/ipt_account/lan", "r")) == NULL) return 0;
+
+	if (!wholenetstatsline)
+		fgets(sa, sizeof(sa), a); // network
+
+	while (fgets(sa, sizeof(sa), a)) {
+		if(sscanf(sa, 
+			"ip = %s bytes_src = %llu %*u %*u %*u %*u packets_src = %*u %*u %*u %*u %*u bytes_dst = %llu %*u %*u %*u %*u packets_dst = %*u %*u %*u %*u %*u time = %*u",
+			ip, &tx, &rx) != 3 ) continue;
+		if (find_word(exclude, ip)) {
+			wholenetstatsline = 0;
+			continue;
+		}
+
+		if (((find_word(include, ip)) || (wholenetstatsline == 1)) || ((nvram_get_int("cstats_all")) && ((rx > 0) || (tx > 0)) )) {
+//		if ((find_word(include, ip)) || (wholenetstatsline == 1)) {
+//		if ((tx > 0) || (rx > 0) || (wholenetstatsline == 1)) {
+//		if ((tx > 0) || (rx > 0)) {
+			websWrite(wp,"%c'%s':{rx:0x%llx,tx:0x%llx}", comma, ip, rx, tx);
+			comma = ',';
+		}
+		wholenetstatsline = 0;
+	}
+	fclose(a);
+	websWrite(wp,"};\n");
+
+	return 0;
+}
+
+int ej_ipt_bandwidth(int eid, webs_t wp, int argc, char **argv)
+{
+	char *name;
+	int sig;
+
+	if ((nvram_get_int("cstats_enable") == 1) && (argc == 1)) {
+		if (strcmp(argv[0], "speed") == 0) {
+			sig = SIGUSR1;
+			name = "/var/spool/cstats-speed.js";
+		}
+		else {
+			sig = SIGUSR2;
+			name = "/var/spool/cstats-history.js";
+		}
+		unlink(name);
+		killall("cstats", sig);
+		f_wait_exists(name, 5);
+		do_f(name, wp);
+		unlink(name);
+	}
+	return 0;
+}
+
+int ej_iptraffic(int eid, webs_t wp, int argc, char **argv) {
+	char comma;
+	char sa[256];
+	FILE *a;
+	char ip[INET_ADDRSTRLEN];
+
+	char *exclude;
+
+	int64_t tx_bytes, rx_bytes;
+	unsigned long tp_tcp, rp_tcp;
+	unsigned long tp_udp, rp_udp;
+	unsigned long tp_icmp, rp_icmp;
+	unsigned int ct_tcp, ct_udp;
+
+	exclude = nvram_safe_get("cstats_exclude");
+
+	Node tmp;
+	Node *ptr;
+
+	iptraffic_conntrack_init();
+
+	if ((a = fopen("/proc/net/ipt_account/lan", "r")) == NULL) return 0;
+
+        websWrite(wp, "\n\niptraffic=[");
+        comma = ' ';
+
+	fgets(sa, sizeof(sa), a); // network
+	while (fgets(sa, sizeof(sa), a)) {
+		if(sscanf(sa, 
+			"ip = %s bytes_src = %llu %*u %*u %*u %*u packets_src = %*u %lu %lu %lu %*u bytes_dst = %llu %*u %*u %*u %*u packets_dst = %*u %lu %lu %lu %*u time = %*u",
+			ip, &tx_bytes, &tp_tcp, &tp_udp, &tp_icmp, &rx_bytes, &rp_tcp, &rp_udp, &rp_icmp) != 9 ) continue;
+		if (find_word(exclude, ip)) continue ;
+		if ((tx_bytes > 0) || (rx_bytes > 0)){
+			strncpy(tmp.ipaddr, ip, INET_ADDRSTRLEN);
+			ptr = TREE_FIND(&tree, _Node, linkage, &tmp);
+			if (!ptr) {
+				ct_tcp = 0;
+				ct_udp = 0;
+			} else {
+				ct_tcp = ptr->tcp_conn;
+				ct_udp = ptr->udp_conn;
+			}
+			websWrite(wp, "%c['%s', %llu, %llu, %lu, %lu, %lu, %lu, %lu, %lu, %u, %u]", 
+						comma, ip, rx_bytes, tx_bytes, rp_tcp, tp_tcp, rp_udp, tp_udp, rp_icmp, tp_icmp, ct_tcp, ct_udp);
+			comma = ',';
+		}
+	}
+	fclose(a);
+	websWrite(wp, "];\n");
+
+	TREE_FORWARD_APPLY(&tree, _Node, linkage, Node_housekeeping, NULL);
+	TREE_INIT(&tree, Node_compare);
+
+	return 0;
+}
+
+void iptraffic_conntrack_init() {
+	unsigned int a_time, a_proto;
+	char a_src[INET_ADDRSTRLEN];
+	char a_dst[INET_ADDRSTRLEN];
+	char b_src[INET_ADDRSTRLEN];
+	char b_dst[INET_ADDRSTRLEN];
+
+	char sa[256];
+	char sb[256];
+	FILE *a;
+	char *p;
+	int x;
+
+	Node tmp;
+	Node *ptr;
+
+	unsigned long rip;
+	unsigned long lan;
+	unsigned long mask;
+
+	if (strcmp(nvram_safe_get("lan_ifname"), "") != 0) {
+		rip = inet_addr(nvram_safe_get("lan_ipaddr"));
+		mask = inet_addr(nvram_safe_get("lan_netmask"));
+		lan = rip & mask;
+//		_dprintf("rip[%d]=%lu\n", br, rip[br]);
+//		_dprintf("mask[%d]=%lu\n", br, mask[br]);
+//		_dprintf("lan[%d]=%lu\n", br, lan[br]);
+	} else {
+		mask = 0;
+		rip = 0;
+		lan = 0;
+	}
+
+	const char conntrack[] = "/proc/net/ip_conntrack";
+
+	if ((a = fopen(conntrack, "r")) == NULL) return;
+
+//	ctvbuf(a);	// if possible, read in one go
+
+	while (fgets(sa, sizeof(sa), a)) {
+		if (sscanf(sa, "%*s %u %u", &a_proto, &a_time) != 2) continue;
+
+		if ((a_proto != 6) && (a_proto != 17)) continue;
+
+		if ((p = strstr(sa, "src=")) == NULL) continue;
+		if (sscanf(p, "src=%s dst=%s %n", a_src, a_dst, &x) != 2) continue;
+		p += x;
+
+		if ((p = strstr(p, "src=")) == NULL) continue;
+		if (sscanf(p, "src=%s dst=%s", b_src, b_dst) != 2) continue;
+
+		snprintf(sb, sizeof(sb), "%s %s %s %s", a_src, a_dst, b_src, b_dst);
+		remove_dups(sb, sizeof(sb));
+
+		char ipaddr[INET_ADDRSTRLEN], *next = NULL;
+
+		foreach(ipaddr, sb, next) {
+			if ((mask == 0) || ((inet_addr(ipaddr) & mask) != lan)) continue;
+
+			strncpy(tmp.ipaddr, ipaddr, INET_ADDRSTRLEN);
+			ptr = TREE_FIND(&tree, _Node, linkage, &tmp);
+
+			if (!ptr) {
+				_dprintf("%s: new ip: %s\n", __FUNCTION__, ipaddr);
+				TREE_INSERT(&tree, _Node, linkage, Node_new(ipaddr));
+				ptr = TREE_FIND(&tree, _Node, linkage, &tmp);
+			}
+			if (a_proto == 6) ++ptr->tcp_conn;
+			if (a_proto == 17) ++ptr->udp_conn;
+		}
+	}
+	fclose(a);
+//	Tree_info();
+}
+
+void ctvbuf(FILE *f) {
+	int n;
+	struct sysinfo si;
+//	meminfo_t mem;
+
+#if 1
+	const char *p;
+
+	if ((p = nvram_get("ct_max")) != NULL) {
+		n = atoi(p);
+		if (n == 0) n = 2048;
+		else if (n < 1024) n = 1024;
+		else if (n > 10240) n = 10240;
+	}
+	else {
+		n = 2048;
+	}
+#else
+	char s[64];
+
+	if (f_read_string("/proc/sys/net/ipv4/ip_conntrack_max", s, sizeof(s)) > 0) n = atoi(s);
+		else n = 1024;
+	if (n < 1024) n = 1024;
+		else if (n > 10240) n = 10240;
+#endif
+
+	n *= 170;	// avg tested
+
+//	get_memory(&mem);
+//	if (mem.maxfreeram < (n + (64 * 1024))) n = mem.maxfreeram - (64 * 1024);
+
+	sysinfo(&si);
+	if (si.freeram < (n + (64 * 1024))) n = si.freeram - (64 * 1024);
+
+//	cprintf("free: %dK, buffer: %dK\n", si.freeram / 1024, n / 1024);
+
+	if (n > 4096) {
+//		n =
+		setvbuf(f, NULL, _IOFBF, n);
+//		cprintf("setvbuf = %d\n", n);
+	}
+}
 

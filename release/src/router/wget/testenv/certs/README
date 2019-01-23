@@ -1,0 +1,87 @@
+To create the server RSA private key:
+$ certtool --generate-privkey --outfile server-key.pem --rsa
+
+
+To create a self signed CA certificate:
+$ certtool --generate-privkey --outfile ca-key.pem
+$ certtool --generate-self-signed --load-privkey ca-key.pem --outfile ca-cert.pem
+Common name: GNU Wget
+UID:
+Organizational unit name: Wget
+Organization name: GNU
+Locality name:
+State or province name:
+Country name (2 chars):
+Enter the subject's domain component (DC):
+This field should not be used in new certificates.
+E-mail:
+Enter the certificate's serial number in decimal (default: 6080487640893163573):
+
+Activation/Expiration time.
+The certificate will expire in (days): -1
+
+Extensions.
+Does the certificate belong to an authority? (y/N): y
+Path length constraint (decimal, -1 for no constraint):
+Is this a TLS web client certificate? (y/N):
+Will the certificate be used for IPsec IKE operations? (y/N):
+Is this a TLS web server certificate? (y/N):
+Enter a dnsName of the subject of the certificate:
+Enter a URI of the subject of the certificate:
+Enter the IP address of the subject of the certificate:
+Enter the e-mail of the subject of the certificate:
+Will the certificate be used to sign OCSP requests? (y/N):
+Will the certificate be used to sign code? (y/N):
+Will the certificate be used for time stamping? (y/N):
+Will the certificate be used to sign other certificates? (y/N): y
+Will the certificate be used to sign CRLs? (y/N): y
+Enter the URI of the CRL distribution point:
+
+
+To generate a server certificate using the private key only:
+$ certtool --generate-certificate --load-privkey server-key.pem --outfile server-cert.pem --load-ca-certificate ca-cert.pem --load-ca-privkey ca-key.pem
+Common name: 127.0.0.1
+UID:
+Organizational unit name: Wget
+Organization name: GNU
+Locality name:
+State or province name:
+Country name (2 chars):
+Enter the subject's domain component (DC):
+This field should not be used in new certificates.
+E-mail:
+Enter the certificate's serial number in decimal (default: 6080488276853553635):
+
+Activation/Expiration time.
+The certificate will expire in (days): -1
+
+Extensions.
+Does the certificate belong to an authority? (y/N):
+Is this a TLS web client certificate? (y/N):
+Will the certificate be used for IPsec IKE operations? (y/N):
+Is this a TLS web server certificate? (y/N): y
+Enter a dnsName of the subject of the certificate: 127.0.0.1
+Enter a dnsName of the subject of the certificate: localhost
+Enter a dnsName of the subject of the certificate:
+Enter a URI of the subject of the certificate:
+Enter the IP address of the subject of the certificate:
+Will the certificate be used for signing (DHE and RSA-EXPORT ciphersuites)? (Y/n):
+Will the certificate be used for encryption (RSA ciphersuites)? (Y/n):
+
+
+To create a CRL for the server certificate:
+$ certtool --generate-crl --load-ca-privkey ca-key.pem --load-ca-certificate ca-cert.pem --load-certificate server-cert.pem --outfile server-crl.pem
+Generating a signed CRL...
+Update times.
+The certificate will expire in (days): -1
+CRL Number (default: 6080006793650397145):
+
+To generate a public key in PEM format:
+$ openssl x509 -noout -pubkey < server-cert.pem > server-pubkey.pem
+
+To generate a public key in DER format:
+$ openssl x509 -noout -pubkey < server-cert.pem | openssl asn1parse -noout -inform pem -out server-pubkey.der
+
+To generate a sha256 hash of the public key:
+$ openssl x509 -noout -pubkey < server-cert.pem | openssl asn1parse -noout -inform pem -out /dev/stdout | openssl dgst -sha256 -binary | openssl base64
+mHiEhWHvusnzP7COZk+SzSJ+Gl7nZT+ADx0PUnDD7mM=

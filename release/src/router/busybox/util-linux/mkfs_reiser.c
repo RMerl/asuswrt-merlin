@@ -66,7 +66,7 @@ struct reiserfs_super_block {
 
 	char s_magic[10];               /* 52 "ReIsErFs" or "ReIsEr2Fs" or "ReIsEr3Fs" */
 	uint16_t sb_fs_state;           /* 62 it is set to used by fsck to mark which phase of rebuilding is done (used for fsck debugging) */
-	uint32_t sb_hash_function_code; /* 64 code of fuction which was/is/will be used to sort names in a directory. See codes in above */
+	uint32_t sb_hash_function_code; /* 64 code of function which was/is/will be used to sort names in a directory. See codes in above */
 	uint16_t sb_tree_height;        /* 68 height of filesytem tree. Tree consisting of only one root block has 2 here */
 	uint16_t sb_bmap_nr;            /* 70 amount of bitmap blocks needed to address each block of file system */
 	uint16_t sb_version;            /* 72 this field is only reliable on filesystem with non-standard journal */
@@ -224,8 +224,8 @@ int mkfs_reiser_main(int argc UNUSED_PARAM, char **argv)
 	jp = &sb->sb_journal;
 	STORE_LE(jp->jp_journal_1st_block, REISERFS_DISK_OFFSET_IN_BYTES / blocksize + 1/*sb*/ + 1/*bmp#0*/);
 	timestamp = time(NULL);
-	srandom(timestamp);
-	STORE_LE(jp->jp_journal_magic, random());
+	srand(timestamp);
+	STORE_LE(jp->jp_journal_magic, rand());
 	STORE_LE(jp->jp_journal_size, journal_blocks);
 	STORE_LE(jp->jp_journal_trans_max, JOURNAL_TRANS_MAX);
 	STORE_LE(jp->jp_journal_max_batch, JOURNAL_MAX_BATCH);

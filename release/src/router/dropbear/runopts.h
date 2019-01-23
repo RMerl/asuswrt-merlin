@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef _RUNOPTS_H_
-#define _RUNOPTS_H_
+#ifndef DROPBEAR_RUNOPTS_H_
+#define DROPBEAR_RUNOPTS_H_
 
 #include "includes.h"
 #include "signkey.h"
@@ -33,18 +33,24 @@
 
 typedef struct runopts {
 
-#if defined(ENABLE_SVR_REMOTETCPFWD) || defined(ENABLE_CLI_LOCALTCPFWD)
+#if defined(ENABLE_SVR_REMOTETCPFWD) || defined(ENABLE_CLI_LOCALTCPFWD) \
+    || defined(ENABLE_CLI_REMOTETCPFWD)
 	int listen_fwd_all;
 #endif
 	unsigned int recv_window;
 	time_t keepalive_secs; /* Time between sending keepalives. 0 is off */
 	time_t idle_timeout_secs; /* Exit if no traffic is sent/received in this time */
+	int usingsyslog;
 
 #ifndef DISABLE_ZLIB
 	/* TODO: add a commandline flag. Currently this is on by default if compression
 	 * is compiled in, but disabled for a client's non-final multihop stages. (The
 	 * intermediate stages are compressed streams, so are uncompressible. */
-	int enable_compress;
+	enum {
+		DROPBEAR_COMPRESS_DELAYED, /* Server only */
+		DROPBEAR_COMPRESS_ON,
+		DROPBEAR_COMPRESS_OFF,
+	} compress_mode;
 #endif
 
 #ifdef ENABLE_USER_ALGO_LIST
@@ -58,16 +64,16 @@ extern runopts opts;
 
 int readhostkey(const char * filename, sign_key * hostkey, 
 	enum signkey_type *type);
-void load_all_hostkeys();
+void load_all_hostkeys(void);
 
 typedef struct svr_runopts {
 
 	char * bannerfile;
 
 	int forkbg;
-	int usingsyslog;
 
-	/* ports is an array of the portcount listening ports */
+	/* ports and addresses are arrays of the portcount 
+	listening ports. strings are malloced. */
 	char *ports[DROPBEAR_MAX_PORTS];
 	unsigned int portcount;
 	char *addresses[DROPBEAR_MAX_PORTS];
@@ -113,7 +119,7 @@ typedef struct svr_runopts {
 extern svr_runopts svr_opts;
 
 void svr_getopts(int argc, char ** argv);
-void loadhostkeys();
+void loadhostkeys(void);
 
 typedef struct cli_runopts {
 
@@ -133,6 +139,9 @@ typedef struct cli_runopts {
 	int is_subsystem;
 #ifdef ENABLE_CLI_PUBKEY_AUTH
 	m_list *privkeys; /* Keys to use for public-key auth */
+#endif
+#ifdef ENABLE_CLI_ANYTCPFWD
+	int exit_on_fwd_failure;
 #endif
 #ifdef ENABLE_CLI_REMOTETCPFWD
 	m_list * remotefwds;
@@ -161,9 +170,9 @@ extern cli_runopts cli_opts;
 void cli_getopts(int argc, char ** argv);
 
 #ifdef ENABLE_USER_ALGO_LIST
-void parse_ciphers_macs();
+void parse_ciphers_macs(void);
 #endif
 
 void print_version(void);
 
-#endif /* _RUNOPTS_H_ */
+#endif /* DROPBEAR_RUNOPTS_H_ */

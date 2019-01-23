@@ -214,6 +214,16 @@ static unsigned int ipv6_defrag(unsigned int hooknum,
 	nf_ct_frag6_output(hooknum, reasm, (struct net_device *)in,
 			   (struct net_device *)out, okfn);
 
+#if defined(HNDCTF)
+	{
+		struct nf_conn *ct;
+		enum ip_conntrack_info ctinfo;
+
+		ct = nf_ct_get(*pskb, &ctinfo);
+		ip_conntrack_ipct_add(reasm, hooknum, ct, ctinfo, NULL);
+	}
+#endif /* HNDCTF */
+
 	return NF_STOLEN;
 }
 

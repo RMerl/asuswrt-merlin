@@ -13,26 +13,85 @@
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="pwdmeter.css">
 <link rel="stylesheet" type="text/css" href="device-map/device-map.css">
+<link rel="stylesheet" type="text/css" href="css/icon.css">
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
-<script language-"JavaScript" type="text/javascript" src="/merlin.js"></script>
+<script language="JavaScript" type="text/javascript" src="/merlin.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<style>
+.cancel{
+	border: 2px solid #898989;
+	border-radius:50%;
+	background-color: #898989;
+}
+.check{
+	border: 2px solid #093;
+	border-radius:50%;
+	background-color: #093;
+}
+.cancel, .check{
+	width: 22px;
+	height: 22px;
+	margin:0 auto;
+	transition: .35s;
+}
+.cancel:active, .check:active{
+	transform: scale(1.5,1.5);
+	opacity: 0.5;
+	transition: 0;
+}
+.all_enable{
+	border: 1px solid #393;
+	color: #393;
+}
+.all_disable{
+	border: 1px solid #999;
+	color: #999;
+}
+.contentM_upload{
+	position:absolute;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	z-index:500;
+	background-color:#2B373B;
+	display:none;
+	margin-left: 30%;
+	top: 1200px;
+	width:650px;
+}
+
+
+.Upload_item{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 13px;
+	font-weight: bolder;
+	color: #FFFFFF;
+	margin-left: 15px;
+	margin-bottom: 15px;
+	margin-top: 15px;
+}
+
+.Upload_file{
+	background-color:#2B373B;
+	color:#FC0;
+	*color:#000;
+	border:0px;
+}
+</style>
 <script>
 time_day = uptimeStr.substring(5,7);//Mon, 01 Aug 2011 16:25:44 +0800(1467 secs since boot....
 time_mon = uptimeStr.substring(9,12);
 time_time = uptimeStr.substring(18,20);
 dstoffset = '<% nvram_get("time_zone_dstoff"); %>';
 
-var isFromHTTPS = false;
-if((location.href.search('https://') >= 0) || (location.href.search('HTTPS://') >= 0)){
-        isFromHTTPS = true;
-}
-
-var orig_http_clientlist = decodeURIComponent("<% nvram_char_to_ascii("","http_clientlist"); %>");
-var http_clientlist_array = decodeURIComponent("<% nvram_char_to_ascii("","http_clientlist"); %>");
+var orig_enable_acc_restriction = '<% nvram_get("enable_acc_restriction"); %>';
+var orig_restrict_rulelist_array = [];
+var restrict_rulelist_array = [];
 var accounts = [<% get_all_accounts(); %>];
 for(var i=0; i<accounts.length; i++){
 	accounts[i] = decodeURIComponent(accounts[i]);	
@@ -48,7 +107,29 @@ else
 if(sw_mode == 3 || (sw_mode == 4))
 	theUrl = location.hostName;
 
+var httpd_cert_info = [<% httpd_cert_info(); %>][0];
+var uploaded_cert = false;
+
 function initial(){	
+	//parse nvram to array
+	var parseNvramToArray = function(oriNvram) {
+		var parseArray = [];
+		var oriNvramRow = decodeURIComponent(oriNvram).split('<');
+		for(var i = 0; i < oriNvramRow.length; i += 1) {
+			if(oriNvramRow[i] != "") {
+				var oriNvramCol = oriNvramRow[i].split('>');
+				var eachRuleArray = new Array();
+				for(var j = 0; j < oriNvramCol.length; j += 1) {
+					eachRuleArray.push(oriNvramCol[j]);
+				}
+				parseArray.push(eachRuleArray);
+			}
+		}
+		return parseArray;
+	};
+	orig_restrict_rulelist_array = parseNvramToArray('<% nvram_char_to_ascii("","restrict_rulelist"); %>');
+	restrict_rulelist_array = JSON.parse(JSON.stringify(orig_restrict_rulelist_array));
+
 	show_menu();
 	show_http_clientlist();
 	display_spec_IP(document.form.http_client.value);
@@ -91,6 +172,8 @@ function initial(){
 	else{
 		hide_https_lanport(document.form.http_enable.value);
 		hide_https_wanport(document.form.http_enable.value);
+		hide_https_crt();
+		show_cert_details();
 	}	
 	
 	if(wifi_tog_btn_support || wifi_hw_sw_support || sw_mode == 2 || sw_mode == 4){		// wifi_tog_btn && wifi_hw_sw && hide WPS button behavior under repeater mode
@@ -175,31 +258,65 @@ var time_zone_withdst="";
 
 function applyRule(){
 	if(validForm()){
-		var rule_num = document.getElementById('http_clientlist_table').rows.length;
-		var item_num = document.getElementById('http_clientlist_table').rows[0].cells.length;
-		var tmp_value = "";
+		var isFromHTTPS = (function(){
+			if(location.protocol.toLowerCase() == "https:") return true;
+			else return false;
+		})();
+
+		var isFromWAN = (function(){
+			var lanIpAddr = '<% nvram_get("lan_ipaddr"); %>';
+			if(location.hostname == lanIpAddr) return false;
+			else if(location.hostname == "router.asus.com") return false;
+			else if(location.hostname == "repeater.asus.com") return false;
+			else if(location.hostname == "cellspot.asus.com") return false;
+			else return true;
+		})();
+
+		var restart_firewall_flag = false;
+		var restart_httpd_flag = false;
 	
-		for(i=0; i<rule_num; i++){
-			tmp_value += "<"		
-			for(j=0; j<item_num-1; j++){	
-				tmp_value += document.getElementById('http_clientlist_table').rows[i].cells[j].innerHTML;
-				if(j != item_num-2)	
-					tmp_value += ">";
+		//parse array to nvram
+		var old_fw_tmp_value = ""; //for old version fw
+		var tmp_value = "";
+		for(var i = 0; i < restrict_rulelist_array.length; i += 1) {
+			if(restrict_rulelist_array[i].length != 0) {
+				old_fw_tmp_value += "<";
+				tmp_value += "<";
+				for(var j = 0; j < restrict_rulelist_array[i].length; j += 1) {
+					tmp_value += restrict_rulelist_array[i][j];
+					if( (j + 1) != restrict_rulelist_array[i].length)
+						tmp_value += ">";
+
+					if(j == 1) //IP, for old version fw
+						old_fw_tmp_value += restrict_rulelist_array[i][j];
+				}
 			}
 		}
-		if(tmp_value == "<"+"<#IPConnection_VSList_Norule#>" || tmp_value == "<")
-			tmp_value = "";	
-		document.form.http_clientlist.value = tmp_value;
 
-		if(document.form.http_clientlist.value == "" && document.form.http_client[0].checked == 1){
+		var getRadioItemCheck = function(obj) {
+			var checkValue = "";
+			var radioLength = obj.length;
+			for(var i = 0; i < radioLength; i += 1) {
+				if(obj[i].checked) {
+					checkValue = obj[i].value;
+					break;
+				}
+			}
+			return 	checkValue;
+		};
+		document.form.http_client.value = getRadioItemCheck(document.form.http_client_radio); //for old version fw
+		document.form.http_clientlist.value = old_fw_tmp_value; //for old version fw
+		document.form.enable_acc_restriction.value = getRadioItemCheck(document.form.http_client_radio);
+		document.form.restrict_rulelist.value = tmp_value;
+	
+		if(document.form.restrict_rulelist.value == "" && document.form.http_client_radio[0].checked == 1){
 			alert("<#JS_fieldblank#>");
 			document.form.http_client_ip_x_0.focus();
 			return false;
 		}
 
-		if(document.form.http_client[0].checked && document.form.http_clientlist.value != orig_http_clientlist){
-			document.form.action_script.value = "restart_time;restart_httpd;restart_upnp";
-		}
+		if((document.form.enable_acc_restriction.value != orig_enable_acc_restriction) || (restrict_rulelist_array.toString() != orig_restrict_rulelist_array.toString()))
+			restart_firewall_flag = true;
 
 		if(document.form.http_passwd2.value.length > 0){
 			document.form.http_passwd.value = document.form.http_passwd2.value;
@@ -235,8 +352,14 @@ function applyRule(){
 				|| document.form.http_enable.value != '<% nvram_get("http_enable"); %>'
 				|| document.form.misc_httpport_x.value != '<% nvram_get("misc_httpport_x"); %>'
 				|| document.form.misc_httpsport_x.value != '<% nvram_get("misc_httpsport_x"); %>'
+				|| getRadioItemCheck(document.form.https_crt_gen) == "1"
+		                || uploaded_cert
+				|| document.form.https_crt_cn.value != '<% nvram_get("https_crt_cn"); %>'
 			){
-			document.form.action_script.value = "restart_time;restart_httpd;restart_upnp";
+			restart_httpd_flag = true;
+			if(document.form.https_crt_cn.value != '<% nvram_get("https_crt_cn"); %>'){
+				document.form.https_crt_gen.value = "1";
+			}
 			if(document.form.http_enable.value == "0"){	//HTTP
 				if(isFromWAN)
 					document.form.flag.value = "http://" + location.hostname + ":" + document.form.misc_httpport_x.value;
@@ -280,6 +403,14 @@ function applyRule(){
 		if(reboot_schedule_support){
 			updateDateTime();
 		}
+
+		var action_script_tmp = "restart_time;";
+		if(restart_httpd_flag)
+			action_script_tmp += "restart_httpd;";
+		action_script_tmp += "restart_upnp;";
+		if(restart_firewall_flag)
+			action_script_tmp += "restart_firewall;";
+		document.form.action_script.value = action_script_tmp;
 
 		showLoading();
 		document.form.submit();
@@ -386,9 +517,7 @@ function validForm(){
 			}	
 	}
 
-	if(!validator.ipAddrFinal(document.form.log_ipaddr, 'log_ipaddr')
-			|| !validator.string(document.form.ntp_server0)
-			)
+	if(!validator.string(document.form.ntp_server0))
 		return false;
 
 	
@@ -468,7 +597,7 @@ function validForm(){
 
 	if(document.form.http_passwd2.value.length > 0)	//password setting changed
 		alert("<#File_Pop_content_alert_desc10#>");
-		
+
 	return true;
 }
 
@@ -553,6 +682,7 @@ var timezones = [
 	["UTC-3_4",	"(GMT+03:00) <#TZ44#>"],
 	["UTC-3_5",	"(GMT+03:00) <#TZ45#>"],
 	["IST-3",	"(GMT+03:00) <#TZ48#>"],
+	["UTC-3_6",	"(GMT+03:00) <#TZ48_1#>"],
 	["UTC-3.30DST",	"(GMT+03:30) <#TZ49#>"],	
 	["UTC-4_1",	"(GMT+04:00) <#TZ50#>"],
 	["UTC-4_5",	"(GMT+04:00) <#TZ50_2#>"],
@@ -774,23 +904,61 @@ function hide_https_wanport(_value){
 	document.getElementById("https_port").style.display = (_value == "0") ? "none" : "";	
 }
 
+function hide_https_crt(){
+	var protos = document.form.http_enable.value;
+
+	showhide("https_crt_san", (protos != "0" ? 1 : 0));
+	showhide("https_crt_gen", (protos != "0" ? 1 : 0));
+	showhide("https_cert", (protos != "0" ? 1 : 0));
+	showhide("cert_details", (protos != "0" ? 1 : 0));
+}
+
 // show clientlist
 function show_http_clientlist(){
-	var http_clientlist_row = http_clientlist_array.split('<');
 	var code = "";
-	code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="list_table" id="http_clientlist_table">'; 
-	if(http_clientlist_row.length == 1)
-		code +='<tr><td style="color:#FFCC00;"><#IPConnection_VSList_Norule#></td>';
-	else{
-		for(var i =1; i < http_clientlist_row.length; i++){
-		code +='<tr id="row'+i+'">';
-		code +='<td width="80%">'+ http_clientlist_row[i] +'</td>';		//Url keyword
-		code +='<td width="20%">';
-		code +="<input class=\"remove_btn\" type=\"button\" onclick=\"deleteRow(this);\" value=\"\"/></td>";
+	code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="list_table" id="http_clientlist_table">';
+	if(restrict_rulelist_array.length == 0) {
+		code +='<tr><td style="color:#FFCC00;"><#IPConnection_VSList_Norule#></td></tr>';
+	}
+	else {
+		var transformNumToText = function(restrict_type) {
+			var bit_text_array = ["", "Web UI", "SSH", "Telnet"];
+			var type_text = "";
+			for(var i = 1; restrict_type != 0 && i <= 4; i += 1) {
+				if(restrict_type & 1) {
+					if(type_text == "")
+						type_text += bit_text_array[i];
+					else 
+						type_text += ", " + bit_text_array[i];
+				}
+				restrict_type = restrict_type >> 1;
+			}
+			return type_text;
+		};
+		for(var i = 0; i < restrict_rulelist_array.length; i += 1) {
+			if(restrict_rulelist_array[i][0] == "1")
+				code += '<tr style="color:#FFFFFF;">';
+			else
+				code += '<tr style="color:#A0A0A0;">';
+			code += '<td width="10%">';
+			if(restrict_rulelist_array[i][0] == "1")
+				code += '<div class="check" onclick="control_rule_status(this);"><div style="width:16px;height:16px;margin: 3px auto" class="icon_check"></div></div>';
+			else
+				code += '<div class="cancel" style="" onclick="control_rule_status(this);"><div style="width:16px;height:16px;margin: 3px auto" class="icon_cancel"></div></div>';
+			code += '</td>';
+			code += '<td width="40%">';
+			code += restrict_rulelist_array[i][1];
+			code += "</td>";
+			code += '<td width="40%">';
+			code += transformNumToText(restrict_rulelist_array[i][2]);
+			code += "</td>";
+			code += '<td width="10%">';
+			code += '<div class="remove" style="margin:0 auto" onclick="deleteRow(this);">';
+			code += "</td>";
+			code += '</tr>';
 		}
 	}
-  	code +='</tr></table>';
-	
+	code +='</table>';
 	document.getElementById("http_clientlist_Block").innerHTML = code;
 }
 
@@ -817,25 +985,19 @@ function check_Timefield_checkbox(){	// To check Date checkbox checked or not an
 function deleteRow(r){
 	var i=r.parentNode.parentNode.rowIndex;
 	document.getElementById('http_clientlist_table').deleteRow(i);
-  
-	var http_clientlist_value = "";
-	for(i=0; i<document.getElementById('http_clientlist_table').rows.length; i++){
-		http_clientlist_value += "<";
-		http_clientlist_value += document.getElementById('http_clientlist_table').rows[i].cells[0].innerHTML;
-	}
-	
-	http_clientlist_array = http_clientlist_value;
-	if(http_clientlist_array == "")
+
+ 	restrict_rulelist_array.splice(i,1);
+
+	if(restrict_rulelist_array.length == 0)
 		show_http_clientlist();
 }
 
 function addRow(obj, upper){
 	if('<% nvram_get("http_client"); %>' != "1")
-		document.form.http_client[0].checked = true;
+		document.form.http_client_radio[0].checked = true;
 		
 	//Viz check max-limit 
-	var rule_num = document.getElementById('http_clientlist_table').rows.length;
-	var item_num = document.getElementById('http_clientlist_table').rows[0].cells.length;		
+	var rule_num = restrict_rulelist_array.length;
 	if(rule_num >= upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
 		return false;	
@@ -850,21 +1012,47 @@ function addRow(obj, upper){
 	else if(validator.validIPForm(obj, 2) != true){
 		return false;
 	}
-	else{		
-		//Viz check same rule
-		for(i=0; i<rule_num; i++){
-			for(j=0; j<item_num-1; j++){		//only 1 value column
-				if(obj.value == document.getElementById('http_clientlist_table').rows[i].cells[j].innerHTML){
+	var access_type_value = 0;
+	$(".access_type").each(function() {
+		if(this.checked)
+			access_type_value += parseInt($(this).val());
+	});	
+	if(access_type_value == 0) {
+		alert("Please select at least one Access Type.");/*untranslated*/
+		return false;
+	}
+	else{
+		var newRuleArray = new Array();
+		newRuleArray.push("1");
+		newRuleArray.push(obj.value.trim());
+		newRuleArray.push(access_type_value.toString());
+		var newRuleArray_tmp = new Array();
+		newRuleArray_tmp = newRuleArray.slice();
+		newRuleArray_tmp.splice(0, 1);
+		newRuleArray_tmp.splice(1, 1);
+		if(restrict_rulelist_array.length > 0) {
+			for(var i = 0; i < restrict_rulelist_array.length; i += 1) {
+				var restrict_rulelist_array_tmp = restrict_rulelist_array[i].slice();
+				restrict_rulelist_array_tmp.splice(0, 1);
+				restrict_rulelist_array_tmp.splice(1, 1);
+				if(newRuleArray_tmp.toString() == restrict_rulelist_array_tmp.toString()) { //compare IP
 					alert("<#JS_duplicate#>");
 					return false;
-				}	
+				}
 			}
 		}
+		restrict_rulelist_array.push(newRuleArray);
 		
-		http_clientlist_array += "<";
-		http_clientlist_array += obj.value;
-		obj.value = "";		
+		obj.value = "";
+		$(".access_type").each(function() {
+			if(this.checked)
+				$(this).prop('checked', false);
+		});	
+		
 		show_http_clientlist();
+		
+		if($("#selAll").hasClass("all_enable"))
+			$("#selAll").removeClass("all_enable").addClass("all_disable");
 	}	
 }
 
@@ -952,7 +1140,6 @@ function check_sshd_enable(obj_value){
 		state = "none";
 
 	document.getElementById("remote_forwarding_tr").style.display = state;
-	document.getElementById("remote_access_tr").style.display = state;
 	document.getElementById("auth_keys_tr").style.display = state;
 	document.getElementById("sshd_bfp_field").style.display = state;
 	document.getElementById("sshd_password_tr").style.display = state;
@@ -1039,6 +1226,106 @@ function paste_password(){
 	pass_checked(document.form.http_passwd2);
 	pass_checked(document.form.v_password2);
 }
+function control_rule_status(obj) {
+	var $itemObj = $(obj);
+	var $trObj = $itemObj.closest('tr');
+	var row_idx = $trObj.index();
+	if($itemObj.hasClass("cancel")) {
+		$itemObj.removeClass("cancel").addClass("check");
+		$itemObj.children().removeClass("icon_cancel").addClass("icon_check");
+		restrict_rulelist_array[row_idx][0] = "1";
+		$trObj.css({"color" : "#FFFFFF"});
+	}
+	else {
+		$itemObj.removeClass("check").addClass("cancel");
+		$itemObj.children().removeClass("icon_check").addClass("icon_cancel");
+		restrict_rulelist_array[row_idx][0] = "0";
+		$trObj.css({"color" : "#A0A0A0"});
+	}
+
+	if($("#selAll").hasClass("all_enable"))
+		$("#selAll").removeClass("all_enable").addClass("all_disable");
+}
+function control_all_rule_status(obj) {
+	var set_all_rule_status = function(stauts) {
+		for(var i = 0; i < restrict_rulelist_array.length; i += 1) {
+			restrict_rulelist_array[i][0] = stauts;
+		}
+	};
+
+	var $itemObj = $(obj);
+	if($itemObj.hasClass("all_enable")) {
+		$itemObj.removeClass("all_enable").addClass("all_disable");
+		set_all_rule_status("1");
+	}
+	else {
+		$itemObj.removeClass("all_disable").addClass("all_enable");
+		set_all_rule_status("0");
+	}
+
+	show_http_clientlist();
+}
+
+function open_upload_window(){
+	$("#upload_cert_window").fadeIn(300);
+}
+
+function hide_upload_window(){
+	$("#upload_cert_window").fadeOut(300);
+}
+
+function get_cert_info(){
+	$.ajax({
+		url: '/ajax_certinfo.asp',
+		dataType: 'script',
+		error: function(xhr){
+			setTimeout("get_cert_info();", 1000);
+		},
+		success: function(response){
+			show_cert_details();
+	   }
+	});
+}
+
+function show_cert_details(){
+	document.getElementById("SAN").innerHTML = httpd_cert_info.SAN;
+	document.getElementById("issueTo").innerHTML = httpd_cert_info.issueTo;
+	document.getElementById("issueBy").innerHTML = httpd_cert_info.issueBy;
+	document.getElementById("expireOn").innerHTML = httpd_cert_info.expire;
+}
+
+function check_filename(){
+	var key_file = document.upload_form.file_key.value;
+	var cert_file = document.upload_form.file_cert.value;
+	var key_subname = key_file.substring(key_file.lastIndexOf('.') + 1);
+	var cert_subname = cert_file.substring(cert_file.lastIndexOf('.') + 1);
+
+	if(key_subname != 'pem' && key_subname != 'key'){
+		alert("Please select correct private key file.");
+		document.upload_form.file_key.value = "";
+		document.upload_form.file_key.focus();
+		return false;
+	}
+
+	if(cert_subname != 'pem' && cert_subname != 'crt' && cert_subname != 'cer'){
+		alert("Please select correct SSL certificate file.");
+		document.upload_form.file_cert.value = "";
+		document.upload_form.file_cert.focus();
+		return false;
+	}
+
+	return true;
+}
+
+function upload_cert_key(){
+	if(check_filename()){
+		document.upload_form.submit();
+		hide_upload_window();
+		setTimeout("get_cert_info();", 3000);
+		uploaded_cert = true;
+	}
+}
+
 </script>
 </head>
 
@@ -1064,7 +1351,10 @@ function paste_password(){
 <input type="hidden" name="time_zone" value="<% nvram_get("time_zone"); %>">
 <input type="hidden" name="time_zone_dstoff" value="<% nvram_get("time_zone_dstoff"); %>">
 <input type="hidden" name="http_passwd" value="" disabled>
-<input type="hidden" name="http_clientlist" value="<% nvram_get("http_clientlist"); %>">
+<input type="hidden" name="http_client" value="<% nvram_get("http_client"); %>"><!--for old fw-->
+<input type="hidden" name="http_clientlist" value="<% nvram_get("http_clientlist"); %>"><!--for old fw-->
+<input type="hidden" name="enable_acc_restriction" value="<% nvram_get("enable_acc_restriction"); %>">
+<input type="hidden" name="restrict_rulelist" value="<% nvram_get("restrict_rulelist"); %>">
 <input type="hidden" name="btn_ez_mode" value="<% nvram_get("btn_ez_mode"); %>">
 <input type="hidden" name="reboot_schedule" value="<% nvram_get_x("","reboot_schedule"); %>" disabled>
 <input type="hidden" name="reboot_schedule_enable" value="<% nvram_get_x("","reboot_schedule_enable"); %>">
@@ -1110,7 +1400,7 @@ function paste_password(){
 				<tr>
 					<th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
 					<td>
-						<input type="password" autocomplete="off" name="http_passwd2" tabindex="2" onKeyPress="return validator.isString(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="setTimeout('paste_password();', 10)" class="input_18_table" maxlength="16" onBlur="clean_scorebar(this);" autocorrect="off" autocapitalize="off"/>
+						<input type="password" autocomplete="new-password" name="http_passwd2" tabindex="2" onKeyPress="return validator.isString(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="setTimeout('paste_password();', 10)" class="input_18_table" maxlength="16" onBlur="clean_scorebar(this);" autocorrect="off" autocapitalize="off"/>
 						&nbsp;&nbsp;
 						<div id="scorebarBorder" style="margin-left:180px; margin-top:-25px; display:none;" title="<#LANHostConfig_x_Password_itemSecur#>">
 							<div id="score"></div>
@@ -1121,7 +1411,7 @@ function paste_password(){
 				<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_retype#></a></th>
 					<td>
-						<input type="password" autocomplete="off" name="v_password2" tabindex="3" onKeyPress="return validator.isString(this, event);" onpaste="setTimeout('paste_password();', 10)" class="input_18_table" maxlength="16" autocorrect="off" autocapitalize="off"/>
+						<input type="password" autocomplete="new-password" name="v_password2" tabindex="3" onKeyPress="return validator.isString(this, event);" onpaste="setTimeout('paste_password();', 10)" class="input_18_table" maxlength="16" autocorrect="off" autocapitalize="off"/>
 						<div style="margin:-25px 0px 5px 175px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.http_passwd2);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
 						<span id="alert_msg2" style="color:#FC0;margin-left:8px;"></span>
 					
@@ -1137,15 +1427,15 @@ function paste_password(){
 				<tr>
 					<th>Format JFFS partition at next boot</th>
 					<td>
-						<input type="radio" name="jffs2_format" class="input" value="1" <% nvram_match("jffs2_format", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="jffs2_format" class="input" value="0" <% nvram_match("jffs2_format", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="jffs2_format" value="1" <% nvram_match("jffs2_format", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="jffs2_format" value="0" <% nvram_match("jffs2_format", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 				<tr>
 					<th>Enable JFFS custom scripts and configs</th>
 					<td>
-						<input type="radio" name="jffs2_scripts" class="input" value="1" <% nvram_match("jffs2_scripts", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="jffs2_scripts" class="input" value="0" <% nvram_match("jffs2_scripts", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="jffs2_scripts" value="1" <% nvram_match("jffs2_scripts", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="jffs2_scripts" value="0" <% nvram_match("jffs2_scripts", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 			</table>
@@ -1167,10 +1457,10 @@ function paste_password(){
 				</tr>
 
 				<tr id="remote_forwarding_tr">
-					<th>Allow SSH Port Forwarding</th>
+					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,10);">Allow SSH Port Forwarding</a></th>
 					<td>
-						<input type="radio" name="sshd_forwarding" class="input" value="1" <% nvram_match("sshd_forwarding", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="sshd_forwarding" class="input" value="0" <% nvram_match("sshd_forwarding", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="sshd_forwarding" value="1" <% nvram_match("sshd_forwarding", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="sshd_forwarding" value="0" <% nvram_match("sshd_forwarding", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 
@@ -1184,15 +1474,15 @@ function paste_password(){
 				<tr id="sshd_password_tr">
 					<th>Allow SSH password login</th>
 					<td>
-						<input type="radio" name="sshd_pass" class="input" value="1" <% nvram_match("sshd_pass", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="sshd_pass" class="input" value="0" <% nvram_match("sshd_pass", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="sshd_pass" value="1" <% nvram_match("sshd_pass", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="sshd_pass" value="0" <% nvram_match("sshd_pass", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 				<tr id="sshd_bfp_field">
 					<th>Enable SSH Brute Force Protection</th>
 					<td>
-						<input type="radio" name="sshd_bfp" class="input" value="1" <% nvram_match("sshd_bfp", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="sshd_bfp" class="input" value="0" <% nvram_match("sshd_bfp", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="sshd_bfp" value="1" <% nvram_match("sshd_bfp", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="sshd_bfp" value="0" <% nvram_match("sshd_bfp", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 
@@ -1208,57 +1498,15 @@ function paste_password(){
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;">
 				<thead>
 					<tr>
-					  <td colspan="2">Logging</td>
-					</tr>
-				</thead>
-				<tr>
-					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,1)"><#LANHostConfig_x_ServerLogEnable_itemname#></a></th>
-					<td><input type="text" maxlength="15" class="input_15_table" name="log_ipaddr" value="<% nvram_get("log_ipaddr"); %>" onKeyPress="return validator.isIPAddr(this, event)" autocorrect="off" autocapitalize="off"></td>
-				</tr>
-				<tr>
-					<th>Default message log level</th>
-					<td>
-						<select name="message_loglevel" class="input_option">
-							<option value="0" <% nvram_match("message_loglevel", "0", "selected"); %>>emergency</option>
-							<option value="1" <% nvram_match("message_loglevel", "1", "selected"); %>>alert</option>
-							<option value="2" <% nvram_match("message_loglevel", "2", "selected"); %>>critical</option>
-							<option value="3" <% nvram_match("message_loglevel", "3", "selected"); %>>error</option>
-							<option value="4" <% nvram_match("message_loglevel", "4", "selected"); %>>warning</option>
-							<option value="5" <% nvram_match("message_loglevel", "5", "selected"); %>>notice</option>
-							<option value="6" <% nvram_match("message_loglevel", "6", "selected"); %>>info</option>
-							<option value="7" <% nvram_match("message_loglevel", "7", "selected"); %>>debug</option>
-						</select>
-					</td>
-				</tr>
-				<tr>
-					<th>Log only messages more urgent than</th>
-					<td>
-						<select name="log_level" class="input_option">
-							<option value="1" <% nvram_match("log_level", "1", "selected"); %>>alert</option>
-							<option value="2" <% nvram_match("log_level", "2", "selected"); %>>critical</option>
-							<option value="3" <% nvram_match("log_level", "3", "selected"); %>>error</option>
-							<option value="4" <% nvram_match("log_level", "4", "selected"); %>>warning</option>
-							<option value="5" <% nvram_match("log_level", "5", "selected"); %>>notice</option>
-							<option value="6" <% nvram_match("log_level", "6", "selected"); %>>info</option>
-							<option value="7" <% nvram_match("log_level", "7", "selected"); %>>debug</option>
-							<option value="8" <% nvram_match("log_level", "8", "selected"); %>>all</option>
-						</select>
-					</td>
-				</tr>
-			</table>
-		
-			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;">
-				<thead>
-					<tr>
 					  <td colspan="2"><#t2Misc#></td>
 					</tr>
 				</thead>
 				<tr id="btn_ez_radiotoggle_tr">
 					<th><#WPS_btn_behavior#></th>
 					<td>
-						<input type="radio" name="btn_ez_radiotoggle" id="turn_WPS" class="input" style="display:none;" value="0"><label for="turn_WPS"><#WPS_btn_actWPS#></label>
-						<input type="radio" name="btn_ez_radiotoggle" id="turn_WiFi" class="input" style="display:none;" value="1" <% nvram_match_x("", "btn_ez_radiotoggle", "1", "checked"); %>><label for="turn_WiFi" id="turn_WiFi_str"><#WPS_btn_toggle#></label>
-						<input type="radio" name="btn_ez_radiotoggle" id="turn_LED" class="input" style="display:none;" value="0" <% nvram_match_x("", "btn_ez_mode", "1", "checked"); %>><label for="turn_LED" id="turn_LED_str">Turn LED On/Off</label>
+						<input type="radio" name="btn_ez_radiotoggle" id="turn_WPS" style="display:none;" value="0"><label for="turn_WPS"><#WPS_btn_actWPS#></label>
+						<input type="radio" name="btn_ez_radiotoggle" id="turn_WiFi" style="display:none;" value="1" <% nvram_match_x("", "btn_ez_radiotoggle", "1", "checked"); %>><label for="turn_WiFi" id="turn_WiFi_str"><#WPS_btn_toggle#></label>
+						<input type="radio" name="btn_ez_radiotoggle" id="turn_LED" style="display:none;" value="0" <% nvram_match_x("", "btn_ez_mode", "1", "checked"); %>><label for="turn_LED" id="turn_LED_str">Turn LED On/Off</label>
 					</td>
 				</tr>				
 				<tr id="reboot_schedule_enable_tr">
@@ -1271,13 +1519,13 @@ function paste_password(){
 				<tr id="reboot_schedule_date_tr">
 					<th>Date to Reboot</th>	<!-- untranslated -->
 					<td>
-						<input type="checkbox" name="reboot_date_x_Sun" class="input" onclick="check_Timefield_checkbox();"><#date_Sun_itemdesc#>
-						<input type="checkbox" name="reboot_date_x_Mon" class="input" onclick="check_Timefield_checkbox();"><#date_Mon_itemdesc#>
-						<input type="checkbox" name="reboot_date_x_Tue" class="input" onclick="check_Timefield_checkbox();"><#date_Tue_itemdesc#>
-						<input type="checkbox" name="reboot_date_x_Wed" class="input" onclick="check_Timefield_checkbox();"><#date_Wed_itemdesc#>
-						<input type="checkbox" name="reboot_date_x_Thu" class="input" onclick="check_Timefield_checkbox();"><#date_Thu_itemdesc#>
-						<input type="checkbox" name="reboot_date_x_Fri" class="input" onclick="check_Timefield_checkbox();"><#date_Fri_itemdesc#>
-            <input type="checkbox" name="reboot_date_x_Sat" class="input" onclick="check_Timefield_checkbox();"><#date_Sat_itemdesc#>
+						<input type="checkbox" name="reboot_date_x_Sun" onclick="check_Timefield_checkbox();"><#date_Sun_itemdesc#>
+						<input type="checkbox" name="reboot_date_x_Mon" onclick="check_Timefield_checkbox();"><#date_Mon_itemdesc#>
+						<input type="checkbox" name="reboot_date_x_Tue" onclick="check_Timefield_checkbox();"><#date_Tue_itemdesc#>
+						<input type="checkbox" name="reboot_date_x_Wed" onclick="check_Timefield_checkbox();"><#date_Wed_itemdesc#>
+						<input type="checkbox" name="reboot_date_x_Thu" onclick="check_Timefield_checkbox();"><#date_Thu_itemdesc#>
+						<input type="checkbox" name="reboot_date_x_Fri" onclick="check_Timefield_checkbox();"><#date_Fri_itemdesc#>
+            <input type="checkbox" name="reboot_date_x_Sat" onclick="check_Timefield_checkbox();"><#date_Sat_itemdesc#>
 					</td>
 				</tr>
 				<tr id="reboot_schedule_time_tr">
@@ -1333,8 +1581,8 @@ function paste_password(){
 				<tr id="telnet_tr">
 					<th><#Enable_Telnet#></th>
 					<td>
-						<input type="radio" name="telnetd_enable" class="input" value="1" <% nvram_match("telnetd_enable", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="telnetd_enable" class="input" value="0" <% nvram_match("telnetd_enable", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="telnetd_enable" value="1" <% nvram_match("telnetd_enable", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="telnetd_enable" value="0" <% nvram_match("telnetd_enable", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 			</table>
@@ -1349,11 +1597,11 @@ function paste_password(){
 				<tr id="https_tr">
 					<th><#WLANConfig11b_AuthenticationMethod_itemname#></th>
 					<td>
-						<select name="http_enable" class="input_option" onchange="hide_https_lanport(this.value);hide_https_wanport(this.value);">
+						<select name="http_enable" class="input_option" onchange="hide_https_lanport(this.value);hide_https_wanport(this.value);hide_https_crt();">
 							<option value="0" <% nvram_match("http_enable", "0", "selected"); %>>HTTP</option>
 							<option value="1" <% nvram_match("http_enable", "1", "selected"); %>>HTTPS</option>
 							<option value="2" <% nvram_match("http_enable", "2", "selected"); %>>BOTH</option>
-						</select>				  	
+						</select>
 					</td>
 				</tr>
 
@@ -1364,12 +1612,54 @@ function paste_password(){
 						<span id="https_access_page"></span>
 					</td>
 				</tr>
-				
+                                <tr id="https_crt_gen">
+                                        <th>Generate a new certificate</th>
+                                        <td>
+						<input type="radio" name="https_crt_gen" class="input" value="1" onClick="hide_https_crt();" <% nvram_match_x("", "https_crt_gen", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="https_crt_gen" class="input" value="0" onClick="hide_https_crt();" <% nvram_match_x("", "https_crt_gen", "0", "checked"); %>><#checkbox_No#>
+                                        </td>
+                                </tr>
+				<tr id="https_crt_san">
+					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,22)">Additional Certificate SANs</a></th>
+					<td>
+						<input type="text" name="https_crt_cn" value="<% nvram_get("https_crt_cn"); %>" autocomplete="off" class="input_32_table" maxlength="64" autocorrect="off" autocapitalize="off">
+					</td>
+				</tr>
+
+				<tr id="https_cert" style="display:none;">
+					<th>Provide your own certificate</th>
+					<td>
+						<div id="cert_act" style="margin-top: 5px;"><div style="display:table-cell"><input class="button_gen" onclick="open_upload_window();" type="button" value="<#CTL_upload#>"/><img id="loadingicon" style="margin-left:5px;display:none;" src="/images/InternetScan.gif"></div></div>
+					</td>
+				</tr>
+
+				<tr id="cert_details" style="display:none;">
+					<th>Installed Server Certificate</th>
+					<td>
+						<div style="display:table-row;">
+							<div style="display:table-cell;white-space: nowrap;">Issued to :</div>
+							<div id="issueTo" style="display:table-cell; padding-left:10px;"></div>
+						</div>
+						<div style="display:table-row;">
+							<div style="display:table-cell;white-space: nowrap">SAN :</div>
+							<div id="SAN" style="display:table-cell; padding-left:10px;"></div>
+						</div>
+						<div style="display:table-row;">
+							<div style="display:table-cell;white-space: nowrap">Issued by :</div>
+							<div id="issueBy" style="display:table-cell; padding-left:10px;"></div>
+						</div>
+						<div style="display:table-row;">
+							<div style="display:table-cell;white-space: nowrap">Expires on :</div>
+							<div id="expireOn" style="display:table-cell; padding-left:10px;"></div>
+						</div>
+					</td>
+				</tr>
+
 				<tr id="misc_http_x_tr">
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(8,2);"><#FirewallConfig_x_WanWebEnable_itemname#></a></th>
 					<td>
-						<input type="radio" value="1" name="misc_http_x" class="input" onClick="hideport(1);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '1')" <% nvram_match("misc_http_x", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" value="0" name="misc_http_x" class="input" onClick="hideport(0);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '0')" <% nvram_match("misc_http_x", "0", "checked"); %>><#checkbox_No#><br>
+						<input type="radio" value="1" name="misc_http_x" onClick="hideport(1);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '1')" <% nvram_match("misc_http_x", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" value="0" name="misc_http_x" onClick="hideport(0);return change_common_radio(this, 'FirewallConfig', 'misc_http_x', '0')" <% nvram_match("misc_http_x", "0", "checked"); %>><#checkbox_No#><br>
 						<div class="formfontdesc" id="NSlookup_help_for_WAN_access" style="color:#FFCC00;display:none;"><#NSlookup_help#></div>		
 					</td>
 				</tr>   					
@@ -1393,24 +1683,24 @@ function paste_password(){
 				<tr>
 					<th align="right"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,6);"><#Enable_redirect_notice#></a></th>
 					<td>
-						<input type="radio" name="nat_redirect_enable" class="input" value="1" <% nvram_match_x("","nat_redirect_enable","1", "checked"); %> ><#checkbox_Yes#>
-						<input type="radio" name="nat_redirect_enable" class="input" value="0" <% nvram_match_x("","nat_redirect_enable","0", "checked"); %> ><#checkbox_No#>
+						<input type="radio" name="nat_redirect_enable" value="1" <% nvram_match_x("","nat_redirect_enable","1", "checked"); %> ><#checkbox_Yes#>
+						<input type="radio" name="nat_redirect_enable"  value="0" <% nvram_match_x("","nat_redirect_enable","0", "checked"); %> ><#checkbox_No#>
 					</td>
 				</tr>
 
 				<tr>
 					<th>Redirect webui access to router.asus.com</th>
 					<td>
-						<input type="radio" name="http_dut_redir" class="input" value="1" <% nvram_match_x("","http_dut_redir","1", "checked"); %> ><#checkbox_Yes#>
-						<input type="radio" name="http_dut_redir" class="input" value="0" <% nvram_match_x("","http_dut_redir","0", "checked"); %> ><#checkbox_No#>
+						<input type="radio" name="http_dut_redir" value="1" <% nvram_match_x("","http_dut_redir","1", "checked"); %> ><#checkbox_Yes#>
+						<input type="radio" name="http_dut_redir" value="0" <% nvram_match_x("","http_dut_redir","0", "checked"); %> ><#checkbox_No#>
 					</td>
 				</tr>
 
 				<tr>
 					<th><#System_login_specified_IP#></th>
 					<td>
-						<input type="radio" name="http_client" class="input" value="1" onclick="display_spec_IP(1);" <% nvram_match_x("", "http_client", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="http_client" class="input" value="0" onclick="display_spec_IP(0);" <% nvram_match_x("", "http_client", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="http_client_radio" value="1" onclick="display_spec_IP(1);" <% nvram_match_x("", "http_client", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="http_client_radio" value="0" onclick="display_spec_IP(0);" <% nvram_match_x("", "http_client", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 			</table>
@@ -1423,20 +1713,28 @@ function paste_password(){
 				</thead>
 				
 				<tr>
-					<th width="80%"><#ConnectedClient#></th>
-					<th width="20%"><#list_add_delete#></th>
+					<th width="10%"><div id="selAll" class="all_disable" style="margin: auto;width:40px;" onclick="control_all_rule_status(this);"><#All#></div></th>
+					<th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,9);"><#FirewallConfig_LanWanDstIP_itemname#></a></th>
+					<th width="40%">Access Type<!--untranslated--></th>
+					<th width="10%"><#list_add_delete#></th>
 				</tr>
 
 				<tr>
-						<!-- client info -->
-					<td width="80%">
-						<input type="text" class="input_32_table" maxlength="18" name="http_client_ip_x_0"  onKeyPress="" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off">
+					<!-- client info -->
+					<td width="10%">-</td>
+					<td width="40%">
+						<input type="text" class="input_25_table" maxlength="18" name="http_client_ip_x_0"  onKeyPress="" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off">
 						<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_client#>">	
-						<div id="ClientList_Block_PC" class="clientlist_dropdown" style="margin-left:122px;width:345px;"></div>	
-					 </td>
-					 <td width="20%">	
-						<input class="add_btn" type="button" onClick="addRow(document.form.http_client_ip_x_0, 4);" value="">
-					 </td>	
+						<div id="ClientList_Block_PC" class="clientlist_dropdown" style="margin-left:27px;width:235px;"></div>	
+					</td>
+					<td width="40%">
+						<input type="checkbox" name="access_webui" class="input access_type" value="1">Web UI<!--untranslated-->
+						<input type="checkbox" name="access_ssh" class="input access_type" value="2">SSH<!--untranslated-->
+						<input type="checkbox" name="access_telnet" class="input access_type" value="4">Telnet (Lan only)<!--untranslated-->
+					</td>
+					<td width="10%">
+						<div id="add_delete" class="add_enable" style="margin:0 auto" onclick="addRow(document.form.http_client_ip_x_0, 4);"></div>
+					</td>
 				</tr>
 			</table>
 			<div id="http_clientlist_Block"></div>
@@ -1459,5 +1757,26 @@ function paste_password(){
 </table>
 
 <div id="footer"></div>
+<form method="post" name="upload_form" action="upload_cert_key.cgi" target="hidden_frame" enctype="multipart/form-data">
+<input type="hidden" name="action_mode" value="">
+<input type="hidden" name="action_script" value="">
+<input type="hidden" name="action_wait" value="">
+<div id="upload_cert_window"  class="contentM_upload" style="box-shadow: 1px 5px 10px #000;">
+	<div class="formfonttitle" style="margin-top: 15px; margin-left: 15px;">Import your own certificate</div>
+	<div class="formfontdesc" style="margin-left: 15px;">Upload a certificate issued by a certification authority here. Your private key and SSL certificate is necessary.</div>
+	<div class="Upload_item">
+		<div style="display:table-cell; width: 45%;">Private Key :</div>
+		<div style="display:table-cell;"><input type="file" name="file_key" class="input Upload_file"></div>
+	</div>
+	<div class="Upload_item">
+		<div style="display:table-cell; width: 45%;">SSL Certificate :</div>
+		<div style="display:table-cell;"><input type="file" name="file_cert" class="input Upload_file"></div>
+	</div>
+	<div align="center" style="margin-top:30px; padding-bottom:15px;">
+		<div style="display:table-cell;"><input class="button_gen" type="button" onclick="hide_upload_window();" id="cancelBtn" value="<#CTL_Cancel#>"></div>
+		<div style="display:table-cell; padding-left: 5px;"><input class="button_gen" type="button" onclick="upload_cert_key();" value="<#CTL_ok#>"></div>
+	</div>
+</div>
+</form>
 </body>
 </html>

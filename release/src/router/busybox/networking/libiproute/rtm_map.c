@@ -12,7 +12,7 @@
 #include "rt_names.h"
 #include "utils.h"
 
-const char* FAST_FUNC rtnl_rtntype_n2a(int id, char *buf)
+const char* FAST_FUNC rtnl_rtntype_n2a(int id)
 {
 	switch (id) {
 	case RTN_UNSPEC:
@@ -40,9 +40,7 @@ const char* FAST_FUNC rtnl_rtntype_n2a(int id, char *buf)
 	case RTN_XRESOLVE:
 		return "xresolve";
 	default:
-		/* buf is SPRINT_BSIZE big */
-		sprintf(buf, "%d", id);
-		return buf;
+		return itoa(id);
 	}
 }
 

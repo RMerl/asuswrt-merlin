@@ -18,5 +18,5 @@ class SampleHook:
         # implement hook here
         # if you need the test case instance, refer to test_obj
         if False:
-            raise TestFailed ("Reason")
+            raise TestFailed("Reason")
         pass

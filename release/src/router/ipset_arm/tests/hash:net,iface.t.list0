@@ -1,0 +1,11 @@
+Name: test
+Type: hash:net,iface
+Header: family inet hashsize 128 maxelem 65536
+Size in memory: 928
+References: 0
+Number of entries: 4
+Members:
+1.1.1.1,eth0
+192.168.68.64/27,eth1
+2.0.0.0/24,eth0
+2.0.0.1,eth0

@@ -20,7 +20,6 @@
 #include <iwlib.h>
 
 
-#define WIF	"ra0"
 extern const char WIF_2G[];
 extern const char WIF_5G[];
 extern const char WDSIF_5G[];

@@ -20,9 +20,7 @@
 
 #if defined(HAVE_IPSET) && defined(HAVE_BSD_NETWORK)
 
-#ifndef __FreeBSD__
 #include <string.h>
-#endif
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -53,52 +51,6 @@ static char *pfr_strerror(int errnum)
     }
 }
 
-static int pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
-{
-  struct pfioc_table io;
-  
-  if (size < 0 || (size && tbl == NULL)) 
-    {
-      errno = EINVAL;
-      return (-1);
-    }
-  bzero(&io, sizeof io);
-  io.pfrio_flags = flags;
-  io.pfrio_buffer = tbl;
-  io.pfrio_esize = sizeof(*tbl);
-  io.pfrio_size = size;
-  if (ioctl(dev, DIOCRADDTABLES, &io))
-    return (-1);
-  if (nadd != NULL)
-    *nadd = io.pfrio_nadd;
-  return (0);
-}
-
-static int fill_addr(const struct all_addr *ipaddr, int flags, struct pfr_addr* addr) {
-  if ( !addr || !ipaddr)
-    {
-      my_syslog(LOG_ERR, _("error: fill_addr missused"));
-      return -1;
-    }
-  bzero(addr, sizeof(*addr));
-#ifdef HAVE_IPV6
-  if (flags & F_IPV6) 
-    {
-      addr->pfra_af = AF_INET6;
-      addr->pfra_net = 0x80;
-      memcpy(&(addr->pfra_ip6addr), &(ipaddr->addr), sizeof(struct in6_addr));
-    } 
-  else 
-#endif
-    {
-      addr->pfra_af = AF_INET;
-      addr->pfra_net = 0x20;
-      addr->pfra_ip4addr.s_addr = ipaddr->addr.addr4.s_addr;
-    }
-  return 1;
-}
-
-/*****************************************************************************/
 
 void ipset_init(void) 
 {
@@ -111,14 +63,13 @@ void ipset_init(void)
 }
 
 int add_to_ipset(const char *setname, const struct all_addr *ipaddr,
-		      int flags, int remove)
+		 int flags, int remove)
 {
   struct pfr_addr addr;
   struct pfioc_table io;
   struct pfr_table table;
-  int n = 0, rc = 0;
 
-  if ( dev == -1 ) 
+  if (dev == -1) 
     {
       my_syslog(LOG_ERR, _("warning: no opened pf devices %s"), pf_device);
       return -1;
@@ -126,31 +77,52 @@ int add_to_ipset(const char *setname, const struct all_addr *ipaddr,
 
   bzero(&table, sizeof(struct pfr_table));
   table.pfrt_flags |= PFR_TFLAG_PERSIST;
-  if ( strlen(setname) >= PF_TABLE_NAME_SIZE )
+  if (strlen(setname) >= PF_TABLE_NAME_SIZE)
     {
       my_syslog(LOG_ERR, _("error: cannot use table name %s"), setname);
       errno = ENAMETOOLONG;
       return -1;
     }
   
-  if ( strlcpy(table.pfrt_name, setname,
-               sizeof(table.pfrt_name)) >= sizeof(table.pfrt_name)) 
+  if (strlcpy(table.pfrt_name, setname,
+	      sizeof(table.pfrt_name)) >= sizeof(table.pfrt_name)) 
     {
       my_syslog(LOG_ERR, _("error: cannot strlcpy table name %s"), setname);
       return -1;
     }
   
-  if ((rc = pfr_add_tables(&table, 1, &n, 0))) 
+  bzero(&io, sizeof io);
+  io.pfrio_flags = 0;
+  io.pfrio_buffer = &table;
+  io.pfrio_esize = sizeof(table);
+  io.pfrio_size = 1;
+  if (ioctl(dev, DIOCRADDTABLES, &io))
     {
-      my_syslog(LOG_WARNING, _("warning: pfr_add_tables: %s(%d)"),
-		pfr_strerror(errno),rc);
+      my_syslog(LOG_WARNING, _("IPset: error:%s"), pfr_strerror(errno));
+      
       return -1;
     }
-  table.pfrt_flags &= ~PFR_TFLAG_PERSIST;
-  if (n)
-    my_syslog(LOG_INFO, _("info: table created"));
   
-  fill_addr(ipaddr,flags,&addr);
+  table.pfrt_flags &= ~PFR_TFLAG_PERSIST;
+  if (io.pfrio_nadd)
+    my_syslog(LOG_INFO, _("info: table created"));
+ 
+  bzero(&addr, sizeof(addr));
+#ifdef HAVE_IPV6
+  if (flags & F_IPV6) 
+    {
+      addr.pfra_af = AF_INET6;
+      addr.pfra_net = 0x80;
+      memcpy(&(addr.pfra_ip6addr), &(ipaddr->addr), sizeof(struct in6_addr));
+    } 
+  else 
+#endif
+    {
+      addr.pfra_af = AF_INET;
+      addr.pfra_net = 0x20;
+      addr.pfra_ip4addr.s_addr = ipaddr->addr.addr4.s_addr;
+    }
+
   bzero(&io, sizeof(io));
   io.pfrio_flags = 0;
   io.pfrio_table = table;

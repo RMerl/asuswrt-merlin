@@ -7,11 +7,14 @@
 # This software may be used and distributed according to the terms
 # of the GNU General Public License, incorporated herein by reference.
 
-import sys, os#, re
+import sys, os
 
 def usage():
-    sys.stderr.write("usage: %s [-t] file1 file2\n" % sys.argv[0])
-    sys.exit(-1)
+    sys.stderr.write("usage: %s [-t] file1 file2 [-- <readelf options>]\n"
+                        % sys.argv[0])
+    sys.stderr.write("\t-t\tShow time spent on parsing/processing\n")
+    sys.stderr.write("\t--\tPass additional parameters to readelf\n")
+    sys.exit(1)
 
 f1, f2 = (None, None)
 flag_timing, dashes = (False, False)
@@ -31,6 +34,8 @@ for f in sys.argv[1:]:
             f1 = f
         elif f2 is None:
             f2 = f
+        else:
+            usage()
 if flag_timing:
     import time
 if f1 is None or f2 is None:

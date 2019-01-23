@@ -636,6 +636,7 @@ void CUDT::listen()
 
 void CUDT::connect(const sockaddr* serv_addr)
 {
+	int retry_count = 0;
    CGuard cg(m_ConnectionLock);
 
    if (!m_bOpened)
@@ -694,6 +695,7 @@ void CUDT::connect(const sockaddr* serv_addr)
    m_llLastReqTime = CTimer::getTime();
 
    m_bConnecting = true;
+   m_retryCount = 0;
 
 #ifdef DEBUGP
    dumpStatus();
@@ -724,7 +726,8 @@ void CUDT::connect(const sockaddr* serv_addr)
          request.setLength(hs_size);
          if (m_bRendezvous)
             request.m_iID = m_ConnRes.m_iID;
-         m_pSndQueue->sendto(serv_addr, request);
+		 m_pSndQueue->sendto(serv_addr, request);
+		 m_retryCount++;
          m_llLastReqTime = CTimer::getTime();
 		 PJ_LOG(1, ("core.cpp", "CUDT::connect() retry send connect request. now=%lld", m_llLastReqTime));
       }

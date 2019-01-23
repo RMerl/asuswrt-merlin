@@ -5,7 +5,7 @@
  * Author  : Justin Maggard
  *
  * MiniDLNA media server
- * Copyright (C) 2008-2009  Justin Maggard
+ * Copyright (C) 2008-2017  Justin Maggard
  *
  * This file is part of MiniDLNA.
  *
@@ -80,6 +80,7 @@ char *strcasestrc(const char *s, const char *p, const char t);
 char *modifyString(char *string, const char *before, const char *after, int noalloc);
 char *escape_tag(const char *tag, int force_alloc);
 char *unescape_tag(const char *tag, int force_alloc);
+char *duration_str(int msec);
 char *strip_ext(char *name);
 
 /* Metadata functions */
@@ -95,6 +96,5 @@ const char *mime_to_ext(const char * mime);
 /* Others */
 int make_dir(char * path, mode_t mode);
 unsigned int DJBHash(uint8_t *data, int len);
-long uptime(void);
 
 #endif

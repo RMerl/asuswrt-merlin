@@ -24,6 +24,11 @@ class ExpectedFiles:
         snapshot = {}
         for parent, dirs, files in os.walk('.'):
             for name in files:
+                # pubring.kbx will be created by libgpgme if $HOME doesn't contain the .gnupg directory.
+					 # setting $HOME to CWD (in base_test.py) breaks two Metalink tests, so we skip this file here.
+                if name == 'pubring.kbx':
+                    continue
+
                 f = {'content': ''}
                 file_path = os.path.join(parent, name)
                 with open(file_path) as fp:
@@ -37,9 +42,10 @@ class ExpectedFiles:
         for file in self.expected_fs:
             if file.name in local_fs:
                 local_file = local_fs.pop(file.name)
-                if file.content != local_file['content']:
+                formatted_content = test_obj._replace_substring(file.content)
+                if formatted_content != local_file['content']:
                     for line in unified_diff(local_file['content'],
-                                             file.content,
+                                             formatted_content,
                                              fromfile='Actual',
                                              tofile='Expected'):
                         print(line, file=sys.stderr)

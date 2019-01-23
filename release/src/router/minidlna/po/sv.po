@@ -68,6 +68,10 @@ msgstr "Mappar"
 msgid "Playlists"
 msgstr "Spelningslistor"
 
+#: scanner.c:598
+msgid "Recently Added"
+msgstr "nyligen tillagda"
+
 #: scanner.c:536
 msgid "Video"
 msgstr "Film"

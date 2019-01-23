@@ -15,7 +15,6 @@
  *
  * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
-
 /* big objects in bss:
  * 00000020 b bl_count
  * 00000074 b base_length
@@ -31,7 +30,6 @@
  * 00000480 b static_ltree
  * 000008f4 b dyn_ltree
  */
-
 /* TODO: full support for -v for DESKTOP
  * "/usr/bin/gzip -v a bogus aa" should say:
 a:       85.1% -- replaced with a.gz
@@ -39,11 +37,55 @@ gzip: bogus: No such file or directory
 aa:      85.1% -- replaced with aa.gz
 */
 
+//config:config GZIP
+//config:	bool "gzip"
+//config:	default y
+//config:	help
+//config:	  gzip is used to compress files.
+//config:	  It's probably the most widely used UNIX compression program.
+//config:
+//config:config FEATURE_GZIP_LONG_OPTIONS
+//config:	bool "Enable long options"
+//config:	default y
+//config:	depends on GZIP && LONG_OPTS
+//config:	help
+//config:	  Enable use of long options, increases size by about 106 Bytes
+//config:
+//config:config GZIP_FAST
+//config:	int "Trade memory for gzip speed (0:small,slow - 2:fast,big)"
+//config:	default 0
+//config:	range 0 2
+//config:	depends on GZIP
+//config:	help
+//config:	  Enable big memory options for gzip.
+//config:	  0: small buffers, small hash-tables
+//config:	  1: larger buffers, larger hash-tables
+//config:	  2: larger buffers, largest hash-tables
+//config:	  Larger models may give slightly better compression
+//config:
+//config:config FEATURE_GZIP_LEVELS
+//config:	bool "Enable compression levels"
+//config:	default n
+//config:	depends on GZIP
+//config:	help
+//config:	  Enable support for compression levels 4-9. The default level
+//config:	  is 6. If levels 1-3 are specified, 4 is used.
+//config:	  If this option is not selected, -N options are ignored and -9
+//config:	  is used.
+
+//applet:IF_GZIP(APPLET(gzip, BB_DIR_BIN, BB_SUID_DROP))
+//kbuild:lib-$(CONFIG_GZIP) += gzip.o
+
 //usage:#define gzip_trivial_usage
-//usage:       "[-cfd] [FILE]..."
+//usage:       "[-cf" IF_GUNZIP("d") IF_FEATURE_GZIP_LEVELS("123456789") "] [FILE]..."
 //usage:#define gzip_full_usage "\n\n"
 //usage:       "Compress FILEs (or stdin)\n"
+//usage:	IF_FEATURE_GZIP_LEVELS(
+//usage:     "\n	-1..9	Compression level"
+//usage:	)
+//usage:	IF_GUNZIP(
 //usage:     "\n	-d	Decompress"
+//usage:	)
 //usage:     "\n	-c	Write to stdout"
 //usage:     "\n	-f	Force"
 //usage:
@@ -225,6 +267,8 @@ enum {
  * input file length plus MIN_LOOKAHEAD.
  */
 
+#ifndef ENABLE_FEATURE_GZIP_LEVELS
+
 	max_chain_length = 4096,
 /* To speed up deflation, hash chains are never searched beyond this length.
  * A higher limit improves compression ratio but degrades the speed.
@@ -256,10 +300,22 @@ enum {
  * For deflate_fast() (levels <= 3) good is ignored and lazy has a different
  * meaning.
  */
+#endif /* ENABLE_FEATURE_GZIP_LEVELS */
 };
 
 
 struct globals {
+
+#ifdef ENABLE_FEATURE_GZIP_LEVELS
+	unsigned max_chain_length;
+	unsigned max_lazy_match;
+	unsigned good_match;
+	unsigned nice_match;
+#define max_chain_length (G1.max_chain_length)
+#define max_lazy_match   (G1.max_lazy_match)
+#define good_match	 (G1.good_match)
+#define nice_match	 (G1.nice_match)
+#endif
 
 	lng block_start;
 
@@ -390,19 +446,46 @@ static void flush_outbuf(void)
 #define put_8bit(c) \
 do { \
 	G1.outbuf[G1.outcnt++] = (c); \
-	if (G1.outcnt == OUTBUFSIZ) flush_outbuf(); \
+	if (G1.outcnt == OUTBUFSIZ) \
+		flush_outbuf(); \
 } while (0)
 
 /* Output a 16 bit value, lsb first */
 static void put_16bit(ush w)
 {
-	if (G1.outcnt < OUTBUFSIZ - 2) {
-		G1.outbuf[G1.outcnt++] = w;
-		G1.outbuf[G1.outcnt++] = w >> 8;
-	} else {
-		put_8bit(w);
-		put_8bit(w >> 8);
+	/* GCC 4.2.1 won't optimize out redundant loads of G1.outcnt
+	 * (probably because of fear of aliasing with G1.outbuf[]
+	 * stores), do it explicitly:
+	 */
+	unsigned outcnt = G1.outcnt;
+	uch *dst = &G1.outbuf[outcnt];
+
+#if BB_UNALIGNED_MEMACCESS_OK && BB_LITTLE_ENDIAN
+	if (outcnt < OUTBUFSIZ-2) {
+		/* Common case */
+		ush *dst16 = (void*) dst;
+		*dst16 = w; /* unalinged LSB 16-bit store */
+		G1.outcnt = outcnt + 2;
+		return;
 	}
+	*dst = (uch)w;
+	w >>= 8;
+#else
+	*dst = (uch)w;
+	w >>= 8;
+	if (outcnt < OUTBUFSIZ-2) {
+		/* Common case */
+		dst[1] = w;
+		G1.outcnt = outcnt + 2;
+		return;
+	}
+#endif
+
+	/* Slowpath: we will need to do flush_outbuf() */
+	G1.outcnt = ++outcnt;
+	if (outcnt == OUTBUFSIZ)
+		flush_outbuf();
+	put_8bit(w);
 }
 
 static void put_32bit(ulg n)
@@ -1179,7 +1262,7 @@ static void gen_codes(ct_data * tree, int max_code)
 	 * must be all ones.
 	 */
 	Assert(code + G2.bl_count[MAX_BITS] - 1 == (1 << MAX_BITS) - 1,
-		   "inconsistent bit counts");
+			"inconsistent bit counts");
 	Tracev((stderr, "\ngen_codes: max_code %d ", max_code));
 
 	for (n = 0; n <= max_code; n++) {
@@ -1291,7 +1374,6 @@ static void build_tree(tree_desc * desc)
 		/* and insert the new node in the heap */
 		G2.heap[SMALLEST] = node++;
 		pqdownheap(tree, SMALLEST);
-
 	} while (G2.heap_len >= 2);
 
 	G2.heap[--G2.heap_max] = G2.heap[SMALLEST];
@@ -1527,9 +1609,9 @@ static int ct_tally(int dist, int lc)
 		}
 		out_length >>= 3;
 		Trace((stderr,
-			   "\nlast_lit %u, last_dist %u, in %ld, out ~%ld(%ld%%) ",
-			   G2.last_lit, G2.last_dist, in_length, out_length,
-			   100L - out_length * 100L / in_length));
+				"\nlast_lit %u, last_dist %u, in %ld, out ~%ld(%ld%%) ",
+				G2.last_lit, G2.last_dist, in_length, out_length,
+				100L - out_length * 100L / in_length));
 		if (G2.last_dist < G2.last_lit / 2 && out_length < in_length / 2)
 			return 1;
 	}
@@ -1621,9 +1703,9 @@ static ulg flush_block(char *buf, ulg stored_len, int eof)
 	static_lenb = (G2.static_len + 3 + 7) >> 3;
 
 	Trace((stderr,
-		   "\nopt %lu(%lu) stat %lu(%lu) stored %lu lit %u dist %u ",
-		   opt_lenb, G2.opt_len, static_lenb, G2.static_len, stored_len,
-		   G2.last_lit, G2.last_dist));
+			"\nopt %lu(%lu) stat %lu(%lu) stored %lu lit %u dist %u ",
+			opt_lenb, G2.opt_len, static_lenb, G2.static_len, stored_len,
+			G2.last_lit, G2.last_dist));
 
 	if (static_lenb <= opt_lenb)
 		opt_lenb = static_lenb;
@@ -1639,7 +1721,6 @@ static ulg flush_block(char *buf, ulg stored_len, int eof)
 
 		copy_block(buf, (unsigned) stored_len, 0);	/* without header */
 		G2.compressed_len = stored_len << 3;
-
 	} else if (stored_len + 4 <= opt_lenb && buf != NULL) {
 		/* 4: two words for the lengths */
 		/* The test buf != NULL is only necessary if LIT_BUFSIZE > WSIZE.
@@ -1653,7 +1734,6 @@ static ulg flush_block(char *buf, ulg stored_len, int eof)
 		G2.compressed_len += (stored_len + 4) << 3;
 
 		copy_block(buf, (unsigned) stored_len, 1);	/* with header */
-
 	} else if (static_lenb == opt_lenb) {
 		send_bits((STATIC_TREES << 1) + eof, 3);
 		compress_block((ct_data *) G2.static_ltree, (ct_data *) G2.static_dtree);
@@ -1661,7 +1741,7 @@ static ulg flush_block(char *buf, ulg stored_len, int eof)
 	} else {
 		send_bits((DYN_TREES << 1) + eof, 3);
 		send_all_trees(G2.l_desc.max_code + 1, G2.d_desc.max_code + 1,
-					   max_blindex + 1);
+					max_blindex + 1);
 		compress_block((ct_data *) G2.dyn_ltree, (ct_data *) G2.dyn_dtree);
 		G2.compressed_len += 3 + G2.opt_len;
 	}
@@ -1980,7 +2060,7 @@ static void ct_init(void)
  * IN assertions: the input and output buffers are cleared.
  */
 
-static void zip(ulg time_stamp)
+static void zip(void)
 {
 	ush deflate_flags = 0;  /* pkzip -es, -en or -ex equivalent */
 
@@ -1991,7 +2071,7 @@ static void zip(ulg time_stamp)
 	/* compression method: 8 (DEFLATED) */
 	/* general flags: 0 */
 	put_32bit(0x00088b1f);
-	put_32bit(time_stamp);
+	put_32bit(0);		/* Unix timestamp */
 
 	/* Write deflated file to zip file */
 	G1.crc = ~0;
@@ -2015,10 +2095,8 @@ static void zip(ulg time_stamp)
 
 /* ======================================================================== */
 static
-IF_DESKTOP(long long) int FAST_FUNC pack_gzip(transformer_aux_data_t *aux UNUSED_PARAM)
+IF_DESKTOP(long long) int FAST_FUNC pack_gzip(transformer_state_t *xstate UNUSED_PARAM)
 {
-	struct stat s;
-
 	/* Clear input and output buffers */
 	G1.outcnt = 0;
 #ifdef DEBUG
@@ -2050,9 +2128,23 @@ IF_DESKTOP(long long) int FAST_FUNC pack_gzip(transformer_aux_data_t *aux UNUSED
 	G2.bl_desc.max_length  = MAX_BL_BITS;
 	//G2.bl_desc.max_code    = 0;
 
+#if 0
+	/* Saving of timestamp is disabled. Why?
+	 * - it is not Y2038-safe.
+	 * - some people want deterministic results
+	 *   (normally they'd use -n, but our -n is a nop).
+	 * - it's bloat.
+	 * Per RFC 1952, gzfile.time=0 is "no timestamp".
+	 * If users will demand this to be reinstated,
+	 * implement -n "don't save timestamp".
+	 */
+	struct stat s;
 	s.st_ctime = 0;
 	fstat(STDIN_FILENO, &s);
 	zip(s.st_ctime);
+#else
+	zip();
+#endif
 	return 0;
 }
 
@@ -2070,6 +2162,7 @@ static const char gzip_longopts[] ALIGN1 =
 	"quiet\0"               No_argument       "q"
 	"fast\0"                No_argument       "1"
 	"best\0"                No_argument       "9"
+	"no-name\0"             No_argument       "n"
 	;
 #endif
 
@@ -2095,24 +2188,45 @@ int gzip_main(int argc UNUSED_PARAM, char **argv)
 #endif
 {
 	unsigned opt;
+#ifdef ENABLE_FEATURE_GZIP_LEVELS
+	static const struct {
+		uint8_t good;
+		uint8_t chain_shift;
+		uint8_t lazy2;
+		uint8_t nice2;
+	} gzip_level_config[6] = {
+		{4,   4,   4/2,  16/2}, /* Level 4 */
+		{8,   5,  16/2,  32/2}, /* Level 5 */
+		{8,   7,  16/2, 128/2}, /* Level 6 */
+		{8,   8,  32/2, 128/2}, /* Level 7 */
+		{32, 10, 128/2, 258/2}, /* Level 8 */
+		{32, 12, 258/2, 258/2}, /* Level 9 */
+	};
+#endif
+
+	SET_PTR_TO_GLOBALS((char *)xzalloc(sizeof(struct globals)+sizeof(struct globals2))
+			+ sizeof(struct globals));
 
 #if ENABLE_FEATURE_GZIP_LONG_OPTIONS
 	applet_long_options = gzip_longopts;
 #endif
 	/* Must match bbunzip's constants OPT_STDOUT, OPT_FORCE! */
-	opt = getopt32(argv, "cfv" IF_GUNZIP("dt") "q123456789n");
+	opt = getopt32(argv, "cfv" IF_GUNZIP("dt") "qn123456789");
 #if ENABLE_GUNZIP /* gunzip_main may not be visible... */
 	if (opt & 0x18) // -d and/or -t
 		return gunzip_main(argc, argv);
 #endif
-	option_mask32 &= 0x7; /* ignore -q, -0..9 */
-	//if (opt & 0x1) // -c
-	//if (opt & 0x2) // -f
-	//if (opt & 0x4) // -v
-	argv += optind;
-
-	SET_PTR_TO_GLOBALS((char *)xzalloc(sizeof(struct globals)+sizeof(struct globals2))
-			+ sizeof(struct globals));
+#ifdef ENABLE_FEATURE_GZIP_LEVELS
+	opt >>= ENABLE_GUNZIP ? 7 : 5; /* drop cfv[dt]qn bits */
+	if (opt == 0)
+		opt = 1 << 6; /* default: 6 */
+	opt = ffs(opt >> 4); /* Maps -1..-4 to [0], -5 to [1] ... -9 to [5] */
+	max_chain_length = 1 << gzip_level_config[opt].chain_shift;
+	good_match	 = gzip_level_config[opt].good;
+	max_lazy_match	 = gzip_level_config[opt].lazy2 * 2;
+	nice_match	 = gzip_level_config[opt].nice2 * 2;
+#endif
+	option_mask32 &= 0x7; /* retain only -cfv */
 
 	/* Allocate all global buffers (for DYN_ALLOC option) */
 	ALLOC(uch, G1.l_buf, INBUFSIZ);
@@ -2124,5 +2238,6 @@ int gzip_main(int argc UNUSED_PARAM, char **argv)
 	/* Initialize the CRC32 table */
 	global_crc32_table = crc32_filltable(NULL, 0);
 
+	argv += optind;
 	return bbunpack(argv, pack_gzip, append_ext, "gz");
 }

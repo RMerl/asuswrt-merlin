@@ -11,7 +11,7 @@
  ********************************************************************
 
  function: utility functions for vorbis codec test suite.
- last mod: $Id: util.c 13293 2007-07-24 00:09:47Z erikd $
+ last mod: $Id: write_read.c 19015 2013-11-12 04:13:28Z giles $
 
  ********************************************************************/
 
@@ -29,7 +29,7 @@
 /* The following function is basically a hacked version of the code in
  * examples/encoder_example.c */
 void
-write_vorbis_data_or_die (const char *filename, int srate, const float * data, int count)
+write_vorbis_data_or_die (const char *filename, int srate, float q, const float * data, int count, int ch)
 {
   FILE * file ;
   ogg_stream_state os;
@@ -51,7 +51,7 @@ write_vorbis_data_or_die (const char *filename, int srate, const float * data, i
 
   vorbis_info_init (&vi);
 
-  ret = vorbis_encode_init_vbr (&vi,1,srate,0.8);
+  ret = vorbis_encode_init_vbr (&vi,ch,srate,q);
   if (ret) {
     printf ("vorbis_encode_init_vbr return %d\n", ret) ;
     exit (1) ;
@@ -88,8 +88,10 @@ write_vorbis_data_or_die (const char *filename, int srate, const float * data, i
   {
     /* expose the buffer to submit data */
     float **buffer = vorbis_analysis_buffer (&vd,count);
+    int i;
 
-    memcpy (buffer [0], data, count * sizeof (float)) ;
+    for(i=0;i<ch;i++)
+      memcpy (buffer [i], data, count * sizeof (float)) ;
 
     /* tell the library how much we actually submitted */
     vorbis_analysis_wrote (&vd,count);
@@ -155,12 +157,14 @@ read_vorbis_data_or_die (const char *filename, int srate, float * data, int coun
   ogg_sync_init (&oy);
 
   {
-    buffer = ogg_sync_buffer (&oy,4096);
-    bytes = fread (buffer,1,4096,file);
+    /* fragile!  Assumes all of our headers will fit in the first 8kB,
+       which currently they will */
+    buffer = ogg_sync_buffer (&oy,8192);
+    bytes = fread (buffer,1,8192,file);
     ogg_sync_wrote (&oy,bytes);
 
     if(ogg_sync_pageout (&oy,&og) != 1) {
-      if(bytes < 4096) {
+      if(bytes < 8192) {
         printf ("Out of data.\n") ;
           goto done_decode ;
       }
@@ -192,86 +196,82 @@ read_vorbis_data_or_die (const char *filename, int srate, float * data, int coun
     i = 0;
     while ( i < 2) {
       while (i < 2) {
+
         int result = ogg_sync_pageout (&oy,&og);
         if(result == 0)
           break;
         if(result==1) {
           ogg_stream_pagein(&os,&og);
 
-        while (i < 2) {
-          result = ogg_stream_packetout (&os,&op);
-          if (result == 0)
-            goto done_decode;
-          if (result < 0) {
-            fprintf (stderr,"Corrupt secondary header.  Exiting.\n");
-            exit(1);
+          while (i < 2) {
+            result = ogg_stream_packetout (&os,&op);
+            if (result == 0) break;
+            if (result < 0) {
+              fprintf (stderr,"Corrupt secondary header.  Exiting.\n");
+              exit(1);
+            }
+            vorbis_synthesis_headerin (&vi,&vc,&op);
+            i++;
           }
-        vorbis_synthesis_headerin (&vi,&vc,&op);
-        i++;
         }
       }
+
+      buffer = ogg_sync_buffer (&oy,4096);
+      bytes = fread (buffer,1,4096,file);
+      if (bytes == 0 && i < 2) {
+        fprintf (stderr,"End of file before finding all Vorbis headers!\n");
+        exit (1);
+      }
+
+      ogg_sync_wrote (&oy,bytes);
     }
 
-    buffer = ogg_sync_buffer (&oy,4096);
-    bytes = fread (buffer,1,4096,file);
-    if (bytes == 0 && i < 2) {
-      fprintf (stderr,"End of file before finding all Vorbis headers!\n");
-      exit (1);
+    if (vi.rate != srate) {
+      printf ("\n\nError : File '%s' has sample rate of %ld when it should be %d.\n\n", filename, vi.rate, srate);
+      exit (1) ;
     }
 
-    ogg_sync_wrote (&oy,bytes);
-  }
+    vorbis_synthesis_init (&vd,&vi);
+    vorbis_block_init (&vd,&vb);
 
-  if (vi.rate != srate) {
-    printf ("\n\nError : File '%s' has sample rate of %ld when it should be %d.\n\n", filename, vi.rate, srate);
-    exit (1) ;
-  }
-  if (vi.channels != 1) {
-    printf ("\n\nError : File '%s' has %d channels, but should be mono.\n\n", filename, vi.channels);
-    exit (1) ;
-  }
+    while(!eos) {
+      while (!eos) {
+        int result = ogg_sync_pageout (&oy,&og);
+        if (result == 0)
+          break;
+        if (result < 0) {
+          fprintf (stderr,"Corrupt or missing data in bitstream; "
+                   "continuing...\n");
+        } else {
+          ogg_stream_pagein (&os,&og);
+          while (1) {
+            result = ogg_stream_packetout (&os,&op);
 
-  vorbis_synthesis_init (&vd,&vi);
-  vorbis_block_init (&vd,&vb);
-
-  while(!eos) {
-    while (!eos) {
-      int result = ogg_sync_pageout (&oy,&og);
-      if (result == 0)
-        break;
-      if (result < 0) {
-        fprintf (stderr,"Corrupt or missing data in bitstream; "
-            "continuing...\n");
-      } else {
-        ogg_stream_pagein (&os,&og);
-        while (1) {
-          result = ogg_stream_packetout (&os,&op);
-
-          if (result == 0)
-            break;
-          if (result < 0) {
-            /* no reason to complain; already complained above */
-          } else {
+            if (result == 0)
+              break;
+            if (result < 0) {
+              /* no reason to complain; already complained above */
+            } else {
               float **pcm;
-            int samples;
+              int samples;
 
-            if (vorbis_synthesis (&vb,&op) == 0)
-              vorbis_synthesis_blockin(&vd,&vb);
-            while ((samples = vorbis_synthesis_pcmout (&vd,&pcm)) > 0 && read_total < count) {
-              int bout = samples < count ? samples : count;
-              bout = read_total + bout > count ? count - read_total : bout;
+              if (vorbis_synthesis (&vb,&op) == 0)
+                vorbis_synthesis_blockin(&vd,&vb);
+              while ((samples = vorbis_synthesis_pcmout (&vd,&pcm)) > 0 && read_total < count) {
+                int bout = samples < count ? samples : count;
+                bout = read_total + bout > count ? count - read_total : bout;
 
-              memcpy (data + read_total, pcm[0], bout * sizeof (float)) ;
+                memcpy (data + read_total, pcm[0], bout * sizeof (float)) ;
 
-              vorbis_synthesis_read (&vd,bout);
-              read_total += bout ;
+                vorbis_synthesis_read (&vd,bout);
+                read_total += bout ;
+              }
             }
           }
-        }
 
-        if (ogg_page_eos (&og)) eos = 1;
+          if (ogg_page_eos (&og)) eos = 1;
+        }
       }
-    }
 
       if (!eos) {
         buffer = ogg_sync_buffer (&oy,4096);
@@ -287,7 +287,6 @@ read_vorbis_data_or_die (const char *filename, int srate, float * data, int coun
     vorbis_dsp_clear (&vd);
     vorbis_comment_clear (&vc);
     vorbis_info_clear (&vi);
-
   }
 done_decode:
 

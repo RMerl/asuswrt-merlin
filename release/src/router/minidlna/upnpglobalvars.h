@@ -3,7 +3,7 @@
  * http://sourceforge.net/projects/minidlna/
  *
  * MiniDLNA media server
- * Copyright (C) 2008-2009  Justin Maggard
+ * Copyright (C) 2008-2017  Justin Maggard
  *
  * This file is part of MiniDLNA.
  *
@@ -57,7 +57,7 @@
 
 #include <sqlite3.h>
 
-#define MINIDLNA_VERSION "1.1.5"
+#define MINIDLNA_VERSION "1.2.0"
 
 #ifdef NETGEAR
 # define SERVER_NAME "ReadyDLNA"
@@ -66,7 +66,7 @@
 #endif
 
 #define USE_FORK 1
-#define DB_VERSION 9
+#define DB_VERSION 10
 
 #ifdef ENABLE_NLS
 #define _(string) gettext(string)
@@ -74,10 +74,6 @@
 #define _(string) (string)
 #endif
 #define THISORNUL(s) (s ? s : "")
-
-#ifndef PNPX
-#define PNPX 0
-#endif
 
 #define RESOURCE_PROTOCOL_INFO_VALUES \
 	"http-get:*:image/jpeg:DLNA.ORG_PN=JPEG_TN," \
@@ -169,8 +165,7 @@
 	"http-get:*:audio/mp4:*," \
 	"http-get:*:audio/x-wav:*," \
 	"http-get:*:audio/x-flac:*," \
-	"http-get:*:application/ogg:*" \
-	"http-get:*:video/x-pn-realvideo:*"
+	"http-get:*:application/ogg:*"
 
 #define DLNA_FLAG_DLNA_V1_5      0x00100000
 #define DLNA_FLAG_HTTP_STALLING  0x00200000
@@ -192,6 +187,12 @@ extern uint32_t runtime_flags;
 #define NO_PLAYLIST_MASK      0x0008
 #define SYSTEMD_MASK          0x0010
 #define MERGE_MEDIA_DIRS_MASK 0x0020
+#define WIDE_LINKS_MASK       0x0040
+#ifdef HAVE_AVAHI
+#define TIVO_BONJOUR_MASK     0x0080
+#else
+#define TIVO_BONJOUR_MASK     0x0000
+#endif
 
 #define SETFLAG(mask)	runtime_flags |= mask
 #define GETFLAG(mask)	(runtime_flags & mask)
@@ -213,10 +214,6 @@ extern char serialnumber[];
 #define PRESENTATIONURL_MAX_LEN 64
 extern char presentationurl[];
 
-#if PNPX
-extern char pnpx_hwid[];
-#endif
-
 /* lan addresses */
 extern int n_lan_addr;
 extern struct lan_addr_s lan_addr[];
@@ -229,7 +226,6 @@ extern sqlite3 *db;
 #define FRIENDLYNAME_MAX_LEN 64
 extern char friendly_name[];
 extern char db_path[];
-extern char db_path_spec[];
 extern char log_path[];
 extern struct media_dir_s *media_dirs;
 extern struct album_art_name_s *album_art_names;
@@ -238,5 +234,6 @@ extern volatile short int quitting;
 extern volatile uint32_t updateID;
 extern const char *force_sort_criteria;
 extern short int rescan_db;
+extern int web_status;
 
 #endif

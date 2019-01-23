@@ -112,6 +112,11 @@ char* FAST_FUNC xstrndup(const char *s, int n)
 	return memcpy(t, s, n);
 }
 
+void* FAST_FUNC xmemdup(const void *s, int n)
+{
+	return memcpy(xmalloc(n), s, n);
+}
+
 // Die if we can't open a file and return a FILE* to it.
 // Notice we haven't got xfread(), This is for use with fscanf() and friends.
 FILE* FAST_FUNC xfopen(const char *path, const char *mode)
@@ -140,15 +145,6 @@ int FAST_FUNC xopen(const char *pathname, int flags)
 	return xopen3(pathname, flags, 0666);
 }
 
-/* Die if we can't open an existing file readonly with O_NONBLOCK
- * and return the fd.
- * Note that for ioctl O_RDONLY is sufficient.
- */
-int FAST_FUNC xopen_nonblocking(const char *pathname)
-{
-	return xopen(pathname, O_RDONLY | O_NONBLOCK);
-}
-
 // Warn if we can't open a file and return a fd.
 int FAST_FUNC open3_or_warn(const char *pathname, int flags, int mode)
 {
@@ -165,6 +161,32 @@ int FAST_FUNC open3_or_warn(const char *pathname, int flags, int mode)
 int FAST_FUNC open_or_warn(const char *pathname, int flags)
 {
 	return open3_or_warn(pathname, flags, 0666);
+}
+
+/* Die if we can't open an existing file readonly with O_NONBLOCK
+ * and return the fd.
+ * Note that for ioctl O_RDONLY is sufficient.
+ */
+int FAST_FUNC xopen_nonblocking(const char *pathname)
+{
+	return xopen(pathname, O_RDONLY | O_NONBLOCK);
+}
+
+int FAST_FUNC xopen_as_uid_gid(const char *pathname, int flags, uid_t u, gid_t g)
+{
+	int fd;
+	uid_t old_euid = geteuid();
+	gid_t old_egid = getegid();
+
+	xsetegid(g);
+	xseteuid(u);
+
+	fd = xopen(pathname, flags);
+
+	xseteuid(old_euid);
+	xsetegid(old_egid);
+
+	return fd;
 }
 
 void FAST_FUNC xunlink(const char *pathname)
@@ -351,17 +373,33 @@ void FAST_FUNC xsetuid(uid_t uid)
 	if (setuid(uid)) bb_perror_msg_and_die("setuid");
 }
 
+void FAST_FUNC xsetegid(gid_t egid)
+{
+	if (setegid(egid)) bb_perror_msg_and_die("setegid");
+}
+
+void FAST_FUNC xseteuid(uid_t euid)
+{
+	if (seteuid(euid)) bb_perror_msg_and_die("seteuid");
+}
+
 // Die if we can't chdir to a new path.
 void FAST_FUNC xchdir(const char *path)
 {
 	if (chdir(path))
-		bb_perror_msg_and_die("chdir(%s)", path);
+		bb_perror_msg_and_die("can't change directory to '%s'", path);
+}
+
+void FAST_FUNC xfchdir(int fd)
+{
+	if (fchdir(fd))
+		bb_perror_msg_and_die("fchdir");
 }
 
 void FAST_FUNC xchroot(const char *path)
 {
 	if (chroot(path))
-		bb_perror_msg_and_die("can't change root directory to %s", path);
+		bb_perror_msg_and_die("can't change root directory to '%s'", path);
 	xchdir("/");
 }
 
@@ -541,13 +579,11 @@ int FAST_FUNC bb_xioctl(int fd, unsigned request, void *argp)
 
 char* FAST_FUNC xmalloc_ttyname(int fd)
 {
-	char *buf = xzalloc(128);
-	int r = ttyname_r(fd, buf, 127);
-	if (r) {
-		free(buf);
-		buf = NULL;
-	}
-	return buf;
+	char buf[128];
+	int r = ttyname_r(fd, buf, sizeof(buf) - 1);
+	if (r)
+		return NULL;
+	return xstrdup(buf);
 }
 
 void FAST_FUNC generate_uuid(uint8_t *buf)
@@ -623,3 +659,19 @@ pid_t FAST_FUNC xfork(void)
 	return pid;
 }
 #endif
+
+void FAST_FUNC xvfork_parent_waits_and_exits(void)
+{
+	pid_t pid;
+
+	fflush_all();
+	pid = xvfork();
+	if (pid > 0) {
+		/* Parent */
+		int exit_status = wait_for_exitstatus(pid);
+		if (WIFSIGNALED(exit_status))
+			kill_myself_with_sig(WTERMSIG(exit_status));
+		_exit(WEXITSTATUS(exit_status));
+	}
+	/* Child continues */
+}

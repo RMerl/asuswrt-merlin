@@ -177,7 +177,7 @@ opt_get(const void *buf, size_t size, unsigned char id)
 static char
 *stropt(const struct opt_hdr *opt, char *buf)
 {
-	*stpncpy(buf, opt->data, opt->len) = '\0';
+	*stpncpy(buf, (char *)opt->data, opt->len) = '\0';
 	return buf;
 }
 
@@ -270,7 +270,7 @@ deconfig(int zcip)
 	expires(wan_ifname, 0);
 	wan_down(wan_ifname);
 
-#if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
+#if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
 	if(nvram_get_int(strcat_r(prefix, "sbstate_t", tmp)) == WAN_STOPPED_REASON_DATALIMIT)
 		end_wan_sbstate = WAN_STOPPED_REASON_DATALIMIT;
 #endif
@@ -385,16 +385,39 @@ bound(void)
 	if ((value = getenv("opt43")) && nvram_get_int("tr_discovery") &&
 	    (value = hex2bin(value, &size))) {
 		struct opt_hdr *opt;
-		char buf[256], *url = NULL;
+		char buf[256], *url = NULL, *userinfo, *host, *path, *ptr, *user, *pass;
 		if ((opt = opt_get(value, size, 1)) &&
-		    strstr(stropt(opt, buf), "://") > buf)
-			url = buf;
-		else if (strstr(value, "://") > value)
+		    (ptr = strstr(stropt(opt, buf), "://")) && ptr > buf)
+			url = trim_r(buf);
+		else if ((ptr = strstr(value, "://")) && ptr > value)
 			url = trim_r(value);
-		if (url && strncmp(url, "http", sizeof("http") - 1) == 0) {
-			//nvram_set(strcat_r(wanprefix, "tr_acs_url", tmp), url);
-			nvram_set("tr_acs_url", url);
-			nvram_set_int("tr_enable", 1);
+		if (url && (
+		    strncmp(url, "http://", sizeof("http://") - 1) == 0 ||
+		    strncmp(url, "https://", sizeof("https://") - 1) == 0)) {
+			host = strtok_r(ptr + 3, " ", &userinfo);
+			path = strchrnul(host, '/');
+			if ((ptr = strchr(host, '@')) && ptr < path) {
+				ptr = strsep(&host, "@");
+				if ((userinfo = user = pass = strdup(ptr)))
+					strsep(&pass, ":");
+				url = memmove(host - (ptr - url), url, ptr - url);
+			} else {
+				user = strtok_r(NULL, " ", &userinfo);
+				pass = strtok_r(NULL, " ", &userinfo);
+				userinfo = NULL;
+			}
+			if (host < path) {
+				if (user || pass) {
+					//nvram_set(strcat_r(wanprefix, "tr_username", tmp), user ? : "");
+					//nvram_set(strcat_r(wanprefix, "tr_passwd", tmp), pass ? : "");
+					nvram_set("tr_username", user ? : "");
+					nvram_set("tr_passwd", pass ? : "");
+				}
+				//nvram_set(strcat_r(wanprefix, "tr_acs_url", tmp), url);
+				nvram_set("tr_acs_url", url);
+				nvram_set_int("tr_enable", 1);
+			}
+			free(userinfo);
 		}
 		if ((opt = opt_get(value, size, 2))) {
 			//nvram_set(strcat_r(wanprefix, "tr_pvgcode", tmp), stropt(opt, buf));
@@ -614,7 +637,7 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 		NULL,		/* -T5 */
 		NULL,		/* -A120 */
 		NULL,		/* -b */
-		NULL, NULL,	/* -H wan_hostname */
+		NULL, NULL,	/* -H/-F wan_hostname */
 		NULL,		/* -Oroutes */
 		NULL,		/* -Ostaticroutes */
 		NULL,		/* -Omsstaticroutes */
@@ -660,9 +683,12 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 		dhcp_argv[index++] = "-b";
 
 	value = nvram_safe_get(strcat_r(prefix, "hostname", tmp));
-	if (*value && is_valid_hostname(value)) {
-		dhcp_argv[index++] = "-H";
-		dhcp_argv[index++] = value;
+	if (*value) {
+		char *fqdn = strchr(value, '.');
+		if (fqdn ? is_valid_domainname(value) : is_valid_hostname(value)) {
+			dhcp_argv[index++] = fqdn ? "-F" : "-H";
+			dhcp_argv[index++] = value;
+		}
 	}
 
 	/* 0: disable, 1: MS routes, 2: RFC routes, 3: Both */
@@ -684,7 +710,6 @@ start_udhcpc(char *wan_ifname, int unit, pid_t *ppid)
 
 	/* Client ID */
 	value = nvram_safe_get(strcat_r(prefix, "clientid", tmp));
-//	value = nvram_safe_get(strcat_r(prefix,"dhcpc_options",tmp));
 	if (nvram_get_int(strcat_r(prefix, "clientid_type", tmp))) {
 		if (get_duid(&duid)) {
 			/* RFC4361 implementation, use WAN number as IAID.
@@ -1271,6 +1296,7 @@ start_dhcp6c(void)
 		NULL, NULL,	/* -rdns -rdomain */
 		NULL, NULL, 	/* -rsolmaxrt -r infmaxrt */
 		NULL,		/* -v */
+		NULL,		/* -k */
 		NULL,		/* interface */
 		NULL };
 	int index = 7;
@@ -1325,6 +1351,9 @@ start_dhcp6c(void)
 
 	if (nvram_get_int("ipv6_debug"))
 		dhcp6c_argv[index++] = "-v";
+
+	if (nvram_get_int(ipv6_nvname("ipv6_dhcp6c_release")) == 0)
+		dhcp6c_argv[index++] = "-k";
 
 	dhcp6c_argv[index++] = wan_ifname;
 

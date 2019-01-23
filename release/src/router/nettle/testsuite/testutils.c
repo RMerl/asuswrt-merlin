@@ -663,9 +663,33 @@ xalloc_limbs (mp_size_t n)
   return xalloc (n * sizeof (mp_limb_t));
 }
 
-#define SIGN(key, hash, msg, signature) do {		\
-  hash##_update(&hash, LDATA(msg));		\
-  ASSERT(rsa_##hash##_sign(key, &hash, signature));	\
+/* Expects local variables pub, key, rstate, digest, signature */
+#define SIGN(hash, msg, expected) do { \
+  hash##_update(&hash, LDATA(msg));					\
+  ASSERT(rsa_##hash##_sign(key, &hash, signature));			\
+  if (verbose)								\
+    {									\
+      fprintf(stderr, "rsa-%s signature: ", #hash);			\
+      mpz_out_str(stderr, 16, signature);				\
+      fprintf(stderr, "\n");						\
+    }									\
+  ASSERT(mpz_cmp (signature, expected) == 0);				\
+									\
+  hash##_update(&hash, LDATA(msg));					\
+  ASSERT(rsa_##hash##_sign_tr(pub, key, &rstate,			\
+			      (nettle_random_func *) knuth_lfib_random,	\
+			      &hash, signature));			\
+  ASSERT(mpz_cmp (signature, expected) == 0);				\
+									\
+  hash##_update(&hash, LDATA(msg));					\
+  hash##_digest(&hash, sizeof(digest), digest);				\
+  ASSERT(rsa_##hash##_sign_digest(key, digest, signature));		\
+  ASSERT(mpz_cmp (signature, expected) == 0);				\
+									\
+  ASSERT(rsa_##hash##_sign_digest_tr(pub, key, &rstate,			\
+				     (nettle_random_func *)knuth_lfib_random, \
+				     digest, signature));		\
+  ASSERT(mpz_cmp (signature, expected) == 0);				\
 } while(0)
 
 #define VERIFY(key, hash, msg, signature) (	\
@@ -770,22 +794,16 @@ test_rsa_md5(struct rsa_public_key *pub,
 	     mpz_t expected)
 {
   struct md5_ctx md5;
+  struct knuth_lfib_ctx rstate;
+  uint8_t digest[MD5_DIGEST_SIZE];
   mpz_t signature;
 
   md5_init(&md5);
   mpz_init(signature);
-  
-  SIGN(key, md5, "The magic words are squeamish ossifrage", signature);
+  knuth_lfib_init (&rstate, 15);
 
-  if (verbose)
-    {
-      fprintf(stderr, "rsa-md5 signature: ");
-      mpz_out_str(stderr, 16, signature);
-      fprintf(stderr, "\n");
-    }
+  SIGN(md5, "The magic words are squeamish ossifrage", expected);
 
-  ASSERT (mpz_cmp(signature, expected) == 0);
-  
   /* Try bad data */
   ASSERT (!VERIFY(pub, md5,
 		  "The magick words are squeamish ossifrage", signature));
@@ -808,22 +826,16 @@ test_rsa_sha1(struct rsa_public_key *pub,
 	      mpz_t expected)
 {
   struct sha1_ctx sha1;
+  struct knuth_lfib_ctx rstate;
+  uint8_t digest[SHA1_DIGEST_SIZE];
   mpz_t signature;
 
   sha1_init(&sha1);
   mpz_init(signature);
+  knuth_lfib_init (&rstate, 16);
 
-  SIGN(key, sha1, "The magic words are squeamish ossifrage", signature);
+  SIGN(sha1, "The magic words are squeamish ossifrage", expected);
 
-  if (verbose)
-    {
-      fprintf(stderr, "rsa-sha1 signature: ");
-      mpz_out_str(stderr, 16, signature);
-      fprintf(stderr, "\n");
-    }
-
-  ASSERT (mpz_cmp(signature, expected) == 0);
-  
   /* Try bad data */
   ASSERT (!VERIFY(pub, sha1,
 		  "The magick words are squeamish ossifrage", signature));
@@ -846,22 +858,16 @@ test_rsa_sha256(struct rsa_public_key *pub,
 		mpz_t expected)
 {
   struct sha256_ctx sha256;
+  struct knuth_lfib_ctx rstate;
+  uint8_t digest[SHA256_DIGEST_SIZE];
   mpz_t signature;
 
   sha256_init(&sha256);
   mpz_init(signature);
+  knuth_lfib_init (&rstate, 17);
 
-  SIGN(key, sha256, "The magic words are squeamish ossifrage", signature);
+  SIGN(sha256, "The magic words are squeamish ossifrage", expected);
 
-  if (verbose)
-    {
-      fprintf(stderr, "rsa-sha256 signature: ");
-      mpz_out_str(stderr, 16, signature);
-      fprintf(stderr, "\n");
-    }
-
-  ASSERT (mpz_cmp(signature, expected) == 0);
-  
   /* Try bad data */
   ASSERT (!VERIFY(pub, sha256,
 		  "The magick words are squeamish ossifrage", signature));
@@ -884,22 +890,16 @@ test_rsa_sha512(struct rsa_public_key *pub,
 		mpz_t expected)
 {
   struct sha512_ctx sha512;
+  struct knuth_lfib_ctx rstate;
+  uint8_t digest[SHA512_DIGEST_SIZE];
   mpz_t signature;
 
   sha512_init(&sha512);
   mpz_init(signature);
+  knuth_lfib_init (&rstate, 18);
 
-  SIGN(key, sha512, "The magic words are squeamish ossifrage", signature);
+  SIGN(sha512, "The magic words are squeamish ossifrage", expected);
 
-  if (verbose)
-    {
-      fprintf(stderr, "rsa-sha512 signature: ");
-      mpz_out_str(stderr, 16, signature);
-      fprintf(stderr, "\n");
-    }
-
-  ASSERT (mpz_cmp(signature, expected) == 0);
-  
   /* Try bad data */
   ASSERT (!VERIFY(pub, sha512,
 		  "The magick words are squeamish ossifrage", signature));

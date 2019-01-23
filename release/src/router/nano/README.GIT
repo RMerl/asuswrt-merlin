@@ -1,0 +1,106 @@
+INSTRUCTIONS FOR COMPILING AND INSTALLING NANO FROM GIT
+=======================================================
+
+The latest changes and fixes for GNU nano are available via git, but
+building this needs a bit more care than the official tarballs.
+
+
+Prerequisites
+-------------
+
+To successfully compile GNU nano from git, you'll need the following
+packages:
+
+- autoconf    (version >= 2.69)
+- automake    (version >= 1.14)
+- autopoint   (version >= 0.18.3)
+- gettext     (version >= 0.18.3)
+- git         (version >= 2.7.4)
+- groff       (version >= 1.12)
+- pkg-config  (version >= 0.22)
+- texinfo     (version >= 4.0)
+- gcc         (any version)
+- make        (any version)
+
+If you want UTF-8 support, you will also need libncursesw5-dev installed
+(version >= 5.7), or libslang2-dev (version >= 2.0) if you use --with-slang.
+
+These should all be available in your distro's package manager or software
+center, or otherwise on any GNU mirror.
+
+
+Download the source
+-------------------
+
+To obtain the current nano development branch (called 'master'), use the
+following command.  It will create in your current working directory a
+subdirectory called 'nano' containing a copy of all of the files:
+
+    $ git clone git://git.savannah.gnu.org/nano.git nano
+
+
+Generate the configure script
+-----------------------------
+
+Once you have the sources in the "nano" directory,
+
+    $ cd nano
+    $ ./autogen.sh
+
+This will set up a configure script and a Makefile.in file.
+
+
+Configure your build
+--------------------
+
+To configure your build, run the configure script from the nano source
+directory:
+
+    $ ./configure [--add-options-here]
+
+
+Build and install
+-----------------
+
+From the nano source directory, build the code with:
+
+    $ make
+
+Then, once it's done compiling, run:
+
+    $ make install
+
+which should copy various files (i.e. the nano executable, the info and
+man pages, and syntax highlighting pattern files) to their appropriate
+directories.
+
+If you're installing into the default install directory (/usr/local),
+you'll need to run that "make install" command with root privileges.
+
+
+Problems?
+---------
+
+Please submit any bugs you find in the code in git via the bug tracker
+on Savannah (https://savannah.gnu.org/bugs/?group=nano).
+
+
+Contributing something
+----------------------
+
+If you have a fix for a bug, or the code for a new or improved feature,
+first create a branch off of master:
+
+    $ git checkout -b somename
+
+Then change the code so it does what you want, and commit it, with in the
+commit message (after the one-line summary) a rationale for the change:
+
+    $ git commit -as
+
+Then create a patch (or patches):
+
+    $ git format-patch master
+
+Send that patch (or patches) to <nano-devel@gnu.org>, as an attachment
+or with git send-email.

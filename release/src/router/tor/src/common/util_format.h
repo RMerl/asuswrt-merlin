@@ -1,7 +1,7 @@
 /* Copyright (c) 2001, Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #ifndef TOR_UTIL_FORMAT_H
@@ -24,6 +24,7 @@ int base64_decode_nopad(uint8_t *dest, size_t destlen,
 #define BASE32_CHARS "abcdefghijklmnopqrstuvwxyz234567"
 void base32_encode(char *dest, size_t destlen, const char *src, size_t srclen);
 int base32_decode(char *dest, size_t destlen, const char *src, size_t srclen);
+size_t base32_encoded_size(size_t srclen);
 
 int hex_decode_digit(char c);
 void base16_encode(char *dest, size_t destlen, const char *src, size_t srclen);

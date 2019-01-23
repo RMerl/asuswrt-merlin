@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2017 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -549,17 +549,16 @@ static DBusMessage *dbus_add_lease(DBusMessage* message)
     return dbus_message_new_error_printf(message, DBUS_ERROR_INVALID_ARGS,
 					 "Invalid IP address '%s'", ipaddr);
    
-  hw_len = parse_hex((char*)hwaddr, dhcp_chaddr, DHCP_CHADDR_MAX, NULL,
-		     &hw_type);
+  hw_len = parse_hex((char*)hwaddr, dhcp_chaddr, DHCP_CHADDR_MAX, NULL, &hw_type);
   if (hw_type == 0 && hw_len != 0)
     hw_type = ARPHRD_ETHER;
-
-    lease_set_hwaddr(lease, dhcp_chaddr, clid, hw_len, hw_type,
+  
+  lease_set_hwaddr(lease, dhcp_chaddr, clid, hw_len, hw_type,
                    clid_len, now, 0);
   lease_set_expires(lease, expires, now);
   if (hostname_len != 0)
     lease_set_hostname(lease, hostname, 0, get_domain(lease->addr), NULL);
-    
+  
   lease_update_file(now);
   lease_update_dns(0);
 

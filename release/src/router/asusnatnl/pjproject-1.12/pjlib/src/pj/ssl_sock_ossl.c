@@ -52,12 +52,22 @@
 
 
 #ifdef _MSC_VER
-# ifdef _DEBUG
-#  pragma comment( lib, "libeay32MTd")
-#  pragma comment( lib, "ssleay32MTd")
-#else
-#  pragma comment( lib, "libeay32MT")
-#  pragma comment( lib, "ssleay32MT")
+# if defined(PJ_WIN32_UWP)
+#  ifdef _DEBUG
+#    pragma comment( lib, "libeay32MDd")
+#    pragma comment( lib, "ssleay32MDd")
+#  else
+#    pragma comment( lib, "libeay32MD")
+#    pragma comment( lib, "ssleay32MD")
+#  endif
+# else
+#  ifdef _DEBUG
+#    pragma comment( lib, "libeay32MTd")
+#    pragma comment( lib, "ssleay32MTd")
+#  else
+#    pragma comment( lib, "libeay32MT")
+#    pragma comment( lib, "ssleay32MT")
+#  endif
 # endif
 #endif
 
@@ -340,7 +350,7 @@ static pj_status_t init_openssl(void)
 	pj_assert(meth);
 
 	ctx=SSL_CTX_new(meth);
-	SSL_CTX_set_cipher_list(ctx, "ALL");
+	SSL_CTX_set_cipher_list(ctx, "HIGH:!MEDIUM:!LOW:!aNULL:!eNULL:!kECDH:!aDH:!RC4:!3DES:!CAMELLIA:!MD5:!PSK:!SRP:!KRB5:@STRENGTH");
 
 	ssl = SSL_new(ctx);
 	sk_cipher = SSL_get_ciphers(ssl);
@@ -509,7 +519,10 @@ static pj_status_t create_ssl(pj_ssl_sock_t *ssock)
 
     /* Determine SSL method to use */
     switch (ssock->param.proto) {
-    case PJ_SSL_SOCK_PROTO_DEFAULT:
+	case PJ_SSL_SOCK_PROTO_DEFAULT:
+	case PJ_SSL_SOCK_PROTO_SSL23:
+	ssl_method = (SSL_METHOD*)SSLv23_method();
+	break;
     case PJ_SSL_SOCK_PROTO_TLS1:
 	ssl_method = (SSL_METHOD*)TLSv1_method();
 	break;
@@ -518,15 +531,6 @@ static pj_status_t create_ssl(pj_ssl_sock_t *ssock)
 	ssl_method = (SSL_METHOD*)SSLv2_method();
 	break;
 #endif
-    case PJ_SSL_SOCK_PROTO_SSL3:
-	ssl_method = (SSL_METHOD*)SSLv3_method();
-	break;
-    case PJ_SSL_SOCK_PROTO_SSL23:
-	ssl_method = (SSL_METHOD*)SSLv23_method();
-	break;
-    //case PJ_SSL_SOCK_PROTO_DTLS1:
-	//ssl_method = (SSL_METHOD*)DTLSv1_method();
-	//break;
     default:
 	return PJ_EINVAL;
     }
@@ -684,14 +688,14 @@ static pj_status_t set_cipher_list(pj_ssl_sock_t *ssock)
     unsigned i;
     int j, ret;
 
-    if (ssock->param.ciphers_num == 0)
-	return PJ_SUCCESS;
+    /*if (ssock->param.ciphers_num == 0)
+	return PJ_SUCCESS;*/
 
     pj_strset(&cipher_list, buf, 0);
 
     /* Set SSL with ALL available ciphers */
-    SSL_set_cipher_list(ssock->ossl_ssl, "ALL");
-
+    SSL_set_cipher_list(ssock->ossl_ssl, "HIGH:!MEDIUM:!LOW:!aNULL:!eNULL:!kECDH:!aDH:!RC4:!3DES:!CAMELLIA:!MD5:!PSK:!SRP:!KRB5:@STRENGTH");
+#if 0
     /* Generate user specified cipher list in OpenSSL format */
     sk_cipher = SSL_get_ciphers(ssock->ossl_ssl);
     for (i = 0; i < ssock->param.ciphers_num; ++i) {
@@ -730,7 +734,7 @@ static pj_status_t set_cipher_list(pj_ssl_sock_t *ssock)
     if (ret < 1) {
 	return GET_SSL_STATUS(ssock);
     }
-
+#endif
     return PJ_SUCCESS;
 }
 

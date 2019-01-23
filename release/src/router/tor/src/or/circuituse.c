@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -92,7 +92,7 @@ circuit_is_acceptable(const origin_circuit_t *origin_circ,
   /* decide if this circ is suitable for this conn */
 
   /* for rend circs, circ->cpath->prev is not the last router in the
-   * circuit, it's the magical extra bob hop. so just check the nickname
+   * circuit, it's the magical extra service hop. so just check the nickname
    * of the one we meant to finish at.
    */
   build_state = origin_circ->build_state;
@@ -203,7 +203,7 @@ circuit_is_better(const origin_circuit_t *oa, const origin_circuit_t *ob,
             timercmp(&a->timestamp_began, &b->timestamp_began, OP_GT))
           return 1;
         if (ob->build_state->is_internal)
-          /* XXX023 what the heck is this internal thing doing here. I
+          /* XXXX++ what the heck is this internal thing doing here. I
            * think we can get rid of it. circuit_is_acceptable() already
            * makes sure that is_internal is exactly what we need it to
            * be. -RD */
@@ -222,7 +222,7 @@ circuit_is_better(const origin_circuit_t *oa, const origin_circuit_t *ob,
       break;
   }
 
-  /* XXXX023 Maybe this check should get a higher priority to avoid
+  /* XXXX Maybe this check should get a higher priority to avoid
    *   using up circuits too rapidly. */
 
   a_bits = connection_edge_update_circuit_isolation(conn,
@@ -788,6 +788,8 @@ static time_t last_expired_clientside_circuits = 0;
  * As a diagnostic for bug 8387, log information about how many one-hop
  * circuits we have around that have been there for at least <b>age</b>
  * seconds. Log a few of them.
+ * Ignores Single Onion Service intro and Tor2web redezvous circuits, they are
+ * expected to be long-term one-hop circuits.
  */
 void
 circuit_log_ancient_one_hop_circuits(int age)
@@ -797,12 +799,26 @@ circuit_log_ancient_one_hop_circuits(int age)
   time_t cutoff = now - age;
   int n_found = 0;
   smartlist_t *log_these = smartlist_new();
+  const or_options_t *options = get_options();
 
   SMARTLIST_FOREACH_BEGIN(circuit_get_global_list(), circuit_t *, circ) {
     const origin_circuit_t *ocirc;
     if (! CIRCUIT_IS_ORIGIN(circ))
       continue;
     if (circ->timestamp_created.tv_sec >= cutoff)
+      continue;
+    /* Single Onion Services deliberately make long term one-hop intro
+     * connections. We only ignore active intro point connections, if we take
+     * a long time establishing, that's worth logging. */
+    if (rend_service_allow_non_anonymous_connection(options) &&
+        circ->purpose == CIRCUIT_PURPOSE_S_INTRO)
+      continue;
+    /* Tor2web deliberately makes long term one-hop rend connections,
+     * particularly when Tor2webRendezvousPoints is used. We only ignore
+     * active rend point connections, if we take a long time to rendezvous,
+     * that's worth logging. */
+    if (rend_client_allow_non_anonymous_connection(options) &&
+        circ->purpose == CIRCUIT_PURPOSE_C_REND_JOINED)
       continue;
     ocirc = CONST_TO_ORIGIN_CIRCUIT(circ);
 
@@ -839,7 +855,7 @@ circuit_log_ancient_one_hop_circuits(int age)
 
       tor_asprintf(&dirty, "Dirty since %s (%ld seconds vs %ld-second cutoff)",
                    dirty_since, (long)(now - circ->timestamp_dirty),
-                   (long) get_options()->MaxCircuitDirtiness);
+                   (long) options->MaxCircuitDirtiness);
     } else {
       dirty = tor_strdup("Not marked dirty");
     }
@@ -1067,7 +1083,7 @@ circuit_predict_and_launch_new(void)
   if (rep_hist_get_predicted_internal(now, &hidserv_needs_uptime,
                                       &hidserv_needs_capacity) &&
       ((num_uptime_internal<2 && hidserv_needs_uptime) ||
-        num_internal<2)
+        num_internal<3)
         && router_have_consensus_path() != CONSENSUS_PATH_UNKNOWN) {
     if (hidserv_needs_uptime)
       flags |= CIRCLAUNCH_NEED_UPTIME;
@@ -1123,7 +1139,7 @@ circuit_build_needed_circs(time_t now)
    * don't require an exit circuit, review in #13814.
    * This allows HSs to function in a consensus without exits. */
   if (router_have_consensus_path() != CONSENSUS_PATH_UNKNOWN)
-    connection_ap_attach_pending();
+    connection_ap_rescan_and_attach_pending();
 
   /* make sure any hidden services have enough intro points
    * HS intro point streams only require an internal circuit */
@@ -1426,7 +1442,7 @@ static void
 circuit_testing_opened(origin_circuit_t *circ)
 {
   if (have_performed_bandwidth_test ||
-      !check_whether_orport_reachable()) {
+      !check_whether_orport_reachable(get_options())) {
     /* either we've already done everything we want with testing circuits,
      * or this testing circuit became open due to a fluke, e.g. we picked
      * a last hop where we already had the connection open due to an
@@ -1443,7 +1459,8 @@ circuit_testing_opened(origin_circuit_t *circ)
 static void
 circuit_testing_failed(origin_circuit_t *circ, int at_last_hop)
 {
-  if (server_mode(get_options()) && check_whether_orport_reachable())
+  const or_options_t *options = get_options();
+  if (server_mode(options) && check_whether_orport_reachable(options))
     return;
 
   log_info(LD_GENERAL,
@@ -1475,7 +1492,7 @@ circuit_has_opened(origin_circuit_t *circ)
     case CIRCUIT_PURPOSE_C_ESTABLISH_REND:
       rend_client_rendcirc_has_opened(circ);
       /* Start building an intro circ if we don't have one yet. */
-      connection_ap_attach_pending();
+      connection_ap_attach_pending(1);
       /* This isn't a call to circuit_try_attaching_streams because a
        * circuit in _C_ESTABLISH_REND state isn't connected to its
        * hidden service yet, thus we can't attach streams to it yet,
@@ -1493,11 +1510,11 @@ circuit_has_opened(origin_circuit_t *circ)
       circuit_try_attaching_streams(circ);
       break;
     case CIRCUIT_PURPOSE_S_ESTABLISH_INTRO:
-      /* at Bob, waiting for introductions */
+      /* at the service, waiting for introductions */
       rend_service_intro_has_opened(circ);
       break;
     case CIRCUIT_PURPOSE_S_CONNECT_REND:
-      /* at Bob, connecting to rend point */
+      /* at the service, connecting to rend point */
       rend_service_rendezvous_has_opened(circ);
       break;
     case CIRCUIT_PURPOSE_TESTING:
@@ -1537,14 +1554,14 @@ void
 circuit_try_attaching_streams(origin_circuit_t *circ)
 {
   /* Attach streams to this circuit if we can. */
-  connection_ap_attach_pending();
+  connection_ap_attach_pending(1);
 
   /* The call to circuit_try_clearing_isolation_state here will do
    * nothing and return 0 if we didn't attach any streams to circ
    * above. */
   if (circuit_try_clearing_isolation_state(circ)) {
     /* Maybe *now* we can attach some streams to this circuit. */
-    connection_ap_attach_pending();
+    connection_ap_attach_pending(1);
   }
 }
 
@@ -1617,32 +1634,32 @@ circuit_build_failed(origin_circuit_t *circ)
       circuit_testing_failed(circ, failed_at_last_hop);
       break;
     case CIRCUIT_PURPOSE_S_ESTABLISH_INTRO:
-      /* at Bob, waiting for introductions */
+      /* at the service, waiting for introductions */
       if (circ->base_.state != CIRCUIT_STATE_OPEN) {
         circuit_increment_failure_count();
       }
-      /* no need to care here, because bob will rebuild intro
+      /* no need to care here, because the service will rebuild intro
        * points periodically. */
       break;
     case CIRCUIT_PURPOSE_C_INTRODUCING:
-      /* at Alice, connecting to intro point */
-      /* Don't increment failure count, since Bob may have picked
+      /* at the client, connecting to intro point */
+      /* Don't increment failure count, since the service may have picked
        * the introduction point maliciously */
-      /* Alice will pick a new intro point when this one dies, if
+      /* The client will pick a new intro point when this one dies, if
        * the stream in question still cares. No need to act here. */
       break;
     case CIRCUIT_PURPOSE_C_ESTABLISH_REND:
-      /* at Alice, waiting for Bob */
+      /* at the client, waiting for the service */
       circuit_increment_failure_count();
-      /* Alice will pick a new rend point when this one dies, if
+      /* the client will pick a new rend point when this one dies, if
        * the stream in question still cares. No need to act here. */
       break;
     case CIRCUIT_PURPOSE_S_CONNECT_REND:
-      /* at Bob, connecting to rend point */
-      /* Don't increment failure count, since Alice may have picked
+      /* at the service, connecting to rend point */
+      /* Don't increment failure count, since the client may have picked
        * the rendezvous point maliciously */
       log_info(LD_REND,
-               "Couldn't connect to Alice's chosen rend point %s "
+               "Couldn't connect to the client's chosen rend point %s "
                "(%s hop failed).",
                escaped(build_state_get_exit_nickname(circ->build_state)),
                failed_at_last_hop?"last":"non-last");
@@ -1674,7 +1691,11 @@ circuit_launch(uint8_t purpose, int flags)
   return circuit_launch_by_extend_info(purpose, NULL, flags);
 }
 
-/** DOCDOC */
+/* Do we have enough descriptors to build paths?
+ * If need_exit is true, return 1 if we can build exit paths.
+ * (We need at least one Exit in the consensus to build exit paths.)
+ * If need_exit is false, return 1 if we can build internal paths.
+ */
 static int
 have_enough_path_info(int need_exit)
 {
@@ -1931,8 +1952,8 @@ circuit_get_open_circ_or_launch(entry_connection_t *conn,
         return -1;
       }
     } else {
-      /* XXXX024 Duplicates checks in connection_ap_handshake_attach_circuit:
-       * refactor into a single function? */
+      /* XXXX Duplicates checks in connection_ap_handshake_attach_circuit:
+       * refactor into a single function. */
       const node_t *node = node_get_by_nickname(conn->chosen_exit_name, 1);
       int opt = conn->chosen_exit_optional;
       if (node && !connection_ap_can_use_exit(conn, node)) {
@@ -1986,6 +2007,7 @@ circuit_get_open_circ_or_launch(entry_connection_t *conn,
                  "No intro points for '%s': re-fetching service descriptor.",
                  safe_str_client(rend_data->onion_address));
         rend_client_refetch_v2_renddesc(rend_data);
+        connection_ap_mark_as_non_pending_circuit(conn);
         ENTRY_TO_CONN(conn)->state = AP_CONN_STATE_RENDDESC_WAIT;
         return 0;
       }
@@ -2005,8 +2027,13 @@ circuit_get_open_circ_or_launch(entry_connection_t *conn,
         if (r && node_has_descriptor(r)) {
           /* We might want to connect to an IPv6 bridge for loading
              descriptors so we use the preferred address rather than
-             the primary.  */
+             the primary. */
           extend_info = extend_info_from_node(r, conn->want_onehop ? 1 : 0);
+          if (!extend_info) {
+            log_warn(LD_CIRC,"Could not make a one-hop connection to %s. "
+                     "Discarding this circuit.", conn->chosen_exit_name);
+            return -1;
+          }
         } else {
           log_debug(LD_DIR, "considering %d, %s",
                     want_onehop, conn->chosen_exit_name);
@@ -2017,7 +2044,8 @@ circuit_get_open_circ_or_launch(entry_connection_t *conn,
             char *hexdigest = conn->chosen_exit_name+1;
             tor_addr_t addr;
             if (strlen(hexdigest) < HEX_DIGEST_LEN ||
-                base16_decode(digest,DIGEST_LEN,hexdigest,HEX_DIGEST_LEN)<0) {
+                base16_decode(digest,DIGEST_LEN,
+                              hexdigest,HEX_DIGEST_LEN) != DIGEST_LEN) {
               log_info(LD_DIR, "Broken exit digest on tunnel conn. Closing.");
               return -1;
             }
@@ -2135,10 +2163,11 @@ optimistic_data_enabled(void)
 {
   const or_options_t *options = get_options();
   if (options->OptimisticData < 0) {
-    /* XXX023 consider having auto default to 1 rather than 0 before
-     * the 0.2.3 branch goes stable. See bug 3617. -RD */
+    /* Note: this default was 0 before #18815 was merged. We can't take the
+     * parameter out of the consensus until versions before that are all
+     * obsolete. */
     const int32_t enabled =
-      networkstatus_get_param(NULL, "UseOptimisticData", 0, 0, 1);
+      networkstatus_get_param(NULL, "UseOptimisticData", /*default*/ 1, 0, 1);
     return (int)enabled;
   }
   return options->OptimisticData;
@@ -2240,7 +2269,7 @@ consider_recording_trackhost(const entry_connection_t *conn,
   char fp[HEX_DIGEST_LEN+1];
 
   /* Search the addressmap for this conn's destination. */
-  /* If he's not in the address map.. */
+  /* If they're not in the address map.. */
   if (!options->TrackHostExits ||
       addressmap_have_mapping(conn->socks_request->address,
                               options->TrackHostExitsExpire))
@@ -2349,6 +2378,25 @@ connection_ap_handshake_attach_circuit(entry_connection_t *conn)
     /* we're a general conn */
     origin_circuit_t *circ=NULL;
 
+    /* Are we linked to a dir conn that aims to fetch a consensus?
+     * We check here because this conn might no longer be needed. */
+    if (base_conn->linked_conn &&
+        base_conn->linked_conn->type == CONN_TYPE_DIR &&
+        base_conn->linked_conn->purpose == DIR_PURPOSE_FETCH_CONSENSUS) {
+
+      /* Yes we are. Is there a consensus fetch farther along than us? */
+      if (networkstatus_consensus_is_already_downloading(
+            TO_DIR_CONN(base_conn->linked_conn)->requested_resource)) {
+        /* We're doing the "multiple consensus fetch attempts" game from
+         * proposal 210, and we're late to the party. Just close this conn.
+         * The circuit and TLS conn that we made will time out after a while
+         * if nothing else wants to use them. */
+        log_info(LD_DIR, "Closing extra consensus fetch (to %s) since one "
+                 "is already downloading.", base_conn->linked_conn->address);
+        return -1;
+      }
+    }
+
     if (conn->chosen_exit_name) {
       const node_t *node = node_get_by_nickname(conn->chosen_exit_name, 1);
       int opt = conn->chosen_exit_optional;
@@ -2385,7 +2433,7 @@ connection_ap_handshake_attach_circuit(entry_connection_t *conn)
     /* find the circuit that we should use, if there is one. */
     retval = circuit_get_open_circ_or_launch(
         conn, CIRCUIT_PURPOSE_C_GENERAL, &circ);
-    if (retval < 1) // XXX023 if we totally fail, this still returns 0 -RD
+    if (retval < 1) // XXXX++ if we totally fail, this still returns 0 -RD
       return retval;
 
     log_debug(LD_APP|LD_CIRC,
@@ -2560,7 +2608,7 @@ mark_circuit_unusable_for_new_conns(origin_circuit_t *circ)
   const or_options_t *options = get_options();
   tor_assert(circ);
 
-  /* XXXX025 This is a kludge; we're only keeping it around in case there's
+  /* XXXX This is a kludge; we're only keeping it around in case there's
    * something that doesn't check unusable_for_new_conns, and to avoid
    * deeper refactoring of our expiration logic. */
   if (! circ->base_.timestamp_dirty)

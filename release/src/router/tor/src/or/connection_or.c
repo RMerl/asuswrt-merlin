@@ -1,13 +1,24 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
  * \file connection_or.c
  * \brief Functions to handle OR connections, TLS handshaking, and
  * cells on the network.
+ *
+ * An or_connection_t is a subtype of connection_t (as implemented in
+ * connection.c) that uses a TLS connection to send and receive cells on the
+ * Tor network. (By sending and receiving cells connection_or.c, it cooperates
+ * with channeltls.c to implement a the channel interface of channel.c.)
+ *
+ * Every OR connection has an underlying tortls_t object (as implemented in
+ * tortls.c) which it uses as its TLS stream.  It is responsible for
+ * sending and receiving cells over that TLS.
+ *
+ * This module also implements the client side of the v3 Tor link handshake,
  **/
 #include "or.h"
 #include "buffers.h"
@@ -31,6 +42,7 @@
 #include "geoip.h"
 #include "main.h"
 #include "link_handshake.h"
+#include "microdesc.h"
 #include "networkstatus.h"
 #include "nodelist.h"
 #include "reasons.h"
@@ -40,10 +52,6 @@
 #include "routerlist.h"
 #include "ext_orport.h"
 #include "scheduler.h"
-
-#ifdef USE_BUFFEREVENTS
-#include <event2/bufferevent_ssl.h>
-#endif
 
 static int connection_tls_finish_handshake(or_connection_t *conn);
 static int connection_or_launch_v3_or_handshake(or_connection_t *conn);
@@ -64,12 +72,6 @@ static void connection_or_mark_bad_for_new_circs(or_connection_t *or_conn);
  */
 
 static void connection_or_change_state(or_connection_t *conn, uint8_t state);
-
-#ifdef USE_BUFFEREVENTS
-static void connection_or_handle_event_cb(struct bufferevent *bufev,
-                                          short event, void *arg);
-#include <event2/buffer.h>/*XXXX REMOVE */
-#endif
 
 /**************************************************************/
 
@@ -403,8 +405,8 @@ connection_or_change_state(or_connection_t *conn, uint8_t state)
  * be an or_connection_t field, but it got moved to channel_t and we
  * shouldn't maintain two copies. */
 
-int
-connection_or_get_num_circuits(or_connection_t *conn)
+MOCK_IMPL(int,
+connection_or_get_num_circuits, (or_connection_t *conn))
 {
   tor_assert(conn);
 
@@ -430,9 +432,11 @@ cell_pack(packed_cell_t *dst, const cell_t *src, int wide_circ_ids)
     set_uint32(dest, htonl(src->circ_id));
     dest += 4;
   } else {
+    /* Clear the last two bytes of dest, in case we can accidentally
+     * send them to the network somehow. */
+    memset(dest+CELL_MAX_NETWORK_SIZE-2, 0, 2);
     set_uint16(dest, htons(src->circ_id));
     dest += 2;
-    memset(dest+CELL_MAX_NETWORK_SIZE-2, 0, 2); /*make sure it's clear */
   }
   set_uint8(dest, src->command);
   memcpy(dest+1, src->payload, CELL_PAYLOAD_SIZE);
@@ -486,6 +490,28 @@ var_cell_new(uint16_t payload_len)
   cell->command = 0;
   cell->circ_id = 0;
   return cell;
+}
+
+/**
+ * Copy a var_cell_t
+ */
+
+var_cell_t *
+var_cell_copy(const var_cell_t *src)
+{
+  var_cell_t *copy = NULL;
+  size_t size = 0;
+
+  if (src != NULL) {
+    size = STRUCT_OFFSET(var_cell_t, payload) + src->payload_len;
+    copy = tor_malloc_zero(size);
+    copy->payload_len = src->payload_len;
+    copy->command = src->command;
+    copy->circ_id = src->circ_id;
+    memcpy(copy->payload, src->payload, copy->payload_len);
+  }
+
+  return copy;
 }
 
 /** Release all space held by <b>cell</b>. */
@@ -542,13 +568,6 @@ connection_or_process_inbuf(or_connection_t *conn)
 
       return ret;
     case OR_CONN_STATE_TLS_SERVER_RENEGOTIATING:
-#ifdef USE_BUFFEREVENTS
-      if (tor_tls_server_got_renegotiate(conn->tls))
-        connection_or_tls_renegotiated_cb(conn->tls, conn);
-      if (conn->base_.marked_for_close)
-        return 0;
-      /* fall through. */
-#endif
     case OR_CONN_STATE_OPEN:
     case OR_CONN_STATE_OR_HANDSHAKING_V2:
     case OR_CONN_STATE_OR_HANDSHAKING_V3:
@@ -561,7 +580,7 @@ connection_or_process_inbuf(or_connection_t *conn)
    * check would otherwise just let data accumulate.  It serves no purpose
    * in 0.2.3.
    *
-   * XXX024 Remove this check once we verify that the above paragraph is
+   * XXXX Remove this check once we verify that the above paragraph is
    * 100% true. */
   if (buf_datalen(conn->base_.inbuf) > MAX_OR_INBUF_WHEN_NONOPEN) {
     log_fn(LOG_PROTOCOL_WARN, LD_NET, "Accumulated too much data (%d bytes) "
@@ -784,27 +803,6 @@ connection_or_update_token_buckets_helper(or_connection_t *conn, int reset,
 
   conn->bandwidthrate = rate;
   conn->bandwidthburst = burst;
-#ifdef USE_BUFFEREVENTS
-  {
-    const struct timeval *tick = tor_libevent_get_one_tick_timeout();
-    struct ev_token_bucket_cfg *cfg, *old_cfg;
-    int64_t rate64 = (((int64_t)rate) * options->TokenBucketRefillInterval)
-      / 1000;
-    /* This can't overflow, since TokenBucketRefillInterval <= 1000,
-     * and rate started out less than INT_MAX. */
-    int rate_per_tick = (int) rate64;
-
-    cfg = ev_token_bucket_cfg_new(rate_per_tick, burst, rate_per_tick,
-                                  burst, tick);
-    old_cfg = conn->bucket_cfg;
-    if (conn->base_.bufev)
-      tor_set_bufferevent_rate_limit(conn->base_.bufev, cfg);
-    if (old_cfg)
-      ev_token_bucket_cfg_free(old_cfg);
-    conn->bucket_cfg = cfg;
-    (void) reset; /* No way to do this with libevent yet. */
-  }
-#else
   if (reset) { /* set up the token buckets to be full */
     conn->read_bucket = conn->write_bucket = burst;
     return;
@@ -815,7 +813,6 @@ connection_or_update_token_buckets_helper(or_connection_t *conn, int reset,
     conn->read_bucket = burst;
   if (conn->write_bucket > burst)
     conn->write_bucket = burst;
-#endif
 }
 
 /** Either our set of relays or our per-conn rate limits have changed.
@@ -912,7 +909,7 @@ connection_or_init_conn_from_address(or_connection_t *conn,
     }
     conn->nickname = tor_strdup(node_get_nickname(r));
     tor_free(conn->base_.address);
-    conn->base_.address = tor_dup_addr(&node_ap.addr);
+    conn->base_.address = tor_addr_to_str_dup(&node_ap.addr);
   } else {
     conn->nickname = tor_malloc(HEX_DIGEST_LEN+2);
     conn->nickname[0] = '$';
@@ -920,7 +917,7 @@ connection_or_init_conn_from_address(or_connection_t *conn,
                   conn->identity_digest, DIGEST_LEN);
 
     tor_free(conn->base_.address);
-    conn->base_.address = tor_dup_addr(addr);
+    conn->base_.address = tor_addr_to_str_dup(addr);
   }
 
   /*
@@ -1259,11 +1256,9 @@ connection_or_connect, (const tor_addr_t *_addr, uint16_t port,
   switch (connection_connect(TO_CONN(conn), conn->base_.address,
                              &addr, port, &socket_error)) {
     case -1:
-      /* If the connection failed immediately, and we're using
-       * a proxy, our proxy is down. Don't blame the Tor server. */
-      if (conn->base_.proxy_state == PROXY_INFANT)
-        entry_guard_register_connect_status(conn->identity_digest,
-                                            0, 1, time(NULL));
+      /* We failed to establish a connection probably because of a local
+       * error. No need to blame the guard in this case. Notify the networking
+       * system of this failure. */
       connection_or_connect_failed(conn,
                                    errno_to_orconn_end_reason(socket_error),
                                    tor_socket_strerror(socket_error));
@@ -1374,40 +1369,14 @@ connection_tls_start_handshake,(or_connection_t *conn, int receiving))
   tor_tls_set_logged_address(conn->tls, // XXX client and relay?
       escaped_safe_str(conn->base_.address));
 
-#ifdef USE_BUFFEREVENTS
-  if (connection_type_uses_bufferevent(TO_CONN(conn))) {
-    const int filtering = get_options()->UseFilteringSSLBufferevents;
-    struct bufferevent *b =
-      tor_tls_init_bufferevent(conn->tls, conn->base_.bufev, conn->base_.s,
-                               receiving, filtering);
-    if (!b) {
-      log_warn(LD_BUG,"tor_tls_init_bufferevent failed. Closing.");
-      return -1;
-    }
-    conn->base_.bufev = b;
-    if (conn->bucket_cfg)
-      tor_set_bufferevent_rate_limit(conn->base_.bufev, conn->bucket_cfg);
-    connection_enable_rate_limiting(TO_CONN(conn));
-
-    connection_configure_bufferevent_callbacks(TO_CONN(conn));
-    bufferevent_setcb(b,
-                      connection_handle_read_cb,
-                      connection_handle_write_cb,
-                      connection_or_handle_event_cb,/* overriding this one*/
-                      TO_CONN(conn));
-  }
-#endif
   connection_start_reading(TO_CONN(conn));
   log_debug(LD_HANDSHAKE,"starting TLS handshake on fd "TOR_SOCKET_T_FORMAT,
             conn->base_.s);
   note_crypto_pk_op(receiving ? TLS_HANDSHAKE_S : TLS_HANDSHAKE_C);
 
-  IF_HAS_BUFFEREVENT(TO_CONN(conn), {
-    /* ???? */;
-  }) ELSE_IF_NO_BUFFEREVENT {
-    if (connection_tls_continue_handshake(conn) < 0)
-      return -1;
-  }
+  if (connection_tls_continue_handshake(conn) < 0)
+    return -1;
+
   return 0;
 }
 
@@ -1450,17 +1419,12 @@ connection_tls_continue_handshake(or_connection_t *conn)
 {
   int result;
   check_no_tls_errors();
- again:
-  if (conn->base_.state == OR_CONN_STATE_TLS_CLIENT_RENEGOTIATING) {
-    // log_notice(LD_OR, "Renegotiate with %p", conn->tls);
-    result = tor_tls_renegotiate(conn->tls);
-    // log_notice(LD_OR, "Result: %d", result);
-  } else {
-    tor_assert(conn->base_.state == OR_CONN_STATE_TLS_HANDSHAKING);
-    // log_notice(LD_OR, "Continue handshake with %p", conn->tls);
-    result = tor_tls_handshake(conn->tls);
-    // log_notice(LD_OR, "Result: %d", result);
-  }
+
+  tor_assert(conn->base_.state == OR_CONN_STATE_TLS_HANDSHAKING);
+  // log_notice(LD_OR, "Continue handshake with %p", conn->tls);
+  result = tor_tls_handshake(conn->tls);
+  // log_notice(LD_OR, "Result: %d", result);
+
   switch (result) {
     CASE_TOR_TLS_ERROR_ANY:
     log_info(LD_OR,"tls error [%s]. breaking connection.",
@@ -1469,23 +1433,10 @@ connection_tls_continue_handshake(or_connection_t *conn)
     case TOR_TLS_DONE:
       if (! tor_tls_used_v1_handshake(conn->tls)) {
         if (!tor_tls_is_server(conn->tls)) {
-          if (conn->base_.state == OR_CONN_STATE_TLS_HANDSHAKING) {
-            if (tor_tls_received_v3_certificate(conn->tls)) {
-              log_info(LD_OR, "Client got a v3 cert!  Moving on to v3 "
-                       "handshake with ciphersuite %s",
-                       tor_tls_get_ciphersuite_name(conn->tls));
-              return connection_or_launch_v3_or_handshake(conn);
-            } else {
-              log_debug(LD_OR, "Done with initial SSL handshake (client-side)."
-                        " Requesting renegotiation.");
-              connection_or_change_state(conn,
-                  OR_CONN_STATE_TLS_CLIENT_RENEGOTIATING);
-              goto again;
-            }
-          }
-          // log_notice(LD_OR,"Done. state was %d.", conn->base_.state);
+          tor_assert(conn->base_.state == OR_CONN_STATE_TLS_HANDSHAKING);
+          return connection_or_launch_v3_or_handshake(conn);
         } else {
-          /* v2/v3 handshake, but not a client. */
+          /* v2/v3 handshake, but we are not a client. */
           log_debug(LD_OR, "Done with initial SSL handshake (server-side). "
                            "Expecting renegotiation or VERSIONS cell");
           tor_tls_set_renegotiate_callback(conn->tls,
@@ -1498,6 +1449,7 @@ connection_tls_continue_handshake(or_connection_t *conn)
           return 0;
         }
       }
+      tor_assert(tor_tls_is_server(conn->tls));
       return connection_tls_finish_handshake(conn);
     case TOR_TLS_WANTWRITE:
       connection_start_writing(TO_CONN(conn));
@@ -1512,89 +1464,6 @@ connection_tls_continue_handshake(or_connection_t *conn)
   }
   return 0;
 }
-
-#ifdef USE_BUFFEREVENTS
-static void
-connection_or_handle_event_cb(struct bufferevent *bufev, short event,
-                              void *arg)
-{
-  struct or_connection_t *conn = TO_OR_CONN(arg);
-
-  /* XXXX cut-and-paste code; should become a function. */
-  if (event & BEV_EVENT_CONNECTED) {
-    if (conn->base_.state == OR_CONN_STATE_TLS_HANDSHAKING) {
-      if (tor_tls_finish_handshake(conn->tls) < 0) {
-        log_warn(LD_OR, "Problem finishing handshake");
-        connection_or_close_for_error(conn, 0);
-        return;
-      }
-    }
-
-    if (! tor_tls_used_v1_handshake(conn->tls)) {
-      if (!tor_tls_is_server(conn->tls)) {
-        if (conn->base_.state == OR_CONN_STATE_TLS_HANDSHAKING) {
-          if (tor_tls_received_v3_certificate(conn->tls)) {
-            log_info(LD_OR, "Client got a v3 cert!");
-            if (connection_or_launch_v3_or_handshake(conn) < 0)
-              connection_or_close_for_error(conn, 0);
-            return;
-          } else {
-            connection_or_change_state(conn,
-                OR_CONN_STATE_TLS_CLIENT_RENEGOTIATING);
-            tor_tls_unblock_renegotiation(conn->tls);
-            if (bufferevent_ssl_renegotiate(conn->base_.bufev)<0) {
-              log_warn(LD_OR, "Start_renegotiating went badly.");
-              connection_or_close_for_error(conn, 0);
-            }
-            tor_tls_unblock_renegotiation(conn->tls);
-            return; /* ???? */
-          }
-        }
-      } else {
-        const int handshakes = tor_tls_get_num_server_handshakes(conn->tls);
-
-        if (handshakes == 1) {
-          /* v2 or v3 handshake, as a server. Only got one handshake, so
-           * wait for the next one. */
-          tor_tls_set_renegotiate_callback(conn->tls,
-                                           connection_or_tls_renegotiated_cb,
-                                           conn);
-          connection_or_change_state(conn,
-              OR_CONN_STATE_TLS_SERVER_RENEGOTIATING);
-        } else if (handshakes == 2) {
-          /* v2 handshake, as a server.  Two handshakes happened already,
-           * so we treat renegotiation as done.
-           */
-          connection_or_tls_renegotiated_cb(conn->tls, conn);
-        } else if (handshakes > 2) {
-          log_warn(LD_OR, "More than two handshakes done on connection. "
-                   "Closing.");
-          connection_or_close_for_error(conn, 0);
-        } else {
-          log_warn(LD_BUG, "We were unexpectedly told that a connection "
-                   "got %d handshakes. Closing.", handshakes);
-          connection_or_close_for_error(conn, 0);
-        }
-        return;
-      }
-    }
-    connection_watch_events(TO_CONN(conn), READ_EVENT|WRITE_EVENT);
-    if (connection_tls_finish_handshake(conn) < 0)
-      connection_or_close_for_error(conn, 0); /* ???? */
-    return;
-  }
-
-  if (event & BEV_EVENT_ERROR) {
-    unsigned long err;
-    while ((err = bufferevent_get_openssl_error(bufev))) {
-      tor_tls_log_one_error(conn->tls, err, LOG_WARN, LD_OR,
-                            "handshaking (with bufferevent)");
-    }
-  }
-
-  connection_handle_event_cb(bufev, event, arg);
-}
-#endif
 
 /** Return 1 if we initiated this connection, or 0 if it started
  * out as an incoming connection.
@@ -1612,11 +1481,11 @@ connection_or_nonopen_was_started_here(or_connection_t *conn)
 }
 
 /** <b>Conn</b> just completed its handshake. Return 0 if all is well, and
- * return -1 if he is lying, broken, or otherwise something is wrong.
+ * return -1 if they are lying, broken, or otherwise something is wrong.
  *
  * If we initiated this connection (<b>started_here</b> is true), make sure
  * the other side sent a correctly formed certificate. If I initiated the
- * connection, make sure it's the right guy.
+ * connection, make sure it's the right relay by checking the certificate.
  *
  * Otherwise (if we _didn't_ initiate this connection), it's okay for
  * the certificate to be weird or absent.
@@ -1632,7 +1501,7 @@ connection_or_nonopen_was_started_here(or_connection_t *conn)
  * 1) Set conn->circ_id_type according to tor-spec.txt.
  * 2) If we're an authdirserver and we initiated the connection: drop all
  *    descriptors that claim to be on that IP/port but that aren't
- *    this guy; and note that this guy is reachable.
+ *    this relay; and note that this relay is reachable.
  * 3) If this is a bridge and we didn't configure its identity
  *    fingerprint, remember the keyid we just learned.
  */
@@ -1707,9 +1576,17 @@ connection_or_check_valid_tls_handshake(or_connection_t *conn,
  * or renegotiation.  For v3 handshakes, this is right after we get a
  * certificate chain in a CERTS cell.
  *
- * If we want any particular ID before, record the one we got.
+ * If we did not know the ID before, record the one we got.
  *
- * If we wanted an ID, but we didn't get it, log a warning and return -1.
+ * If we wanted an ID, but we didn't get the one we expected, log a message
+ * and return -1.
+ * On relays:
+ *  - log a protocol warning whenever the fingerprints don't match;
+ * On clients:
+ *  - if a relay's fingerprint doesn't match, log a warning;
+ *  - if we don't have updated relay fingerprints from a recent consensus, and
+ *    a fallback directory mirror's hard-coded fingerprint has changed, log an
+ *    info explaining that we will try another fallback.
  *
  * If we're testing reachability, remember what we learned.
  *
@@ -1720,7 +1597,6 @@ connection_or_client_learned_peer_id(or_connection_t *conn,
                                      const uint8_t *peer_id)
 {
   const or_options_t *options = get_options();
-  int severity = server_mode(options) ? LOG_PROTOCOL_WARN : LOG_WARN;
 
   if (tor_digest_is_zero(conn->identity_digest)) {
     connection_or_set_identity_digest(conn, (const char*)peer_id);
@@ -1745,10 +1621,43 @@ connection_or_client_learned_peer_id(or_connection_t *conn,
     base16_encode(seen, sizeof(seen), (const char*)peer_id, DIGEST_LEN);
     base16_encode(expected, sizeof(expected), conn->identity_digest,
                   DIGEST_LEN);
+    const int using_hardcoded_fingerprints =
+      !networkstatus_get_reasonably_live_consensus(time(NULL),
+                                                   usable_consensus_flavor());
+    const int is_fallback_fingerprint = router_digest_is_fallback_dir(
+                                                   conn->identity_digest);
+    const int is_authority_fingerprint = router_digest_is_trusted_dir(
+                                                   conn->identity_digest);
+    int severity;
+    const char *extra_log = "";
+
+    if (server_mode(options)) {
+      severity = LOG_PROTOCOL_WARN;
+    } else {
+      if (using_hardcoded_fingerprints) {
+        /* We need to do the checks in this order, because the list of
+         * fallbacks includes the list of authorities */
+        if (is_authority_fingerprint) {
+          severity = LOG_WARN;
+        } else if (is_fallback_fingerprint) {
+          /* we expect a small number of fallbacks to change from their
+           * hard-coded fingerprints over the life of a release */
+          severity = LOG_INFO;
+          extra_log = " Tor will try a different fallback.";
+        } else {
+          /* it's a bridge, it's either a misconfiguration, or unexpected */
+          severity = LOG_WARN;
+        }
+      } else {
+        /* a relay has changed its fingerprint from the one in the consensus */
+        severity = LOG_WARN;
+      }
+    }
+
     log_fn(severity, LD_HANDSHAKE,
            "Tried connecting to router at %s:%d, but identity key was not "
-           "as expected: wanted %s but got %s.",
-           conn->base_.address, conn->base_.port, expected, seen);
+           "as expected: wanted %s but got %s.%s",
+           conn->base_.address, conn->base_.port, expected, seen, extra_log);
     entry_guard_register_connect_status(conn->identity_digest, 0, 1,
                                         time(NULL));
     control_event_or_conn_status(conn, OR_CONN_EVENT_FAILED,
@@ -1785,7 +1694,7 @@ connection_or_client_used(or_connection_t *conn)
  *
  * Make sure we are happy with the person we just handshaked with.
  *
- * If he initiated the connection, make sure he's not already connected,
+ * If they initiated the connection, make sure they're not already connected,
  * then initialize conn from the information in router.
  *
  * If all is successful, call circuit_n_conn_done() to handle events
@@ -1799,6 +1708,8 @@ connection_tls_finish_handshake(or_connection_t *conn)
 {
   char digest_rcvd[DIGEST_LEN];
   int started_here = connection_or_nonopen_was_started_here(conn);
+
+  tor_assert(!started_here);
 
   log_debug(LD_HANDSHAKE,"%s tls handshake on %p with %s done, using "
             "ciphersuite %s. verifying.",
@@ -1815,10 +1726,8 @@ connection_tls_finish_handshake(or_connection_t *conn)
 
   if (tor_tls_used_v1_handshake(conn->tls)) {
     conn->link_proto = 1;
-    if (!started_here) {
-      connection_or_init_conn_from_address(conn, &conn->base_.addr,
-                                           conn->base_.port, digest_rcvd, 0);
-    }
+    connection_or_init_conn_from_address(conn, &conn->base_.addr,
+                                         conn->base_.port, digest_rcvd, 0);
     tor_tls_block_renegotiation(conn->tls);
     rep_hist_note_negotiated_link_proto(1, started_here);
     return connection_or_set_state_open(conn);
@@ -1826,10 +1735,8 @@ connection_tls_finish_handshake(or_connection_t *conn)
     connection_or_change_state(conn, OR_CONN_STATE_OR_HANDSHAKING_V2);
     if (connection_init_or_handshake_state(conn, started_here) < 0)
       return -1;
-    if (!started_here) {
-      connection_or_init_conn_from_address(conn, &conn->base_.addr,
-                                           conn->base_.port, digest_rcvd, 0);
-    }
+    connection_or_init_conn_from_address(conn, &conn->base_.addr,
+                                         conn->base_.port, digest_rcvd, 0);
     return connection_or_send_versions(conn, 0);
   }
 }
@@ -1844,7 +1751,6 @@ static int
 connection_or_launch_v3_or_handshake(or_connection_t *conn)
 {
   tor_assert(connection_or_nonopen_was_started_here(conn));
-  tor_assert(tor_tls_received_v3_certificate(conn->tls));
 
   circuit_build_times_network_is_live(get_circuit_build_times_mutable());
 
@@ -1976,11 +1882,7 @@ connection_or_set_state_open(or_connection_t *conn)
 
   or_handshake_state_free(conn->handshake_state);
   conn->handshake_state = NULL;
-  IF_HAS_BUFFEREVENT(TO_CONN(conn), {
-    connection_watch_events(TO_CONN(conn), READ_EVENT|WRITE_EVENT);
-  }) ELSE_IF_NO_BUFFEREVENT {
-    connection_start_reading(TO_CONN(conn));
-  }
+  connection_start_reading(TO_CONN(conn));
 
   return 0;
 }
@@ -2040,12 +1942,7 @@ static int
 connection_fetch_var_cell_from_buf(or_connection_t *or_conn, var_cell_t **out)
 {
   connection_t *conn = TO_CONN(or_conn);
-  IF_HAS_BUFFEREVENT(conn, {
-    struct evbuffer *input = bufferevent_get_input(conn->bufev);
-    return fetch_var_cell_from_evbuffer(input, out, or_conn->link_proto);
-  }) ELSE_IF_NO_BUFFEREVENT {
-    return fetch_var_cell_from_buf(conn->inbuf, out, or_conn->link_proto);
-  }
+  return fetch_var_cell_from_buf(conn->inbuf, out, or_conn->link_proto);
 }
 
 /** Process cells from <b>conn</b>'s inbuf.
@@ -2059,6 +1956,19 @@ static int
 connection_or_process_cells_from_inbuf(or_connection_t *conn)
 {
   var_cell_t *var_cell;
+
+  /*
+   * Note on memory management for incoming cells: below the channel layer,
+   * we shouldn't need to consider its internal queueing/copying logic.  It
+   * is safe to pass cells to it on the stack or on the heap, but in the
+   * latter case we must be sure we free them later.
+   *
+   * The incoming cell queue code in channel.c will (in the common case)
+   * decide it can pass them to the upper layer immediately, in which case
+   * those functions may run directly on the cell pointers we pass here, or
+   * it may decide to queue them, in which case it will allocate its own
+   * buffer and copy the cell.
+   */
 
   while (1) {
     log_debug(LD_OR,
@@ -2229,22 +2139,29 @@ connection_or_send_netinfo,(or_connection_t *conn))
 int
 connection_or_send_certs_cell(or_connection_t *conn)
 {
-  const tor_x509_cert_t *link_cert = NULL, *id_cert = NULL;
+  const tor_x509_cert_t *global_link_cert = NULL, *id_cert = NULL,
+    *using_link_cert = NULL;
+  tor_x509_cert_t *own_link_cert = NULL;
   const uint8_t *link_encoded = NULL, *id_encoded = NULL;
   size_t link_len, id_len;
   var_cell_t *cell;
   size_t cell_len;
   ssize_t pos;
-  int server_mode;
 
   tor_assert(conn->base_.state == OR_CONN_STATE_OR_HANDSHAKING_V3);
 
   if (! conn->handshake_state)
     return -1;
-  server_mode = ! conn->handshake_state->started_here;
-  if (tor_tls_get_my_certs(server_mode, &link_cert, &id_cert) < 0)
+  const int conn_in_server_mode = ! conn->handshake_state->started_here;
+  if (tor_tls_get_my_certs(conn_in_server_mode,
+                           &global_link_cert, &id_cert) < 0)
     return -1;
-  tor_x509_cert_get_der(link_cert, &link_encoded, &link_len);
+  if (conn_in_server_mode) {
+    using_link_cert = own_link_cert = tor_tls_get_own_cert(conn->tls);
+  } else {
+    using_link_cert = global_link_cert;
+  }
+  tor_x509_cert_get_der(using_link_cert, &link_encoded, &link_len);
   tor_x509_cert_get_der(id_cert, &id_encoded, &id_len);
 
   cell_len = 1 /* 1 byte: num certs in cell */ +
@@ -2255,7 +2172,7 @@ connection_or_send_certs_cell(or_connection_t *conn)
   cell->payload[0] = 2;
   pos = 1;
 
-  if (server_mode)
+  if (conn_in_server_mode)
     cell->payload[pos] = OR_CERT_TYPE_TLS_LINK; /* Link cert  */
   else
     cell->payload[pos] = OR_CERT_TYPE_AUTH_1024; /* client authentication */
@@ -2272,6 +2189,7 @@ connection_or_send_certs_cell(or_connection_t *conn)
 
   connection_or_write_var_cell_to_buf(cell, conn);
   var_cell_free(cell);
+  tor_x509_cert_free(own_link_cert);
 
   return 0;
 }
@@ -2290,8 +2208,7 @@ connection_or_send_auth_challenge_cell(or_connection_t *conn)
 
   auth_challenge_cell_t *ac = auth_challenge_cell_new();
 
-  if (crypto_rand((char*)ac->challenge, sizeof(ac->challenge)) < 0)
-    goto done;
+  crypto_rand((char*)ac->challenge, sizeof(ac->challenge));
 
   auth_challenge_cell_add_methods(ac, AUTHTYPE_RSA_SHA256_TLSSECRET);
   auth_challenge_cell_set_n_methods(ac,
@@ -2352,10 +2269,10 @@ connection_or_compute_authenticate_cell_body(or_connection_t *conn,
   memcpy(auth1_getarray_type(auth), "AUTH0001", 8);
 
   {
-    const tor_x509_cert_t *id_cert=NULL, *link_cert=NULL;
-    const digests_t *my_digests, *their_digests;
+    const tor_x509_cert_t *id_cert=NULL;
+    const common_digests_t *my_digests, *their_digests;
     const uint8_t *my_id, *their_id, *client_id, *server_id;
-    if (tor_tls_get_my_certs(server, &link_cert, &id_cert))
+    if (tor_tls_get_my_certs(server, NULL, &id_cert))
       goto err;
     my_digests = tor_x509_cert_get_id_digests(id_cert);
     their_digests =
@@ -2394,13 +2311,11 @@ connection_or_compute_authenticate_cell_body(or_connection_t *conn,
 
   {
     /* Digest of cert used on TLS link : 32 octets. */
-    const tor_x509_cert_t *cert = NULL;
-    tor_x509_cert_t *freecert = NULL;
+    tor_x509_cert_t *cert = NULL;
     if (server) {
-      tor_tls_get_my_certs(1, &cert, NULL);
+      cert = tor_tls_get_own_cert(conn->tls);
     } else {
-      freecert = tor_tls_get_peer_cert(conn->tls);
-      cert = freecert;
+      cert = tor_tls_get_peer_cert(conn->tls);
     }
     if (!cert) {
       log_warn(LD_OR, "Unable to find cert when making AUTH1 data.");
@@ -2410,8 +2325,7 @@ connection_or_compute_authenticate_cell_body(or_connection_t *conn,
     memcpy(auth->scert,
            tor_x509_cert_get_cert_digests(cert)->d[DIGEST_SHA256], 32);
 
-    if (freecert)
-      tor_x509_cert_free(freecert);
+    tor_x509_cert_free(cert);
   }
 
   /* HMAC of clientrandom and serverrandom using master key : 32 octets */

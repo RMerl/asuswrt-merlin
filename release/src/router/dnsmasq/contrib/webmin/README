@@ -1,5 +1,5 @@
 
-This is the README for the DNSmasq webmin module.
+This is the README for the Dnsmasq webmin module.
 
 Problems:
 
@@ -48,7 +48,7 @@ wade through the config file and man pages again.
 
 If you modify it, or add a language file, and you have a spare moment,
 please e-mail me - I won't be upset at all if you fix my poor coding!
-(rather the opposite - I'd be pleased someone found it usefull)
+(rather the opposite - I'd be pleased someone found it useful)
 
 Cheers,
 	Neil Fisher <neil@magnecor.com.au>

@@ -1,0 +1,90 @@
+req:	msg:	IPSET_CMD_PROTOCOL
+	attr:	IPSET_ATTR_PROTOCOL
+
+resp:	attr:	IPSET_ATTR_PROTOCOL	(protocol max)
+		IPSET_ATTR_PROTOCOL_MIN	(protocol min, optional)
+
+req:	msg:	IPSET_CMD_CREATE
+	attr:	IPSET_ATTR_PROTOCOL
+		IPSET_ATTR_SETNAME
+		IPSET_ATTR_TYPENAME
+		IPSET_ATTR_REVISION
+		IPSET_ATTR_FAMILY
+		IPSET_ATTR_FLAGS
+		IPSET_ATTR_DATA
+			create-specific-data
+
+resp:	success/error
+
+req:	msg:	IPSET_CMD_DESTROY|IPSET_CMD_FLUSH
+	attr:	IPSET_ATTR_PROTOCOL
+		IPSET_ATTR_SETNAME	(optional)
+
+resp:	success/error
+
+req:	msg:	IPSET_CMD_SWAP|IPSET_CMD_RENAME
+	attr:	IPSET_ATTR_PROTOCOL
+		IPSET_ATTR_SETNAME
+		IPSET_ATTR_SETNAME2
+
+resp:	success/error
+
+req:	msg:	IPSET_CMD_LIST|SAVE
+	attr:	IPSET_ATTR_PROTOCOL
+		IPSET_ATTR_SETNAME	(optional)
+
+resp:	attr:	IPSET_ATTR_SETNAME
+		IPSET_ATTR_TYPENAME
+		IPSET_ATTR_REVISION
+		IPSET_ATTR_FAMILY
+		IPSET_ATTR_DATA
+			create-specific-data
+		IPSET_ATTR_ADT
+			IPSET_ATTR_DATA
+				adt-specific-data
+			...
+
+req:	msg:	IPSET_CMD_ADD|DEL
+	attr:	IPSET_ATTR_PROTOCOL
+		IPSET_ATTR_SETNAME
+		IPSET_ATTR_FLAGS
+		IPSET_ATTR_LINENO	(for reporting error line back too)
+		IPSET_ATTR_DATA
+			adt-specific-data
+
+		or
+
+		IPSET_ATTR_ADT
+			IPSET_ATTR_DATA
+				adt-specific-data
+			...
+
+resp:	success/error
+
+req:	msg:	IPSET_CMD_TEST
+	attr:	IPSET_ATTR_PROTOCOL
+		IPSET_ATTR_SETNAME
+		IPSET_ATTR_FLAGS
+		IPSET_ATTR_DATA
+			adt-specific-data
+
+resp:	success/error
+
+req:	msg:	IPSET_CMD_HEADER
+	attr:	IPSET_ATTR_PROTOCOL
+		IPSET_ATTR_SETNAME
+
+resp:	attr:	IPSET_ATTR_SETNAME
+		IPSET_ATTR_TYPENAME
+		IPSET_ATTR_REVISION
+		IPSET_ATTR_FAMILY
+
+req:	msg:	IPSET_CMD_TYPE
+	attr:	IPSET_ATTR_PROTOCOL
+		IPSET_ATTR_TYPENAME
+		IPSET_ATTR_FAMILY
+
+resp:	attr:	IPSET_ATTR_TYPENAME
+		IPSET_ATTR_FAMILY
+		IPSET_ATTR_REVISION	(version max)
+		IPSET_ATTR_REVISION_MIN	(version min, optional)

@@ -1,6 +1,6 @@
 /* sockets.h - wrappers for Windows socket functions
 
-   Copyright (C) 2008-2014 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,20 +20,20 @@
 #ifndef SOCKETS_H
 # define SOCKETS_H 1
 
-#define SOCKETS_1_0 0x100  /* don't use - does not work on Windows XP */
-#define SOCKETS_1_1 0x101
-#define SOCKETS_2_0 0x200  /* don't use - does not work on Windows XP */
-#define SOCKETS_2_1 0x201
-#define SOCKETS_2_2 0x202
+#define SOCKETS_1_0 0x0001
+#define SOCKETS_1_1 0x0101
+#define SOCKETS_2_0 0x0002
+#define SOCKETS_2_1 0x0102
+#define SOCKETS_2_2 0x0202
 
 int gl_sockets_startup (int version)
-#if !WINDOWS_SOCKETS
+#ifndef WINDOWS_SOCKETS
   _GL_ATTRIBUTE_CONST
 #endif
   ;
 
 int gl_sockets_cleanup (void)
-#if !WINDOWS_SOCKETS
+#ifndef WINDOWS_SOCKETS
   _GL_ATTRIBUTE_CONST
 #endif
   ;
@@ -41,7 +41,7 @@ int gl_sockets_cleanup (void)
 /* This function is useful it you create a socket using gnulib's
    Winsock wrappers but needs to pass on the socket handle to some
    other library that only accepts sockets. */
-#if WINDOWS_SOCKETS
+#ifdef WINDOWS_SOCKETS
 
 #include <sys/socket.h>
 

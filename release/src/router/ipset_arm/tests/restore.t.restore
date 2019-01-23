@@ -1,0 +1,11 @@
+create a hash:ip family inet6
+add a 1::1
+add a 2::2
+create b hash:ip family inet6
+add b 3::3
+add b 4::4
+rename a c
+swap c b
+rename c a
+add a a::a
+add b b::b

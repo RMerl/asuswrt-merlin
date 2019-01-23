@@ -4,6 +4,7 @@ import shlex
 import traceback
 import re
 import time
+import sys
 from subprocess import call
 from misc.colour_terminal import print_red, print_blue
 from exc.test_failed import TestFailed
@@ -22,27 +23,37 @@ class BaseTest:
         * instantiate_server_by(protocol)
     """
 
-    def __init__(self, name, pre_hook, test_params, post_hook, protocols):
+    def __init__(self, pre_hook, test_params, post_hook, protocols, req_protocols):
         """
         Define the class-wide variables (or attributes).
         Attributes should not be defined outside __init__.
         """
-        self.name = name
-        self.pre_configs = pre_hook or {}  # if pre_hook == None, then
-                                           # {} (an empty dict object) is
-                                           # passed to self.pre_configs
+        self.name = os.path.basename(os.path.realpath(sys.argv[0]))
+        # if pre_hook == None, then {} (an empty dict object) is passed to
+        # self.pre_configs
+        self.pre_configs = pre_hook or {}
+
         self.test_params = test_params or {}
         self.post_configs = post_hook or {}
         self.protocols = protocols
 
+        if req_protocols is None:
+            self.req_protocols = map(lambda p: p.lower(), self.protocols)
+        else:
+            self.req_protocols = req_protocols
+
         self.servers = []
         self.domains = []
+        self.ports = []
+
+        self.addr = None
         self.port = -1
 
         self.wget_options = ''
         self.urls = []
 
         self.tests_passed = True
+        self.ready = False
         self.init_test_env()
 
         self.ret_code = 0
@@ -62,9 +73,12 @@ class BaseTest:
     def get_domain_addr(self, addr):
         # TODO if there's a multiple number of ports, wouldn't it be
         # overridden to the port of the last invocation?
+        # Set the instance variables 'addr' and 'port' so that
+        # they can be queried by test cases.
+        self.addr = str(addr[0])
         self.port = str(addr[1])
 
-        return '%s:%s' % (addr[0], self.port)
+        return [self.addr, self.port]
 
     def server_setup(self):
         print_blue("Running Test %s" % self.name)
@@ -76,7 +90,8 @@ class BaseTest:
             # ports and etc.
             # so we should record different domains respect to servers.
             domain = self.get_domain_addr(instance.server_address)
-            self.domains.append(domain)
+            self.domains.append('localhost')
+            self.ports.append(domain[1])
 
     def exec_wget(self):
         cmd_line = self.gen_cmd_line()
@@ -87,7 +102,7 @@ class BaseTest:
             time.sleep(float(os.getenv("SERVER_WAIT")))
 
         try:
-            ret_code = call(params)
+            ret_code = call(params, env={"HOME": os.getcwd()})
         except FileNotFoundError:
             raise TestFailed("The Wget Executable does not exist at the "
                              "expected path.")
@@ -100,14 +115,31 @@ class BaseTest:
                                                  "..", '..', 'src', "wget"))
         wget_options = '--debug --no-config %s' % self.wget_options
 
-        if os.getenv("VALGRIND_TESTS"):
-            valgrind_test = "valgrind --error-exitcode=301 --leak-check=full --track-origins=yes"
+        valgrind = os.getenv("VALGRIND_TESTS", "")
+        gdb = os.getenv("GDB_TESTS", "")
+
+        # GDB has precedence over Valgrind
+        # If both VALGRIND_TESTS and GDB_TESTS are defined,
+        # GDB will be executed.
+        if gdb == "1":
+            cmd_line = 'gdb --args %s %s ' % (wget_path, wget_options)
+        elif valgrind == "1":
+            cmd_line = 'valgrind --error-exitcode=301 ' \
+                                '--leak-check=yes ' \
+                                '--track-origins=yes ' \
+                                '--suppressions=../valgrind-suppression-ssl ' \
+                                '%s %s ' % (wget_path, wget_options)
+        elif valgrind not in ("", "0"):
+            cmd_line = '%s %s %s ' % (os.getenv("VALGRIND_TESTS", ""),
+                                      wget_path,
+                                      wget_options)
         else:
-            valgrind_test = ""
-        cmd_line = '%s %s %s ' % (valgrind_test, wget_path, wget_options)
-        for protocol, urls, domain in zip(self.protocols,
-                                          self.urls,
-                                          self.domains):
+            cmd_line = '%s %s ' % (wget_path, wget_options)
+
+        for req_protocol, urls, domain, port in zip(self.req_protocols,
+                                                    self.urls,
+                                                    self.domains,
+                                                    self.ports):
             # zip is function for iterating multiple lists at the same time.
             # e.g. for item1, item2 in zip([1, 5, 3],
             #                              ['a', 'e', 'c']):
@@ -117,7 +149,8 @@ class BaseTest:
             # 5 e
             # 3 c
             for url in urls:
-                cmd_line += '%s://%s/%s ' % (protocol.lower(), domain, url)
+                cmd_line += '%s://%s:%s/%s ' % (req_protocol, domain, port, url)
+
 
         print(cmd_line)
 
@@ -129,12 +162,13 @@ class BaseTest:
             if not os.getenv("NO_CLEANUP"):
                 shutil.rmtree(self.get_test_dir())
         except:
-            print ("Unknown Exception while trying to remove Test Environment.")
+            print("Unknown Exception while trying to remove Test Environment.")
+            self.tests_passed = False
 
-    def _exit_test (self):
+    def _exit_test(self):
         self.__test_cleanup()
 
-    def begin (self):
+    def begin(self):
         return 0 if self.tests_passed else 100
 
     def call_test(self):
@@ -171,13 +205,17 @@ class BaseTest:
     def post_hook_call(self):
         self.hook_call(self.post_configs, 'Post Test Function')
 
-    def _replace_substring (self, string):
-        pattern = re.compile ('\{\{\w+\}\}')
-        match_obj = pattern.search (string)
+    def _replace_substring(self, string):
+        """
+        Replace first occurrence of "{{name}}" in @string with
+        "getattr(self, name)".
+        """
+        pattern = re.compile(r'\{\{\w+\}\}')
+        match_obj = pattern.search(string)
         if match_obj is not None:
             rep = match_obj.group()
-            temp = getattr (self, rep.strip ('{}'))
-            string = string.replace (rep, temp)
+            temp = getattr(self, rep.strip('{}'))
+            string = string.replace(rep, temp)
         return string
 
     def instantiate_server_by(self, protocol):
@@ -227,4 +265,4 @@ class BaseTest:
                 traceback.print_tb(exc_tb)
         self.__test_cleanup()
 
-        return True
+        return self.tests_passed

@@ -1,15 +1,15 @@
-eval '(exit $?0)' && eval 'exec perl -wS "$0" ${1+"$@"}'
+eval '(exit $?0)' && eval 'exec perl -wS "$0" "$@"'
   & eval 'exec perl -wS "$0" $argv:q'
     if 0;
 # Generate a release announcement message.
 
-my $VERSION = '2012-06-08 06:53'; # UTC
+my $VERSION = '2016-01-12 23:09'; # UTC
 # The definition above must lie within the first 8 lines in order
 # for the Emacs time-stamp write hook (at end) to update it.
 # If you change this file with Emacs, please let the write hook
 # do its job.  Otherwise, update this string manually.
 
-# Copyright (C) 2002-2014 Free Software Foundation, Inc.
+# Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,15 +29,18 @@ my $VERSION = '2012-06-08 06:53'; # UTC
 use strict;
 
 use Getopt::Long;
-use Digest::MD5;
-eval { require Digest::SHA; }
-  or eval 'use Digest::SHA1';
 use POSIX qw(strftime);
 
 (my $ME = $0) =~ s|.*/||;
 
 my %valid_release_types = map {$_ => 1} qw (alpha beta stable);
 my @archive_suffixes = ('tar.gz', 'tar.bz2', 'tar.lzma', 'tar.xz');
+my %digest_classes =
+  (
+   'md5' => (eval { require Digest::MD5; } and 'Digest::MD5'),
+   'sha1' => ((eval { require Digest::SHA; } and 'Digest::SHA')
+              or (eval { require Digest::SHA1; } and 'Digest::SHA1'))
+  );
 my $srcdir = '.';
 
 sub usage ($)
@@ -157,15 +160,13 @@ sub print_checksums (@)
 
   foreach my $meth (qw (md5 sha1))
     {
+      my $class = $digest_classes{$meth} or next;
       foreach my $f (@file)
         {
           open IN, '<', $f
             or die "$ME: $f: cannot open for reading: $!\n";
           binmode IN;
-          my $dig =
-            ($meth eq 'md5'
-             ? Digest::MD5->new->addfile(*IN)->hexdigest
-             : Digest::SHA1->new->addfile(*IN)->hexdigest);
+          my $dig = $class->new->addfile(*IN)->hexdigest;
           close IN;
           print "$dig  $f\n";
         }
@@ -416,14 +417,15 @@ sub get_tool_versions ($$)
   @url_dir_list
     or (warn "URL directory name(s) not specified\n"), $fail = 1;
 
-  my @tool_list = split ',', $bootstrap_tools;
+  my @tool_list = split ',', $bootstrap_tools
+    if $bootstrap_tools;
 
   grep (/^gnulib$/, @tool_list) ^ defined $gnulib_version
     and (warn "when specifying gnulib as a tool, you must also specify\n"
         . "--gnulib-version=V, where V is the result of running git describe\n"
         . "in the gnulib source directory.\n"), $fail = 1;
 
-  exists $valid_release_types{$release_type}
+  !$release_type || exists $valid_release_types{$release_type}
     or (warn "'$release_type': invalid release type\n"), $fail = 1;
 
   @ARGV
@@ -550,6 +552,6 @@ EOF
 ## eval: (add-hook 'write-file-hooks 'time-stamp)
 ## time-stamp-start: "my $VERSION = '"
 ## time-stamp-format: "%:y-%02m-%02d %02H:%02M"
-## time-stamp-time-zone: "UTC"
+## time-stamp-time-zone: "UTC0"
 ## time-stamp-end: "'; # UTC"
 ## End:

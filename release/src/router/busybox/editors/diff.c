@@ -76,6 +76,33 @@
  * 6n words for files of length n.
  */
 
+//config:config DIFF
+//config:	bool "diff"
+//config:	default y
+//config:	help
+//config:	  diff compares two files or directories and outputs the
+//config:	  differences between them in a form that can be given to
+//config:	  the patch command.
+//config:
+//config:config FEATURE_DIFF_LONG_OPTIONS
+//config:	bool "Enable long options"
+//config:	default y
+//config:	depends on DIFF && LONG_OPTS
+//config:	help
+//config:	  Enable use of long options.
+//config:
+//config:config FEATURE_DIFF_DIR
+//config:	bool "Enable directory support"
+//config:	default y
+//config:	depends on DIFF
+//config:	help
+//config:	  This option enables support for directory and subdirectory
+//config:	  comparison.
+
+//kbuild:lib-$(CONFIG_DIFF) += diff.o
+
+//applet:IF_DIFF(APPLET(diff, BB_DIR_USR_BIN, BB_SUID_DROP))
+
 //usage:#define diff_trivial_usage
 //usage:       "[-abBdiNqrTstw] [-L LABEL] [-S FILE] [-U LINES] FILE1 FILE2"
 //usage:#define diff_full_usage "\n\n"
@@ -98,6 +125,7 @@
 //usage:     "\n	-w	Ignore all whitespace"
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 
 #if 0
 # define dbg_error_msg(...) bb_error_msg(__VA_ARGS__)
@@ -336,7 +364,7 @@ static void stone(const int *a, int n, const int *b, int *J, int pref)
 }
 
 struct line {
-	/* 'serial' is not used in the begining, so we reuse it
+	/* 'serial' is not used in the beginning, so we reuse it
 	 * to store line offsets, thus reducing memory pressure
 	 */
 	union {
@@ -406,7 +434,7 @@ static void fetch(FILE_and_pos_t *ft, const off_t *ix, int a, int b, int ch)
 		for (j = 0, col = 0; j < ix[i] - ix[i - 1]; j++) {
 			int c = fgetc(ft->ft_fp);
 			if (c == EOF) {
-				printf("\n\\ No newline at end of file\n");
+				puts("\n\\ No newline at end of file");
 				return;
 			}
 			ft->ft_pos++;
@@ -631,8 +659,8 @@ static bool diff(FILE* fp[2], char *file[2])
 				}
 
 				for (j = 0; j < 2; j++)
-					for (k = v[j].a; k < v[j].b; k++)
-						nonempty |= (ix[j][k+1] - ix[j][k] != 1);
+					for (k = v[j].a; k <= v[j].b; k++)
+						nonempty |= (ix[j][k] - ix[j][k - 1] != 1);
 
 				vec = xrealloc_vector(vec, 6, ++idx);
 				memcpy(vec[idx], v, sizeof(v));
@@ -665,7 +693,7 @@ static bool diff(FILE* fp[2], char *file[2])
 					continue;
 				printf(",%d", (a < b) ? b - a + 1 : 0);
 			}
-			printf(" @@\n");
+			puts(" @@");
 			/*
 			 * Output changes in "unified" diff format--the old and new lines
 			 * are printed together.
@@ -713,13 +741,15 @@ static int diffreg(char *file[2])
 			unlink(name);
 			if (bb_copyfd_eof(fd, fd_tmp) < 0)
 				xfunc_die();
-			if (fd) /* Prevents closing of stdin */
+			if (fd != STDIN_FILENO)
 				close(fd);
 			fd = fd_tmp;
+			xlseek(fd, 0, SEEK_SET);
 		}
 		fp[i] = fdopen(fd, "r");
 	}
 
+	setup_common_bufsiz();
 	while (1) {
 		const size_t sz = COMMON_BUFSIZE / 2;
 		char *const buf0 = bb_common_bufsiz1;
@@ -843,7 +873,7 @@ static void diffdir(char *p[2], const char *s_start)
 		 * add_to_dirlist will remove it. */
 		list[i].len = strlen(p[i]);
 		recursive_action(p[i], ACTION_RECURSE | ACTION_FOLLOWLINKS,
-		                 add_to_dirlist, skip_dir, &list[i], 0);
+				add_to_dirlist, skip_dir, &list[i], 0);
 		/* Sort dl alphabetically.
 		 * GNU diff does this ignoring any number of trailing dots.
 		 * We don't, so for us dotted files almost always are

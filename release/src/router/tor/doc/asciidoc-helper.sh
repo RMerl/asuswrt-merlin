@@ -19,7 +19,7 @@ if [ "$1" = "html" ]; then
     base=${output%%.html.in}
 
     if [ "$2" != none ]; then
-      "$2" -d manpage -o $output $input;
+      TZ=UTC "$2" -d manpage -o $output $input;
     else
       echo "==================================";
       echo;

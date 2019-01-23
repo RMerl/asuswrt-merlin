@@ -22,7 +22,7 @@
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script>
-var wollist_array = '<% nvram_get("wollist"); %>';
+var wollist_array = "<% nvram_get("wollist"); %>";
 var manually_wol_list_array = new Array();
 Object.prototype.getKey = function(value) {
 	for(var key in this) {
@@ -130,7 +130,7 @@ function showwollist(){
 				clientName = (clientList[key].nickName == "") ? clientList[key].name : clientList[key].nickName;
 				manually_wol_list_array[key] = clientName;
 			}
-			var clientMac = key;
+			var clientMac = key.toUpperCase();
 			code +='<tr>';
 			code +='<td width="80%" align="center">';
 			if(clientList[clientMac]) {
@@ -200,7 +200,7 @@ function addRow_Group(upper){
 	
 	if(item_num >=2){
 		for(i=0; i<rule_num; i++){	
-			if(manually_wol_list_array[document.form.wollist_macAddr.value] != null){
+			if(manually_wol_list_array[document.form.wollist_macAddr.value.toUpperCase()] != null){
 				alert("<#JS_duplicate#>");
 				document.form.wollist_macAddr.focus();
 				document.form.wollist_macAddr.select();
@@ -295,7 +295,7 @@ function applyRule(){
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
-<form method="GET" name="form" action="/apply.cgi" target="hidden_frame"> 
+<form method="POST" name="form" action="/apply.cgi" target="hidden_frame"> 
 <input type="hidden" name="current_page" value="Main_WOL_Content.asp">
 <input type="hidden" name="next_page" value="Main_WOL_Content.asp">
 <input type="hidden" name="group_id" value="">

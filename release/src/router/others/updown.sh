@@ -12,6 +12,7 @@ create_client_list(){
 	server=$1
 	VPN_IP_LIST=$(nvram get vpn_client$(echo $instance)_clientlist)
 
+	OLDIFS=$IFS
 	IFS="<"
 
 	for ENTRY in $VPN_IP_LIST
@@ -47,7 +48,7 @@ if [ $script_type == 'up' ]
 then
 	echo iptables -t nat -N DNSVPN$instance >> $dnsscript
 
-	if [ $instance != 0 -a $(nvram get vpn_client$(echo $instance)_rgw) == 2 -a $(nvram get vpn_client$(echo $instance)_adns) == 3 ]
+	if [ $instance != 0 -a $(nvram get vpn_client$(echo $instance)_rgw) -ge 2 -a $(nvram get vpn_client$(echo $instance)_adns) == 3 ]
 	then
 		setdns=0
 	else
@@ -96,8 +97,8 @@ then
 		service updateresolv
 	elif [ $script_type == 'down' ]; then
 		rm $dnsscript
-		service updateresolv
-		service restart_dnsmasq
+		service updateresolv # also restarts or reloads dnsmasq as necessary
+#		service restart_dnsmasq
 	fi
 fi
 
@@ -106,7 +107,7 @@ rmdir /etc/openvpn
 
 if [ -f /jffs/scripts/openvpn-event ]
 then
-	logger -t "custom script" "Running /jffs/scripts/openvpn-event (args: $*)"
+	logger -t "custom_script" "Running /jffs/scripts/openvpn-event (args: $*)"
 	sh /jffs/scripts/openvpn-event $*
 fi
 

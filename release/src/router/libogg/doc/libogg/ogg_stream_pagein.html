@@ -9,7 +9,7 @@
 <table border=0 width=100%>
 <tr>
 <td><p class=tiny>libogg documentation</p></td>
-<td align=right><p class=tiny>libogg release 1.1.4 - 20090520</p></td>
+<td align=right><p class=tiny>libogg release 1.3.2 - 20140527</p></td>
 </tr>
 </table>
 
@@ -35,7 +35,7 @@ int ogg_stream_pagein(<a href="ogg_stream_state.html">ogg_stream_state</a> *os, 
 <h3>Parameters</h3>
 <dl>
 <dt><i>os</i></dt>
-<dd>Pointer to a previously declared <a href="ogg_stream.html">ogg_stream</a> struct, which represents the current logical bitstream.</dd>
+<dd>Pointer to a previously declared <a href="ogg_stream_state.html">ogg_stream_state</a> struct, which represents the current logical bitstream.</dd>
 <dt><i>og</i></dt>
 <dd>Pointer to a page of data.  The data inside this page is being submitted to the streaming layer in order to be allocated into packets.
 </dl>
@@ -43,7 +43,7 @@ int ogg_stream_pagein(<a href="ogg_stream_state.html">ogg_stream_state</a> *os, 
 
 <h3>Return Values</h3>
 <blockquote>
-<li>-1 indicates failure.  This means that the serial number of the page did not match the serial number of the bitstream, the page version was incorrect, or an internal error accurred.</li>
+<li>-1 indicates failure.  This means that the serial number of the page did not match the serial number of the bitstream, the page version was incorrect, or an internal error occurred.</li>
 <li>
 0 means that the page was successfully submitted to the bitstream.</li>
 </blockquote>
@@ -53,11 +53,11 @@ int ogg_stream_pagein(<a href="ogg_stream_state.html">ogg_stream_state</a> *os, 
 <hr noshade>
 <table border=0 width=100%>
 <tr valign=top>
-<td><p class=tiny>copyright &copy; 2000-2009 Xiph.Org</p></td>
+<td><p class=tiny>copyright &copy; 2000-2014 Xiph.Org</p></td>
 <td align=right><p class=tiny><a href="http://www.xiph.org/ogg/">Ogg Container Format</a></p></td>
 </tr><tr>
 <td><p class=tiny>libogg documentation</p></td>
-<td align=right><p class=tiny>libogg release 1.1.4 - 20090520</p></td>
+<td align=right><p class=tiny>libogg release 1.3.2 - 20140527</p></td>
 </tr>
 </table>
 

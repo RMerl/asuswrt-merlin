@@ -22,9 +22,9 @@
 //usage:     "\n	-r PROG		Script to run"
 //usage:     "\n	-x ARG		Extra argument for script"
 //usage:     "\n	-I		Don't exit on nonzero exit code from script"
-//usage:     "\n	-p		Don't run script on daemon startup"
-//usage:     "\n	-q		Don't run script on daemon quit"
-//usage:     "\n	-l		Run script on startup even if no cable is detected"
+//usage:     "\n	-p		Don't run \"up\" script on startup"
+//usage:     "\n	-q		Don't run \"down\" script on exit"
+//usage:     "\n	-l		Always run script on startup"
 //usage:     "\n	-t SECS		Poll time in seconds"
 //usage:     "\n	-u SECS		Delay before running script after link up"
 //usage:     "\n	-d SECS		Delay after link down"
@@ -38,7 +38,17 @@
 #include <linux/mii.h>
 #include <linux/ethtool.h>
 #ifdef HAVE_NET_ETHERNET_H
-# include <net/ethernet.h>
+/* musl breakage:
+ * In file included from /usr/include/net/ethernet.h:10,
+ *                  from networking/ifplugd.c:41:
+ * /usr/include/netinet/if_ether.h:96: error: redefinition of 'struct ethhdr'
+ *
+ * Build succeeds without it on musl. Commented it out.
+ * If on your system you need it, consider removing <linux/ethtool.h>
+ * and copy-pasting its definitions here (<linux/ethtool.h> is what pulls in
+ * conflicting definition of struct ethhdr on musl).
+ */
+/* # include <net/ethernet.h> */
 #endif
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
@@ -47,6 +57,10 @@
 
 #define __user
 #include <linux/wireless.h>
+
+#ifndef ETH_ALEN
+# define ETH_ALEN  6
+#endif
 
 /*
 From initial port to busybox, removed most of the redundancy by
@@ -289,8 +303,6 @@ static const struct {
 	{ "IFF_RUNNING"       , &detect_link_iff     },
 };
 
-
-
 static const char *strstatus(int status)
 {
 	if (status == IFSTATUS_ERR)
@@ -451,20 +463,24 @@ static smallint detect_link(void)
 static NOINLINE int check_existence_through_netlink(void)
 {
 	int iface_len;
-	char replybuf[1024];
+	/* Buffer was 1K, but on linux-3.9.9 it was reported to be too small.
+	 * netlink.h: "limit to 8K to avoid MSG_TRUNC when PAGE_SIZE is very large".
+	 * Note: on error returns (-1) we exit, no need to free replybuf.
+	 */
+	enum { BUF_SIZE = 8 * 1024 };
+	char *replybuf = xmalloc(BUF_SIZE);
 
 	iface_len = strlen(G.iface);
 	while (1) {
 		struct nlmsghdr *mhdr;
 		ssize_t bytes;
 
-		bytes = recv(netlink_fd, &replybuf, sizeof(replybuf), MSG_DONTWAIT);
+		bytes = recv(netlink_fd, replybuf, BUF_SIZE, MSG_DONTWAIT);
 		if (bytes < 0) {
 			if (errno == EAGAIN)
-				return G.iface_exists;
+				goto ret;
 			if (errno == EINTR)
 				continue;
-
 			bb_perror_msg("netlink: recv");
 			return -1;
 		}
@@ -507,6 +523,8 @@ static NOINLINE int check_existence_through_netlink(void)
 		}
 	}
 
+ ret:
+	free(replybuf);
 	return G.iface_exists;
 }
 
@@ -551,12 +569,13 @@ int ifplugd_main(int argc UNUSED_PARAM, char **argv)
 	applet_name = xasprintf("ifplugd(%s)", G.iface);
 
 #if ENABLE_FEATURE_PIDFILE
-	pidfile_name = xasprintf(_PATH_VARRUN"ifplugd.%s.pid", G.iface);
+	pidfile_name = xasprintf(CONFIG_PID_FILE_PATH "/ifplugd.%s.pid", G.iface);
 	pid_from_pidfile = read_pid(pidfile_name);
 
 	if (opts & FLAG_KILL) {
 		if (pid_from_pidfile > 0)
-			kill(pid_from_pidfile, SIGQUIT);
+			/* Upstream tool use SIGINT for -k */
+			kill(pid_from_pidfile, SIGINT);
 		return EXIT_SUCCESS;
 	}
 
@@ -645,7 +664,6 @@ int ifplugd_main(int argc UNUSED_PARAM, char **argv)
 	delay_time = 0;
 	while (1) {
 		int iface_status_old;
-		int iface_exists_old;
 
 		switch (bb_got_signal) {
 		case SIGINT:
@@ -671,12 +689,12 @@ int ifplugd_main(int argc UNUSED_PARAM, char **argv)
 			goto exiting;
 		}
 
-		iface_status_old = iface_status;
-		iface_exists_old = G.iface_exists;
-
 		if ((opts & FLAG_MONITOR)
 		 && (netlink_pollfd[0].revents & POLLIN)
 		) {
+			int iface_exists_old;
+
+			iface_exists_old = G.iface_exists;
 			G.iface_exists = check_existence_through_netlink();
 			if (G.iface_exists < 0) /* error */
 				goto exiting;
@@ -689,6 +707,7 @@ int ifplugd_main(int argc UNUSED_PARAM, char **argv)
 		}
 
 		/* note: if !G.iface_exists, returns DOWN */
+		iface_status_old = iface_status;
 		iface_status = detect_link();
 		if (iface_status == IFSTATUS_ERR) {
 			if (!(opts & FLAG_MONITOR))
@@ -702,7 +721,7 @@ int ifplugd_main(int argc UNUSED_PARAM, char **argv)
 
 			if (delay_time) {
 				/* link restored its old status before
-				 * we run script. don't run the script: */
+				 * we ran script. don't run the script: */
 				delay_time = 0;
 			} else {
 				delay_time = monotonic_sec();
@@ -710,15 +729,19 @@ int ifplugd_main(int argc UNUSED_PARAM, char **argv)
 					delay_time += G.delay_up;
 				if (iface_status == IFSTATUS_DOWN)
 					delay_time += G.delay_down;
-				if (delay_time == 0)
-					delay_time++;
+#if 0  /* if you are back in 1970... */
+				if (delay_time == 0) {
+					sleep(1);
+					delay_time = 1;
+				}
+#endif
 			}
 		}
 
 		if (delay_time && (int)(monotonic_sec() - delay_time) >= 0) {
-			delay_time = 0;
 			if (run_script(iface_status_str) != 0)
 				goto exiting;
+			delay_time = 0;
 		}
 	} /* while (1) */
 

@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: linux_osl.c 586208 2015-09-14 22:19:09Z $
+ * $Id: linux_osl.c 633907 2016-04-26 03:45:51Z $
  */
 
 #define LINUX_PORT
@@ -1419,6 +1419,14 @@ osl_pci_device(osl_t *osh)
 	ASSERT(osh && (osh->magic == OS_HANDLE_MAGIC) && osh->pdev);
 
 	return osh->pdev;
+}
+
+const char *
+osl_pci_name(osl_t *osh)
+{
+	ASSERT(osh && (osh->magic == OS_HANDLE_MAGIC) && osh->pdev);
+
+	return (pci_name((struct pci_dev *)osh->pdev));
 }
 
 static void

@@ -27,7 +27,7 @@ my %urls = (
         code => "200",
         msg => "You want fries with that?",
         headers => {
-            # HTTP header preceeds http-equiv, simply just omit it here
+            # HTTP header preceds http-equiv, simply just omit it here
             #'Content-Type' => 'text/html; charset=UTF-8',
         },
         content => $starter_file,

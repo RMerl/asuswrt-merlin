@@ -13,12 +13,21 @@
 #include <unistd.h>
 #endif
 
+#include "compat.h"
+
+/* Some versions of OpenSSL declare X509_STORE_CTX_set_verify_cb twice in
+ * x509.h and x509_vfy.h. Suppress the GCC warning so we can build with
+ * -Wredundant-decl. */
+DISABLE_GCC_WARNING(redundant-decls)
+
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/objects.h>
 #include <openssl/obj_mac.h>
 #include <openssl/err.h>
+
+ENABLE_GCC_WARNING(redundant-decls)
 
 #include <errno.h>
 #if 0
@@ -39,21 +48,21 @@
 #define DEFAULT_LIFETIME 12
 
 /* These globals are set via command line options. */
-char *identity_key_file = NULL;
-char *signing_key_file = NULL;
-char *certificate_file = NULL;
-int reuse_signing_key = 0;
-int verbose = 0;
-int make_new_id = 0;
-int months_lifetime = DEFAULT_LIFETIME;
-int passphrase_fd = -1;
-char *address = NULL;
+static char *identity_key_file = NULL;
+static char *signing_key_file = NULL;
+static char *certificate_file = NULL;
+static int reuse_signing_key = 0;
+static int verbose = 0;
+static int make_new_id = 0;
+static int months_lifetime = DEFAULT_LIFETIME;
+static int passphrase_fd = -1;
+static char *address = NULL;
 
-char *passphrase = NULL;
-size_t passphrase_len = 0;
+static char *passphrase = NULL;
+static size_t passphrase_len = 0;
 
-EVP_PKEY *identity_key = NULL;
-EVP_PKEY *signing_key = NULL;
+static EVP_PKEY *identity_key = NULL;
+static EVP_PKEY *signing_key = NULL;
 
 /** Write a usage message for tor-gencert to stderr. */
 static void
@@ -96,14 +105,21 @@ load_passphrase(void)
 {
   char *cp;
   char buf[1024]; /* "Ought to be enough for anybody." */
+  memset(buf, 0, sizeof(buf)); /* should be needless */
   ssize_t n = read_all(passphrase_fd, buf, sizeof(buf), 0);
   if (n < 0) {
     log_err(LD_GENERAL, "Couldn't read from passphrase fd: %s",
             strerror(errno));
     return -1;
   }
+  /* We'll take everything from the buffer except for optional terminating
+   * newline. */
   cp = memchr(buf, '\n', n);
-  passphrase_len = cp-buf;
+  if (cp == NULL) {
+    passphrase_len = n;
+  } else {
+    passphrase_len = cp-buf;
+  }
   passphrase = tor_strndup(buf, passphrase_len);
   memwipe(buf, 0, sizeof(buf));
   return 0;
@@ -395,17 +411,18 @@ key_to_string(EVP_PKEY *key)
   b = BIO_new(BIO_s_mem());
   if (!PEM_write_bio_RSAPublicKey(b, rsa)) {
     crypto_log_errors(LOG_WARN, "writing public key to string");
+    RSA_free(rsa);
     return NULL;
   }
 
   BIO_get_mem_ptr(b, &buf);
-  (void) BIO_set_close(b, BIO_NOCLOSE);
-  BIO_free(b);
   result = tor_malloc(buf->length + 1);
   memcpy(result, buf->data, buf->length);
   result[buf->length] = 0;
-  BUF_MEM_free(buf);
 
+  BIO_free(b);
+
+  RSA_free(rsa);
   return result;
 }
 
@@ -481,10 +498,13 @@ generate_certificate(void)
   tor_free(signing);
 
   /* Append a cross-certification */
+  RSA *rsa = EVP_PKEY_get1_RSA(signing_key);
   r = RSA_private_encrypt(DIGEST_LEN, (unsigned char*)id_digest,
                           (unsigned char*)signature,
-                          EVP_PKEY_get1_RSA(signing_key),
+                          rsa,
                           RSA_PKCS1_PADDING);
+  RSA_free(rsa);
+
   signed_len = strlen(buf);
   base64_encode(buf+signed_len, sizeof(buf)-signed_len, signature, r,
                 BASE64_ENCODE_MULTILINE);
@@ -496,10 +516,12 @@ generate_certificate(void)
   signed_len = strlen(buf);
   SHA1((const unsigned char*)buf,signed_len,(unsigned char*)digest);
 
+  rsa = EVP_PKEY_get1_RSA(identity_key);
   r = RSA_private_encrypt(DIGEST_LEN, (unsigned char*)digest,
                           (unsigned char*)signature,
-                          EVP_PKEY_get1_RSA(identity_key),
+                          rsa,
                           RSA_PKCS1_PADDING);
+  RSA_free(rsa);
   strlcat(buf, "-----BEGIN SIGNATURE-----\n", sizeof(buf));
   signed_len = strlen(buf);
   base64_encode(buf+signed_len, sizeof(buf)-signed_len, signature, r,

@@ -1,8 +1,9 @@
-/* Copyright (c) 2007-2015, The Tor Project, Inc. */
+/* Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
- * \file dnsserv.c \brief Implements client-side DNS proxy server code.  Note:
+ * \file dnsserv.c
+ * \brief Implements client-side DNS proxy server code.  Note:
  * this is the DNS Server code, not the Server DNS code.  Confused?  This code
  * runs on client-side, and acts as a DNS server.  The code in dns.c, on the
  * other hand, runs on Tor servers, and acts as a DNS client.
@@ -16,14 +17,10 @@
 #include "control.h"
 #include "main.h"
 #include "policies.h"
-#ifdef HAVE_EVENT2_DNS_H
 #include <event2/dns.h>
 #include <event2/dns_compat.h>
 /* XXXX this implies we want an improved evdns  */
 #include <event2/dns_struct.h>
-#else
-#include "eventdns.h"
-#endif
 
 /** Helper function: called by evdns whenever the client sends a request to our
  * DNSPort.  We need to eventually answer the request <b>req</b>.
@@ -87,8 +84,6 @@ evdns_server_callback(struct evdns_server_request *req, void *data_)
   for (i = 0; i < req->nquestions; ++i) {
     if (req->questions[i]->dns_question_class != EVDNS_CLASS_INET)
       continue;
-    if (! q)
-      q = req->questions[i];
     switch (req->questions[i]->type) {
       case EVDNS_TYPE_A:
       case EVDNS_TYPE_AAAA:
@@ -96,7 +91,7 @@ evdns_server_callback(struct evdns_server_request *req, void *data_)
         /* We always pick the first one of these questions, if there is
            one. */
         if (! supported_q)
-          supported_q = q;
+          supported_q = req->questions[i];
         break;
       default:
         break;
@@ -125,12 +120,13 @@ evdns_server_callback(struct evdns_server_request *req, void *data_)
   /* Make a new dummy AP connection, and attach the request to it. */
   entry_conn = entry_connection_new(CONN_TYPE_AP, AF_INET);
   conn = ENTRY_TO_EDGE_CONN(entry_conn);
+  CONNECTION_AP_EXPECT_NONPENDING(entry_conn);
   TO_CONN(conn)->state = AP_CONN_STATE_RESOLVE_WAIT;
   conn->is_dns_request = 1;
 
   tor_addr_copy(&TO_CONN(conn)->addr, &tor_addr);
   TO_CONN(conn)->port = port;
-  TO_CONN(conn)->address = tor_dup_addr(&tor_addr);
+  TO_CONN(conn)->address = tor_addr_to_str_dup(&tor_addr);
 
   if (q->type == EVDNS_TYPE_A || q->type == EVDNS_TYPE_AAAA ||
       q->type == EVDNS_QTYPE_ALL) {
@@ -140,6 +136,8 @@ evdns_server_callback(struct evdns_server_request *req, void *data_)
     entry_conn->socks_request->command = SOCKS_COMMAND_RESOLVE_PTR;
   }
 
+  /* This serves our DNS port so enable DNS request by default. */
+  entry_conn->entry_cfg.dns_request = 1;
   if (q->type == EVDNS_TYPE_A || q->type == EVDNS_QTYPE_ALL) {
     entry_conn->entry_cfg.ipv4_traffic = 1;
     entry_conn->entry_cfg.ipv6_traffic = 0;
@@ -199,12 +197,13 @@ dnsserv_launch_request(const char *name, int reverse,
   /* Make a new dummy AP connection, and attach the request to it. */
   entry_conn = entry_connection_new(CONN_TYPE_AP, AF_INET);
   conn = ENTRY_TO_EDGE_CONN(entry_conn);
+  CONNECTION_AP_EXPECT_NONPENDING(entry_conn);
   conn->base_.state = AP_CONN_STATE_RESOLVE_WAIT;
 
   tor_addr_copy(&TO_CONN(conn)->addr, &control_conn->base_.addr);
 #ifdef AF_UNIX
   /*
-   * The control connection can be AF_UNIX and if so tor_dup_addr will
+   * The control connection can be AF_UNIX and if so tor_addr_to_str_dup will
    * unhelpfully say "<unknown address type>"; say "(Tor_internal)"
    * instead.
    */
@@ -213,11 +212,11 @@ dnsserv_launch_request(const char *name, int reverse,
     TO_CONN(conn)->address = tor_strdup("(Tor_internal)");
   } else {
     TO_CONN(conn)->port = control_conn->base_.port;
-    TO_CONN(conn)->address = tor_dup_addr(&control_conn->base_.addr);
+    TO_CONN(conn)->address = tor_addr_to_str_dup(&control_conn->base_.addr);
   }
 #else
   TO_CONN(conn)->port = control_conn->base_.port;
-  TO_CONN(conn)->address = tor_dup_addr(&control_conn->base_.addr);
+  TO_CONN(conn)->address = tor_addr_to_str_dup(&control_conn->base_.addr);
 #endif
 
   if (reverse)
@@ -291,6 +290,10 @@ evdns_get_orig_address(const struct evdns_server_request *req,
   case RESOLVED_TYPE_IPV6:
     type = EVDNS_TYPE_AAAA;
     break;
+  case RESOLVED_TYPE_ERROR:
+  case RESOLVED_TYPE_ERROR_TRANSIENT:
+     /* Addr doesn't matter, since we're not sending it back in the reply.*/
+    return addr;
   default:
     tor_fragile_assert();
     return addr;

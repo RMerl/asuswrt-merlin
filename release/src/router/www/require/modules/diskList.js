@@ -20,9 +20,6 @@
 				"allUsbStatusArray" : [<% show_usb_path(); %>][0]
 			};
 
-			/* Add the internal SD card reader to the existing USB ports */
-			if (based_modelid == "RT-N66U") initialValue.usbPortMax++;
-
 			var newDisk = function(){
 				this.usbPath = "";
 				this.deviceIndex = "";

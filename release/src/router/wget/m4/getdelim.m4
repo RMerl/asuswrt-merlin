@@ -1,6 +1,6 @@
-# getdelim.m4 serial 10
+# getdelim.m4 serial 11
 
-dnl Copyright (C) 2005-2007, 2009-2014 Free Software Foundation, Inc.
+dnl Copyright (C) 2005-2007, 2009-2017 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -48,7 +48,9 @@ AC_DEFUN([gl_FUNC_GETDELIM],
         size_t siz = (size_t)(~0) / 4;
         if (getdelim (&line, &siz, '\n', in) == -1)
           return 3;
+        free (line);
       }
+      fclose (in);
       return 0;
     }
     ]])], [gl_cv_func_working_getdelim=yes] dnl The library version works.

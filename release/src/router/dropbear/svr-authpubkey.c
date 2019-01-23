@@ -70,10 +70,10 @@
 #define MIN_AUTHKEYS_LINE 10 /* "ssh-rsa AB" - short but doesn't matter */
 #define MAX_AUTHKEYS_LINE 4200 /* max length of a line in authkeys */
 
-static int checkpubkey(unsigned char* algo, unsigned int algolen,
+static int checkpubkey(char* algo, unsigned int algolen,
 		unsigned char* keyblob, unsigned int keybloblen);
-static int checkpubkeyperms();
-static void send_msg_userauth_pk_ok(unsigned char* algo, unsigned int algolen,
+static int checkpubkeyperms(void);
+static void send_msg_userauth_pk_ok(char* algo, unsigned int algolen,
 		unsigned char* keyblob, unsigned int keybloblen);
 static int checkfileperm(char * filename);
 
@@ -82,10 +82,11 @@ static int checkfileperm(char * filename);
 void svr_auth_pubkey() {
 
 	unsigned char testkey; /* whether we're just checking if a key is usable */
-	unsigned char* algo = NULL; /* pubkey algo */
+	char* algo = NULL; /* pubkey algo */
 	unsigned int algolen;
 	unsigned char* keyblob = NULL;
 	unsigned int keybloblen;
+	unsigned int sign_payload_length;
 	buffer * signbuf = NULL;
 	sign_key * key = NULL;
 	char* fp = NULL;
@@ -125,9 +126,18 @@ void svr_auth_pubkey() {
 
 	/* create the data which has been signed - this a string containing
 	 * session_id, concatenated with the payload packet up to the signature */
+	assert(ses.payload_beginning <= ses.payload->pos);
+	sign_payload_length = ses.payload->pos - ses.payload_beginning;
 	signbuf = buf_new(ses.payload->pos + 4 + ses.session_id->len);
 	buf_putbufstring(signbuf, ses.session_id);
-	buf_putbytes(signbuf, ses.payload->data, ses.payload->pos);
+
+	/* The entire contents of the payload prior. */
+	buf_setpos(ses.payload, ses.payload_beginning);
+	buf_putbytes(signbuf, 
+		buf_getptr(ses.payload, sign_payload_length),
+		sign_payload_length);
+	buf_incrpos(ses.payload, sign_payload_length);
+
 	buf_setpos(signbuf, 0);
 
 	/* ... and finally verify the signature */
@@ -136,6 +146,14 @@ void svr_auth_pubkey() {
 		dropbear_log(LOG_NOTICE,
 				"Pubkey auth succeeded for '%s' with key %s from %s",
 				ses.authstate.pw_name, fp, svr_ses.addrstring);
+#ifdef RTCONFIG_PROTECTION_SERVER
+		char ip[64];
+		char *addr;
+		strncpy(ip, svr_ses.addrstring, sizeof(ip)-1);
+		addr = strrchr(ip, ':');
+		*addr = '\0';
+		SEND_PTCSRV_EVENT(PROTECTION_SERVICE_SSH, RPT_SUCCESS, ip, "From dropbear , LOGIN SUCCESS(authpubkey)");
+#endif
 		send_msg_userauth_success();
 	} else {
 		dropbear_log(LOG_WARNING,
@@ -163,7 +181,7 @@ out:
 /* Reply that the key is valid for auth, this is sent when the user sends
  * a straight copy of their pubkey to test, to avoid having to perform
  * expensive signing operations with a worthless key */
-static void send_msg_userauth_pk_ok(unsigned char* algo, unsigned int algolen,
+static void send_msg_userauth_pk_ok(char* algo, unsigned int algolen,
 		unsigned char* keyblob, unsigned int keybloblen) {
 
 	TRACE(("enter send_msg_userauth_pk_ok"))
@@ -171,7 +189,7 @@ static void send_msg_userauth_pk_ok(unsigned char* algo, unsigned int algolen,
 
 	buf_putbyte(ses.writepayload, SSH_MSG_USERAUTH_PK_OK);
 	buf_putstring(ses.writepayload, algo, algolen);
-	buf_putstring(ses.writepayload, keyblob, keybloblen);
+	buf_putstring(ses.writepayload, (const char*)keyblob, keybloblen);
 
 	encrypt_packet();
 	TRACE(("leave send_msg_userauth_pk_ok"))
@@ -181,7 +199,7 @@ static void send_msg_userauth_pk_ok(unsigned char* algo, unsigned int algolen,
 /* Checks whether a specified publickey (and associated algorithm) is an
  * acceptable key for authentication */
 /* Returns DROPBEAR_SUCCESS if key is ok for auth, DROPBEAR_FAILURE otherwise */
-static int checkpubkey(unsigned char* algo, unsigned int algolen,
+static int checkpubkey(char* algo, unsigned int algolen,
 		unsigned char* keyblob, unsigned int keybloblen) {
 
 	FILE * authfile = NULL;
@@ -191,6 +209,8 @@ static int checkpubkey(unsigned char* algo, unsigned int algolen,
 	unsigned int len, pos;
 	buffer * options_buf = NULL;
 	int line_num;
+	uid_t origuid;
+	gid_t origgid;
 
 	TRACE(("enter checkpubkey"))
 
@@ -217,8 +237,21 @@ static int checkpubkey(unsigned char* algo, unsigned int algolen,
 	snprintf(filename, len + 22, "%s/.ssh/authorized_keys", 
 				ses.authstate.pw_dir);
 
-	/* open the file */
+	/* open the file as the authenticating user. */
+	origuid = getuid();
+	origgid = getgid();
+	if ((setegid(ses.authstate.pw_gid)) < 0 ||
+		(seteuid(ses.authstate.pw_uid)) < 0) {
+		dropbear_exit("Failed to set euid");
+	}
+
 	authfile = fopen(filename, "r");
+
+	if ((seteuid(origuid)) < 0 ||
+		(setegid(origgid)) < 0) {
+		dropbear_exit("Failed to revert euid");
+	}
+
 	if (authfile == NULL) {
 		goto out;
 	}
@@ -250,9 +283,9 @@ static int checkpubkey(unsigned char* algo, unsigned int algolen,
 		/* check the key type - will fail if there are options */
 		TRACE(("a line!"))
 
-		if (strncmp(buf_getptr(line, algolen), algo, algolen) != 0) {
+		if (strncmp((const char *) buf_getptr(line, algolen), algo, algolen) != 0) {
 			int is_comment = 0;
-			char *options_start = NULL;
+			unsigned char *options_start = NULL;
 			int options_len = 0;
 			int escape, quoted;
 			
@@ -298,7 +331,7 @@ static int checkpubkey(unsigned char* algo, unsigned int algolen,
 			if (line->pos + algolen+3 > line->len) {
 				continue;
 			}
-			if (strncmp(buf_getptr(line, algolen), algo, algolen) != 0) { 
+			if (strncmp((const char *) buf_getptr(line, algolen), algo, algolen) != 0) {
 				continue;
 			}
 		}
@@ -320,7 +353,7 @@ static int checkpubkey(unsigned char* algo, unsigned int algolen,
 
 		TRACE(("checkpubkey: line pos = %d len = %d", line->pos, line->len))
 
-		ret = cmp_base64_key(keyblob, keybloblen, algo, algolen, line, NULL);
+		ret = cmp_base64_key(keyblob, keybloblen, (const unsigned char *) algo, algolen, line, NULL);
 
 		if (ret == DROPBEAR_SUCCESS && options_buf) {
 			ret = svr_add_pubkey_options(options_buf, line_num, filename);

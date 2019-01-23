@@ -1,16 +1,64 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
  * \file connection_edge.c
  * \brief Handle edge streams.
+ *
+ * An edge_connection_t is a subtype of a connection_t, and represents two
+ * critical concepts in Tor: a stream, and an edge connection.  From the Tor
+ * protocol's point of view, a stream is a bi-directional channel that is
+ * multiplexed on a single circuit.  Each stream on a circuit is identified
+ * with a separate 16-bit stream ID, local to the (circuit,exit) pair.
+ * Streams are created in response to client requests.
+ *
+ * An edge connection is one thing that can implement a stream: it is either a
+ * TCP application socket that has arrived via (e.g.) a SOCKS request, or an
+ * exit connection.
+ *
+ * Not every instance of edge_connection_t truly represents an edge connction,
+ * however. (Sorry!) We also create edge_connection_t objects for streams that
+ * we will not be handling with TCP.  The types of these streams are:
+ *   <ul>
+ *   <li>DNS lookup streams, created on the client side in response to
+ *     a UDP DNS request received on a DNSPort, or a RESOLVE command
+ *     on a controller.
+ *   <li>DNS lookup streams, created on the exit side in response to
+ *     a RELAY_RESOLVE cell from a client.
+ *   <li>Tunneled directory streams, created on the directory cache side
+ *     in response to a RELAY_BEGINDIR cell.  These streams attach directly
+ *     to a dir_connection_t object without ever using TCP.
+ *   </ul>
+ *
+ * This module handles general-purpose functionality having to do with
+ * edge_connection_t.  On the client side, it accepts various types of
+ * application requests on SocksPorts, TransPorts, and NATDPorts, and
+ * creates streams appropriately.
+ *
+ * This module is also responsible for implementing stream isolation:
+ * ensuring that streams that should not be linkable to one another are
+ * kept to different circuits.
+ *
+ * On the exit side, this module handles the various stream-creating
+ * type of RELAY cells by launching appropriate outgoing connections,
+ * DNS requests, or directory connection objects.
+ *
+ * And for all edge connections, this module is responsible for handling
+ * incoming and outdoing data as it arrives or leaves in the relay.c
+ * module.  (Outgoing data will be packaged in
+ * connection_edge_process_inbuf() as it calls
+ * connection_edge_package_raw_inbuf(); incoming data from RELAY_DATA
+ * cells is applied in connection_edge_process_relay_cell().)
  **/
 #define CONNECTION_EDGE_PRIVATE
 
 #include "or.h"
+
+#include "backtrace.h"
+
 #include "addressmap.h"
 #include "buffers.h"
 #include "channel.h"
@@ -24,6 +72,7 @@
 #include "control.h"
 #include "dns.h"
 #include "dnsserv.h"
+#include "directory.h"
 #include "dirserv.h"
 #include "hibernate.h"
 #include "main.h"
@@ -211,6 +260,7 @@ connection_edge_process_inbuf(edge_connection_t *conn, int package_partial)
       }
       /* Fall through if the connection is on a circuit without optimistic
        * data support. */
+      /* Falls through. */
     case EXIT_CONN_STATE_CONNECTING:
     case AP_CONN_STATE_RENDDESC_WAIT:
     case AP_CONN_STATE_CIRCUIT_WAIT:
@@ -475,8 +525,7 @@ connection_edge_finished_connecting(edge_connection_t *edge_conn)
   rep_hist_note_exit_stream_opened(conn->port);
 
   conn->state = EXIT_CONN_STATE_OPEN;
-  IF_HAS_NO_BUFFEREVENT(conn)
-    connection_watch_events(conn, READ_EVENT); /* stop writing, keep reading */
+  connection_watch_events(conn, READ_EVENT); /* stop writing, keep reading */
   if (connection_get_outbuf_len(conn)) /* in case there are any queued relay
                                         * cells */
     connection_start_writing(conn);
@@ -503,6 +552,16 @@ connection_edge_finished_connecting(edge_connection_t *edge_conn)
   return connection_edge_process_inbuf(edge_conn, 1);
 }
 
+/** A list of all the entry_connection_t * objects that are not marked
+ * for close, and are in AP_CONN_STATE_CIRCUIT_WAIT.
+ *
+ * (Right now, we check in several places to make sure that this list is
+ * correct.  When it's incorrect, we'll fix it, and log a BUG message.)
+ */
+static smartlist_t *pending_entry_connections = NULL;
+
+static int untried_pending_connections = 0;
+
 /** Common code to connection_(ap|exit)_about_to_close. */
 static void
 connection_edge_about_to_close(edge_connection_t *edge_conn)
@@ -525,6 +584,8 @@ connection_ap_about_to_close(entry_connection_t *entry_conn)
   edge_connection_t *edge_conn = ENTRY_TO_EDGE_CONN(entry_conn);
   connection_t *conn = ENTRY_TO_CONN(entry_conn);
 
+  connection_edge_about_to_close(edge_conn);
+
   if (entry_conn->socks_request->has_finished == 0) {
     /* since conn gets removed right after this function finishes,
      * there's no point trying to send back a reply at this point. */
@@ -543,6 +604,20 @@ connection_ap_about_to_close(entry_connection_t *entry_conn)
              conn->marked_for_close_file, conn->marked_for_close);
     dnsserv_reject_request(entry_conn);
   }
+
+  if (TO_CONN(edge_conn)->state == AP_CONN_STATE_CIRCUIT_WAIT) {
+    smartlist_remove(pending_entry_connections, entry_conn);
+  }
+
+#if 1
+  /* Check to make sure that this isn't in pending_entry_connections if it
+   * didn't actually belong there. */
+  if (TO_CONN(edge_conn)->type == CONN_TYPE_AP) {
+    connection_ap_warn_and_unmark_if_pending_circ(entry_conn,
+                                                  "about_to_close");
+  }
+#endif
+
   control_event_stream_bandwidth(edge_conn);
   control_event_stream_status(entry_conn, STREAM_EVENT_CLOSED,
                               edge_conn->end_reason);
@@ -711,31 +786,197 @@ connection_ap_expire_beginning(void)
   } SMARTLIST_FOREACH_END(base_conn);
 }
 
-/** Tell any AP streams that are waiting for a new circuit to try again,
- * either attaching to an available circ or launching a new one.
+/**
+ * As connection_ap_attach_pending, but first scans the entire connection
+ * array to see if any elements are missing.
  */
 void
-connection_ap_attach_pending(void)
+connection_ap_rescan_and_attach_pending(void)
 {
   entry_connection_t *entry_conn;
   smartlist_t *conns = get_connection_array();
+
+  if (PREDICT_UNLIKELY(NULL == pending_entry_connections))
+    pending_entry_connections = smartlist_new();
+
   SMARTLIST_FOREACH_BEGIN(conns, connection_t *, conn) {
     if (conn->marked_for_close ||
         conn->type != CONN_TYPE_AP ||
         conn->state != AP_CONN_STATE_CIRCUIT_WAIT)
       continue;
+
     entry_conn = TO_ENTRY_CONN(conn);
+    tor_assert(entry_conn);
+    if (! smartlist_contains(pending_entry_connections, entry_conn)) {
+      log_warn(LD_BUG, "Found a connection %p that was supposed to be "
+               "in pending_entry_connections, but wasn't. No worries; "
+               "adding it.",
+               pending_entry_connections);
+      untried_pending_connections = 1;
+      connection_ap_mark_as_pending_circuit(entry_conn);
+    }
+
+  } SMARTLIST_FOREACH_END(conn);
+
+  connection_ap_attach_pending(1);
+}
+
+#ifdef DEBUGGING_17659
+#define UNMARK() do {                           \
+    entry_conn->marked_pending_circ_line = 0;   \
+    entry_conn->marked_pending_circ_file = 0;   \
+  } while (0)
+#else
+#define UNMARK() do { } while (0)
+#endif
+
+/** Tell any AP streams that are listed as waiting for a new circuit to try
+ * again, either attaching to an available circ or launching a new one.
+ *
+ * If <b>retry</b> is false, only check the list if it contains at least one
+ * streams that we have not yet tried to attach to a circuit.
+ */
+void
+connection_ap_attach_pending(int retry)
+{
+  if (PREDICT_UNLIKELY(!pending_entry_connections)) {
+    return;
+  }
+
+  if (untried_pending_connections == 0 && !retry)
+    return;
+
+  /* Don't allow modifications to pending_entry_connections while we are
+   * iterating over it. */
+  smartlist_t *pending = pending_entry_connections;
+  pending_entry_connections = smartlist_new();
+
+  SMARTLIST_FOREACH_BEGIN(pending,
+                          entry_connection_t *, entry_conn) {
+    connection_t *conn = ENTRY_TO_CONN(entry_conn);
+    tor_assert(conn && entry_conn);
+    if (conn->marked_for_close) {
+      UNMARK();
+      continue;
+    }
+    if (conn->magic != ENTRY_CONNECTION_MAGIC) {
+      log_warn(LD_BUG, "%p has impossible magic value %u.",
+               entry_conn, (unsigned)conn->magic);
+      UNMARK();
+      continue;
+    }
+    if (conn->state != AP_CONN_STATE_CIRCUIT_WAIT) {
+      // XXXX 030 -- this is downgraded in 0.2.9, since we apparently
+      // XXXX are running into it in practice.  It's harmless.
+      log_info(LD_BUG, "%p is no longer in circuit_wait. Its current state "
+               "is %s. Why is it on pending_entry_connections?",
+               entry_conn,
+               conn_state_to_string(conn->type, conn->state));
+      UNMARK();
+      continue;
+    }
+
     if (connection_ap_handshake_attach_circuit(entry_conn) < 0) {
       if (!conn->marked_for_close)
         connection_mark_unattached_ap(entry_conn,
                                       END_STREAM_REASON_CANT_ATTACH);
     }
-  } SMARTLIST_FOREACH_END(conn);
+
+    if (! conn->marked_for_close &&
+        conn->type == CONN_TYPE_AP &&
+        conn->state == AP_CONN_STATE_CIRCUIT_WAIT) {
+      if (!smartlist_contains(pending_entry_connections, entry_conn)) {
+        smartlist_add(pending_entry_connections, entry_conn);
+        continue;
+      }
+    }
+
+    UNMARK();
+  } SMARTLIST_FOREACH_END(entry_conn);
+
+  smartlist_free(pending);
+  untried_pending_connections = 0;
+}
+
+/** Mark <b>entry_conn</b> as needing to get attached to a circuit.
+ *
+ * And <b>entry_conn</b> must be in AP_CONN_STATE_CIRCUIT_WAIT,
+ * should not already be pending a circuit.  The circuit will get
+ * launched or the connection will get attached the next time we
+ * call connection_ap_attach_pending().
+ */
+void
+connection_ap_mark_as_pending_circuit_(entry_connection_t *entry_conn,
+                                       const char *fname, int lineno)
+{
+  connection_t *conn = ENTRY_TO_CONN(entry_conn);
+  tor_assert(conn->state == AP_CONN_STATE_CIRCUIT_WAIT);
+  tor_assert(conn->magic == ENTRY_CONNECTION_MAGIC);
+  if (conn->marked_for_close)
+    return;
+
+  if (PREDICT_UNLIKELY(NULL == pending_entry_connections))
+    pending_entry_connections = smartlist_new();
+
+  if (PREDICT_UNLIKELY(smartlist_contains(pending_entry_connections,
+                                          entry_conn))) {
+    log_warn(LD_BUG, "What?? pending_entry_connections already contains %p! "
+             "(Called from %s:%d.)",
+             entry_conn, fname, lineno);
+#ifdef DEBUGGING_17659
+    const char *f2 = entry_conn->marked_pending_circ_file;
+    log_warn(LD_BUG, "(Previously called from %s:%d.)\n",
+             f2 ? f2 : "<NULL>",
+             entry_conn->marked_pending_circ_line);
+#endif
+    log_backtrace(LOG_WARN, LD_BUG, "To debug, this may help");
+    return;
+  }
+
+#ifdef DEBUGGING_17659
+  entry_conn->marked_pending_circ_line = (uint16_t) lineno;
+  entry_conn->marked_pending_circ_file = fname;
+#endif
+
+  untried_pending_connections = 1;
+  smartlist_add(pending_entry_connections, entry_conn);
+
+  /* Work-around for bug 19969: we handle pending_entry_connections at
+   * the end of run_main_loop_once(), but in many cases that function will
+   * take a very long time, if ever, to finish its call to event_base_loop().
+   *
+   * So the fix is to tell it right now that it ought to finish its loop at
+   * its next available opportunity.
+   */
+  tell_event_loop_to_finish();
+}
+
+/** Mark <b>entry_conn</b> as no longer waiting for a circuit. */
+void
+connection_ap_mark_as_non_pending_circuit(entry_connection_t *entry_conn)
+{
+  if (PREDICT_UNLIKELY(NULL == pending_entry_connections))
+    return;
+  UNMARK();
+  smartlist_remove(pending_entry_connections, entry_conn);
+}
+
+/* DOCDOC */
+void
+connection_ap_warn_and_unmark_if_pending_circ(entry_connection_t *entry_conn,
+                                              const char *where)
+{
+  if (pending_entry_connections &&
+      smartlist_contains(pending_entry_connections, entry_conn)) {
+    log_warn(LD_BUG, "What was %p doing in pending_entry_connections in %s?",
+             entry_conn, where);
+    connection_ap_mark_as_non_pending_circuit(entry_conn);
+  }
 }
 
 /** Tell any AP streams that are waiting for a one-hop tunnel to
  * <b>failed_digest</b> that they are going to fail. */
-/* XXX024 We should get rid of this function, and instead attach
+/* XXXX We should get rid of this function, and instead attach
  * one-hop streams to circ->p_streams so they get marked in
  * circuit_mark_for_close like normal p_streams. */
 void
@@ -842,8 +1083,8 @@ connection_ap_detach_retriable(entry_connection_t *conn,
   pathbias_mark_use_rollback(circ);
 
   if (conn->pending_optimistic_data) {
-    generic_buffer_set_to_copy(&conn->sending_optimistic_data,
-                               conn->pending_optimistic_data);
+    buf_set_to_copy(&conn->sending_optimistic_data,
+                    conn->pending_optimistic_data);
   }
 
   if (!get_options()->LeaveStreamsUnattached || conn->use_begindir) {
@@ -851,12 +1092,13 @@ connection_ap_detach_retriable(entry_connection_t *conn,
      * a tunneled directory connection, then just attach it. */
     ENTRY_TO_CONN(conn)->state = AP_CONN_STATE_CIRCUIT_WAIT;
     circuit_detach_stream(TO_CIRCUIT(circ),ENTRY_TO_EDGE_CONN(conn));
-    return connection_ap_handshake_attach_circuit(conn);
+    connection_ap_mark_as_pending_circuit(conn);
   } else {
+    CONNECTION_AP_EXPECT_NONPENDING(conn);
     ENTRY_TO_CONN(conn)->state = AP_CONN_STATE_CONTROLLER_WAIT;
     circuit_detach_stream(TO_CIRCUIT(circ),ENTRY_TO_EDGE_CONN(conn));
-    return 0;
   }
+  return 0;
 }
 
 /** Check if <b>conn</b> is using a dangerous port. Then warn and/or
@@ -905,6 +1147,7 @@ connection_ap_rewrite_and_attach_if_allowed(entry_connection_t *conn,
   const or_options_t *options = get_options();
 
   if (options->LeaveStreamsUnattached) {
+    CONNECTION_AP_EXPECT_NONPENDING(conn);
     ENTRY_TO_CONN(conn)->state = AP_CONN_STATE_CONTROLLER_WAIT;
     return 0;
   }
@@ -1042,7 +1285,7 @@ connection_ap_handshake_rewrite(entry_connection_t *conn,
     }
 
     /* Hang on, did we find an answer saying that this is a reverse lookup for
-     * an internal address?  If so, we should reject it if we're condigured to
+     * an internal address?  If so, we should reject it if we're configured to
      * do so. */
     if (options->ClientDNSRejectInternalAddresses) {
       /* Don't let people try to do a reverse lookup on 10.0.0.1. */
@@ -1256,7 +1499,7 @@ connection_ap_handshake_rewrite_and_attach(entry_connection_t *conn,
       connection_mark_unattached_ap(conn, END_STREAM_REASON_TORPROTOCOL);
       return -1;
     }
-    /* XXXX024-1090 Should we also allow foo.bar.exit if ExitNodes is set and
+    /* XXXX-1090 Should we also allow foo.bar.exit if ExitNodes is set and
        Bar is not listed in it?  I say yes, but our revised manpage branch
        implies no. */
   }
@@ -1281,13 +1524,60 @@ connection_ap_handshake_rewrite_and_attach(entry_connection_t *conn,
     /* If we're running in Tor2webMode, we don't allow anything BUT .onion
      * addresses. */
     if (options->Tor2webMode) {
-      log_warn(LD_APP, "Refusing to connect to non-hidden-service hostname %s "
-               "because tor2web mode is enabled.",
+      log_warn(LD_APP, "Refusing to connect to non-hidden-service hostname "
+               "or IP address %s because tor2web mode is enabled.",
                safe_str_client(socks->address));
       connection_mark_unattached_ap(conn, END_STREAM_REASON_ENTRYPOLICY);
       return -1;
     }
 #endif
+
+    /* socks->address is a non-onion hostname or IP address.
+     * If we can't do any non-onion requests, refuse the connection.
+     * If we have a hostname but can't do DNS, refuse the connection.
+     * If we have an IP address, but we can't use that address family,
+     * refuse the connection.
+     *
+     * If we can do DNS requests, and we can use at least one address family,
+     * then we have to resolve the address first. Then we'll know if it
+     * resolves to a usable address family. */
+
+    /* First, check if all non-onion traffic is disabled */
+    if (!conn->entry_cfg.dns_request && !conn->entry_cfg.ipv4_traffic
+        && !conn->entry_cfg.ipv6_traffic) {
+        log_warn(LD_APP, "Refusing to connect to non-hidden-service hostname "
+                 "or IP address %s because Port has OnionTrafficOnly set (or "
+                 "NoDNSRequest, NoIPv4Traffic, and NoIPv6Traffic).",
+                 safe_str_client(socks->address));
+        connection_mark_unattached_ap(conn, END_STREAM_REASON_ENTRYPOLICY);
+        return -1;
+    }
+
+    /* Then check if we have a hostname or IP address, and whether DNS or
+     * the IP address family are permitted */
+    tor_addr_t dummy_addr;
+    int socks_family = tor_addr_parse(&dummy_addr, socks->address);
+    /* family will be -1 for a non-onion hostname that's not an IP */
+    if (socks_family == -1 && !conn->entry_cfg.dns_request) {
+      log_warn(LD_APP, "Refusing to connect to hostname %s "
+               "because Port has NoDNSRequest set.",
+               safe_str_client(socks->address));
+      connection_mark_unattached_ap(conn, END_STREAM_REASON_ENTRYPOLICY);
+      return -1;
+    } else if (socks_family == AF_INET && !conn->entry_cfg.ipv4_traffic) {
+      log_warn(LD_APP, "Refusing to connect to IPv4 address %s because "
+               "Port has NoIPv4Traffic set.",
+               safe_str_client(socks->address));
+      connection_mark_unattached_ap(conn, END_STREAM_REASON_ENTRYPOLICY);
+      return -1;
+    } else if (socks_family == AF_INET6 && !conn->entry_cfg.ipv6_traffic) {
+      log_warn(LD_APP, "Refusing to connect to IPv6 address %s because "
+               "Port has NoIPv6Traffic set.",
+               safe_str_client(socks->address));
+      connection_mark_unattached_ap(conn, END_STREAM_REASON_ENTRYPOLICY);
+      return -1;
+    }
+    /* No else, we've covered all possible returned value. */
 
     /* See if this is a hostname lookup that we can answer immediately.
      * (For example, an attempt to look up the IP address for an IP address.)
@@ -1454,10 +1744,12 @@ connection_ap_handshake_rewrite_and_attach(entry_connection_t *conn,
     /* If we were given a circuit to attach to, try to attach. Otherwise,
      * try to find a good one and attach to that. */
     int rv;
-    if (circ)
-      rv =  connection_ap_handshake_attach_chosen_circuit(conn, circ, cpath);
-    else
-      rv = connection_ap_handshake_attach_circuit(conn);
+    if (circ) {
+      rv = connection_ap_handshake_attach_chosen_circuit(conn, circ, cpath);
+    } else {
+      connection_ap_mark_as_pending_circuit(conn);
+      rv = 0;
+    }
 
     /* If the above function returned 0 then we're waiting for a circuit.
      * if it returned 1, we're attached.  Both are okay.  But if it returned
@@ -1473,6 +1765,14 @@ connection_ap_handshake_rewrite_and_attach(entry_connection_t *conn,
   } else {
     /* If we get here, it's a request for a .onion address! */
     tor_assert(!automap);
+
+    /* If .onion address requests are disabled, refuse the request */
+    if (!conn->entry_cfg.onion_traffic) {
+      log_warn(LD_APP, "Onion address %s requested from a port with .onion "
+                       "disabled", safe_str_client(socks->address));
+      connection_mark_unattached_ap(conn, END_STREAM_REASON_ENTRYPOLICY);
+      return -1;
+    }
 
     /* Check whether it's RESOLVE or RESOLVE_PTR.  We don't handle those
      * for hidden service addresses. */
@@ -1503,7 +1803,7 @@ connection_ap_handshake_rewrite_and_attach(entry_connection_t *conn,
     rend_service_authorization_t *client_auth =
       rend_client_lookup_service_authorization(socks->address);
 
-    const char *cookie = NULL;
+    const uint8_t *cookie = NULL;
     rend_auth_type_t auth_type = REND_NO_AUTH;
     if (client_auth) {
       log_info(LD_REND, "Using previously configured client authorization "
@@ -1515,7 +1815,8 @@ connection_ap_handshake_rewrite_and_attach(entry_connection_t *conn,
     /* Fill in the rend_data field so we can start doing a connection to
      * a hidden service. */
     rend_data_t *rend_data = ENTRY_TO_EDGE_CONN(conn)->rend_data =
-      rend_data_client_create(socks->address, NULL, cookie, auth_type);
+      rend_data_client_create(socks->address, NULL, (char *) cookie,
+                              auth_type);
     if (rend_data == NULL) {
       return -1;
     }
@@ -1554,6 +1855,7 @@ connection_ap_handshake_rewrite_and_attach(entry_connection_t *conn,
      * Also, a fetch could have been requested if the onion address was not
      * found in the cache previously. */
     if (refetch_desc || !rend_client_any_intro_points_usable(entry)) {
+      connection_ap_mark_as_non_pending_circuit(conn);
       base_conn->state = AP_CONN_STATE_RENDDESC_WAIT;
       log_info(LD_REND, "Unknown descriptor %s. Fetching.",
           safe_str_client(rend_data->onion_address));
@@ -1564,11 +1866,7 @@ connection_ap_handshake_rewrite_and_attach(entry_connection_t *conn,
     /* We have the descriptor so launch a connection to the HS. */
     base_conn->state = AP_CONN_STATE_CIRCUIT_WAIT;
     log_info(LD_REND, "Descriptor is here. Great.");
-    if (connection_ap_handshake_attach_circuit(conn) < 0) {
-      if (!base_conn->marked_for_close)
-        connection_mark_unattached_ap(conn, END_STREAM_REASON_CANT_ATTACH);
-      return -1;
-    }
+    connection_ap_mark_as_pending_circuit(conn);
     return 0;
   }
 
@@ -1613,8 +1911,8 @@ destination_from_socket(entry_connection_t *conn, socks_request_t *req)
   socklen_t orig_dst_len = sizeof(orig_dst);
   tor_addr_t addr;
 
-#ifdef TRANS_TRPOXY
-  if (options->TransProxyType_parsed == TPT_TPROXY) {
+#ifdef TRANS_TPROXY
+  if (get_options()->TransProxyType_parsed == TPT_TPROXY) {
     if (getsockname(ENTRY_TO_CONN(conn)->s, (struct sockaddr*)&orig_dst,
                     &orig_dst_len) < 0) {
       int e = tor_socket_errno(ENTRY_TO_CONN(conn)->s);
@@ -1822,14 +2120,8 @@ connection_ap_handshake_process_socks(entry_connection_t *conn)
 
   log_debug(LD_APP,"entered.");
 
-  IF_HAS_BUFFEREVENT(base_conn, {
-    struct evbuffer *input = bufferevent_get_input(base_conn->bufev);
-    sockshere = fetch_from_evbuffer_socks(input, socks,
-                                     options->TestSocks, options->SafeSocks);
-  }) ELSE_IF_NO_BUFFEREVENT {
-    sockshere = fetch_from_buf_socks(base_conn->inbuf, socks,
-                                     options->TestSocks, options->SafeSocks);
-  };
+  sockshere = fetch_from_buf_socks(base_conn->inbuf, socks,
+                                   options->TestSocks, options->SafeSocks);
 
   if (socks->replylen) {
     had_reply = 1;
@@ -2092,6 +2384,7 @@ connection_ap_handshake_send_begin(entry_connection_t *ap_conn)
   char payload[CELL_PAYLOAD_SIZE];
   int payload_len;
   int begin_type;
+  const or_options_t *options = get_options();
   origin_circuit_t *circ;
   edge_connection_t *edge_conn = ENTRY_TO_EDGE_CONN(ap_conn);
   connection_t *base_conn = TO_CONN(edge_conn);
@@ -2105,7 +2398,7 @@ connection_ap_handshake_send_begin(entry_connection_t *ap_conn)
 
   edge_conn->stream_id = get_unique_stream_id_by_circ(circ);
   if (edge_conn->stream_id==0) {
-    /* XXXX024 Instead of closing this stream, we should make it get
+    /* XXXX+ Instead of closing this stream, we should make it get
      * retried on another circuit. */
     connection_mark_unattached_ap(ap_conn, END_STREAM_REASON_INTERNAL);
 
@@ -2135,10 +2428,37 @@ connection_ap_handshake_send_begin(entry_connection_t *ap_conn)
 
   begin_type = ap_conn->use_begindir ?
                  RELAY_COMMAND_BEGIN_DIR : RELAY_COMMAND_BEGIN;
+
+  /* Check that circuits are anonymised, based on their type. */
   if (begin_type == RELAY_COMMAND_BEGIN) {
-#ifndef NON_ANONYMOUS_MODE_ENABLED
-    tor_assert(circ->build_state->onehop_tunnel == 0);
-#endif
+    /* This connection is a standard OR connection.
+     * Make sure its path length is anonymous, or that we're in a
+     * non-anonymous mode. */
+    assert_circ_anonymity_ok(circ, options);
+  } else if (begin_type == RELAY_COMMAND_BEGIN_DIR) {
+    /* This connection is a begindir directory connection.
+     * Look at the linked directory connection to access the directory purpose.
+     * If a BEGINDIR connection is ever not linked, that's a bug. */
+    if (BUG(!base_conn->linked)) {
+      return -1;
+    }
+    connection_t *linked_dir_conn_base = base_conn->linked_conn;
+    /* If the linked connection has been unlinked by other code, we can't send
+     * a begin cell on it. */
+    if (!linked_dir_conn_base) {
+      return -1;
+    }
+    /* Sensitive directory connections must have an anonymous path length.
+     * Otherwise, directory connections are typically one-hop.
+     * This matches the earlier check for directory connection path anonymity
+     * in directory_initiate_command_rend(). */
+    if (is_sensitive_dir_purpose(linked_dir_conn_base->purpose)) {
+      assert_circ_anonymity_ok(circ, options);
+    }
+  } else {
+    /* This code was written for the two connection types BEGIN and BEGIN_DIR
+     */
+    tor_assert_unreached();
   }
 
   if (connection_edge_send_command(edge_conn, begin_type,
@@ -2161,7 +2481,7 @@ connection_ap_handshake_send_begin(entry_connection_t *ap_conn)
     log_info(LD_APP, "Sending up to %ld + %ld bytes of queued-up data",
              (long)connection_get_inbuf_len(base_conn),
              ap_conn->sending_optimistic_data ?
-             (long)generic_buffer_len(ap_conn->sending_optimistic_data) : 0);
+             (long)buf_datalen(ap_conn->sending_optimistic_data) : 0);
     if (connection_edge_package_raw_inbuf(edge_conn, 1, NULL) < 0) {
       connection_mark_for_close(base_conn);
     }
@@ -2197,7 +2517,7 @@ connection_ap_handshake_send_resolve(entry_connection_t *ap_conn)
 
   edge_conn->stream_id = get_unique_stream_id_by_circ(circ);
   if (edge_conn->stream_id==0) {
-    /* XXXX024 Instead of closing this stream, we should make it get
+    /* XXXX+ Instead of closing this stream, we should make it get
      * retried on another circuit. */
     connection_mark_unattached_ap(ap_conn, END_STREAM_REASON_INTERNAL);
 
@@ -2248,7 +2568,7 @@ connection_ap_handshake_send_resolve(entry_connection_t *ap_conn)
 
   if (!base_conn->address) {
     /* This might be unnecessary. XXXX */
-    base_conn->address = tor_dup_addr(&base_conn->addr);
+    base_conn->address = tor_addr_to_str_dup(&base_conn->addr);
   }
   base_conn->state = AP_CONN_STATE_RESOLVE_WAIT;
   log_info(LD_APP,"Address sent for resolve, ap socket "TOR_SOCKET_T_FORMAT
@@ -2324,12 +2644,7 @@ connection_ap_make_link(connection_t *partner,
   control_event_stream_status(conn, STREAM_EVENT_NEW, 0);
 
   /* attaching to a dirty circuit is fine */
-  if (connection_ap_handshake_attach_circuit(conn) < 0) {
-    if (!base_conn->marked_for_close)
-      connection_mark_unattached_ap(conn, END_STREAM_REASON_CANT_ATTACH);
-    return NULL;
-  }
-
+  connection_ap_mark_as_pending_circuit(conn);
   log_info(LD_APP,"... application connection created and linked.");
   return conn;
 }
@@ -2700,7 +3015,7 @@ connection_exit_begin_conn(cell_t *cell, circuit_t *circ)
   or_circuit_t *or_circ = NULL;
   const or_options_t *options = get_options();
   begin_cell_t bcell;
-  int r;
+  int rv;
   uint8_t end_reason=0;
 
   assert_circuit_ok(circ);
@@ -2725,10 +3040,10 @@ connection_exit_begin_conn(cell_t *cell, circuit_t *circ)
     return 0;
   }
 
-  r = begin_cell_parse(cell, &bcell, &end_reason);
-  if (r < -1) {
+  rv = begin_cell_parse(cell, &bcell, &end_reason);
+  if (rv < -1) {
     return -END_CIRC_REASON_TORPROTOCOL;
-  } else if (r == -1) {
+  } else if (rv == -1) {
     tor_free(bcell.address);
     relay_send_end_cell_from_edge(rh.stream_id, circ, end_reason, NULL);
     return 0;
@@ -2771,8 +3086,8 @@ connection_exit_begin_conn(cell_t *cell, circuit_t *circ)
       return 0;
     }
     /* Make sure to get the 'real' address of the previous hop: the
-     * caller might want to know whether his IP address has changed, and
-     * we might already have corrected base_.addr[ess] for the relay's
+     * caller might want to know whether the remote IP address has changed,
+     * and we might already have corrected base_.addr[ess] for the relay's
      * canonical IP address. */
     if (or_circ && or_circ->p_chan)
       address = tor_strdup(channel_get_actual_remote_address(or_circ->p_chan));
@@ -2966,6 +3281,24 @@ connection_exit_begin_resolve(cell_t *cell, or_circuit_t *circ)
   return 0;
 }
 
+/** Helper: Return true and set *<b>why_rejected</b> to an optional clarifying
+ * message message iff we do not allow connections to <b>addr</b>:<b>port</b>.
+ */
+static int
+my_exit_policy_rejects(const tor_addr_t *addr,
+                       uint16_t port,
+                       const char **why_rejected)
+{
+  if (router_compare_to_my_exit_policy(addr, port)) {
+    *why_rejected = "";
+    return 1;
+  } else if (tor_addr_family(addr) == AF_INET6 && !get_options()->IPv6Exit) {
+    *why_rejected = " (IPv6 address without IPv6Exit configured)";
+    return 1;
+  }
+  return 0;
+}
+
 /** Connect to conn's specified addr and port. If it worked, conn
  * has now been added to the connection_array.
  *
@@ -2980,14 +3313,18 @@ connection_exit_connect(edge_connection_t *edge_conn)
   uint16_t port;
   connection_t *conn = TO_CONN(edge_conn);
   int socket_error = 0, result;
+  const char *why_failed_exit_policy = NULL;
 
-  if ( (!connection_edge_is_rendezvous_stream(edge_conn) &&
-        router_compare_to_my_exit_policy(&edge_conn->base_.addr,
-                                         edge_conn->base_.port)) ||
-       (tor_addr_family(&conn->addr) == AF_INET6 &&
-        ! get_options()->IPv6Exit)) {
-    log_info(LD_EXIT,"%s:%d failed exit policy. Closing.",
-             escaped_safe_str_client(conn->address), conn->port);
+  /* Apply exit policy to non-rendezvous connections. */
+  if (! connection_edge_is_rendezvous_stream(edge_conn) &&
+      my_exit_policy_rejects(&edge_conn->base_.addr,
+                             edge_conn->base_.port,
+                             &why_failed_exit_policy)) {
+    if (BUG(!why_failed_exit_policy))
+      why_failed_exit_policy = "";
+    log_info(LD_EXIT,"%s:%d failed exit policy%s. Closing.",
+             escaped_safe_str_client(conn->address), conn->port,
+             why_failed_exit_policy);
     connection_edge_end(edge_conn, END_STREAM_REASON_EXITPOLICY);
     circuit_detach_stream(circuit_get_by_edge_conn(edge_conn), edge_conn);
     connection_free(conn);
@@ -3044,11 +3381,9 @@ connection_exit_connect(edge_connection_t *edge_conn)
   conn->state = EXIT_CONN_STATE_OPEN;
   if (connection_get_outbuf_len(conn)) {
     /* in case there are any queued data cells, from e.g. optimistic data */
-    IF_HAS_NO_BUFFEREVENT(conn)
-      connection_watch_events(conn, READ_EVENT|WRITE_EVENT);
+    connection_watch_events(conn, READ_EVENT|WRITE_EVENT);
   } else {
-    IF_HAS_NO_BUFFEREVENT(conn)
-      connection_watch_events(conn, READ_EVENT);
+    connection_watch_events(conn, READ_EVENT);
   }
 
   /* also, deliver a 'connected' cell back through the circuit. */
@@ -3152,19 +3487,20 @@ connection_edge_is_rendezvous_stream(edge_connection_t *conn)
   return 0;
 }
 
-/** Return 1 if router <b>exit</b> is likely to allow stream <b>conn</b>
+/** Return 1 if router <b>exit_node</b> is likely to allow stream <b>conn</b>
  * to exit from it, or 0 if it probably will not allow it.
  * (We might be uncertain if conn's destination address has not yet been
  * resolved.)
  */
 int
-connection_ap_can_use_exit(const entry_connection_t *conn, const node_t *exit)
+connection_ap_can_use_exit(const entry_connection_t *conn,
+                           const node_t *exit_node)
 {
   const or_options_t *options = get_options();
 
   tor_assert(conn);
   tor_assert(conn->socks_request);
-  tor_assert(exit);
+  tor_assert(exit_node);
 
   /* If a particular exit node has been requested for the new connection,
    * make sure the exit node of the existing circuit matches exactly.
@@ -3173,7 +3509,7 @@ connection_ap_can_use_exit(const entry_connection_t *conn, const node_t *exit)
     const node_t *chosen_exit =
       node_get_by_nickname(conn->chosen_exit_name, 1);
     if (!chosen_exit || tor_memneq(chosen_exit->identity,
-                               exit->identity, DIGEST_LEN)) {
+                               exit_node->identity, DIGEST_LEN)) {
       /* doesn't match */
 //      log_debug(LD_APP,"Requested node '%s', considering node '%s'. No.",
 //                conn->chosen_exit_name, exit->nickname);
@@ -3198,7 +3534,8 @@ connection_ap_can_use_exit(const entry_connection_t *conn, const node_t *exit)
       tor_addr_make_null(&addr, AF_INET);
       addrp = &addr;
     }
-    r = compare_tor_addr_to_node_policy(addrp, conn->socks_request->port,exit);
+    r = compare_tor_addr_to_node_policy(addrp, conn->socks_request->port,
+                                        exit_node);
     if (r == ADDR_POLICY_REJECTED)
       return 0; /* We know the address, and the exit policy rejects it. */
     if (r == ADDR_POLICY_PROBABLY_REJECTED && !conn->chosen_exit_name)
@@ -3207,10 +3544,10 @@ connection_ap_can_use_exit(const entry_connection_t *conn, const node_t *exit)
                  * this node, err on the side of caution. */
   } else if (SOCKS_COMMAND_IS_RESOLVE(conn->socks_request->command)) {
     /* Don't send DNS requests to non-exit servers by default. */
-    if (!conn->chosen_exit_name && node_exit_policy_rejects_all(exit))
+    if (!conn->chosen_exit_name && node_exit_policy_rejects_all(exit_node))
       return 0;
   }
-  if (routerset_contains_node(options->ExcludeExitNodesUnion_, exit)) {
+  if (routerset_contains_node(options->ExcludeExitNodesUnion_, exit_node)) {
     /* Not a suitable exit. Refuse it. */
     return 0;
   }
@@ -3476,5 +3813,14 @@ circuit_clear_isolation(origin_circuit_t *circ)
     tor_free(circ->socks_password);
   }
   circ->socks_username_len = circ->socks_password_len = 0;
+}
+
+/** Free all storage held in module-scoped variables for connection_edge.c */
+void
+connection_edge_free_all(void)
+{
+  untried_pending_connections = 0;
+  smartlist_free(pending_entry_connections);
+  pending_entry_connections = NULL;
 }
 

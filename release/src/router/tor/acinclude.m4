@@ -42,10 +42,11 @@ AC_DEFUN([TOR_DEFINE_CODEPATH],
   AC_SUBST(TOR_LDFLAGS_$2)
 ])
 
-dnl 1:flags
-dnl 2:also try to link (yes: non-empty string)
-dnl   will set yes or no in $tor_can_link_$1 (as modified by AS_VAR_PUSHDEF)
-AC_DEFUN([TOR_CHECK_CFLAGS], [
+dnl 1: flags
+dnl 2: try to link too if this is nonempty.
+dnl 3: what to do on success compiling
+dnl 4: what to do on failure compiling
+AC_DEFUN([TOR_TRY_COMPILE_WITH_CFLAGS], [
   AS_VAR_PUSHDEF([VAR],[tor_cv_cflags_$1])
   AC_CACHE_CHECK([whether the compiler accepts $1], VAR, [
     tor_saved_CFLAGS="$CFLAGS"
@@ -63,9 +64,18 @@ AC_DEFUN([TOR_CHECK_CFLAGS], [
     CFLAGS="$tor_saved_CFLAGS"
   ])
   if test x$VAR = xyes; then
-    CFLAGS="$CFLAGS $1"
+     $3
+  else
+     $4
   fi
   AS_VAR_POPDEF([VAR])
+])
+
+dnl 1:flags
+dnl 2:also try to link (yes: non-empty string)
+dnl   will set yes or no in $tor_can_link_$1 (as modified by AS_VAR_PUSHDEF)
+AC_DEFUN([TOR_CHECK_CFLAGS], [
+  TOR_TRY_COMPILE_WITH_CFLAGS($1, $2, CFLAGS="$CFLAGS $1", true)
 ])
 
 dnl 1:flags
@@ -109,7 +119,7 @@ if test -f /etc/debian_version && test x"$tor_$1_$2_debian" != x; then
   fi 
 fi
 if test -f /etc/fedora-release && test x"$tor_$1_$2_redhat" != x; then
-  AC_WARN([On Fedora Core, you can install$h $1 using "yum install $tor_$1_$2_redhat"])
+  AC_WARN([On Fedora, you can install$h $1 using "dnf install $tor_$1_$2_redhat"])
   if test x"$tor_$1_$2_redhat" != x"$tor_$1_devpkg_redhat"; then 
     AC_WARN([   You will probably need to install $tor_$1_devpkg_redhat too.])
   fi 

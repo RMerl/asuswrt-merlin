@@ -207,6 +207,27 @@
     <ClCompile Include="win32.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="comp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="compstub.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="comp-lz4.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="argv.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="block_dns.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="console_builtin.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tls_crypt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base64.h">
@@ -225,6 +246,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="comp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="comp-lz4.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="console.h">
@@ -449,7 +476,16 @@
     <ClInclude Include="win32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="win32_wfp.h">
+    <ClInclude Include="compstub.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="argv.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="block_dns.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tls_crypt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

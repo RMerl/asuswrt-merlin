@@ -441,7 +441,7 @@ function changeBgColor(obj, num){
           		<tr>
 				<th><#BM_UserList1#></th>
 				<th>Remote IP/CIDR</th>
-	            		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,25);"><#IPConnection_VServerIP_itemname#></a></th>
+	            		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,1);"><#IPConnection_VServerIP_itemname#> or fixed Interface ID</a></th>
 				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,24);"><#FirewallConfig_LanWanSrcPort_itemname#></a></th>
 	            		<th><#IPConnection_VServerProto_itemname#></th>
 				<th><#list_add_delete#></th>
@@ -449,7 +449,7 @@ function changeBgColor(obj, num){
           		        
           		<tr>
   				<td width="15%">
-  					<input type="text" maxlength="30" class="input_12_table" name="ipv6_fw_desc_x_0" onKeyPress="return is_alphanum(this, event)" onblur="validator.safeName(this);" autocorrect="off" autocapitalize="off"/>
+  					<input type="text" maxlength="30" class="input_12_table" name="ipv6_fw_desc_x_0" onKeyPress="return validator.isString(this, event);"  onblur="validator.safeName(this);" autocorrect="off" autocapitalize="off"/>
   				</td>
 				<td width="24%">
 					<input type="text" maxlength="45" class="input_18_table" name="ipv6_fw_ripaddr_x_0" align="left" style="float:left;" autocorrect="off" autocapitalize="off">

@@ -11,6 +11,7 @@
 <title><#Web_Title#> - <#menu5_7_3#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
+<link rel="stylesheet" type="text/css" href="/js/table/table.css">
 
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
@@ -18,9 +19,16 @@
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/table/table.js"></script>
 <style>
 p{
 	font-weight: bolder;
+}
+.tableApi_table th {
+       height: 20px;
+}
+.data_tr {
+       height: 30px;
 }
 </style>
 
@@ -36,43 +44,65 @@ function initial() {
 	show_leases();
 }
 
+function pad(num, size) {
+    var s = "00" + num;
+    return s.substr(s.length-size);
+}
+
 function show_leases() {
-	var code, i, line;
+	var i, line;
 	var Days, Hours, Minutes, Seconds;
+	var tableStruct;
 
-	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table">';
-	code += '<thead><tr><td colspan="4">DHCP Leases</td></tr></thead>';
-	code += '<tr><th width="20%">Time Left</th>';
-	code += '<th width="20%">MAC</th>';
-	code += '<th width="20%">IP Address</th>';
-	code += '<th width="40%">Hostname</th>';
-	code += '</tr>';
+	leasearray.pop();	// Remove last empty element
 
-	if ("<% nvram_get("dhcp_enable_x"); %>" == "0") {
-		code += '<tr><td colspan="4">DHCP server is disabled.</td></tr>';
-	} else if (leasearray.length > 1) {
-		for (i = 0; i < leasearray.length-1; ++i) {
+	if (leasearray.length > 0) {
+		for (i = 0; i < leasearray.length; ++i) {
 			line = leasearray[i];
-			code += '<tr>';
-
-			Days = Math.floor(line[0] / (60*60*24));        
+			Days = Math.floor(line[0] / (60*60*24));
 			Hours = Math.floor((line[0] / 3600) % 24);
 			Minutes = Math.floor(line[0] % 3600 / 60);
 			Seconds = Math.floor(line[0] % 60);
-			code += '<td>' + Days + "d " + Hours + "h " + Minutes + "m "+ Seconds + "s" + '</td>';
+			leasearray[i][0] = pad(Days,2) + "d " + pad(Hours,2) + "h " + pad(Minutes,2) + "m "+ pad(Seconds,2) + "s";
 
 			overlib_str = "<p><#MAC_Address#>:</p>" + line[1];
-			code += '<td><span class="ClientName" onclick="oui_query_full_vendor(\'' + line[1].toUpperCase() +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ line[1].toUpperCase() +'</span></td>'; 
-			code += '<td>' + line[2] + '</td>';
-			code += '<td>' + line[3] + '</td>';
-			code += '</tr>';
+			leasearray[i][1] = '<span class="ClientName" onclick="oui_query_full_vendor(\'' + line[1].toUpperCase() +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ line[1].toUpperCase() +'</span>';
 		}
-	} else {
-		code += '<tr><td colspan="4"><span>No active leases.</span></td></tr>';
-	}
 
-	code += '</tr></table>';
-	document.getElementById("leaseblock").innerHTML = code;
+		tableStruct = {
+			data: leasearray,
+			container: "leaseblock",
+			title: "DHCP Leases",
+			header: [
+				{
+					"title" : "Time Left",
+					"width" : "20%",
+					"sort" : "str"
+				},
+				{
+					"title" : "MAC Address",
+					"width" : "20%",
+					"sort" : "str"
+				},
+				{
+					"title" : "IP Address",
+					"width" : "20%",
+					"sort" : "ip",
+					"defaultSort" : "increase"
+				},
+				{
+					"title" : "Hostname",
+					"width" : "40%",
+					"sort" : "str"
+				}
+			]
+		}
+
+		tableApi.genTableAPI(tableStruct);
+
+	} else {
+		document.getElementById("leaseblock").innerHTML = '<span style="color:#FFCC00;">No active leases.</span>';
+	}
 }
 
 
@@ -118,7 +148,7 @@ function show_leases() {
 										<div class="formfonttitle"><#System_Log#> - <#menu5_7_3#></div>
 										<div style="margin-lease:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 										<div class="formfontdesc"><#DHCPlease_title#></div>
-										<br>
+
                                                                                 <div style="margin-top:8px">
 											<div id="leaseblock"></div>
 										</div>

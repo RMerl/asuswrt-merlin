@@ -7,13 +7,38 @@
  * Copyright (C) 2007 by Tito Ragusa <farmatito@tiscali.it>
  *
  * Licensed under GPLv2, see file LICENSE in this source tree.
- *
  */
+//config:config DELUSER
+//config:	bool "deluser"
+//config:	default y
+//config:	help
+//config:	  Utility for deleting a user account.
+//config:
+//config:config DELGROUP
+//config:	bool "delgroup"
+//config:	default y
+//config:	help
+//config:	  Utility for deleting a group account.
+//config:
+//config:config FEATURE_DEL_USER_FROM_GROUP
+//config:	bool "Support for removing users from groups"
+//config:	default y
+//config:	depends on DELGROUP
+//config:	help
+//config:	  If called with two non-option arguments, deluser
+//config:	  or delgroup will remove an user from a specified group.
+
+//applet:IF_DELUSER(APPLET(deluser, BB_DIR_USR_SBIN, BB_SUID_DROP))
+//applet:IF_DELGROUP(APPLET_ODDNAME(delgroup, deluser, BB_DIR_USR_SBIN, BB_SUID_DROP, delgroup))
+
+//kbuild:lib-$(CONFIG_DELUSER) += deluser.o
+//kbuild:lib-$(CONFIG_DELGROUP) += deluser.o
 
 //usage:#define deluser_trivial_usage
-//usage:       "USER"
+//usage:       IF_LONG_OPTS("[--remove-home] ") "USER"
 //usage:#define deluser_full_usage "\n\n"
 //usage:       "Delete USER from the system"
+//	--remove-home is self-explanatory enough to put it in --help
 
 //usage:#define delgroup_trivial_usage
 //usage:	IF_FEATURE_DEL_USER_FROM_GROUP("[USER] ")"GROUP"
@@ -37,6 +62,19 @@ int deluser_main(int argc, char **argv)
 	/* Are we deluser or delgroup? */
 	int do_deluser = (ENABLE_DELUSER && (!ENABLE_DELGROUP || applet_name[3] == 'u'));
 
+#if !ENABLE_LONG_OPTS
+	const int opt_delhome = 0;
+#else
+	int opt_delhome = 0;
+	if (do_deluser) {
+		applet_long_options =
+			"remove-home\0" No_argument "\xff";
+		opt_delhome = getopt32(argv, "");
+		argv += opt_delhome;
+		argc -= opt_delhome;
+	}
+#endif
+
 	if (geteuid() != 0)
 		bb_error_msg_and_die(bb_msg_perm_denied_are_you_root);
 
@@ -55,10 +93,14 @@ int deluser_main(int argc, char **argv)
 	case 2:
 		if (do_deluser) {
 			/* "deluser USER" */
-			xgetpwnam(name); /* bail out if USER is wrong */
+			struct passwd *pw;
+
+			pw = xgetpwnam(name); /* bail out if USER is wrong */
 			pfile = bb_path_passwd_file;
 			if (ENABLE_FEATURE_SHADOWPASSWDS)
 				sfile = bb_path_shadow_file;
+			if (opt_delhome)
+				remove_file(pw->pw_dir, FILEUTILS_RECUR);
 		} else {
 			struct group *gr;
  do_delgroup:
@@ -73,12 +115,11 @@ int deluser_main(int argc, char **argv)
 			if (!member) {
 				/* "delgroup GROUP" */
 				struct passwd *pw;
-				struct passwd pwent;
 				/* Check if the group is in use */
-#define passwd_buf bb_common_bufsiz1
-				while (!getpwent_r(&pwent, passwd_buf, sizeof(passwd_buf), &pw)) {
-					if (pwent.pw_gid == gr->gr_gid)
-						bb_error_msg_and_die("'%s' still has '%s' as their primary group!", pwent.pw_name, name);
+				while ((pw = getpwent()) != NULL) {
+					if (pw->pw_gid == gr->gr_gid)
+						bb_error_msg_and_die("'%s' still has '%s' as their primary group!",
+							pw->pw_name, name);
 				}
 				//endpwent();
 			}
@@ -97,16 +138,22 @@ int deluser_main(int argc, char **argv)
 			}
 		} while (ENABLE_FEATURE_SHADOWPASSWDS && pfile);
 
-		if (ENABLE_DELGROUP && do_deluser > 0) {
-			/* "deluser USER" also should try to delete
-			 * same-named group. IOW: do "delgroup USER"
-			 */
+		if (do_deluser > 0) {
+			/* Delete user from all groups */
+			if (update_passwd(bb_path_group_file, NULL, NULL, name) == -1)
+				return EXIT_FAILURE;
+
+			if (ENABLE_DELGROUP) {
+				/* "deluser USER" also should try to delete
+				 * same-named group. IOW: do "delgroup USER"
+				 */
 // On debian deluser is a perl script that calls userdel.
 // From man userdel:
 //  If USERGROUPS_ENAB is defined to yes in /etc/login.defs, userdel will
 //  delete the group with the same name as the user.
-			do_deluser = -1;
-			goto do_delgroup;
+				do_deluser = -1;
+				goto do_delgroup;
+			}
 		}
 		return EXIT_SUCCESS;
 	}

@@ -8,7 +8,8 @@ includedir=@includedir@
 Name: vorbis
 Description: vorbis is the primary Ogg Vorbis library
 Version: @VERSION@
-Requires: ogg
+Requires.private: ogg
 Conflicts:
-Libs: -L${libdir} -lvorbis -lm
+Libs: -L${libdir} -lvorbis 
+Libs.private: -lm
 Cflags: -I${includedir}

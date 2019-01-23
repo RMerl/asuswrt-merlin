@@ -1,3 +1,23 @@
+1.2.0 - Released 17-May-2017
+--------------------------------
+- Add libavformat > 57 compatibility.
+- Add TiVo Bonjour discovery support using Avahi for Bolt.
+- Improve Samsung BD-J5500 support.
+- Add quirk to fix video playback on Hyundai TVs.
+- Add non-destructive update rescan support.
+- Enhance bookmark support to work with Kodi.
+
+1.1.6 - Released 16-June-2016
+--------------------------------
+- Add AllShare and Windows client detection.
+- Update support for LG2012 TV.
+- Fix Samsung bookmarking on magic containers.
+- Fix SQL error when moving captions.
+- Add wide_links config option.
+- Fix external subtitles on Samsung Series J.
+- Add string localization support for magic containers.
+- Rework NLS init to work with non-en_US locales.
+
 1.1.5 - Released 10-Sep-2015
 --------------------------------
 - Re-enable Samsung DCM10, which adds video bookmarks and "BasicView" support.

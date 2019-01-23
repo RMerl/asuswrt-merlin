@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2017 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -73,7 +73,7 @@ void netlink_init(void)
     }
   
   if (daemon->netlinkfd == -1 || 
-      getsockname(daemon->netlinkfd, (struct sockaddr *)&addr, &slen) == 1)
+      getsockname(daemon->netlinkfd, (struct sockaddr *)&addr, &slen) == -1)
     die(_("cannot create netlink socket: %s"), NULL, EC_MISC);
    
   /* save pid assigned by bind() and retrieved by getsockname() */ 
@@ -188,10 +188,16 @@ int iface_enumerate(int family, void *parm, int (*callback)())
 	}
 
       for (h = (struct nlmsghdr *)iov.iov_base; NLMSG_OK(h, (size_t)len); h = NLMSG_NEXT(h, len))
-	if (h->nlmsg_seq != seq || h->nlmsg_pid != netlink_pid || h->nlmsg_type == NLMSG_ERROR)
+	if (h->nlmsg_pid != netlink_pid || h->nlmsg_type == NLMSG_ERROR)
 	  {
 	    /* May be multicast arriving async */
 	    nl_async(h);
+	  }
+	else if (h->nlmsg_seq != seq)
+	  {
+	    /* May be part of incomplete response to previous request after
+	       ENOBUFS. Drop it. */
+	    continue;
 	  }
 	else if (h->nlmsg_type == NLMSG_DONE)
 	  return callback_ok;

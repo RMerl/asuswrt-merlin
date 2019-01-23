@@ -16,10 +16,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifndef COMPAT_H
@@ -42,27 +41,33 @@
 #endif
 
 #ifndef HAVE_DIRNAME
-char * dirname(char *str);
+char *dirname(char *str);
+
 #endif /* HAVE_DIRNAME */
 
 #ifndef HAVE_BASENAME
-char * basename(char *str);
+char *basename(char *str);
+
 #endif /* HAVE_BASENAME */
 
 #ifndef HAVE_GETTIMEOFDAY
-int gettimeofday (struct timeval *tv, void *tz);
+int gettimeofday(struct timeval *tv, void *tz);
+
 #endif
 
 #ifndef HAVE_DAEMON
 int daemon(int nochdir, int noclose);
+
 #endif
 
 #ifndef HAVE_INET_NTOP
-const char * inet_ntop(int af, const void *src, char *dst, socklen_t size);
+const char *inet_ntop(int af, const void *src, char *dst, socklen_t size);
+
 #endif
 
 #ifndef HAVE_INET_PTON
 int inet_pton(int af, const char *src, void *dst);
+
 #endif
 
 #endif /* COMPAT_H */

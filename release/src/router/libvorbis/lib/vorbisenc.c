@@ -5,13 +5,13 @@
  * GOVERNED BY A BSD-STYLE SOURCE LICENSE INCLUDED WITH THIS SOURCE *
  * IN 'COPYING'. PLEASE READ THESE TERMS BEFORE DISTRIBUTING.       *
  *                                                                  *
- * THE OggVorbis SOURCE CODE IS (C) COPYRIGHT 1994-2009             *
+ * THE OggVorbis SOURCE CODE IS (C) COPYRIGHT 1994-2015             *
  * by the Xiph.Org Foundation http://www.xiph.org/                  *
  *                                                                  *
  ********************************************************************
 
  function: simple programmatic interface for encoder mode setup
- last mod: $Id: vorbisenc.c 16227 2009-07-08 06:58:46Z xiphmont $
+ last mod: $Id: vorbisenc.c 19457 2015-03-03 00:15:29Z giles $
 
  ********************************************************************/
 
@@ -32,12 +32,13 @@
    with > 12 partition types, or a different division of iteration,
    this needs to be updated. */
 typedef struct {
-  const static_codebook *books[12][3];
+  const static_codebook *books[12][4];
 } static_bookblock;
 
 typedef struct {
   int res_type;
   int limit_type; /* 0 lowpass limited, 1 point stereo limited */
+  int grouping;
   const vorbis_info_residue0 *res;
   const static_codebook  *book_aux;
   const static_codebook  *book_aux_managed;
@@ -134,8 +135,8 @@ typedef struct {
 
   const static_codebook *const *const *const floor_books;
   const vorbis_info_floor1 *floor_params;
-  const int *floor_short_mapping;
-  const int *floor_long_mapping;
+  const int floor_mappings;
+  const int **floor_mapping_list;
 
   const vorbis_mapping_template *maps;
 } ve_setup_data_template;
@@ -153,6 +154,7 @@ static const vorbis_info_mapping0 _map_nominal[2]={
 
 #include "modes/setup_44.h"
 #include "modes/setup_44u.h"
+#include "modes/setup_44p51.h"
 #include "modes/setup_32.h"
 #include "modes/setup_8.h"
 #include "modes/setup_11.h"
@@ -162,6 +164,7 @@ static const vorbis_info_mapping0 _map_nominal[2]={
 
 static const ve_setup_data_template *const setup_list[]={
   &ve_setup_44_stereo,
+  &ve_setup_44_51,
   &ve_setup_44_uncoupled,
 
   &ve_setup_32_stereo,
@@ -184,19 +187,7 @@ static const ve_setup_data_template *const setup_list[]={
   0
 };
 
-static int vorbis_encode_toplevel_setup(vorbis_info *vi,int ch,long rate){
-  if(vi && vi->codec_setup){
-
-    vi->version=0;
-    vi->channels=ch;
-    vi->rate=rate;
-
-    return(0);
-  }
-  return(OV_EINVAL);
-}
-
-static void vorbis_encode_floor_setup(vorbis_info *vi,double s,int block,
+static void vorbis_encode_floor_setup(vorbis_info *vi,int s,
                                      const static_codebook *const *const *const books,
                                      const vorbis_info_floor1 *in,
                                      const int *x){
@@ -205,8 +196,6 @@ static void vorbis_encode_floor_setup(vorbis_info *vi,double s,int block,
   codec_setup_info *ci=vi->codec_setup;
 
   memcpy(f,in+x[is],sizeof(*f));
-  /* fill in the lowpass field, even if it's temporary */
-  f->n=ci->blocksizes[block]>>1;
 
   /* books */
   {
@@ -333,8 +322,7 @@ static void vorbis_encode_psyset_setup(vorbis_info *vi,double s,
   p->blockflag=block>>1;
 
   if(hi->noise_normalize_p){
-    p->normal_channel_p=1;
-    p->normal_point_p=1;
+    p->normal_p=1;
     p->normal_start=nn_start[is];
     p->normal_partition=nn_partition[is];
     p->normal_thresh=nn_thresh[is];
@@ -470,7 +458,7 @@ static void vorbis_encode_residue_setup(vorbis_info *vi,
                                         const vorbis_residue_template *res){
 
   codec_setup_info *ci=vi->codec_setup;
-  int i,n;
+  int i;
 
   vorbis_info_residue0 *r=ci->residue_param[number]=
     _ogg_malloc(sizeof(*r));
@@ -478,20 +466,8 @@ static void vorbis_encode_residue_setup(vorbis_info *vi,
   memcpy(r,res->res,sizeof(*r));
   if(ci->residues<=number)ci->residues=number+1;
 
-  switch(ci->blocksizes[block]){
-  case 64:case 128:case 256:
-    r->grouping=16;
-    break;
-  default:
-    r->grouping=32;
-    break;
-  }
+  r->grouping=res->grouping;
   ci->residue_type[number]=res->res_type;
-
-  /* to be adjusted by lowpass/pointlimit later */
-  n=r->end=ci->blocksizes[block]>>1;
-  if(res->res_type==2)
-    n=r->end*=vi->channels;
 
   /* fill in all the books */
   {
@@ -499,7 +475,7 @@ static void vorbis_encode_residue_setup(vorbis_info *vi,
 
     if(ci->hi.managed){
       for(i=0;i<r->partitions;i++)
-        for(k=0;k<3;k++)
+        for(k=0;k<4;k++)
           if(res->books_base_managed->books[i][k])
             r->secondstages[i]|=(1<<k);
 
@@ -507,7 +483,7 @@ static void vorbis_encode_residue_setup(vorbis_info *vi,
       ci->book_param[r->groupbook]=(static_codebook *)res->book_aux_managed;
 
       for(i=0;i<r->partitions;i++){
-        for(k=0;k<3;k++){
+        for(k=0;k<4;k++){
           if(res->books_base_managed->books[i][k]){
             int bookid=book_dup_or_new(ci,res->books_base_managed->books[i][k]);
             r->booklist[booklist++]=bookid;
@@ -519,7 +495,7 @@ static void vorbis_encode_residue_setup(vorbis_info *vi,
     }else{
 
       for(i=0;i<r->partitions;i++)
-        for(k=0;k<3;k++)
+        for(k=0;k<4;k++)
           if(res->books_base->books[i][k])
             r->secondstages[i]|=(1<<k);
 
@@ -527,7 +503,7 @@ static void vorbis_encode_residue_setup(vorbis_info *vi,
       ci->book_param[r->groupbook]=(static_codebook *)res->book_aux;
 
       for(i=0;i<r->partitions;i++){
-        for(k=0;k<3;k++){
+        for(k=0;k<4;k++){
           if(res->books_base->books[i][k]){
             int bookid=book_dup_or_new(ci,res->books_base->books[i][k]);
             r->booklist[booklist++]=bookid;
@@ -554,24 +530,58 @@ static void vorbis_encode_residue_setup(vorbis_info *vi,
 
     /* this res may by limited by the maximum pointlimit of the mode,
        not the lowpass. the floor is always lowpass limited. */
-    if(res->limit_type){
+    switch(res->limit_type){
+    case 1: /* point stereo limited */
       if(ci->hi.managed)
         freq=ci->psy_g_param.coupling_pkHz[PACKETBLOBS-1]*1000.;
       else
         freq=ci->psy_g_param.coupling_pkHz[PACKETBLOBS/2]*1000.;
       if(freq>nyq)freq=nyq;
+      break;
+    case 2: /* LFE channel; lowpass at ~ 250Hz */
+      freq=250;
+      break;
+    default:
+      /* already set */
+      break;
     }
 
     /* in the residue, we're constrained, physically, by partition
        boundaries.  We still lowpass 'wherever', but we have to round up
        here to next boundary, or the vorbis spec will round it *down* to
        previous boundary in encode/decode */
-    if(ci->residue_type[block]==2)
-      r->end=(int)((freq/nyq*blocksize*2)/r->grouping+.9)* /* round up only if we're well past */
+    if(ci->residue_type[number]==2){
+      /* residue 2 bundles together multiple channels; used by stereo
+         and surround.  Count the channels in use */
+      /* Multiple maps/submaps can point to the same residue.  In the case
+         of residue 2, they all better have the same number of
+         channels/samples. */
+      int j,k,ch=0;
+      for(i=0;i<ci->maps&&ch==0;i++){
+        vorbis_info_mapping0 *mi=(vorbis_info_mapping0 *)ci->map_param[i];
+        for(j=0;j<mi->submaps && ch==0;j++)
+          if(mi->residuesubmap[j]==number) /* we found a submap referencing theis residue backend */
+            for(k=0;k<vi->channels;k++)
+              if(mi->chmuxlist[k]==j) /* this channel belongs to the submap */
+                ch++;
+      }
+
+      r->end=(int)((freq/nyq*blocksize*ch)/r->grouping+.9)* /* round up only if we're well past */
         r->grouping;
-    else
+      /* the blocksize and grouping may disagree at the end */
+      if(r->end>blocksize*ch)r->end=blocksize*ch/r->grouping*r->grouping;
+
+    }else{
+
       r->end=(int)((freq/nyq*blocksize)/r->grouping+.9)* /* round up only if we're well past */
         r->grouping;
+      /* the blocksize and grouping may disagree at the end */
+      if(r->end>blocksize)r->end=blocksize/r->grouping*r->grouping;
+
+    }
+
+    if(r->end==0)r->end=r->grouping; /* LFE channel */
+
   }
 }
 
@@ -620,12 +630,10 @@ static double setting_to_approx_bitrate(vorbis_info *vi){
   return((r[is]*(1.-ds)+r[is+1]*ds)*ch);
 }
 
-static void get_setup_template(vorbis_info *vi,
-                               long ch,long srate,
-                               double req,int q_or_bitrate){
+static const void *get_setup_template(long ch,long srate,
+                                      double req,int q_or_bitrate,
+                                      double *base_setting){
   int i=0,j;
-  codec_setup_info *ci=vi->codec_setup;
-  highlevel_encode_setup *hi=&ci->hi;
   if(q_or_bitrate)req/=ch;
 
   while(setup_list[i]){
@@ -645,23 +653,22 @@ static void get_setup_template(vorbis_info *vi,
         for(j=0;j<mappings;j++)
           if(req>=map[j] && req<map[j+1])break;
         /* an all-points match */
-        hi->setup=setup_list[i];
         if(j==mappings)
-          hi->base_setting=j-.001;
+          *base_setting=j-.001;
         else{
           float low=map[j];
           float high=map[j+1];
           float del=(req-low)/(high-low);
-          hi->base_setting=j+del;
+          *base_setting=j+del;
         }
 
-        return;
+        return(setup_list[i]);
       }
     }
     i++;
   }
 
-  hi->setup=NULL;
+  return NULL;
 }
 
 /* encoders will need to use vorbis_info_init beforehand and call
@@ -672,7 +679,7 @@ static void get_setup_template(vorbis_info *vi,
 
 /* the final setup call */
 int vorbis_encode_setup_init(vorbis_info *vi){
-  int i0=0,singleblock=0;
+  int i,i0=0,singleblock=0;
   codec_setup_info *ci=vi->codec_setup;
   ve_setup_data_template *setup=NULL;
   highlevel_encode_setup *hi=&ci->hi;
@@ -705,16 +712,12 @@ int vorbis_encode_setup_init(vorbis_info *vi){
   if(ci->blocksizes[0]==ci->blocksizes[1])singleblock=1;
 
   /* floor setup; choose proper floor params.  Allocated on the floor
-     stack in order; if we alloc only long floor, it's 0 */
-  vorbis_encode_floor_setup(vi,hi->short_setting,0,
-                            setup->floor_books,
-                            setup->floor_params,
-                            setup->floor_short_mapping);
-  if(!singleblock)
-    vorbis_encode_floor_setup(vi,hi->long_setting,1,
+     stack in order; if we alloc only a single long floor, it's 0 */
+  for(i=0;i<setup->floor_mappings;i++)
+    vorbis_encode_floor_setup(vi,hi->base_setting,
                               setup->floor_books,
                               setup->floor_params,
-                              setup->floor_long_mapping);
+                              setup->floor_mapping_list[i]);
 
   /* setup of [mostly] short block detection and stereo*/
   vorbis_encode_global_psych_setup(vi,hi->trigger_setting,
@@ -723,23 +726,23 @@ int vorbis_encode_setup_init(vorbis_info *vi){
   vorbis_encode_global_stereo(vi,hi,setup->stereo_modes);
 
   /* basic psych setup and noise normalization */
-  vorbis_encode_psyset_setup(vi,hi->short_setting,
+  vorbis_encode_psyset_setup(vi,hi->base_setting,
                              setup->psy_noise_normal_start[0],
                              setup->psy_noise_normal_partition[0],
                              setup->psy_noise_normal_thresh,
                              0);
-  vorbis_encode_psyset_setup(vi,hi->short_setting,
+  vorbis_encode_psyset_setup(vi,hi->base_setting,
                              setup->psy_noise_normal_start[0],
                              setup->psy_noise_normal_partition[0],
                              setup->psy_noise_normal_thresh,
                              1);
   if(!singleblock){
-    vorbis_encode_psyset_setup(vi,hi->long_setting,
+    vorbis_encode_psyset_setup(vi,hi->base_setting,
                                setup->psy_noise_normal_start[1],
                                setup->psy_noise_normal_partition[1],
                                     setup->psy_noise_normal_thresh,
                                2);
-    vorbis_encode_psyset_setup(vi,hi->long_setting,
+    vorbis_encode_psyset_setup(vi,hi->base_setting,
                                setup->psy_noise_normal_start[1],
                                setup->psy_noise_normal_partition[1],
                                setup->psy_noise_normal_thresh,
@@ -855,32 +858,30 @@ int vorbis_encode_setup_init(vorbis_info *vi){
 
 }
 
-static int vorbis_encode_setup_setting(vorbis_info *vi,
+static void vorbis_encode_setup_setting(vorbis_info *vi,
                                        long  channels,
                                        long  rate){
-  int ret=0,i,is;
+  int i,is;
   codec_setup_info *ci=vi->codec_setup;
   highlevel_encode_setup *hi=&ci->hi;
   const ve_setup_data_template *setup=hi->setup;
   double ds;
 
-  ret=vorbis_encode_toplevel_setup(vi,channels,rate);
-  if(ret)return(ret);
-
-  is=hi->base_setting;
-  ds=hi->base_setting-is;
-
-  hi->short_setting=hi->base_setting;
-  hi->long_setting=hi->base_setting;
-
-  hi->managed=0;
+  vi->version=0;
+  vi->channels=channels;
+  vi->rate=rate;
 
   hi->impulse_block_p=1;
   hi->noise_normalize_p=1;
 
+  is=hi->base_setting;
+  ds=hi->base_setting-is;
+
   hi->stereo_point_setting=hi->base_setting;
-  hi->lowpass_kHz=
-    setup->psy_lowpass[is]*(1.-ds)+setup->psy_lowpass[is+1]*ds;
+
+  if(!hi->lowpass_altered)
+    hi->lowpass_kHz=
+      setup->psy_lowpass[is]*(1.-ds)+setup->psy_lowpass[is+1]*ds;
 
   hi->ath_floating_dB=setup->psy_ath_float[is]*(1.-ds)+
     setup->psy_ath_float[is+1]*ds;
@@ -896,24 +897,31 @@ static int vorbis_encode_setup_setting(vorbis_info *vi,
     hi->block[i].noise_bias_setting=hi->base_setting;
     hi->block[i].noise_compand_setting=hi->base_setting;
   }
-
-  return(ret);
 }
 
 int vorbis_encode_setup_vbr(vorbis_info *vi,
                             long  channels,
                             long  rate,
                             float quality){
-  codec_setup_info *ci=vi->codec_setup;
-  highlevel_encode_setup *hi=&ci->hi;
+  codec_setup_info *ci;
+  highlevel_encode_setup *hi;
+  if(rate<=0) return OV_EINVAL;
+
+  ci=vi->codec_setup;
+  hi=&ci->hi;
 
   quality+=.0000001;
   if(quality>=1.)quality=.9999;
 
-  get_setup_template(vi,channels,rate,quality,0);
+  hi->req=quality;
+  hi->setup=get_setup_template(channels,rate,quality,0,&hi->base_setting);
   if(!hi->setup)return OV_EIMPL;
 
-  return vorbis_encode_setup_setting(vi,channels,rate);
+  vorbis_encode_setup_setting(vi,channels,rate);
+  hi->managed=0;
+  hi->coupling_p=1;
+
+  return 0;
 }
 
 int vorbis_encode_init_vbr(vorbis_info *vi,
@@ -944,10 +952,14 @@ int vorbis_encode_setup_managed(vorbis_info *vi,
                                 long nominal_bitrate,
                                 long min_bitrate){
 
-  codec_setup_info *ci=vi->codec_setup;
-  highlevel_encode_setup *hi=&ci->hi;
-  double tnominal=nominal_bitrate;
-  int ret=0;
+  codec_setup_info *ci;
+  highlevel_encode_setup *hi;
+  double tnominal;
+  if(rate<=0) return OV_EINVAL;
+
+  ci=vi->codec_setup;
+  hi=&ci->hi;
+  tnominal=nominal_bitrate;
 
   if(nominal_bitrate<=0.){
     if(max_bitrate>0.){
@@ -964,16 +976,14 @@ int vorbis_encode_setup_managed(vorbis_info *vi,
     }
   }
 
-  get_setup_template(vi,channels,rate,nominal_bitrate,1);
+  hi->req=nominal_bitrate;
+  hi->setup=get_setup_template(channels,rate,nominal_bitrate,1,&hi->base_setting);
   if(!hi->setup)return OV_EIMPL;
 
-  ret=vorbis_encode_setup_setting(vi,channels,rate);
-  if(ret){
-    vorbis_info_clear(vi);
-    return ret;
-  }
+  vorbis_encode_setup_setting(vi,channels,rate);
 
   /* initialize management with sane defaults */
+  hi->coupling_p=1;
   hi->managed=1;
   hi->bitrate_min=min_bitrate;
   hi->bitrate_max=max_bitrate;
@@ -982,7 +992,7 @@ int vorbis_encode_setup_managed(vorbis_info *vi,
   hi->bitrate_reservoir=nominal_bitrate*2;
   hi->bitrate_reservoir_bias=.1; /* bias toward hoarding bits */
 
-  return(ret);
+  return(0);
 
 }
 
@@ -1159,6 +1169,7 @@ int vorbis_encode_ctl(vorbis_info *vi,int number,void *arg){
 
         if(hi->lowpass_kHz<2.)hi->lowpass_kHz=2.;
         if(hi->lowpass_kHz>99.)hi->lowpass_kHz=99.;
+        hi->lowpass_altered=1;
       }
       return(0);
     case OV_ECTL_IBLOCK_GET:
@@ -1176,9 +1187,37 @@ int vorbis_encode_ctl(vorbis_info *vi,int number,void *arg){
         if(hi->impulse_noisetune<-15.)hi->impulse_noisetune=-15.;
       }
       return(0);
+    case OV_ECTL_COUPLING_GET:
+      {
+        int *iarg=(int *)arg;
+        *iarg=hi->coupling_p;
+      }
+      return(0);
+    case OV_ECTL_COUPLING_SET:
+      {
+        const void *new_template;
+        double new_base=0.;
+        int *iarg=(int *)arg;
+        hi->coupling_p=((*iarg)!=0);
+
+        /* Fetching a new template can alter the base_setting, which
+           many other parameters are based on.  Right now, the only
+           parameter drawn from the base_setting that can be altered
+           by an encctl is the lowpass, so that is explictly flagged
+           to not be overwritten when we fetch a new template and
+           recompute the dependant settings */
+        new_template = get_setup_template(hi->coupling_p?vi->channels:-1,
+                                          vi->rate,
+                                          hi->req,
+                                          hi->managed,
+                                          &new_base);
+        if(!hi->setup)return OV_EIMPL;
+        hi->setup=new_template;
+        hi->base_setting=new_base;
+        vorbis_encode_setup_setting(vi,vi->channels,vi->rate);
+      }
+      return(0);
     }
-
-
     return(OV_EIMPL);
   }
   return(OV_EINVAL);

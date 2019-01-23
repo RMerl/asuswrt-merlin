@@ -11,7 +11,7 @@
  ********************************************************************
 
  function: simple example decoder using vorbisfile
- last mod: $Id: vorbisfile_example.c 16037 2009-05-26 21:10:58Z xiphmont $
+ last mod: $Id: vorbisfile_example.c 16328 2009-07-24 01:51:10Z xiphmont $
 
  ********************************************************************/
 
@@ -70,7 +70,12 @@ int main(){
       /* EOF */
       eof=1;
     } else if (ret < 0) {
-      /* error in the stream.  Not a problem, just reporting it in
+      if(ret==OV_EBADLINK){
+        fprintf(stderr,"Corrupt bitstream section! Exiting.\n");
+        exit(1);
+      }
+
+      /* some other error in the stream.  Not a problem, just reporting it in
          case we (the app) cares.  In this case, we don't. */
     } else {
       /* we don't bother dealing with sample rate changes, etc, but

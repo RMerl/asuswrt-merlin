@@ -1035,7 +1035,11 @@ struct sockaddr_conn {
 #ifdef HAVE_SCONN_LEN
 	uint8_t sconn_len;
 #endif
+#ifdef AICAM_SMART
+	uint16_t sconn_family;
+#else
 	uint8_t sconn_family;
+#endif
 	uint16_t sconn_port;
 	void *sconn_addr;
 };

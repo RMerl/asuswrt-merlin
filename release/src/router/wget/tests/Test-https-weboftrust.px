@@ -1,0 +1,125 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Socket;
+use WgetFeature qw(https);
+use SSLTest;
+
+###############################################################################
+
+# code, msg, headers, content
+my %urls = (
+    '/somefile.txt' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/plain",
+        },
+        content => "blabla",
+    },
+);
+
+# Skip the test if openssl is not available
+my $ossl = `openssl version`;
+unless ($ossl =~ m/OpenSSL 1/)
+{
+  exit 77;
+}
+
+my $srcdir;
+if (@ARGV) {
+    $srcdir = shift @ARGV;
+} elsif (defined $ENV{srcdir}) {
+    $srcdir = $ENV{srcdir};
+}
+$srcdir = Cwd::abs_path("$srcdir");
+
+# HOSTALIASES env variable allows us to create hosts file alias.
+my $testhostname = "WgetTestingServer";
+$ENV{'HOSTALIASES'} = "$srcdir/certs/wgethosts";
+
+my $addr = gethostbyname($testhostname);
+unless ($addr)
+{
+    warn "Failed to resolve $addr, using $srcdir/certs/wgethosts\n";
+    exit 77;
+}
+unless (inet_ntoa($addr) =~ "127.0.0.1")
+{
+    warn "Failed to resolve $$addr, using $srcdir/certs/wgethosts\n";
+    exit 77;
+}
+
+# Use Intermediate CA
+my $caconf   = "$srcdir/certs/rootca.conf";
+my $icrtfile = "$srcdir/certs/interca.crt";
+my $ikeyfile = "$srcdir/certs/interca.key";
+
+my $icacheck=`(openssl x509 -noout -modulus -in $icrtfile | openssl md5 ;
+               openssl rsa  -noout -modulus -in $ikeyfile | openssl md5) |
+               uniq | wc -l`;
+# Check if certificate and key are correct.
+unless(-e $icrtfile && -e $ikeyfile && $icacheck == 1)
+{
+    exit 77; # skip
+}
+
+# User certificate using intermediate CA
+my $usrcrt  = "$srcdir/certs/user.crt";
+my $usrkey  = "$srcdir/certs/user.key";
+
+my $usrcheck=`(openssl x509 -noout -modulus -in $usrcrt | openssl md5 ;
+               openssl rsa -noout -modulus -in $usrkey | openssl md5) |
+               uniq | wc -l`;
+# Check if certificate and key are made correctly.
+unless(-e $usrcrt && -e $ikeyfile && $usrcheck == 1)
+{
+    exit 77; # skip
+}
+
+# Try Wget using SSL using certificate signed by intermediate CA. Expect error.
+my $port    = 30443;
+my $cmdline = $WgetTest::WGETPATH . " --ca-certificate=$srcdir/certs/".
+                "test-ca-cert.pem https://$testhostname:$port/somefile.txt";
+my $expected_error_code = 5;
+my %existing_files = (
+);
+
+my %expected_downloaded_files = (
+  'somefile.txt' => {
+    content => "blabla",
+  },
+);
+
+my $sslsock = SSLTest->new(cmdline   => $cmdline,
+                           input     => \%urls,
+                           errcode   => $expected_error_code,
+                           existing  => \%existing_files,
+                           output    => \%expected_downloaded_files,
+                           certfile  => $usrcrt,
+                           keyfile   => $usrkey,
+                           lhostname => $testhostname);
+if ($sslsock->run() == 0)
+{
+  exit 0;
+}
+
+# Retry the test with --no-check-certificate. expect success
+$port    = 31443;
+$cmdline = $WgetTest::WGETPATH . " --ca-certificate=$srcdir/certs/wotca.pem".
+                                 " https://$testhostname:$port/somefile.txt";
+
+$expected_error_code = 0;
+
+my $retryssl = SSLTest->new(cmdline  => $cmdline,
+                           input     => \%urls,
+                           errcode   => $expected_error_code,
+                           existing  => \%existing_files,
+                           output    => \%expected_downloaded_files,
+                           certfile  => $usrcrt,
+                           keyfile   => $usrkey,
+                           lhostname => $testhostname,
+                           sslport   => $port);
+exit $retryssl->run();
+# vim: et ts=4 sw=4

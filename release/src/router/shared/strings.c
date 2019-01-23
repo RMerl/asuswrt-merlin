@@ -153,6 +153,17 @@ int remove_word(char *buffer, const char *word)
 	return 1;
 }
 
+int replace_char(char *str, const char from, const char to)
+{
+	char *p = str;
+	while (*p) {
+		if (*p == from)
+			*p = to;
+		p++;
+	}
+	return 1;
+}
+
 /* Escape characters that could break a Javascript array */
 int str_escape_quotes(const char *output, const char *input, int outsize)
 {

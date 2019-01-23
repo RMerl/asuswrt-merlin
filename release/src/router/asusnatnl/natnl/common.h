@@ -25,13 +25,24 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
+#include <pjlib.h>
 #include <pj/errno.h>
 #include <pj/sock.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef ROUTER
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <unistd.h>
+#include <bcmnvram.h>
+#include <rtconfig.h>
 typedef struct natnl_wl_ioctl {
 	uint cmd;       /* common ioctl definition */
 	void *buf;      /* pointer to user buffer */
@@ -45,6 +56,14 @@ typedef struct natnl_wl_ioctl {
 #define WLC_SET_VAR             263
 #define WLC_GET_MAGIC                           0
 #define WLC_GET_BSSID                           23
+
+#define NVRAM_WEBDAV_HTTP_PORT "webdav_http_port"
+#define NVRAM_WEBDAV_HTTPS_PORT "webdav_https_port"
+#define NVRAM_WEB_HTTP_PORT ""
+#define NVRAM_WEB_HTTPS_PORT "https_lanport"
+#ifdef __cplusplus
+}
+#endif
 #endif
 
 #define NO_DEBUG     0
@@ -53,21 +72,26 @@ typedef struct natnl_wl_ioctl {
 #define DEBUG_LEVEL3 3
 
 #ifdef WIN32
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned long uint32_t;
+# if defined(PJ_WIN32_UWP)
+#   include <stdint.h>
+# else
+    typedef unsigned char uint8_t;
+    typedef unsigned short uint16_t;
+    typedef unsigned long uint32_t;
+# endif
 #endif
 
 /* cl.exe has a different 'inline' keyword for some dumb reason */
 #ifdef WIN32
-#define _inline_ __inline
+# define _inline_ __inline
+# define stricmp _stricmp
 #else
-#define _inline_ inline
+# define _inline_ inline
 #endif
 
-#ifdef WIN32
+#if defined(PJ_WIN32) && !defined(PJ_WIN32_UWP)
 // Set signal handler for crash stack trace use.
-void set_signal_handler();
+  extern void set_signal_handler();
 #endif
 
 struct natnl_data {
@@ -179,6 +203,10 @@ static _inline_ int natnl_get_ip_addr_ver(const pj_str_t *host)
 	/* Not an IP address */
 	return 0;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* COMMON_H */
 

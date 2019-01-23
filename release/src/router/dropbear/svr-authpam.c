@@ -188,7 +188,7 @@ void svr_auth_pam() {
 
 	pam_handle_t* pamHandlep = NULL;
 
-	unsigned char * password = NULL;
+	char * password = NULL;
 	unsigned int passwordlen;
 
 	int rc = PAM_SUCCESS;
@@ -218,7 +218,7 @@ void svr_auth_pam() {
 	}
 
 	/* just to set it to something */
-	if ((rc = pam_set_item(pamHandlep, PAM_TTY, "ssh") != PAM_SUCCESS)) {
+	if ((rc = pam_set_item(pamHandlep, PAM_TTY, "ssh")) != PAM_SUCCESS) {
 		dropbear_log(LOG_WARNING, "pam_set_item() failed, rc=%d, %s",
 				rc, pam_strerror(pamHandlep, rc));
 		goto cleanup;

@@ -61,7 +61,7 @@ main (argc, argv)
   int   num;		/* insert count. */
   int   block_size;     /* gdbm block size. */
   char  quiet;		/* Do work Quietly? */
-  char  option_char;    /* The option character. */
+  int	option_char;    /* The option character. */
 
   char *dbm_file, *gdbm_file;   /* pointers to the file names. */
 

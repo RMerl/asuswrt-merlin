@@ -1,6 +1,6 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -28,6 +28,7 @@
 #define ROUTER_PRIVATE
 #define CIRCUITSTATS_PRIVATE
 #define CIRCUITLIST_PRIVATE
+#define MAIN_PRIVATE
 #define STATEFILE_PRIVATE
 
 /*
@@ -47,11 +48,14 @@ double fabs(double x);
 #include "connection_edge.h"
 #include "geoip.h"
 #include "rendcommon.h"
+#include "rendcache.h"
 #include "test.h"
 #include "torgzip.h"
+#include "main.h"
 #include "memarea.h"
 #include "onion.h"
 #include "onion_ntor.h"
+#include "onion_fast.h"
 #include "onion_tap.h"
 #include "policies.h"
 #include "rephist.h"
@@ -175,20 +179,26 @@ test_bad_onion_handshake(void *arg)
                                             s_buf, s_keys, 40));
 
   /* Client: Case 1: The server sent back junk. */
+  const char *msg = NULL;
   s_buf[64] ^= 33;
   tt_int_op(-1, OP_EQ,
-            onion_skin_TAP_client_handshake(c_dh, s_buf, c_keys, 40, NULL));
+            onion_skin_TAP_client_handshake(c_dh, s_buf, c_keys, 40, &msg));
   s_buf[64] ^= 33;
+  tt_str_op(msg, OP_EQ, "Digest DOES NOT MATCH on onion handshake. "
+            "Bug or attack.");
 
   /* Let the client finish; make sure it can. */
+  msg = NULL;
   tt_int_op(0, OP_EQ,
-            onion_skin_TAP_client_handshake(c_dh, s_buf, c_keys, 40, NULL));
+            onion_skin_TAP_client_handshake(c_dh, s_buf, c_keys, 40, &msg));
   tt_mem_op(s_keys,OP_EQ, c_keys, 40);
+  tt_ptr_op(msg, OP_EQ, NULL);
 
   /* Client: Case 2: The server sent back a degenerate DH. */
   memset(s_buf, 0, sizeof(s_buf));
   tt_int_op(-1, OP_EQ,
-            onion_skin_TAP_client_handshake(c_dh, s_buf, c_keys, 40, NULL));
+            onion_skin_TAP_client_handshake(c_dh, s_buf, c_keys, 40, &msg));
+  tt_str_op(msg, OP_EQ, "DH computation failed.");
 
  done:
   crypto_dh_free(c_dh);
@@ -243,9 +253,54 @@ test_ntor_handshake(void *arg)
   memset(s_buf, 0, 40);
   tt_mem_op(c_keys,OP_NE, s_buf, 40);
 
+  /* Now try with a bogus server response. Zero input should trigger
+   * All The Problems. */
+  memset(c_keys, 0, 400);
+  memset(s_buf, 0, NTOR_REPLY_LEN);
+  const char *msg = NULL;
+  tt_int_op(-1, OP_EQ, onion_skin_ntor_client_handshake(c_state, s_buf,
+                                                        c_keys, 400, &msg));
+  tt_str_op(msg, OP_EQ, "Zero output from curve25519 handshake");
+
  done:
   ntor_handshake_state_free(c_state);
   dimap_free(s_keymap, NULL);
+}
+
+static void
+test_fast_handshake(void *arg)
+{
+  /* tests for the obsolete "CREATE_FAST" handshake. */
+  (void) arg;
+  fast_handshake_state_t *state = NULL;
+  uint8_t client_handshake[CREATE_FAST_LEN];
+  uint8_t server_handshake[CREATED_FAST_LEN];
+  uint8_t s_keys[100], c_keys[100];
+
+  /* First, test an entire handshake. */
+  memset(client_handshake, 0, sizeof(client_handshake));
+  tt_int_op(0, OP_EQ, fast_onionskin_create(&state, client_handshake));
+  tt_assert(! tor_mem_is_zero((char*)client_handshake,
+                              sizeof(client_handshake)));
+
+  tt_int_op(0, OP_EQ,
+            fast_server_handshake(client_handshake, server_handshake,
+                                  s_keys, 100));
+  const char *msg = NULL;
+  tt_int_op(0, OP_EQ,
+            fast_client_handshake(state, server_handshake, c_keys, 100, &msg));
+  tt_ptr_op(msg, OP_EQ, NULL);
+  tt_mem_op(s_keys, OP_EQ, c_keys, 100);
+
+  /* Now test a failing handshake. */
+  server_handshake[0] ^= 3;
+  tt_int_op(-1, OP_EQ,
+            fast_client_handshake(state, server_handshake, c_keys, 100, &msg));
+  tt_str_op(msg, OP_EQ, "Digest DOES NOT MATCH on fast handshake. "
+            "Bug or attack.");
+
+ done:
+  fast_handshake_state_free(state);
 }
 
 /** Run unit tests for the onion queues. */
@@ -316,6 +371,9 @@ test_circuit_timeout(void *arg)
   int i, runs;
   double close_ms;
   (void)arg;
+
+  initialize_periodic_events();
+
   circuit_build_times_init(&initial);
   circuit_build_times_init(&estimate);
   circuit_build_times_init(&final);
@@ -455,6 +513,7 @@ test_circuit_timeout(void *arg)
   circuit_build_times_free_timeouts(&estimate);
   circuit_build_times_free_timeouts(&final);
   or_state_free(state);
+  teardown_periodic_events();
 }
 
 /** Test encoding and parsing of rendezvous service descriptors. */
@@ -493,6 +552,9 @@ test_rend_fns(void *arg)
   tt_assert(ONION_HOSTNAME == parse_extended_hostname(address6));
   tt_str_op(address6,OP_EQ, "abcdefghijklmnop");
   tt_assert(BAD_HOSTNAME == parse_extended_hostname(address7));
+
+  /* Initialize the service cache. */
+  rend_cache_init();
 
   pk1 = pk_generate(0);
   pk2 = pk_generate(1);
@@ -1105,60 +1167,15 @@ static struct testcase_t test_array[] = {
   { "bad_onion_handshake", test_bad_onion_handshake, 0, NULL, NULL },
   ENT(onion_queues),
   { "ntor_handshake", test_ntor_handshake, 0, NULL, NULL },
-  ENT(circuit_timeout),
-  ENT(rend_fns),
+  { "fast_handshake", test_fast_handshake, 0, NULL, NULL },
+  FORK(circuit_timeout),
+  FORK(rend_fns),
   ENT(geoip),
   FORK(geoip_with_pt),
   FORK(stats),
 
   END_OF_TESTCASES
 };
-
-extern struct testcase_t accounting_tests[];
-extern struct testcase_t addr_tests[];
-extern struct testcase_t address_tests[];
-extern struct testcase_t buffer_tests[];
-extern struct testcase_t cell_format_tests[];
-extern struct testcase_t cell_queue_tests[];
-extern struct testcase_t channel_tests[];
-extern struct testcase_t channeltls_tests[];
-extern struct testcase_t checkdir_tests[];
-extern struct testcase_t circuitlist_tests[];
-extern struct testcase_t circuitmux_tests[];
-extern struct testcase_t config_tests[];
-extern struct testcase_t container_tests[];
-extern struct testcase_t controller_tests[];
-extern struct testcase_t controller_event_tests[];
-extern struct testcase_t crypto_tests[];
-extern struct testcase_t dir_tests[];
-extern struct testcase_t entryconn_tests[];
-extern struct testcase_t entrynodes_tests[];
-extern struct testcase_t guardfraction_tests[];
-extern struct testcase_t extorport_tests[];
-extern struct testcase_t hs_tests[];
-extern struct testcase_t introduce_tests[];
-extern struct testcase_t keypin_tests[];
-extern struct testcase_t link_handshake_tests[];
-extern struct testcase_t logging_tests[];
-extern struct testcase_t microdesc_tests[];
-extern struct testcase_t nodelist_tests[];
-extern struct testcase_t oom_tests[];
-extern struct testcase_t options_tests[];
-extern struct testcase_t policy_tests[];
-extern struct testcase_t pt_tests[];
-extern struct testcase_t relay_tests[];
-extern struct testcase_t relaycell_tests[];
-extern struct testcase_t replaycache_tests[];
-extern struct testcase_t router_tests[];
-extern struct testcase_t routerkeys_tests[];
-extern struct testcase_t routerlist_tests[];
-extern struct testcase_t routerset_tests[];
-extern struct testcase_t scheduler_tests[];
-extern struct testcase_t socks_tests[];
-extern struct testcase_t status_tests[];
-extern struct testcase_t thread_tests[];
-extern struct testcase_t util_tests[];
-extern struct testcase_t dns_tests[];
 
 struct testgroup_t testgroups[] = {
   { "", test_array },
@@ -1173,12 +1190,15 @@ struct testgroup_t testgroups[] = {
   { "checkdir/", checkdir_tests },
   { "circuitlist/", circuitlist_tests },
   { "circuitmux/", circuitmux_tests },
+  { "compat/libevent/", compat_libevent_tests },
   { "config/", config_tests },
+  { "connection/", connection_tests },
   { "container/", container_tests },
   { "control/", controller_tests },
   { "control/event/", controller_event_tests },
   { "crypto/", crypto_tests },
   { "dir/", dir_tests },
+  { "dir_handle_get/", dir_handle_get_tests },
   { "dir/md/", microdesc_tests },
   { "entryconn/", entryconn_tests },
   { "entrynodes/", entrynodes_tests },
@@ -1190,21 +1210,31 @@ struct testgroup_t testgroups[] = {
   { "link-handshake/", link_handshake_tests },
   { "nodelist/", nodelist_tests },
   { "oom/", oom_tests },
+  { "oos/", oos_tests },
   { "options/", options_tests },
   { "policy/" , policy_tests },
+  { "procmon/", procmon_tests },
+  { "protover/", protover_tests },
   { "pt/", pt_tests },
   { "relay/" , relay_tests },
   { "relaycell/", relaycell_tests },
+  { "rend_cache/", rend_cache_tests },
   { "replaycache/", replaycache_tests },
   { "routerkeys/", routerkeys_tests },
   { "routerlist/", routerlist_tests },
   { "routerset/" , routerset_tests },
   { "scheduler/", scheduler_tests },
   { "socks/", socks_tests },
+  { "shared-random/", sr_tests },
   { "status/" , status_tests },
+  { "tortls/", tortls_tests },
   { "util/", util_tests },
+  { "util/format/", util_format_tests },
   { "util/logging/", logging_tests },
+  { "util/process/", util_process_tests },
+  { "util/pubsub/", pubsub_tests },
   { "util/thread/", thread_tests },
+  { "util/handle/", handle_tests },
   { "dns/", dns_tests },
   END_OF_GROUPS
 };

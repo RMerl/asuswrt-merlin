@@ -100,4 +100,9 @@ GetImageMetadata(const char *path, char *name);
 int64_t
 GetVideoMetadata(const char *path, char *name);
 
+#if defined MS_IPK || defined RTCONFIG_WEBDAV || defined MS_LIMIT
+int
+thumb_cache_exists(const char *orig_path, char **cache_file);
+#endif
+
 #endif

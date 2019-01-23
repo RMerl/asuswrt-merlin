@@ -1,7 +1,7 @@
 /* mswindows.c -- Windows-specific support
    Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007, 2008, 2009, 2010, 2011, 2014 Free Software Foundation,
-   Inc.
+   2005, 2006, 2007, 2008, 2009, 2010, 2011, 2014, 2015 Free Software
+   Foundation, Inc.
 
 This file is part of GNU Wget.
 
@@ -53,16 +53,13 @@ as that of the covered work.  */
 #endif
 
 
-/* Defined in log.c.  */
-void log_request_redirect_output (const char *);
-
 /* Windows version of xsleep in utils.c.  */
 
 void
 xsleep (double seconds)
 {
 #if defined(HAVE_USLEEP) && defined(HAVE_SLEEP)
-  if (seconds > 1000)
+  if (seconds >= 1)
     {
       /* Explained in utils.c. */
       sleep (seconds);
@@ -85,11 +82,11 @@ windows_main (char **exec_name)
   if (p)
     *p = '\0';
 }
-
+
 static void
 ws_cleanup (void)
 {
-  xfree ((char*)exec_name);
+  xfree (exec_name);
   WSACleanup ();
 }
 
@@ -98,7 +95,7 @@ static void
 ws_hangup (const char *reason)
 {
   fprintf (stderr, _("Continuing in background.\n"));
-  log_request_redirect_output (reason);
+  redirect_output (true, reason);
 
   /* Detach process from the current console.  Under Windows 9x, if we
      were launched from a 16-bit process (which is usually the case;
@@ -367,8 +364,8 @@ static int old_percentage = -1;
 void
 ws_changetitle (const char *url)
 {
-  xfree_null (title_buf);
-  xfree_null (curr_url);
+  xfree (title_buf);
+  xfree (curr_url);
   title_buf = xmalloc (strlen (url) + 20);
   curr_url = xstrdup (url);
   old_percentage = -1;
@@ -477,7 +474,7 @@ ws_startup (void)
   set_sleep_mode ();
   SetConsoleCtrlHandler (ws_handler, TRUE);
 }
-
+
 /* run_with_timeout Windows implementation.  */
 
 /* Stack size 0 uses default thread stack-size (reserve+commit).
@@ -583,7 +580,7 @@ run_with_timeout (double seconds, void (*fun) (void *), void *arg)
 const char *
 inet_ntop (int af, const void *src, char *dst, socklen_t cnt)
 {
-  /* struct sockaddr can't accomodate struct sockaddr_in6. */
+  /* struct sockaddr can't accommodate struct sockaddr_in6. */
   union {
     struct sockaddr_in6 sin6;
     struct sockaddr_in sin;

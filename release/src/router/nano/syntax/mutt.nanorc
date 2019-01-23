@@ -1,0 +1,9 @@
+## Here is an example for quoted emails (under e.g. mutt).
+
+syntax "mutt"
+
+# Quoted lines.
+color green "^>.*"
+
+# Signatures, even quoted ones.
+color yellow start="^>* ?-- $" end="^>* ?$"

@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2017 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -16,10 +16,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -37,42 +36,52 @@
 
 /* Set a file descriptor to non-blocking */
 bool
-set_nonblock_action (int fd)
+set_nonblock_action(int fd)
 {
-#ifdef WIN32
-  u_long arg = 1;
-  if (ioctlsocket (fd, FIONBIO, &arg))
-    return false;
-#else
-  if (fcntl (fd, F_SETFL, O_NONBLOCK) < 0)
-    return false;
+#ifdef _WIN32
+    u_long arg = 1;
+    if (ioctlsocket(fd, FIONBIO, &arg))
+    {
+        return false;
+    }
+#else  /* ifdef _WIN32 */
+    if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+    {
+        return false;
+    }
 #endif
-  return true;
+    return true;
 }
 
 /* Set a file descriptor to not be passed across execs */
 bool
-set_cloexec_action (int fd)
+set_cloexec_action(int fd)
 {
-#ifndef WIN32
-  if (fcntl (fd, F_SETFD, FD_CLOEXEC) < 0)
-    return false;
+#ifndef _WIN32
+    if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0)
+    {
+        return false;
+    }
 #endif
-  return true;
+    return true;
 }
 
 /* Set a file descriptor to non-blocking */
 void
-set_nonblock (int fd)
+set_nonblock(int fd)
 {
-  if (!set_nonblock_action (fd))
-    msg (M_ERR, "Set socket to non-blocking mode failed");
+    if (!set_nonblock_action(fd))
+    {
+        msg(M_ERR, "Set socket to non-blocking mode failed");
+    }
 }
 
 /* Set a file descriptor to not be passed across execs */
 void
-set_cloexec (int fd)
+set_cloexec(int fd)
 {
-  if (!set_cloexec_action (fd))
-    msg (M_ERR, "Set FD_CLOEXEC flag on file descriptor failed");
+    if (!set_cloexec_action(fd))
+    {
+        msg(M_ERR, "Set FD_CLOEXEC flag on file descriptor failed");
+    }
 }

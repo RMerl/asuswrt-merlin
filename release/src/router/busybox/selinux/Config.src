@@ -64,7 +64,7 @@ config RUNCON
 	default n
 	depends on SELINUX
 	help
-	  Enable support to run command in speficied security context.
+	  Enable support to run command in specified security context.
 
 config FEATURE_RUNCON_LONG_OPTIONS
 	bool "Enable long options"

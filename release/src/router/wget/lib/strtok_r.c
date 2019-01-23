@@ -1,5 +1,5 @@
 /* Reentrant string tokenizer.  Generic version.
-   Copyright (C) 1991, 1996-1999, 2001, 2004, 2007, 2009-2014 Free Software
+   Copyright (C) 1991, 1996-1999, 2001, 2004, 2007, 2009-2017 Free Software
    Foundation, Inc.
    This file is part of the GNU C Library.
 

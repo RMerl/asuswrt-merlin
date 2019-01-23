@@ -18,12 +18,15 @@
 #
 
 #CROSS = mipsel-uclibc-
+#CROSS = mipsel-linux-
 #CROSS = mipsel-linux-uclibc-
+#CROSS = mips-openwrt-linux-
 #CROSS = arm-uclibc-
 #CC = $(CROSS)gcc
 
 CFLAGS = -Os -g -Wall -W -Wno-unused-parameter $(EXTRACFLAGS)
 LDFLAGS = $(EXTRALDFLAGS)
+LIBS += -Wl,--as-needed -lrt -Wl,--no-as-needed
 
 CFLAGS += -ffunction-sections -fdata-sections
 LDFLAGS += -Wl,--gc-sections
@@ -40,13 +43,16 @@ SWITCH ?= simul
 all: snooper
 
 snooper: snooper.o igmp.o timer.o cache.o utils.o $(SWITCH).o
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+	@echo " [snooper] LD $@"
+	@$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 test: $(SWITCH).c
-	$(CC) -DTEST $(CFLAGS) $(LDFLAGS) -o $@ $^
+	@echo " [snooper] LD $@"
+	@$(CC) -DTEST $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 clean:
-	rm -f *.o *~ snooper test
+	@rm -f *.o *~ snooper test
 
 %.o: %.c *.h Makefile
-	$(CC) $(CFLAGS) -c -o $@ -fPIC $<
+	@echo " [snooper] CC $@"
+	@$(CC) $(CFLAGS) -c -o $@ -fPIC $<

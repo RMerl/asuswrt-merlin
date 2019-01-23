@@ -130,10 +130,12 @@ static int length_from_afi(const unsigned afi)
  */
 unsigned int v3_addr_get_afi(const IPAddressFamily *f)
 {
-    return ((f != NULL &&
-             f->addressFamily != NULL && f->addressFamily->data != NULL)
-            ? ((f->addressFamily->data[0] << 8) | (f->addressFamily->data[1]))
-            : 0);
+    if (f == NULL
+            || f->addressFamily == NULL
+            || f->addressFamily->data == NULL
+            || f->addressFamily->length < 2)
+        return 0;
+    return (f->addressFamily->data[0] << 8) | f->addressFamily->data[1];
 }
 
 /*
@@ -1211,6 +1213,11 @@ int v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b)
 
 /*
  * Core code for RFC 3779 2.3 path validation.
+ *
+ * Returns 1 for success, 0 on error.
+ *
+ * When returning 0, ctx->error MUST be set to an appropriate value other than
+ * X509_V_OK.
  */
 static int v3_addr_validate_path_internal(X509_STORE_CTX *ctx,
                                           STACK_OF(X509) *chain,
@@ -1245,6 +1252,7 @@ static int v3_addr_validate_path_internal(X509_STORE_CTX *ctx,
     if ((child = sk_IPAddressFamily_dup(ext)) == NULL) {
         X509V3err(X509V3_F_V3_ADDR_VALIDATE_PATH_INTERNAL,
                   ERR_R_MALLOC_FAILURE);
+        ctx->error = X509_V_ERR_OUT_OF_MEM;
         ret = 0;
         goto done;
     }

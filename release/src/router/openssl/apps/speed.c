@@ -307,7 +307,8 @@ static SIGRETTYPE sig_done(int sig)
 #  if !defined(SIGALRM)
 #   define SIGALRM
 #  endif
-static unsigned int lapse, schlock;
+static volatile unsigned int lapse;
+static volatile unsigned int schlock;
 static void alarm_win32(unsigned int secs)
 {
     lapse = secs * 1000;
@@ -372,6 +373,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 {
+    ENGINE *e = NULL;
     unsigned char *buf = NULL, *buf2 = NULL;
     int mret = 1;
     long count = 0, save_count = 0;
@@ -669,6 +671,10 @@ int MAIN(int argc, char **argv)
         ecdh_b[i] = NULL;
     }
 # endif
+# ifndef OPENSSL_NO_RSA
+    for (i = 0; i < RSA_NUM; i++)
+        rsa_key[i] = NULL;
+# endif
 
     if (bio_err == NULL)
         if ((bio_err = BIO_new(BIO_s_file())) != NULL)
@@ -676,12 +682,6 @@ int MAIN(int argc, char **argv)
 
     if (!load_config(bio_err, NULL))
         goto end;
-
-# ifndef OPENSSL_NO_RSA
-    memset(rsa_key, 0, sizeof(rsa_key));
-    for (i = 0; i < RSA_NUM; i++)
-        rsa_key[i] = NULL;
-# endif
 
     if ((buf = (unsigned char *)OPENSSL_malloc((int)BUFSIZE)) == NULL) {
         BIO_printf(bio_err, "out of memory\n");
@@ -726,6 +726,7 @@ int MAIN(int argc, char **argv)
                 BIO_printf(bio_err, "no EVP given\n");
                 goto end;
             }
+            evp_md = NULL;
             evp_cipher = EVP_get_cipherbyname(*argv);
             if (!evp_cipher) {
                 evp_md = EVP_get_digestbyname(*argv);
@@ -749,7 +750,7 @@ int MAIN(int argc, char **argv)
                 BIO_printf(bio_err, "no engine given\n");
                 goto end;
             }
-            setup_engine(bio_err, *argv, 0);
+            e = setup_engine(bio_err, *argv, 0);
             /*
              * j will be increased again further down.  We just don't want
              * speed to confuse an engine with an algorithm, especially when
@@ -2526,6 +2527,7 @@ int MAIN(int argc, char **argv)
     }
 # endif
 
+    release_engine(e);
     apps_shutdown();
     OPENSSL_EXIT(mret);
 }
@@ -2614,6 +2616,10 @@ static int do_multi(int multi)
     static char sep[] = ":";
 
     fds = malloc(multi * sizeof *fds);
+    if (fds == NULL) {
+        fprintf(stderr, "Out of memory in speed (do_multi)\n");
+        exit(1);
+    }
     for (n = 0; n < multi; ++n) {
         if (pipe(fd) == -1) {
             fprintf(stderr, "pipe failure\n");
@@ -2823,8 +2829,8 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher)
 
                 RAND_bytes(out, 16);
                 len += 16;
-                aad[11] = len >> 8;
-                aad[12] = len;
+                aad[11] = (unsigned char)(len >> 8);
+                aad[12] = (unsigned char)(len);
                 pad = EVP_CIPHER_CTX_ctrl(&ctx,
                                           EVP_CTRL_AEAD_TLS1_AAD,
                                           EVP_AEAD_TLS1_AAD_LEN, aad);

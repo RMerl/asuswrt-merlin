@@ -1,11 +1,188 @@
 GNU Wget NEWS -- history of user-visible changes.
 
-Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-2006, 2007, 2008, 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
+Copyright (C) 1997-2017 Free Software Foundation, Inc.
 See the end for copying conditions.
 
 Please send GNU Wget bug reports to <bug-wget@gnu.org>.
-
+
+* Changes in Wget 1.19.2
+
+* Fix CVE-2017-13089 (Stack overflow in HTTP protocol handling)
+
+* Fix CVE-2017-13090 (Heap overflow in HTTP protocol handling)
+
+* New option --compression for gzip Content-Encoding
+
+* New option --[no]-netrc to control .netrc parsing
+
+* Added GNU extensions to .netrc parsing
+
+* Improved IDNA 2003 compatibility
+
+* Fix VPATH issues
+
+* Improved and extended the test suite
+
+* Support Wayback Machine's X-Archive-Orig-last-modified
+
+* Several bug fixes
+
+
+* Changes in Wget 1.19.1
+
+* Fix bugs, a regression, portability/build issues
+
+* Add new option --retry-on-http-error
+
+
+* Changes in Wget 1.19
+
+* New option --use-askpass=COMMAND. Fetch user/password by calling
+  an external program.
+
+* Use IDNA2008 (+ TR46 if available) through libidn2
+
+* When processing a Metalink header, --metalink-index=<number> allows
+  to process the header's application/metalink4+xml files.
+
+* When processing a Metalink file, --trust-server-names enables the
+  use of the destination file names specified in the Metalink file,
+  otherwise a safe destination file name is computed.
+
+* When processing a Metalink file, enforce a safe destination path.
+  Remove any drive letter prefix under w32, i.e. 'C:D:file'.  Call
+  libmetalink's metalink_check_safe_path() to prevent absolute,
+  relative, or home paths:
+  https://tools.ietf.org/html/rfc5854#section-4.1.2.1
+  https://tools.ietf.org/html/rfc5854#section-4.2.8.3
+
+* When processing a Metalink file, --directory-prefix=<prefix> sets
+  the top of the retrieval tree to prefix for Metalink downloads.
+
+* When processing a Metalink file, reject downloaded files which don't
+  agree with their own metalink:size value:
+  https://tools.ietf.org/html/rfc5854#section-4.2.16
+
+* When processing a Metalink file, with --continue resume partially
+  downloaded files and keep fully downloaded files even if they fail
+  the verification.
+
+* When processing a Metalink file, create the parent directories of a
+  "path/file" destination file name:
+  https://tools.ietf.org/html/rfc5854#section-4.1.2.1
+  https://tools.ietf.org/html/rfc5854#section-4.2.8.3
+
+* On a recursive download, append a .tmp suffix to temporary files
+  that will be deleted after being parsed, and create them
+  readable/writable only by the owner.
+
+* New make target 'check-valgrind'
+
+* Fix several bugs
+
+* Fix compatibility issues
+
+* Changes in Wget 1.18
+
+* By default, on server redirects to a FTP resource, use the original
+  URL to get the local file name. Close CVE-2016-4971.  This
+  introduces a backward-incompatibility for HTTP->FTP redirects and
+  any script that relies on the old  behaviour must use
+  --trust-server-names.
+
+* Check the HSTS file is not world-writable before using it.
+
+* Parse <img srcset> attributes on a recursive download.
+
+* Fix problem with SNI server names having trailing dot(s)
+
+* New options --bind-dns-address and --dns-servers.
+
+* When Wget is built with libiconv, it now converts non-ASCII URIs to
+  the locale's codeset when it creates files.  The encoding of the
+  remote files and URIs is taken from --remote-encoding, defaulting to
+  UTF-8.  The result is that non-ASCII URIs and files downloaded via
+  HTTP/HTTPS and FTP will have names on the local filesystem that
+  correspond to their remote names.
+
+* Changes in Wget 1.17.1
+
+* Fix compile error when IPv6 is disabled or SSL is not present.
+
+* Fix HSTS memory leak.
+
+* Fix progress output in non-C locales.
+
+* Fix SIGSEGV when -N and --content-disposition are used together.
+
+* Add --check-certificate=quiet to tell wget to not print any warning about
+  invalid certificates.
+
+* Changes in Wget 1.17
+
+** Remove FTP passive to active fallback due to privacy concerns.
+
+** Add support for --if-modified-since.
+
+** Add support for metalink through --input-metalink and --metalink-over-http.
+
+** Add support for HSTS through --hsts and --hsts-file.
+
+** Add option to restrict filenames under VMS.
+
+** Add support for --rejected-log which logs to a separate file the reasons why
+   URLs are being rejected and some context around it.
+
+** Add support for FTPS.
+
+** Do not download/save file on error when --spider enabled
+
+** Add --convert-file-only option. This option converts only the
+   filename part of the URLs, leaving the rest of the URLs untouched.
+
+* Changes in Wget 1.16.3
+
+** Fix a regression introduced by wget 1.16.2 that --quiet is not
+   really quiet anymore.
+
+* Changes in Wget 1.16.2
+
+** Native uuid generation on Windows
+
+** Fix build on Solaris
+
+** Allow progress bar on stderr when -o is used
+
+** Accept 5-digit port numbers in FTP EPSV responses.
+
+** Support older versions of flex.
+
+** Updated translations.
+
+* Changes in Wget 1.16.1
+
+** Add --enable-assert configure option.
+
+** Use pkg-config to check for libraries presence.
+
+** Do not limit --secure-protocol=auto|pfs to TLSv1.0.
+
+** Add --secure-protocol=TLSv1_1|TLSv1_2 .
+
+** Full C89 source code compliance.
+
+** Select and use the most secure authentication scheme with HTTP connections.
+
+** Fix issues with turkish locales.
+
+** Handle 504 Gateway Timeout.
+
+** New option --crl-file to load Certificate Revocation Lists.
+
+** Add valgrind support to tests suite.
+
+** Fix an off-by-one problem in the progress bar (introduced in 1.16).
+
 * Changes in Wget 1.16
 
 ** No longer create local symbolic links by default.  Closes CVE-2014-4877.
@@ -21,7 +198,7 @@ Please send GNU Wget bug reports to <bug-wget@gnu.org>.
 ** Introduce --start-pos to allow starting downloads from a specified position.
 
 ** Fix a problem with ISA Server Proxy and keep-alive connections.
-
+
 * Changes in Wget 1.15
 
 ** Add support for --method.
@@ -53,7 +230,7 @@ Please send GNU Wget bug reports to <bug-wget@gnu.org>.
 ** Specify Host with the HTTP CONNECT method.
 
 ** Use the correct HTTP method on a redirection.
-
+
 * Changes in Wget 1.14
 
 ** Add support for content-on-error.  It allows to store the HTTP
@@ -75,12 +252,12 @@ Please send GNU Wget bug reports to <bug-wget@gnu.org>.
 
 ** Add support for TLS Server Name Indication.
 
-** Accept the arguments --accept-reject and --reject-regex.
+** Accept the arguments --accept-regex and --reject-regex.
 
 ** The GNU TLS backend honors correctly the timeout value.
 
 ** Add support for RFC 2617 Digest Access Authentication.
-
+
 * Changes in Wget 1.13.4
 
 ** Now --version and --help work again.
@@ -93,7 +270,7 @@ Please send GNU Wget bug reports to <bug-wget@gnu.org>.
    is specified.
 
 ** Fix a segfault on an incomplete STYLE tag.
-
+
 * Changes in Wget 1.13.3
 
 ** Support HTTP/1.1
@@ -159,7 +336,7 @@ Please send GNU Wget bug reports to <bug-wget@gnu.org>.
 
 ** Introduce `show_all_dns_entries' to print all IP addresses corresponding to
    a DNS name when it is resolved.
-
+
 * Changes in Wget 1.12
 
 ** Mailing list MOVED to bug-wget@gnu.org
@@ -213,7 +390,7 @@ forces the percent-encoding of all non-ASCII bytes
 now documented: save_headers, spider, and user_agent,
 auth_no_challenge, and keep_session_cookies. Also added documentation
 for the "lowercase" and "uppercase" values for --restrict-file-names, which had been present since Wget 1.11.
-
+
 * Changes in Wget 1.11.4
 
 ** Fixed an issue (apparently a regression) where -O would refuse to
@@ -227,13 +404,13 @@ locally with content.
 to a pointer-to-time_t.
 
 ** Translation updates for Catalan.
-
+
 * Changes in Wget 1.11.3
 
 ** Downgraded -N with -O to a warning, rather than an error.
 
 ** Translation updates
-
+
 * Changes in Wget 1.11.2
 
 ** Fixed a problem in authenticating over HTTPS through a proxy.
@@ -255,7 +432,7 @@ multiple times. This has been fixed in 1.11.2.
 for improved conformance with RFC 3986. However, this behavior presents
 problems for some FTP setups, and so they are now preserved again, for
 FTP URLs only.
-
+
 * Changes in Wget 1.11.1.
 
 ** Interrupted downloads no longer result in renaming the file
@@ -277,7 +454,7 @@ be surprising, and notes that they may change in the future.
 
 ** Documentation of --no-parents now explains how a trailing slash, or
 lack thereof, in the specified URL, will affect behavior.
-
+
 * Changes in Wget 1.11.
 
 ** Timestamping now uses the value from the most recent HTTP response,
@@ -323,7 +500,7 @@ available at http://hg.addictivecode.org/. Prior to this, the source
 code was hosted on Subversion (migrated from the original CVS); you can
 still get access to older tags and branches for Wget in the Subversion
 repository at http://addictivecode.org/svn/wget/.
-
+
 * Changes in Wget 1.10.
 
 ** Downloading files larger than 2GB, sometimes referred to as "large
@@ -434,9 +611,9 @@ http_password and proxy_password respectively.  The login and passwd
 .wgetrc commands have been deprecated.
 
 * `wget -b' now works correctly under Windows.
-
+
 * Wget 1.9.1 is a bugfix release with no user-visible changes.
-
+
 * Changes in Wget 1.9.
 
 ** It is now possible to specify that POST method be used for HTTP
@@ -488,11 +665,11 @@ values "yes" and "no" along with the traditional "on" and "off".
 ** It is now possible to specify decimal values for timeouts, waiting
 periods, and download rate.  For instance, `--wait=0.5' now works as
 expected, as does `--dns-timeout=0.5' and even `--limit-rate=2.5k'.
-
+
 * Wget 1.8.2 is a bugfix release with no user-visible changes.
-
+
 * Wget 1.8.1 is a bugfix release with no user-visible changes.
-
+
 * Changes in Wget 1.8.
 
 ** A new progress indicator is now available and used by default.
@@ -544,7 +721,7 @@ addresses when accessing the first one fails.
 non-standard port.
 
 ** Wget now supports the robots.txt directives specified in
-<http://www.robotstxt.org/wc/norobots-rfc.txt>.
+<http://www.robotstxt.org/norobots-rfc.txt>.
 
 ** URL parser has been fixed, especially the infamous overzealous
 quoting.  Wget no longer dequotes reserved characters, e.g. `%3F' is
@@ -552,9 +729,9 @@ no longer translated to `?', nor `%2B' to `+'.  Unsafe characters
 which are not reserved are still escaped, of course.
 
 ** No more than 20 successive redirections are allowed.
-
+
 * Wget 1.7.1 is a bugfix release with no user-visible changes.
-
+
 * Changes in Wget 1.7.
 
 ** SSL (`https') pages now work if you compile Wget with SSL support;
@@ -596,7 +773,7 @@ large sites (thousands of documents).
 documentation.  (The last version that shipped with a man page was
 1.4.5).  To get this, you need to have pod2man from the Perl
 distribution installed on your system.
-
+
 * Changes in Wget 1.6
 
 ** Administrative changes.
@@ -647,13 +824,13 @@ passive_ftp is the only .wgetrc command which takes a lockable Boolean.
 bound to multiple IP addresses.
 
 ** wget now accepts (illegal per HTTP spec) relative URLs in HTTP redirects.
-
+
 * Wget 1.5.3 is a bugfix release with no user-visible changes.
-
+
 * Wget 1.5.2 is a bugfix release with no user-visible changes.
-
+
 * Wget 1.5.1 is a bugfix release with no user-visible changes.
-
+
 * Changes in Wget 1.5.0
 
 ** Wget speaks many languages!
@@ -699,11 +876,11 @@ download.
 
 ** The manual page, now hopelessly out of date, is no longer
 distributed with Wget.
-
+
 * Wget 1.4.5 is a bugfix release with no user-visible changes.
-
+
 * Wget 1.4.4 is a bugfix release with no user-visible changes.
-
+
 * Changes in Wget 1.4.3
 
 ** Wget is now a GNU utility.
@@ -719,7 +896,7 @@ distributed with Wget.
 ** Global wgetrc now goes to /usr/local/etc (i.e. $sysconfdir).
 
 ** Lots of bugfixes.
-
+
 * Changes in Wget 1.4.2
 
 ** New mirror site at ftp://sunsite.auc.dk/pub/infosystems/wget/,
@@ -737,7 +914,7 @@ files.
 ** --convert-links should work now.
 
 ** Minor bugfixes.
-
+
 * Changes in Wget 1.4.1
 
 ** Minor bugfixes.
@@ -745,7 +922,7 @@ files.
 ** Added -I (the opposite of -X).
 
 ** Dot tracing is now customizable; try wget --dot-style=binary
-
+
 * Changes in Wget 1.4.0
 
 ** Wget 1.4.0 [formerly known as Geturl] is an extensive rewrite of
@@ -826,7 +1003,7 @@ turn on mirroring options).
 ** Lots of small features I can't remember. :-)
 
 ** A host of bugfixes.
-
+
 * Changes in Geturl 1.3
 
 ** Added FTP globbing support (ftp://fly.cc.fer.hr/*)
@@ -844,9 +1021,9 @@ turn on mirroring options).
 ** Added support for robots.txt
 
 ** Fixed some minor bugs
-
+
 * Geturl 1.2 is a bugfix release with no user-visible changes.
-
+
 * Changes in Geturl 1.1
 
 ** REST supported in FTP
@@ -864,7 +1041,7 @@ geturl -vo log http://fly.cc.fer.hr/
 ** <base href="xxx"> supported
 
 ** autoconf supported
-
+
 ----------------------------------------------------------------------
 Copyright information:
 

@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2017 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -51,9 +51,9 @@ void dhcp6_init(void)
       !set_ipv6pktinfo(fd))
     die (_("cannot create DHCPv6 socket: %s"), NULL, EC_BADNET);
   
- /* When bind-interfaces is set, there might be more than one dnmsasq
+ /* When bind-interfaces is set, there might be more than one dnsmasq
      instance binding port 547. That's OK if they serve different networks.
-     Need to set REUSEADDR|REUSEPORT to make this posible.
+     Need to set REUSEADDR|REUSEPORT to make this possible.
      Handle the case that REUSEPORT is defined, but the kernel doesn't 
      support it. This handles the introduction of REUSEPORT on Linux. */
   if (option_bool(OPT_NOWILD) || option_bool(OPT_CLEVERBIND))
@@ -252,7 +252,7 @@ void dhcp6_packet(time_t now)
 
 void get_client_mac(struct in6_addr *client, int iface, unsigned char *mac, unsigned int *maclenp, unsigned int *mactypep, time_t now)
 {
-  /* Recieving a packet from a host does not populate the neighbour
+  /* Receiving a packet from a host does not populate the neighbour
      cache, so we send a neighbour discovery request if we can't 
      find the sender. Repeat a few times in case of packet loss. */
   
@@ -344,7 +344,7 @@ static int complete_context6(struct in6_addr *local,  int prefix,
 		    {
 		      struct dhcp_context *tmp, **up;
 		      
-		      /* use interface values only for contructed contexts */
+		      /* use interface values only for constructed contexts */
 		      if (!(context->flags & CONTEXT_CONSTRUCTED))
 			preferred = valid = 0xffffffff;
 		      else if (flags & IFACE_DEPRECATED)
@@ -672,7 +672,7 @@ static int construct_worker(struct in6_addr *local, int prefix,
 		  /* address went, now it's back */
 		  log_context(AF_INET6, context); 
 		  /* fast RAs for a while */
-		  ra_start_unsolicted(param->now, context);
+		  ra_start_unsolicited(param->now, context);
 		  param->newone = 1; 
 		  /* Add address to name again */
 		  if (context->flags & CONTEXT_RA_NAME)
@@ -695,7 +695,7 @@ static int construct_worker(struct in6_addr *local, int prefix,
 	    context->next = daemon->dhcp6;
 	    daemon->dhcp6 = context;
 
-	    ra_start_unsolicted(param->now, context);
+	    ra_start_unsolicited(param->now, context);
 	    /* we created a new one, need to call
 	       lease_update_file to get periodic functions called */
 	    param->newone = 1; 
@@ -743,7 +743,7 @@ void dhcp_construct_contexts(time_t now)
 	      /* maximum time is 2 hours, from RFC */
 	      if (context->saved_valid > 7200) /* 2 hours */
 		context->saved_valid = 7200;
-	      ra_start_unsolicted(now, context);
+	      ra_start_unsolicited(now, context);
 	      param.newone = 1; /* include deletion */ 
 	      
 	      if (context->flags & CONTEXT_RA_NAME)

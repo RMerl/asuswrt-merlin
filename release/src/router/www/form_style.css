@@ -84,25 +84,6 @@
 .FormTitle tbody{
 	line-height:180%;
 }
-
-.FormTitle_firefox{
-	margin-top:-100px;
-	line-height:160%;
-	font-size:12px;
-	font-family:Arial, Verdana, Arial, Helvetica, sans-serif;
-	border:1px solid #4D595D;
-	color:white;
-}
-.FormTitle_firefox thead{
-	color:#FFF;
-	font-size:13px;
-	text-align:center;	
-	font-weight:bold;
-	background-color:#4D595D;
-}
-.FormTitle_firefox tbody{
-	line-height:180%;
-}
 .FormTable{
 	font-size:12px;
 	font-family:Arial, Helvetica, sans-serif;
@@ -703,10 +684,6 @@ form{
 	margin:0px;
 }
 
-textarea{
-	width:99%;	
-}
-
 .hint_word{
 	color: #FF0000;
 	font:Verdana, Arial, Helvetica, sans-serif;
@@ -1149,68 +1126,6 @@ color:#FFFFFF;
 	color:#FFFFFF;
 	font-size:12px;
 	/*text-decoration:underline;*/
-}
-
-.tab:hover{
-	background-position:right -73px;
-	cursor: pointer;
-}	
-.tab:hover span{
-	background-position:left -73px;
-	cursor: pointer;
-} 
-.tab {	
-	background: transparent url(images/New_ui/hightaba.png) no-repeat scroll right top;
-	color: White;
-	float: left;
-	height: 40px;
-	padding-right: 8px;      
-	margin-right: 2px;
-	text-align:center;
-	text-decoration: none;
-	font-family: Verdana;
-	z-index: -1;
-}
-.tab span {
-	background: transparent url(images/New_ui/hightabspan.png) no-repeat;
-	height: 40px;
-	padding-left: 6px;
-	padding-top: 10px \9;
-	line-height: 15px;
-	font-family: Verdana;
-	font-size: 12px;
-	vertical-align: middle;
-	display: table-cell;
-	display: inline-block \9;
-	width: auto;
-	z-index: -1;
-}
-.tabclick {	   
-	background: transparent url(images/New_ui/hightabclicka.png) no-repeat scroll right top;
-	color: White;
-	float: left;
-	height: 40px;
-	padding-right: 8px;      
-	margin-right: 2px;
-	text-align: center;
-	text-decoration: none;
-	font-family: Verdana;
-}
-.tabclick span {
-	background: transparent url(images/New_ui/hightabclickspan.png) repeat;
-	height: 40px;
-	padding-left: 6px;
-	padding-top: 10px \9;
-	line-height: 15px;
-	font-family: Verdana;
-	font-size: 12px; 
-	vertical-align: middle;
-	display: table-cell;
-	display: inline-block \9;
-	width: auto;
-}	
-div.tabclick {
-	height: 40px !important;
 }
 
 .tab_NW {	
@@ -1982,7 +1897,6 @@ padding-top:1px;
 
 .traffictable th{
 	height:30px;
-	background-image: url(images/general_th.gif);
 }
 
 .traffictable th:hover{
@@ -2315,16 +2229,17 @@ padding-top:1px;
 	width:20px;
 }
 .textarea_ssh_table{
-	margin-left:2px;
-	padding-left:0.4em;
-	width:500px;
-	height:184px;
-	line-height:18px;
-	font-size:12px;
-	background:#576D73;
-	border:2px ridge #777;
-	border-style:bevel;
-	color:#FFFFFF;
+        color: #FFFFFF;
+        background-color: #576D73;
+        border:2px ridge #777;
+        border-style:bevel;
+}
+.textarea_log_table{
+	color: #FFFFFF;
+	background-color: #475A5F;
+        border:2px ridge #777;
+        border-style:bevel;
+	width:99%;
 }
 .link{
 	cursor:pointer !important;
@@ -2334,3 +2249,64 @@ padding-top:1px;
 .IE8HACK{
 	display: none \9;
 }
+/* 382 */
+.content_bg, .list_bg{
+	background: #4D595D;
+}
+.block_bg{
+	background: #444f53;
+}
+.control_bg{
+	background: #3A4042;
+}
+.tab_font_color{
+	color: #93A9B1;
+}
+.pop_div_bg{
+	background-color: #2B373B;	
+}
+.analysis_bg{
+	background: #2F3E44;
+}
+.tm_title_bg{
+	background: #2F3A3E;
+}
+.arrow_up{
+	border-color:#444F53 #444F53 #93E7FF #444F53;
+}
+.arrow_down{
+< 	border-color:#93E7FF #444F53 #444F53 #444F53;
+}
+#sortable div table tr:hover{
+	cursor: pointer;
+	color: #000;
+	background-color: #66777D;
+	font-weight: bolder;
+}
+.web_frame{
+	border: 1px solid #A9A9A9;
+}
+.tab_info_bg{
+	background: #444f53;
+}
+.textarea_bg{
+	background: #475A5F;
+}
+.eula_panel_container{
+	display: none;
+	position: absolute;
+	width: 500px;
+	height: 558px;
+	z-index: 2000;
+	border: 3px solid #4D5C63;
+	border-radius: 4px;
+}
+
+.minup_bg{
+	background :url("images/New_ui/midup_bg.png");
+}
+.mindown_bg{
+	background :url("images/New_ui/middown_bg.png");
+}
+
+/* end 382 */

@@ -1,0 +1,20 @@
+## Here is an example for Javascript.
+
+syntax "javascript" "\.js$"
+comment "//"
+
+color brightred "\<[A-Z_][0-9A-Z_]+\>"
+color green "\<(const|function|let|this|typeof|var|void)\>"
+color brightyellow "\<(for|if|while|with|do|else|case|default|switch)\>"
+color brightyellow "\<(export|try|throw|catch|new|delete)\>"
+color magenta "\<(continue|break|return|yield)\>"
+color brightmagenta "'([^'\]|(\\["'abfnrtv\\]))'" "'\\(([0-3]?[0-7]{1,2}))'" "'\\x[0-9A-Fa-f]{1,2}'"
+
+# Strings.
+color brightyellow "<[^= 	]*>" ""(\\.|[^"])*"" "'(\\.|[^'])*'"
+# Comments.
+color brightblue "//.*"
+color brightblue start="/\*" end="\*/"
+
+# Trailing whitespace.
+color ,green "[[:space:]]+$"

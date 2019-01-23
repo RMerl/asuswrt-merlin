@@ -841,8 +841,8 @@ unsigned int getAPPIN(int unit)
 int
 wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 {
-	int i, j = -1, u = unit;
-	char tmpstr[128], tmpstr2[256];
+	int /*i,*/ j = -1, u = unit;
+	char tmpstr[128]/*, tmpstr2[256]*/;
 	WSC_CONFIGURED_VALUE result;
 	int retval=0;
 	struct iwreq wrq;
@@ -916,6 +916,7 @@ wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		retval += websWrite(wp, "%s%s%s\n", tag1, tmpstr, tag2);
 
 		//6. WPAKey
+#if 0	//hide for security
 		memset(tmpstr, 0, sizeof(tmpstr));
 		for (i=0; i<64; i++)	// WPA key default length is 64 (defined & hardcode in driver)
 		{
@@ -928,11 +929,14 @@ wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			char_to_ascii(tmpstr2, tmpstr);
 			retval += websWrite(wp, "%s%s%s\n", tag1, tmpstr2, tag2);
 		}
-
+#else
+		retval += websWrite(wp, "%s%s\n", tag1, tag2);
+#endif
 		//7. AP PIN Code
 		retval += websWrite(wp, "%s%08d%s\n", tag1, getAPPIN(u), tag2);
 
 		//8. Saved WPAKey
+#if 0	//hide for security
 		if (!strlen(nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp))))
 			retval += websWrite(wp, "%s%s%s\n", tag1, "None", tag2);
 		else
@@ -940,7 +944,9 @@ wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			char_to_ascii(tmpstr, nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp)));
 			retval += websWrite(wp, "%s%s%s\n", tag1, tmpstr, tag2);
 		}
-
+#else
+		retval += websWrite(wp, "%s%s\n", tag1, tag2);
+#endif
 		//9. WPS enable?
 		if (!strcmp(nvram_safe_get(strcat_r(prefix, "wps_mode", tmp)), "enabled"))
 			retval += websWrite(wp, "%s%s%s\n", tag1, "None", tag2);

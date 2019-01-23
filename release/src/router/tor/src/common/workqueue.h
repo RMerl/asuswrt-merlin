@@ -1,4 +1,4 @@
-/* Copyright (c) 2013, The Tor Project, Inc. */
+/* Copyright (c) 2013-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #ifndef TOR_WORKQUEUE_H
@@ -7,7 +7,7 @@
 #include "compat.h"
 
 /** A replyqueue is used to tell the main thread about the outcome of
- * work that we queued for the the workers. */
+ * work that we queued for the workers. */
 typedef struct replyqueue_s replyqueue_t;
 /** A thread-pool manages starting threads and passing work to them. */
 typedef struct threadpool_s threadpool_t;

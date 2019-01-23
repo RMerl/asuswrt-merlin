@@ -17,36 +17,6 @@
 typedef uint32_t aliased_uint32_t FIX_ALIASING;
 typedef off_t    aliased_off_t    FIX_ALIASING;
 
-
-const char* FAST_FUNC strip_unsafe_prefix(const char *str)
-{
-	const char *cp = str;
-	while (1) {
-		char *cp2;
-		if (*cp == '/') {
-			cp++;
-			continue;
-		}
-		if (strncmp(cp, "/../"+1, 3) == 0) {
-			cp += 3;
-			continue;
-		}
-		cp2 = strstr(cp, "/../");
-		if (!cp2)
-			break;
-		cp = cp2 + 4;
-	}
-	if (cp != str) {
-		static smallint warned = 0;
-		if (!warned) {
-			warned = 1;
-			bb_error_msg("removing leading '%.*s' from member names",
-				(int)(cp - str), str);
-		}
-	}
-	return cp;
-}
-
 /* NB: _DESTROYS_ str[len] character! */
 static unsigned long long getOctal(char *str, int len)
 {
@@ -90,13 +60,21 @@ static unsigned long long getOctal(char *str, int len)
 }
 #define GET_OCTAL(a) getOctal((a), sizeof(a))
 
+#define TAR_EXTD (ENABLE_FEATURE_TAR_GNU_EXTENSIONS || ENABLE_FEATURE_TAR_SELINUX)
+#if !TAR_EXTD
+#define process_pax_hdr(archive_handle, sz, global) \
+	process_pax_hdr(archive_handle, sz)
+#endif
 /* "global" is 0 or 1 */
 static void process_pax_hdr(archive_handle_t *archive_handle, unsigned sz, int global)
 {
+#if !TAR_EXTD
+	unsigned blk_sz = (sz + 511) & (~511);
+	seek_by_read(archive_handle->src_fd, blk_sz);
+#else
+	unsigned blk_sz = (sz + 511) & (~511);
 	char *buf, *p;
-	unsigned blk_sz;
 
-	blk_sz = (sz + 511) & (~511);
 	p = buf = xmalloc(blk_sz + 1);
 	xread(archive_handle->src_fd, buf, blk_sz);
 	archive_handle->offset += blk_sz;
@@ -115,7 +93,9 @@ static void process_pax_hdr(archive_handle_t *archive_handle, unsigned sz, int g
 		 */
 		p += len;
 		sz -= len;
-		if ((int)sz < 0
+		if (
+		/** (int)sz < 0 - not good enough for huge malicious VALUE of 2^32-1 */
+		    (int)(sz|len) < 0 /* this works */
 		 || len == 0
 		 || errno != EINVAL
 		 || *end != ' '
@@ -132,30 +112,31 @@ static void process_pax_hdr(archive_handle_t *archive_handle, unsigned sz, int g
 		p[-1] = '\0';
 		value = end + 1;
 
-#if ENABLE_FEATURE_TAR_GNU_EXTENSIONS
-		if (!global && strncmp(value, "path=", sizeof("path=") - 1) == 0) {
+# if ENABLE_FEATURE_TAR_GNU_EXTENSIONS
+		if (!global && is_prefixed_with(value, "path=")) {
 			value += sizeof("path=") - 1;
 			free(archive_handle->tar__longname);
 			archive_handle->tar__longname = xstrdup(value);
 			continue;
 		}
-#endif
+# endif
 
-#if ENABLE_FEATURE_TAR_SELINUX
+# if ENABLE_FEATURE_TAR_SELINUX
 		/* Scan for SELinux contexts, via "RHT.security.selinux" keyword.
 		 * This is what Red Hat's patched version of tar uses.
 		 */
-# define SELINUX_CONTEXT_KEYWORD "RHT.security.selinux"
-		if (strncmp(value, SELINUX_CONTEXT_KEYWORD"=", sizeof(SELINUX_CONTEXT_KEYWORD"=") - 1) == 0) {
+#  define SELINUX_CONTEXT_KEYWORD "RHT.security.selinux"
+		if (is_prefixed_with(value, SELINUX_CONTEXT_KEYWORD"=")) {
 			value += sizeof(SELINUX_CONTEXT_KEYWORD"=") - 1;
 			free(archive_handle->tar__sctx[global]);
 			archive_handle->tar__sctx[global] = xstrdup(value);
 			continue;
 		}
-#endif
+# endif
 	}
 
 	free(buf);
+#endif
 }
 
 char FAST_FUNC get_header_tar(archive_handle_t *archive_handle)
@@ -198,13 +179,13 @@ char FAST_FUNC get_header_tar(archive_handle_t *archive_handle)
 	 * the message and we don't check whether we indeed
 	 * saw zero block directly before this. */
 	if (i == 0) {
-		xfunc_error_retval = 0;
- short_read:
-		bb_error_msg_and_die("short read");
+		bb_error_msg("short read");
+		/* this merely signals end of archive, not exit(1): */
+		return EXIT_FAILURE;
 	}
 	if (i != 512) {
 		IF_FEATURE_TAR_AUTODETECT(goto autodetect;)
-		goto short_read;
+		bb_error_msg_and_die("short read");
 	}
 
 #else
@@ -221,16 +202,16 @@ char FAST_FUNC get_header_tar(archive_handle_t *archive_handle)
 			 */
 			while (full_read(archive_handle->src_fd, &tar, 512) == 512)
 				continue;
-			return EXIT_FAILURE;
+			return EXIT_FAILURE; /* "end of archive" */
 		}
 		archive_handle->tar__end = 1;
-		return EXIT_SUCCESS;
+		return EXIT_SUCCESS; /* "decoded one header" */
 	}
 	archive_handle->tar__end = 0;
 
 	/* Check header has valid magic, "ustar" is for the proper tar,
 	 * five NULs are for the old tar format  */
-	if (strncmp(tar.magic, "ustar", 5) != 0
+	if (!is_prefixed_with(tar.magic, "ustar")
 	 && (!ENABLE_FEATURE_TAR_OLDGNU_COMPATIBILITY
 	     || memcmp(tar.magic, "\0\0\0\0", 5) != 0)
 	) {
@@ -241,7 +222,7 @@ char FAST_FUNC get_header_tar(archive_handle_t *archive_handle)
 		 * or not first block (false positive, it's not .gz/.bz2!) */
 		if (lseek(archive_handle->src_fd, -i, SEEK_CUR) != 0)
 			goto err;
-		if (setup_unzip_on_fd(archive_handle->src_fd, /*fail_if_not_detected:*/ 0) != 0)
+		if (setup_unzip_on_fd(archive_handle->src_fd, /*fail_if_not_compressed:*/ 0) != 0)
  err:
 			bb_error_msg_and_die("invalid tar magic");
 		archive_handle->offset = 0;
@@ -378,7 +359,14 @@ char FAST_FUNC get_header_tar(archive_handle_t *archive_handle)
 	case '6':
 		file_header->mode |= S_IFIFO;
 		goto size0;
+	case 'g':	/* pax global header */
+	case 'x': {	/* pax extended header */
+		if ((uoff_t)file_header->size > 0xfffff) /* paranoia */
+			goto skip_ext_hdr;
+		process_pax_hdr(archive_handle, file_header->size, (tar.typeflag == 'g'));
+		goto again_after_align;
 #if ENABLE_FEATURE_TAR_GNU_EXTENSIONS
+/* See http://www.gnu.org/software/tar/manual/html_node/Extensions.html */
 	case 'L':
 		/* free: paranoia: tar with several consecutive longnames */
 		free(p_longname);
@@ -398,18 +386,17 @@ char FAST_FUNC get_header_tar(archive_handle_t *archive_handle)
 		archive_handle->offset += file_header->size;
 		/* return get_header_tar(archive_handle); */
 		goto again;
-	case 'D':	/* GNU dump dir */
-	case 'M':	/* Continuation of multi volume archive */
-	case 'N':	/* Old GNU for names > 100 characters */
-	case 'S':	/* Sparse file */
-	case 'V':	/* Volume header */
+/*
+ *	case 'S':	// Sparse file
+ * Was seen in the wild. Not supported (yet?).
+ * See https://www.gnu.org/software/tar/manual/html_section/tar_92.html
+ * for the format. (An "Old GNU Format" was seen, not PAX formats).
+ */
+//	case 'D':	/* GNU dump dir */
+//	case 'M':	/* Continuation of multi volume archive */
+//	case 'N':	/* Old GNU for names > 100 characters */
+//	case 'V':	/* Volume header */
 #endif
-	case 'g':	/* pax global header */
-	case 'x': {	/* pax extended header */
-		if ((uoff_t)file_header->size > 0xfffff) /* paranoia */
-			goto skip_ext_hdr;
-		process_pax_hdr(archive_handle, file_header->size, (tar.typeflag == 'g'));
-		goto again_after_align;
 	}
  skip_ext_hdr:
 	{
@@ -440,6 +427,7 @@ char FAST_FUNC get_header_tar(archive_handle_t *archive_handle)
 
 	/* Everything up to and including last ".." component is stripped */
 	overlapping_strcpy(file_header->name, strip_unsafe_prefix(file_header->name));
+//TODO: do the same for file_header->link_target?
 
 	/* Strip trailing '/' in directories */
 	/* Must be done after mode is set as '/' is used to check if it's a directory */
@@ -452,9 +440,11 @@ char FAST_FUNC get_header_tar(archive_handle_t *archive_handle)
 		if (cp)
 			*cp = '\0';
 		archive_handle->action_data(archive_handle);
-		if (archive_handle->accept || archive_handle->reject)
+		if (archive_handle->accept || archive_handle->reject
+		 || (archive_handle->ah_flags & ARCHIVE_REMEMBER_NAMES)
+		) {
 			llist_add_to(&archive_handle->passed, file_header->name);
-		else /* Caller isn't interested in list of unpacked files */
+		} else /* Caller isn't interested in list of unpacked files */
 			free(file_header->name);
 	} else {
 		data_skip(archive_handle);
@@ -469,5 +459,5 @@ char FAST_FUNC get_header_tar(archive_handle_t *archive_handle)
 	free(file_header->tar__uname);
 	free(file_header->tar__gname);
 #endif
-	return EXIT_SUCCESS;
+	return EXIT_SUCCESS; /* "decoded one header" */
 }

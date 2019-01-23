@@ -82,7 +82,7 @@ enum
 #else
 #define NMP_CLIENT_LIST_FILENAME        "/tmp/nmp_client_list"
 #endif
-#define NCL_LIMIT 524288   //nmp_client_list limit size(512KB)
+#define NCL_LIMIT 14336   //nmp_client_list limit to 14KB to avoid UI glitch
 
 #ifdef DEBUG
 	#define NMP_DEBUG(fmt, args...) _dprintf(fmt, ## args)

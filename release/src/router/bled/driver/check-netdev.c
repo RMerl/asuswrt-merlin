@@ -29,30 +29,67 @@
 #include "../bled_defs.h"
 #include "check.h"
 
-static struct net_device_stats *get_stats(struct net_device *ndev)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)
+/* Convert rtnl_link_stats64 to net_device_stats. They have the same
+ * fields in the same order, with only the type differing.
+ */
+void netdev_stats64_to_stats(struct net_device_stats *netdev_stats, const struct rtnl_link_stats64 *stats64)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 22)
-	struct net_device_stats* (*get_stats)(struct net_device *dev) = NULL;
+#if BITS_PER_LONG == 64
+#error //eric++
+	BUILD_BUG_ON(sizeof(*stats64) != sizeof(*netdev_stats));
+	memcpy(netdev_stats, stats64, sizeof(*netdev_stats));
+#else
+	size_t i, n = sizeof(*stats64) / sizeof(u64);
+	const u64 *src = (const u64 *)stats64;
+	unsigned long *dst = (unsigned long *)netdev_stats;
 
+	BUILD_BUG_ON(sizeof(*netdev_stats) / sizeof(unsigned long) !=
+		     sizeof(*stats64) / sizeof(u64));
+	for (i = 0; i < n; i++)
+		dst[i] = src[i];
+#endif
+}
+#endif
+
+static struct net_device_stats *get_stats(struct net_device *ndev, struct net_device_stats *stats)
+{
+	struct net_device_stats *s = stats;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 29)
 	const struct net_device_ops *ops = ndev->netdev_ops;
-
-	get_stats = ops->ndo_get_stats;
-#else
-	get_stats = ndev->get_stats;
+#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)
+	struct rtnl_link_stats64 stats64;
 #endif
 
-	if (get_stats)
-		return get_stats(ndev);
-
-	return &ndev->stats;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)
+	if (ops->ndo_get_stats64) {
+		memset(&stats64, 0, sizeof(stats64));
+		ops->ndo_get_stats64(ndev, &stats64);
+		netdev_stats64_to_stats(stats, &stats64);
+	} else
+#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 29)
+	if (ops->ndo_get_stats) {
+		s = ops->ndo_get_stats(ndev);
+	} else
+#endif
+	{
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 22)
+		s = &ndev->stats;
 #else
 #error
-	/* FIXME:
-	 * 	net_device.stats doesn't exist until
-	 * 	commit c45d286e72dd72c0229dc9e2849743ba427fee84. (2.6.22)
-	 */
+		/* FIXME:
+		 * 	net_device.stats doesn't exist until
+		 * 	commit c45d286e72dd72c0229dc9e2849743ba427fee84. (2.6.22)
+		 */
 #endif
+	}
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 37)
+	s->rx_dropped += atomic_long_read(&ndev->rx_dropped);
+#endif
+
+	return s;
 }
 
 /**
@@ -72,6 +109,7 @@ unsigned int ndev_check_traffic(struct bled_priv *bp)
 	const struct net_device_stats *s;
 	struct ndev_bled_priv *np = bp->check_priv;
 	struct ndev_bled_ifstat *ifs;
+	struct net_device_stats stats;
 
 	if (bp->state != BLED_STATE_RUN)
 		return -1;
@@ -82,7 +120,7 @@ unsigned int ndev_check_traffic(struct bled_priv *bp)
 		if (unlikely(!(dev = dev_get_by_name(&init_net, ifs->ifname))))
 			continue;
 
-		if (unlikely(!(s = get_stats(dev)))) {
+		if (unlikely(!(s = get_stats(dev, &stats)))) {
 			dev_put(dev);
 			continue;
 		}
@@ -129,16 +167,17 @@ int ndev_reset_check_traffic(struct bled_priv *bp)
 	const struct net_device_stats *s;
 	struct ndev_bled_priv *np = bp->check_priv;
 	struct ndev_bled_ifstat *ifs;
+	struct net_device_stats stats;
 
 	if (bp->type != BLED_TYPE_NETDEV_BLED)
 		np = bp->check2_priv;
 	for (i = 0, c = 0, ifs = &np->ifstat[0]; i < np->nr_if; ++i, ++ifs) {
+		ifs->last_rx_bytes = 0;
+		ifs->last_tx_bytes = 0;
 		if (!(dev = dev_get_by_name(&init_net, ifs->ifname)))
 			continue;
 
-		ifs->last_rx_bytes = 0;
-		ifs->last_tx_bytes = 0;
-		if (!(s = get_stats(dev))) {
+		if (!(s = get_stats(dev, &stats))) {
 			dev_put(dev);
 			continue;
 		}

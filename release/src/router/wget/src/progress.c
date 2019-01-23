@@ -1,6 +1,6 @@
 /* Download progress.
    Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   2010, 2011, 2015 Free Software Foundation, Inc.
 
 This file is part of GNU Wget.
 
@@ -42,6 +42,7 @@ as that of the covered work.  */
 #include "progress.h"
 #include "utils.h"
 #include "retr.h"
+#include "c-strcase.h"
 
 struct progress_implementation {
   const char *name;
@@ -74,7 +75,7 @@ static struct progress_implementation implementations[] = {
 static struct progress_implementation *current_impl;
 static int current_impl_locked;
 
-/* Progress implementation used by default.  Can be overriden in
+/* Progress implementation used by default.  Can be overridden in
    wgetrc or by the fallback one.  */
 
 #define DEFAULT_PROGRESS_IMPLEMENTATION "bar"
@@ -195,7 +196,7 @@ progress_finish (void *progress, double dltime)
 {
   current_impl->finish (progress, dltime);
 }
-
+
 /* Dot-printing. */
 
 struct dot_progress {
@@ -427,7 +428,7 @@ dot_set_params (char *params)
     return;
 
   /* We use this to set the retrieval style.  */
-  if (!strcasecmp (params, "default"))
+  if (!c_strcasecmp (params, "default"))
     {
       /* Default style: 1K dots, 10 dots in a cluster, 50 dots in a
          line.  */
@@ -435,7 +436,7 @@ dot_set_params (char *params)
       opt.dot_spacing = 10;
       opt.dots_in_line = 50;
     }
-  else if (!strcasecmp (params, "binary"))
+  else if (!c_strcasecmp (params, "binary"))
     {
       /* "Binary" retrieval: 8K dots, 16 dots in a cluster, 48 dots
          (384K) in a line.  */
@@ -443,7 +444,7 @@ dot_set_params (char *params)
       opt.dot_spacing = 16;
       opt.dots_in_line = 48;
     }
-  else if (!strcasecmp (params, "mega"))
+  else if (!c_strcasecmp (params, "mega"))
     {
       /* "Mega" retrieval, for retrieving very long files; each dot is
          64K, 8 dots in a cluster, 6 clusters (3M) in a line.  */
@@ -451,7 +452,7 @@ dot_set_params (char *params)
       opt.dot_spacing = 8;
       opt.dots_in_line = 48;
     }
-  else if (!strcasecmp (params, "giga"))
+  else if (!c_strcasecmp (params, "giga"))
     {
       /* "Giga" retrieval, for retrieving very very *very* long files;
          each dot is 1M, 8 dots in a cluster, 4 clusters (32M) in a
@@ -465,7 +466,7 @@ dot_set_params (char *params)
              _("Invalid dot style specification %s; leaving unchanged.\n"),
              quote (params));
 }
-
+
 /* "Thermometer" (bar) progress. */
 
 /* Assumed screen width if we can't find the real value.  */
@@ -593,7 +594,8 @@ bar_create (const char *f_download, wgint initial, wgint total)
   bp->width = screen_width - 1;
   /* + enough space for the terminating zero, and hopefully enough room
    * for multibyte characters. */
-  bp->buffer = xmalloc (bp->width + 100);
+#define BUF_LEN (bp->width + 100)
+  bp->buffer = xmalloc (BUF_LEN);
 
   logputs (LOG_VERBOSE, "\n");
 
@@ -692,7 +694,7 @@ bar_finish (void *progress, double dltime)
    The idea is that for fast downloads, we get the speed over exactly
    the last three seconds.  For slow downloads (where a network read
    takes more than 150ms to complete), we get the speed over a larger
-   time period, as large as it takes to complete thirty reads.  This
+   time period, as large as it takes to complete twenty reads.  This
    is good because slow downloads tend to fluctuate more and a
    3-second average would be too erratic.  */
 
@@ -839,11 +841,13 @@ cols_to_bytes (const char *mbs, const int cols, int *ncols)
   return bytes;
 }
 #else
-# define count_cols(mbs) ((int)(strlen(mbs)))
-# define cols_to_bytes(mbs, cols, *ncols) do {  \
-    *ncols = cols;                              \
-    bytes = cols;                               \
-}while (0)
+static int count_cols (const char *mbs) { return (int) strlen(mbs); }
+static int
+cols_to_bytes (const char *mbs _GL_UNUSED, const int cols, int *ncols)
+{
+  *ncols = cols;
+  return cols;
+}
 #endif
 
 static const char *
@@ -851,7 +855,7 @@ get_eta (int *bcd)
 {
   /* TRANSLATORS: "ETA" is English-centric, but this must
      be short, ideally 3 chars.  Abbreviate if necessary.  */
-  static const char eta_str[] = N_("   eta %s");
+  static const char eta_str[] = N_("    eta %s");
   static const char *eta_trans;
   static int bytes_cols_diff;
   if (eta_trans == NULL)
@@ -888,18 +892,6 @@ get_eta (int *bcd)
   p += sizeof (s) - 1;                          \
 } while (0)
 
-/* Use move_to_end (s) to get S to point the end of the string (the
-   terminating \0).  This is faster than s+=strlen(s), but some people
-   are confused when they see strchr (s, '\0') in the code.  */
-#define move_to_end(s) s = strchr (s, '\0');
-
-#ifndef MAX
-# define MAX(a, b) ((a) >= (b) ? (a) : (b))
-#endif
-#ifndef MIN
-# define MIN(a, b) ((a) <= (b) ? (a) : (b))
-#endif
-
 static void
 create_image (struct bar_progress *bp, double dl_total_time, bool done)
 {
@@ -907,14 +899,10 @@ create_image (struct bar_progress *bp, double dl_total_time, bool done)
   char *p = bp->buffer;
   wgint size = bp->initial_length + bp->count;
 
-  const char *size_grouped = with_thousand_seps (size);
-  int size_grouped_len = count_cols (size_grouped);
-  /* Difference between num cols and num bytes: */
-  int size_grouped_diff = strlen (size_grouped) - size_grouped_len;
-  int size_grouped_pad; /* Used to pad the field width for size_grouped. */
-
   struct bar_progress_hist *hist = &bp->hist;
   int orig_filename_cols = count_cols (bp->f_download);
+
+  int padding;
 
   /* The progress bar should look like this:
      file xx% [=======>             ] nnn.nnK 12.34KB/s  eta 36m 51s
@@ -936,12 +924,16 @@ create_image (struct bar_progress *bp, double dl_total_time, bool done)
      "=====>..."       - progress bar             - the rest
   */
 
+  /* TODO: Ask the Turkish Translators to fix their translation for the "done"
+   * mode of progress bar. Use one less character. Once that is done, redice
+   * PROGRESS_ETA_LEN by 1.
+   */
 #define PROGRESS_FILENAME_LEN  MAX_FILENAME_COLS + 1
 #define PROGRESS_PERCENT_LEN   4
 #define PROGRESS_DECORAT_LEN   2
 #define PROGRESS_FILESIZE_LEN  7 + 1
-#define PROGRESS_DWNLOAD_RATE  8 + 1
-#define PROGRESS_ETA_LEN       14
+#define PROGRESS_DWNLOAD_RATE  8 + 2
+#define PROGRESS_ETA_LEN       15
 
   int progress_size = bp->width - (PROGRESS_FILENAME_LEN + PROGRESS_PERCENT_LEN +
                                    PROGRESS_DECORAT_LEN + PROGRESS_FILESIZE_LEN +
@@ -950,17 +942,20 @@ create_image (struct bar_progress *bp, double dl_total_time, bool done)
   /* The difference between the number of bytes used,
      and the number of columns used. */
   int bytes_cols_diff = 0;
+  int cols_diff;
+  const char *down_size;
+
+  memset (bp->buffer, '\0', BUF_LEN);
 
   if (progress_size < 5)
     progress_size = 0;
 
   if (orig_filename_cols <= MAX_FILENAME_COLS)
     {
-      int padding = MAX_FILENAME_COLS - orig_filename_cols;
-      sprintf (p, "%s ", bp->f_download);
-      p += orig_filename_cols + 1;
-      for (;padding;padding--)
-        *p++ = ' ';
+      padding = MAX_FILENAME_COLS - orig_filename_cols;
+      p += sprintf (p, "%s ", bp->f_download);
+      memset (p, ' ', padding);
+      p += padding;
     }
   else
     {
@@ -968,18 +963,37 @@ create_image (struct bar_progress *bp, double dl_total_time, bool done)
       int bytes_in_filename, offset_bytes, col;
       int *cols_ret = &col;
 
-      if (((orig_filename_cols > MAX_FILENAME_COLS) && !opt.noscroll) && !done)
-        offset_cols = ((int) bp->tick) % (orig_filename_cols - MAX_FILENAME_COLS);
+#define MIN_SCROLL_TEXT 5
+      if ((orig_filename_cols > MAX_FILENAME_COLS + MIN_SCROLL_TEXT) &&
+          !opt.noscroll &&
+          !done)
+        {
+          offset_cols = ((int) bp->tick + orig_filename_cols + MAX_FILENAME_COLS / 2)
+                        % (orig_filename_cols + MAX_FILENAME_COLS);
+          if (offset_cols > orig_filename_cols)
+            {
+              padding = MAX_FILENAME_COLS - (offset_cols - orig_filename_cols);
+              memset(p, ' ', padding);
+              p += padding;
+              offset_cols = 0;
+            }
+          else
+            padding = 0;
+        }
       else
-        offset_cols = 0;
+        {
+          padding = 0;
+          offset_cols = 0;
+        }
       offset_bytes = cols_to_bytes (bp->f_download, offset_cols, cols_ret);
-      bytes_in_filename = cols_to_bytes (bp->f_download + offset_bytes, MAX_FILENAME_COLS, cols_ret);
+      bytes_in_filename = cols_to_bytes (bp->f_download + offset_bytes,
+                                         MAX_FILENAME_COLS - padding,
+                                         cols_ret);
       memcpy (p, bp->f_download + offset_bytes, bytes_in_filename);
       p += bytes_in_filename;
-      int padding = MAX_FILENAME_COLS - *cols_ret;
-      for (;padding;padding--)
-          *p++ = ' ';
-      *p++ = ' ';
+      padding = MAX_FILENAME_COLS - (padding + *cols_ret);
+      memset (p, ' ', padding + 1);
+      p += padding + 1;
     }
 
   /* "xx% " */
@@ -987,15 +1001,13 @@ create_image (struct bar_progress *bp, double dl_total_time, bool done)
     {
       int percentage = 100.0 * size / bp->total_length;
       assert (percentage <= 100);
-
-      if (percentage < 100)
-        sprintf (p, "%3d%%", percentage);
-      else
-        strcpy (p, "100%");
-      p += 4;
+      p += sprintf (p, "%3d%%", percentage);
     }
   else
-    APPEND_LITERAL ("    ");
+    {
+      memset (p, ' ', PROGRESS_PERCENT_LEN);
+      p += PROGRESS_PERCENT_LEN;
+    }
 
   /* The progress bar: "[====>      ]" or "[++==>      ]". */
   if (progress_size && bp->total_length > 0)
@@ -1007,7 +1019,6 @@ create_image (struct bar_progress *bp, double dl_total_time, bool done)
       int dlsz = (double)size / bp->total_length * progress_size;
 
       char *begin;
-      int i;
 
       assert (dlsz <= progress_size);
       assert (insz <= dlsz);
@@ -1017,18 +1028,19 @@ create_image (struct bar_progress *bp, double dl_total_time, bool done)
 
       /* Print the initial portion of the download with '+' chars, the
          rest with '=' and one '>'.  */
-      for (i = 0; i < insz; i++)
-        *p++ = '+';
+      memset (p, '+', insz);
+      p += insz;
+
       dlsz -= insz;
       if (dlsz > 0)
         {
-          for (i = 0; i < dlsz - 1; i++)
-            *p++ = '=';
+          memset (p, '=', dlsz-1);
+          p += dlsz - 1;
           *p++ = '>';
         }
 
-      while (p - begin < progress_size)
-        *p++ = ' ';
+      memset (p, ' ', (progress_size - (p - begin)));
+      p += (progress_size - (p - begin));
       *p++ = ']';
     }
   else if (progress_size)
@@ -1056,27 +1068,14 @@ create_image (struct bar_progress *bp, double dl_total_time, bool done)
       *p++ = ']';
 
     }
- ++bp->tick;
+  ++bp->tick;
 
   /* " 234.56M" */
-  const char * down_size = human_readable (size, 1000, 2);
-  int cols_diff = 7 - count_cols (down_size);
-  while (cols_diff > 0)
-  {
-    *p++=' ';
-    cols_diff--;
-  }
-  sprintf (p, " %s", down_size);
-  move_to_end (p);
-  /* Pad with spaces to 7 chars for the size_grouped field;
-   * couldn't use the field width specifier in sprintf, because
-   * it counts in bytes, not characters. */
-  for (size_grouped_pad = PROGRESS_FILESIZE_LEN - 7;
-       size_grouped_pad > 0;
-       --size_grouped_pad)
-    {
-      *p++ = ' ';
-    }
+  down_size = human_readable (size, 1000, 2);
+  cols_diff = PROGRESS_FILESIZE_LEN - count_cols (down_size);
+  memset (p, ' ', cols_diff);
+  p += cols_diff;
+  p += sprintf (p, "%s", down_size);
 
   /* " 12.52Kb/s or 12.52KB/s" */
   if (hist->total_time > 0 && hist->total_bytes)
@@ -1089,12 +1088,11 @@ create_image (struct bar_progress *bp, double dl_total_time, bool done)
       wgint dlquant = hist->total_bytes + bp->recent_bytes;
       double dltime = hist->total_time + (dl_total_time - bp->recent_start);
       double dlspeed = calc_rate (dlquant, dltime, &units);
-      sprintf (p, " %4.*f%s", dlspeed >= 99.95 ? 0 : dlspeed >= 9.995 ? 1 : 2,
+      p += sprintf (p, "  %4.*f%s", dlspeed >= 99.95 ? 0 : dlspeed >= 9.995 ? 1 : 2,
                dlspeed,  !opt.report_bps ? short_units[units] : short_units_bits[units]);
-      move_to_end (p);
     }
   else
-    APPEND_LITERAL (" --.-KB/s");
+    APPEND_LITERAL ("  --.-KB/s");
 
   if (!done)
     {
@@ -1129,14 +1127,14 @@ create_image (struct bar_progress *bp, double dl_total_time, bool done)
               bp->last_eta_time = dl_total_time;
             }
 
-          sprintf (p, get_eta(&bytes_cols_diff),
+          p += sprintf (p, get_eta(&bytes_cols_diff),
                    eta_to_human_short (eta, false));
-          move_to_end (p);
         }
       else if (bp->total_length > 0)
         {
         skip_eta:
-          APPEND_LITERAL ("             ");
+          memset (p, ' ', PROGRESS_ETA_LEN);
+          p += PROGRESS_ETA_LEN;
         }
     }
   else
@@ -1146,22 +1144,38 @@ create_image (struct bar_progress *bp, double dl_total_time, bool done)
       int ncols;
 
       /* Note to translators: this should not take up more room than
-         available here.  Abbreviate if necessary.  */
-      strcpy (p, _("   in "));
+         available here (6 columns).  Abbreviate if necessary.  */
+      strcpy (p, _("    in "));
       nbytes = strlen (p);
       ncols  = count_cols (p);
       bytes_cols_diff = nbytes - ncols;
-      p += nbytes;
       if (dl_total_time >= 10)
-        strcpy (p, eta_to_human_short ((int) (dl_total_time + 0.5), false));
+        ncols += sprintf (p + nbytes, "%s",  eta_to_human_short ((int) (dl_total_time + 0.5), false));
       else
-        sprintf (p, "%ss", print_decimal (dl_total_time));
-      move_to_end (p);
+        ncols += sprintf (p + nbytes, "%ss", print_decimal (dl_total_time));
+      p += ncols + bytes_cols_diff;
+      memset (p, ' ', PROGRESS_ETA_LEN - ncols);
+      p += PROGRESS_ETA_LEN - ncols;
     }
 
-  while (p - bp->buffer - bytes_cols_diff - size_grouped_diff < bp->width)
-    *p++ = ' ';
+  padding = bp->width - count_cols (bp->buffer);
+  assert (padding >= 0 && "Padding length became non-positive!");
+  padding = padding > 0 ? padding : 0;
+  memset (p, ' ', padding);
+  p += padding;
   *p = '\0';
+
+  /* 2014-11-14  Darshit Shah  <darnir@gmail.com>
+   * Assert that the length of the progress bar is lesser than the size of the
+   * screen with which we are dealing. This assertion *MUST* always be removed
+   * from the release code since we do not want Wget to crash and burn when the
+   * assertion fails. Instead Wget should continue downloading and display a
+   * horrible and irritating progress bar that spams the screen with newlines.
+   *
+   * By default, all assertions are disabled in a Wget build and are enabled
+   * only with the --enable-assert configure option.
+   */
+  assert (count_cols (bp->buffer) == bp->width);
 }
 
 /* Print the contents of the buffer as a one-line ASCII "image" so
@@ -1179,8 +1193,6 @@ display_image (char *buf)
 static void
 bar_set_params (char *params)
 {
-  char *term = getenv ("TERM");
-
   if (params)
     {
       char *param = strtok (params, ":");
@@ -1193,19 +1205,13 @@ bar_set_params (char *params)
         } while ((param = strtok (NULL, ":")) != NULL);
     }
 
-  if ((opt.lfilename
+  if (((opt.lfilename && opt.show_progress != 1)
 #ifdef HAVE_ISATTY
        /* The progress bar doesn't make sense if the output is not a
           TTY -- when logging to file, it is better to review the
           dots.  */
        || !isatty (fileno (stderr))
 #endif
-       /* Normally we don't depend on terminal type because the
-          progress bar only uses ^M to move the cursor to the
-          beginning of line, which works even on dumb terminals.  But
-          Jamie Zawinski reports that ^M and ^H tricks don't work in
-          Emacs shell buffers, and only make a mess.  */
-       || (term && 0 == strcmp (term, "emacs"))
        )
       && !current_impl_locked)
     {

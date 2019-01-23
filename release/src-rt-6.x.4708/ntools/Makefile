@@ -13,7 +13,7 @@ KERNEL_SIZE = 0x1E00000
 # CFE Image Information
 #
 CFE_DIR = ../cfe
-CFE_IMAGE = cfe_rt-ac56u.bin
+CFE_IMAGE = cfe_rt-ac68u.bin
 
 #
 # Linux Firmware Image Information
@@ -39,29 +39,29 @@ all: check_img
 	@echo " +--------------------+--------+-----------------------------+"
 	@echo " |         CFE        | NVRAM  |    Linux Firmware Image     |"
 	@echo " +--------------------+--------+-----------------------------+"
-	@echo " |<----------$(CFE_SIZE)---------->|<-------$(KERNEL_SIZE)------------>|"
+	@echo " |<---------$(CFE_SIZE)---------->|<---------$(KERNEL_SIZE)--------->|"
 	
 	@echo -e "\n-Original CFE Image Size"
 	@wc -c $(CFE_DIR)/$(CFE_IMAGE)
 
-	@echo -e "\n-Original Firmware Image Size"
-	@wc -c $(KERNEL_DIR)/$(KERNEL_IMAGE)
+	#@echo -e "\n-Original Firmware Image Size"
+	#@wc -c $(KERNEL_DIR)/$(KERNEL_IMAGE)
 
 # Copy CFE 
 	@cp $(CFE_DIR)/$(CFE_IMAGE) $(PACKED_DIR)/$(PACKED_IMAGE)
 
 # Finish CFE Padding
-	@SIZE=`wc -c $(CFE_DIR)/$(CFE_IMAGE) | awk '{ print $$1 }'` ; \
+	#@SIZE=`wc -c $(CFE_DIR)/$(CFE_IMAGE) | awk '{ print $$1 }'` ; \
 	CFE_PART_SIZE=`printf "%d" $(CFE_SIZE)` ; \
 	PAD=`expr $$CFE_PART_SIZE - $$SIZE` ; \
 	dd if=/dev/zero count=1 bs=$$PAD 2> /dev/null | \
 	tr \\000 \\377 >> $(PACKED_DIR)/$(PACKED_IMAGE)
 
 # Copy Kernel
-	@cat $(KERNEL_DIR)/$(KERNEL_IMAGE) >> $(PACKED_DIR)/$(PACKED_IMAGE)
+	#@cat $(KERNEL_DIR)/$(KERNEL_IMAGE) >> $(PACKED_DIR)/$(PACKED_IMAGE)
 
 # Finish Kernel Padding
-	@SIZE=`wc -c $(KERNEL_DIR)/$(KERNEL_IMAGE) | awk '{ print $$1 }'` ; \
+	#@SIZE=`wc -c $(KERNEL_DIR)/$(KERNEL_IMAGE) | awk '{ print $$1 }'` ; \
 	KERNEL_PART_SIZE=`printf "%d" $(KERNEL_SIZE)` ; \
 	PAD=`expr $$KERNEL_PART_SIZE - $$SIZE` ; \
 	dd if=/dev/zero count=1 bs=$$PAD 2> /dev/null | \
@@ -89,9 +89,9 @@ check_img:
 	exit 1; \
 	fi 
 
-	@if [ ! -f $(KERNEL_DIR)/$(KERNEL_IMAGE) ]; then \
-	echo "" ; \
-	echo "Please copy \"$(KERNEL_IMAGE)\" to current directory"; \
-	echo "" ; \
-	exit 1; \
-	fi
+	#@if [ ! -f $(KERNEL_DIR)/$(KERNEL_IMAGE) ]; then \
+	#echo "" ; \
+	#echo "Please copy \"$(KERNEL_IMAGE)\" to current directory"; \
+	#echo "" ; \
+	#exit 1; \
+	#fi

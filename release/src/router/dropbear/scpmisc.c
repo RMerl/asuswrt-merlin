@@ -1,3 +1,6 @@
+/* Dropbear Note: This file is based on OpenSSH 4.3p2. Avoid unnecessary 
+   changes to simplify future updates */
+
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -223,6 +226,7 @@ void fatal(char* fmt,...)
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
 	va_end(args);
+	fputc('\n', stderr);
 	exit(255);
 }
 

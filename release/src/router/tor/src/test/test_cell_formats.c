@@ -1,6 +1,6 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "orconfig.h"
@@ -345,9 +345,9 @@ test_cfmt_connected_cells(void *arg)
   memset(&cell, 0, sizeof(cell));
   tor_addr_parse(&addr, "30.40.50.60");
   rh.length = connected_cell_format_payload(cell.payload+RELAY_HEADER_SIZE,
-                                            &addr, 128);
+                                            &addr, 1024);
   tt_int_op(rh.length, OP_EQ, 8);
-  test_memeq_hex(cell.payload+RELAY_HEADER_SIZE, "1e28323c" "00000080");
+  test_memeq_hex(cell.payload+RELAY_HEADER_SIZE, "1e28323c" "00000e10");
 
   /* Try parsing it. */
   tor_addr_make_unspec(&addr);
@@ -355,7 +355,7 @@ test_cfmt_connected_cells(void *arg)
   tt_int_op(r, OP_EQ, 0);
   tt_int_op(tor_addr_family(&addr), OP_EQ, AF_INET);
   tt_str_op(fmt_addr(&addr), OP_EQ, "30.40.50.60");
-  tt_int_op(ttl, OP_EQ, 128);
+  tt_int_op(ttl, OP_EQ, 3600); /* not 1024, since we clipped to 3600 */
 
   /* Try an IPv6 address */
   memset(&rh, 0, sizeof(rh));
@@ -882,8 +882,8 @@ test_cfmt_resolved_cells(void *arg)
     memset(&rh, 0, sizeof(rh));                 \
   } while (0)
 #define CLEAR_ADDRS() do {                              \
-    SMARTLIST_FOREACH(addrs, address_ttl_t *, a,        \
-                      address_ttl_free(a); );           \
+    SMARTLIST_FOREACH(addrs, address_ttl_t *, aa_,      \
+                      address_ttl_free(aa_); );         \
     smartlist_clear(addrs);                             \
   } while (0)
 #define SET_CELL(s) do {                                                \

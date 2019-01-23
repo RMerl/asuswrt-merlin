@@ -87,7 +87,7 @@ Revision 1.47  2006/01/10 02:29:22  cheshire
 
 typedef union { unsigned char b[2]; unsigned short NotAnInteger; } Opaque16;
 
-static char operation;
+static int operation;
 static dns_service_discovery_ref client = NULL;
 static int num_printed;
 static char addtest = 0;

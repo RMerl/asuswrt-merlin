@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef _SESSION_H_
-#define _SESSION_H_
+#ifndef DROPBEAR_SESSION_H_
+#define DROPBEAR_SESSION_H_
 
 #include "includes.h"
 #include "options.h"
@@ -38,30 +38,33 @@
 #include "tcpfwd.h"
 #include "chansession.h"
 #include "dbutil.h"
+#include "netio.h"
 
 extern int sessinitdone; /* Is set to 0 somewhere */
 extern int exitflag;
 
 void common_session_init(int sock_in, int sock_out);
-void session_loop(void(*loophandler)());
-void session_cleanup();
-void send_session_identification();
-void send_msg_ignore();
-void ignore_recv_response();
+void session_loop(void(*loophandler)()) ATTRIB_NORETURN;
+void session_cleanup(void);
+void send_session_identification(void);
+void send_msg_ignore(void);
+void ignore_recv_response(void);
 
-void update_channel_prio();
+void update_channel_prio(void);
 
-const char* get_user_shell();
+const char* get_user_shell(void);
 void fill_passwd(const char* username);
 
 /* Server */
-void svr_session(int sock, int childpipe);
+void svr_session(int sock, int childpipe) ATTRIB_NORETURN;
 void svr_dropbear_exit(int exitcode, const char* format, va_list param) ATTRIB_NORETURN;
 void svr_dropbear_log(int priority, const char* format, va_list param);
 
 /* Client */
-void cli_session(int sock_in, int sock_out);
-void cleantext(unsigned char* dirtytext);
+void cli_session(int sock_in, int sock_out, struct dropbear_progress_connection *progress, pid_t proxy_cmd_pid) ATTRIB_NORETURN;
+void cli_connected(int result, int sock, void* userdata, const char *errstring);
+void cleantext(char* dirtytext);
+void kill_proxy_command(void);
 
 /* crypto parameters that are stored individually for transmit and receive */
 struct key_context_directional {
@@ -107,13 +110,18 @@ struct sshsession {
 	/* Is it a client or server? */
 	unsigned char isserver;
 
+	time_t connect_time; /* time the connection was established
+							(cleared after auth once we're not
+							respecting AUTH_TIMEOUT any more).
+							A monotonic time, not realworld */
+
 	int sock_in;
 	int sock_out;
 
 	/* remotehost will be initially NULL as we delay
 	 * reading the remote version string. it will be set
 	 * by the time any recv_() packet methods are called */
-	unsigned char *remoteident; 
+	char *remoteident;
 
 	int maxfd; /* the maximum file descriptor to check with select() */
 
@@ -123,8 +131,13 @@ struct sshsession {
 							 throughout the code, as handlers fill out this
 							 buffer with the packet to send. */
 	struct Queue writequeue; /* A queue of encrypted packets to send */
+	unsigned int writequeue_len; /* Number of bytes pending to send in writequeue */
 	buffer *readbuf; /* From the wire, decrypted in-place */
-	buffer *payload; /* Post-decompression, the actual SSH packet */
+	buffer *payload; /* Post-decompression, the actual SSH packet. 
+						May have extra data at the beginning, will be
+						passed to packet processing functions positioned past
+						that, see payload_beginning */
+	unsigned int payload_beginning;
 	unsigned int transseq, recvseq; /* Sequence IDs */
 
 	/* Packet-handling flags */
@@ -144,6 +157,8 @@ struct sshsession {
 	
 	int signal_pipe[2]; /* stores endpoints of a self-pipe used for
 						   race-free signal handling */
+
+	m_list conn_pending;
 						
 	/* time of the last packet send/receive, for keepalive. Not real-world clock */
 	time_t last_packet_time_keepalive_sent;
@@ -174,11 +189,11 @@ struct sshsession {
 	   concluded (ie, while dataallowed was unset)*/
 	struct packetlist *reply_queue_head, *reply_queue_tail;
 
-	void(*remoteclosed)(); /* A callback to handle closure of the
+	void(*remoteclosed)(void); /* A callback to handle closure of the
 									  remote connection */
 
-	void(*extra_session_cleanup)(); /* client or server specific cleanup */
-	void(*send_kex_first_guess)();
+	void(*extra_session_cleanup)(void); /* client or server specific cleanup */
+	void(*send_kex_first_guess)(void);
 
 	struct AuthState authstate; /* Common amongst client and server, since most
 								   struct elements are common */
@@ -221,11 +236,6 @@ struct serversession {
 
 	/* The resolved remote address, used for lastlog etc */
 	char *remotehost;
-
-	time_t connect_time; /* time the connection was established
-							(cleared after auth once we're not
-							respecting AUTH_TIMEOUT any more).
-							A monotonic time, not realworld */
 
 #ifdef USE_VFORK
 	pid_t server_pid;
@@ -284,10 +294,9 @@ struct clientsession {
 	int interact_request_received; /* flag whether we've received an 
 									  info request from the server for
 									  interactive auth.*/
-
+#endif
 	int cipher_none_after_auth; /* Set to 1 if the user requested "none"
 								   auth */
-#endif
 	sign_key *lastprivkey;
 
 	int retval; /* What the command exit status was - we emulate it */
@@ -296,6 +305,7 @@ struct clientsession {
 	struct AgentkeyList *agentkeys; /* Keys to use for public-key auth */
 #endif
 
+	pid_t proxy_cmd_pid;
 };
 
 /* Global structs storing the state */
@@ -309,4 +319,4 @@ extern struct serversession svr_ses;
 extern struct clientsession cli_ses;
 #endif /* DROPBEAR_CLIENT */
 
-#endif /* _SESSION_H_ */
+#endif /* DROPBEAR_SESSION_H_ */

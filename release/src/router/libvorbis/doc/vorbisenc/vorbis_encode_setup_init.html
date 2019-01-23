@@ -9,18 +9,18 @@
 <table border=0 width=100%>
 <tr>
 <td><p class=tiny>libvorbisenc documentation</p></td>
-<td align=right><p class=tiny>libvorbisenc release 1.1 - 20040709</p></td>
+<td align=right><p class=tiny>libvorbisenc version 1.3.2 - 20101101</p></td>
 </tr>
 </table>
 
 <h1>vorbis_encode_setup_init</h1>
 
-<p><i>declared in "vorbis/libvorbisenc.h";</i></p>
+<p><i>declared in "vorbis/vorbisenc.h";</i></p>
 
 <p>This function performs the last stage of three-step encoding setup, as described in the API overview under <a href="overview.html#BBR">managed bitrate modes</a>.
 
 <p>Before this function is called, the <a
-href="vorbis_info.html">vorbis_info</a> struct should be initialized
+href="../libvorbis/vorbis_info.html">vorbis_info</a> struct should be initialized
 by using vorbis_info_init() from the libvorbis API, one of <a
 href="vorbis_encode_setup_managed.html">vorbis_encode_setup_managed()</a>
 or <a
@@ -38,7 +38,7 @@ After encoding, vorbis_info_clear should be called.
 <tr bgcolor=#cccccc>
 	<td>
 <pre><b>
-extern int vorbis_encode_setup_init(<a href="vorbis_info.html">vorbis_info</a> *vi);
+extern int vorbis_encode_setup_init(<a href="../libvorbis/vorbis_info.html">vorbis_info</a> *vi);
 
 </b></pre>
 	</td>
@@ -48,7 +48,7 @@ extern int vorbis_encode_setup_init(<a href="vorbis_info.html">vorbis_info</a> *
 <h3>Parameters</h3>
 <dl>
 <dt><i>vi</i></dt>
-<dd>File pointer to an initialized <a href="vorbis_info.html">vorbis_info</a> struct.</dd>
+<dd>Pointer to an initialized <a href="../libvorbis/vorbis_info.html">vorbis_info</a> struct.</dd>
 </dl>
 
 
@@ -74,11 +74,11 @@ to initialize the high-level encoding setup
 <hr noshade>
 <table border=0 width=100%>
 <tr valign=top>
-<td><p class=tiny>copyright &copy; 2004 xiph.org</p></td>
-<td align=right><p class=tiny><a href="http://www.xiph.org/ogg/vorbis/index.html">Ogg Vorbis</a><br><a href="mailto:team@vorbis.org">team@vorbis.org</a></p></td>
+<td><p class=tiny>copyright &copy; 2000-2010 Xiph.Org</p></td>
+<td align=right><p class=tiny><a href="http://www.xiph.org/ogg/vorbis/index.html">Ogg Vorbis</a></p></td>
 </tr><tr>
 <td><p class=tiny>libvorbisenc documentation</p></td>
-<td align=right><p class=tiny>libvorbisenc release 1.1 - 20040709</p></td>
+<td align=right><p class=tiny>libvorbisenc version 1.3.2 - 20101101</p></td>
 </tr>
 </table>
 

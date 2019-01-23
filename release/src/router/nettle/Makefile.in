@@ -133,6 +133,7 @@ nettle_SOURCES = aes-decrypt-internal.c aes-decrypt.c \
 		 umac-nh.c umac-nh-n.c umac-l2.c umac-l3.c \
 		 umac-poly64.c umac-poly128.c umac-set-key.c \
 		 umac32.c umac64.c umac96.c umac128.c \
+		 version.c \
 		 write-be32.c write-le32.c write-le64.c \
 		 yarrow256.c yarrow_key_event.c
 
@@ -143,12 +144,12 @@ hogweed_SOURCES = sexp.c sexp-format.c \
 		  pkcs1.c pkcs1-encrypt.c pkcs1-decrypt.c \
 		  pkcs1-rsa-digest.c pkcs1-rsa-md5.c pkcs1-rsa-sha1.c \
 		  pkcs1-rsa-sha256.c pkcs1-rsa-sha512.c \
-		  rsa.c rsa-sign.c rsa-verify.c \
+		  rsa.c rsa-sign.c rsa-sign-tr.c rsa-verify.c \
 		  rsa-pkcs1-sign.c rsa-pkcs1-sign-tr.c rsa-pkcs1-verify.c \
-		  rsa-md5-sign.c rsa-md5-verify.c \
-		  rsa-sha1-sign.c rsa-sha1-verify.c \
-		  rsa-sha256-sign.c rsa-sha256-verify.c \
-		  rsa-sha512-sign.c rsa-sha512-verify.c \
+		  rsa-md5-sign.c rsa-md5-sign-tr.c rsa-md5-verify.c \
+		  rsa-sha1-sign.c rsa-sha1-sign-tr.c rsa-sha1-verify.c \
+		  rsa-sha256-sign.c rsa-sha256-sign-tr.c rsa-sha256-verify.c \
+		  rsa-sha512-sign.c rsa-sha512-sign-tr.c rsa-sha512-verify.c \
 		  rsa-encrypt.c rsa-decrypt.c rsa-decrypt-tr.c \
 		  rsa-keygen.c rsa-blind.c \
 		  rsa2sexp.c sexp2rsa.c \

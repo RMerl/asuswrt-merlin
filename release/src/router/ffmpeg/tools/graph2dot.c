@@ -94,7 +94,7 @@ int main(int argc, char **argv)
     FILE *infile = NULL;
     char *graph_string = NULL;
     AVFilterGraph *graph = av_mallocz(sizeof(AVFilterGraph));
-    char c;
+    int c;
 
     av_log_set_level(AV_LOG_DEBUG);
 

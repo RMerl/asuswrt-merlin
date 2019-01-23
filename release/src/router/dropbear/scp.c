@@ -1,3 +1,6 @@
+/* Dropbear Note: This file is based on OpenSSH 4.3p2. Avoid unnecessary 
+   changes to simplify future updates */
+
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -96,7 +99,7 @@ int verbose_mode = 0;
 int showprogress = 1;
 
 /* This is the program to execute for the secured connection. ("ssh" or -S) */
-char *ssh_program = _PATH_SSH_PROGRAM;
+char *ssh_program = DROPBEAR_PATH_SSH_PROGRAM;
 
 /* This is used to store the pid of ssh_program */
 pid_t do_cmd_pid = -1;
@@ -286,7 +289,6 @@ int okname(char *);
 void run_err(const char *,...);
 void verifydir(char *);
 
-struct passwd *pwd;
 uid_t userid;
 int errs, remin, remout;
 int pflag, iamremote, iamrecursive, targetshouldbedirectory;
@@ -393,9 +395,6 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if ((pwd = getpwuid(userid = getuid())) == NULL)
-		fatal("unknown user %u", (u_int) userid);
-
 	if (!isatty(STDERR_FILENO))
 		showprogress = 0;
 
@@ -437,13 +436,13 @@ main(int argc, char **argv)
 	}
 	/*
 	 * Finally check the exit status of the ssh process, if one was forked
-	 * and no error has occured yet
+	 * and no error has occurred yet
 	 */
 	if (do_cmd_pid != -1 && errs == 0) {
 		if (remin != -1)
-		    (void) close(remin);
+			(void) close(remin);
 		if (remout != -1)
-		    (void) close(remout);
+			(void) close(remout);
 		if (waitpid(do_cmd_pid, &status, 0) == -1)
 			errs = 1;
 		else {
@@ -511,7 +510,7 @@ toremote(char *targ, int argc, char **argv)
 				host = cleanhostname(host);
 				suser = argv[i];
 				if (*suser == '\0')
-					suser = pwd->pw_name;
+					continue; /* pretend there wasn't any @ at all */
 				else if (!okname(suser))
 					continue;
 				addargs(&alist, "-l");
@@ -579,7 +578,7 @@ tolocal(int argc, char **argv)
 			*host++ = 0;
 			suser = argv[i];
 			if (*suser == '\0')
-				suser = pwd->pw_name;
+				suser = NULL;
 		}
 		host = cleanhostname(host);
 		len = strlen(src) + CMDNEEDS + 20;
@@ -673,7 +672,7 @@ next:			if (fd != -1) {
 			}
 			continue;
 		}
-#if PROGRESS_METER
+#ifdef PROGRESS_METER
 		if (showprogress)
 			start_progress_meter(curfile, stb.st_size, &statbytes);
 #endif
@@ -773,7 +772,7 @@ void
 bwlimit(int amount)
 {
 	static struct timeval bwstart, bwend;
-	static int lamt, thresh = 16384;
+	static int lamt = 0, thresh = 16384;
 	uint64_t waitlen;
 	struct timespec ts, rm;
 
@@ -842,7 +841,7 @@ sink(int argc, char **argv)
 
 #define	atime	tv[0]
 #define	mtime	tv[1]
-#define	SCREWUP(str)	{ why = str; goto screwup; }
+#define	SCREWUP(str)	do { why = str; goto screwup; } while (0)
 
 	setimes = targisdir = 0;
 	mask = umask(0);
@@ -941,8 +940,8 @@ sink(int argc, char **argv)
 			exit(1);
 		}
 		if (targisdir) {
-			static char *namebuf;
-			static size_t cursize;
+			static char *namebuf = NULL;
+			static size_t cursize = 0;
 			size_t need;
 
 			need = strlen(targ) + strlen(cp) + 250;
@@ -992,7 +991,7 @@ sink(int argc, char **argv)
 			continue;
 		}
 		omode = mode;
-		mode |= S_IWRITE;
+		mode |= S_IWUSR;
 		if ((ofd = open(np, O_WRONLY|O_CREAT, mode)) < 0) {
 bad:			run_err("%s: %s", np, strerror(errno));
 			continue;
@@ -1154,7 +1153,7 @@ usage(void)
 void
 run_err(const char *fmt,...)
 {
-	static FILE *fp;
+	static FILE *fp = NULL;
 	va_list ap;
 
 	++errs;

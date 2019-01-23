@@ -7,7 +7,6 @@ from misc.wget_file import WgetFile
     This test ensures that Wget returns the correct exit code when Basic
     authentcation failes due to a username/password error.
 """
-TEST_NAME = "Basic Authentication Failure"
 ############# File Definitions ###############################################
 File1 = "I am an invisble man."
 
@@ -42,7 +41,6 @@ post_test = {
 }
 
 err = HTTPTest (
-                name=TEST_NAME,
                 pre_hook=pre_test,
                 test_params=test_options,
                 post_hook=post_test

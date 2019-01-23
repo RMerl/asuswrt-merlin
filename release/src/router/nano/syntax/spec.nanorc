@@ -1,0 +1,40 @@
+## Syntax highlighting for RPM spec files.
+
+syntax "spec" "\.(spec$|spec\.*)"
+comment "#"
+
+# Main tags.
+color brightblue "((Icon|ExclusiveOs|ExcludeOs)[[:space:]]*:)"
+color brightblue "((BuildArch|BuildArchitectures|ExclusiveArch|ExcludeArch)[[:space:]]*:)"
+color brightblue "((Conflicts|Obsoletes|Provides|Requires|Requires\(.*\)|Enhances|Suggests|BuildConflicts|BuildRequires|Recommends|PreReq|Supplements)[[:space:]]*:)"
+color brightblue "((Epoch|Serial|Nosource|Nopatch)[[:space:]]*:)"
+color brightblue "((AutoReq|AutoProv|AutoReqProv)[[:space:]]*:)"
+color brightblue "((Copyright|License|Summary|Summary\(.*\)|Distribution|Vendor|Packager|Group|Source\d*|Patch\d*|BuildRoot|Prefix)[[:space:]]*:)"
+color brightblue "((Name|Version|Release|Url|URL)[[:space:]]*:)"
+color brightblue start="^Source" end=":" start="^Patch" end=":"
+# Architectures.
+color brightred "(i386|i486|i586|i686|athlon|ia64|alpha|alphaev5|alphaev56|alphapca56|alphaev6|alphaev67|sparc|sparcv9|sparc64armv3l|armv4b|armv4lm|ips|mipsel|ppc|ppc|iseries|ppcpseries|ppc64|m68k|m68kmint|Sgi|rs6000|i370|s390x|s390|noarch)"
+# Architecture conditionals.
+color brightred "(ifarch|ifnarch)"
+# OS conditionals.
+color brightred "(ifos|ifnos)"
+# %* strings.
+color green "%([A-Z_a-z_0-9_]*)"
+color magenta "%_([A-Z_a-z_0-9_]*)"
+color yellow start="%__" end="\ "
+color magenta start="%\{" end="\}"
+color yellow start="%\{__" end="\}"
+# Sections.
+color red "^%(build$|changelog|check$|clean$|description|files|install$|package|pre|prep$|pretrans|preun)"
+color red "^%(post|posttrans|postun|trigger|triggerin|triggerpostun|triggerun|verifyscript)"
+# Conditionals and defines.
+color brightred "%(if|else|endif|define|global|undefine)"
+
+# Comments.
+color cyan "#.*$"
+# Special case: "# norootforbuild" is handled as main tag.
+color brightblue "^# norootforbuild"
+# %changelog date entries.
+color brightyellow "^\* .*\)$"
+# Trailing whitespace.
+color ,green "[[:space:]]+$"

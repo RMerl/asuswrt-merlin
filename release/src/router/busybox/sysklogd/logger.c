@@ -6,12 +6,26 @@
  *
  * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
+//config:config LOGGER
+//config:	bool "logger"
+//config:	default y
+//config:	select FEATURE_SYSLOG
+//config:	help
+//config:	    The logger utility allows you to send arbitrary text
+//config:	    messages to the system log (i.e. the 'syslogd' utility) so
+//config:	    they can be logged. This is generally used to help locate
+//config:	    problems that occur within programs and scripts.
+
+//applet:IF_LOGGER(APPLET(logger, BB_DIR_USR_BIN, BB_SUID_DROP))
+
+//kbuild:lib-$(CONFIG_LOGGER) += syslogd_and_logger.o
 
 //usage:#define logger_trivial_usage
 //usage:       "[OPTIONS] [MESSAGE]"
 //usage:#define logger_full_usage "\n\n"
 //usage:       "Write MESSAGE (or stdin) to syslog\n"
 //usage:     "\n	-s	Log to stderr as well as the system log"
+//usage:     "\n	-c	Log to console as well as the system log"
 //usage:     "\n	-t TAG	Log using the specified tag (defaults to user name)"
 //usage:     "\n	-p PRIO	Priority (numeric or facility.level pair)"
 //usage:
@@ -85,7 +99,9 @@ int logger_main(int argc UNUSED_PARAM, char **argv)
 	char *str_p, *str_t;
 	int opt;
 	int i = 0;
-	FILE *f = NULL;
+	int fd = -1;
+
+	setup_common_bufsiz();
 
 	/* Fill out the name string early (may be overwritten later) */
 	str_t = uid2uname_utoa(geteuid());
@@ -95,13 +111,13 @@ int logger_main(int argc UNUSED_PARAM, char **argv)
 
 	if (opt & 0x2) /* -s */
 		i |= LOG_PERROR;
-	if (opt & 0x8) { /* -c */
-		f = fopen_for_write(DEV_CONSOLE);
-		if (!f)
-			bb_error_msg("can't open console: %d %s\n", errno, strerror(errno));
-	}
 	//if (opt & 0x4) /* -t */
 	openlog(str_t, i, 0);
+	if (opt & 0x8) { /* -c */
+		fd = device_open(DEV_CONSOLE, O_WRONLY | O_NOCTTY | O_NONBLOCK);
+		if (fd < 0)
+			bb_error_msg("can't open console");
+	}
 	i = LOG_USER | LOG_WARNING;
 	if (opt & 0x1) /* -p */
 		i = pencode(str_p);
@@ -114,8 +130,10 @@ int logger_main(int argc UNUSED_PARAM, char **argv)
 			) {
 				/* Neither "" nor "\n" */
 				syslog(i, "%s", strbuf);
-				if (f)
-					fprintf(f, "%s", strbuf);
+				if (fd >= 0) {
+					fdprintf(fd, "%s: %s%s", str_t, strbuf,
+						 strchr(strbuf, '\n') ? "" : "\n");
+				}
 			}
 		}
 	} else {
@@ -129,13 +147,15 @@ int logger_main(int argc UNUSED_PARAM, char **argv)
 			pos = len;
 		} while (*++argv);
 		syslog(i, "%s", message + 1); /* skip leading " " */
-		if (f)
-			fprintf(f, "%s", message + 1);
+		if (fd >= 0 && len) {
+			fdprintf(fd, "%s:%s%s", str_t, message,
+				 message[len - 1] == '\n' ? "" : "\n");
+		}
 	}
 
 	closelog();
-	if (f)
-		fclose(f);
+	if (fd >= 0)
+		close(fd);
 	return EXIT_SUCCESS;
 }
 

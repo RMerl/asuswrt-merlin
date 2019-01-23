@@ -1,0 +1,5 @@
+/var/log/vsftpd.log {
+    # ftpd doesn't handle SIGHUP properly
+    nocompress
+    missingok
+}

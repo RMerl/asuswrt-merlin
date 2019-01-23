@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <linux/mii.h>
 #include <bcmnvram.h>
 
 #include "utils.h"
@@ -29,41 +30,120 @@ int led_control(int which, int mode);
 
 static int gpio_values_loaded = 0;
 
-int btn_rst_gpio = 0x0ff;
-int btn_wps_gpio = 0xff;
-
+static int btn_gpio_table[BTN_ID_MAX];
 int led_gpio_table[LED_ID_MAX];
 
 int wan_port = 0xff;
 int fan_gpio = 0xff;
-int have_fan_gpio = 0xff;
-#ifdef RTCONFIG_WIRELESS_SWITCH
-int btn_wifi_sw = 0xff; 
-#endif
-#ifdef RTCONFIG_WIFI_TOG_BTN
-int btn_wltog_gpio = 0xff; 
-#endif
-#ifdef RTCONFIG_TURBO
-int btn_turbo_gpio = 0xff;
-#endif
-#ifdef RTCONFIG_LED_BTN
-int btn_led_gpio = 0xff;
-#endif
-#ifdef RTCONFIG_INTERNAL_GOBI
-int btn_lte_gpio = 0xff;
-#endif
-#ifdef RTCONFIG_SWMODE_SWITCH
-#if defined(PLAC66U)
-int btn_swmode_sw_router = 0xff;
-#else
-int btn_swmode_sw_router = 0xff;
-int btn_swmode_sw_repeater = 0xff;
-int btn_swmode_sw_ap = 0xff;
-#endif	/* Model */
-#endif	/* RTCONFIG_SWMODE_SWITCH */
 #ifdef RTCONFIG_QTN
 int reset_qtn_gpio = 0xff;
 #endif
+
+static const struct led_btn_table_s {
+	char *nv;
+	int *p_val;
+} led_btn_table[] = {
+	/* button */
+	{ "btn_rst_gpio",	&btn_gpio_table[BTN_RESET] },
+	{ "btn_wps_gpio",	&btn_gpio_table[BTN_WPS] },
+#ifdef RTCONFIG_SWMODE_SWITCH
+#if defined(PLAC66U)
+	{ "btn_swmode1_gpio",	&btn_gpio_table[BTN_SWMODE_SW_ROUTER] },
+#else
+	{ "btn_swmode1_gpio",	&btn_gpio_table[BTN_SWMODE_SW_ROUTER] },
+	{ "btn_swmode2_gpio",	&btn_gpio_table[BTN_SWMODE_SW_REPEATER] },
+	{ "btn_swmode3_gpio",	&btn_gpio_table[BTN_SWMODE_SW_AP] },
+#endif	/* Model */
+#endif	/* RTCONFIG_SWMODE_SWITCH */
+
+#ifdef RTCONFIG_WIRELESS_SWITCH
+	{ "btn_wifi_gpio",	&btn_gpio_table[BTN_WIFI_SW] },
+#endif
+#ifdef RTCONFIG_WIFI_TOG_BTN
+	{ "btn_wltog_gpio",	&btn_gpio_table[BTN_WIFI_TOG] },
+#endif
+#ifdef RTCONFIG_LED_BTN
+	{ "btn_led_gpio",	&btn_gpio_table[BTN_LED] },
+#endif
+#ifdef RT4GAC55U
+	{ "btn_lte_gpio",	&btn_gpio_table[BTN_LTE] },
+#endif
+#ifdef RTCONFIG_EJUSB_BTN
+	{ "btn_ejusb1_gpio",	&btn_gpio_table[BTN_EJUSB1] },
+	{ "btn_ejusb2_gpio",	&btn_gpio_table[BTN_EJUSB2] },
+#endif
+	/* LED */
+	{ "led_pwr_gpio",	&led_gpio_table[LED_POWER] },
+#if defined(RTCONFIG_PWRRED_LED)
+	{ "led_pwr_red_gpio",	&led_gpio_table[LED_POWER_RED] },
+#endif
+	{ "led_wps_gpio",	&led_gpio_table[LED_WPS] },
+	{ "led_2g_gpio",	&led_gpio_table[LED_2G] },
+	{ "led_5g_gpio",	&led_gpio_table[LED_5G] },
+#ifdef RTCONFIG_LAN4WAN_LED
+	{ "led_lan1_gpio",	&led_gpio_table[LED_LAN1] },
+	{ "led_lan2_gpio",	&led_gpio_table[LED_LAN2] },
+	{ "led_lan3_gpio",	&led_gpio_table[LED_LAN3] },
+	{ "led_lan4_gpio",	&led_gpio_table[LED_LAN4] },
+#else
+	{ "led_lan_gpio",	&led_gpio_table[LED_LAN] },
+#endif	/* LAN4WAN_LED */
+	{ "led_wan_gpio",	&led_gpio_table[LED_WAN] },
+#if defined(RTCONFIG_WANPORT2)
+	{ "led_wan2_gpio",	&led_gpio_table[LED_WAN2] },
+#endif
+#if defined(RTCONFIG_FAILOVER_LED)
+	{ "led_failover_gpio",	&led_gpio_table[LED_FAILOVER] },
+#endif
+#if defined(RTCONFIG_M2_SSD)
+	{ "led_sata_gpio",	&led_gpio_table[LED_SATA] },
+#endif
+	{ "led_usb_gpio",	&led_gpio_table[LED_USB] },
+	{ "led_usb3_gpio",	&led_gpio_table[LED_USB3] },
+#ifdef RTCONFIG_MMC_LED
+	{ "led_mmc_gpio",	&led_gpio_table[LED_MMC] },
+#endif
+#ifdef RTCONFIG_RESET_SWITCH
+	{ "reset_switch_gpio",	&led_gpio_table[LED_RESET_SWITCH] },
+#endif
+#ifdef RTCONFIG_LED_ALL
+	{ "led_all_gpio",	&led_gpio_table[LED_ALL] },
+#endif
+#ifdef RTCONFIG_LOGO_LED
+	{ "led_logo_gpio",	&led_gpio_table[LED_LOGO] },
+#endif
+	{ "led_wan_red_gpio",	&led_gpio_table[LED_WAN_RED] },
+#if defined(RTCONFIG_WANPORT2) && defined(RTCONFIG_WANRED_LED)
+	{ "led_wan2_red_gpio",	&led_gpio_table[LED_WAN2_RED] },
+#endif
+#ifdef RTCONFIG_QTN
+	{ "reset_qtn_gpio",	&led_gpio_table[BTN_QTN_RESET] },
+#endif
+#ifdef RTCONFIG_INTERNAL_GOBI
+	{ "led_3g_gpio",	&led_gpio_table[LED_3G] },
+	{ "led_lte_gpio",	&led_gpio_table[LED_LTE] },
+	{ "led_sig1_gpio",	&led_gpio_table[LED_SIG1] },
+	{ "led_sig2_gpio",	&led_gpio_table[LED_SIG2] },
+	{ "led_sig3_gpio",	&led_gpio_table[LED_SIG3] },
+#endif
+
+#if defined(RTCONFIG_RTAC5300) || defined(RTCONFIG_RTAC5300R)
+	{ "rpm_fan_gpio",	&led_gpio_table[RPM_FAN] },
+#endif
+
+#if defined(PLN12) || defined(PLAC56)
+	{ "plc_wake_gpio",	&led_gpio_table[PLC_WAKE] },
+	{ "led_pwr_red_gpio",	&led_gpio_table[LED_POWER_RED] },
+	{ "led_2g_green_gpio",	&led_gpio_table[LED_2G_GREEN] },
+	{ "led_2g_orange_gpio",	&led_gpio_table[LED_2G_ORANGE] },
+	{ "led_2g_red_gpio",	&led_gpio_table[LED_2G_RED] },
+	{ "led_5g_green_gpio",	&led_gpio_table[LED_5G_GREEN] },
+	{ "led_5g_orange_gpio",	&led_gpio_table[LED_5G_ORANGE] },
+	{ "led_5g_red_gpio",	&led_gpio_table[LED_5G_RED] },
+#endif
+
+	{ NULL, NULL },
+};
 
 int extract_gpio_pin(const char *gpio)
 {
@@ -91,24 +171,38 @@ int init_gpio(void)
 		, "btn_swmode1_gpio", "btn_swmode2_gpio", "btn_swmode3_gpio"
 #endif	/* Mode */
 #endif	/* RTCONFIG_SWMODE_SWITCH */
-#ifdef RTCONFIG_TURBO
-		, "btn_turbo_gpio"
-#endif
 #ifdef RTCONFIG_LED_BTN
 		, "btn_led_gpio"
 #endif
 #ifdef RTCONFIG_INTERNAL_GOBI
 		, "btn_lte_gpio"
 #endif
+#ifdef RTCONFIG_EJUSB_BTN
+		, "btn_ejusb1_gpio", "btn_ejusb2_gpio"
+#endif
 	};
-	char *led_list[] = { "led_turbo_gpio", "led_pwr_gpio", "led_usb_gpio", "led_wps_gpio", "fan_gpio", "have_fan_gpio", "led_lan_gpio", "led_wan_gpio", "led_usb3_gpio", "led_2g_gpio", "led_5g_gpio" 
+	char *led_list[] = { "led_pwr_gpio", "led_usb_gpio", "led_wps_gpio", "fan_gpio", "have_fan_gpio", "led_lan_gpio", "led_wan_gpio", "led_usb3_gpio", "led_2g_gpio", "led_5g_gpio"
+#if defined(RTCONFIG_PWRRED_LED)
+		, "led_pwr_red_gpio"
+#endif
+#ifdef RTCONFIG_LOGO_LED
+		, "led_logo_gpio"
+#endif
 #ifdef RTCONFIG_LAN4WAN_LED
 		, "led_lan1_gpio", "led_lan2_gpio", "led_lan3_gpio", "led_lan4_gpio"
 #endif  /* LAN4WAN_LED */
 #ifdef RTCONFIG_LED_ALL
 		, "led_all_gpio"
 #endif
+#if defined(RTCONFIG_WANPORT2)
+		, "led_wan2_gpio"
+#endif
+#if defined(RTCONFIG_WANRED_LED)
 		, "led_wan_red_gpio"
+#if defined(RTCONFIG_WANPORT2)
+		, "led_wan2_red_gpio"
+#endif
+#endif
 #ifdef RTCONFIG_QTN
 		, "reset_qtn_gpio"
 #endif
@@ -122,6 +216,15 @@ int init_gpio(void)
 #endif
 #ifdef RTCONFIG_INTERNAL_GOBI
 		, "led_3g_gpio", "led_lte_gpio", "led_sig1_gpio", "led_sig2_gpio", "led_sig3_gpio", "led_sig4_gpio"
+#endif
+#if defined(RTCONFIG_PWRRED_LED)
+		, "led_pwr_red_gpio"
+#endif
+#if defined(RTCONFIG_FAILOVER_LED)
+		, "led_failover_gpio"
+#endif
+#if defined(RTCONFIG_M2_SSD)
+		, "led_sata_gpio"
 #endif
 #if (defined(PLN12) || defined(PLAC56))
 		, "plc_wake_gpio"
@@ -170,6 +273,12 @@ int init_gpio(void)
 			continue;
 		}
 #endif
+#if defined(BRTAC828)
+		if ((!strcmp(led_list[i], "led_wan_gpio") && nvram_match("led_wan_gpio", "qca8033")) ||
+		    (!strcmp(led_list[i], "led_wan2_gpio") && nvram_match("led_wan2_gpio", "qca8033"))) {
+			continue;
+		}
+#endif
 		use_gpio = nvram_get_int(led_list[i]);
 
 		if((gpio_pin = use_gpio & 0xff) == 0xff)
@@ -183,9 +292,20 @@ int init_gpio(void)
 		disable = (use_gpio&GPIO_ACTIVE_LOW)==0 ? 0: 1;
 		gpio_dir(gpio_pin, GPIO_DIR_OUT);
 
+#if defined(RTCONFIG_WANPORT2)
+		/* Turn on WAN RED LED at system start-up if and only if coresponding WAN unit is enabled. */
+		if (nvram_get_int("sw_mode") == SW_MODE_ROUTER) {
+			if ((!strcmp(led_list[i], "led_wan_red_gpio") && get_dualwan_by_unit(0) != WANS_DUALWAN_IF_NONE) ||
+			    (!strcmp(led_list[i], "led_wan2_red_gpio") && get_dualwan_by_unit(1) != WANS_DUALWAN_IF_NONE))
+				disable = !disable;
+		}
+#else
+#if defined(RTCONFIG_WANRED_LED)
 		/* If WAN RED LED is defined, keep it on until Internet connection ready in router mode. */
 		if (!strcmp(led_list[i], "led_wan_red_gpio") && nvram_get_int("sw_mode") == SW_MODE_ROUTER)
 			disable = !disable;
+#endif
+#endif
 
 		set_gpio(gpio_pin, disable);
 #ifdef RTCONFIG_INTERNAL_GOBI	// save setting value
@@ -235,9 +355,11 @@ int init_gpio(void)
 	return 0;
 }
 
-int set_pwr_usb(int boolOn){
+#ifdef RTCONFIG_BCMARM
+int set_pwr_usb(int boolOn) {
 	int use_gpio, gpio_pin;
 
+#ifdef RTAC68U
 	switch(get_model()) {
 		case MODEL_RTAC68U:
 			if ((nvram_get_int("HW_ver") != 170) &&
@@ -246,20 +368,23 @@ int set_pwr_usb(int boolOn){
 			    (nvram_get_double("HW_ver") != 1.90) &&
 			    (nvram_get_double("HW_ver") != 1.95) &&
 			    (nvram_get_double("HW_ver") != 2.10) &&
-			    (nvram_get_double("HW_ver") != 2.20))
+			    (nvram_get_double("HW_ver") != 2.20) &&
+			    !is_ac66u_v2_series() &&
+			    !nvram_match("cpurev", "c0"))
 				return 0;
 			break;
 	}
+#endif
 
-	if((gpio_pin = (use_gpio = nvram_get_int("pwr_usb_gpio"))&0xff) != 0xff){
-		if(boolOn)
+	if ((gpio_pin = (use_gpio = nvram_get_int("pwr_usb_gpio"))&0xff) != 0xff) {
+		if (boolOn)
 			set_gpio(gpio_pin, 1);
 		else
 			set_gpio(gpio_pin, 0);
 	}
 
-	if((gpio_pin = (use_gpio = nvram_get_int("pwr_usb_gpio2"))&0xff) != 0xff){
-		if(boolOn)
+	if ((gpio_pin = (use_gpio = nvram_get_int("pwr_usb_gpio2"))&0xff) != 0xff) {
+		if (boolOn)
 			set_gpio(gpio_pin, 1);
 		else
 			set_gpio(gpio_pin, 0);
@@ -267,6 +392,11 @@ int set_pwr_usb(int boolOn){
 
 	return 0;
 }
+#else
+int set_pwr_usb(int boolOn) {
+	return 0;
+}
+#endif
 
 /* Return GPIO# of specified nvram variable.
  * @return:
@@ -284,103 +414,17 @@ static int __get_gpio(char *name)
 void get_gpio_values_once(int force)
 {
 	int i;
-	//int model;
+	const struct led_btn_table_s *p;
+
 	if (gpio_values_loaded && !force) return;
 
 	gpio_values_loaded = 1;
-	//model = get_model();
-
 	// TODO : add other models
-
-	btn_rst_gpio = __get_gpio("btn_rst_gpio");
-	btn_wps_gpio = __get_gpio("btn_wps_gpio");
-
 	for (i = 0; i < ARRAY_SIZE(led_gpio_table); ++i) {
 		led_gpio_table[i] = -1;
 	}
-	led_gpio_table[LED_POWER] = __get_gpio("led_pwr_gpio");
-	led_gpio_table[LED_WPS] = __get_gpio("led_wps_gpio");
-	led_gpio_table[LED_2G] = __get_gpio("led_2g_gpio");
-	led_gpio_table[LED_5G] = __get_gpio("led_5g_gpio");
-#ifdef RTCONFIG_LAN4WAN_LED
-	led_gpio_table[LED_LAN1] = __get_gpio("led_lan1_gpio");
-	led_gpio_table[LED_LAN2] = __get_gpio("led_lan2_gpio");
-	led_gpio_table[LED_LAN3] = __get_gpio("led_lan3_gpio");
-	led_gpio_table[LED_LAN4] = __get_gpio("led_lan4_gpio");
-#else
-	led_gpio_table[LED_LAN] = __get_gpio("led_lan_gpio");
-#endif	/* LAN4WAN_LED */
-	led_gpio_table[LED_WAN] = __get_gpio("led_wan_gpio");
-	led_gpio_table[LED_USB] = __get_gpio("led_usb_gpio");
-	led_gpio_table[LED_USB3] = __get_gpio("led_usb3_gpio");
-#ifdef RTCONFIG_MMC_LED
-	led_gpio_table[LED_MMC] = __get_gpio("led_mmc_gpio");
-#endif
-#ifdef RTCONFIG_RESET_SWITCH
-	led_gpio_table[LED_RESET_SWITCH] = __get_gpio("reset_switch_gpio");
-#endif
-#ifdef RTCONFIG_LED_ALL
-	led_gpio_table[LED_ALL] = __get_gpio("led_all_gpio");
-#endif
-	led_gpio_table[LED_TURBO] = __get_gpio("led_turbo_gpio");
-	led_gpio_table[LED_WAN_RED] = __get_gpio("led_wan_red_gpio");
-#ifdef RTCONFIG_QTN
-	led_gpio_table[BTN_QTN_RESET] = __get_gpio("reset_qtn_gpio");
-#endif
-#ifdef RTCONFIG_INTERNAL_GOBI
-	led_gpio_table[LED_3G] = __get_gpio("led_3g_gpio");
-	led_gpio_table[LED_LTE] = __get_gpio("led_lte_gpio");
-	led_gpio_table[LED_SIG1] = __get_gpio("led_sig1_gpio");
-	led_gpio_table[LED_SIG2] = __get_gpio("led_sig2_gpio");
-	led_gpio_table[LED_SIG3] = __get_gpio("led_sig3_gpio");
-#ifdef RT4GAC68U
-	led_gpio_table[LED_SIG4] = __get_gpio("led_sig4_gpio");
-#endif
-#endif
-
-#if defined(RTCONFIG_RTAC5300) || defined(RTCONFIG_RTAC5300R)
-	led_gpio_table[RPM_FAN] = __get_gpio("rpm_fan_gpio");
-#endif
-
-#if (defined(PLN12) || defined(PLAC56))
-	led_gpio_table[PLC_WAKE] = __get_gpio("plc_wake_gpio");
-	led_gpio_table[LED_POWER_RED] = __get_gpio("led_pwr_red_gpio");
-	led_gpio_table[LED_2G_GREEN] = __get_gpio("led_2g_green_gpio");
-	led_gpio_table[LED_2G_ORANGE] = __get_gpio("led_2g_orange_gpio");
-	led_gpio_table[LED_2G_RED] = __get_gpio("led_2g_red_gpio");
-	led_gpio_table[LED_5G_GREEN] = __get_gpio("led_5g_green_gpio");
-	led_gpio_table[LED_5G_ORANGE] = __get_gpio("led_5g_orange_gpio");
-	led_gpio_table[LED_5G_RED] = __get_gpio("led_5g_red_gpio");
-#endif
-
-#ifdef RTCONFIG_SWMODE_SWITCH
-#if defined(PLAC66U)
-	btn_swmode_sw_router = __get_gpio("btn_swmode1_gpio");
-#else	
-	btn_swmode_sw_router = __get_gpio("btn_swmode1_gpio");
-	btn_swmode_sw_repeater = __get_gpio("btn_swmode2_gpio");
-	btn_swmode_sw_ap = __get_gpio("btn_swmode3_gpio");
-#endif	/* Model */
-#endif	/* RTCONFIG_SWMODE_SWITCH */
-
-#ifdef RTCONFIG_WIRELESS_SWITCH
-	btn_wifi_sw = __get_gpio("btn_wifi_gpio");
-#endif
-#ifdef RTCONFIG_WIFI_TOG_BTN
-	btn_wltog_gpio = __get_gpio("btn_wltog_gpio");
-#endif
-#ifdef RTCONFIG_TURBO
-	btn_turbo_gpio = __get_gpio("btn_turbo_gpio");
-#endif
-#ifdef RTCONFIG_LED_BTN
-	btn_led_gpio = __get_gpio("btn_led_gpio");
-#endif
-#ifdef RTCONFIG_QTN
-	reset_qtn_gpio = nvram_get_int("reset_qtn_gpio");
-#endif
-#ifdef RTCONFIG_INTERNAL_GOBI
-	btn_lte_gpio = __get_gpio("btn_lte_gpio");
-#endif
+	for (p = &led_btn_table[0]; p->p_val; ++p)
+		*(p->p_val) = __get_gpio(p->nv);
 }
 
 int button_pressed(int which)
@@ -388,67 +432,11 @@ int button_pressed(int which)
 	int use_gpio;
 	int gpio_value;
 
-	get_gpio_values_once(0);
-	switch(which) {
-		case BTN_RESET:
-			use_gpio = btn_rst_gpio;
-			break;
-		case BTN_WPS:
-			use_gpio = btn_wps_gpio;
-			break;
-		case BTN_FAN:
-			use_gpio = fan_gpio;
-			break;
-		case BTN_HAVE_FAN:
-			use_gpio = have_fan_gpio;
-			break;
-#ifdef RTCONFIG_SWMODE_SWITCH
-#if defined(PLAC66U)
-		case BTN_SWMODE_SW_ROUTER:
-			use_gpio = btn_swmode_sw_router;
-			break;
-#else
-		case BTN_SWMODE_SW_ROUTER:
-			use_gpio = btn_swmode_sw_router;
-			break;
-		case BTN_SWMODE_SW_REPEATER:
-			use_gpio = btn_swmode_sw_repeater;
-			break;
-		case BTN_SWMODE_SW_AP:
-			use_gpio = btn_swmode_sw_ap;
-			break;
-#endif	/* Model */
-#endif	/* RTCONFIG_SWMODE_SWITCH */
-#ifdef RTCONFIG_WIRELESS_SWITCH
-		case BTN_WIFI_SW:
-			use_gpio = btn_wifi_sw;
-			break;
-#endif
-#ifdef RTCONFIG_WIFI_TOG_BTN
-		case BTN_WIFI_TOG:
-			use_gpio = btn_wltog_gpio;
-			break;
-#endif
-#ifdef RTCONFIG_TURBO
-		case BTN_TURBO:
-			use_gpio = btn_turbo_gpio;
-			break;
-#endif
-#ifdef RTCONFIG_LED_BTN
-		case BTN_LED:
-			use_gpio = btn_led_gpio;
-			break;
-#endif
-#ifdef RTCONFIG_INTERNAL_GOBI
-		case BTN_LTE:
-			use_gpio = btn_lte_gpio;
-			break;
-#endif
-		default:
-			use_gpio = 0xff;
-			break;
-	}
+	if (which < 0 || which >= BTN_ID_MAX)
+		return -1;
 
+	get_gpio_values_once(0);
+	use_gpio = btn_gpio_table[which];
 	if((use_gpio&0xff)!=0x0ff) 
 	{
 		gpio_value = get_gpio(use_gpio&0xff);
@@ -487,7 +475,7 @@ int do_led_control(int which, int mode)
 	int v = (mode == LED_OFF)? 0:1;
 
 	// Did the user disable the leds?
-	if ((mode == LED_ON) && (nvram_get_int("led_disable") == 1) && (which != LED_TURBO)
+	if ((mode == LED_ON) && (nvram_get_int("led_disable") == 1)
 #ifdef RTCONFIG_QTN
 		&& (which != BTN_QTN_RESET)
 #endif
@@ -603,7 +591,7 @@ int led_control_atomic(int which, int mode)
 				else if (mode == LED_OFF)
 					eval("wl", "-i", "eth3", "ledbh", "10", "0");
 			}
-			// Fall through regular LED_5G to handle other models
+			which = LED_5G;	// Fall through regular LED_5G to handle other models
 		case LED_5G:
 			if ((model == MODEL_RTN66U) || (model == MODEL_RTN16)) {
                                 if (mode == LED_ON)
@@ -667,7 +655,6 @@ void led_control_lte(int percent)
 	}
 }
 #endif	/* RT4GAC55U */
-
 
 extern uint32_t get_phy_status(uint32_t portmask);
 extern uint32_t set_phy_ctrl(uint32_t portmask, int ctrl);

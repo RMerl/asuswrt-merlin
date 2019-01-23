@@ -11,7 +11,7 @@
  ********************************************************************
 
  function: toplevel residue templates for 32/44.1/48kHz
- last mod: $Id: residue_44.h 16227 2009-07-08 06:58:46Z xiphmont $
+ last mod: $Id: residue_44.h 16962 2010-03-11 07:30:34Z xiphmont $
 
  ********************************************************************/
 
@@ -22,30 +22,30 @@
 /***** residue backends *********************************************/
 
 static const vorbis_info_residue0 _residue_44_low={
-  0,-1, -1, 9,-1,
-  /*  0     1     2     3     4     5     6     7  */
+  0,-1, -1, 9,-1,-1,
+  /* 0   1   2   3   4   5   6   7  */
   {0},
   {-1},
-  {  .5,  1.5,  2.5,  2.5,  4.5,  8.5,  16.5, 32.5},
-  {  .5,   .5,   .5,  999., 4.5,  8.5,  16.5, 32.5},
+  {  0,  1,  2,  2,  4,  8, 16, 32},
+  {  0,  0,  0,999,  4,  8, 16, 32},
 };
 
 static const vorbis_info_residue0 _residue_44_mid={
-  0,-1, -1, 10,-1,
-  /*  0     1     2     3     4     5     6     7     8  */
+  0,-1, -1, 10,-1,-1,
+  /* 0   1   2   3   4   5   6   7   8  */
   {0},
   {-1},
-  {  .5,  1.5,  1.5,  2.5,  2.5,  4.5,  8.5,  16.5, 32.5},
-  {  .5,   .5, 999.,   .5,  999., 4.5,  8.5,  16.5, 32.5},
+  {  0,  1,  1,  2,  2,  4,  8, 16, 32},
+  {  0,  0,999,  0,999,  4,  8, 16, 32},
 };
 
 static const vorbis_info_residue0 _residue_44_high={
-  0,-1, -1, 10,-1,
-  /*  0     1     2     3     4     5     6     7     8  */
+  0,-1, -1, 10,-1,-1,
+  /* 0   1   2   3   4   5   6   7   8  */
   {0},
   {-1},
-  {  .5,  1.5,  2.5,  4.5,  8.5, 16.5, 32.5, 71.5,157.5},
-  {  .5,  1.5,  2.5,  3.5,  4.5,  8.5, 16.5, 71.5,157.5},
+  {  0,  1,  2,  4,  8, 16, 32, 71,157},
+  {  0,  1,  2,  3,  4,  8, 16, 71,157},
 };
 
 static const static_bookblock _resbook_44s_n1={
@@ -177,102 +177,102 @@ static const static_bookblock _resbook_44s_9={
 };
 
 static const vorbis_residue_template _res_44s_n1[]={
-  {2,0,  &_residue_44_low,
+  {2,0,32,  &_residue_44_low,
    &_huff_book__44cn1_s_short,&_huff_book__44cn1_sm_short,
    &_resbook_44s_n1,&_resbook_44sm_n1},
 
-  {2,0,  &_residue_44_low,
+  {2,0,32,  &_residue_44_low,
    &_huff_book__44cn1_s_long,&_huff_book__44cn1_sm_long,
    &_resbook_44s_n1,&_resbook_44sm_n1}
 };
 static const vorbis_residue_template _res_44s_0[]={
-  {2,0,  &_residue_44_low,
+  {2,0,16,  &_residue_44_low,
    &_huff_book__44c0_s_short,&_huff_book__44c0_sm_short,
    &_resbook_44s_0,&_resbook_44sm_0},
 
-  {2,0,  &_residue_44_low,
+  {2,0,32,  &_residue_44_low,
    &_huff_book__44c0_s_long,&_huff_book__44c0_sm_long,
    &_resbook_44s_0,&_resbook_44sm_0}
 };
 static const vorbis_residue_template _res_44s_1[]={
-  {2,0,  &_residue_44_low,
+  {2,0,16,  &_residue_44_low,
    &_huff_book__44c1_s_short,&_huff_book__44c1_sm_short,
    &_resbook_44s_1,&_resbook_44sm_1},
 
-  {2,0,  &_residue_44_low,
+  {2,0,32,  &_residue_44_low,
    &_huff_book__44c1_s_long,&_huff_book__44c1_sm_long,
    &_resbook_44s_1,&_resbook_44sm_1}
 };
 
 static const vorbis_residue_template _res_44s_2[]={
-  {2,0,  &_residue_44_mid,
+  {2,0,16,  &_residue_44_mid,
    &_huff_book__44c2_s_short,&_huff_book__44c2_s_short,
    &_resbook_44s_2,&_resbook_44s_2},
 
-  {2,0,  &_residue_44_mid,
+  {2,0,32,  &_residue_44_mid,
    &_huff_book__44c2_s_long,&_huff_book__44c2_s_long,
    &_resbook_44s_2,&_resbook_44s_2}
 };
 static const vorbis_residue_template _res_44s_3[]={
-  {2,0,  &_residue_44_mid,
+  {2,0,16,  &_residue_44_mid,
    &_huff_book__44c3_s_short,&_huff_book__44c3_s_short,
    &_resbook_44s_3,&_resbook_44s_3},
 
-  {2,0,  &_residue_44_mid,
+  {2,0,32,  &_residue_44_mid,
    &_huff_book__44c3_s_long,&_huff_book__44c3_s_long,
    &_resbook_44s_3,&_resbook_44s_3}
 };
 static const vorbis_residue_template _res_44s_4[]={
-  {2,0,  &_residue_44_mid,
+  {2,0,16,  &_residue_44_mid,
    &_huff_book__44c4_s_short,&_huff_book__44c4_s_short,
    &_resbook_44s_4,&_resbook_44s_4},
 
-  {2,0,  &_residue_44_mid,
+  {2,0,32,  &_residue_44_mid,
    &_huff_book__44c4_s_long,&_huff_book__44c4_s_long,
    &_resbook_44s_4,&_resbook_44s_4}
 };
 static const vorbis_residue_template _res_44s_5[]={
-  {2,0,  &_residue_44_mid,
+  {2,0,16,  &_residue_44_mid,
    &_huff_book__44c5_s_short,&_huff_book__44c5_s_short,
    &_resbook_44s_5,&_resbook_44s_5},
 
-  {2,0,  &_residue_44_mid,
+  {2,0,32,  &_residue_44_mid,
    &_huff_book__44c5_s_long,&_huff_book__44c5_s_long,
    &_resbook_44s_5,&_resbook_44s_5}
 };
 static const vorbis_residue_template _res_44s_6[]={
-  {2,0,  &_residue_44_high,
+  {2,0,16,  &_residue_44_high,
    &_huff_book__44c6_s_short,&_huff_book__44c6_s_short,
    &_resbook_44s_6,&_resbook_44s_6},
 
-  {2,0,  &_residue_44_high,
+  {2,0,32,  &_residue_44_high,
    &_huff_book__44c6_s_long,&_huff_book__44c6_s_long,
    &_resbook_44s_6,&_resbook_44s_6}
 };
 static const vorbis_residue_template _res_44s_7[]={
-  {2,0,  &_residue_44_high,
+  {2,0,16,  &_residue_44_high,
    &_huff_book__44c7_s_short,&_huff_book__44c7_s_short,
    &_resbook_44s_7,&_resbook_44s_7},
 
-  {2,0,  &_residue_44_high,
+  {2,0,32,  &_residue_44_high,
    &_huff_book__44c7_s_long,&_huff_book__44c7_s_long,
    &_resbook_44s_7,&_resbook_44s_7}
 };
 static const vorbis_residue_template _res_44s_8[]={
-  {2,0,  &_residue_44_high,
+  {2,0,16,  &_residue_44_high,
    &_huff_book__44c8_s_short,&_huff_book__44c8_s_short,
    &_resbook_44s_8,&_resbook_44s_8},
 
-  {2,0,  &_residue_44_high,
+  {2,0,32,  &_residue_44_high,
    &_huff_book__44c8_s_long,&_huff_book__44c8_s_long,
    &_resbook_44s_8,&_resbook_44s_8}
 };
 static const vorbis_residue_template _res_44s_9[]={
-  {2,0,  &_residue_44_high,
+  {2,0,16,  &_residue_44_high,
    &_huff_book__44c9_s_short,&_huff_book__44c9_s_short,
    &_resbook_44s_9,&_resbook_44s_9},
 
-  {2,0,  &_residue_44_high,
+  {2,0,32,  &_residue_44_high,
    &_huff_book__44c9_s_long,&_huff_book__44c9_s_long,
    &_resbook_44s_9,&_resbook_44s_9}
 };

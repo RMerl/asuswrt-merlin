@@ -1,162 +1,162 @@
 # Irish translations for wget.
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # This file is distributed under the same license as the wget package.
-# Kevin Patrick Scannell <scannell@SLU.EDU>, 2004, 2007, 2008.
-#
+# Kevin Patrick Scannell <scannell@SLU.EDU>, 2004, 2007, 2008, 2017.
 msgid ""
 msgstr ""
-"Project-Id-Version: wget 1.11.3\n"
+"Project-Id-Version: wget 1.18.109\n"
 "Report-Msgid-Bugs-To: bug-wget@gnu.org\n"
-"POT-Creation-Date: 2014-10-27 09:59+0100\n"
-"PO-Revision-Date: 2008-05-13 11:59-0500\n"
+"POT-Creation-Date: 2017-10-26 17:36+0200\n"
+"PO-Revision-Date: 2017-01-17 11:59-0500\n"
 "Last-Translator: Kevin Scannell <kscanne@gmail.com>\n"
 "Language-Team: Irish <gaeilge-gnulinux@lists.sourceforge.net>\n"
 "Language: ga\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
 "Plural-Forms: nplurals=5; plural=n==1 ? 0 : n==2 ? 1 : (n>2 && n<7) ? 2 :"
 "(n>6 && n<11) ? 3 : 4;\n"
 
-#: lib/error.c:188
-#, fuzzy
+#: lib/error.c:191
 msgid "Unknown system error"
-msgstr "Earr·id anaithnid"
+msgstr "Earr√°id ch√≥rais anaithnid"
 
 #: lib/gai_strerror.c:57
-#, fuzzy
 msgid "Address family for hostname not supported"
-msgstr "NÌl seoltaÌ IPv6 ar f·il"
+msgstr "N√≠ thaca√≠tear leis an bhfine seolta√≠"
 
-#: lib/gai_strerror.c:58 src/host.c:365
+#: lib/gai_strerror.c:58 src/host.c:373
 msgid "Temporary failure in name resolution"
-msgstr "Teip shealadach ar rÈiteach na n-ainmneacha"
+msgstr "Teip shealadach ar r√©iteach na n-ainmneacha"
 
 #: lib/gai_strerror.c:59
 msgid "Bad value for ai_flags"
-msgstr ""
+msgstr "Drochluach ai_flags"
 
 #: lib/gai_strerror.c:60
-#, fuzzy
 msgid "Non-recoverable failure in name resolution"
-msgstr "Teip shealadach ar rÈiteach na n-ainmneacha"
+msgstr "Teip ar r√©iteach na n-ainmneacha n√°rbh fh√©idir teacht sl√°n as"
 
 #: lib/gai_strerror.c:61
 msgid "ai_family not supported"
-msgstr ""
+msgstr "N√≠ thaca√≠tear le ai_family"
 
 #: lib/gai_strerror.c:62
 msgid "Memory allocation failure"
-msgstr ""
+msgstr "N√≠orbh fh√©idir cuimhne a leithdh√°ileadh"
 
 #: lib/gai_strerror.c:63
 msgid "No address associated with hostname"
-msgstr ""
+msgstr "N√≠l aon seoladh ceangailte leis an √≥stainm"
 
 #: lib/gai_strerror.c:64
 msgid "Name or service not known"
-msgstr ""
+msgstr "Ainm n√≥ seirbh√≠s anaithnid"
 
 #: lib/gai_strerror.c:65
 msgid "Servname not supported for ai_socktype"
-msgstr ""
+msgstr "N√≠ thaca√≠tear le Servname le haghaidh ai_socktype"
 
 #: lib/gai_strerror.c:66
-#, fuzzy
 msgid "ai_socktype not supported"
-msgstr "NÌl seoltaÌ IPv6 ar f·il"
+msgstr "N√≠ thaca√≠tear le ai_socktype"
 
 #: lib/gai_strerror.c:67
-#, fuzzy
 msgid "System error"
-msgstr "NÌ raibh aon earr·id"
+msgstr "Earr√°id ch√≥rais"
 
 #: lib/gai_strerror.c:68
 msgid "Argument buffer too small"
-msgstr ""
+msgstr "Maol√°n arg√≥int√≠ r√≥bheag"
 
 #: lib/gai_strerror.c:70
 msgid "Processing request in progress"
-msgstr ""
+msgstr "Iarratas √° phr√≥ise√°il"
 
 #: lib/gai_strerror.c:71
 msgid "Request canceled"
-msgstr ""
+msgstr "Ceala√≠odh an t-iarratas"
 
 #: lib/gai_strerror.c:72
 msgid "Request not canceled"
-msgstr ""
+msgstr "N√≠or ceala√≠odh an t-iarratas"
 
 #: lib/gai_strerror.c:73
 msgid "All requests done"
-msgstr ""
+msgstr "Gach iarratas curtha i gcr√≠ch"
 
 #: lib/gai_strerror.c:74
 msgid "Interrupted by a signal"
-msgstr ""
+msgstr "Briseadh comhartha isteach air"
 
 #: lib/gai_strerror.c:75
 msgid "Parameter string not correctly encoded"
-msgstr ""
+msgstr "N√≠ raibh an teaghr√°n paraim√©adar ionch√≥daithe mar is ceart"
 
-#: lib/gai_strerror.c:87 src/host.c:367
+#: lib/gai_strerror.c:87 src/host.c:375
 msgid "Unknown error"
-msgstr "Earr·id anaithnid"
+msgstr "Earr√°id anaithnid"
 
-#: lib/getopt.c:547 lib/getopt.c:576
-#, fuzzy, c-format
+#: lib/getopt.c:575 lib/getopt.c:604
+#, c-format
 msgid "%s: option '%s' is ambiguous; possibilities:"
-msgstr "%s: T· an rogha `%s' dÈbhrÌoch\n"
+msgstr "%s: T√° an rogha '%s' d√©bhr√≠och; f√©idearthachta√≠:"
 
-#: lib/getopt.c:624 lib/getopt.c:628
-#, fuzzy, c-format
+#: lib/getopt.c:619
+#, c-format
+msgid "%s: option '%s' is ambiguous\n"
+msgstr "%s: T√° an rogha '%s' d√©bhr√≠och\n"
+
+#: lib/getopt.c:654 lib/getopt.c:658
+#, c-format
 msgid "%s: option '--%s' doesn't allow an argument\n"
-msgstr "%s: nÌ cheadaÌtear argÛint i ndiaidh na rogha `--%s'\n"
+msgstr "%s: n√≠ cheada√≠tear arg√≥int i ndiaidh na rogha '--%s'\n"
 
-#: lib/getopt.c:637 lib/getopt.c:642
-#, fuzzy, c-format
+#: lib/getopt.c:667 lib/getopt.c:672
+#, c-format
 msgid "%s: option '%c%s' doesn't allow an argument\n"
-msgstr "%s: nÌ cheadaÌtear argÛint i ndiaidh na rogha `%c%s'\n"
+msgstr "%s: n√≠ cheada√≠tear arg√≥int i ndiaidh na rogha '%c%s'\n"
 
-#: lib/getopt.c:685 lib/getopt.c:704
-#, fuzzy, c-format
+#: lib/getopt.c:715 lib/getopt.c:734
+#, c-format
 msgid "%s: option '--%s' requires an argument\n"
-msgstr "%s: t· argÛint de dhÌth i ndiaidh na rogha `%s'\n"
+msgstr "%s: t√° arg√≥int de dh√≠th i ndiaidh na rogha '--%s'\n"
 
-#: lib/getopt.c:742 lib/getopt.c:745
-#, fuzzy, c-format
+#: lib/getopt.c:772 lib/getopt.c:775
+#, c-format
 msgid "%s: unrecognized option '--%s'\n"
-msgstr "%s: rogha anaithnid `--%s'\n"
+msgstr "%s: rogha anaithnid '--%s'\n"
 
-#: lib/getopt.c:753 lib/getopt.c:756
-#, fuzzy, c-format
+#: lib/getopt.c:783 lib/getopt.c:786
+#, c-format
 msgid "%s: unrecognized option '%c%s'\n"
-msgstr "%s: rogha anaithnid `%c%s'\n"
+msgstr "%s: rogha anaithnid '%c%s'\n"
 
-#: lib/getopt.c:805 lib/getopt.c:808
-#, fuzzy, c-format
+#: lib/getopt.c:835 lib/getopt.c:838
+#, c-format
 msgid "%s: invalid option -- '%c'\n"
-msgstr "%s: rogha neamhbhailÌ -- %c\n"
+msgstr "%s: rogha neamhbhail√≠ -- '%c'\n"
 
-#: lib/getopt.c:861 lib/getopt.c:878 lib/getopt.c:1088 lib/getopt.c:1106
-#, fuzzy, c-format
+#: lib/getopt.c:891 lib/getopt.c:908 lib/getopt.c:1118 lib/getopt.c:1136
+#, c-format
 msgid "%s: option requires an argument -- '%c'\n"
-msgstr "%s: t· argÛint de dhÌth i ndiaidh na rogha -- %c\n"
+msgstr "%s: t√° arg√≥int de dh√≠th i ndiaidh na rogha -- '%c'\n"
 
-#: lib/getopt.c:934 lib/getopt.c:950
-#, fuzzy, c-format
+#: lib/getopt.c:964 lib/getopt.c:980
+#, c-format
 msgid "%s: option '-W %s' is ambiguous\n"
-msgstr "%s: T· an rogha `-W %s' dÈbhrÌoch\n"
+msgstr "%s: T√° an rogha '-W %s' d√©bhr√≠och\n"
 
-#: lib/getopt.c:974 lib/getopt.c:992
-#, fuzzy, c-format
+#: lib/getopt.c:1004 lib/getopt.c:1022
+#, c-format
 msgid "%s: option '-W %s' doesn't allow an argument\n"
-msgstr "%s: nÌ cheadaÌtear argÛint i ndiaidh na rogha `-W %s'\n"
+msgstr "%s: n√≠ cheada√≠tear arg√≥int i ndiaidh na rogha '-W %s'\n"
 
-#: lib/getopt.c:1013 lib/getopt.c:1031
-#, fuzzy, c-format
+#: lib/getopt.c:1043 lib/getopt.c:1061
+#, c-format
 msgid "%s: option '-W %s' requires an argument\n"
-msgstr "%s: t· argÛint de dhÌth i ndiaidh na rogha `%s'\n"
+msgstr "%s: t√° arg√≥int de dh√≠th i ndiaidh na rogha '-W %s'\n"
 
 #. TRANSLATORS:
 #. Get translations for open and closing quotation marks.
@@ -179,2744 +179,3311 @@ msgstr "%s: t· argÛint de dhÌth i ndiaidh na rogha `%s'\n"
 #. If you don't know what to put here, please see
 #. <http://en.wikipedia.org/wiki/Quotation_marks_in_other_languages>
 #. and use glyphs suitable for your language.
-#: lib/quotearg.c:312
+#: lib/quotearg.c:354
 msgid "`"
-msgstr ""
+msgstr "`"
 
-#: lib/quotearg.c:313
+#: lib/quotearg.c:355
 msgid "'"
-msgstr ""
+msgstr "'"
 
-#: lib/regcomp.c:131
+#: lib/regcomp.c:135
 msgid "Success"
-msgstr ""
+msgstr "D'√©irigh leis"
 
-#: lib/regcomp.c:134
+#: lib/regcomp.c:138
 msgid "No match"
-msgstr ""
+msgstr "Gan tortha√≠"
 
-#: lib/regcomp.c:137
+#: lib/regcomp.c:141
 msgid "Invalid regular expression"
-msgstr ""
+msgstr "Slonn ionada√≠ochta neamhbhail√≠"
 
-#: lib/regcomp.c:140
+#: lib/regcomp.c:144
 msgid "Invalid collation character"
-msgstr ""
+msgstr "Carachtar s√≥rt√°la neamhbhail√≠"
 
-#: lib/regcomp.c:143
-#, fuzzy
+#: lib/regcomp.c:147
 msgid "Invalid character class name"
-msgstr "”stainm neamhbhailÌ"
+msgstr "Ainm neamhbhail√≠ ar aicme charachtair"
 
-#: lib/regcomp.c:146
+#: lib/regcomp.c:150
 msgid "Trailing backslash"
-msgstr ""
+msgstr "C√∫lslais ag an deireadh"
 
-#: lib/regcomp.c:149
-#, fuzzy
+#: lib/regcomp.c:153
 msgid "Invalid back reference"
-msgstr "Ainm neamhbhailÌ ˙s·ideora"
+msgstr "C√∫ltagairt neamhbhail√≠"
 
-#: lib/regcomp.c:152
-msgid "Unmatched [ or [^"
-msgstr ""
+#: lib/regcomp.c:156
+msgid "Unmatched [, [^, [:, [., or [="
+msgstr "[, [^, [:, [., n√≥ [= corr"
 
-#: lib/regcomp.c:155
+#: lib/regcomp.c:159
 msgid "Unmatched ( or \\("
-msgstr ""
+msgstr "( n√≥ \\( corr"
 
-#: lib/regcomp.c:158
+#: lib/regcomp.c:162
 msgid "Unmatched \\{"
-msgstr ""
+msgstr "\\{ corr"
 
-#: lib/regcomp.c:161
+#: lib/regcomp.c:165
 msgid "Invalid content of \\{\\}"
-msgstr ""
+msgstr "√Åbhar neamhbhail√≠ idir \\{\\}"
 
-#: lib/regcomp.c:164
-#, fuzzy
+#: lib/regcomp.c:168
 msgid "Invalid range end"
-msgstr "Ainm neamhbhailÌ ˙s·ideora"
+msgstr "Deireadh neamhbhail√≠ ar raon"
 
-#: lib/regcomp.c:167
+#: lib/regcomp.c:171
 msgid "Memory exhausted"
-msgstr ""
+msgstr "Cuimhne √≠dithe"
 
-#: lib/regcomp.c:170
+#: lib/regcomp.c:174
 msgid "Invalid preceding regular expression"
-msgstr ""
+msgstr "Slonn ionada√≠ochta neamhbhail√≠ roimhe seo"
 
-#: lib/regcomp.c:173
+#: lib/regcomp.c:177
 msgid "Premature end of regular expression"
-msgstr ""
+msgstr "Deireadh an tsloinn ionada√≠ochta gan s√∫il leis"
 
-#: lib/regcomp.c:176
+#: lib/regcomp.c:180
 msgid "Regular expression too big"
-msgstr ""
+msgstr "Slonn ionada√≠ochta r√≥mh√≥r"
 
-#: lib/regcomp.c:179
+#: lib/regcomp.c:183
 msgid "Unmatched ) or \\)"
-msgstr ""
+msgstr ") n√≥ \\) corr"
 
-#: lib/regcomp.c:707
+#: lib/regcomp.c:687
 msgid "No previous regular expression"
-msgstr ""
+msgstr "N√≠ raibh slonn ionada√≠ochta ann roimhe seo"
 
-#: lib/spawn-pipe.c:135 lib/spawn-pipe.c:138 lib/spawn-pipe.c:259
-#: lib/spawn-pipe.c:262
+#: lib/spawn-pipe.c:137 lib/spawn-pipe.c:140 lib/spawn-pipe.c:261
+#: lib/spawn-pipe.c:264
 #, c-format
 msgid "cannot create pipe"
-msgstr ""
+msgstr "n√≠ f√©idir p√≠opa a chruth√∫"
 
-#: lib/spawn-pipe.c:229 lib/spawn-pipe.c:343 lib/wait-process.c:282
+#: lib/spawn-pipe.c:231 lib/spawn-pipe.c:345 lib/wait-process.c:282
 #: lib/wait-process.c:356
 #, c-format
 msgid "%s subprocess failed"
-msgstr ""
+msgstr "theip ar fhophr√≥iseas %s"
 
-#: lib/w32spawn.h:43
+#: lib/w32spawn.h:45
 #, c-format
 msgid "_open_osfhandle failed"
-msgstr ""
+msgstr "theip ar _open_osfhandle"
 
-#: lib/w32spawn.h:84
+#: lib/w32spawn.h:86
 #, c-format
 msgid "cannot restore fd %d: dup2 failed"
-msgstr ""
+msgstr "n√≠ f√©idir fd %d a athch√≥iri√∫: theip ar dup2"
 
 #: lib/wait-process.c:223 lib/wait-process.c:255 lib/wait-process.c:317
 #, c-format
 msgid "%s subprocess"
-msgstr ""
+msgstr "fophr√≥iseas %s"
 
 #: lib/wait-process.c:274 lib/wait-process.c:346
 #, c-format
 msgid "%s subprocess got fatal signal %d"
-msgstr ""
+msgstr "Fuair fophr√≥iseas %s comhartha marfach %d"
 
 #: lib/xalloc-die.c:34
 msgid "memory exhausted"
-msgstr ""
+msgstr "cuimhne √≠dithe"
 
-#: src/connect.c:200
-#, fuzzy, c-format
+#: src/connect.c:202
+#, c-format
 msgid "%s: unable to resolve bind address %s; disabling bind.\n"
-msgstr ""
-"%s: nÌ fÈidir seoladh ceangail `%s' a rÈiteach; ceangal · dhÌchumas˙.\n"
+msgstr "%s: n√≠ f√©idir seoladh ceangail %s a r√©iteach; ceangal √° dh√≠chumas√∫.\n"
 
-#: src/connect.c:284
+#: src/connect.c:283
 #, c-format
 msgid "Connecting to %s|%s|:%d... "
-msgstr "Ag dul i dteagmh·il le %s|%s|:%d... "
+msgstr "Ag dul i dteagmh√°il le %s|%s|:%d... "
 
-#: src/connect.c:293
+#: src/connect.c:291
 #, c-format
 msgid "Connecting to %s:%d... "
-msgstr "Ag dul i dteagmh·il le %s:%d... "
+msgstr "Ag dul i dteagmh√°il le %s:%d... "
 
-#: src/connect.c:296
-#, fuzzy, c-format
+#: src/connect.c:294
+#, c-format
 msgid "Connecting to [%s]:%d... "
-msgstr "Ag dul i dteagmh·il le %s:%d... "
+msgstr "Ag dul i dteagmh√°il le [%s]:%d... "
+
+#: src/connect.c:330
+#, c-format
+msgid "setsockopt SO_RCVBUF failed: %s\n"
+msgstr "theip ar setsockopt SO_RCVBUF: %s\n"
 
 #: src/connect.c:358
 msgid "connected.\n"
 msgstr "ceangailte.\n"
 
-#: src/connect.c:370 src/host.c:783 src/host.c:812
+#: src/connect.c:377 src/host.c:914 src/host.c:952
 #, c-format
 msgid "failed: %s.\n"
 msgstr "teipthe: %s.\n"
 
-#: src/connect.c:394 src/http.c:1990
-#, fuzzy, c-format
+#: src/connect.c:401 src/http.c:2096
+#, c-format
 msgid "%s: unable to resolve host address %s\n"
-msgstr "%s: nÌ fÈidir seoladh an ÛstrÌomhaire `%s' a rÈiteach\n"
+msgstr "%s: n√≠ f√©idir seoladh an √≥str√≠omhaire %s a r√©iteach\n"
 
-#: src/convert.c:196
+#: src/connect.c:471
 #, c-format
-msgid "Converted %d files in %s seconds.\n"
-msgstr "TiontaÌodh %d comhad i %s soicind.\n"
+msgid "setsockopt SO_REUSEADDR failed: %s\n"
+msgstr "theip ar setsockopt SO_REUSEADDR: %s\n"
 
-#: src/convert.c:224
+#: src/connect.c:692 src/connect.c:739
 #, c-format
-msgid "Converting %s... "
-msgstr "%s · thiont˙..."
+msgid "Too many fds open.  Cannot use select on a fd >= %d\n"
+msgstr "An iomarca fd-anna oscailte. N√≠ f√©idir select a √∫s√°id ar fd >= %d\n"
 
-#: src/convert.c:237
+#: src/convert.c:198
+#, c-format
+msgid "Converted links in %d files in %s seconds.\n"
+msgstr "Tionta√≠odh nascanna i %d comhad i %s soicind.\n"
+
+#: src/convert.c:227
+#, c-format
+msgid "Converting links in %s... "
+msgstr "Nascanna i %s √° dtiont√∫..."
+
+#: src/convert.c:240
 msgid "nothing to do.\n"
-msgstr "faic le dÈanamh.\n"
+msgstr "faic le d√©anamh.\n"
 
-#: src/convert.c:245 src/convert.c:269
+#: src/convert.c:248 src/convert.c:272
 #, c-format
 msgid "Cannot convert links in %s: %s\n"
-msgstr "NÌ fÈidir naisc a thiont˙ i %s: %s\n"
+msgstr "N√≠ f√©idir nascanna a thiont√∫ i %s: %s\n"
 
-#: src/convert.c:260
-#, fuzzy, c-format
+#: src/convert.c:263
+#, c-format
 msgid "Unable to delete %s: %s\n"
-msgstr "NÌ fÈidir `%s' a scriosadh: %s\n"
+msgstr "N√≠ f√©idir %s a scriosadh: %s\n"
 
-#: src/convert.c:476
+#: src/convert.c:578
 #, c-format
 msgid "Cannot back up %s as %s: %s\n"
-msgstr "NÌ fÈidir c˙ltaca a dhÈanamh ar %s mar %s: %s\n"
+msgstr "N√≠ f√©idir c√∫ltaca a dh√©anamh ar %s mar %s: %s\n"
 
-#: src/cookies.c:450
+#: src/cookies.c:311
+#, c-format
+msgid "Unable to get cookie for %s\n"
+msgstr "N√≠ f√©idir fian√°n a fh√°il le haghaidh %s\n"
+
+#: src/cookies.c:458
 #, c-format
 msgid "Syntax error in Set-Cookie: %s at position %d.\n"
-msgstr "Earr·id chomhrÈire i Set-Cookie: %s ag %d.\n"
+msgstr "Earr√°id chomhr√©ire i Set-Cookie: %s ag %d.\n"
 
-#: src/cookies.c:732
-#, fuzzy, c-format
+#: src/cookies.c:772
+#, c-format
 msgid "Cookie coming from %s attempted to set domain to "
-msgstr "Ba mhaith le fian·n Û %s an fearann a shocr˙ mar %s\n"
+msgstr "Rinne fian√°n √≥ %s iarracht ar an bhfearann a athr√∫ go "
 
-#: src/cookies.c:735 src/spider.c:92
+#: src/cookies.c:775
 #, c-format
 msgid "%s\n"
 msgstr "%s\n"
 
-#: src/cookies.c:1183 src/cookies.c:1304
-#, fuzzy, c-format
+#: src/cookies.c:1226 src/cookies.c:1347
+#, c-format
 msgid "Cannot open cookies file %s: %s\n"
-msgstr "NÌ fÈidir comhad fian·in `%s' a oscailt: %s\n"
+msgstr "N√≠ f√©idir comhad na bhfian√°n %s a oscailt: %s\n"
 
-#: src/cookies.c:1341
-#, fuzzy, c-format
+#: src/cookies.c:1384
+#, c-format
 msgid "Error writing to %s: %s\n"
-msgstr "Earr·id le linn scrÌofa i gcomhad `%s': %s\n"
+msgstr "Earr√°id le linn scr√≠ofa i gcomhad %s: %s\n"
 
-#: src/cookies.c:1344
-#, fuzzy, c-format
+#: src/cookies.c:1387
+#, c-format
 msgid "Error closing %s: %s\n"
-msgstr "Earr·id ag d˙nadh comhaid `%s': %s\n"
+msgstr "Earr√°id agus %s √° dh√∫nadh: %s\n"
 
-#: src/ftp-ls.c:1049
+#: src/ftp-ls.c:1051
 msgid "Unsupported listing type, trying Unix listing parser.\n"
 msgstr ""
-"Modh liost·il gan tacaÌocht, ag baint triail as pars·laÌ liost·la Unix.\n"
+"Modh liost√°la gan taca√≠ocht, ag baint triail as pars√°la√≠ liost√°la Unix.\n"
 
-#: src/ftp-ls.c:1100 src/ftp-ls.c:1102
+#: src/ftp-ls.c:1102 src/ftp-ls.c:1104
 #, c-format
 msgid "Index of /%s on %s:%d"
-msgstr "InnÈacs de /%s ar %s:%d"
+msgstr "Inn√©acs de /%s ar %s:%d"
 
-#: src/ftp-ls.c:1127
+#: src/ftp-ls.c:1129
 #, c-format
 msgid "time unknown       "
 msgstr "am anaithnid       "
 
-#: src/ftp-ls.c:1131
+#: src/ftp-ls.c:1133
 #, c-format
 msgid "File        "
 msgstr "Comhad      "
 
-#: src/ftp-ls.c:1134
+#: src/ftp-ls.c:1136
 #, c-format
 msgid "Directory   "
 msgstr "Comhadlann  "
 
-#: src/ftp-ls.c:1137
+#: src/ftp-ls.c:1139
 #, c-format
 msgid "Link        "
 msgstr "Nasc        "
 
-#: src/ftp-ls.c:1140
+#: src/ftp-ls.c:1142
 #, c-format
 msgid "Not sure    "
-msgstr "…iginnte    "
+msgstr "√âiginnte    "
 
-#: src/ftp-ls.c:1163
+#: src/ftp-ls.c:1165
 #, c-format
 msgid " (%s bytes)"
 msgstr " (%s beart)"
 
-#: src/ftp.c:222
+#: src/ftp.c:226
 #, c-format
 msgid "Length: %s"
 msgstr "Fad: %s"
 
-#: src/ftp.c:228 src/http.c:2810
+#: src/ftp.c:232 src/http.c:4003
 #, c-format
 msgid ", %s (%s) remaining"
-msgstr ", %s (%s) f·gtha"
+msgstr ", %s (%s) f√°gtha"
 
-#: src/ftp.c:232 src/http.c:2814
+#: src/ftp.c:236 src/http.c:4007
 #, c-format
 msgid ", %s remaining"
-msgstr ", %s f·gtha"
+msgstr ", %s f√°gtha"
 
-#: src/ftp.c:235
+#: src/ftp.c:239
 msgid " (unauthoritative)\n"
-msgstr " (neamh˙dar·sach)\n"
+msgstr " (neamh√∫dar√°sach)\n"
 
-#: src/ftp.c:313
+#: src/ftp.c:404
+msgid "Could not initialize SSL. It will be disabled."
+msgstr "N√≠orbh fh√©idir SSL a th√∫s√∫. D√≠chumas√≥far √©."
+
+#: src/ftp.c:486
 #, c-format
 msgid "Logging in as %s ... "
-msgstr "Log·il isteach mar %s ... "
+msgstr "Log√°il isteach mar %s ... "
 
-#: src/ftp.c:332 src/ftp.c:378 src/ftp.c:445 src/ftp.c:510 src/ftp.c:740
-#: src/ftp.c:793 src/ftp.c:840 src/ftp.c:897 src/ftp.c:958 src/ftp.c:1049
-#: src/ftp.c:1099
+#: src/ftp.c:505 src/ftp.c:591 src/ftp.c:658 src/ftp.c:723 src/ftp.c:957
+#: src/ftp.c:1010 src/ftp.c:1057 src/ftp.c:1120 src/ftp.c:1181 src/ftp.c:1279
+#: src/ftp.c:1329
 msgid "Error in server response, closing control connection.\n"
-msgstr "Earr·id sa fhreagra Ûn fhreastalaÌ, ceangal rialaithe · dh˙nadh.\n"
+msgstr "Earr√°id sa fhreagra √≥n fhreastala√≠, ceangal rialaithe √° dh√∫nadh.\n"
 
-#: src/ftp.c:339
+#: src/ftp.c:512
 msgid "Error in server greeting.\n"
-msgstr "Earr·id i mbeannacht Ûn fhreastalaÌ.\n"
+msgstr "Earr√°id i mbeannacht √≥n fhreastala√≠.\n"
 
-#: src/ftp.c:346 src/ftp.c:518 src/ftp.c:748 src/ftp.c:848 src/ftp.c:907
-#: src/ftp.c:968 src/ftp.c:1059 src/ftp.c:1109
+#: src/ftp.c:519 src/ftp.c:731 src/ftp.c:965 src/ftp.c:1065 src/ftp.c:1130
+#: src/ftp.c:1191 src/ftp.c:1289 src/ftp.c:1339
 msgid "Write failed, closing control connection.\n"
-msgstr "Theip ar scrÌobh, ceangal rialaithe · dh˙nadh.\n"
-
-#: src/ftp.c:352
-msgid "The server refuses login.\n"
-msgstr "NÌ cheadaÌonn an freastalaÌ do log·il isteach.\n"
-
-#: src/ftp.c:358
-msgid "Login incorrect.\n"
-msgstr "Log·il mhÌcheart.\n"
-
-#: src/ftp.c:364
-msgid "Logged in!\n"
-msgstr "Log·ilte isteach!\n"
-
-#: src/ftp.c:386
-msgid "Server error, can't determine system type.\n"
-msgstr "Earr·id fhreastalaÌ, nÌ fÈidir an cine·l cÛrais a dhÈanamh amach.\n"
-
-# used in the stats page table
-#: src/ftp.c:395 src/ftp.c:884 src/ftp.c:941 src/ftp.c:984
-msgid "done.    "
-msgstr "crÌochnaithe.  "
-
-# used in the stats page table
-#: src/ftp.c:498 src/ftp.c:765 src/ftp.c:810 src/ftp.c:1079 src/ftp.c:1128
-msgid "done.\n"
-msgstr "crÌochnaithe.\n"
+msgstr "Theip ar scr√≠obh, ceangal rialaithe √° dh√∫nadh.\n"
 
 #: src/ftp.c:525
+msgid "The server refuses login.\n"
+msgstr "N√≠ cheada√≠onn an freastala√≠ do log√°il isteach.\n"
+
+#: src/ftp.c:531
+msgid "Login incorrect.\n"
+msgstr "Log√°il mh√≠cheart.\n"
+
+#: src/ftp.c:537
+msgid "Logged in!\n"
+msgstr "Log√°ilte isteach!\n"
+
+#: src/ftp.c:557
+msgid "Server did not accept the 'PBSZ 0' command.\n"
+msgstr "N√≠or ghlac an freastala√≠ leis an ord√∫ 'PBSZ 0'.\n"
+
+#: src/ftp.c:567
 #, c-format
-msgid "Unknown type `%c', closing control connection.\n"
-msgstr "Cine·l anaithnid `%c', ceangal rialaithe · dh˙nadh.\n"
+msgid "Server did not accept the 'PROT %c' command.\n"
+msgstr "N√≠or ghlac an freastala√≠ leis an ord√∫ 'PROT %c'.\n"
+
+#: src/ftp.c:599
+msgid "Server error, can't determine system type.\n"
+msgstr "Earr√°id fhreastala√≠, n√≠ f√©idir an cine√°l c√≥rais a dh√©anamh amach.\n"
 
 # used in the stats page table
-#: src/ftp.c:537
+#: src/ftp.c:608 src/ftp.c:1100 src/ftp.c:1164 src/ftp.c:1207
+msgid "done.    "
+msgstr "cr√≠ochnaithe.  "
+
+# used in the stats page table
+#: src/ftp.c:711 src/ftp.c:983 src/ftp.c:1027 src/ftp.c:1309 src/ftp.c:1358
+msgid "done.\n"
+msgstr "cr√≠ochnaithe.\n"
+
+#: src/ftp.c:738
+#, c-format
+msgid "Unknown type `%c', closing control connection.\n"
+msgstr "Cine√°l anaithnid `%c', ceangal rialaithe √° dh√∫nadh.\n"
+
+# used in the stats page table
+#: src/ftp.c:750
 msgid "done.  "
-msgstr "crÌochnaithe."
+msgstr "cr√≠ochnaithe."
 
-#: src/ftp.c:543
+#: src/ftp.c:756
 msgid "==> CWD not needed.\n"
-msgstr "==> NÌl g· le CWD.\n"
+msgstr "==> N√≠l g√° le CWD.\n"
 
-#: src/ftp.c:754
-#, fuzzy, c-format
+#: src/ftp.c:940
+msgid "Logically impossible section reached in getftp()"
+msgstr "Sroicheadh rann√°n doshroichte in getftp()"
+
+#: src/ftp.c:941
+#, c-format
+msgid ""
+"cwd_count: %d\n"
+"cwd_start: %d\n"
+"cwd_end: %d\n"
+msgstr ""
+"cwd_count: %d\n"
+"cwd_start: %d\n"
+"cwd_end: %d\n"
+
+#: src/ftp.c:971
+#, c-format
 msgid ""
 "No such directory %s.\n"
 "\n"
 msgstr ""
-"NÌl a leithÈid de chomhadlann `%s' ann.\n"
+"N√≠l comhadlann %s ann.\n"
 "\n"
 
-#: src/ftp.c:775
+#: src/ftp.c:992
 msgid "==> CWD not required.\n"
-msgstr "==> NÌl g· le CWD.\n"
+msgstr "==> N√≠l CWD de dh√≠th.\n"
 
-#: src/ftp.c:818
-#, fuzzy
+#: src/ftp.c:1035
 msgid "File has already been retrieved.\n"
-msgstr "T· an comhad `%s' ann cheana; nÌ aisghabhfar È.\n"
+msgstr "Fuarthas an comhad cheana.\n"
 
-#: src/ftp.c:854
+#: src/ftp.c:1071
 msgid "Cannot initiate PASV transfer.\n"
-msgstr "NÌ fÈidir t˙s a chur leis an aistri˙ PASV.\n"
+msgstr "N√≠ f√©idir t√∫s a chur leis an aistri√∫ PASV.\n"
 
-#: src/ftp.c:858
+#: src/ftp.c:1075
 msgid "Cannot parse PASV response.\n"
-msgstr "NÌ fÈidir an freagra PASV a phars·il.\n"
+msgstr "N√≠ f√©idir an freagra PASV a phars√°il.\n"
 
-#: src/ftp.c:875
+#: src/ftp.c:1092
 #, c-format
 msgid "couldn't connect to %s port %d: %s\n"
-msgstr "nÌorbh fhÈidir dul i dteagmh·il le %s port %d: %s\n"
+msgstr "n√≠orbh fh√©idir dul i dteagmh√°il le %s port %d: %s\n"
 
-#: src/ftp.c:923
+#: src/ftp.c:1146
 #, c-format
 msgid "Bind error (%s).\n"
-msgstr "Earr·id cheangail (%s).\n"
+msgstr "Earr√°id cheangail (%s).\n"
 
-#: src/ftp.c:929
+#: src/ftp.c:1152
 msgid "Invalid PORT.\n"
-msgstr "PORT neamhbhailÌ.\n"
+msgstr "PORT neamhbhail√≠.\n"
 
-#: src/ftp.c:975
+#: src/ftp.c:1198
 msgid ""
 "\n"
 "REST failed, starting from scratch.\n"
 msgstr ""
 "\n"
-"Theip ar REST, ag atos˙ Û thosach.\n"
+"Theip ar REST, ag atos√∫ √≥ thosach.\n"
 
-#: src/ftp.c:1015
-#, fuzzy, c-format
+#: src/ftp.c:1241
+#, c-format
 msgid "File %s exists.\n"
-msgstr ""
-"T· an cianchomhad ann.\n"
-"\n"
+msgstr "T√° comhad %s ann.\n"
 
-#: src/ftp.c:1021
-#, fuzzy, c-format
+#: src/ftp.c:1247
+#, c-format
 msgid "No such file %s.\n"
-msgstr ""
-"NÌl a leithÈid de chomhad `%s' ann.\n"
-"\n"
+msgstr "N√≠l comhad %s ann.\n"
 
-#: src/ftp.c:1067
-#, fuzzy, c-format
+#: src/ftp.c:1297
+#, c-format
 msgid ""
 "No such file %s.\n"
 "\n"
 msgstr ""
-"NÌl a leithÈid de chomhad `%s' ann.\n"
+"N√≠l comhad %s ann.\n"
 "\n"
 
-#: src/ftp.c:1117
-#, fuzzy, c-format
+#: src/ftp.c:1347
+#, c-format
 msgid ""
 "No such file or directory %s.\n"
 "\n"
 msgstr ""
-"NÌl a leithÈid de chomhad n· de chomhadlann `%s' ann.\n"
+"N√≠l a leith√©id de chomhad n√° de chomhadlann ann: %s\n"
 "\n"
 
-#: src/ftp.c:1276 src/http.c:2940
+#: src/ftp.c:1506 src/http.c:2551
 #, c-format
 msgid "%s has sprung into existence.\n"
-msgstr "T· %s ann anois.\n"
+msgstr "T√° %s ann anois.\n"
 
 # CRL next update.
-#: src/ftp.c:1328
+#: src/ftp.c:1595
 #, c-format
 msgid "%s: %s, closing control connection.\n"
-msgstr "%s: %s, ceangal rialaithe · dh˙nadh.\n"
+msgstr "%s: %s, ceangal rialaithe √° dh√∫nadh.\n"
 
-#: src/ftp.c:1340
+#: src/ftp.c:1607
 #, c-format
 msgid "%s (%s) - Data connection: %s; "
-msgstr "%s (%s) - Ceangal sonraÌ: %s; "
+msgstr "%s (%s) - Ceangal sonra√≠: %s; "
 
-#: src/ftp.c:1356
+#: src/ftp.c:1622
 msgid "Control connection closed.\n"
-msgstr "Ceangal rialaithe d˙nta.\n"
+msgstr "Ceangal rialaithe d√∫nta.\n"
 
-#: src/ftp.c:1374
+#: src/ftp.c:1640
 msgid "Data transfer aborted.\n"
-msgstr "Tobscoireadh an t-aistri˙ sonraÌ.\n"
+msgstr "Tobscoireadh an t-aistri√∫ sonra√≠.\n"
 
-#: src/ftp.c:1580
-#, fuzzy, c-format
+#: src/ftp.c:1864
+#, c-format
 msgid "File %s already there; not retrieving.\n"
-msgstr "T· an comhad `%s' ann cheana; nÌ aisghabhfar È.\n"
+msgstr "T√° comhad %s ann cheana; n√≠ aisghabhfar √©.\n"
 
-#: src/ftp.c:1663 src/http.c:3107
+#: src/ftp.c:1949 src/http.c:4273
 #, c-format
 msgid "(try:%2d)"
 msgstr "(iarracht:%2d)"
 
-#: src/ftp.c:1745 src/http.c:3493
-#, fuzzy, c-format
+#: src/ftp.c:2037 src/http.c:4689
+#, c-format
 msgid ""
 "%s (%s) - written to stdout %s[%s]\n"
 "\n"
 msgstr ""
-"%s (%s) - `%s' s·bh·ilte [%s/%s]\n"
+"%s (%s) - scr√≠ofa ar stdout %s[%s]\n"
 "\n"
 
-#: src/ftp.c:1746 src/http.c:3494
-#, fuzzy, c-format
+#: src/ftp.c:2038 src/http.c:4690
+#, c-format
 msgid ""
 "%s (%s) - %s saved [%s]\n"
 "\n"
 msgstr ""
-"%s (%s) - `%s' s·bh·ilte [%s]\n"
+"%s (%s) - %s s√°bh√°ilte [%s]\n"
 "\n"
 
-#: src/ftp.c:1804 src/main.c:1670 src/recur.c:433 src/recur.c:650
-#: src/retr.c:1102
+#: src/ftp.c:2098 src/main.c:2117 src/metalink.c:1137 src/recur.c:513
+#: src/recur.c:748 src/retr.c:1294
 #, c-format
 msgid "Removing %s.\n"
-msgstr "%s · bhaint.\n"
+msgstr "%s √° bhaint.\n"
 
-#: src/ftp.c:1850
-#, fuzzy, c-format
+#: src/ftp.c:2152
+#, c-format
 msgid "Using %s as listing tmp file.\n"
-msgstr "`%s' · ˙s·id mar chomhad sealadach chun liost˙.\n"
+msgstr "%s √° √∫s√°id mar chomhad sealadach le haghaidh liost√°la.\n"
 
-#: src/ftp.c:1867
-#, fuzzy, c-format
+#: src/ftp.c:2169
+#, c-format
 msgid "Removed %s.\n"
-msgstr "Baineadh `%s'.\n"
+msgstr "Baineadh %s.\n"
 
-#: src/ftp.c:1904
+#: src/ftp.c:2209
 #, c-format
 msgid "Recursion depth %d exceeded max. depth %d.\n"
-msgstr "Doimhneacht athch˙rs·la %d nÌos mÛ n· an t-uasmhÈid %d.\n"
+msgstr "Doimhneacht athch√∫rs√°la %d n√≠os m√≥ n√° an t-uasmh√©id %d.\n"
 
-#: src/ftp.c:1974
-#, fuzzy, c-format
+#: src/ftp.c:2279
+#, c-format
 msgid "Remote file no newer than local file %s -- not retrieving.\n"
 msgstr ""
-"NÌl an cianchomhad nÌos nuaÌ n· an comhad log·nta `%s' -- nÌ aisghabhfar È.\n"
+"N√≠l an comhad i gc√©in n√≠os nua√≠ n√° an comhad √°iti√∫il %s -- n√≠ aisghabhfar "
+"√©.\n"
 
-#: src/ftp.c:1981
-#, fuzzy, c-format
+#: src/ftp.c:2287
+#, c-format
 msgid ""
 "Remote file is newer than local file %s -- retrieving.\n"
 "\n"
 msgstr ""
-"T· an cianchomhad nÌos nuaÌ n· an comhad log·nta `%s' -- · aisghabh·il.\n"
+"T√° an comhad i gc√©in n√≠os nua√≠ n√° an comhad √°iti√∫il %s -- √° aisghabh√°il.\n"
 "\n"
 
-#: src/ftp.c:1988
+#: src/ftp.c:2294
 #, c-format
 msgid ""
 "The sizes do not match (local %s) -- retrieving.\n"
 "\n"
 msgstr ""
-"NÌl an mÈid cÈanna ar na comhaid (log·nta %s) -- · aisghabh.\n"
+"N√≠l an m√©id c√©anna ar na comhaid (√°iti√∫il %s) -- √° aisghabh.\n"
 "\n"
 
-#: src/ftp.c:2006
+#: src/ftp.c:2312
 msgid "Invalid name of the symlink, skipping.\n"
-msgstr "Ainm neamhbhailÌ ar an nasc siombalach, · scipe·il.\n"
+msgstr "Ainm neamhbhail√≠ ar an nasc siombalach, ag dul thart.\n"
 
-#: src/ftp.c:2023
+#: src/ftp.c:2329
 #, c-format
 msgid ""
 "Already have correct symlink %s -> %s\n"
 "\n"
 msgstr ""
-"T· nasc ceart siombalach ann cheana %s -> %s\n"
+"T√° nasc ceart siombalach ann cheana %s -> %s\n"
 "\n"
 
-#: src/ftp.c:2032
+#: src/ftp.c:2338
 #, c-format
 msgid "Creating symlink %s -> %s\n"
-msgstr "Nasc siombalach %s -> %s · chruth˙\n"
+msgstr "Nasc siombalach %s -> %s √° chruth√∫\n"
 
-#: src/ftp.c:2042
-#, fuzzy, c-format
+#: src/ftp.c:2348
+#, c-format
 msgid "Symlinks not supported, skipping symlink %s.\n"
-msgstr "NÌl aon tacaÌocht ar naisc shiombalacha, ag scipe·il `%s'.\n"
+msgstr "N√≠ thaca√≠tear le nascanna siombalacha, ag dul thar %s.\n"
 
-#: src/ftp.c:2054
-#, fuzzy, c-format
+#: src/ftp.c:2363
+#, c-format
 msgid "Skipping directory %s.\n"
-msgstr "Ag f·g·il na comhadlainne `%s' ar l·r.\n"
+msgstr "Ag dul thar comhadlann %s.\n"
 
-#: src/ftp.c:2063
+#: src/ftp.c:2376
 #, c-format
 msgid "%s: unknown/unsupported file type.\n"
-msgstr "%s: comhad de chine·l anaithnid/gan tac˙.\n"
+msgstr "%s: comhad de chine√°l anaithnid/gan taca√≠ocht.\n"
 
-#: src/ftp.c:2103
+#: src/ftp.c:2400
+#, c-format
+msgid "Failed to set permissions for %s.\n"
+msgstr "N√≠orbh fh√©idir ceadanna le haghaidh %s a shocr√∫.\n"
+
+#: src/ftp.c:2421
 #, c-format
 msgid "%s: corrupt time-stamp.\n"
-msgstr "%s: stampa truaillithe ama.\n"
+msgstr "%s: stampa ama truaillithe.\n"
 
-#: src/ftp.c:2127
+#: src/ftp.c:2445
 #, c-format
 msgid "Will not retrieve dirs since depth is %d (max %d).\n"
 msgstr ""
-"NÌ aisghabhfar comhadlanna Ûs rud È go bhfuil an doimhneacht %d faoi l·thair "
-"(uasmhÈid %d).\n"
+"N√≠ aisghabhfar comhadlanna toisc gurb √© %d an doimhneacht (uasmh√©id %d).\n"
 
-#: src/ftp.c:2177
-#, fuzzy, c-format
+#: src/ftp.c:2496
+#, c-format
 msgid "Not descending to %s as it is excluded/not-included.\n"
-msgstr ""
-"nÌ ag dul isteach i `%s' Ûs rud È go bhfuil sÈ f·gtha-as/nach-curtha-san-"
-"·ireamh.\n"
+msgstr "N√≠ rachfar isteach i %s toisc go bhfuil eisiata/as an √°ireamh.\n"
 
-#: src/ftp.c:2266 src/ftp.c:2280
-#, fuzzy, c-format
+#: src/ftp.c:2586 src/ftp.c:2600
+#, c-format
 msgid "Rejecting %s.\n"
-msgstr "`%s' · dhi˙lt˙.\n"
+msgstr "%s √° dhi√∫lt√∫.\n"
 
-#: src/ftp.c:2303
+#: src/ftp.c:2623
 #, c-format
 msgid "Error matching %s against %s: %s\n"
-msgstr "Earr·id agus %s · chur i gcomhoiri˙nacht do %s: %s\n"
+msgstr "Earr√°id agus %s √° chur i gcomhoiri√∫nacht do %s: %s\n"
 
-#: src/ftp.c:2359
-#, fuzzy, c-format
+#: src/ftp.c:2679
+#, c-format
 msgid "No matches on pattern %s.\n"
-msgstr "NÌl aon rud comhoiri˙nach leis an phatr˙n `%s'.\n"
+msgstr "N√≠l aon rud comhoiri√∫nach leis an bpatr√∫n %s.\n"
 
-#: src/ftp.c:2430
-#, fuzzy, c-format
+#: src/ftp.c:2751
+#, c-format
 msgid "Wrote HTML-ized index to %s [%s].\n"
-msgstr "ScrÌobhadh innÈacs i gcruth HTML i `%s' [%s].\n"
+msgstr "Scr√≠obhadh inn√©acs i bhform√°id HTML i %s [%s].\n"
 
-#: src/ftp.c:2435
-#, fuzzy, c-format
+#: src/ftp.c:2756
+#, c-format
 msgid "Wrote HTML-ized index to %s.\n"
-msgstr "ScrÌobhadh innÈacs i gcruth HTML i `%s'.\n"
+msgstr "Scr√≠obhadh inn√©acs i bhform√°id HTML i %s.\n"
 
-#: src/gnutls.c:110
+#: src/gnutls.c:115
 #, c-format
 msgid "ERROR: Cannot open directory %s.\n"
-msgstr ""
+msgstr "EARR√ÅID: N√≠ f√©idir comhadlann %s a oscailt.\n"
 
-#: src/gnutls.c:141
+#: src/gnutls.c:165
 #, c-format
 msgid "ERROR: Failed to open cert %s: (%d).\n"
-msgstr ""
+msgstr "EARR√ÅID: N√≠orbh fh√©idir teastas %s a oscailt: (%d).\n"
 
-#: src/gnutls.c:173
+#: src/gnutls.c:170
+#, c-format
+msgid "Loaded CA certificate '%s'\n"
+msgstr "Teastas CA '%s' l√≥d√°ilte\n"
+
+#: src/gnutls.c:180
+#, c-format
+msgid "ERROR: Failed to load CRL file '%s': (%d)\n"
+msgstr "EARR√ÅID: N√≠orbh fh√©idir comhad CRL '%s' a l√≥d√°il: (%d)\n"
+
+#: src/gnutls.c:184
+#, c-format
+msgid "Loaded CRL file '%s'\n"
+msgstr "L√≥d√°ladh comhad CRL '%s'\n"
+
+#: src/gnutls.c:208
 msgid "ERROR: GnuTLS requires the key and the cert to be of the same type.\n"
 msgstr ""
+"EARR√ÅID: √âil√≠onn GnuTLS gur den chine√°l c√©anna iad an eochair agus an "
+"teastas.\n"
 
-#: src/gnutls.c:589 src/openssl.c:599
+#: src/gnutls.c:602
+#, fuzzy, c-format
+msgid "GnuTLS: unimplemented 'secure-protocol' option value %u\n"
+msgstr "GnuTLS: n√≠l an luach %d ar f√°il le 'secure-protocal'\n"
+
+#: src/gnutls.c:604 src/gnutls.c:641 src/host.c:159 src/openssl.c:255
+msgid "Please report this issue to bug-wget@gnu.org\n"
+msgstr "Seol tuairisc faoin fhabht seo chuig bug-wget@gnu.org\n"
+
+#: src/gnutls.c:640
+#, c-format
+msgid "GnuTLS: unimplemented 'secure-protocol' option value %d\n"
+msgstr "GnuTLS: n√≠l an luach %d ar f√°il le 'secure-protocal'\n"
+
+#: src/gnutls.c:769 src/openssl.c:763
 msgid "ERROR"
-msgstr "EARR¡ID"
+msgstr "EARR√ÅID"
 
-#: src/gnutls.c:589 src/openssl.c:599
+#: src/gnutls.c:769 src/openssl.c:763
 msgid "WARNING"
 msgstr "RABHADH"
 
-#: src/gnutls.c:595 src/openssl.c:608
+#: src/gnutls.c:780 src/openssl.c:776
 #, c-format
 msgid "%s: No certificate presented by %s.\n"
-msgstr "%s: NÌor thaispe·in %s teastas ar bith.\n"
+msgstr "%s: N√≠or thaispe√°in %s teastas ar bith.\n"
 
-#: src/gnutls.c:601
-#, fuzzy, c-format
+#: src/gnutls.c:786
+#, c-format
 msgid "%s: The certificate of %s is not trusted.\n"
-msgstr "%s: NÌor thaispe·in %s teastas ar bith.\n"
+msgstr "%s: N√≠l an teastas ag %s iontaofa.\n"
 
-#: src/gnutls.c:602
+#: src/gnutls.c:787
 #, c-format
 msgid "%s: The certificate of %s hasn't got a known issuer.\n"
-msgstr ""
+msgstr "%s: N√≠l eisitheoir aitheanta ag teastas %s.\n"
 
-#: src/gnutls.c:603
-#, fuzzy, c-format
+#: src/gnutls.c:788
+#, c-format
 msgid "%s: The certificate of %s has been revoked.\n"
-msgstr "  T· an teastas imithe as feidhm.\n"
+msgstr "%s: Aisghaireadh an teastas ag %s.\n"
 
-#: src/gnutls.c:604
-#, fuzzy, c-format
+#: src/gnutls.c:789
+#, c-format
 msgid "%s: The certificate signer of %s was not a CA.\n"
-msgstr "%s: NÌor thaispe·in %s teastas ar bith.\n"
+msgstr "%s: N√≠ CA √© s√≠nitheoir an teastais ag %s.\n"
 
-#: src/gnutls.c:605
+#: src/gnutls.c:790
 #, c-format
 msgid "%s: The certificate of %s was signed using an insecure algorithm.\n"
-msgstr ""
+msgstr "%s: S√≠n√≠odh teastas %s le halgartam neamhshl√°n.\n"
 
-#: src/gnutls.c:606
-#, fuzzy, c-format
+#: src/gnutls.c:791
+#, c-format
 msgid "%s: The certificate of %s is not yet activated.\n"
-msgstr "  NÌl an teastas eisithe bailÌ fÛs.\n"
+msgstr "%s: N√≠l an teastas ag %s bail√≠ f√≥s.\n"
 
-#: src/gnutls.c:607
-#, fuzzy, c-format
+#: src/gnutls.c:792
+#, c-format
 msgid "%s: The certificate of %s has expired.\n"
-msgstr "  T· an teastas imithe as feidhm.\n"
+msgstr "%s: Chuaigh an teastas ag %s as feidhm.\n"
 
-#: src/gnutls.c:618
+#: src/gnutls.c:804
 #, c-format
 msgid "Error initializing X509 certificate: %s\n"
-msgstr ""
+msgstr "Earr√°id agus teastas X509 √° th√∫s√∫: %s\n"
 
-#: src/gnutls.c:627
-#, fuzzy
+#: src/gnutls.c:813
 msgid "No certificate found\n"
-msgstr "%s: NÌor thaispe·in %s teastas ar bith.\n"
+msgstr "N√≠or aims√≠odh aon teastas\n"
 
-#: src/gnutls.c:634
-#, fuzzy, c-format
+#: src/gnutls.c:820
+#, c-format
 msgid "Error parsing certificate: %s\n"
-msgstr "Earr·id agus URL an seachfhreastalaÌ %s · phars·il: %s.\n"
+msgstr "Earr√°id agus an teastas √° phars√°il: %s\n"
 
-#: src/gnutls.c:641
-#, fuzzy
+#: src/gnutls.c:827
 msgid "The certificate has not yet been activated\n"
-msgstr "  NÌl an teastas eisithe bailÌ fÛs.\n"
+msgstr "N√≠l an teastas bail√≠ f√≥s.\n"
 
-#: src/gnutls.c:646
-#, fuzzy
+#: src/gnutls.c:832
 msgid "The certificate has expired\n"
-msgstr "  T· an teastas imithe as feidhm.\n"
+msgstr "Chuaigh an teastas as feidhm\n"
 
-#: src/gnutls.c:652
-#, fuzzy, c-format
+#: src/gnutls.c:839
+#, c-format
 msgid "The certificate's owner does not match hostname %s\n"
-msgstr ""
-"%s: nÌl ainm coitianta an teastais `%s' comhoiri˙nach leis an Ûstainm "
-"iarrtha `%s'.\n"
+msgstr "N√≠ ionann √∫in√©ir an teastais agus an t-√≥stainm %s\n"
 
-#: src/gnutls.c:661
+#: src/gnutls.c:848 src/openssl.c:972
+msgid "The public key does not match pinned public key!\n"
+msgstr "N√≠ ionann an eochair phoibl√≠ agus an eochair a bhfuil PIN aici!\n"
+
+#: src/gnutls.c:857
 msgid "Certificate must be X.509\n"
-msgstr ""
+msgstr "Caithfear teastas X.509 a √∫s√°id\n"
 
-#: src/host.c:361
+#: src/host.c:158
+msgid "Error in handling the address list.\n"
+msgstr "Earr√°id agus an liosta seolta√≠ √° l√°imhse√°il.\n"
+
+#: src/host.c:369
 msgid "Unknown host"
-msgstr "”strÌomhaire anaithnid"
+msgstr "√ìstr√≠omhaire anaithnid"
 
-#: src/host.c:740
+#: src/host.c:849
 #, c-format
 msgid "Resolving %s... "
-msgstr "%s · rÈiteach... "
+msgstr "%s √° r√©iteach... "
 
-#: src/host.c:792
+#: src/host.c:925
 msgid "failed: No IPv4/IPv6 addresses for host.\n"
-msgstr "teipthe: Gan seoladh IPv4/IPv6 don ÛstrÌomhaire.\n"
+msgstr "teipthe: Gan seoladh IPv4/IPv6 don √≥str√≠omhaire.\n"
 
-#: src/host.c:815
+#: src/host.c:955
 msgid "failed: timed out.\n"
 msgstr "teipthe: thar am.\n"
 
-#: src/html-url.c:303
+#: src/html-url.c:307
 #, c-format
 msgid "%s: Cannot resolve incomplete link %s.\n"
-msgstr "%s: NÌ fÈidir nasc %s neamhioml·n a rÈiteach.\n"
+msgstr "%s: N√≠ f√©idir nasc %s neamhioml√°n a r√©iteach.\n"
 
-#: src/html-url.c:836
+#: src/html-url.c:931
 #, c-format
 msgid "%s: Invalid URL %s: %s\n"
-msgstr "%s: URL neamhbhailÌ %s: %s\n"
+msgstr "%s: URL neamhbhail√≠ %s: %s\n"
 
-#: src/http.c:371
+#: src/http.c:376
 #, c-format
 msgid "Failed writing HTTP request: %s.\n"
-msgstr "Theip ar scrÌobh iarratais HTTP: %s.\n"
+msgstr "Theip ar scr√≠obh iarratais HTTP: %s.\n"
 
-#: src/http.c:767
+#: src/http.c:781
 msgid "No headers, assuming HTTP/0.9"
-msgstr "Gan cheannt·sca, glac le HTTP/0.9"
+msgstr "Gan cheannt√°sca, glac le HTTP/0.9"
 
-#: src/http.c:1495
-#, fuzzy, c-format
+#: src/http.c:1611
+#, c-format
 msgid ""
 "File %s already there; not retrieving.\n"
 "\n"
 msgstr ""
-"T· an comhad `%s' ann cheana; nÌ aisghabhfar È.\n"
+"T√° an comhad %s ann cheana; n√≠ aisghabhfar √©.\n"
 "\n"
 
-#: src/http.c:1747
-msgid "Disabling SSL due to encountered errors.\n"
-msgstr "SSL · dhÌchumas˙ de bharr earr·idÌ.\n"
+#: src/http.c:1821
+msgid "gmtime failed. This is probably a bug.\n"
+msgstr "theip ar gmtime. Is d√≥cha gur fabht √© seo.\n"
 
-#: src/http.c:1869
-#, fuzzy, c-format
+#: src/http.c:1882
+msgid ""
+"Cannot convert timestamp to http format. Falling back to time 0 as last "
+"modification time.\n"
+msgstr ""
+"N√≠ f√©idir an stampa ama a thiont√∫ go HTTP. √ös√°idfear am athraithe = 0 mar "
+"ch√∫ltaca.\n"
+
+#: src/http.c:1986
+#, c-format
 msgid "BODY data file %s missing: %s\n"
-msgstr "Comhad sonraÌ POST `%s' ar iarraidh: %s\n"
+msgstr "Comhad sonra√≠ BODY %s ar iarraidh: %s\n"
 
-#: src/http.c:1971
-#, fuzzy, c-format
+#: src/http.c:2078
+#, c-format
 msgid "Reusing existing connection to [%s]:%d.\n"
-msgstr "Ag baint ath˙s·id as an gceangal le %s:%d.\n"
+msgstr "Ag baint ath√∫s√°id as an gceangal le [%s]:%d.\n"
 
-#: src/http.c:1976
+#: src/http.c:2083
 #, c-format
 msgid "Reusing existing connection to %s:%d.\n"
-msgstr "Ag baint ath˙s·id as an gceangal le %s:%d.\n"
+msgstr "Ag baint ath√∫s√°id as an gceangal le %s:%d.\n"
 
-#: src/http.c:2048
+#: src/http.c:2149
 #, c-format
 msgid "Failed reading proxy response: %s\n"
-msgstr "Theip ar lÈamh freagra Ûn seachfhreastalaÌ: %s\n"
+msgstr "Theip ar l√©amh freagra √≥n seachfhreastala√≠: %s\n"
 
-#: src/http.c:2068 src/http.c:2235 src/http.c:3287
+#: src/http.c:2168 src/http.c:3407 src/http.c:4483
 #, c-format
 msgid "%s ERROR %d: %s.\n"
-msgstr "%s EARR¡ID %d: %s.\n"
+msgstr "%s EARR√ÅID %d: %s.\n"
 
-#: src/http.c:2070 src/http.c:2237 src/http.c:2572
+#: src/http.c:2170 src/http.c:3409 src/http.c:3597
 msgid "Malformed status line"
-msgstr "LÌne st·dais mÌchumtha"
+msgstr "L√≠ne st√°dais m√≠chumtha"
 
-#: src/http.c:2081
+#: src/http.c:2181
 #, c-format
 msgid "Proxy tunneling failed: %s"
-msgstr "Theip ar tholl·n˙ seachfhreastalaÌ: %s"
+msgstr "Theip ar tholl√°n√∫ seachfhreastala√≠: %s"
 
-#: src/http.c:2175
+#: src/http.c:2417
+msgid "Unknown authentication scheme.\n"
+msgstr "Sc√©im anaithnid fh√≠ordheimhnithe.\n"
+
+#: src/http.c:2435
+#, c-format
+msgid "Authentication selected: %s\n"
+msgstr "Sc√©im fh√≠ordheimhnithe: %s\n"
+
+#: src/http.c:2566
+#, c-format
+msgid "Saving to: %s\n"
+msgstr "√Å sh√°bh√°il i: %s\n"
+
+#: src/http.c:2785
+#, c-format
+msgid ""
+"When downloading signature:\n"
+"%s: %s.\n"
+msgstr ""
+"Agus s√≠ni√∫ √° √≠osl√≥d√°il:\n"
+"%s: %s.\n"
+
+#: src/http.c:2821
+msgid "Unable to read signature content from temporary file. Skipping.\n"
+msgstr ""
+"N√≠ f√©idir √°bhar an ts√≠nithe a l√©amh √≥ chomhad sealadach. Ag dul thart.\n"
+
+#: src/http.c:2844
+msgid "Could not create temporary file. Skipping signature download.\n"
+msgstr "N√≠orbh fh√©idir comhad sealadach a chruth√∫. N√≠ √≠osl√≥d√°lfar an s√≠ni√∫.\n"
+
+#: src/http.c:2878 src/http.c:2960
+#, c-format
+msgid "Invalid pri value. Assuming %d.\n"
+msgstr "Luach neamhbhail√≠ pri. Glacfar le %d ina ionad.\n"
+
+#: src/http.c:3064
+msgid ""
+"Could not find acceptable digest for Metalink resources.\n"
+"Ignoring them.\n"
+msgstr ""
+"N√≠or aims√≠odh achoimre inghlactha le haghaidh acmhainn√≠ Metalink.\n"
+"D√©anfar neamhshuim orthu.\n"
+
+#: src/http.c:3201
+msgid "Disabling SSL due to encountered errors.\n"
+msgstr "SSL √° dh√≠chumas√∫ de bharr earr√°id√≠.\n"
+
+#: src/http.c:3343
 #, c-format
 msgid "%s request sent, awaiting response... "
 msgstr "Iarratas %s seolta, ag fanacht le freagra... "
 
-#: src/http.c:2210
+#: src/http.c:3383
 msgid "No data received.\n"
-msgstr "NÌor glacadh aon sonra.\n"
+msgstr "N√≠or glacadh aon sonra.\n"
 
-#: src/http.c:2217
+#: src/http.c:3389
 #, c-format
 msgid "Read error (%s) in headers.\n"
-msgstr "Earr·id (%s) ag lÈamh na gceannt·sc.\n"
+msgstr "Earr√°id (%s) ag l√©amh na gceannt√°sc.\n"
 
-#: src/http.c:2389
-msgid "Unknown authentication scheme.\n"
-msgstr "ScÈim anaithnid fhÌordheimhnithe.\n"
-
-#: src/http.c:2574
+#: src/http.c:3599
 msgid "(no description)"
-msgstr "(gan cur sÌos)"
+msgstr "(gan cur s√≠os)"
 
-#: src/http.c:2650
+#: src/http.c:3768
 #, c-format
 msgid "Location: %s%s\n"
-msgstr "SuÌomh: %s%s\n"
+msgstr "Su√≠omh: %s%s\n"
 
-#: src/http.c:2651 src/http.c:2820
+#: src/http.c:3769 src/http.c:4013
 msgid "unspecified"
-msgstr "gan sonr˙"
+msgstr "gan sonr√∫"
 
-#: src/http.c:2652
+#: src/http.c:3770
 msgid " [following]"
-msgstr " [· lean˙int]"
+msgstr " [√° lean√∫int]"
 
-#: src/http.c:2765
+#: src/http.c:3853
+#, c-format
+msgid ""
+"File %s not modified on server. Omitting download.\n"
+"\n"
+msgstr ""
+"N√≠or athraigh comhad %s ar an bhfreastala√≠. N√≠ √≠osl√≥d√°lfar √©.\n"
+"\n"
+
+#: src/http.c:3924
+#, c-format
+msgid ""
+"Server ignored If-Modified-Since header for file %s.\n"
+"You might want to add --no-if-modified-since option.\n"
+"\n"
+msgstr ""
+"Rinne an freastala√≠ neamhaird den cheannt√°sc If-Modified-Since le haghaidh "
+"%s.\n"
+"Seans gur mhaith leat an rogha --no-if-modified-since a shonr√∫.\n"
+"\n"
+
+#: src/http.c:3954
 msgid ""
 "\n"
 "    The file is already fully retrieved; nothing to do.\n"
 "\n"
 msgstr ""
 "\n"
-"    BhÌ an comhad aisghafa ina ioml·ine cheana; nÌl faic le dÈanamh.\n"
+"    Bh√≠ an comhad aisghafa ina ioml√°ine cheana; n√≠l faic le d√©anamh.\n"
 "\n"
 
-#: src/http.c:2800
+#: src/http.c:3993
 msgid "Length: "
 msgstr "Fad: "
 
-#: src/http.c:2820
+#: src/http.c:4013
 msgid "ignored"
 msgstr "rinneadh neamhaird"
 
-#: src/http.c:2961
-#, fuzzy, c-format
-msgid "Saving to: %s\n"
-msgstr "¡ sh·bh·il i: `%s'\n"
-
-#: src/http.c:3031
+#: src/http.c:4181
 msgid "Warning: wildcards not supported in HTTP.\n"
-msgstr "Rabhadh: nÌl saorÛga ar f·il i HTTP.\n"
+msgstr "Rabhadh: n√≠l saor√≥ga ar f√°il i HTTP.\n"
 
-#: src/http.c:3096
+#: src/http.c:4263
 msgid "Spider mode enabled. Check if remote file exists.\n"
-msgstr "CumasaÌodh an mÛd cr˙bad·in. Seice·il an bhfuil an cianchomhad ann.\n"
+msgstr "Cumasa√≠odh an m√≥d cr√∫bad√°in. Seice√°il an bhfuil an cianchomhad ann.\n"
 
-#: src/http.c:3185
-#, fuzzy, c-format
+#: src/http.c:4353
+#, c-format
 msgid "Cannot write to %s (%s).\n"
-msgstr "NÌ fÈidir aon rud a scrÌobh i gcomhad `%s' (%s).\n"
+msgstr "N√≠ f√©idir scr√≠obh i gcomhad %s (%s).\n"
 
-#: src/http.c:3196
+#: src/http.c:4364
 msgid "Required attribute missing from Header received.\n"
-msgstr ""
+msgstr "Fuarthas aitreab√∫id riachtanach a bh√≠ ar iarraidh √≥n Cheannt√°sc.\n"
 
-#: src/http.c:3201
+#: src/http.c:4369
 msgid "Username/Password Authentication Failed.\n"
-msgstr ""
+msgstr "Theip ar fh√≠ordheimhni√∫ Ainm √ös√°ideora/Focal Faire.\n"
 
-#: src/http.c:3207
-#, fuzzy
+#: src/http.c:4375
 msgid "Cannot write to WARC file.\n"
-msgstr "NÌ fÈidir aon rud a scrÌobh i gcomhad `%s' (%s).\n"
+msgstr "N√≠ f√©idir scr√≠obh sa chomhad WARC.\n"
 
-#: src/http.c:3213
+#: src/http.c:4381
 msgid "Cannot write to temporary WARC file.\n"
-msgstr ""
+msgstr "N√≠ f√©idir scr√≠obh i gcomhad sealadach WARC.\n"
 
-#: src/http.c:3218
+#: src/http.c:4386
 msgid "Unable to establish SSL connection.\n"
-msgstr "NÌ fÈidir ceangal SSL a dhÈanamh.\n"
+msgstr "N√≠ f√©idir ceangal SSL a dh√©anamh.\n"
 
-#: src/http.c:3224
-#, fuzzy, c-format
+#: src/http.c:4392
+#, c-format
 msgid "Cannot unlink %s (%s).\n"
-msgstr "NÌ fÈidir aon rud a scrÌobh i gcomhad `%s' (%s).\n"
+msgstr "N√≠ f√©idir %s a dh√≠nascadh (%s).\n"
 
-#: src/http.c:3234
+#: src/http.c:4402
 #, c-format
 msgid "ERROR: Redirection (%d) without location.\n"
-msgstr "EARR¡ID: Atreor˙ (%d) gan suÌomh.\n"
+msgstr "EARR√ÅID: Atreor√∫ (%d) gan su√≠omh.\n"
 
-#: src/http.c:3282
+#: src/http.c:4424
+msgid ""
+"Could not find Metalink data in HTTP response. Downloading file using HTTP "
+"GET.\n"
+msgstr ""
+"N√≠or aims√≠odh na sonra√≠ Metalink sa fhreagra HTTP. Comhad √° √≠osl√≥d√°il tr√≠ "
+"HTTP GET.\n"
+
+#: src/http.c:4433
+msgid "Metalink headers found. Switching to Metalink mode.\n"
+msgstr "Aims√≠odh na ceannt√°sca Metalink. Bainfear √∫s√°id as an m√≥d Metalink.\n"
+
+#: src/http.c:4473
 msgid "Remote file does not exist -- broken link!!!\n"
-msgstr "NÌl an cianchomhad ann -- nasc briste!!!\n"
+msgstr "N√≠l an cianchomhad ann -- nasc briste!!!\n"
 
-#: src/http.c:3304
+#: src/http.c:4500
 msgid "Last-modified header missing -- time-stamps turned off.\n"
-msgstr "Ceannt·sc `Last-modified' ar iarraidh -- nÌ ˙s·idfear stampaÌ ama.\n"
+msgstr "Ceannt√°sc `Last-modified' ar iarraidh -- n√≠ √∫s√°idfear stampa√≠ ama.\n"
 
-#: src/http.c:3312
+#: src/http.c:4508
 msgid "Last-modified header invalid -- time-stamp ignored.\n"
 msgstr ""
-"Ceannt·sc neamhbhailÌ `Last-modified' -- tugadh neamhaird ar an stampa ama.\n"
+"Ceannt√°sc neamhbhail√≠ `Last-modified' -- tugadh neamhaird ar an stampa ama.\n"
 
-#: src/http.c:3342
-#, fuzzy, c-format
+#: src/http.c:4538
+#, c-format
 msgid ""
 "Server file no newer than local file %s -- not retrieving.\n"
 "\n"
 msgstr ""
-"NÌl an comhad freastalaÌ nÌos nuaÌ n· an comhad log·nta `%s' -- nÌ "
-"aisghabhfar È.\n"
+"N√≠l an comhad ar an bhfreastala√≠ n√≠os nua√≠ n√° an comhad √°iti√∫il %s -- n√≠ "
+"aisghabhfar √©.\n"
 "\n"
 
-#: src/http.c:3350
+#: src/http.c:4546
 #, c-format
 msgid "The sizes do not match (local %s) -- retrieving.\n"
-msgstr "NÌl an mÈid cÈanna ar na comhaid (log·nta %s) -- · aisghabh.\n"
+msgstr "N√≠l an m√©id c√©anna ar na comhaid (√°iti√∫il %s) -- √° aisghabh.\n"
 
-#: src/http.c:3359
+#: src/http.c:4555
 msgid "Remote file is newer, retrieving.\n"
-msgstr "T· an cianchomhad nÌos nuaÌ, · aisghabh·il.\n"
+msgstr "T√° an cianchomhad n√≠os nua√≠, √° aisghabh√°il.\n"
 
-#: src/http.c:3377
+#: src/http.c:4573
 msgid ""
 "Remote file exists and could contain links to other resources -- "
 "retrieving.\n"
 "\n"
 msgstr ""
-"T· an cianchomhad ann agus is fÈidir go bhfuil naisc le hacmhainnÌ eile ann "
-"-- · aisghabh·il.\n"
+"T√° an cianchomhad ann agus is f√©idir go bhfuil naisc le hacmhainn√≠ eile ann "
+"-- √° aisghabh√°il.\n"
 "\n"
 
-#: src/http.c:3383
+#: src/http.c:4579
 msgid ""
 "Remote file exists but does not contain any link -- not retrieving.\n"
 "\n"
 msgstr ""
-"T· an cianchomhad ann ach nÌl aon nasc ann -- nÌ aisghabhfar È.\n"
+"T√° an cianchomhad ann ach n√≠l aon nasc ann -- n√≠ aisghabhfar √©.\n"
 "\n"
 
-#: src/http.c:3392
+#: src/http.c:4588
 msgid ""
 "Remote file exists and could contain further links,\n"
 "but recursion is disabled -- not retrieving.\n"
 "\n"
 msgstr ""
-"T· an cianchomhad ann agus seans go bhfuil nascanna breise ann,\n"
-"ach dÌchumasaÌodh athch˙rs·il -- nÌ aisghabhfar È.\n"
+"T√° an cianchomhad ann agus seans go bhfuil nascanna breise ann,\n"
+"ach d√≠chumasa√≠odh athch√∫rs√°il -- n√≠ aisghabhfar √©.\n"
 "\n"
 
-#: src/http.c:3398
+#: src/http.c:4594
 msgid ""
 "Remote file exists.\n"
 "\n"
 msgstr ""
-"T· an cianchomhad ann.\n"
+"T√° an cianchomhad ann.\n"
 "\n"
 
-#: src/http.c:3407
-#, fuzzy, c-format
+#: src/http.c:4603
+#, c-format
 msgid "%s URL: %s %2d %s\n"
-msgstr "%s: URL neamhbhailÌ %s: %s\n"
+msgstr "URL %s: %s %2d %s\n"
 
-#: src/http.c:3457
-#, fuzzy, c-format
+#: src/http.c:4653
+#, c-format
 msgid ""
 "%s (%s) - written to stdout %s[%s/%s]\n"
 "\n"
 msgstr ""
-"%s (%s) - `%s' s·bh·ilte [%s/%s]\n"
+"%s (%s) - scr√≠ofa ar stdout %s[%s/%s]\n"
 "\n"
 
-#: src/http.c:3458
-#, fuzzy, c-format
+#: src/http.c:4654
+#, c-format
 msgid ""
 "%s (%s) - %s saved [%s/%s]\n"
 "\n"
 msgstr ""
-"%s (%s) - `%s' s·bh·ilte [%s/%s]\n"
+"%s (%s) - %s s√°bh√°ilte [%s/%s]\n"
 "\n"
 
-#: src/http.c:3519
+#: src/http.c:4715
 #, c-format
 msgid "%s (%s) - Connection closed at byte %s. "
-msgstr "%s (%s) - Ceangal d˙nta ag beart %s. "
+msgstr "%s (%s) - Ceangal d√∫nta ag beart %s. "
 
-#: src/http.c:3542
+#: src/http.c:4738
 #, c-format
 msgid "%s (%s) - Read error at byte %s (%s)."
-msgstr "%s (%s) - Earr·id lÈimh ag beart %s (%s)."
+msgstr "%s (%s) - Earr√°id l√©imh ag beart %s (%s)."
 
-#: src/http.c:3551
+#: src/http.c:4747
 #, c-format
 msgid "%s (%s) - Read error at byte %s/%s (%s). "
-msgstr "%s (%s) - Earr·id lÈimh ag beart %s/%s (%s). "
+msgstr "%s (%s) - Earr√°id l√©imh ag beart %s/%s (%s). "
 
-#: src/http.c:3786
+#: src/http.c:4985
 #, c-format
 msgid "Unsupported quality of protection '%s'.\n"
-msgstr ""
+msgstr "C√°il√≠ocht cosanta nach dtaca√≠tear l√©i '%s'.\n"
 
-#: src/http.c:3792
-#, fuzzy, c-format
-msgid "Unsupported algorithm '%s'.\n"
-msgstr "ScÈim gan tac˙"
-
-#: src/init.c:500
+#: src/http.c:4990
 #, c-format
-msgid "%s: WGETRC points to %s, which doesn't exist.\n"
-msgstr "%s: T· WGETRC dÌrithe ar %s, agus nÌl sÈ seo ann ar chor ar bith.\n"
+msgid "Unsupported algorithm '%s'.\n"
+msgstr "Algartam gan taca√≠ocht '%s'.\n"
 
-#: src/init.c:605 src/netrc.c:246
+#: src/init.c:582
+#, fuzzy, c-format
+msgid ""
+"%s: WGETRC points to %s, which couldn't be accessed because of error: %s.\n"
+msgstr "%s: T√° WGETRC d√≠rithe ar %s, agus n√≠l s√© seo ann ar chor ar bith.\n"
+
+#: src/init.c:683 src/netrc.c:246
 #, c-format
 msgid "%s: Cannot read %s (%s).\n"
-msgstr "%s: NÌ fÈidir %s a lÈamh (%s).\n"
+msgstr "%s: N√≠ f√©idir %s a l√©amh (%s).\n"
 
-#: src/init.c:622
+#: src/init.c:700
 #, c-format
 msgid "%s: Error in %s at line %d.\n"
-msgstr "%s: Earr·id i %s, lÌne %d.\n"
+msgstr "%s: Earr√°id i %s, l√≠ne %d.\n"
 
-#: src/init.c:628
+#: src/init.c:706
 #, c-format
 msgid "%s: Syntax error in %s at line %d.\n"
-msgstr "%s: Earr·id chomhrÈire i %s ag lÌne %d.\n"
+msgstr "%s: Earr√°id chomhr√©ire i %s ag l√≠ne %d.\n"
 
-#: src/init.c:633
-#, fuzzy, c-format
+#: src/init.c:711
+#, c-format
 msgid "%s: Unknown command %s in %s at line %d.\n"
-msgstr "%s: Ord˙ anaithnid `%s' i %s ag lÌne %d.\n"
+msgstr "%s: Ord√∫ anaithnid %s i %s ag l√≠ne %d.\n"
 
-#: src/init.c:670
+#: src/init.c:750
 #, c-format
 msgid ""
 "Parsing system wgetrc file (env SYSTEM_WGETRC) failed.  Please check\n"
 "'%s',\n"
 "or specify a different file using --config.\n"
 msgstr ""
+"N√≠orbh fh√©idir comhad wgetrc an ch√≥rais a phars√°il (cf athr√≥g\n"
+"SYSTEM_WGETRC). F√©ach '%s', n√≥ roghnaigh comhad eile le --config.\n"
 
-#: src/init.c:685
+#: src/init.c:765
 #, c-format
 msgid ""
 "Parsing system wgetrc file failed.  Please check\n"
 "'%s',\n"
 "or specify a different file using --config.\n"
 msgstr ""
+"N√≠orbh fh√©idir comhad wgetrc an ch√≥rais a phars√°il F√©ach '%s',\n"
+"n√≥ roghnaigh comhad eile le --config.\n"
 
-#: src/init.c:701
-#, fuzzy, c-format
+#: src/init.c:781
+#, c-format
 msgid "%s: Warning: Both system and user wgetrc point to %s.\n"
 msgstr ""
-"%s: Rabhadh: T· an comhad wgetrc ˙s·ideora agus an comhad cÛrais wgetrc "
-"araon dÌrithe ar `%s'.\n"
+"%s: Rabhadh: T√° na comhaid wgetrc ag an √∫s√°ideoir agus ag an gc√≥ras nasctha "
+"le %s.\n"
 
-#: src/init.c:891
-#, fuzzy, c-format
+#: src/init.c:976
+#, c-format
 msgid "%s: Invalid --execute command %s\n"
-msgstr "%s: Ord˙ neamhbhailÌ --execute `%s'\n"
+msgstr "%s: Ord√∫ neamhbhail√≠ --execute %s\n"
 
-#: src/init.c:936
-#, fuzzy, c-format
+#: src/init.c:1037
+#, c-format
 msgid "%s: %s: Invalid boolean %s; use `on' or `off'.\n"
-msgstr "%s: %s: Slonn neamhbhailÌ Boole `%s'; ˙s·id `on' nÛ `off'.\n"
+msgstr "%s: %s: Slonn neamhbhail√≠ Boole %s; √∫s√°id `on' n√≥ `off'.\n"
 
-#: src/init.c:953
-#, fuzzy, c-format
+#: src/init.c:1070
+#, c-format
+msgid "%s: %s: Invalid %s; use `on', `off' or `quiet'.\n"
+msgstr "%s: %s: %s neamhbhail√≠; √∫s√°id `on', `off', n√≥ `quiet'.\n"
+
+#: src/init.c:1088
+#, c-format
 msgid "%s: %s: Invalid number %s.\n"
-msgstr "%s: %s: Uimhir neamhbhailÌ `%s'.\n"
+msgstr "%s: %s: Uimhir neamhbhail√≠ %s.\n"
 
-#: src/init.c:1175 src/init.c:1194
-#, fuzzy, c-format
+#: src/init.c:1169
+#, c-format
+msgid "%s: %s must only be used once\n"
+msgstr "%s: N√≠ f√©idir %s a √∫s√°id n√≠os m√≥ n√° uair amh√°in\n"
+
+#: src/init.c:1324 src/init.c:1343
+#, c-format
 msgid "%s: %s: Invalid byte value %s\n"
-msgstr "%s: %s: Luach neamhbhailÌ bearta `%s'\n"
+msgstr "%s: %s: Luach neamhbhail√≠ birt %s\n"
 
-#: src/init.c:1219
-#, fuzzy, c-format
+#: src/init.c:1368
+#, c-format
 msgid "%s: %s: Invalid time period %s\n"
-msgstr "%s: %s: TrÈimhse neamhbhailÌ `%s'\n"
+msgstr "%s: %s: Tr√©imhse neamhbhail√≠ %s\n"
 
-#: src/init.c:1273 src/init.c:1384 src/init.c:1440 src/init.c:1504
-#: src/init.c:1523 src/init.c:1548
-#, fuzzy, c-format
+#: src/init.c:1430 src/main.c:1859
+#, c-format
+msgid ""
+"use-askpass requires a string or either environment variable WGET_ASKPASS or "
+"SSH_ASKPASS to be set.\n"
+msgstr ""
+"n√≠ m√≥r duit teaghr√°n a thabhairt do use-askpass, n√≥ athr√≥g timpeallachta "
+"WGET_ASKPASS n√≥ SSH_ASKPASS a shocr√∫.\n"
+
+#: src/init.c:1448 src/init.c:1470 src/init.c:1578 src/init.c:1634
+#: src/init.c:1700 src/init.c:1719 src/init.c:1744
+#, c-format
 msgid "%s: %s: Invalid value %s.\n"
-msgstr "%s: %s: Luach neamhbhailÌ `%s'.\n"
+msgstr "%s: %s: Luach neamhbhail√≠ %s.\n"
 
-#: src/init.c:1310
-#, fuzzy, c-format
+#: src/init.c:1504
+#, c-format
 msgid "%s: %s: Invalid header %s.\n"
-msgstr "%s: %s: Ceannt·sc neamhbhailÌ `%s'.\n"
+msgstr "%s: %s: Ceannt√°sc neamhbhail√≠ %s.\n"
 
-#: src/init.c:1331
-#, fuzzy, c-format
+#: src/init.c:1525
+#, c-format
 msgid "%s: %s: Invalid WARC header %s.\n"
-msgstr "%s: %s: Ceannt·sc neamhbhailÌ `%s'.\n"
+msgstr "%s: %s: Ceannt√°sc WARC neamhbhail√≠ %s.\n"
 
-#: src/init.c:1397
-#, fuzzy, c-format
+#: src/init.c:1591
+#, c-format
 msgid "%s: %s: Invalid progress type %s.\n"
-msgstr "%s: %s: Cine·l neamhbhailÌ dul chun cinn `%s'.\n"
+msgstr "%s: %s: Cine√°l neamhbhail√≠ dul chun cinn %s.\n"
 
-#: src/init.c:1477
-#, fuzzy, c-format
+#: src/init.c:1673
+#, c-format
 msgid ""
 "%s: %s: Invalid restriction %s,\n"
-"    use [unix|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
+"    use [unix|vms|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
 msgstr ""
-"%s: %s: Teorann˙ neamhbhailÌ `%s', ˙s·id [unix|windows],[lowercase|"
-"uppercase],[nocontrol].\n"
+"%s: %s: Teorann√∫ neamhbhail√≠ %s,\n"
+"    √∫s√°id [unix|vms|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
 
-#: src/iri.c:101
+#: src/iri.c:114
 #, c-format
 msgid "Encoding %s isn't valid\n"
-msgstr ""
+msgstr "N√≠l an t-ionch√≥d√∫ %s bail√≠\n"
 
-#: src/iri.c:126
+#: src/iri.c:140 src/url.c:1572
 #, c-format
 msgid "Conversion from %s to %s isn't supported\n"
-msgstr ""
+msgstr "N√≠ thaca√≠tear le tiont√∫ √≥ %s go %s\n"
 
-#: src/iri.c:149 src/iri.c:190
-#, c-format
-msgid "converted '%s' (%s) -> '%s' (%s)\n"
-msgstr ""
-
-#: src/iri.c:158
+#: src/iri.c:180 src/url.c:1600
 msgid "Incomplete or invalid multibyte sequence encountered\n"
-msgstr ""
+msgstr "Chonacthas seicheamh ilbheart neamhioml√°n n√≥ neamhbhail√≠\n"
 
-#: src/iri.c:183
+#: src/iri.c:199 src/url.c:1617
 #, c-format
 msgid "Unhandled errno %d\n"
-msgstr ""
+msgstr "Earr√°id %d gan l√°imhse√°il\n"
 
-#: src/iri.c:204
+#: src/iri.c:236
 msgid "locale_to_utf8: locale is unset\n"
-msgstr ""
+msgstr "locale_to_utf8: n√≠l logchaighde√°n sonraithe\n"
 
-#: src/iri.c:238
+#: src/iri.c:282 src/iri.c:297
 #, c-format
 msgid "idn_encode failed (%d): %s\n"
-msgstr ""
+msgstr "theip ar idn_encode (%d): %s\n"
 
-#: src/iri.c:257
+#: src/iri.c:289
 #, c-format
-msgid "idn_decode failed (%d): %s\n"
-msgstr ""
+msgid "Failed to convert to lower: %d: %s\n"
+msgstr "N√≠orbh fh√©idir tiont√∫ go c√°s √≠ochtair: %d: %s\n"
 
-#: src/log.c:867
-#, fuzzy, c-format
-msgid ""
-"\n"
-"%s received, redirecting output to %s.\n"
-msgstr ""
-"\n"
-"Fuarthas %s, ag athsheoladh an aschuir go `%s'.\n"
-
-#: src/log.c:877
+#: src/log.c:921 src/log.c:940
 #, c-format
 msgid ""
 "\n"
-"%s received.\n"
+"Redirecting output to %s.\n"
 msgstr ""
 "\n"
-"fuarthas %s.\n"
+"Aschur √° athsheoladh go %s.\n"
 
-#: src/log.c:878
+#: src/log.c:933
 #, c-format
 msgid "%s: %s; disabling logging.\n"
-msgstr "%s: %s; log·il · dÌchumas˙.\n"
+msgstr "%s: %s; log√°il √° d√≠chumas√∫.\n"
 
-#: src/main.c:414
+#: src/main.c:557
 #, c-format
 msgid "Usage: %s [OPTION]... [URL]...\n"
-msgstr "⁄s·id: %s [ROGHA]... [URL]...\n"
+msgstr "√ös√°id: %s [ROGHA]... [URL]...\n"
 
-#: src/main.c:426
+#: src/main.c:569
 msgid ""
 "Mandatory arguments to long options are mandatory for short options too.\n"
 "\n"
 msgstr ""
-"Is riachtanach le rogha ghearr aon argÛint at· riachtanach leis an rogha "
+"Is riachtanach le rogha ghearr aon arg√≥int at√° riachtanach leis an rogha "
 "fhada.\n"
 "\n"
 
-#: src/main.c:428
+#: src/main.c:571
 msgid "Startup:\n"
-msgstr "Tos˙:\n"
+msgstr "Tos√∫:\n"
 
-#: src/main.c:430
-#, fuzzy
+#: src/main.c:573
 msgid ""
-"  -V,  --version                   display the version of Wget and exit.\n"
-msgstr "  -V,  --version           taispe·in an leagan Wget agus scoir.\n"
+"  -V,  --version                   display the version of Wget and exit\n"
+msgstr "  -V,  --version           taispe√°in an leagan de Wget agus scoir\n"
 
-#: src/main.c:432
-#, fuzzy
-msgid "  -h,  --help                      print this help.\n"
-msgstr "  -h,  --help              taispe·in an chabhair seo.\n"
+#: src/main.c:575
+msgid "  -h,  --help                      print this help\n"
+msgstr "  -h,  --help              taispe√°in an chabhair seo\n"
 
-#: src/main.c:434
-#, fuzzy
-msgid "  -b,  --background                go to background after startup.\n"
-msgstr "  -b,  --background        rith sa ch˙lra.\n"
+#: src/main.c:577
+msgid "  -b,  --background                go to background after startup\n"
+msgstr "  -b,  --background        rith sa ch√∫lra tar √©is tosaithe\n"
 
-#: src/main.c:436
-#, fuzzy
-msgid "  -e,  --execute=COMMAND           execute a `.wgetrc'-style command.\n"
-msgstr "  -e,  --execute=ORD⁄      rith ord˙ sa stÌl `.wgetrc'.\n"
+#: src/main.c:579
+msgid "  -e,  --execute=COMMAND           execute a `.wgetrc'-style command\n"
+msgstr "  -e,  --execute=ORD√ö      rith ord√∫ de n√≥s `.wgetrc'\n"
 
-#: src/main.c:440
+#: src/main.c:583
 msgid "Logging and input file:\n"
-msgstr "Log·il agus an t-inchomhad:\n"
+msgstr "Log√°il agus an t-inchomhad:\n"
 
-#: src/main.c:442
-#, fuzzy
-msgid "  -o,  --output-file=FILE          log messages to FILE.\n"
-msgstr "  -o,  --output-file=COMHAD  log·il teachtaireachtaÌ i gCOMHAD.\n"
+#: src/main.c:585
+msgid "  -o,  --output-file=FILE          log messages to FILE\n"
+msgstr "  -o,  --output-file=COMHAD  log√°il teachtaireachta√≠ i gCOMHAD\n"
 
-#: src/main.c:444
-#, fuzzy
-msgid "  -a,  --append-output=FILE        append messages to FILE.\n"
+#: src/main.c:587
+msgid "  -a,  --append-output=FILE        append messages to FILE\n"
 msgstr ""
-"  -a,  --append-output=COMHAD iarcheangail teachtaireachtaÌ le COMHAD.\n"
+"  -a,  --append-output=COMHAD iarcheangail teachtaireachta√≠ le COMHAD\n"
 
-#: src/main.c:447
-#, fuzzy
+#: src/main.c:590
 msgid ""
-"  -d,  --debug                     print lots of debugging information.\n"
-msgstr "  -d,  --debug               taispe·in go leor eolas dhÌfhabhtaithe.\n"
+"  -d,  --debug                     print lots of debugging information\n"
+msgstr "  -d,  --debug               taispe√°in go leor eolas dh√≠fhabhtaithe\n"
 
-#: src/main.c:451
-#, fuzzy
-msgid "       --wdebug                    print Watt-32 debug output.\n"
-msgstr "       --wdebug              taispe·in eolas dhÌfhabhtaithe Watt-32.\n"
+#: src/main.c:594
+msgid "       --wdebug                    print Watt-32 debug output\n"
+msgstr "       --wdebug              taispe√°in eolas dh√≠fhabhtaithe Watt-32\n"
 
-#: src/main.c:454
-#, fuzzy
-msgid "  -q,  --quiet                     quiet (no output).\n"
-msgstr "  -q,  --quiet               tostach (gan aschur).\n"
+#: src/main.c:597
+msgid "  -q,  --quiet                     quiet (no output)\n"
+msgstr "  -q,  --quiet               tostach (gan aschur)\n"
 
-#: src/main.c:456
-#, fuzzy
-msgid "  -v,  --verbose                   be verbose (this is the default).\n"
-msgstr "  -v,  --verbose             bÌ foclach (is È seo an rÈamhshocr˙).\n"
+#: src/main.c:599
+msgid "  -v,  --verbose                   be verbose (this is the default)\n"
+msgstr "  -v,  --verbose             foclach (seo √© an r√©amhshocr√∫)\n"
 
-#: src/main.c:458
-#, fuzzy
+#: src/main.c:601
 msgid ""
 "  -nv, --no-verbose                turn off verboseness, without being "
-"quiet.\n"
-msgstr ""
-"  -nv, --no-verbose          n· bÌ foclach, ach n· bÌ tostach ach oiread.\n"
+"quiet\n"
+msgstr "  -nv, --no-verbose          idir foclach agus tostach\n"
 
-#: src/main.c:460
+#: src/main.c:603
 msgid ""
-"       --report-speed=TYPE         Output bandwidth as TYPE.  TYPE can be "
-"bits.\n"
+"       --report-speed=TYPE         output bandwidth as TYPE.  TYPE can be "
+"bits\n"
 msgstr ""
+"       --report-speed=MODH   taispe√°in bandaleithead mar MODH, mar shampla "
+"'bots'\n"
 
-#: src/main.c:462
-#, fuzzy
+#: src/main.c:605
 msgid ""
 "  -i,  --input-file=FILE           download URLs found in local or external "
-"FILE.\n"
-msgstr "  -i,  --input-file=COMHAD   Ìosluchtaigh URLanna Ûn CHOMHAD.\n"
+"FILE\n"
+msgstr ""
+"  -i,  --input-file=COMHAD   √≠osl√≥d√°il URLanna √≥n CHOMHAD √°iti√∫il n√≥ "
+"seachtrach\n"
 
-#: src/main.c:464
-#, fuzzy
-msgid "  -F,  --force-html                treat input file as HTML.\n"
-msgstr "  -F,  --force-html          caith leis an inchomhad mar HTML.\n"
+#: src/main.c:608
+msgid ""
+"       --input-metalink=FILE       download files covered in local Metalink "
+"FILE\n"
+msgstr ""
+"       --input-metalink=COMHAD  √≠osl√≥d√°il comhaid cl√∫daithe sa CHOMHAD "
+"√°iti√∫il Metalink\n"
 
-#: src/main.c:466
-#, fuzzy
+#: src/main.c:611
+msgid "  -F,  --force-html                treat input file as HTML\n"
+msgstr "  -F,  --force-html          caith leis an inchomhad mar HTML\n"
+
+#: src/main.c:613
 msgid ""
 "  -B,  --base=URL                  resolves HTML input-file links (-i -F)\n"
-"                                   relative to URL.\n"
+"                                     relative to URL\n"
 msgstr ""
-"  -N,  --timestamping            n· haisghabh comhaid arÌs mura bhfuil siad "
-"nÌos nuaÌ\n"
+"  -B,  --base=URL                  r√©itigh nascanna HTML √≥ inchomhaid (-i -"
+"F)\n"
+"                                     i gcoibhneas le URL\n"
 
-#: src/main.c:469
-#, fuzzy
-msgid "       --config=FILE               Specify config file to use.\n"
-msgstr "       --certificate=COMHAD     comhad teastais an chliaint.\n"
+#: src/main.c:616
+msgid "       --config=FILE               specify config file to use\n"
+msgstr "       --config=COMHAD             sonraigh comhad cumra√≠ochta\n"
 
-#: src/main.c:471
-#, fuzzy
-msgid "       --no-config                 Do not read any config file.\n"
-msgstr "       --no-cookies            n· h˙s·id fian·in.\n"
+#: src/main.c:618
+msgid "       --no-config                 do not read any config file\n"
+msgstr "       --no-config           n√° l√©igh aon chomhad cumra√≠ochta\n"
 
-#: src/main.c:475
+#: src/main.c:620
+msgid ""
+"       --rejected-log=FILE         log reasons for URL rejection to FILE\n"
+msgstr ""
+"       --rejected-log=COMHAD       logchomhad i gcomhair URLanna di√∫ltaithe\n"
+
+#: src/main.c:624
 msgid "Download:\n"
-msgstr "Õosluchtaigh:\n"
+msgstr "√çosl√≥d√°il:\n"
 
-#: src/main.c:477
-#, fuzzy
+#: src/main.c:626
 msgid ""
 "  -t,  --tries=NUMBER              set number of retries to NUMBER (0 "
-"unlimits).\n"
+"unlimits)\n"
 msgstr ""
-"  -t,  --tries=UIMHIR            lÌon na n-atrialacha (0=gan teorainn).\n"
+"  -t,  --tries=UIMHIR            l√≠on na n-atrialacha (0=gan teorainn)\n"
 
-#: src/main.c:479
-#, fuzzy
+#: src/main.c:628
 msgid ""
-"       --retry-connrefused         retry even if connection is refused.\n"
+"       --retry-connrefused         retry even if connection is refused\n"
 msgstr ""
-"       --retry-connrefused       atriail fi˙ m· t· an ceangal di˙ltaithe.\n"
+"       --retry-connrefused       atriail fi√∫ m√° t√° an ceangal di√∫ltaithe\n"
 
-#: src/main.c:481
-#, fuzzy
-msgid "  -O,  --output-document=FILE      write documents to FILE.\n"
-msgstr "  -O,  --output-document=COMHAD  scrÌobh c·ipÈisÌ i gCOMHAD.\n"
+#: src/main.c:630
+msgid "  -O,  --output-document=FILE      write documents to FILE\n"
+msgstr "  -O,  --output-document=COMHAD  scr√≠obh c√°ip√©is√≠ i gCOMHAD\n"
 
-#: src/main.c:483
-#, fuzzy
+#: src/main.c:632
 msgid ""
 "  -nc, --no-clobber                skip downloads that would download to\n"
-"                                   existing files (overwriting them).\n"
-msgstr "  -nc, --no-clobber              n· forscrÌobh comhaid at· ann.\n"
+"                                     existing files (overwriting them)\n"
+msgstr ""
+"  -nc, --no-clobber              n√° h√≠osl√≥d√°il comhad a d'fhorscr√≠obhfadh\n"
+"                                          comhad at√° ann cheana\n"
 
-#: src/main.c:486
+#: src/main.c:635
 #, fuzzy
+msgid ""
+"       --no-netrc                  don't try to obtain credentials from ."
+"netrc\n"
+msgstr "       --no-config           n√° l√©igh aon chomhad cumra√≠ochta\n"
+
+#: src/main.c:637
 msgid ""
 "  -c,  --continue                  resume getting a partially-downloaded "
-"file.\n"
-msgstr "  -c,  --continue                atosaigh Ìosluchtaigh comhad.\n"
+"file\n"
+msgstr "  -c,  --continue                atosaigh √≠osl√≥d√°il comhad\n"
 
-#: src/main.c:488
+#: src/main.c:639
 msgid ""
 "       --start-pos=OFFSET          start downloading from zero-based "
-"position OFFSET.\n"
+"position OFFSET\n"
 msgstr ""
+"       --start-pos=UIMHIR          tosaigh ag √≠osl√≥d√°il √≥ fhrith√°ireamh "
+"UIMHIR\n"
 
-#: src/main.c:490
-#, fuzzy
-msgid "       --progress=TYPE             select progress gauge type.\n"
-msgstr "       --progress=CINE¡L         cine·l rianaire dul chun cinn.\n"
+#: src/main.c:641
+msgid "       --progress=TYPE             select progress gauge type\n"
+msgstr "       --progress=CINE√ÅL         cine√°l rianaire dul chun cinn\n"
 
-#: src/main.c:492
-#, fuzzy
+#: src/main.c:643
 msgid ""
 "       --show-progress             display the progress bar in any verbosity "
-"mode.\n"
-msgstr "       --progress=CINE¡L         cine·l rianaire dul chun cinn.\n"
+"mode\n"
+msgstr ""
+"       --show-progress             taispe√°in barra dul chun cinn, m√≥d "
+"foclachais ar bith\n"
 
-#: src/main.c:494
-#, fuzzy
+#: src/main.c:645
 msgid ""
 "  -N,  --timestamping              don't re-retrieve files unless newer "
 "than\n"
-"                                   local.\n"
+"                                     local\n"
 msgstr ""
-"  -N,  --timestamping            n· haisghabh comhaid arÌs mura bhfuil siad "
-"nÌos nuaÌ\n"
+"  -N,  --timestamping            n√° h√≠osl√≥d√°il comhad mura bhfuil s√© n√≠os\n"
+"                                   nua√≠ n√° an leagan √°iti√∫il\n"
 
-#: src/main.c:497
-#, fuzzy
+#: src/main.c:648
 msgid ""
-"  --no-use-server-timestamps       don't set the local file's timestamp by\n"
-"                                   the one on the server.\n"
+"       --no-if-modified-since      don't use conditional if-modified-since "
+"get\n"
+"                                     requests in timestamping mode\n"
 msgstr ""
-"  -N,  --timestamping            n· haisghabh comhaid arÌs mura bhfuil siad "
-"nÌos nuaÌ\n"
+"       --no-if-modified-since    n√° h√∫s√°id iarratais choinn√≠ollacha if-"
+"modified-since\n"
+"                                     i m√≥d na stampa√≠ ama\n"
 
-#: src/main.c:500
-#, fuzzy
-msgid "  -S,  --server-response           print server response.\n"
-msgstr "  -S,  --server-response         taispe·in freagra Ûn fhreastalaÌ.\n"
-
-#: src/main.c:502
-#, fuzzy
-msgid "       --spider                    don't download anything.\n"
-msgstr "       --spider                  n· hÌosluchtaigh rud ar bith.\n"
-
-#: src/main.c:504
-#, fuzzy
-msgid "  -T,  --timeout=SECONDS           set all timeout values to SECONDS.\n"
-msgstr ""
-"  -T,  --timeout=SOICINDÕ        socraigh gach seal fanachta = SOICINDÕ.\n"
-
-#: src/main.c:506
-#, fuzzy
+#: src/main.c:651
 msgid ""
-"       --dns-timeout=SECS          set the DNS lookup timeout to SECS.\n"
-msgstr "       --dns-timeout=SOIC        seal fanachta DNS = SOIC.\n"
+"       --no-use-server-timestamps  don't set the local file's timestamp by\n"
+"                                     the one on the server\n"
+msgstr ""
+"       --no-use-server-timestamps  n√° √∫s√°id an stampa ama ar an "
+"bhfreastala√≠\n"
+"                                     chun an stampa ama √°iti√∫il a shocr√∫\n"
 
-#: src/main.c:508
-#, fuzzy
-msgid "       --connect-timeout=SECS      set the connect timeout to SECS.\n"
-msgstr "       --connect-timeout=SOIC    seal fanachta ceangailte = SOIC.\n"
+#: src/main.c:654
+msgid "  -S,  --server-response           print server response\n"
+msgstr "  -S,  --server-response         taispe√°in an freagra √≥n fhreastala√≠\n"
 
-#: src/main.c:510
-#, fuzzy
-msgid "       --read-timeout=SECS         set the read timeout to SECS.\n"
-msgstr "       --read-timeout=SOIC       seal fanachta lÈimh = SOIC.\n"
+#: src/main.c:656
+msgid "       --spider                    don't download anything\n"
+msgstr "       --spider                  n√° h√≠osl√≥d√°il rud ar bith\n"
 
-#: src/main.c:512
-#, fuzzy
-msgid "  -w,  --wait=SECONDS              wait SECONDS between retrievals.\n"
-msgstr "  -w,  --wait=SOICINDÕ           fan SOICINDÕ idir Ìosluchtuithe.\n"
+#: src/main.c:658
+msgid "  -T,  --timeout=SECONDS           set all timeout values to SECONDS\n"
+msgstr ""
+"  -T,  --timeout=SOICIND√ç        socraigh gach tr√©imhse feithimh = SOICIND√ç\n"
 
-#: src/main.c:514
-#, fuzzy
+#: src/main.c:661
+msgid ""
+"       --dns-servers=ADDRESSES     list of DNS servers to query (comma "
+"separated)\n"
+msgstr ""
+"       --dns-servers=SEOLTA√ç    liosta freastalaithe DNS le h√∫s√°id (cam√≥ga "
+"eatarthu)\n"
+
+#: src/main.c:663
+msgid ""
+"       --bind-dns-address=ADDRESS  bind DNS resolver to ADDRESS (hostname or "
+"IP) on local host\n"
+msgstr ""
+"       --bind-dns-address=SEOLADH    ceangail r√©iteoir DNS le SEOLADH "
+"(√≥stainm/IP) ar an √≥str√≠omhaire √°iti√∫il\n"
+
+#: src/main.c:666
+msgid "       --dns-timeout=SECS          set the DNS lookup timeout to SECS\n"
+msgstr "       --dns-timeout=SOIC        seal fanachta DNS = SOIC\n"
+
+#: src/main.c:668
+msgid "       --connect-timeout=SECS      set the connect timeout to SECS\n"
+msgstr "       --connect-timeout=SOIC    seal fanachta ceangailte = SOIC\n"
+
+#: src/main.c:670
+msgid "       --read-timeout=SECS         set the read timeout to SECS\n"
+msgstr "       --read-timeout=SOIC       seal fanachta l√©imh = SOIC\n"
+
+#: src/main.c:672
+msgid "  -w,  --wait=SECONDS              wait SECONDS between retrievals\n"
+msgstr "  -w,  --wait=SOICIND√ç           fan SOICIND√ç idir √≠osl√≥d√°lacha\n"
+
+#: src/main.c:674
 msgid ""
 "       --waitretry=SECONDS         wait 1..SECONDS between retries of a "
-"retrieval.\n"
-msgstr "       --waitretry=SOICINDÕ      fan 1...SOICINDÕ idir atrialacha.\n"
+"retrieval\n"
+msgstr "       --waitretry=SOICIND√ç      fan 1...SOICIND√ç idir atrialacha\n"
 
-#: src/main.c:516
-#, fuzzy
+#: src/main.c:676
 msgid ""
 "       --random-wait               wait from 0.5*WAIT...1.5*WAIT secs "
-"between retrievals.\n"
+"between retrievals\n"
 msgstr ""
-"       --random-wait             fan Û 0...2*WAIT soicindÌ idir "
-"Ìosluchtuithe.\n"
+"       --random-wait             fan √≥ 0.5*WAIT...1.5*WAIT soicind idir "
+"√≠osl√≥d√°lacha\n"
 
-#: src/main.c:518
-#, fuzzy
-msgid "       --no-proxy                  explicitly turn off proxy.\n"
-msgstr "       --no-proxy                n· h˙s·id seachfhreastalaÌ.\n"
+#: src/main.c:678
+msgid "       --no-proxy                  explicitly turn off proxy\n"
+msgstr "       --no-proxy                n√° h√∫s√°id seachfhreastala√≠\n"
 
-#: src/main.c:520
-#, fuzzy
-msgid "  -Q,  --quota=NUMBER              set retrieval quota to NUMBER.\n"
-msgstr "  -Q,  --quota=UIMHIR            socraigh cuÛta athghabh·la.\n"
+#: src/main.c:680
+msgid "  -Q,  --quota=NUMBER              set retrieval quota to NUMBER\n"
+msgstr "  -Q,  --quota=UIMHIR            socraigh cu√≥ta √≠osl√≥d√°la\n"
 
-#: src/main.c:522
-#, fuzzy
+#: src/main.c:682
 msgid ""
 "       --bind-address=ADDRESS      bind to ADDRESS (hostname or IP) on local "
-"host.\n"
+"host\n"
 msgstr ""
-"       --bind-address=SEOLADH    ceangail le SEOLADH (Ûstainm/IP) go "
-"log·nta.\n"
+"       --bind-address=SEOLADH    ceangail le SEOLADH (√≥stainm/IP) ar an "
+"√≥stach √°iti√∫il\n"
 
-#: src/main.c:524
-#, fuzzy
-msgid "       --limit-rate=RATE           limit download rate to RATE.\n"
-msgstr "       --limit-rate=R¡TA         socraigh uasr·ta Ìosluchtaithe.\n"
+#: src/main.c:684
+msgid "       --limit-rate=RATE           limit download rate to RATE\n"
+msgstr "       --limit-rate=R√ÅTA         socraigh uasr√°ta √≠osl√≥d√°la\n"
 
-#: src/main.c:526
-#, fuzzy
-msgid "       --no-dns-cache              disable caching DNS lookups.\n"
-msgstr "       --no-dns-cache            n· cuir cuardaigh DNS i dtaisce.\n"
+#: src/main.c:686
+msgid "       --no-dns-cache              disable caching DNS lookups\n"
+msgstr "       --no-dns-cache            n√° cuir cuardaigh DNS i dtaisce\n"
 
-#: src/main.c:528
-#, fuzzy
+#: src/main.c:688
 msgid ""
 "       --restrict-file-names=OS    restrict chars in file names to ones OS "
-"allows.\n"
+"allows\n"
 msgstr ""
-"       --restrict-file-names=OS  ˙s·id carachtair ceadaithe ag an chÛras.\n"
+"       --restrict-file-names=OS  n√° h√∫s√°id carachtair nach dtaca√≠tear leo ar "
+"an OS\n"
 
-#: src/main.c:530
-#, fuzzy
+#: src/main.c:690
 msgid ""
 "       --ignore-case               ignore case when matching files/"
-"directories.\n"
+"directories\n"
 msgstr ""
-"       --ignore-case             n· bac le c·s agus comhaid · meaitse·il.\n"
+"       --ignore-case             n√° bac le c√°s agus comhaid/comhadlanna √° "
+"meaitse√°il\n"
 
-#: src/main.c:533
-#, fuzzy
-msgid "  -4,  --inet4-only                connect only to IPv4 addresses.\n"
-msgstr "  -4,  --inet4-only              ceangail le seoltaÌ IPv4 amh·in.\n"
+#: src/main.c:693
+msgid "  -4,  --inet4-only                connect only to IPv4 addresses\n"
+msgstr "  -4,  --inet4-only              ceangail le seolta√≠ IPv4 amh√°in\n"
 
-#: src/main.c:535
-#, fuzzy
-msgid "  -6,  --inet6-only                connect only to IPv6 addresses.\n"
-msgstr "  -6,  --inet6-only              ceangail le seoltaÌ IPv6 amh·in.\n"
+#: src/main.c:695
+msgid "  -6,  --inet6-only                connect only to IPv6 addresses\n"
+msgstr "  -6,  --inet6-only              ceangail le seolta√≠ IPv6 amh√°in\n"
 
-#: src/main.c:537
-#, fuzzy
+#: src/main.c:697
 msgid ""
 "       --prefer-family=FAMILY      connect first to addresses of specified "
 "family,\n"
-"                                   one of IPv6, IPv4, or none.\n"
+"                                     one of IPv6, IPv4, or none\n"
 msgstr ""
-"       --prefer-family=CLANN     ceangail ar dt˙s le seoltaÌ Ûn CHLANN "
-"sonraithe:\n"
-"                                 IPv6, IPv4, nÛ \"none\".\n"
+"       --prefer-family=CLANN     ceangail ar dt√∫s le seolta√≠ √≥n CHLANN,\n"
+"                                 IPv6, IPv4, n√≥ \"none\".\n"
 
-#: src/main.c:541
-#, fuzzy
+#: src/main.c:701
+msgid "       --user=USER                 set both ftp and http user to USER\n"
+msgstr ""
+"       --user=√öS√ÅIDEOIR          socraigh an t√öS√ÅIDEOIR ftp agus http\n"
+
+#: src/main.c:703
 msgid ""
-"       --user=USER                 set both ftp and http user to USER.\n"
+"       --password=PASS             set both ftp and http password to PASS\n"
 msgstr ""
-"       --user=⁄S¡IDEOIR          socraigh ⁄S¡IDEOIR do ftp agus http araon.\n"
+"       --password=FF             socraigh an focal faire ftp agus http\n"
 
-#: src/main.c:543
-#, fuzzy
+#: src/main.c:705
+msgid "       --ask-password              prompt for passwords\n"
+msgstr "       --ask-password            faigh focail fhaire √≥n √∫s√°ideoir\n"
+
+#: src/main.c:707
 msgid ""
-"       --password=PASS             set both ftp and http password to PASS.\n"
+"       --use-askpass=COMMAND       specify credential handler for "
+"requesting \n"
+"                                     username and password.  If no COMMAND "
+"is \n"
+"                                     specified the WGET_ASKPASS or the "
+"SSH_ASKPASS \n"
+"                                     environment variable is used.\n"
 msgstr ""
-"       --password=FF             socraigh focal faire do ftp agus http.\n"
+"       --use-askpass=ORD√ö    sonraigh l√°imhse√°la√≠ dinti√∫r nuair a iarrtar\n"
+"                                  ainm √∫s√°ideora agus focal faire. Gan "
+"ORD√ö,\n"
+"                                  √∫s√°idtear athr√≥ga timpeallachta "
+"WGET_ASKPASS\n"
+"                                  n√≥ SSH_ASKPASS.\n"
 
-#: src/main.c:545
-#, fuzzy
-msgid "       --ask-password              prompt for passwords.\n"
-msgstr ""
-"       --password=FF             socraigh focal faire do ftp agus http.\n"
+#: src/main.c:712
+msgid "       --no-iri                    turn off IRI support\n"
+msgstr "       --no-iri            m√∫ch taca√≠ocht do IRI\n"
 
-#: src/main.c:547
-#, fuzzy
-msgid "       --no-iri                    turn off IRI support.\n"
-msgstr "       --no-proxy                n· h˙s·id seachfhreastalaÌ.\n"
-
-#: src/main.c:549
+#: src/main.c:714
 msgid ""
-"       --local-encoding=ENC        use ENC as the local encoding for IRIs.\n"
+"       --local-encoding=ENC        use ENC as the local encoding for IRIs\n"
 msgstr ""
+"       --local-encoding=IONCH√ìD√ö   sonraigh IONCH√ìD√ö √°iti√∫il i gcomhair "
+"IRIanna\n"
 
-#: src/main.c:551
+#: src/main.c:716
 msgid ""
-"       --remote-encoding=ENC       use ENC as the default remote encoding.\n"
+"       --remote-encoding=ENC       use ENC as the default remote encoding\n"
 msgstr ""
+"       --remote-encoding=IONCH√ìD√ö  IONCH√ìD√ö r√©amhshocraithe ar chomhaid i "
+"gc√©in\n"
 
-#: src/main.c:553
-#, fuzzy
-msgid "       --unlink                    remove file before clobber.\n"
+#: src/main.c:718
+msgid "       --unlink                    remove file before clobber\n"
+msgstr "       --unlink             scrios comhaid sula bhforscr√≠obhfar iad\n"
+
+#: src/main.c:721
+msgid ""
+"       --keep-badhash              keep files with checksum mismatch "
+"(append .badhash)\n"
 msgstr ""
-"       --no-glob               n· h˙s·id glob·il le hainmneacha comhaid "
-"FTP.\n"
+"       --keep-badhash              coinnigh comhaid fi√∫ mura meaitse√°lann an "
+"tsuim sheice√°la (agus cuir .badhash leis an ainm)\n"
 
-#: src/main.c:557
+#: src/main.c:723
+msgid ""
+"       --metalink-index=NUMBER     Metalink application/metalink4+xml "
+"metaurl ordinal NUMBER\n"
+msgstr ""
+"       --metalink-index=UIMHIR     Orduimhir Metalink application/"
+"metalink4+xml\n"
+
+#: src/main.c:725
+msgid ""
+"       --metalink-over-http        use Metalink metadata from HTTP response "
+"headers\n"
+msgstr ""
+"       --metalink-over-http        √∫s√°id meiteashonra√≠ Metalink √≥ "
+"cheannt√°sca an fhreagra HTTP\n"
+
+#: src/main.c:727
+msgid ""
+"       --preferred-location        preferred location for Metalink "
+"resources\n"
+msgstr ""
+"       --preferred-location        do rogha √°ite le haghaidh acmhainn√≠ "
+"Metalink\n"
+
+#: src/main.c:731
+msgid ""
+"       --no-xattr                  turn off storage of metadata in extended "
+"file attributes\n"
+msgstr ""
+"       --no-xattr                  n√° st√≥r√°il meiteashonra√≠ in aitreab√∫id√≠ "
+"breisithe\n"
+
+#: src/main.c:736
 msgid "Directories:\n"
 msgstr "Comhadlanna:\n"
 
-#: src/main.c:559
-#, fuzzy
-msgid "  -nd, --no-directories            don't create directories.\n"
-msgstr "  -nd, --no-directories           n· cruthaigh comhadlanna.\n"
+#: src/main.c:738
+msgid "  -nd, --no-directories            don't create directories\n"
+msgstr "  -nd, --no-directories           n√° cruthaigh comhadlanna\n"
 
-#: src/main.c:561
-#, fuzzy
-msgid "  -x,  --force-directories         force creation of directories.\n"
-msgstr "  -x,  --force-directories        cruthaigh comhadlanna i gcÛnaÌ.\n"
+#: src/main.c:740
+msgid "  -x,  --force-directories         force creation of directories\n"
+msgstr "  -x,  --force-directories        cruthaigh comhadlanna i gc√≥na√≠\n"
 
-#: src/main.c:563
-#, fuzzy
-msgid "  -nH, --no-host-directories       don't create host directories.\n"
-msgstr "  -nH, --no-host-directories      n· cruthaigh comhadlanna Ûstacha.\n"
+#: src/main.c:742
+msgid "  -nH, --no-host-directories       don't create host directories\n"
+msgstr "  -nH, --no-host-directories      n√° cruthaigh comhadlanna √≥stacha\n"
 
-#: src/main.c:565
-#, fuzzy
-msgid "       --protocol-directories      use protocol name in directories.\n"
+#: src/main.c:744
+msgid "       --protocol-directories      use protocol name in directories\n"
 msgstr ""
-"       --protocol-directories     ˙s·id ainm an phrÛtacail i gcomhadlanna.\n"
+"       --protocol-directories     √∫s√°id ainm an phr√≥tacail i gcomhadlanna\n"
 
-#: src/main.c:567
-#, fuzzy
-msgid "  -P,  --directory-prefix=PREFIX   save files to PREFIX/...\n"
-msgstr "  -P,  --directory-prefix=R…IMÕR  s·bh·il comhaid i R…IMÕR/...\n"
+#: src/main.c:746
+msgid "  -P,  --directory-prefix=PREFIX   save files to PREFIX/..\n"
+msgstr "  -P,  --directory-prefix=R√âIM√çR  s√°bh√°il comhaid i R√âIM√çR/..\n"
 
-#: src/main.c:569
-#, fuzzy
+#: src/main.c:748
 msgid ""
 "       --cut-dirs=NUMBER           ignore NUMBER remote directory "
-"components.\n"
+"components\n"
 msgstr ""
-"       --cut-dirs=UIMHIR          dÈan neamhshuim ar UIMHIR comhph·irt "
-"chomhadlainne.\n"
+"       --cut-dirs=UIMHIR          d√©an neamhshuim ar UIMHIR comhph√°irt den "
+"chomhadlann i gc√©in\n"
 
-#: src/main.c:573
+#: src/main.c:752
 msgid "HTTP options:\n"
 msgstr "Roghanna HTTP:\n"
 
-#: src/main.c:575
-#, fuzzy
-msgid "       --http-user=USER            set http user to USER.\n"
-msgstr "       --http-user=⁄S¡IDEOIR   socraigh ⁄S¡IDEOIR http.\n"
+#: src/main.c:754
+msgid "       --http-user=USER            set http user to USER\n"
+msgstr "       --http-user=√öS√ÅIDEOIR   socraigh an t√öS√ÅIDEOIR http\n"
 
-#: src/main.c:577
-#, fuzzy
-msgid "       --http-password=PASS        set http password to PASS.\n"
-msgstr "       --http-passwd=FF        socraigh focal faire http.\n"
+#: src/main.c:756
+msgid "       --http-password=PASS        set http password to PASS\n"
+msgstr "       --http-password=FF        socraigh an focal faire http\n"
 
-#: src/main.c:579
-#, fuzzy
-msgid "       --no-cache                  disallow server-cached data.\n"
+#: src/main.c:758
+msgid "       --no-cache                  disallow server-cached data\n"
 msgstr ""
-"       --no-cache              n· ceadaigh sonraÌ curtha i dtaisce ag an "
-"fhreastalaÌ.\n"
+"       --no-cache              n√° ceadaigh sonra√≠ curtha i dtaisce ag an "
+"bhfreastala√≠\n"
 
-#: src/main.c:581
+#: src/main.c:760
 msgid ""
-"       --default-page=NAME         Change the default page name (normally\n"
-"                                   this is `index.html'.).\n"
+"       --default-page=NAME         change the default page name (normally\n"
+"                                     this is 'index.html'.)\n"
 msgstr ""
+"       --default-page=AINM         athraigh an t-ainm leathanaigh "
+"r√©amhshocraithe\n"
+"                                     ('index.html' de ghn√°th.)\n"
 
-#: src/main.c:584
-#, fuzzy
+#: src/main.c:763
 msgid ""
 "  -E,  --adjust-extension          save HTML/CSS documents with proper "
-"extensions.\n"
+"extensions\n"
 msgstr ""
-"  -E,  --html-extension        s·bh·il gach c·ipÈis HTML le hiarmhÌr `."
-"html'.\n"
+"  -E,  --adjust-extension        s√°bh√°il c√°ip√©is√≠ HTML/CSS le hiarmh√≠reanna "
+"cu√≠\n"
 
-#: src/main.c:586
+#: src/main.c:765
+msgid ""
+"       --ignore-length             ignore 'Content-Length' header field\n"
+msgstr ""
+"       --ignore-length         d√©an neamhaird den r√©imse 'Content-Length'\n"
+
+#: src/main.c:767
+msgid "       --header=STRING             insert STRING among the headers\n"
+msgstr "       --header=TEAGHR√ÅN       cuir TEAGHR√ÅN sna ceannt√°sca\n"
+
+#: src/main.c:770
 #, fuzzy
 msgid ""
-"       --ignore-length             ignore `Content-Length' header field.\n"
-msgstr ""
-"       --ignore-length         dÈan neamhaird den rÈimse `Content-Length'.\n"
+"       --compression=TYPE          choose compression, one of auto, gzip and "
+"none\n"
+msgstr "       --progress=CINE√ÅL         cine√°l rianaire dul chun cinn\n"
 
-#: src/main.c:588
-#, fuzzy
-msgid "       --header=STRING             insert STRING among the headers.\n"
-msgstr "       --header=TEAGHR¡N       ions·igh TEAGHR¡N sna ceannt·sca.\n"
-
-#: src/main.c:590
-#, fuzzy
+#: src/main.c:773
 msgid ""
-"       --max-redirect              maximum redirections allowed per page.\n"
-msgstr "       --max-redirect          uasmhÈid atreoraithe sa leathanach.\n"
-
-#: src/main.c:592
-#, fuzzy
-msgid "       --proxy-user=USER           set USER as proxy username.\n"
+"       --max-redirect              maximum redirections allowed per page\n"
 msgstr ""
-"       --proxy-user=⁄S¡IDEOIR  socraigh ⁄S¡IDEOIR an seachfhreastalaÌ.\n"
+"       --max-redirect          uasmh√©id atreoraithe do gach leathanach\n"
 
-#: src/main.c:594
-#, fuzzy
-msgid "       --proxy-password=PASS       set PASS as proxy password.\n"
+#: src/main.c:775
+msgid "       --proxy-user=USER           set USER as proxy username\n"
 msgstr ""
-"       --proxy-passwd=FF       socraigh focal faire seachfhreastalaÌ.\n"
+"       --proxy-user=√öS√ÅIDEOIR  socraigh √öS√ÅIDEOIR an tseachfhreastala√≠\n"
 
-#: src/main.c:596
-#, fuzzy
+#: src/main.c:777
+msgid "       --proxy-password=PASS       set PASS as proxy password\n"
+msgstr ""
+"       --proxy-password=FF       socraigh focal faire don seachfhreastala√≠\n"
+
+#: src/main.c:779
 msgid ""
-"       --referer=URL               include `Referer: URL' header in HTTP "
-"request.\n"
+"       --referer=URL               include 'Referer: URL' header in HTTP "
+"request\n"
 msgstr ""
-"       --referer=URL           iniaigh ceannt·sc `Referer: URL' san "
-"iarracht.\n"
+"       --referer=URL           cuir ceannt√°sc 'Referer: URL' san iarracht "
+"HTTP\n"
 
-#: src/main.c:598
-#, fuzzy
-msgid "       --save-headers              save the HTTP headers to file.\n"
-msgstr "       --save-headers          s·bh·il na ceannt·sca HTTP i gcomhad.\n"
+#: src/main.c:781
+msgid "       --save-headers              save the HTTP headers to file\n"
+msgstr "       --save-headers          s√°bh√°il na ceannt√°sca HTTP i gcomhad\n"
 
-#: src/main.c:600
-#, fuzzy
+#: src/main.c:783
 msgid ""
 "  -U,  --user-agent=AGENT          identify as AGENT instead of Wget/"
-"VERSION.\n"
+"VERSION\n"
 msgstr ""
-"  -U,  --user-agent=AINM       cuir thusa fÈin in aithne le hAINM vs. Wget/"
-"LEAGAN.\n"
+"  -U,  --user-agent=AINM       t√∫ f√©in a chur in aithne mar AINM vs. Wget/"
+"LEAGAN\n"
 
-#: src/main.c:602
-#, fuzzy
+#: src/main.c:785
 msgid ""
 "       --no-http-keep-alive        disable HTTP keep-alive (persistent "
-"connections).\n"
+"connections)\n"
 msgstr ""
-"       --no-http-keep-alive    dÌchumasaigh keep-alive HTTP (ceangail "
-"sheasmhacha).\n"
+"       --no-http-keep-alive    d√≠chumasaigh keep-alive HTTP (ceangail "
+"sheasmhacha)\n"
 
-#: src/main.c:604
-#, fuzzy
-msgid "       --no-cookies                don't use cookies.\n"
-msgstr "       --no-cookies            n· h˙s·id fian·in.\n"
+#: src/main.c:787
+msgid "       --no-cookies                don't use cookies\n"
+msgstr "       --no-cookies            n√° h√∫s√°id fian√°in\n"
 
-#: src/main.c:606
-#, fuzzy
+#: src/main.c:789
 msgid ""
-"       --load-cookies=FILE         load cookies from FILE before session.\n"
+"       --load-cookies=FILE         load cookies from FILE before session\n"
 msgstr ""
-"       --load-cookies=COMHAD   luchtaigh fian·in Û CHOMHAD roimh an "
-"seisi˙n.\n"
+"       --load-cookies=COMHAD   l√≥d√°il fian√°in √≥ CHOMHAD roimh an seisi√∫n\n"
 
-#: src/main.c:608
-#, fuzzy
-msgid ""
-"       --save-cookies=FILE         save cookies to FILE after session.\n"
+#: src/main.c:791
+msgid "       --save-cookies=FILE         save cookies to FILE after session\n"
 msgstr ""
-"       --save-cookies=COMHAD   s·bh·il fian·in i gCOMHAD tar Èis an "
-"tseisi˙in.\n"
+"       --save-cookies=COMHAD   s√°bh√°il fian√°in i gCOMHAD tar √©is an "
+"tseisi√∫in\n"
 
-#: src/main.c:610
-#, fuzzy
+#: src/main.c:793
 msgid ""
 "       --keep-session-cookies      load and save session (non-permanent) "
-"cookies.\n"
+"cookies\n"
 msgstr ""
-"       --keep-session-cookies  luchtaigh agus s·bh·il fian·in (sealadacha) "
-"an tseisi˙in.\n"
+"       --keep-session-cookies  l√≥d√°il agus s√°bh√°il fian√°in (sealadacha) an "
+"tseisi√∫in\n"
 
-#: src/main.c:612
-#, fuzzy
+#: src/main.c:795
 msgid ""
 "       --post-data=STRING          use the POST method; send STRING as the "
-"data.\n"
+"data\n"
 msgstr ""
-"       --post-data=TEAGHR¡N    ˙s·id an modh POST; seol TEAGHR¡N mar "
-"sonraÌ.\n"
+"       --post-data=TEAGHR√ÅN    √∫s√°id an modh POST; seol TEAGHR√ÅN mar na "
+"sonra√≠\n"
 
-#: src/main.c:614
-#, fuzzy
+#: src/main.c:797
 msgid ""
 "       --post-file=FILE            use the POST method; send contents of "
-"FILE.\n"
+"FILE\n"
 msgstr ""
-"       --post-file=COMHAD      ˙s·id an modh POST; seol na sonraÌ as "
-"COMHAD.\n"
+"       --post-file=COMHAD      √∫s√°id an modh POST; seol na sonra√≠ as COMHAD\n"
 
-#: src/main.c:616
+#: src/main.c:799
 msgid ""
-"       --method=HTTPMethod         use method \"HTTPMethod\" in the "
-"request.\n"
+"       --method=HTTPMethod         use method \"HTTPMethod\" in the request\n"
 msgstr ""
+"       --method=HTTPMethod         √∫s√°id modh \"HTTPMethod\" san iarratas\n"
 
-#: src/main.c:618
-#, fuzzy
+#: src/main.c:801
 msgid ""
-"       --body-data=STRING          Send STRING as data. --method MUST be "
-"set.\n"
+"       --body-data=STRING          send STRING as data. --method MUST be "
+"set\n"
 msgstr ""
-"       --post-data=TEAGHR¡N    ˙s·id an modh POST; seol TEAGHR¡N mar "
-"sonraÌ.\n"
+"       --body-data=TEAGHR√ÅN    seol TEAGHR√ÅN mar na sonra√≠; n√≠ m√≥r --method "
+"a shonr√∫\n"
 
-#: src/main.c:620
-#, fuzzy
+#: src/main.c:803
 msgid ""
-"       --body-file=FILE            Send contents of FILE. --method MUST be "
-"set.\n"
+"       --body-file=FILE            send contents of FILE. --method MUST be "
+"set\n"
 msgstr ""
-"       --post-file=COMHAD      ˙s·id an modh POST; seol na sonraÌ as "
-"COMHAD.\n"
+"       --body-file=COMHAD      seol √°bhar an CHOMHAID; n√≠ m√≥r --method a "
+"shonr√∫\n"
 
-#: src/main.c:622
-#, fuzzy
+#: src/main.c:805
 msgid ""
 "       --content-disposition       honor the Content-Disposition header "
 "when\n"
-"                                   choosing local file names "
-"(EXPERIMENTAL).\n"
+"                                     choosing local file names "
+"(EXPERIMENTAL)\n"
 msgstr ""
-"       --content-disposition   gÈill do cheannt·sc Content-Disposition agus\n"
-"                               ainmneacha log·nta · roghn˙ (TRIALACH).\n"
+"       --content-disposition   g√©ill do cheannt√°sc Content-Disposition agus\n"
+"                               ainmneacha √°iti√∫la √° roghn√∫ (TURGNAMH)\n"
 
-#: src/main.c:625
+#: src/main.c:808
 msgid ""
 "       --content-on-error          output the received content on server "
-"errors.\n"
+"errors\n"
 msgstr ""
+"       --content-on-error          taispe√°in an t-aschur a fuarthas i gc√°s "
+"earr√°ide\n"
 
-#: src/main.c:627
-#, fuzzy
+#: src/main.c:810
 msgid ""
 "       --auth-no-challenge         send Basic HTTP authentication "
 "information\n"
-"                                   without first waiting for the server's\n"
-"                                   challenge.\n"
+"                                     without first waiting for the server's\n"
+"                                     challenge\n"
 msgstr ""
-"       --auth-no-challenge     Seol bunfhaisnÈis fhÌordheimhnithe HTTP\n"
-"                               gan fanacht le d˙shl·n Ûn fhreastalaÌ.\n"
+"       --auth-no-challenge     Seol bunfhaisn√©is fh√≠ordheimhnithe HTTP\n"
+"                               gan fanacht le d√∫shl√°n √≥n fhreastala√≠\n"
 
-#: src/main.c:634
+#: src/main.c:817
 msgid "HTTPS (SSL/TLS) options:\n"
 msgstr "Roghanna HTTPS (SSL/TLS):\n"
 
-#: src/main.c:636
+#: src/main.c:819
 #, fuzzy
 msgid ""
 "       --secure-protocol=PR        choose secure protocol, one of auto, "
 "SSLv2,\n"
-"                                   SSLv3, TLSv1 and PFS.\n"
+"                                     SSLv3, TLSv1, TLSv1_1, TLSv1_2 and PFS\n"
 msgstr ""
-"       --secure-protocol=PR     roghnaigh prÛtacal daingean: auto, SSLv2,\n"
-"                                SSLv3, nÛ TLSv1.\n"
-"                                SSLv3, and TLSv1.\n"
+"       --secure-protocol=PR     roghnaigh pr√≥tacal sl√°n: auto, SSLv2,\n"
+"                                SSLv3, TLSv1 n√≥ PFS\n"
 
-#: src/main.c:639
-#, fuzzy
+#: src/main.c:822
 msgid "       --https-only                only follow secure HTTPS links\n"
-msgstr "  -L,  --relative                  n· lean ach naisc choibhneasta.\n"
+msgstr "       --https-only      n√° lean ach nascanna HTTPS\n"
 
-#: src/main.c:641
-#, fuzzy
+#: src/main.c:824
 msgid ""
-"       --no-check-certificate      don't validate the server's certificate.\n"
+"       --no-check-certificate      don't validate the server's certificate\n"
 msgstr ""
-"       --no-check-certificate   n· bailÌochtaigh teastas an fhreastalaÌ.\n"
+"       --no-check-certificate   n√° bail√≠ochtaigh teastas an fhreastala√≠\n"
 
-#: src/main.c:643
-#, fuzzy
-msgid "       --certificate=FILE          client certificate file.\n"
-msgstr "       --certificate=COMHAD     comhad teastais an chliaint.\n"
+#: src/main.c:826
+msgid "       --certificate=FILE          client certificate file\n"
+msgstr "       --certificate=COMHAD     comhad teastais an chliaint\n"
 
-#: src/main.c:645
-#, fuzzy
+#: src/main.c:828
 msgid ""
-"       --certificate-type=TYPE     client certificate type, PEM or DER.\n"
+"       --certificate-type=TYPE     client certificate type, PEM or DER\n"
 msgstr ""
-"       --certificate-type=CINL  cine·l teastais an chliaint: PEM nÛ DER.\n"
+"       --certificate-type=CINL  cine√°l teastais an chliaint: PEM n√≥ DER\n"
 
-#: src/main.c:647
-#, fuzzy
-msgid "       --private-key=FILE          private key file.\n"
-msgstr "       --private-key=COMHAD     comhad don eochair phrÌobh·ideach.\n"
+#: src/main.c:830
+msgid "       --private-key=FILE          private key file\n"
+msgstr "       --private-key=COMHAD     comhad don eochair phr√≠obh√°ideach\n"
 
-#: src/main.c:649
-#, fuzzy
-msgid "       --private-key-type=TYPE     private key type, PEM or DER.\n"
+#: src/main.c:832
+msgid "       --private-key-type=TYPE     private key type, PEM or DER\n"
 msgstr ""
-"       --private-key-type=CINL  cine·l na heochrach prÌobh·idÌ, PEM nÛ DER.\n"
+"       --private-key-type=CINL  cine√°l na heochrach pr√≠obh√°id√≠, PEM n√≥ DER\n"
 
-#: src/main.c:651
-#, fuzzy
-msgid "       --ca-certificate=FILE       file with the bundle of CA's.\n"
-msgstr "       --ca-certificate=COMHAD  comhad le burla den CAnna.\n"
+#: src/main.c:834
+msgid "       --ca-certificate=FILE       file with the bundle of CAs\n"
+msgstr "       --ca-certificate=COMHAD  comhad ina bhfuil an burla CAnna\n"
 
-#: src/main.c:653
-#, fuzzy
+#: src/main.c:836
 msgid ""
-"       --ca-directory=DIR          directory where hash list of CA's is "
-"stored.\n"
+"       --ca-directory=DIR          directory where hash list of CAs is "
+"stored\n"
 msgstr ""
-"       --ca-directory=COMHADLN  comhadlann leis an liosta haise·ilte de "
-"CAnna.\n"
+"       --ca-directory=COMHADLN  comhadlann ina gcoinn√≠tear an liosta "
+"haise√°ilte de CAnna\n"
 
-#: src/main.c:655
-#, fuzzy
+#: src/main.c:838
+msgid "       --crl-file=FILE             file with bundle of CRLs\n"
+msgstr "       --crl-file=COMHAD comhad ina bhfuil burla CRLanna\n"
+
+#: src/main.c:840
+msgid ""
+"       --pinnedpubkey=FILE/HASHES  Public key (PEM/DER) file, or any number\n"
+"                                   of base64 encoded sha256 hashes preceded "
+"by\n"
+"                                   'sha256//' and separated by ';', to "
+"verify\n"
+"                                   peer against\n"
+msgstr ""
+"       --pinnedpubkey=COMHAD/HAIS  Comhad ina bhfuil eochair phoibl√≠ (PEM/"
+"DER),\n"
+"                                   n√≥ haiseanna sha256, base64-ionch√≥daithe, "
+"le\n"
+"                                   'sha256//' rompu agus ';' eatarthu, chun "
+"an\n"
+"                                   acmhainn i gc√©in a dheimhni√∫\n"
+
+#: src/main.c:846
 msgid ""
 "       --random-file=FILE          file with random data for seeding the SSL "
-"PRNG.\n"
+"PRNG\n"
 msgstr ""
-"       --random-file=COMHAD     comhad le sonraÌ randamacha chun SSL PRNG a "
-"shÌolr˙.\n"
+"       --random-file=COMHAD     comhad ina bhfuil sonra√≠ randamacha chun an "
+"SSL PRNG a sh√≠olr√∫\n"
 
-#: src/main.c:657
-#, fuzzy
+#: src/main.c:850
 msgid ""
 "       --egd-file=FILE             file naming the EGD socket with random "
-"data.\n"
+"data\n"
 msgstr ""
-"       --egd-file=COMHAD        comhad a ainmnÌonn an soicÈad EGD le sonraÌ "
-"randamacha.\n"
+"       --egd-file=COMHAD        comhad a ainmn√≠onn an soic√©ad EGD le sonra√≠ "
+"randamacha\n"
 
-#: src/main.c:662
+#: src/main.c:857
+msgid "HSTS options:\n"
+msgstr "Roghanna HSTS:\n"
+
+#: src/main.c:859
+msgid "       --no-hsts                   disable HSTS\n"
+msgstr "       --no-hsts                   d√≠chumasaigh HSTS\n"
+
+#: src/main.c:861
+msgid ""
+"       --hsts-file                 path of HSTS database (will override "
+"default)\n"
+msgstr ""
+"       --hsts-file                 cos√°n go dt√≠ an bunachar sonra√≠ HSTS "
+"(s√°ra√≠onn seo an r√©amhshocr√∫)\n"
+
+#: src/main.c:866
 msgid "FTP options:\n"
 msgstr "Roghanna FTP:\n"
 
-#: src/main.c:665
+#: src/main.c:869
 msgid ""
-"       --ftp-stmlf                 Use Stream_LF format for all binary FTP "
-"files.\n"
+"       --ftp-stmlf                 use Stream_LF format for all binary FTP "
+"files\n"
 msgstr ""
+"       --ftp-stmlf                 √∫s√°id form√°id Stream_LF le haghaidh gach "
+"comhaid dh√©n√°rtha FTP\n"
 
-#: src/main.c:668
-#, fuzzy
-msgid "       --ftp-user=USER             set ftp user to USER.\n"
-msgstr "       --ftp-user=⁄S¡IDEOIR    socraigh an t⁄S¡IDEOIR ftp.\n"
+#: src/main.c:872
+msgid "       --ftp-user=USER             set ftp user to USER\n"
+msgstr "       --ftp-user=√öS√ÅIDEOIR    socraigh an t√öS√ÅIDEOIR ftp\n"
 
-#: src/main.c:670
-#, fuzzy
-msgid "       --ftp-password=PASS         set ftp password to PASS.\n"
-msgstr "       --ftp-password=FF       socraigh an focal faire ftp.\n"
+#: src/main.c:874
+msgid "       --ftp-password=PASS         set ftp password to PASS\n"
+msgstr "       --ftp-password=FF       socraigh an focal faire ftp\n"
 
-#: src/main.c:672
-#, fuzzy
-msgid "       --no-remove-listing         don't remove `.listing' files.\n"
-msgstr "       --no-remove-listing     n· bain comhaid `.listing' amach.\n"
+#: src/main.c:876
+msgid "       --no-remove-listing         don't remove '.listing' files\n"
+msgstr "       --no-remove-listing     n√° bain comhaid '.listing'\n"
 
-#: src/main.c:674
-#, fuzzy
-msgid "       --no-glob                   turn off FTP file name globbing.\n"
+#: src/main.c:878
+msgid "       --no-glob                   turn off FTP file name globbing\n"
 msgstr ""
-"       --no-glob               n· h˙s·id glob·il le hainmneacha comhaid "
-"FTP.\n"
+"       --no-glob               n√° d√©an glob√°il le hainmneacha comhaid FTP\n"
 
-#: src/main.c:676
-#, fuzzy
+#: src/main.c:880
 msgid ""
-"       --no-passive-ftp            disable the \"passive\" transfer mode.\n"
+"       --no-passive-ftp            disable the \"passive\" transfer mode\n"
 msgstr ""
-"       --no-passive-ftp        dÌchumasaigh an mÛd aistrithe \"passive\".\n"
+"       --no-passive-ftp        d√≠chumasaigh an m√≥d aistrithe \"passive\"\n"
 
-#: src/main.c:678
-#, fuzzy
-msgid "       --preserve-permissions      preserve remote file permissions.\n"
+#: src/main.c:882
+msgid "       --preserve-permissions      preserve remote file permissions\n"
 msgstr ""
-"       --preserve-permissions  caomhnaigh ceadanna Û na cianchomhaid.\n"
+"       --preserve-permissions  caomhnaigh ceadanna an chomhaid i gc√©in\n"
 
-#: src/main.c:680
-#, fuzzy
+#: src/main.c:884
 msgid ""
 "       --retr-symlinks             when recursing, get linked-to files (not "
-"dir).\n"
+"dir)\n"
 msgstr ""
-"       --retr-symlinks         faigh comhaid lena nasctar, le linn "
-"athch˙rs·la.\n"
+"       --retr-symlinks         faigh na comhaid a nasctar leo, agus √° "
+"athch√∫rs√°il\n"
 
-#: src/main.c:684
-#, fuzzy
+#: src/main.c:889
+msgid "FTPS options:\n"
+msgstr "Roghanna FTPS:\n"
+
+#: src/main.c:891
+msgid ""
+"       --ftps-implicit                 use implicit FTPS (default port is "
+"990)\n"
+msgstr ""
+"       --ftps-implicit                 √∫s√°id FTPS intuigthe (port "
+"r√©amhshocraithe 990)\n"
+
+#: src/main.c:893
+msgid ""
+"       --ftps-resume-ssl               resume the SSL/TLS session started in "
+"the control connection when\n"
+"                                         opening a data connection\n"
+msgstr ""
+"       --ftps-resume-ssl               atosaigh an seisi√∫n SSL/TLS a "
+"tosa√≠odh sa cheangal rialaithe nuair\n"
+"                                         a oscl√≥far ceangal nua sonra√≠\n"
+
+#: src/main.c:896
+msgid ""
+"       --ftps-clear-data-connection    cipher the control channel only; all "
+"the data will be in plaintext\n"
+msgstr ""
+"       --ftps-clear-data-connection    r√∫nscr√≠obh an cain√©al rialaithe "
+"amh√°in; beidh na sonra√≠ go l√©ir i nglant√©acs\n"
+
+#: src/main.c:898
+msgid ""
+"       --ftps-fallback-to-ftp          fall back to FTP if FTPS is not "
+"supported in the target server\n"
+msgstr ""
+"       --ftps-fallback-to-ftp          √∫s√°id FTP mar thacachumas mura "
+"dtaca√≠onn an freastala√≠ le FTPS\n"
+
+#: src/main.c:902
 msgid "WARC options:\n"
-msgstr "Roghanna FTP:\n"
+msgstr "Roghanna WARC:\n"
 
-#: src/main.c:686
+#: src/main.c:904
 msgid ""
 "       --warc-file=FILENAME        save request/response data to a .warc.gz "
-"file.\n"
+"file\n"
 msgstr ""
+"       --warc-file=COMHAD        s√°bh√°il sonra√≠ an iarratais/fhreagra i "
+"gcomhad .warc.gz\n"
 
-#: src/main.c:688
-#, fuzzy
+#: src/main.c:906
 msgid ""
-"       --warc-header=STRING        insert STRING into the warcinfo record.\n"
-msgstr "       --header=TEAGHR¡N       ions·igh TEAGHR¡N sna ceannt·sca.\n"
+"       --warc-header=STRING        insert STRING into the warcinfo record\n"
+msgstr "       --warc-header=TEAGHR√ÅN      cuir TEAGHR√ÅN sa taifead warcinfo\n"
 
-#: src/main.c:690
-#, fuzzy
+#: src/main.c:908
 msgid ""
-"       --warc-max-size=NUMBER      set maximum size of WARC files to "
-"NUMBER.\n"
-msgstr ""
-"  -t,  --tries=UIMHIR            lÌon na n-atrialacha (0=gan teorainn).\n"
+"       --warc-max-size=NUMBER      set maximum size of WARC files to NUMBER\n"
+msgstr "       --warc-max-size=UIMHIR      socraigh uasmh√©id na gcomhad WARC\n"
 
-#: src/main.c:692
-#, fuzzy
-msgid "       --warc-cdx                  write CDX index files.\n"
-msgstr "       --spider                  n· hÌosluchtaigh rud ar bith.\n"
+#: src/main.c:910
+msgid "       --warc-cdx                  write CDX index files\n"
+msgstr "       --warc-cdx                  scr√≠obh comhad inn√©acsaithe CDX\n"
 
-#: src/main.c:694
+#: src/main.c:912
 msgid ""
 "       --warc-dedup=FILENAME       do not store records listed in this CDX "
-"file.\n"
+"file\n"
 msgstr ""
+"       --warc-dedup=COMHAD       n√° st√≥r√°il taifid at√° sa chomhad CDX seo\n"
 
-#: src/main.c:697
+#: src/main.c:915
 msgid ""
-"       --no-warc-compression       do not compress WARC files with GZIP.\n"
+"       --no-warc-compression       do not compress WARC files with GZIP\n"
 msgstr ""
+"       --no-warc-compression       n√° comhbhr√∫igh comhaid WARC le GZIP\n"
 
-#: src/main.c:700
-#, fuzzy
-msgid "       --no-warc-digests           do not calculate SHA1 digests.\n"
-msgstr "       --no-cookies            n· h˙s·id fian·in.\n"
+#: src/main.c:918
+msgid "       --no-warc-digests           do not calculate SHA1 digests\n"
+msgstr "       --no-warc-digests           n√° r√≠omh haiseanna SHA1\n"
 
-#: src/main.c:702
-#, fuzzy
+#: src/main.c:920
 msgid ""
 "       --no-warc-keep-log          do not store the log file in a WARC "
-"record.\n"
+"record\n"
 msgstr ""
-"       --ignore-case             n· bac le c·s agus comhaid · meaitse·il.\n"
+"       --no-warc-keep-log          n√° st√≥r√°il an logchomhad i dtaifead WARC\n"
 
-#: src/main.c:704
+#: src/main.c:922
 msgid ""
 "       --warc-tempdir=DIRECTORY    location for temporary files created by "
 "the\n"
-"                                   WARC writer.\n"
+"                                     WARC writer\n"
 msgstr ""
+"       --warc-tempdir=COMHADLANN   √°it ina gcruth√≥idh an scr√≠bhneoir WARC "
+"comhaid shealadacha\n"
 
-#: src/main.c:709
+#: src/main.c:927
 msgid "Recursive download:\n"
-msgstr "Õoslucht˙ athch˙rsach:\n"
+msgstr "√çosl√≥d√°il athch√∫rsach:\n"
 
-#: src/main.c:711
-#, fuzzy
-msgid "  -r,  --recursive                 specify recursive download.\n"
-msgstr "  -r,  --recursive          Ìosluchtaigh go hathch˙rsach.\n"
+#: src/main.c:929
+msgid "  -r,  --recursive                 specify recursive download\n"
+msgstr "  -r,  --recursive          √≠osl√≥d√°il go hathch√∫rsach\n"
 
-#: src/main.c:713
-#, fuzzy
+#: src/main.c:931
 msgid ""
 "  -l,  --level=NUMBER              maximum recursion depth (inf or 0 for "
-"infinite).\n"
+"infinite)\n"
 msgstr ""
-"  -l,  --level=UIMHIR       uasmhÈid doimhneachta (inf nÛ 0 = gan "
-"teorainn).\n"
+"  -l,  --level=UIMHIR       doimhneacht athch√∫rs√°la is m√≥ (inf n√≥ 0 = gan "
+"teorainn)\n"
 
-#: src/main.c:715
-#, fuzzy
+#: src/main.c:933
 msgid ""
 "       --delete-after              delete files locally after downloading "
-"them.\n"
+"them\n"
 msgstr ""
-"       --delete-after       scrios comhaid log·nta i ndiaidh Ìosluchtaithe.\n"
+"       --delete-after       scrios comhaid go h√°iti√∫il i ndiaidh √≠osl√≥d√°la\n"
 
-#: src/main.c:717
-#, fuzzy
+#: src/main.c:935
 msgid ""
 "  -k,  --convert-links             make links in downloaded HTML or CSS "
 "point to\n"
-"                                   local files.\n"
+"                                     local files\n"
 msgstr ""
-"  -k,  --convert-links      nasc le comhaid log·nta i HTML Ìosluchtaithe.\n"
+"  -k,  --convert-links      nasc le comhaid √°iti√∫la i HTML/CSS √≠osl√≥d√°ilte\n"
 
-#: src/main.c:720
+#: src/main.c:938
+msgid ""
+"       --convert-file-only         convert the file part of the URLs only "
+"(usually known as the basename)\n"
+msgstr ""
+"       --convert-file-only         n√° tiontaigh ach an chuid den URL a "
+"shonra√≠onn an comhad f√©√≠n (a dtugtar 'an bunainm' air)\n"
+
+#: src/main.c:940
 msgid ""
 "       --backups=N                 before writing file X, rotate up to N "
-"backup files.\n"
+"backup files\n"
 msgstr ""
+"       --backups=N                 sula scr√≠obhtar comhad, rothlaigh suas le "
+"N comhad c√∫ltaca\n"
 
-#: src/main.c:724
-#, fuzzy
+#: src/main.c:944
 msgid ""
 "  -K,  --backup-converted          before converting file X, back up as "
-"X_orig.\n"
+"X_orig\n"
 msgstr ""
-"  -K,  --backup-converted   roimh X a thiont˙, dÈan c˙ltaca mar X.orig.\n"
+"  -K,  --backup-converted   d√©an c√∫ltaca mar X_orig sula dtionta√≠tear comhad "
+"X\n"
 
-#: src/main.c:727
-#, fuzzy
+#: src/main.c:947
 msgid ""
 "  -K,  --backup-converted          before converting file X, back up as X."
-"orig.\n"
+"orig\n"
 msgstr ""
-"  -K,  --backup-converted   roimh X a thiont˙, dÈan c˙ltaca mar X.orig.\n"
+"  -K,  --backup-converted   d√©an c√∫ltaca mar X.orig sula dtionta√≠tear comhad "
+"X\n"
 
-#: src/main.c:730
-#, fuzzy
+#: src/main.c:950
 msgid ""
 "  -m,  --mirror                    shortcut for -N -r -l inf --no-remove-"
-"listing.\n"
+"listing\n"
 msgstr ""
-"  -m,  --mirror             rogha aicearra ar comhbhrÌ le -N -r -l inf --no-"
-"remove-listing.\n"
+"  -m,  --mirror             ar comhbhr√≠ le -N -r -l inf --no-remove-listing\n"
 
-#: src/main.c:732
-#, fuzzy
+#: src/main.c:952
 msgid ""
 "  -p,  --page-requisites           get all images, etc. needed to display "
-"HTML page.\n"
+"HTML page\n"
 msgstr ""
-"  -p,  --page-requisites    faigh gach Ìomh·, srl. riachtanach chun an\n"
-"                               leathanach HTML a thaispe·int go ceart.\n"
+"  -p,  --page-requisites    faigh gach √≠omh√°, srl. ag teast√°il chun "
+"leathanach HTML a thaispe√°int\n"
 
-#: src/main.c:734
-#, fuzzy
+#: src/main.c:954
 msgid ""
 "       --strict-comments           turn on strict (SGML) handling of HTML "
-"comments.\n"
+"comments\n"
 msgstr ""
-"       --strict-comments    glac le nÛtaÌ tr·chta HTML go docht (mar SGML).\n"
+"       --strict-comments    l√°imhse√°il dhocht de n√≥ta√≠ tr√°chta HTML (.i. mar "
+"SGML)\n"
 
-#: src/main.c:738
+#: src/main.c:958
 msgid "Recursive accept/reject:\n"
-msgstr "Glacadh/Di˙lt˙ Athch˙rsach:\n"
+msgstr "Glacadh/di√∫lt√∫ athch√∫rsach:\n"
 
-#: src/main.c:740
+#: src/main.c:960
 msgid ""
 "  -A,  --accept=LIST               comma-separated list of accepted "
-"extensions.\n"
+"extensions\n"
 msgstr ""
-"  -A,  --accept=LIOSTA             iarmhÌreanna inghlactha, scartha le "
-"camÛga.\n"
+"  -A,  --accept=LIOSTA             iarmh√≠reanna inghlactha, scartha le "
+"cam√≥ga\n"
 
-#: src/main.c:742
+#: src/main.c:962
 msgid ""
 "  -R,  --reject=LIST               comma-separated list of rejected "
-"extensions.\n"
+"extensions\n"
 msgstr ""
-"  -R,  --reject=LIOSTA             iarmhÌreanna di˙ltaithe, scartha le "
-"camÛga.\n"
+"  -R,  --reject=LIOSTA             iarmh√≠reanna di√∫ltaithe, scartha le "
+"cam√≥ga\n"
 
-#: src/main.c:744
-msgid "       --accept-regex=REGEX        regex matching accepted URLs.\n"
+#: src/main.c:964
+msgid "       --accept-regex=REGEX        regex matching accepted URLs\n"
 msgstr ""
+"       --accept-regex=SLONN        slonn ionada√≠ochta a mheaitse√°lann "
+"URLanna a nglacfar leo\n"
 
-#: src/main.c:746
-msgid "       --reject-regex=REGEX        regex matching rejected URLs.\n"
+#: src/main.c:966
+msgid "       --reject-regex=REGEX        regex matching rejected URLs\n"
 msgstr ""
+"       --reject-regex=SLONN        slonn ionada√≠ochta a mheaitse√°lann "
+"URLanna nach nglacfar leo\n"
 
-#: src/main.c:749
-#, fuzzy
-msgid "       --regex-type=TYPE           regex type (posix|pcre).\n"
-msgstr "       --progress=CINE¡L         cine·l rianaire dul chun cinn.\n"
+#: src/main.c:969
+msgid "       --regex-type=TYPE           regex type (posix|pcre)\n"
+msgstr ""
+"       --regex-type=CINE√ÅL         cine√°l an tsloinn ionada√≠ochta (posix|"
+"pcre)\n"
 
-#: src/main.c:752
-#, fuzzy
-msgid "       --regex-type=TYPE           regex type (posix).\n"
-msgstr "       --progress=CINE¡L         cine·l rianaire dul chun cinn.\n"
+#: src/main.c:972
+msgid "       --regex-type=TYPE           regex type (posix)\n"
+msgstr ""
+"       --regex-type=CINE√ÅL         cine√°l an tsloinn ionada√≠ochta (posix)\n"
 
-#: src/main.c:755
+#: src/main.c:975
 msgid ""
-"  -D,  --domains=LIST              comma-separated list of accepted "
-"domains.\n"
+"  -D,  --domains=LIST              comma-separated list of accepted domains\n"
 msgstr ""
-"  -D,  --domains=LIOSTA            fearainn ghlactha, scartha le camÛga.\n"
+"  -D,  --domains=LIOSTA            fearainn inghlactha, scartha le cam√≥ga\n"
 
-#: src/main.c:757
+#: src/main.c:977
 msgid ""
-"       --exclude-domains=LIST      comma-separated list of rejected "
-"domains.\n"
+"       --exclude-domains=LIST      comma-separated list of rejected domains\n"
 msgstr ""
-"       --exclude-domains=LIOSTA    fearainn di˙ltaithe, scartha le camÛga.\n"
+"       --exclude-domains=LIOSTA    fearainn di√∫ltaithe, scartha le cam√≥ga\n"
 
-#: src/main.c:759
+#: src/main.c:979
 msgid ""
-"       --follow-ftp                follow FTP links from HTML documents.\n"
-msgstr "       --follow-ftp                lean naisc FTP i gc·ipÈisÌ HTML.\n"
+"       --follow-ftp                follow FTP links from HTML documents\n"
+msgstr "       --follow-ftp                lean naisc FTP i gc√°ip√©is√≠ HTML\n"
 
-#: src/main.c:761
+#: src/main.c:981
 msgid ""
 "       --follow-tags=LIST          comma-separated list of followed HTML "
-"tags.\n"
+"tags\n"
 msgstr ""
-"       --follow-tags=LIOSTA        clibeanna HTML le lean˙int, scartha le "
-"camÛga.\n"
+"       --follow-tags=LIOSTA        clibeanna HTML le lean√∫int, scartha le "
+"cam√≥ga\n"
 
-#: src/main.c:763
+#: src/main.c:983
 msgid ""
 "       --ignore-tags=LIST          comma-separated list of ignored HTML "
-"tags.\n"
+"tags\n"
 msgstr ""
-"       --ignore-tags=LIOSTA        clibeanna HTML le scipe·il, scartha le "
-"camÛga.\n"
+"       --ignore-tags=LIOSTA        clibeanna HTML nach mbactar leo, scartha "
+"le cam√≥ga\n"
 
-#: src/main.c:765
-msgid ""
-"  -H,  --span-hosts                go to foreign hosts when recursive.\n"
+#: src/main.c:985
+msgid "  -H,  --span-hosts                go to foreign hosts when recursive\n"
 msgstr ""
-"  -H,  --span-hosts                tÈigh go cianÛstaÌ m·s athch˙rsach È.\n"
+"  -H,  --span-hosts                oscail √≥staigh i gc√©in m√°s athch√∫rsach √©\n"
 
-#: src/main.c:767
-msgid "  -L,  --relative                  follow relative links only.\n"
-msgstr "  -L,  --relative                  n· lean ach naisc choibhneasta.\n"
+#: src/main.c:987
+msgid "  -L,  --relative                  follow relative links only\n"
+msgstr "  -L,  --relative                  n√° lean ach naisc choibhneasta\n"
 
-#: src/main.c:769
-msgid "  -I,  --include-directories=LIST  list of allowed directories.\n"
-msgstr "  -I,  --include-directories=LIOSTA comhadlanna ceadaithe.\n"
+#: src/main.c:989
+msgid "  -I,  --include-directories=LIST  list of allowed directories\n"
+msgstr "  -I,  --include-directories=LIOSTA comhadlanna ceadaithe\n"
 
-#: src/main.c:771
-#, fuzzy
+#: src/main.c:991
 msgid ""
 "       --trust-server-names        use the name specified by the "
 "redirection\n"
-"                                   url last component.\n"
+"                                     URL's last component\n"
 msgstr ""
-"       --prefer-family=CLANN     ceangail ar dt˙s le seoltaÌ Ûn CHLANN "
-"sonraithe:\n"
-"                                 IPv6, IPv4, nÛ \"none\".\n"
+"       --trust-server-names        √∫s√°id an t-ainm sa chomhph√°irt "
+"dheireanach\n"
+"den URL atreoraithe\n"
 
-#: src/main.c:774
-msgid "  -X,  --exclude-directories=LIST  list of excluded directories.\n"
-msgstr "  -X,  --exclude-directories=LIOSTA comhadlanna neamhcheadaithe.\n"
+#: src/main.c:994
+msgid "  -X,  --exclude-directories=LIST  list of excluded directories\n"
+msgstr "  -X,  --exclude-directories=LIOSTA comhadlanna neamhcheadaithe\n"
 
-#: src/main.c:776
+#: src/main.c:996
 msgid ""
-"  -np, --no-parent                 don't ascend to the parent directory.\n"
+"  -np, --no-parent                 don't ascend to the parent directory\n"
 msgstr ""
-"  -np, --no-parent                 n· tÈigh suas go comhadlanna nÌos airde.\n"
+"  -np, --no-parent                 n√° t√©igh suas go comhadlanna n√≠os airde.\n"
 
-#: src/main.c:779
-msgid "Mail bug reports and suggestions to <bug-wget@gnu.org>.\n"
-msgstr "Seol tuairiscÌ fabhtanna agus moltaÌ chuig <bug-wget@gnu.org>.\n"
+#: src/main.c:999
+msgid "Mail bug reports and suggestions to <bug-wget@gnu.org>\n"
+msgstr "Seol tuairisc√≠ ar fhabhtanna agus molta√≠ chuig <bug-wget@gnu.org>\n"
 
-#: src/main.c:784
+#: src/main.c:1004
 #, c-format
 msgid "GNU Wget %s, a non-interactive network retriever.\n"
-msgstr "GNU Wget, leagan %s, faighteoir cianchomhad nach idirghnÌomhach.\n"
+msgstr "GNU Wget, leagan %s, √≠osl√≥d√°la√≠ neamh-idirghn√≠omhach.\n"
 
-#: src/main.c:827
+#: src/main.c:1047
 #, c-format
 msgid "Password for user %s: "
-msgstr ""
+msgstr "Focal faire le haghaidh %s: "
 
-#: src/main.c:829
+#: src/main.c:1049
 #, c-format
 msgid "Password: "
-msgstr ""
+msgstr "Focal faire: "
 
-#: src/main.c:885
+#: src/main.c:1068
+#, c-format
+msgid "Cannot create pipe\n"
+msgstr "N√≠ f√©idir p√≠opa a chruth√∫\n"
+
+#: src/main.c:1076
+#, c-format
+msgid "Error initializing spawn file actions for use-askpass: %d\n"
+msgstr "Earr√°id agus sceitheadh comhad √° th√∫s√∫ le haghaidh use-askpass: %d\n"
+
+#: src/main.c:1085
+#, c-format
+msgid "Error setting spawn file actions for use-askpass: %d\n"
+msgstr "Earr√°id agus sceitheadh comhad √° shocr√∫ le haghaidh use-askpass: %d\n"
+
+#: src/main.c:1109
+#, c-format
+msgid "Error reading response from command \"%s %s\": %s\n"
+msgstr "Earr√°id agus an freagra √≥ ord√∫ \"%s %s\" √° l√©amh: %s\n"
+
+#: src/main.c:1132
+#, c-format
+msgid "Username for '%s%s': "
+msgstr "Ainm √∫s√°ideora le haghaidh '%s%s': "
+
+#: src/main.c:1142
+#, c-format
+msgid "Password for '%s%s@%s': "
+msgstr "Focal faire le haghaidh '%s%s@%s': "
+
+#: src/main.c:1214
 msgid "Wgetrc: "
-msgstr ""
+msgstr "Wgetrc"
 
-#: src/main.c:886
+#: src/main.c:1215
 msgid "Locale: "
-msgstr ""
+msgstr "Logchaighde√°n: "
 
-#: src/main.c:887
+#: src/main.c:1216
 msgid "Compile: "
-msgstr ""
+msgstr "Tioms√∫: "
 
-#: src/main.c:888
+#: src/main.c:1217
 msgid "Link: "
-msgstr ""
+msgstr "Nasc: "
 
-#: src/main.c:892
+#: src/main.c:1221
 #, c-format
 msgid ""
 "GNU Wget %s built on %s.\n"
 "\n"
 msgstr ""
+"GNU Wget %s t√≥gtha ar %s.\n"
+"\n"
 
-#: src/main.c:919
+#: src/main.c:1248
 #, c-format
 msgid "    %s (env)\n"
-msgstr ""
+msgstr "    %s (env)\n"
 
-#: src/main.c:926
+#: src/main.c:1255
 #, c-format
 msgid "    %s (user)\n"
-msgstr ""
+msgstr "    %s (√∫s√°ideoir)\n"
 
-#: src/main.c:931
+#: src/main.c:1260
 #, c-format
 msgid "    %s (system)\n"
-msgstr ""
+msgstr "    %s (c√≥ras)\n"
 
 #. TRANSLATORS: When available, an actual copyright character
 #. (circle-c) should be used in preference to "(C)".
-#: src/main.c:959
-#, fuzzy, c-format
+#: src/main.c:1288
+#, c-format
 msgid "Copyright (C) %s Free Software Foundation, Inc.\n"
-msgstr "Copyright © 2008 Free Software Foundation, Inc.\n"
+msgstr "Copyright ¬© %s Free Software Foundation, Inc.\n"
 
-#: src/main.c:962
+#: src/main.c:1291
 msgid ""
 "License GPLv3+: GNU GPL version 3 or later\n"
 "<http://www.gnu.org/licenses/gpl.html>.\n"
 "This is free software: you are free to change and redistribute it.\n"
 "There is NO WARRANTY, to the extent permitted by law.\n"
 msgstr ""
-"Cead˙nas GPLv3+: GNU GPL, leagan 3 nÛ nÌos nuaÌ\n"
+"Cead√∫nas GPLv3+: GNU GPL, leagan 3 n√≥ n√≠os nua√≠\n"
 "<http://www.gnu.org/licenses/gpl.html>.\n"
-"Is saorbhogearra È seo: ceadaÌtear duit È a athr˙ agus a athdh·ileadh.\n"
-"NÌl bar·nta AR BITH ann, an oiread at· ceadaithe de rÈir dlÌ.\n"
+"Is saorbhogearra √© seo: ceada√≠tear duit √© a athr√∫ agus a athdh√°ileadh.\n"
+"N√≠l bar√°nta AR BITH ann, an oiread at√° ceadaithe de r√©ir dl√≠.\n"
 
 #. TRANSLATORS: When available, please use the proper diacritics for
 #. names such as this one. See en_US.po for reference.
-#: src/main.c:970
+#: src/main.c:1299
 msgid ""
 "\n"
 "Originally written by Hrvoje Niksic <hniksic@xemacs.org>.\n"
 msgstr ""
 "\n"
-"ScrÌofa ar dt˙s ag Hrvoje Niksic <hniksic@xemacs.org>.\n"
+"Scr√≠ofa ar dt√∫s ag Hrvoje Niksic <hniksic@xemacs.org>.\n"
 
-#: src/main.c:973
-#, fuzzy
+#: src/main.c:1302
 msgid "Please send bug reports and questions to <bug-wget@gnu.org>.\n"
-msgstr "Seol tuairiscÌ fabhtanna agus moltaÌ chuig <bug-wget@gnu.org>.\n"
+msgstr ""
+"Seol tuairisc√≠ ar fhabhtanna agus ceisteanna chuig <bug-wget@gnu.org>.\n"
 
-#: src/main.c:1024 src/main.c:1515
+#: src/main.c:1351 src/main.c:1882
 #, c-format
 msgid "Memory allocation problem\n"
-msgstr ""
+msgstr "Fadhb agus cuimhne √° leithdh√°ileadh\n"
 
-#: src/main.c:1075
+#: src/main.c:1401
 #, c-format
 msgid "Exiting due to error in %s\n"
-msgstr ""
+msgstr "√Å scor mar gheall ar earr√°id i %s\n"
 
-#: src/main.c:1104 src/main.c:1174 src/main.c:1376
+#: src/main.c:1430 src/main.c:1501 src/main.c:1733
 #, c-format
 msgid "Try `%s --help' for more options.\n"
-msgstr "Bain triail as `%s --help' chun tuilleadh roghanna a fheice·il.\n"
+msgstr "Bain triail as `%s --help' chun tuilleadh roghanna a fheice√°il.\n"
 
-#: src/main.c:1170
+#: src/main.c:1497
 #, c-format
 msgid "%s: illegal option -- `-n%c'\n"
 msgstr "%s: rogha neamhcheadaithe -- `-n%c'\n"
 
-#: src/main.c:1213
+#: src/main.c:1540
 #, c-format
 msgid "Debugging support not compiled in. Ignoring --debug flag.\n"
 msgstr ""
+"N√≠or tiomsa√≠√≥dh an cl√°r seo le taca√≠ocht d√≠fhabhtaithe. D√©anfar neamhaird "
+"den bhratach --debug.\n"
 
-#: src/main.c:1225
+#: src/main.c:1553
 #, c-format
 msgid ""
 "Both --no-clobber and --convert-links were specified, only --convert-links "
 "will be used.\n"
 msgstr ""
+"Sonra√≠odh --no-clobber agus --convert-links. √ös√°idfear --convert-links "
+"amh√°in.\n"
 
-#: src/main.c:1255
+#: src/main.c:1555
+#, c-format
+msgid ""
+"Both --no-clobber and --convert-file-only were specified, only --convert-"
+"file-only will be used.\n"
+msgstr ""
+"Sonra√≠odh --no-clobber agus --convert-file-only. √ös√°idfear --convert-file-"
+"only amh√°in.\n"
+
+#: src/main.c:1588
 #, c-format
 msgid "Can't be verbose and quiet at the same time.\n"
-msgstr "NÌ fÈidir a bheith foclach agus tostach san am cÈanna.\n"
+msgstr "N√≠ f√©idir a bheith foclach agus tostach san am c√©anna.\n"
 
-#: src/main.c:1261
+#: src/main.c:1594
 #, c-format
 msgid "Can't timestamp and not clobber old files at the same time.\n"
 msgstr ""
-"NÌ fÈidir stampaÌ ama a dhÈanamh gan forscrÌobh ar do chuid sheanchomhaid.\n"
+"N√≠ f√©idir stampa√≠ ama a dh√©anamh gan forscr√≠obh ar do chuid sheanchomhaid.\n"
 
-#: src/main.c:1270
+#: src/main.c:1603
 #, c-format
 msgid "Cannot specify both --inet4-only and --inet6-only.\n"
-msgstr "NÌ fÈidir --inet4-only agus --inet6-only a shonr˙ araon.\n"
+msgstr "N√≠ f√©idir --inet4-only agus --inet6-only a shonr√∫ araon.\n"
 
-#: src/main.c:1280
+#: src/main.c:1613
 msgid ""
-"Cannot specify both -k and -O if multiple URLs are given, or in combination\n"
+"Cannot specify both -k or --convert-file-only and -O if multiple URLs are "
+"given, or in combination\n"
 "with -p or -r. See the manual for details.\n"
 "\n"
 msgstr ""
-"NÌ fÈidir -k agus -O araon a shonr˙ m· t· URLanna iomad˙la ann, nÛ in "
-"Èineacht le -p nÛ -r. FÈach ar an l·mhleabhar chun tuilleadh eolais a "
-"fh·il.\n"
+"N√≠ f√©idir -k n√≥ --convert-file-only a shonr√∫ chomh maith le -O m√° t√° n√≠os m√≥ "
+"n√° URL amh√°in ann, n√≥\n"
+"in √©ineacht le -p n√≥ -r. F√©ach ar an l√°mhleabhar chun tuilleadh eolais a "
+"fh√°il.\n"
 "\n"
 
-#: src/main.c:1289
+#: src/main.c:1622
 msgid ""
 "WARNING: combining -O with -r or -p will mean that all downloaded content\n"
 "will be placed in the single file you specified.\n"
 "\n"
 msgstr ""
-"RABHADH: M· shonraÌonn t˙ -O in Èineacht le -r nÛ -p, cuirfear an t-·bhar "
-"Ìosluchtaithe go lÈir sa chomhad a roghnaigh t˙.\n"
+"RABHADH: M√° shonra√≠onn t√∫ -O in √©ineacht le -r n√≥ -p, cuirfear an t-√°bhar "
+"√≠osl√≥d√°ilte go l√©ir sa chomhad a roghnaigh t√∫.\n"
 "\n"
 
-#: src/main.c:1295
+#: src/main.c:1628
 msgid ""
 "WARNING: timestamping does nothing in combination with -O. See the manual\n"
 "for details.\n"
 "\n"
 msgstr ""
-"RABHADH: nÌ dhÈanann stamp·il ama faic in Èineacht le -O. FÈach ar an\n"
-"l·mhleabhar chun tuilleadh eolais a fh·il.\n"
+"RABHADH: n√≠ dh√©anann stamp√°il ama faic in √©ineacht le -O. F√©ach ar an\n"
+"l√°mhleabhar chun tuilleadh eolais a fh√°il.\n"
 "\n"
 
-#: src/main.c:1304
+#: src/main.c:1637
 #, c-format
 msgid "File `%s' already there; not retrieving.\n"
-msgstr "T· an comhad `%s' ann cheana; nÌ aisghabhfar È.\n"
+msgstr "T√° an comhad `%s' ann cheana; n√≠ aisghabhfar √©.\n"
 
-#: src/main.c:1315
+#: src/main.c:1648
 #, c-format
 msgid ""
 "WARC output does not work with --no-clobber, --no-clobber will be disabled.\n"
 msgstr ""
+"N√≠ fheidhm√≠onn aschur WARC leis an rogha --no-clobber; d√≠chumas√≥far --no-"
+"clobber.\n"
 
-#: src/main.c:1322
+#: src/main.c:1655
 #, c-format
 msgid ""
 "WARC output does not work with timestamping, timestamping will be disabled.\n"
 msgstr ""
+"N√≠ fheidhm√≠onn aschur WARC le stampa√≠ ama; d√≠chumas√≥far na stampa√≠ ama.\n"
 
-#: src/main.c:1329
+#: src/main.c:1662
 #, c-format
 msgid "WARC output does not work with --spider.\n"
-msgstr ""
+msgstr "N√≠ fheidhm√≠onn aschur WARC in √©ineacht le --spider.\n"
 
-#: src/main.c:1335
+#: src/main.c:1668
 #, c-format
 msgid ""
 "WARC output does not work with --continue or --start-pos, they will be "
 "disabled.\n"
 msgstr ""
+"N√≠ fheidhm√≠onn aschur WARC in √©ineacht le --continue n√≥ --start-pos; "
+"d√≠chumas√≥far iad.\n"
 
-#: src/main.c:1343
+#: src/main.c:1676
 #, c-format
 msgid ""
 "Digests are disabled; WARC deduplication will not find duplicate records.\n"
 msgstr ""
+"D√≠chumasa√≠odh achoimr√≠; n√≠ bheidh WARC in ann taifeadta√≠ d√∫bailte a aimsi√∫.\n"
 
-#: src/main.c:1355
+#: src/main.c:1697
 #, fuzzy, c-format
-msgid "Cannot specify both --ask-password and --password.\n"
-msgstr "NÌ fÈidir --inet4-only agus --inet6-only a shonr˙ araon.\n"
+msgid ""
+"Compression does not work with --continue or --start-pos, they will be "
+"disabled.\n"
+msgstr ""
+"N√≠ fheidhm√≠onn aschur WARC in √©ineacht le --continue n√≥ --start-pos; "
+"d√≠chumas√≥far iad.\n"
 
-#: src/main.c:1363
+#: src/main.c:1708
+#, c-format
+msgid "Cannot specify both --ask-password and --password.\n"
+msgstr "N√≠ f√©idir --ask-password agus --password a thabhairt le ch√©ile.\n"
+
+#: src/main.c:1716
 #, c-format
 msgid ""
 "Specifying both --start-pos and --continue is not recommended; --continue "
 "will be disabled.\n"
 msgstr ""
+"N√≠ mholtar duit --start-pos agus --continue a √∫s√°id le ch√©ile; d√≠chumas√≥far "
+"--continue.\n"
 
-#: src/main.c:1371
+#: src/main.c:1728
 #, c-format
 msgid "%s: missing URL\n"
 msgstr "%s: URL ar iarraidh\n"
 
-#: src/main.c:1412
-#, fuzzy, c-format
+#: src/main.c:1769
+#, c-format
 msgid "You cannot specify both --post-data and --post-file.\n"
-msgstr "NÌ fÈidir --inet4-only agus --inet6-only a shonr˙ araon.\n"
+msgstr "N√≠ f√©idir --post-data agus --post-file a thabhairt le ch√©ile.\n"
 
-#: src/main.c:1417
+#: src/main.c:1774
 #, c-format
 msgid ""
 "You cannot use --post-data or --post-file along with --method. --method "
-"expects data through --body-data and --body-file options"
+"expects data through --body-data and --body-file options\n"
 msgstr ""
+"N√≠ f√©idir --post-data n√≥ --post-file a √∫s√°id in √©ineacht le --method, rogha "
+"at√° ag s√∫il le sonra√≠ tr√≠ na roghanna --body-data n√≥ --body-file\n"
 
-#: src/main.c:1426
+#: src/main.c:1783
 #, c-format
 msgid ""
 "You must specify a method through --method=HTTPMethod to use with --body-"
 "data or --body-file.\n"
 msgstr ""
+"Caithfidh t√∫ modh a roghn√∫ le --method=HTTPMethod a √∫s√°idfar in √©ineacht le "
+"--body-data n√≥ --body-file.\n"
 
-#: src/main.c:1432
-#, fuzzy, c-format
+#: src/main.c:1789
+#, c-format
 msgid "You cannot specify both --body-data and --body-file.\n"
-msgstr "NÌ fÈidir --inet4-only agus --inet6-only a shonr˙ araon.\n"
+msgstr "N√≠ f√©idir --body-data agus --body-file a thabhairt le ch√©ile.\n"
 
-#: src/main.c:1484
+#: src/main.c:1841
 #, c-format
 msgid "This version does not have support for IRIs\n"
-msgstr ""
+msgstr "N√≠ thaca√≠onn an leagan seo le IRIanna\n"
 
-#: src/main.c:1584
+#: src/main.c:1951
 #, c-format
-msgid "-k can be used together with -O only if outputting to a regular file.\n"
+msgid ""
+"-k or -r can be used together with -O only if outputting to a regular file.\n"
 msgstr ""
+"Is f√©idir -k n√≥ -r a √∫s√°id in √©ineacht le -O ach amh√°in m√° t√° t√∫ ag scr√≠obh "
+"i ngn√°thchomhad.\n"
 
-#: src/main.c:1689
+#: src/main.c:1957
+#, c-format
+msgid ""
+"--convert-links or --convert-file-only can be used together only if "
+"outputting to a regular file.\n"
+msgstr ""
+"Is f√©idir --convert-links n√≥ --convert-file-only a √∫s√°id le ch√©ile ach "
+"amh√°in m√° t√° t√∫ ag scr√≠obh i ngn√°thchomhad.\n"
+
+#: src/main.c:1968
+#, c-format
+msgid "Failed to init libcares\n"
+msgstr "N√≠orbh fh√©idir libcares a th√∫s√∫\n"
+
+#: src/main.c:1974
+#, c-format
+msgid "Failed to init c-ares channel\n"
+msgstr "N√≠orbh fh√©idir cain√©al c-ares a th√∫s√∫\n"
+
+#: src/main.c:1997
+#, c-format
+msgid "Failed to parse IP address '%s'\n"
+msgstr "N√≠orbh fh√©idir an seoladh IP '%s' a phars√°il\n"
+
+#: src/main.c:2008
+#, c-format
+msgid "Failed to set DNS server(s) '%s' (%d)\n"
+msgstr "N√≠orbh fh√©idir freastala√≠ n√≥ freastalaithe DNS '%s' a shocr√∫ (%d)\n"
+
+#: src/main.c:2136
 #, c-format
 msgid "No URLs found in %s.\n"
-msgstr "NÌor aimsÌodh aon URL i %s.\n"
+msgstr "N√≠or aims√≠odh aon URL i %s.\n"
 
-#: src/main.c:1710
-#, fuzzy, c-format
+#: src/main.c:2152
+#, c-format
+msgid "Unable to parse metalink file %s.\n"
+msgstr "N√≠orbh fh√©idir an comhad meiteanaisc %s a phars√°il.\n"
+
+#: src/main.c:2182 src/metalink.c:337
+#, c-format
+msgid "Could not download all resources from %s.\n"
+msgstr "N√≠orbh fh√©idir na hacmhainn√≠ go l√©ir a √≠osl√≥d√°il √≥ %s.\n"
+
+#: src/main.c:2209
+#, c-format
 msgid ""
 "FINISHED --%s--\n"
 "Total wall clock time: %s\n"
 "Downloaded: %d files, %s in %s (%s)\n"
 msgstr ""
-"CRÕOCHNAITHE --%s--\n"
-"Õosluchtaithe: %d comhad, %s i %s (%s)\n"
+"CR√çOCHNAITHE --%s--\n"
+"Am ioml√°n (clog balla): %s\n"
+"√çosl√≥d√°ilte: %d comhad, %s i %s (%s)\n"
 
-#: src/main.c:1724
+#: src/main.c:2223
 #, c-format
 msgid "Download quota of %s EXCEEDED!\n"
-msgstr "S·raÌodh an cuÛta Ìosluchtaithe de %s!\n"
+msgstr "S√°ra√≠odh cu√≥ta √≠osl√≥d√°la %s!\n"
 
-#: src/mswindows.c:100
+#: src/metalink.c:93
+msgid "-O not supported for metalink download. Ignoring.\n"
+msgstr "N√≠ thaca√≠tear le -O agus √≠osl√≥d√°il Metalink. D√©anfar neamhaird de.\n"
+
+#: src/metalink.c:172
+#, c-format
+msgid "[--trust-server-names %s, --directory-prefix=%s]\n"
+msgstr "[--trust-server-names %s, --directory-prefix=%s]\n"
+
+#: src/metalink.c:176
+#, c-format
+msgid "Planned metalink file: %s\n"
+msgstr "Comhad meiteanaisc plean√°ilte: %s\n"
+
+#: src/metalink.c:179
+#, c-format
+msgid "Secured metalink file: %s\n"
+msgstr "Comhad daingnithe Metalink: %s\n"
+
+#: src/metalink.c:184
+msgid "Rejecting metalink file. Unsafe name.\n"
+msgstr "Comhad Metalink √° dhi√∫lt√∫. Ainm neamhshl√°n.\n"
+
+#: src/metalink.c:238
+#, c-format
+msgid "Processing metaurl %s...\n"
+msgstr "Metaurl %s √° phr√≥ise√°il...\n"
+
+#: src/metalink.c:251
+#, c-format
+msgid "Rejecting metaurl file %s. Unsafe name.\n"
+msgstr "Comhad metaurl %s √° dhi√∫lt√∫. Ainm neamhshl√°n.\n"
+
+#: src/metalink.c:268
+#, c-format
+msgid "Failed to download %s. Skipping metaurl.\n"
+msgstr "N√≠orbh fh√©idir %s a √≠osl√≥d√°il. N√≠ √∫s√°idfear metaurl.\n"
+
+#: src/metalink.c:285
+#, c-format
+msgid "Unable to parse metaurl file %s.\n"
+msgstr "N√≠ f√©idir comhad metaurl %s a phars√°il.\n"
+
+#: src/metalink.c:354
+msgid "Metaurls processing returned with error.\n"
+msgstr "Tharla earr√°id agus metaurl-anna √° bpr√≥ise√°il.\n"
+
+#: src/metalink.c:386
+#, c-format
+msgid "Resource type %s not supported, ignoring...\n"
+msgstr "N√≠ thaca√≠tear le cine√°l acmhainne %s; d√©anfar neamhaird de...\n"
+
+#: src/metalink.c:509
+msgid "Could not open downloaded file.\n"
+msgstr "N√≠orbh fh√©idir an comhad √≠osl√≥d√°ilte a oscailt.\n"
+
+#: src/metalink.c:514
+#, c-format
+msgid "Computing size for %s\n"
+msgstr "M√©id %s √° √°ireamh\n"
+
+#: src/metalink.c:519
+msgid "File size not declared. Skipping check.\n"
+msgstr "N√≠or f√≥gra√≠odh m√©id an chomhaid. N√≠ dh√©anfar an deimhni√∫.\n"
+
+#: src/metalink.c:527
+msgid "Could not get downloaded file's size.\n"
+msgstr "N√≠orbh fh√©idir m√©id an chomhaid √≠osl√≥d√°ilte a fh√°il.\n"
+
+#: src/metalink.c:539
+#, c-format
+msgid "Size mismatch for file %s.\n"
+msgstr "N√≠ ionann na m√©ideanna le haghaidh %s.\n"
+
+#: src/metalink.c:547
+msgid "Size matches.\n"
+msgstr "Is ionann na m√©ideanna.\n"
+
+#: src/metalink.c:600
+#, c-format
+msgid "Computing checksum for %s\n"
+msgstr "Suim sheice√°la %s √° h√°ireamh\n"
+
+#: src/metalink.c:678
+msgid "Checksum matches.\n"
+msgstr "Is ionann na suimeanna seice√°la.\n"
+
+#: src/metalink.c:683
+#, c-format
+msgid "Checksum mismatch for file %s.\n"
+msgstr "N√≠ ionann na suimeanna seice√°la le haghaidh %s.\n"
+
+#: src/metalink.c:723
+msgid "Could not open downloaded file for signature verification.\n"
+msgstr ""
+"N√≠orbh fh√©idir an comhad √≠osl√≥d√°ilte a oscailt chun an s√≠ni√∫ a dheimhni√∫.\n"
+
+#: src/metalink.c:782
+#, c-format
+msgid "GPGME data_new_from_mem: %s\n"
+msgstr "GPGME data_new_from_mem: %s\n"
+
+#: src/metalink.c:794
+#, c-format
+msgid "GPGME op_verify: %s\n"
+msgstr "GPGME op_verify: %s\n"
+
+#: src/metalink.c:807
+msgid "GPGME op_verify_result: NULL\n"
+msgstr "GPGME op_verify_result: NULL\n"
+
+#: src/metalink.c:823
+msgid "Signature validation succeeded.\n"
+msgstr "D'√©irigh le deimhni√∫ an ts√≠nithe.\n"
+
+#: src/metalink.c:831
+msgid "Invalid signature. Rejecting resource.\n"
+msgstr "S√≠ni√∫ neamhbhail√≠. Acmhainn √° di√∫lt√∫.\n"
+
+#: src/metalink.c:840
+msgid "Data matches signature, but signature is not trusted.\n"
+msgstr "Meaitse√°lann na sonra√≠ an s√≠ni√∫, ach n√≠l an s√≠ni√∫ iontaofa.\n"
+
+#: src/metalink.c:867
+msgid "No checksums found.\n"
+msgstr "N√≠or aims√≠odh aon suimeanna seice√°la.\n"
+
+#: src/metalink.c:873
+#, c-format
+msgid "Failed to download %s. Skipping resource.\n"
+msgstr "N√≠orbh fh√©idir %s a √≠osl√≥d√°il. D√©anfar neamhaird den acmhainn seo.\n"
+
+#: src/metalink.c:880
+#, c-format
+msgid "File %s retrieved but size does not match. \n"
+msgstr "Fuarthas comhad %s ach n√≠ mheaitse√°lann an m√©id. \n"
+
+#: src/metalink.c:887
+#, c-format
+msgid "File %s retrieved but checksum does not match. \n"
+msgstr "Fuarthas comhad %s ach n√≠ mheaitse√°lann an tsuim sheice√°la. \n"
+
+#: src/metalink.c:896
+#, c-format
+msgid "File %s retrieved but signature does not match. \n"
+msgstr "Fuarthas comhad %s ach n√≠ mheaitse√°lann an s√≠ni√∫. \n"
+
+#: src/metalink.c:1115
+#, c-format
+msgid "Renaming %s to %s.\n"
+msgstr "Ainm √° athr√∫ √≥ %s go %s.\n"
+
+#: src/mswindows.c:97
 #, c-format
 msgid "Continuing in background.\n"
-msgstr "¡ lean˙int sa ch˙lra.\n"
+msgstr "√Å lean√∫int sa ch√∫lra.\n"
 
-#: src/mswindows.c:293
+#: src/mswindows.c:290
 #, c-format
 msgid "Continuing in background, pid %lu.\n"
-msgstr "¡ lean˙int sa ch˙lra, pid %lu.\n"
+msgstr "√Å lean√∫int sa ch√∫lra, pid %lu.\n"
 
-#: src/mswindows.c:295 src/utils.c:481
-#, fuzzy, c-format
+#: src/mswindows.c:292 src/utils.c:510
+#, c-format
 msgid "Output will be written to %s.\n"
-msgstr "ScrÌobhfar aschur i `%s'.\n"
+msgstr "Scr√≠obhfar an t-aschur i %s.\n"
 
-#: src/mswindows.c:327
+#: src/mswindows.c:324
 #, c-format
 msgid "fake_fork_child() failed\n"
-msgstr ""
+msgstr "Theip ar fake_fork_child()\n"
 
-#: src/mswindows.c:335
+#: src/mswindows.c:332
 #, c-format
 msgid "fake_fork() failed\n"
-msgstr ""
+msgstr "Theip ar fake_fork()\n"
 
-#: src/mswindows.c:463 src/mswindows.c:470
+#: src/mswindows.c:460 src/mswindows.c:467
 #, c-format
 msgid "%s: Couldn't find usable socket driver.\n"
-msgstr "%s: NÌorbh fhÈidir tiom·naÌ in˙s·idte soicÈid a aimsi˙.\n"
+msgstr "%s: N√≠orbh fh√©idir tiom√°na√≠ in√∫s√°idte soic√©id a aimsi√∫.\n"
 
-#: src/mswindows.c:650
+#: src/mswindows.c:647
 #, c-format
 msgid "ioctl() failed.  The socket could not be set as blocking.\n"
-msgstr ""
+msgstr "Theip ar ioctl(). N√≠orbh fh√©idir an soic√©ad a shocr√∫ mar bhloc√°il.\n"
 
-#: src/netrc.c:354
-#, fuzzy, c-format
+#: src/netrc.c:366
+#, c-format
 msgid "%s: %s:%d: warning: %s token appears before any machine name\n"
-msgstr "%s: %s:%d: rabhadh: tagann an teaghr·n \"%s\" roimh aon ainm meaisÌn\n"
+msgstr "%s: %s:%d: rabhadh: tagann an teaghr√°n %s roimh aon ainm meais√≠n\n"
 
-#: src/netrc.c:385
+#: src/netrc.c:407
 #, c-format
 msgid "%s: %s:%d: unknown token \"%s\"\n"
-msgstr "%s: %s:%d: teaghr·n anaithnid comharthach \"%s\"\n"
+msgstr "%s: %s:%d: teaghr√°n anaithnid comharthach \"%s\"\n"
 
-#: src/netrc.c:448
+#: src/netrc.c:470
 #, c-format
 msgid "Usage: %s NETRC [HOSTNAME]\n"
-msgstr "⁄s·id: %s NETRC [”STAINM]\n"
+msgstr "√ös√°id: %s NETRC [√ìSTAINM]\n"
 
-#: src/netrc.c:466
+#: src/netrc.c:488
 #, c-format
 msgid "%s: cannot stat %s: %s\n"
-msgstr "%s: nÌ fÈidir %s a stat: %s\n"
+msgstr "%s: n√≠ f√©idir %s a stat: %s\n"
 
-#: src/openssl.c:118
+#: src/openssl.c:123
 msgid "WARNING: using a weak random seed.\n"
-msgstr "RABHADH: sÌol lag randamach in ˙s·id.\n"
+msgstr "RABHADH: s√≠ol lag randamach in √∫s√°id.\n"
 
-#: src/openssl.c:189
+#: src/openssl.c:195
 msgid "Could not seed PRNG; consider using --random-file.\n"
-msgstr "NÌorbh fhÈidir PRNG a shÌol˙; b'fhÈidir --random-file a ˙s·id.\n"
+msgstr "N√≠orbh fh√©idir PRNG a sh√≠ol√∫; b'fh√©idir --random-file a √∫s√°id.\n"
 
-#: src/openssl.c:630
-#, fuzzy, c-format
+#: src/openssl.c:245
+msgid "Your OpenSSL version is too old to support TLSv1.1\n"
+msgstr "T√° an leagan de OpenSSL at√° agat r√≥shean le tac√∫ le TLSv1.1\n"
+
+#: src/openssl.c:249
+msgid "Your OpenSSL version is too old to support TLSv1.2\n"
+msgstr "T√° an leagan de OpenSSL at√° agat r√≥shean le tac√∫ le TLSv1.2\n"
+
+#: src/openssl.c:254
+#, c-format
+msgid "OpenSSL: unimplemented 'secure-protocol' option value %d\n"
+msgstr "OpenSSL: n√≠l luach %d ar f√°il le rogha 'secure-protocol'\n"
+
+#: src/openssl.c:798
+#, c-format
 msgid "%s: cannot verify %s's certificate, issued by %s:\n"
-msgstr "%s: nÌ fÈidir teastas %s a fhÌor˙, eisithe ag `%s':\n"
+msgstr "%s: n√≠ f√©idir teastas %s a fh√≠or√∫, eisithe ag %s:\n"
 
-#: src/openssl.c:639
+#: src/openssl.c:809
 msgid "  Unable to locally verify the issuer's authority.\n"
-msgstr "  NÌ fÈidir ˙dar·s an eisitheora a fhÌor˙ go log·nta.\n"
+msgstr "  N√≠ f√©idir √∫dar√°s an eisitheora a fh√≠or√∫ go h√°iti√∫il.\n"
 
-#: src/openssl.c:644
+#: src/openssl.c:814
 msgid "  Self-signed certificate encountered.\n"
-msgstr "  Teastas fÈinsÌnithe.\n"
+msgstr "  Teastas f√©ins√≠nithe.\n"
 
-#: src/openssl.c:647
+#: src/openssl.c:817
 msgid "  Issued certificate not yet valid.\n"
-msgstr "  NÌl an teastas eisithe bailÌ fÛs.\n"
+msgstr "  N√≠l an teastas eisithe bail√≠ f√≥s.\n"
 
-#: src/openssl.c:650
+#: src/openssl.c:820
 msgid "  Issued certificate has expired.\n"
-msgstr "  T· an teastas imithe as feidhm.\n"
+msgstr "  T√° an teastas imithe as feidhm.\n"
 
-#: src/openssl.c:735
-#, fuzzy, c-format
+#: src/openssl.c:908
+#, c-format
 msgid ""
 "%s: no certificate subject alternative name matches\n"
 "\trequested host name %s.\n"
 msgstr ""
-"%s: nÌl ainm coitianta an teastais `%s' comhoiri˙nach leis an Ûstainm "
-"iarrtha `%s'.\n"
+"%s: n√≠l aon ainm malartach ar √°bhar an teastais ann a mheaitse√°lann\n"
+"\tan t-√≥stainm iarrtha %s.\n"
 
-#: src/openssl.c:752
-#, fuzzy, c-format
+#: src/openssl.c:927
+#, c-format
 msgid ""
 "    %s: certificate common name %s doesn't match requested host name %s.\n"
 msgstr ""
-"%s: nÌl ainm coitianta an teastais `%s' comhoiri˙nach leis an Ûstainm "
-"iarrtha `%s'.\n"
+"    %s: n√≠l ainm coitianta an teastais %s comhoiri√∫nach leis an √≥stainm "
+"iarrtha %s.\n"
 
-#: src/openssl.c:784
+#: src/openssl.c:959
 #, c-format
 msgid ""
 "    %s: certificate common name is invalid (contains a NUL character).\n"
 "    This may be an indication that the host is not who it claims to be\n"
 "    (that is, it is not the real %s).\n"
 msgstr ""
+"    %s: t√° gn√°thainm an teastais neamhbhail√≠ (t√° carachtar NUL ann).\n"
+"    Seans ann go cialla√≠onn seo nach √© an t-√≥str√≠omhaire an f√≠or %s.\n"
 
-#: src/openssl.c:802
+#: src/openssl.c:984
 #, c-format
 msgid "To connect to %s insecurely, use `--no-check-certificate'.\n"
 msgstr ""
-"Chun ceangal neamhdhaingean a dhÈanamh le %s, ˙s·id `--no-check-"
-"certificate'.\n"
+"Chun ceangal neamhshl√°n a dh√©anamh le %s, √∫s√°id `--no-check-certificate'.\n"
 
-#: src/progress.c:244
+#: src/progress.c:245
 #, c-format
 msgid ""
 "\n"
 "%*s[ skipping %sK ]"
 msgstr ""
 "\n"
-"%*s[ %sK · scipe·il ]"
+"%*s[ ag dul thar %sK ]"
 
-#: src/progress.c:465
-#, fuzzy, c-format
+#: src/progress.c:466
+#, c-format
 msgid "Invalid dot style specification %s; leaving unchanged.\n"
-msgstr "Sonr˙ neamhbhailÌ ar stÌl phonc `%s'; ag f·g·il gan athr˙.\n"
+msgstr "Sonr√∫ neamhbhail√≠ ar st√≠l phonc %s; √° f√°g√°il gan athr√∫.\n"
 
 #. TRANSLATORS: "ETA" is English-centric, but this must
 #. be short, ideally 3 chars.  Abbreviate if necessary.
-#: src/progress.c:854
-#, fuzzy, c-format
-msgid "   eta %s"
-msgstr "  eta %s"
+#: src/progress.c:858
+#, c-format
+msgid "    eta %s"
+msgstr "    eta %s"
 
-#: src/progress.c:1150
-msgid "   in "
-msgstr "   i  "
+#: src/progress.c:1148
+msgid "    in "
+msgstr "    i  "
 
 #: src/ptimer.c:158
 #, c-format
 msgid "Cannot get REALTIME clock frequency: %s\n"
-msgstr "NÌ fÈidir minicÌocht an chloig REALTIME a fh·il: %s\n"
+msgstr "N√≠ f√©idir minic√≠ocht an chloig REALTIME a fh√°il: %s\n"
 
-#: src/recur.c:434
+#: src/recur.c:514
 #, c-format
 msgid "Removing %s since it should be rejected.\n"
-msgstr "Ag baint %s toisc gur ceart È a dhi˙lt˙.\n"
+msgstr "Ag baint %s toisc gur ceart √© a dhi√∫lt√∫.\n"
 
-#: src/res.c:391
+#: src/res.c:392
 #, c-format
 msgid "Cannot open %s: %s"
-msgstr "NÌ fÈidir %s a oscailt: %s"
+msgstr "N√≠ f√©idir %s a oscailt: %s"
 
-#: src/res.c:550
+#: src/res.c:551
 msgid "Loading robots.txt; please ignore errors.\n"
-msgstr "robots.txt · lucht˙; dÈan neamhaird d'earr·idÌ le do thoil.\n"
+msgstr "robots.txt √° l√≥d√°il; d√©an neamhaird d'earr√°id√≠ le do thoil.\n"
 
-#: src/retr.c:768
+#: src/retr.c:913
 #, c-format
 msgid "Error parsing proxy URL %s: %s.\n"
-msgstr "Earr·id agus URL an seachfhreastalaÌ %s · phars·il: %s.\n"
+msgstr "Earr√°id agus URL an seachfhreastala√≠ %s √° phars√°il: %s.\n"
 
-#: src/retr.c:778
+#: src/retr.c:925
 #, c-format
 msgid "Error in proxy URL %s: Must be HTTP.\n"
-msgstr "Earr·id i URL seachfhreastalaÌ %s: NÌ fol·ir a bheith HTTP.\n"
+msgstr "Earr√°id i URL seachfhreastala√≠ %s: N√≠ fol√°ir a bheith HTTP.\n"
 
-#: src/retr.c:879
+#: src/retr.c:1054
 #, c-format
 msgid "%d redirections exceeded.\n"
-msgstr "nÌos mÛ n· %d atreor˙.\n"
+msgstr "n√≠os m√≥ n√° %d atreor√∫.\n"
 
-#: src/retr.c:1126
+#: src/retr.c:1318
 msgid ""
 "Giving up.\n"
 "\n"
 msgstr ""
-"¡ ÈirÌ as.\n"
+"√Å √©ir√≠ as.\n"
 "\n"
 
-#: src/retr.c:1126
+#: src/retr.c:1318
 msgid ""
 "Retrying.\n"
 "\n"
 msgstr ""
-"¡ triail arÌs.\n"
+"√Å triail ar√≠s.\n"
 "\n"
 
-#: src/spider.c:75
-msgid ""
-"Found no broken links.\n"
-"\n"
-msgstr ""
-"NÌor aimsÌodh aon nasc briste.\n"
-"\n"
-
-#: src/spider.c:82
-#, c-format
-msgid ""
-"Found %d broken link.\n"
-"\n"
-msgid_plural ""
-"Found %d broken links.\n"
-"\n"
-msgstr[0] ""
-"AimsÌodh %d nasc briste.\n"
-"\n"
-msgstr[1] ""
-"AimsÌodh %d nasc briste.\n"
-"\n"
-msgstr[2] ""
-"AimsÌodh %d nasc briste.\n"
-"\n"
-msgstr[3] ""
-"AimsÌodh %d nasc briste.\n"
-"\n"
-msgstr[4] ""
-"AimsÌodh %d nasc briste.\n"
-"\n"
-
-#: src/url.c:639
+#: src/url.c:676
 msgid "No error"
-msgstr "NÌ raibh aon earr·id"
+msgstr "N√≠ raibh aon earr√°id"
 
-#: src/url.c:641
-#, fuzzy, c-format
+#: src/url.c:678
+#, c-format
 msgid "Unsupported scheme %s"
-msgstr "ScÈim gan tac˙"
+msgstr "Sc√©im gan taca√≠ocht %s"
 
-#: src/url.c:643
+#: src/url.c:680
 msgid "Scheme missing"
-msgstr ""
+msgstr "Sc√©im ar iarraidh"
 
-#: src/url.c:645
+#: src/url.c:682
 msgid "Invalid host name"
-msgstr "”stainm neamhbhailÌ"
+msgstr "√ìstainm neamhbhail√≠"
 
-#: src/url.c:647
+#: src/url.c:684
 msgid "Bad port number"
 msgstr "Drochuimhir phoirt"
 
-#: src/url.c:649
+#: src/url.c:686
 msgid "Invalid user name"
-msgstr "Ainm neamhbhailÌ ˙s·ideora"
+msgstr "Ainm neamhbhail√≠ √∫s√°ideora"
 
-#: src/url.c:651
+#: src/url.c:688
 msgid "Unterminated IPv6 numeric address"
-msgstr "Seoladh uimhri˙il IPv6 gan chrÌochn˙"
+msgstr "Seoladh uimhri√∫il IPv6 gan chr√≠ochn√∫"
 
-#: src/url.c:653
+#: src/url.c:690
 msgid "IPv6 addresses not supported"
-msgstr "NÌl seoltaÌ IPv6 ar f·il"
+msgstr "N√≠l seolta√≠ IPv6 ar f√°il"
 
-#: src/url.c:655
+#: src/url.c:692
 msgid "Invalid IPv6 numeric address"
-msgstr "Seoladh uimhri˙il IPv6 neamhbhailÌ"
+msgstr "Seoladh uimhri√∫il IPv6 neamhbhail√≠"
 
-#: src/url.c:959
+#: src/url.c:1008
 msgid "HTTPS support not compiled in"
-msgstr ""
+msgstr "N√≠or t√≥gadh an cl√°r seo le taca√≠ocht HTTPS"
 
-#: src/utils.c:116
-#, fuzzy, c-format
+#: src/url.c:1603
+#, fuzzy
+msgid "Unconvertable multibyte sequence encountered\n"
+msgstr "Chonacthas seicheamh ilbheart neamhioml√°n n√≥ neamhbhail√≠\n"
+
+#: src/utils.c:130
+#, c-format
 msgid "%s: %s: Failed to allocate enough memory; memory exhausted.\n"
-msgstr "%s: %s: Theip ar leithdh·ileadh %ld beart; cuimhne Ìdithe.\n"
+msgstr "%s: %s: N√≠orbh fh√©idir cuimhne a leithdh√°ileadh; cuimhne √≠dithe.\n"
 
-#: src/utils.c:122
+#: src/utils.c:136
 #, c-format
 msgid "%s: %s: Failed to allocate %ld bytes; memory exhausted.\n"
-msgstr "%s: %s: Theip ar leithdh·ileadh %ld beart; cuimhne Ìdithe.\n"
+msgstr "%s: %s: N√≠orbh fh√©idir %ld beart a leithdh√°ileadh; cuimhne √≠dithe.\n"
 
-#: src/utils.c:336
+#: src/utils.c:356
 #, c-format
-msgid "%s: aprintf: text buffer is too big (%ld bytes), aborting.\n"
-msgstr ""
+msgid "%s: aprintf: text buffer is too big (%d bytes), aborting.\n"
+msgstr "%s: aprintf: maol√°n t√©acs r√≥mh√≥r (%d beart), √° thobscor.\n"
 
-#: src/utils.c:479
+#: src/utils.c:508
 #, c-format
 msgid "Continuing in background, pid %d.\n"
-msgstr "¡ lean˙int sa ch˙lra, pid %d.\n"
+msgstr "√Å lean√∫int sa ch√∫lra, pid %d.\n"
 
-#: src/utils.c:555
-#, fuzzy, c-format
+#: src/utils.c:584
+#, c-format
 msgid "Failed to unlink symlink %s: %s\n"
-msgstr "Theip ar dhÌnascadh an naisc shiombalaigh `%s': %s\n"
+msgstr "N√≠orbh fh√©idir nasc siombalach %s a dh√≠nascadh: %s\n"
 
-#: src/utils.c:2273 src/utils.c:2292
+#: src/utils.c:884
+#, fuzzy, c-format
+msgid "Failed to Fopen file %s\n"
+msgstr "N√≠orbh fh√©idir libcares a th√∫s√∫\n"
+
+#: src/utils.c:890
+#, fuzzy, c-format
+msgid "Failed to get FD for file %s\n"
+msgstr "N√≠orbh fh√©idir ceadanna le haghaidh %s a shocr√∫.\n"
+
+#: src/utils.c:897
+#, fuzzy, c-format
+msgid "Failed to stat file %s, (check permissions)\n"
+msgstr "N√≠orbh fh√©idir ceadanna le haghaidh %s a shocr√∫.\n"
+
+#: src/utils.c:907
+#, c-format
+msgid "File %s changed since the last check. Security check failed."
+msgstr ""
+
+#: src/utils.c:942
+#, fuzzy, c-format
+msgid "Failed to open file %s, reason :%s\n"
+msgstr "N√≠orbh fh√©idir an seoladh IP '%s' a phars√°il\n"
+
+#: src/utils.c:948
+#, fuzzy, c-format
+msgid "Failed to stat file %s, error: %s\n"
+msgstr "N√≠orbh fh√©idir ceadanna le haghaidh %s a shocr√∫.\n"
+
+#: src/utils.c:957
+#, c-format
+msgid ""
+"Trying to open file %s but it changed since last check. Security check "
+"failed."
+msgstr ""
+
+#: src/utils.c:2461 src/utils.c:2480
 #, c-format
 msgid "Invalid regular expression %s, %s\n"
-msgstr ""
+msgstr "Slonn ionada√≠ochta neamhbhail√≠ %s, %s\n"
 
-#: src/utils.c:2315 src/utils.c:2339
-#, fuzzy, c-format
+#: src/utils.c:2504 src/utils.c:2528
+#, c-format
 msgid "Error while matching %s: %d\n"
-msgstr "Earr·id le linn scrÌofa i gcomhad `%s': %s\n"
+msgstr "Earr√°id agus %s √° mheaitse√°il: %d\n"
 
-#: src/warc.c:222
+#: src/utils.c:2821
+#, c-format
+msgid "Skipping key with wrong size (%d/%d): %s\n"
+msgstr ""
+
+#: src/warc.c:223
 msgid "Error opening GZIP stream to WARC file.\n"
-msgstr ""
+msgstr "Earr√°id agus sruth GZIP √° oscailt go comhad WARC.\n"
 
-#: src/warc.c:710
+#: src/warc.c:798
 msgid "Error writing warcinfo record to WARC file.\n"
-msgstr ""
+msgstr "Earr√°id agus taifead warcinfo √° scr√≠obh i gcomhad WARC.\n"
 
-#: src/warc.c:771
+#: src/warc.c:861
 #, c-format
 msgid ""
 "Opening WARC file %s.\n"
 "\n"
 msgstr ""
+"Comhad WARC %s √° oscailt.\n"
+"\n"
 
-#: src/warc.c:777
-#, fuzzy, c-format
+#: src/warc.c:867
+#, c-format
 msgid "Error opening WARC file %s.\n"
-msgstr "Earr·id agus URL an seachfhreastalaÌ %s · phars·il: %s.\n"
+msgstr "Earr√°id agus comhad WARC %s √° oscailt.\n"
 
-#: src/warc.c:974
+#: src/warc.c:1064
 msgid "CDX file does not list original urls. (Missing column 'a'.)\n"
-msgstr ""
+msgstr "N√≠l na bunURLanna sa chomhad CDX. (Col√∫n 'a' ar iarraidh.)\n"
 
-#: src/warc.c:977
+#: src/warc.c:1067
 msgid "CDX file does not list checksums. (Missing column 'k'.)\n"
-msgstr ""
+msgstr "N√≠l na suimeanna seice√°la sa chomhad CDX. (Col√∫n 'k' ar iarraidh.)\n"
 
-#: src/warc.c:980
+#: src/warc.c:1070
 msgid "CDX file does not list record ids. (Missing column 'u'.)\n"
-msgstr ""
+msgstr "N√≠l aitheantais na dtaifead sa chomhad CDX. (Col√∫n 'u' ar iarraidh.)\n"
 
-#: src/warc.c:1002
+#: src/warc.c:1094
 #, c-format
 msgid ""
 "Loaded %d record from CDX.\n"
@@ -2925,45 +3492,93 @@ msgid_plural ""
 "Loaded %d records from CDX.\n"
 "\n"
 msgstr[0] ""
+"L√≥d√°ladh %d taifead √≥ CDX.\n"
+"\n"
 msgstr[1] ""
+"L√≥d√°ladh %d thaifead √≥ CDX.\n"
+"\n"
 msgstr[2] ""
+"L√≥d√°ladh %d thaifead √≥ CDX.\n"
+"\n"
 msgstr[3] ""
+"L√≥d√°ladh %d dtaifead √≥ CDX.\n"
+"\n"
 msgstr[4] ""
+"L√≥d√°ladh %d taifead √≥ CDX.\n"
+"\n"
 
-#: src/warc.c:1047
+#: src/warc.c:1140
 #, c-format
 msgid "Could not read CDX file %s for deduplication.\n"
-msgstr ""
+msgstr "N√≠orbh fh√©idir comhad CDX %s a l√©amh chun taifid d√∫bailte a bhaint.\n"
 
-#: src/warc.c:1057
+#: src/warc.c:1150
 msgid "Could not open temporary WARC manifest file.\n"
-msgstr ""
+msgstr "N√≠orbh fh√©idir comhad sealadach don lastliosta WARC a oscailt.\n"
 
-#: src/warc.c:1067
+#: src/warc.c:1160
 msgid "Could not open temporary WARC log file.\n"
-msgstr ""
+msgstr "N√≠orbh fh√©idir logchomhad sealadach WARC a oscailt.\n"
 
-#: src/warc.c:1076
+#: src/warc.c:1169
 msgid "Could not open WARC file.\n"
-msgstr ""
+msgstr "N√≠orbh fh√©idir comhad WARC a oscailt.\n"
 
-#: src/warc.c:1085
+#: src/warc.c:1178
 msgid "Could not open CDX file for output.\n"
-msgstr ""
+msgstr "N√≠orbh fh√©idir comhad CDX a oscailt le scr√≠obh ann.\n"
 
-#: src/warc.c:1113
+#: src/warc.c:1208
 msgid "Could not open temporary WARC file.\n"
-msgstr ""
+msgstr "N√≠orbh fh√©idir comhad sealadach WARC a oscailt.\n"
 
-#: src/warc.c:1370
+#: src/warc.c:1476
 msgid "Found exact match in CDX file. Saving revisit record to WARC.\n"
 msgstr ""
+"Aims√≠odh toradh beacht sa chomhad CDX. Taifead athchuairte √° sh√°bh√°il le "
+"WARC.\n"
+
+#~ msgid ""
+#~ "Found no broken links.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "N√≠or aims√≠odh aon nasc briste.\n"
+#~ "\n"
+
+#~ msgid ""
+#~ "Found %d broken link.\n"
+#~ "\n"
+#~ msgid_plural ""
+#~ "Found %d broken links.\n"
+#~ "\n"
+#~ msgstr[0] ""
+#~ "Aims√≠odh %d nasc briste.\n"
+#~ "\n"
+#~ msgstr[1] ""
+#~ "Aims√≠odh %d nasc briste.\n"
+#~ "\n"
+#~ msgstr[2] ""
+#~ "Aims√≠odh %d nasc briste.\n"
+#~ "\n"
+#~ msgstr[3] ""
+#~ "Aims√≠odh %d nasc briste.\n"
+#~ "\n"
+#~ msgstr[4] ""
+#~ "Aims√≠odh %d nasc briste.\n"
+#~ "\n"
 
 #~ msgid "%s: illegal option -- %c\n"
 #~ msgstr "%s: rogha neamhcheadaithe -- %c\n"
 
 #~ msgid "Authorization failed.\n"
-#~ msgstr "Theip ar ˙dar˙.\n"
+#~ msgstr "Theip ar √∫dar√∫.\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "%s received.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "fuarthas %s.\n"
 
 #~ msgid ""
 #~ "  -B,  --base=URL            prepends URL to relative links in -F -i "
@@ -2979,34 +3594,34 @@ msgstr ""
 #~ "Cannot specify -N if -O is given. See the manual for details.\n"
 #~ "\n"
 #~ msgstr ""
-#~ "NÌ fÈidir -N a shonr˙ m· t· -O ann. FÈach ar an l·mhleabhar chun "
-#~ "tuilleadh eolais a fh·il.\n"
+#~ "N√≠ f√©idir -N a shonr√∫ m√° t√° -O ann. F√©ach ar an l√°mhleabhar chun "
+#~ "tuilleadh eolais a fh√°il.\n"
 #~ "\n"
 
 #~ msgid "  -Y,  --proxy                   explicitly turn on proxy.\n"
-#~ msgstr "  -Y,  --proxy                  ˙s·id seachfhreastalaÌ.\n"
+#~ msgstr "  -Y,  --proxy                  √∫s√°id seachfhreastala√≠.\n"
 
 #~ msgid ""
 #~ "       --no-content-disposition  don't honor Content-Disposition header.\n"
 #~ msgstr ""
-#~ "       --no-content-disposition  n· gÈill do cheannt·sc Content-"
+#~ "       --no-content-disposition  n√° g√©ill do cheannt√°sc Content-"
 #~ "Disposition.\n"
 
 #~ msgid "%s referred by:\n"
 #~ msgstr "%s tagartha ag:\n"
 
 #~ msgid "Error in Set-Cookie, field `%s'"
-#~ msgstr "Earr·id i Set-Cookie, rÈimse `%s'"
+#~ msgstr "Earr√°id i Set-Cookie, r√©imse `%s'"
 
 #~ msgid "%s (%s) - Connection closed at byte %s/%s. "
-#~ msgstr "%s (%s) - Ceangal d˙nta ag beart %s/%s. "
+#~ msgstr "%s (%s) - Ceangal d√∫nta ag beart %s/%s. "
 
 #~ msgid ""
 #~ "%s: %s: Invalid extended boolean `%s';\n"
 #~ "use one of `on', `off', `always', or `never'.\n"
 #~ msgstr ""
-#~ "%s: %s: Slonn neamhbhailÌ Boole sÌnithe `%s';\n"
-#~ "˙s·id ceann de `on', `off', `always', nÛ `never'.\n"
+#~ "%s: %s: Slonn neamhbhail√≠ Boole s√≠nithe `%s';\n"
+#~ "√∫s√°id ceann de `on', `off', `always', n√≥ `never'.\n"
 
 #~ msgid ""
 #~ "This program is distributed in the hope that it will be useful,\n"
@@ -3014,26 +3629,23 @@ msgstr ""
 #~ "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
 #~ "GNU General Public License for more details.\n"
 #~ msgstr ""
-#~ "Scaiptear an rÌomhchl·r seo le s˙il go mbeidh sÈ ·isi˙il,\n"
-#~ "ach GAN AON BAR¡NTA; go fi˙ gan an bar·ntas intuigthe\n"
-#~ "d'INDÕOLTACHT nÛ FEILI⁄NACHT D'FHEIDHM AR LEITH.  FÈach ar an\n"
-#~ "GNU General Public License chun nÌos mÛ sonraÌ a fh·il.\n"
+#~ "Scaiptear an r√≠omhchl√°r seo le s√∫il go mbeidh s√© √°isi√∫il,\n"
+#~ "ach GAN AON BAR√ÅNTA; go fi√∫ gan an bar√°ntas intuigthe\n"
+#~ "d'IND√çOLTACHT n√≥ FEILI√öNACHT D'FHEIDHM AR LEITH.  F√©ach ar an\n"
+#~ "GNU General Public License chun n√≠os m√≥ sonra√≠ a fh√°il.\n"
 
 #~ msgid "%s: Certificate verification error for %s: %s\n"
-#~ msgstr "%s: Earr·id agus teastas · bhailÌocht˙ le haghaidh %s: %s\n"
-
-#~ msgid "Failed writing to proxy: %s.\n"
-#~ msgstr "Theip ar scrÌobh go seachfhreastalaÌ: %s.\n"
+#~ msgstr "%s: Earr√°id agus teastas √° bhail√≠ocht√∫ le haghaidh %s: %s\n"
 
 #~ msgid "File `%s' already there, will not retrieve.\n"
-#~ msgstr "T· an comhad `%s' ann cheana, nÌ aisghabhfar È.\n"
+#~ msgstr "T√° an comhad `%s' ann cheana, n√≠ aisghabhfar √©.\n"
 
 #~ msgid ""
 #~ "%s (%s) - `%s' saved [%s/%s])\n"
 #~ "\n"
 #~ msgstr ""
-#~ "%s (%s) - `%s' s·bh·ilte [%s/%s])\n"
+#~ "%s (%s) - `%s' s√°bh√°ilte [%s/%s])\n"
 #~ "\n"
 
 #~ msgid "Empty host"
-#~ msgstr "”strÌomhaire folamh"
+#~ msgstr "√ìstr√≠omhaire folamh"

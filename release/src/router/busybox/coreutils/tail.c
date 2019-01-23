@@ -24,24 +24,24 @@
  * 7) lseek attempted when count==0 even if arg was +0 (from top)
  */
 
+//kbuild:lib-$(CONFIG_TAIL) += tail.o
+
 //usage:#define tail_trivial_usage
 //usage:       "[OPTIONS] [FILE]..."
 //usage:#define tail_full_usage "\n\n"
 //usage:       "Print last 10 lines of each FILE (or stdin) to stdout.\n"
 //usage:       "With more than one FILE, precede each with a filename header.\n"
 //usage:     "\n	-f		Print data as file grows"
-//usage:	IF_FEATURE_FANCY_TAIL(
-//usage:     "\n	-s SECONDS	Wait SECONDS between reads with -f"
-//usage:	)
+//usage:     "\n	-c [+]N[kbm]	Print last N bytes"
 //usage:     "\n	-n N[kbm]	Print last N lines"
+//usage:     "\n	-n +N[kbm]	Start on Nth line and print the rest"
 //usage:	IF_FEATURE_FANCY_TAIL(
-//usage:     "\n	-c N[kbm]	Print last N bytes"
 //usage:     "\n	-q		Never print headers"
+//usage:     "\n	-s SECONDS	Wait SECONDS between reads with -f"
 //usage:     "\n	-v		Always print headers"
+//usage:     "\n	-F		Same as -f, but keep retrying"
 //usage:     "\n"
 //usage:     "\nN may be suffixed by k (x1024), b (x512), or m (x1024^2)."
-//usage:     "\nIf N starts with a '+', output begins with the Nth item from the start"
-//usage:     "\nof each file, not from the end."
 //usage:	)
 //usage:
 //usage:#define tail_example_usage
@@ -49,20 +49,14 @@
 //usage:       "nameserver 10.0.0.1\n"
 
 #include "libbb.h"
-
-static const struct suffix_mult tail_suffixes[] = {
-	{ "b", 512 },
-	{ "k", 1024 },
-	{ "m", 1024*1024 },
-	{ "", 0 }
-};
+#include "common_bufsiz.h"
 
 struct globals {
 	bool from_top;
 	bool exitcode;
 } FIX_ALIASING;
-#define G (*(struct globals*)&bb_common_bufsiz1)
-#define INIT_G() do { } while (0)
+#define G (*(struct globals*)bb_common_bufsiz1)
+#define INIT_G() do { setup_common_bufsiz(); } while (0)
 
 static void tail_xprint_header(const char *fmt, const char *filename)
 {
@@ -73,15 +67,6 @@ static void tail_xprint_header(const char *fmt, const char *filename)
 static ssize_t tail_read(int fd, char *buf, size_t count)
 {
 	ssize_t r;
-	off_t current;
-	struct stat sbuf;
-
-	/* /proc files report zero st_size, don't lseek them. */
-	if (fstat(fd, &sbuf) == 0 && sbuf.st_size > 0) {
-		current = lseek(fd, 0, SEEK_CUR);
-		if (sbuf.st_size < current)
-			xlseek(fd, 0, SEEK_SET);
-	}
 
 	r = full_read(fd, buf, count);
 	if (r < 0) {
@@ -102,7 +87,7 @@ static unsigned eat_num(const char *p)
 		p++;
 		G.from_top = 1;
 	}
-	return xatou_sfx(p, tail_suffixes);
+	return xatou_sfx(p, bkm_suffixes);
 }
 
 int tail_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
@@ -120,6 +105,7 @@ int tail_main(int argc, char **argv)
 
 	int *fds;
 	const char *fmt;
+	int prev_fd;
 
 	INIT_G();
 
@@ -324,6 +310,7 @@ int tail_main(int argc, char **argv)
 			xwrite(STDOUT_FILENO, tailbuf, taillen);
 		}
 	} while (++i < nfiles);
+	prev_fd = fds[i-1];
 
 	tailbuf = xrealloc(tailbuf, BUFSIZ);
 
@@ -367,10 +354,23 @@ int tail_main(int argc, char **argv)
 			if (nfiles > header_threshhold) {
 				fmt = header_fmt_str;
 			}
-			while ((nread = tail_read(fd, tailbuf, BUFSIZ)) > 0) {
-				if (fmt) {
+			for (;;) {
+				/* tail -f keeps following files even if they are truncated */
+				struct stat sbuf;
+				/* /proc files report zero st_size, don't lseek them */
+				if (fstat(fd, &sbuf) == 0 && sbuf.st_size > 0) {
+					off_t current = lseek(fd, 0, SEEK_CUR);
+					if (sbuf.st_size < current)
+						xlseek(fd, 0, SEEK_SET);
+				}
+
+				nread = tail_read(fd, tailbuf, BUFSIZ);
+				if (nread <= 0)
+					break;
+				if (fmt && (fd != prev_fd)) {
 					tail_xprint_header(fmt, filename);
 					fmt = NULL;
+					prev_fd = fd;
 				}
 				xwrite(STDOUT_FILENO, tailbuf, nread);
 			}

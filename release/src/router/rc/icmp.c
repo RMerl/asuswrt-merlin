@@ -18,11 +18,11 @@ int icmp_check(char *src_addr, char *dst_addr)
 	char* packet;
 	int payload_size = 5;
 	char* buffer;
-	int sockfd;
+	int sockfd = 0;
 	int optval;
 	int addrlen;
 	int siz;
-	int ping_result;
+	int ping_result = 0;
 
 	printf("Source address: %s\n", src_addr);
 	printf("Destination address: %s\n", dst_addr);
@@ -32,12 +32,12 @@ int icmp_check(char *src_addr, char *dst_addr)
 	packet = malloc(packet_size);
 	if(packet == NULL){
 		perror("malloc packet");
-		return 0;
+		goto EXIT;
 	}
 	buffer = malloc(sizeof(struct iphdr) + sizeof(struct icmphdr));
 	if(buffer == NULL){
 		perror("malloc buffer");
-		return 0;
+		goto EXIT;
 	}
 
 	memset(packet, 0, packet_size);
@@ -78,13 +78,14 @@ int icmp_check(char *src_addr, char *dst_addr)
 	if(setsockopt(sockfd, IPPROTO_IP, IP_HDRINCL, &optval, sizeof(optval)) == -1)
 	{
         perror("setsockopt");
-        return (0);
+	goto EXIT;
 	}
 
 	if ( fcntl(sockfd, F_SETFL, O_NONBLOCK) != 0 )
 	{
 		perror("Request nonblocking I/O");
-		return 1;
+		ping_result = 1;
+		goto EXIT;
 	}
 
 	/*
@@ -117,7 +118,7 @@ int icmp_check(char *src_addr, char *dst_addr)
 	if(rc == 0){
 		puts("Got no reply\n");
 		ping_result = 0;
-		return 0;
+		goto EXIT;
 	}else if(rc < 0){
 		perror("Select");
 		ping_result = 0;
@@ -139,12 +140,13 @@ int icmp_check(char *src_addr, char *dst_addr)
 		ping_result = 1;
 	}
 
-	free(packet);
-	free(buffer);
 	FD_ZERO(&read_set);
-	close(sockfd);
 	FD_CLR(sockfd, &read_set);
 
+EXIT:
+	if (packet) free(packet);
+	if (buffer) free(buffer);
+	if (sockfd) close(sockfd);
 	if(ping_result == 0){
 		return 0;
 	}else{

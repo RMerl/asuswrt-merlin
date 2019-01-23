@@ -9,6 +9,7 @@
  * Tom St Denis, tomstdenis@gmail.com, http://libtomcrypt.com
  */
 #include "tomcrypt.h"
+#include "dbhelpers.h"
 
 /**
    @file zeromem.c
@@ -22,11 +23,7 @@
 */
 void zeromem(void *out, size_t outlen)
 {
-   unsigned char *mem = out;
-   LTC_ARGCHKVD(out != NULL);
-   while (outlen-- > 0) {
-      *mem++ = 0;
-   }
+   m_burn(out, outlen);
 }
 
 /* $Source: /cvs/libtom/libtomcrypt/src/misc/zeromem.c,v $ */

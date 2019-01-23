@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2015, The Tor Project, Inc. */
+/* Copyright (c) 2013-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #ifndef TOR_BACKTRACE_H
@@ -13,7 +13,7 @@ void clean_up_backtrace_handler(void);
 #ifdef EXPOSE_CLEAN_BACKTRACE
 #if defined(HAVE_EXECINFO_H) && defined(HAVE_BACKTRACE) && \
   defined(HAVE_BACKTRACE_SYMBOLS_FD) && defined(HAVE_SIGACTION)
-void clean_backtrace(void **stack, int depth, const ucontext_t *ctx);
+void clean_backtrace(void **stack, size_t depth, const ucontext_t *ctx);
 #endif
 #endif
 

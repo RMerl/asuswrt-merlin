@@ -9,13 +9,13 @@
 <table border=0 width=100%>
 <tr>
 <td><p class=tiny>libvorbisenc documentation</p></td>
-<td align=right><p class=tiny>libvorbisenc release 1.1 - 20040709</p></td>
+<td align=right><p class=tiny>libvorbisenc version 1.3.2 - 20101101</p></td>
 </tr>
 </table>
 
 <h1>vorbis_encode_setup_vbr</h1>
 
-<p><i>declared in "vorbis/libvorbisenc.h";</i></p>
+<p><i>declared in "vorbis/vorbisenc.h";</i></p>
 
 <p>This function performs step-one of a three-step variable bitrate
 (quality-based) encode setup.  It functions similarly to the one-step
@@ -27,14 +27,14 @@ calling <a
 href="vorbis_encode_setup_init.html">vorbis_encode_setup_init()</a> to
 complete the setup process.
 
-<p>Before this function is called, the <a href="vorbis_info.html">vorbis_info</a> struct should be initialized by using vorbis_info_init() from the libvorbis API.  After encoding, vorbis_info_clear should be called.
+<p>Before this function is called, the <a href="../libvorbis/vorbis_info.html">vorbis_info</a> struct should be initialized by using vorbis_info_init() from the libvorbis API.  After encoding, vorbis_info_clear should be called.
 <p>
 <br><br>
 <table border=0 color=black cellspacing=0 cellpadding=7>
 <tr bgcolor=#cccccc>
 	<td>
 <pre><b>
-extern int vorbis_encode_init_vbr(<a href="vorbis_info.html">vorbis_info</a> *vi,
+extern int vorbis_encode_init_vbr(<a href="../libvorbis/vorbis_info.html">vorbis_info</a> *vi,
 			      long channels,
 			      long rate,
 			      
@@ -48,7 +48,7 @@ extern int vorbis_encode_init_vbr(<a href="vorbis_info.html">vorbis_info</a> *vi
 <h3>Parameters</h3>
 <dl>
 <dt><i>vi</i></dt>
-<dd>File pointer to an initialized <a href="vorbis_info.html">vorbis_info</a> struct.</dd>
+<dd>Pointer to an initialized <a href="../libvorbis/vorbis_info.html">vorbis_info</a> struct.</dd>
 <dt><i>channels</i></dt>
 <dd>The number of channels to be encoded.</dd>
 <dt><i>rate</i></dt>
@@ -76,11 +76,11 @@ extern int vorbis_encode_init_vbr(<a href="vorbis_info.html">vorbis_info</a> *vi
 <hr noshade>
 <table border=0 width=100%>
 <tr valign=top>
-<td><p class=tiny>copyright &copy; 2004 xiph.org</p></td>
-<td align=right><p class=tiny><a href="http://www.xiph.org/ogg/vorbis/index.html">Ogg Vorbis</a><br><a href="mailto:team@vorbis.org">team@vorbis.org</a></p></td>
+<td><p class=tiny>copyright &copy; 2000-2010 Xiph.Org</p></td>
+<td align=right><p class=tiny><a href="http://www.xiph.org/ogg/vorbis/index.html">Ogg Vorbis</a></p></td>
 </tr><tr>
 <td><p class=tiny>libvorbisenc documentation</p></td>
-<td align=right><p class=tiny>libvorbisenc release 1.1 - 20040709</p></td>
+<td align=right><p class=tiny>libvorbisenc version 1.3.2 - 20101101</p></td>
 </tr>
 </table>
 

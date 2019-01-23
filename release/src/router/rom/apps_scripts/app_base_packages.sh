@@ -3,6 +3,7 @@
 
 
 apps_ipkg_old=`nvram get apps_ipkg_old`
+
 autorun_file=.asusrouter
 nonautorun_file=$autorun_file.disabled
 APPS_INSTALL_FOLDER=`nvram get apps_install_folder`
@@ -16,11 +17,24 @@ apps_local_space=`nvram get apps_local_space`
 apps_local_test=`nvram get apps_local_test`
 link_internet=`nvram get link_internet`
 f=`nvram get apps_install_folder`
+
+#2016.7.1 sherry new oleg arm{
+apps_new_arm=`nvram get apps_new_arm` 
+#end sherry add }
+
+
 case $f in
 	"asusware.arm")
 		pkg_type=`echo $f|sed -e "s,asusware\.,,"`
-		third_lib="mbwe-bluering"
-		base_size=503297
+		#2016.7.1 sherry new oleg arm{
+		#third_lib="mbwe-bluering"  
+		if [ $apps_new_arm -eq 1 ]; then 
+			third_lib="armeabi-ng"
+		else
+			third_lib="mbwe-bluering" 
+			base_size=503297
+		fi #end sherry modify}
+		
 		;;
 	"asusware.big")
 		pkg_type="mipsbig"
@@ -67,6 +81,14 @@ if [ -z "$APPS_MOUNTED_PATH" ]; then
 fi
 
 APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
+
+#2016.7.1 sherry new oleg arm{
+TEMP_BASELEN_FILE=$APPS_INSTALL_PATH/BasePackages.tgz
+BASELEN_TGZ=BasePackages.tgz
+BASELEN_FILE=BasePackages
+#end sherry add }
+
+
 if [ -L "$APPS_INSTALL_PATH" ] || [ ! -d "$APPS_INSTALL_PATH" ]; then
 	echo "Building the base directory!"
 	rm -rf $APPS_INSTALL_PATH
@@ -87,9 +109,14 @@ fi
 had_uclibc=`ls $APPS_INSTALL_PATH/lib/libuClibc-*.so`
 if [ ! -f "$APPS_INSTALL_PATH/bin/ipkg" ] || [ -z "$had_uclibc" ]; then
 	echo "Installing the base apps!"
-
-	base_file=asus_base_apps_$pkg_type.tgz
-
+	#2016.7.1 sherry new oleg arm{
+	#base_file=asus_base_apps_$pkg_type.tgz
+	if [ $apps_new_arm -eq 1 ]; then 
+		base_file=asus_base_apps_new_$pkg_type.tgz
+	else
+		base_file=asus_base_apps_$pkg_type.tgz
+	fi #end sherry modify
+	
 	target=$APPS_INSTALL_PATH/$base_file
 	CURRENT_PWD=`pwd`
 	rm -rf $target
@@ -120,7 +147,7 @@ if [ ! -f "$APPS_INSTALL_PATH/bin/ipkg" ] || [ -z "$had_uclibc" ]; then
 			exit 1
 		fi
 		cp -f $apps_local_space/optware.asus $APPS_INSTALL_PATH/lib/ipkg/lists/
-		if [ -n "$third_lib" ]; then
+		if [ -n "$third_lib" ]; then # TODO filename /rom/optware.$third_lib need change
 			cp -f $apps_local_space/optware.$third_lib $APPS_INSTALL_PATH/lib/ipkg/lists/
 		fi
 		cd $CURRENT_PWD
@@ -132,6 +159,57 @@ if [ ! -f "$APPS_INSTALL_PATH/bin/ipkg" ] || [ -z "$had_uclibc" ]; then
 			exit 1
 		fi
 
+		#2016.7.1 sherry new oleg arm{
+		if [ $apps_new_arm -eq 1 ]; then
+			echo "wget --spider $wget_options $dl_path/$BASELEN_TGZ"
+			wget --spider $wget_options $dl_path/$BASELEN_TGZ
+			if [ "$?" != "0" ]; then
+				echo "There is no $BASELEN_TGZ from Internet!"
+				nvram set apps_state_error=6
+				return 1
+			fi
+
+			echo "wget -c $wget_options -O $TEMP_BASELEN_FILE $dl_path/$BASELEN_TGZ"
+			wget -c $wget_options -O $TEMP_BASELEN_FILE $dl_path/$BASELEN_TGZ &
+
+			wget_pid=`pidof wget`
+			if [ -z "$wget_pid" ] || [ $wget_pid -lt 1 ]; then
+				echo "Failed to get $BASELEN_TGZ from Internet!"
+				nvram set apps_state_error=6
+				return 1
+			fi
+			i=0
+			while [ $i -lt $wget_timeout ] && [ ! -f "$TEMP_BASELEN_FILE" ]; do
+				i=$((i+1))
+				sleep 1
+			done
+			
+			if [ -f "$TEMP_BASELEN_FILE" ]; then
+				i=0
+				tar xzf $TEMP_BASELEN_FILE -C $APPS_INSTALL_PATH
+				while [ $? != 0 ]; do
+					i=$((i+1))
+					if [ $i -gt 5 ]; then
+						echo "Failed to get $BASELEN_TGZ from Internet!"
+						nvram set apps_state_error=6
+						return 1
+					fi
+					sleep 1
+					tar xzf $TEMP_BASELEN_FILE -C $APPS_INSTALL_PATH
+				done
+			else
+				echo "Failed to get $BASELEN_TGZ from Internet!"
+				nvram set apps_state_error=6
+				return 1
+			fi		
+
+			base_size_tmp=`cat "$APPS_INSTALL_PATH/$BASELEN_FILE" |grep "base_size:"`
+			base_size=${base_size_tmp:11}
+		
+		fi
+
+		#end sherry add}
+		
 		nvram set apps_download_file=$target
 		echo "wget --spider $wget_options $dl_path/$base_file"
 		wget --spider $wget_options $dl_path/$base_file
@@ -207,6 +285,13 @@ if [ "$APPS_MOUNTED_TYPE" == "vfat" ] || [ "$APPS_MOUNTED_TYPE" == "tfat" ]; the
 		exit 1
 	fi
 fi
+
+#2016.7.6 sherry add for new arm{
+if [ $apps_new_arm -eq 1 ]; then
+	rm -f $TEMP_BASELEN_FILE
+	rm -f $APPS_INSTALL_PATH/$BASELEN_FILE
+fi
+#end sherry add
 
 /usr/sbin/app_base_link.sh
 if [ "$?" != "0" ]; then

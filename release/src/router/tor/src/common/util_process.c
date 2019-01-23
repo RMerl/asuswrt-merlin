@@ -1,6 +1,6 @@
 /* Copyright (c) 2003-2004, Roger Dingledine
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -45,13 +45,13 @@ struct waitpid_callback_t {
   unsigned running;
 };
 
-static INLINE unsigned int
+static inline unsigned int
 process_map_entry_hash_(const waitpid_callback_t *ent)
 {
   return (unsigned) ent->pid;
 }
 
-static INLINE unsigned int
+static inline unsigned int
 process_map_entries_eq_(const waitpid_callback_t *a,
                         const waitpid_callback_t *b)
 {
@@ -61,9 +61,9 @@ process_map_entries_eq_(const waitpid_callback_t *a,
 static HT_HEAD(process_map, waitpid_callback_t) process_map = HT_INITIALIZER();
 
 HT_PROTOTYPE(process_map, waitpid_callback_t, node, process_map_entry_hash_,
-             process_map_entries_eq_);
+             process_map_entries_eq_)
 HT_GENERATE2(process_map, waitpid_callback_t, node, process_map_entry_hash_,
-             process_map_entries_eq_, 0.6, tor_reallocarray_, tor_free_);
+             process_map_entries_eq_, 0.6, tor_reallocarray_, tor_free_)
 
 /**
  * Begin monitoring the child pid <b>pid</b> to see if we get a SIGCHLD for

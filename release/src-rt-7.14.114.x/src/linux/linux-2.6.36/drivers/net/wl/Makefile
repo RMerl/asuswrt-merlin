@@ -66,5 +66,7 @@ wlsubdirs := $(addprefix wl_,$(foreach v,$(VLIST),$(shell echo "$(v)" | tr A-Z a
 #subdir-y += $(wlsubdirs)
 #subdir-m += $(wlsubdirs)
 
+ifneq ($(wlsubdirs),)
 .NOTPARALLEL:
+endif
 include $(src)/wl_generic.mk

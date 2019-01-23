@@ -58,15 +58,19 @@ function deleteRow(r){
 		show_keyword_rulelist();
 }
 
-function addRow(obj){
+function addRow(obj,upper){
 	if(validForm(obj)){
 		if(keyword_firewall_enable != "1")
 			document.form.keyword_enable_x[0].checked = true;
 		
 		var rule_num = document.getElementById('keyword_rulelist_table').rows.length;
 		var item_num = document.getElementById('keyword_rulelist_table').rows[0].cells.length;
-		
-		//Viz check same rule
+
+		if(rule_num >= upper){
+			alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
+			return false;   
+		}
+                //check same rule
 		for(i=0; i<rule_num; i++){
 			for(j=0; j<item_num-1; j++){		//only 1 value column
 				if(obj.value == document.getElementById('keyword_rulelist_table').rows[i].cells[j].innerHTML){
@@ -178,7 +182,7 @@ function done_validating(action){
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table">
 										<thead>
 										<tr>
-											<td colspan="2"><#FirewallConfig_KeywordList_groupitemname#></td>
+											<td colspan="2"><#FirewallConfig_KeywordList_groupitemname#>&nbsp;(<#List_limit#>&nbsp;64)</td>
 										</tr>
 										</thead>
 										<tr>
@@ -190,7 +194,7 @@ function done_validating(action){
 												<input type="text" maxlength="32" class="input_32_table" name="url_keyword_x_0" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off">
 											</td>
 											<td width="20%">	
-												<input class="add_btn" type="button" onClick="addRow(document.form.url_keyword_x_0);" value="">
+												<input class="add_btn" type="button" onClick="addRow(document.form.url_keyword_x_0, 64);" value="">
 											</td>	
 										</tr>
 									</table>     	

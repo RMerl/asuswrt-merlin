@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -64,7 +64,7 @@ void connection_or_init_conn_from_address(or_connection_t *conn,
 int connection_or_client_learned_peer_id(or_connection_t *conn,
                                          const uint8_t *peer_id);
 time_t connection_or_client_used(or_connection_t *conn);
-int connection_or_get_num_circuits(or_connection_t *conn);
+MOCK_DECL(int, connection_or_get_num_circuits, (or_connection_t *conn));
 void or_handshake_state_free(or_handshake_state_t *state);
 void or_handshake_state_record_cell(or_connection_t *conn,
                                     or_handshake_state_t *state,
@@ -97,9 +97,10 @@ void cell_pack(packed_cell_t *dest, const cell_t *src, int wide_circ_ids);
 int var_cell_pack_header(const var_cell_t *cell, char *hdr_out,
                          int wide_circ_ids);
 var_cell_t *var_cell_new(uint16_t payload_len);
+var_cell_t *var_cell_copy(const var_cell_t *src);
 void var_cell_free(var_cell_t *cell);
 
-/** DOCDOC */
+/* DOCDOC */
 #define MIN_LINK_PROTO_FOR_WIDE_CIRC_IDS 4
 
 #endif

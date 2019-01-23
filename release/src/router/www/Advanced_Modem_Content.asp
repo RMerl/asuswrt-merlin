@@ -82,7 +82,7 @@ var passlist = new Array();
 var wans_dualwan = '<% nvram_get("wans_dualwan"); %>';
 var usb_modem_enable = 0;
 <% wan_get_parameter(); %>
-if(dualWAN_support){
+if(dualWAN_support || productid == "RT-AC1200G+"){
 	usb_modem_enable = (usb_index >= 0)? 1:0;
 }
 else{
@@ -140,8 +140,11 @@ function initial(){
 
 	$('#usb_modem_switch').iphoneSwitch(usb_modem_enable,
 		function() {
-			if(dualWAN_support)
+			if(dualWAN_support || productid == "RT-AC1200G+")
 				document.form.wans_dualwan.value = wans_dualwan_array[0]+" usb";
+			else
+				document.form.modem_enable.value = "1";
+
 			document.getElementById("modem_android_tr").style.display="";
 			if(document.form.modem_android.value == "0"){
 				switch_modem_mode(document.form.modem_enable.value);
@@ -152,26 +155,23 @@ function initial(){
 				change_apn_mode();
 			}
 			else{
-				document.getElementById("android_desc").style.display="";					
+				document.getElementById("android_desc").style.display="";
 				hide_usb_settings(1);
-			}				
+			}
 		},
 		function() {
-			if(dualWAN_support){
+			if(dualWAN_support || productid == "RT-AC1200G+"){
 				if(usb_index == 0)
-						document.form.wans_dualwan.value = wans_dualwan_array[1]+" none";
-					else
-						document.form.wans_dualwan.value = wans_dualwan_array[0]+" none";
+					document.form.wans_dualwan.value = wans_dualwan_array[1]+" none";
+				else
+					document.form.wans_dualwan.value = wans_dualwan_array[0]+" none";
 			}
+			else
+				document.form.modem_enable.value = "0";
 			document.getElementById("modem_android_tr").style.display="none";
 			hide_usb_settings();
 		}
 	);
-
-	if(!dualWAN_support){
-		document.getElementById("_APP_Installation").innerHTML = '<table><tbody><tr><td><div class="_APP_Installation"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
-		document.getElementById("_APP_Installation").className = "menu_clicked";
-	}
 
 	if(!wimax_support){
 		for (var i = 0; i < document.form.modem_enable_option.options.length; i++) {

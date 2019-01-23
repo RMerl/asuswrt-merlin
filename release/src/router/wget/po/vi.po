@@ -1,29 +1,31 @@
 # Vietnamese translation for WGet.
-# Copyright © 2013 Free Software Foundation, Inc.
+# Bản dịch tiếng Việt dành cho wget.
+# Copyright © 2016 Free Software Foundation, Inc.
 # This file is distributed under the same license as the wget package.
 # Phan Vinh Thinh <teppi82@gmail.com>, 2005.
 # Clytie Siddall <clytie@riverland.net.au>, 2007-2010.
-# Trần Ngọc Quân <vnwildman@gmail.com>, 2012-2013.
 # Nguyễn Thái Ngọc Duy <pclouds@gmail.com>, 2012.
+# Trần Ngọc Quân <vnwildman@gmail.com>, 2012-2013, 2015, 2016, 2017.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: wget 1.15-pre1\n"
+"Project-Id-Version: wget 1.18.109\n"
 "Report-Msgid-Bugs-To: bug-wget@gnu.org\n"
-"POT-Creation-Date: 2014-10-27 09:59+0100\n"
-"PO-Revision-Date: 2013-11-04 15:08+0700\n"
+"POT-Creation-Date: 2017-10-26 17:36+0200\n"
+"PO-Revision-Date: 2017-01-24 08:49+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
 "Language: vi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
 "Team-Website: <http://translationproject.org/team/vi.html>\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 1.5.5\n"
+"X-Generator: Gtranslator 2.91.7\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
-#: lib/error.c:188
+#: lib/error.c:191
 msgid "Unknown system error"
 msgstr "Lỗi hệ thống không rõ"
 
@@ -31,13 +33,13 @@ msgstr "Lỗi hệ thống không rõ"
 msgid "Address family for hostname not supported"
 msgstr "Họ địa chỉ cho tên máy không được hỗ trợ"
 
-#: lib/gai_strerror.c:58 src/host.c:365
+#: lib/gai_strerror.c:58 src/host.c:373
 msgid "Temporary failure in name resolution"
 msgstr "Thất bại tạm thời khi phân giải tên"
 
 #: lib/gai_strerror.c:59
 msgid "Bad value for ai_flags"
-msgstr "Giá trị sai cho ai_flags"
+msgstr "Giá trị cho ai_flags sai"
 
 #: lib/gai_strerror.c:60
 msgid "Non-recoverable failure in name resolution"
@@ -49,7 +51,7 @@ msgstr "không hỗ trợ “ai_family”"
 
 #: lib/gai_strerror.c:62
 msgid "Memory allocation failure"
-msgstr "Lỗi cấp phát bộ nhớ"
+msgstr "Gặp lỗi khi cấp phát bộ nhớ"
 
 #: lib/gai_strerror.c:63
 msgid "No address associated with hostname"
@@ -97,63 +99,68 @@ msgstr "Bị ngắt bởi một tín hiệu"
 
 #: lib/gai_strerror.c:75
 msgid "Parameter string not correctly encoded"
-msgstr "Chuỗi tham số không được mã hoá một cách đúng đắn"
+msgstr "Chuỗi tham số không được mã hóa một cách đúng đắn"
 
-#: lib/gai_strerror.c:87 src/host.c:367
+#: lib/gai_strerror.c:87 src/host.c:375
 msgid "Unknown error"
 msgstr "Lỗi không rõ nguyên nhân"
 
-#: lib/getopt.c:547 lib/getopt.c:576
+#: lib/getopt.c:575 lib/getopt.c:604
 #, c-format
 msgid "%s: option '%s' is ambiguous; possibilities:"
 msgstr "%s: tùy chọn “%s” chưa rõ ràng; khả năng là:"
 
-#: lib/getopt.c:624 lib/getopt.c:628
+#: lib/getopt.c:619
+#, c-format
+msgid "%s: option '%s' is ambiguous\n"
+msgstr "%s: tùy chọn “%s” chưa rõ ràng\n"
+
+#: lib/getopt.c:654 lib/getopt.c:658
 #, c-format
 msgid "%s: option '--%s' doesn't allow an argument\n"
 msgstr "%s: tùy chọn “--%s” không cho phép đối số\n"
 
-#: lib/getopt.c:637 lib/getopt.c:642
+#: lib/getopt.c:667 lib/getopt.c:672
 #, c-format
 msgid "%s: option '%c%s' doesn't allow an argument\n"
 msgstr "%s: tùy chọn “%c%s” không cho phép đối số\n"
 
-#: lib/getopt.c:685 lib/getopt.c:704
+#: lib/getopt.c:715 lib/getopt.c:734
 #, c-format
 msgid "%s: option '--%s' requires an argument\n"
 msgstr "%s: tùy chọn “--%s” cần một đối số\n"
 
-#: lib/getopt.c:742 lib/getopt.c:745
+#: lib/getopt.c:772 lib/getopt.c:775
 #, c-format
 msgid "%s: unrecognized option '--%s'\n"
-msgstr "%s: không nhận ra tuỳ chọn “--%s”\n"
+msgstr "%s: không nhận ra tùy chọn “--%s”\n"
 
-#: lib/getopt.c:753 lib/getopt.c:756
+#: lib/getopt.c:783 lib/getopt.c:786
 #, c-format
 msgid "%s: unrecognized option '%c%s'\n"
-msgstr "%s: không nhận ra tuỳ chọn “%c%s”\n"
+msgstr "%s: không nhận ra tùy chọn “%c%s”\n"
 
-#: lib/getopt.c:805 lib/getopt.c:808
+#: lib/getopt.c:835 lib/getopt.c:838
 #, c-format
 msgid "%s: invalid option -- '%c'\n"
 msgstr "%s: tùy chọn sai -- “%c”\n"
 
-#: lib/getopt.c:861 lib/getopt.c:878 lib/getopt.c:1088 lib/getopt.c:1106
+#: lib/getopt.c:891 lib/getopt.c:908 lib/getopt.c:1118 lib/getopt.c:1136
 #, c-format
 msgid "%s: option requires an argument -- '%c'\n"
 msgstr "%s: tùy chọn yêu cầu một đối số -- “%c”\n"
 
-#: lib/getopt.c:934 lib/getopt.c:950
+#: lib/getopt.c:964 lib/getopt.c:980
 #, c-format
 msgid "%s: option '-W %s' is ambiguous\n"
 msgstr "%s: tùy chọn “-W %s” chưa rõ ràng\n"
 
-#: lib/getopt.c:974 lib/getopt.c:992
+#: lib/getopt.c:1004 lib/getopt.c:1022
 #, c-format
 msgid "%s: option '-W %s' doesn't allow an argument\n"
 msgstr "%s: tùy chọn “-W %s” không cho phép đối số\n"
 
-#: lib/getopt.c:1013 lib/getopt.c:1031
+#: lib/getopt.c:1043 lib/getopt.c:1061
 #, c-format
 msgid "%s: option '-W %s' requires an argument\n"
 msgstr "%s: tùy chọn “-W %s” cần một đối số\n"
@@ -179,113 +186,104 @@ msgstr "%s: tùy chọn “-W %s” cần một đối số\n"
 #. If you don't know what to put here, please see
 #. <http://en.wikipedia.org/wiki/Quotation_marks_in_other_languages>
 #. and use glyphs suitable for your language.
-#: lib/quotearg.c:312
+#: lib/quotearg.c:354
 msgid "`"
 msgstr "“"
 
-#: lib/quotearg.c:313
+#: lib/quotearg.c:355
 msgid "'"
 msgstr "”"
 
-#: lib/regcomp.c:131
+#: lib/regcomp.c:135
 msgid "Success"
-msgstr ""
+msgstr "Thành công"
 
-#: lib/regcomp.c:134
+#: lib/regcomp.c:138
 msgid "No match"
-msgstr ""
+msgstr "Không tìm thấy"
 
-#: lib/regcomp.c:137
-#, fuzzy
+#: lib/regcomp.c:141
 msgid "Invalid regular expression"
-msgstr "Biểu thức chính qui không hợp lệ %s, %s\n"
+msgstr "Biểu thức chính quy không hợp lệ"
 
-#: lib/regcomp.c:140
+#: lib/regcomp.c:144
 msgid "Invalid collation character"
-msgstr ""
+msgstr "Ký tự đối chiếu không hợp lệ"
 
-#: lib/regcomp.c:143
-#, fuzzy
+#: lib/regcomp.c:147
 msgid "Invalid character class name"
-msgstr "Sai tên máy"
+msgstr "Tên lớp ký tự không hợp lệ"
 
-#: lib/regcomp.c:146
+#: lib/regcomp.c:150
 msgid "Trailing backslash"
-msgstr ""
+msgstr "Có dấu gạch ngược theo sau"
 
-#: lib/regcomp.c:149
-#, fuzzy
+#: lib/regcomp.c:153
 msgid "Invalid back reference"
-msgstr "Sai tên người dùng"
+msgstr "Tham chiếu ngược không hợp lệ"
 
-#: lib/regcomp.c:152
-msgid "Unmatched [ or [^"
-msgstr ""
+#: lib/regcomp.c:156
+msgid "Unmatched [, [^, [:, [., or [="
+msgstr "Chưa khớp cặp ký tự [, [^, [:, [., hay [="
 
-#: lib/regcomp.c:155
+#: lib/regcomp.c:159
 msgid "Unmatched ( or \\("
-msgstr ""
+msgstr "Chưa khớp ký tự “(” hay “\\(”"
 
-#: lib/regcomp.c:158
+#: lib/regcomp.c:162
 msgid "Unmatched \\{"
-msgstr ""
+msgstr "Chưa khớp cặp “\\{”"
 
-#: lib/regcomp.c:161
+#: lib/regcomp.c:165
 msgid "Invalid content of \\{\\}"
-msgstr ""
+msgstr "Nội dung của “\\{\\}” không hợp lệ"
 
-#: lib/regcomp.c:164
-#, fuzzy
+#: lib/regcomp.c:168
 msgid "Invalid range end"
-msgstr "Sai tên người dùng"
+msgstr "Kết thúc phạm vi không hợp lệ"
 
-#: lib/regcomp.c:167
-#, fuzzy
+#: lib/regcomp.c:171
 msgid "Memory exhausted"
-msgstr "hết bộ nhớ"
+msgstr "Hết bộ nhớ"
 
-#: lib/regcomp.c:170
-#, fuzzy
+#: lib/regcomp.c:174
 msgid "Invalid preceding regular expression"
-msgstr "Biểu thức chính qui không hợp lệ %s, %s\n"
+msgstr "Biểu thức chính quy đi trước không hợp lệ"
 
-#: lib/regcomp.c:173
-#, fuzzy
+#: lib/regcomp.c:177
 msgid "Premature end of regular expression"
-msgstr "Biểu thức chính qui không hợp lệ %s, %s\n"
+msgstr "Biểu thức chính quy kết thúc quá sớm"
 
-#: lib/regcomp.c:176
-#, fuzzy
+#: lib/regcomp.c:180
 msgid "Regular expression too big"
-msgstr "Biểu thức chính qui không hợp lệ %s, %s\n"
+msgstr "Biểu thức chính quy quá lớn"
 
-#: lib/regcomp.c:179
+#: lib/regcomp.c:183
 msgid "Unmatched ) or \\)"
-msgstr ""
+msgstr "Chưa khớp “)” hoặc “\\)”"
 
-#: lib/regcomp.c:707
-#, fuzzy
+#: lib/regcomp.c:687
 msgid "No previous regular expression"
-msgstr "Biểu thức chính qui không hợp lệ %s, %s\n"
+msgstr "Không có biểu thức chính quy nằm trước"
 
-#: lib/spawn-pipe.c:135 lib/spawn-pipe.c:138 lib/spawn-pipe.c:259
-#: lib/spawn-pipe.c:262
+#: lib/spawn-pipe.c:137 lib/spawn-pipe.c:140 lib/spawn-pipe.c:261
+#: lib/spawn-pipe.c:264
 #, c-format
 msgid "cannot create pipe"
 msgstr "không thể tạo ống dẫn"
 
-#: lib/spawn-pipe.c:229 lib/spawn-pipe.c:343 lib/wait-process.c:282
+#: lib/spawn-pipe.c:231 lib/spawn-pipe.c:345 lib/wait-process.c:282
 #: lib/wait-process.c:356
 #, c-format
 msgid "%s subprocess failed"
 msgstr "tiến trình con %s gặp lỗi"
 
-#: lib/w32spawn.h:43
+#: lib/w32spawn.h:45
 #, c-format
 msgid "_open_osfhandle failed"
 msgstr "_open_osfhandle gặp lỗi"
 
-#: lib/w32spawn.h:84
+#: lib/w32spawn.h:86
 #, c-format
 msgid "cannot restore fd %d: dup2 failed"
 msgstr "không thể phục hồi bộ mô tả tập tin %d: dup2 gặp lỗi"
@@ -304,215 +302,263 @@ msgstr "tiến trình con %s đã nhận tín hiệu báo lỗi nghiêm trọng 
 msgid "memory exhausted"
 msgstr "hết bộ nhớ"
 
-#: src/connect.c:200
+#: src/connect.c:202
 #, c-format
 msgid "%s: unable to resolve bind address %s; disabling bind.\n"
 msgstr "%s: không tìm thấy được địa chỉ bind “%s”; tắt bỏ bind.\n"
 
-#: src/connect.c:284
+#: src/connect.c:283
 #, c-format
 msgid "Connecting to %s|%s|:%d... "
-msgstr "Kết nối tới %s[%s]:%d... "
+msgstr "Kết nối tới %s[%s]:%d… "
 
-#: src/connect.c:293
+#: src/connect.c:291
 #, c-format
 msgid "Connecting to %s:%d... "
-msgstr "Kết nối tới %s:%d... "
+msgstr "Kết nối tới %s:%d… "
 
-#: src/connect.c:296
+#: src/connect.c:294
 #, c-format
 msgid "Connecting to [%s]:%d... "
-msgstr "Kết nối tới [%s]:%d... "
+msgstr "Kết nối tới [%s]:%d… "
+
+#: src/connect.c:330
+#, c-format
+msgid "setsockopt SO_RCVBUF failed: %s\n"
+msgstr "setsockopt SO_RCVBUF gặp lỗi: %s\n"
 
 #: src/connect.c:358
 msgid "connected.\n"
 msgstr "đã kết nối.\n"
 
-#: src/connect.c:370 src/host.c:783 src/host.c:812
+#: src/connect.c:377 src/host.c:914 src/host.c:952
 #, c-format
 msgid "failed: %s.\n"
 msgstr "gặp lỗi: %s.\n"
 
-#: src/connect.c:394 src/http.c:1990
+#: src/connect.c:401 src/http.c:2096
 #, c-format
 msgid "%s: unable to resolve host address %s\n"
 msgstr "%s: không phân giải được địa chỉ của máy %s\n"
 
-#: src/convert.c:196
+#: src/connect.c:471
 #, c-format
-msgid "Converted %d files in %s seconds.\n"
-msgstr "Đã chuyển đổi %d tập tin trong %s giây.\n"
+msgid "setsockopt SO_REUSEADDR failed: %s\n"
+msgstr "setsockopt SO_REUSEADDR gặp lỗi: %s\n"
 
-#: src/convert.c:224
+#: src/connect.c:692 src/connect.c:739
 #, c-format
-msgid "Converting %s... "
-msgstr "Chuyển đổi %s... "
+msgid "Too many fds open.  Cannot use select on a fd >= %d\n"
+msgstr "Mở quá nhiều fd. Không thể dùng chọn trên một fd >= %d\n"
 
-#: src/convert.c:237
+#: src/convert.c:198
+#, c-format
+msgid "Converted links in %d files in %s seconds.\n"
+msgstr "Đã chuyển đổi các liên kết trong %d tập tin trong %s giây.\n"
+
+#: src/convert.c:227
+#, c-format
+msgid "Converting links in %s... "
+msgstr "Chuyển đổi các liên kết trong %s… "
+
+#: src/convert.c:240
 msgid "nothing to do.\n"
 msgstr "không có gì cần làm.\n"
 
-#: src/convert.c:245 src/convert.c:269
+#: src/convert.c:248 src/convert.c:272
 #, c-format
 msgid "Cannot convert links in %s: %s\n"
 msgstr "Không thể chuyển đổi liên kết trong %s: %s\n"
 
-#: src/convert.c:260
+#: src/convert.c:263
 #, c-format
 msgid "Unable to delete %s: %s\n"
-msgstr "Không xoá được %s: %s\n"
+msgstr "Không xóa được %s: %s\n"
 
-#: src/convert.c:476
+#: src/convert.c:578
 #, c-format
 msgid "Cannot back up %s as %s: %s\n"
 msgstr "Không sao lưu được %s thành %s: %s\n"
 
-#: src/cookies.c:450
+#: src/cookies.c:311
+#, c-format
+msgid "Unable to get cookie for %s\n"
+msgstr "Không thể lấy cookie cho %s\n"
+
+#: src/cookies.c:458
 #, c-format
 msgid "Syntax error in Set-Cookie: %s at position %d.\n"
 msgstr "Lỗi cú pháp trong Set-Cookie: %s tại vị trí %d.\n"
 
-#: src/cookies.c:732
+#: src/cookies.c:772
 #, c-format
 msgid "Cookie coming from %s attempted to set domain to "
 msgstr "Cookie đến từ %s đã cố đặt miền thành"
 
-#: src/cookies.c:735 src/spider.c:92
+#: src/cookies.c:775
 #, c-format
 msgid "%s\n"
 msgstr "%s\n"
 
-#: src/cookies.c:1183 src/cookies.c:1304
+#: src/cookies.c:1226 src/cookies.c:1347
 #, c-format
 msgid "Cannot open cookies file %s: %s\n"
 msgstr "Không mở được tập tin cookie %s: %s\n"
 
-#: src/cookies.c:1341
+#: src/cookies.c:1384
 #, c-format
 msgid "Error writing to %s: %s\n"
 msgstr "Lỗi ghi vào %s: %s\n"
 
-#: src/cookies.c:1344
+#: src/cookies.c:1387
 #, c-format
 msgid "Error closing %s: %s\n"
 msgstr "Lỗi đóng %s: %s\n"
 
-#: src/ftp-ls.c:1049
+#: src/ftp-ls.c:1051
 msgid "Unsupported listing type, trying Unix listing parser.\n"
 msgstr "Dạng danh sách không hỗ trợ, đang thử phân tích dạng danh sách Unix.\n"
 
-#: src/ftp-ls.c:1100 src/ftp-ls.c:1102
+#: src/ftp-ls.c:1102 src/ftp-ls.c:1104
 #, c-format
 msgid "Index of /%s on %s:%d"
 msgstr "Chỉ mục của /%s trên %s:%d"
 
-#: src/ftp-ls.c:1127
+#: src/ftp-ls.c:1129
 #, c-format
 msgid "time unknown       "
 msgstr "thời gian không xác định "
 
-#: src/ftp-ls.c:1131
+#: src/ftp-ls.c:1133
 #, c-format
 msgid "File        "
 msgstr "Tập tin        "
 
-#: src/ftp-ls.c:1134
+#: src/ftp-ls.c:1136
 #, c-format
 msgid "Directory   "
 msgstr "Thư mục   "
 
-#: src/ftp-ls.c:1137
+#: src/ftp-ls.c:1139
 #, c-format
 msgid "Link        "
 msgstr "Liên kết        "
 
-#: src/ftp-ls.c:1140
+#: src/ftp-ls.c:1142
 #, c-format
 msgid "Not sure    "
 msgstr "Không chắc    "
 
-#: src/ftp-ls.c:1163
+#: src/ftp-ls.c:1165
 #, c-format
 msgid " (%s bytes)"
 msgstr " (%s byte)"
 
-#: src/ftp.c:222
+#: src/ftp.c:226
 #, c-format
 msgid "Length: %s"
 msgstr "Kích thước: %s"
 
-#: src/ftp.c:228 src/http.c:2810
+#: src/ftp.c:232 src/http.c:4003
 #, c-format
 msgid ", %s (%s) remaining"
 msgstr ", còn lại %s (%s)"
 
-#: src/ftp.c:232 src/http.c:2814
+#: src/ftp.c:236 src/http.c:4007
 #, c-format
 msgid ", %s remaining"
 msgstr ", còn %s"
 
-#: src/ftp.c:235
+#: src/ftp.c:239
 msgid " (unauthoritative)\n"
 msgstr " (không đủ thẩm quyền)\n"
 
-#: src/ftp.c:313
+#: src/ftp.c:404
+msgid "Could not initialize SSL. It will be disabled."
+msgstr "Không thể khởi tạo SSL. Nó sẽ bị tắt đi."
+
+#: src/ftp.c:486
 #, c-format
 msgid "Logging in as %s ... "
-msgstr "Đăng nhập với tên %s... "
+msgstr "Đăng nhập với tên %s… "
 
-#: src/ftp.c:332 src/ftp.c:378 src/ftp.c:445 src/ftp.c:510 src/ftp.c:740
-#: src/ftp.c:793 src/ftp.c:840 src/ftp.c:897 src/ftp.c:958 src/ftp.c:1049
-#: src/ftp.c:1099
+#: src/ftp.c:505 src/ftp.c:591 src/ftp.c:658 src/ftp.c:723 src/ftp.c:957
+#: src/ftp.c:1010 src/ftp.c:1057 src/ftp.c:1120 src/ftp.c:1181 src/ftp.c:1279
+#: src/ftp.c:1329
 msgid "Error in server response, closing control connection.\n"
 msgstr "Lỗi trong câu trả lời của máy phục vụ, đóng liên kết điều khiển.\n"
 
-#: src/ftp.c:339
+#: src/ftp.c:512
 msgid "Error in server greeting.\n"
 msgstr "Lỗi trong lời chào của máy phục vụ.\n"
 
-#: src/ftp.c:346 src/ftp.c:518 src/ftp.c:748 src/ftp.c:848 src/ftp.c:907
-#: src/ftp.c:968 src/ftp.c:1059 src/ftp.c:1109
+#: src/ftp.c:519 src/ftp.c:731 src/ftp.c:965 src/ftp.c:1065 src/ftp.c:1130
+#: src/ftp.c:1191 src/ftp.c:1289 src/ftp.c:1339
 msgid "Write failed, closing control connection.\n"
 msgstr "Gặp lỗi khi ghi, đóng liên kết điều khiển.\n"
 
-#: src/ftp.c:352
+#: src/ftp.c:525
 msgid "The server refuses login.\n"
 msgstr "Máy phục vụ từ chối đăng nhập.\n"
 
-#: src/ftp.c:358
+#: src/ftp.c:531
 msgid "Login incorrect.\n"
 msgstr "Đăng nhập không đúng.\n"
 
-#: src/ftp.c:364
+#: src/ftp.c:537
 msgid "Logged in!\n"
 msgstr "Đã đăng nhập!\n"
 
-#: src/ftp.c:386
+#: src/ftp.c:557
+msgid "Server did not accept the 'PBSZ 0' command.\n"
+msgstr "Máy chủ không chấp nhận lệnh “PBSZ 0”.\n"
+
+#: src/ftp.c:567
+#, c-format
+msgid "Server did not accept the 'PROT %c' command.\n"
+msgstr "Máy chủ không chấp nhận lệnh “PROT %c”.\n"
+
+#: src/ftp.c:599
 msgid "Server error, can't determine system type.\n"
 msgstr "Lỗi máy phục vụ, không xác định được dạng hệ thống.\n"
 
-#: src/ftp.c:395 src/ftp.c:884 src/ftp.c:941 src/ftp.c:984
+#: src/ftp.c:608 src/ftp.c:1100 src/ftp.c:1164 src/ftp.c:1207
 msgid "done.    "
 msgstr "xong.    "
 
-#: src/ftp.c:498 src/ftp.c:765 src/ftp.c:810 src/ftp.c:1079 src/ftp.c:1128
+#: src/ftp.c:711 src/ftp.c:983 src/ftp.c:1027 src/ftp.c:1309 src/ftp.c:1358
 msgid "done.\n"
 msgstr "xong.\n"
 
-#: src/ftp.c:525
+#: src/ftp.c:738
 #, c-format
 msgid "Unknown type `%c', closing control connection.\n"
 msgstr "Không hiểu kiểu “%c”, đóng kết nối điều khiển.\n"
 
-#: src/ftp.c:537
+#: src/ftp.c:750
 msgid "done.  "
 msgstr "xong.  "
 
-#: src/ftp.c:543
+#: src/ftp.c:756
 msgid "==> CWD not needed.\n"
 msgstr "==> không cần CWD.\n"
 
-#: src/ftp.c:754
+#: src/ftp.c:940
+msgid "Logically impossible section reached in getftp()"
+msgstr "Theo lô-gíc không thể với đến các phần trong getftp()"
+
+#: src/ftp.c:941
+#, c-format
+msgid ""
+"cwd_count: %d\n"
+"cwd_start: %d\n"
+"cwd_end: %d\n"
+msgstr ""
+"cwd_count: %d\n"
+"cwd_start: %d\n"
+"cwd_end: %d\n"
+
+#: src/ftp.c:971
 #, c-format
 msgid ""
 "No such directory %s.\n"
@@ -521,37 +567,37 @@ msgstr ""
 "Không có thư mục %s.\n"
 "\n"
 
-#: src/ftp.c:775
+#: src/ftp.c:992
 msgid "==> CWD not required.\n"
 msgstr "==> không yêu cầu CWD.\n"
 
-#: src/ftp.c:818
+#: src/ftp.c:1035
 msgid "File has already been retrieved.\n"
 msgstr "Tập tin đã được lấy rồi.\n"
 
-#: src/ftp.c:854
+#: src/ftp.c:1071
 msgid "Cannot initiate PASV transfer.\n"
 msgstr "Không khởi đầu được sự truyền tải PASV.\n"
 
-#: src/ftp.c:858
+#: src/ftp.c:1075
 msgid "Cannot parse PASV response.\n"
 msgstr "Không phân tích được câu trả lời PASV.\n"
 
-#: src/ftp.c:875
+#: src/ftp.c:1092
 #, c-format
 msgid "couldn't connect to %s port %d: %s\n"
 msgstr "không kết nối được tới %s cổng %d: %s\n"
 
-#: src/ftp.c:923
+#: src/ftp.c:1146
 #, c-format
 msgid "Bind error (%s).\n"
 msgstr "Lỗi buộc “bind” (%s).\n"
 
-#: src/ftp.c:929
+#: src/ftp.c:1152
 msgid "Invalid PORT.\n"
 msgstr "Lệnh PORT không đúng.\n"
 
-#: src/ftp.c:975
+#: src/ftp.c:1198
 msgid ""
 "\n"
 "REST failed, starting from scratch.\n"
@@ -559,17 +605,17 @@ msgstr ""
 "\n"
 "REST không thành công; làm lại từ đầu.\n"
 
-#: src/ftp.c:1015
+#: src/ftp.c:1241
 #, c-format
 msgid "File %s exists.\n"
 msgstr "Tập tin %s đã sẵn có.\n"
 
-#: src/ftp.c:1021
+#: src/ftp.c:1247
 #, c-format
 msgid "No such file %s.\n"
 msgstr "Không có tập tin %s.\n"
 
-#: src/ftp.c:1067
+#: src/ftp.c:1297
 #, c-format
 msgid ""
 "No such file %s.\n"
@@ -578,7 +624,7 @@ msgstr ""
 "Không có tập tin %s.\n"
 "\n"
 
-#: src/ftp.c:1117
+#: src/ftp.c:1347
 #, c-format
 msgid ""
 "No such file or directory %s.\n"
@@ -587,40 +633,40 @@ msgstr ""
 "Không có tập tin hay thư mục tên %s.\n"
 "\n"
 
-#: src/ftp.c:1276 src/http.c:2940
+#: src/ftp.c:1506 src/http.c:2551
 #, c-format
 msgid "%s has sprung into existence.\n"
 msgstr "%s xuất hiện bất thình lình.\n"
 
-#: src/ftp.c:1328
+#: src/ftp.c:1595
 #, c-format
 msgid "%s: %s, closing control connection.\n"
 msgstr "%s: %s, đóng kết nối điều khiển.\n"
 
-#: src/ftp.c:1340
+#: src/ftp.c:1607
 #, c-format
 msgid "%s (%s) - Data connection: %s; "
 msgstr "%s (%s) - Kết nối dữ liệu: %s; "
 
-#: src/ftp.c:1356
+#: src/ftp.c:1622
 msgid "Control connection closed.\n"
 msgstr "Đã đóng kết nối điều khiển.\n"
 
-#: src/ftp.c:1374
+#: src/ftp.c:1640
 msgid "Data transfer aborted.\n"
 msgstr "Truyền tải dữ liệu bị bãi bỏ.\n"
 
-#: src/ftp.c:1580
+#: src/ftp.c:1864
 #, c-format
 msgid "File %s already there; not retrieving.\n"
 msgstr "Tập tin %s đã có ở đó nên không nhận nữa.\n"
 
-#: src/ftp.c:1663 src/http.c:3107
+#: src/ftp.c:1949 src/http.c:4273
 #, c-format
 msgid "(try:%2d)"
 msgstr "(lần thử: %2d)"
 
-#: src/ftp.c:1745 src/http.c:3493
+#: src/ftp.c:2037 src/http.c:4689
 #, c-format
 msgid ""
 "%s (%s) - written to stdout %s[%s]\n"
@@ -629,7 +675,7 @@ msgstr ""
 "%s (%s) — ghi vào đầu ra tiêu chuẩn %s[%s]\n"
 "\n"
 
-#: src/ftp.c:1746 src/http.c:3494
+#: src/ftp.c:2038 src/http.c:4690
 #, c-format
 msgid ""
 "%s (%s) - %s saved [%s]\n"
@@ -638,34 +684,34 @@ msgstr ""
 "%s (%s) — đã lưu %s [%s]\n"
 "\n"
 
-#: src/ftp.c:1804 src/main.c:1670 src/recur.c:433 src/recur.c:650
-#: src/retr.c:1102
+#: src/ftp.c:2098 src/main.c:2117 src/metalink.c:1137 src/recur.c:513
+#: src/recur.c:748 src/retr.c:1294
 #, c-format
 msgid "Removing %s.\n"
-msgstr "Đang xoá %s.\n"
+msgstr "Đang xóa %s.\n"
 
-#: src/ftp.c:1850
+#: src/ftp.c:2152
 #, c-format
 msgid "Using %s as listing tmp file.\n"
 msgstr "Dùng %s làm tập tin danh sách tạm.\n"
 
-#: src/ftp.c:1867
+#: src/ftp.c:2169
 #, c-format
 msgid "Removed %s.\n"
 msgstr "Đã xóa %s.\n"
 
-#: src/ftp.c:1904
+#: src/ftp.c:2209
 #, c-format
 msgid "Recursion depth %d exceeded max. depth %d.\n"
 msgstr "Độ sâu đệ quy %d vượt quá ngưỡng tối đa %d.\n"
 
-#: src/ftp.c:1974
+#: src/ftp.c:2279
 #, c-format
 msgid "Remote file no newer than local file %s -- not retrieving.\n"
 msgstr ""
 "Tập tin trên máy chủ không mới hơn tập tin cục bộ %s -- không tải xuống.\n"
 
-#: src/ftp.c:1981
+#: src/ftp.c:2287
 #, c-format
 msgid ""
 "Remote file is newer than local file %s -- retrieving.\n"
@@ -674,7 +720,7 @@ msgstr ""
 "Tập tin %s trên máy chủ mới hơn tập tin cục bộ -- đang tải xuống.\n"
 "\n"
 
-#: src/ftp.c:1988
+#: src/ftp.c:2294
 #, c-format
 msgid ""
 "The sizes do not match (local %s) -- retrieving.\n"
@@ -683,11 +729,11 @@ msgstr ""
 "Kích thước không bằng nhau (nội bộ %s) -- đang tải xuống.\n"
 "\n"
 
-#: src/ftp.c:2006
+#: src/ftp.c:2312
 msgid "Invalid name of the symlink, skipping.\n"
 msgstr "Tên của liên kết mềm không hợp lệ, bỏ qua.\n"
 
-#: src/ftp.c:2023
+#: src/ftp.c:2329
 #, c-format
 msgid ""
 "Already have correct symlink %s -> %s\n"
@@ -696,196 +742,238 @@ msgstr ""
 "Đã có liên kết mềm đúng %s -> %s\n"
 "\n"
 
-#: src/ftp.c:2032
+#: src/ftp.c:2338
 #, c-format
 msgid "Creating symlink %s -> %s\n"
 msgstr "Tạo liên kết mềm %s -> %s\n"
 
-#: src/ftp.c:2042
+#: src/ftp.c:2348
 #, c-format
 msgid "Symlinks not supported, skipping symlink %s.\n"
 msgstr "Không hỗ trợ liên kết mềm, bỏ qua liên kết mềm %s.\n"
 
-#: src/ftp.c:2054
+#: src/ftp.c:2363
 #, c-format
 msgid "Skipping directory %s.\n"
 msgstr "Bỏ qua thư mục %s.\n"
 
-#: src/ftp.c:2063
+#: src/ftp.c:2376
 #, c-format
 msgid "%s: unknown/unsupported file type.\n"
 msgstr "%s: Kiểu tập tin không biết hoặc không được hỗ trợ.\n"
 
-#: src/ftp.c:2103
+#: src/ftp.c:2400
+#, c-format
+msgid "Failed to set permissions for %s.\n"
+msgstr "Gặp lỗi khi phân quyền cho %s.\n"
+
+#: src/ftp.c:2421
 #, c-format
 msgid "%s: corrupt time-stamp.\n"
 msgstr "%s: dấu vết thời gian bị hỏng.\n"
 
-#: src/ftp.c:2127
+#: src/ftp.c:2445
 #, c-format
 msgid "Will not retrieve dirs since depth is %d (max %d).\n"
 msgstr "Sẽ không nhận thư mục vì độ sâu là %d (tối đa %d).\n"
 
-#: src/ftp.c:2177
+#: src/ftp.c:2496
 #, c-format
 msgid "Not descending to %s as it is excluded/not-included.\n"
 msgstr "Không vào %s vì nó bị loại ra hoặc không được thêm vào.\n"
 
-#: src/ftp.c:2266 src/ftp.c:2280
+#: src/ftp.c:2586 src/ftp.c:2600
 #, c-format
 msgid "Rejecting %s.\n"
 msgstr "Từ chối %s.\n"
 
-#: src/ftp.c:2303
+#: src/ftp.c:2623
 #, c-format
 msgid "Error matching %s against %s: %s\n"
 msgstr "Lỗi khớp %s với %s: %s\n"
 
-#: src/ftp.c:2359
+#: src/ftp.c:2679
 #, c-format
 msgid "No matches on pattern %s.\n"
 msgstr "Không tìm thấy cái nào khớp với mẫu %s.\n"
 
-#: src/ftp.c:2430
+#: src/ftp.c:2751
 #, c-format
 msgid "Wrote HTML-ized index to %s [%s].\n"
 msgstr "Đã viết chỉ mục ở dạng HTML vào %s [%s].\n"
 
-#: src/ftp.c:2435
+#: src/ftp.c:2756
 #, c-format
 msgid "Wrote HTML-ized index to %s.\n"
 msgstr "Đã viết chỉ mục ở dạng HTML vào %s.\n"
 
-#: src/gnutls.c:110
+#: src/gnutls.c:115
 #, c-format
 msgid "ERROR: Cannot open directory %s.\n"
 msgstr "LỖI: Không thể mở thư mục %s.\n"
 
-#: src/gnutls.c:141
+#: src/gnutls.c:165
 #, c-format
 msgid "ERROR: Failed to open cert %s: (%d).\n"
 msgstr "LỖI: Gặp lỗi khi mở giấy chứng nhận %s: (%d).\n"
 
-#: src/gnutls.c:173
-msgid "ERROR: GnuTLS requires the key and the cert to be of the same type.\n"
-msgstr "LỖI: GnuTLS yêu cầu khoá và chứng nhận phải cùng một kiểu.\n"
+#: src/gnutls.c:170
+#, c-format
+msgid "Loaded CA certificate '%s'\n"
+msgstr "Chứng nhận CA đã tải “%s”\n"
 
-#: src/gnutls.c:589 src/openssl.c:599
+#: src/gnutls.c:180
+#, c-format
+msgid "ERROR: Failed to load CRL file '%s': (%d)\n"
+msgstr "LỖI: Gặp lỗi khi tải tập tin CRL “%s”: (%d).\n"
+
+#: src/gnutls.c:184
+#, c-format
+msgid "Loaded CRL file '%s'\n"
+msgstr "Tập tin CRL đã tải “%s”\n"
+
+#: src/gnutls.c:208
+msgid "ERROR: GnuTLS requires the key and the cert to be of the same type.\n"
+msgstr "LỖI: GnuTLS yêu cầu khóa và chứng nhận phải cùng một kiểu.\n"
+
+#: src/gnutls.c:602
+#, fuzzy, c-format
+msgid "GnuTLS: unimplemented 'secure-protocol' option value %u\n"
+msgstr "GnuTLS: giá trị tùy chọn “secure-protocol” chưa được thực hiện %d\n"
+
+#: src/gnutls.c:604 src/gnutls.c:641 src/host.c:159 src/openssl.c:255
+msgid "Please report this issue to bug-wget@gnu.org\n"
+msgstr "Hãy gửi thông báo lỗi nảy sinh này cho <bug-wget@gnu.org>.\n"
+
+#: src/gnutls.c:640
+#, c-format
+msgid "GnuTLS: unimplemented 'secure-protocol' option value %d\n"
+msgstr "GnuTLS: giá trị tùy chọn “secure-protocol” chưa được thực hiện %d\n"
+
+#: src/gnutls.c:769 src/openssl.c:763
 msgid "ERROR"
 msgstr "LỖI"
 
-#: src/gnutls.c:589 src/openssl.c:599
+#: src/gnutls.c:769 src/openssl.c:763
 msgid "WARNING"
 msgstr "CẢNH BÁO"
 
-#: src/gnutls.c:595 src/openssl.c:608
+#: src/gnutls.c:780 src/openssl.c:776
 #, c-format
 msgid "%s: No certificate presented by %s.\n"
 msgstr "%s: Không có chứng thực từ %s.\n"
 
-#: src/gnutls.c:601
+#: src/gnutls.c:786
 #, c-format
 msgid "%s: The certificate of %s is not trusted.\n"
 msgstr "%s: Chứng nhận của %s không tin cậy.\n"
 
-#: src/gnutls.c:602
+#: src/gnutls.c:787
 #, c-format
 msgid "%s: The certificate of %s hasn't got a known issuer.\n"
 msgstr "%s: Chứng nhận của %s không có nhà cấp đã biết.\n"
 
-#: src/gnutls.c:603
+#: src/gnutls.c:788
 #, c-format
 msgid "%s: The certificate of %s has been revoked.\n"
 msgstr "%s: Chứng nhận của %s đã bị thu hồi.\n"
 
-#: src/gnutls.c:604
+#: src/gnutls.c:789
 #, c-format
 msgid "%s: The certificate signer of %s was not a CA.\n"
 msgstr "%s: Người ký chứng nhận của %s không phải là một CA.\n"
 
-#: src/gnutls.c:605
+#: src/gnutls.c:790
 #, c-format
 msgid "%s: The certificate of %s was signed using an insecure algorithm.\n"
 msgstr "%s: Chứng nhận của %s đã được ký bằng thuật toán không an toàn.\n"
 
-#: src/gnutls.c:606
+#: src/gnutls.c:791
 #, c-format
 msgid "%s: The certificate of %s is not yet activated.\n"
 msgstr "%s: Chứng nhận của %s vẫn chưa được kích hoạt.\n"
 
-#: src/gnutls.c:607
+#: src/gnutls.c:792
 #, c-format
 msgid "%s: The certificate of %s has expired.\n"
 msgstr "%s: Chứng nhận của %s đã bị hết hạn.\n"
 
-#: src/gnutls.c:618
+#: src/gnutls.c:804
 #, c-format
 msgid "Error initializing X509 certificate: %s\n"
 msgstr "Lỗi khởi tạo chứng nhận X509: %s\n"
 
-#: src/gnutls.c:627
+#: src/gnutls.c:813
 msgid "No certificate found\n"
 msgstr "Không tìm thấy chứng nhận nào\n"
 
-#: src/gnutls.c:634
+#: src/gnutls.c:820
 #, c-format
 msgid "Error parsing certificate: %s\n"
 msgstr "Lỗi phân tích cú pháp của chứng nhận: %s\n"
 
-#: src/gnutls.c:641
+#: src/gnutls.c:827
 msgid "The certificate has not yet been activated\n"
 msgstr "Chứng nhận vẫn chưa được kích hoạt\n"
 
-#: src/gnutls.c:646
+#: src/gnutls.c:832
 msgid "The certificate has expired\n"
 msgstr "Chứng nhận đã hết hạn dùng\n"
 
-#: src/gnutls.c:652
+#: src/gnutls.c:839
 #, c-format
 msgid "The certificate's owner does not match hostname %s\n"
 msgstr "Chủ chứng nhận không tương ứng với tên máy %s\n"
 
-#: src/gnutls.c:661
+#: src/gnutls.c:848 src/openssl.c:972
+msgid "The public key does not match pinned public key!\n"
+msgstr "Khóa công không khớp với khóa công được đóng cứng!\n"
+
+#: src/gnutls.c:857
 msgid "Certificate must be X.509\n"
 msgstr "Giấy chứng nhận phải có định dạng X.509\n"
 
-#: src/host.c:361
+#: src/host.c:158
+msgid "Error in handling the address list.\n"
+msgstr "Có lỗi trong xử lý danh sách địa chỉ.\n"
+
+#: src/host.c:369
 msgid "Unknown host"
 msgstr "Máy lạ"
 
-#: src/host.c:740
+#: src/host.c:849
 #, c-format
 msgid "Resolving %s... "
-msgstr "Đang phân giải %s... "
+msgstr "Đang phân giải %s… "
 
-#: src/host.c:792
+#: src/host.c:925
 msgid "failed: No IPv4/IPv6 addresses for host.\n"
 msgstr "gặp lỗi: Không có địa chỉ IPv4/IPv6 cho máy.\n"
 
-#: src/host.c:815
+#: src/host.c:955
 msgid "failed: timed out.\n"
 msgstr "gặp lỗi: quá lâu không đáp ứng.\n"
 
-#: src/html-url.c:303
+#: src/html-url.c:307
 #, c-format
 msgid "%s: Cannot resolve incomplete link %s.\n"
 msgstr "%s: Không thể phân giải liên kết không hoàn chỉnh %s.\n"
 
-#: src/html-url.c:836
+#: src/html-url.c:931
 #, c-format
 msgid "%s: Invalid URL %s: %s\n"
 msgstr "%s: URL không hợp lệ %s: %s\n"
 
-#: src/http.c:371
+#: src/http.c:376
 #, c-format
 msgid "Failed writing HTTP request: %s.\n"
 msgstr "Lỗi ghi yêu cầu HTTP: %s.\n"
 
-#: src/http.c:767
+#: src/http.c:781
 msgid "No headers, assuming HTTP/0.9"
 msgstr "Không có phần đầu, coi là HTTP/0.9"
 
-#: src/http.c:1495
+#: src/http.c:1611
 #, c-format
 msgid ""
 "File %s already there; not retrieving.\n"
@@ -894,80 +982,150 @@ msgstr ""
 "Tập tin %s đã sẵn có nên không nhận nữa.\n"
 "\n"
 
-#: src/http.c:1747
-msgid "Disabling SSL due to encountered errors.\n"
-msgstr "Tắt SSL vì gặp lỗi.\n"
+#: src/http.c:1821
+msgid "gmtime failed. This is probably a bug.\n"
+msgstr "gmtime gặp lỗi. Đây gần như chắc chắn là một lỗi.\n"
 
-#: src/http.c:1869
+#: src/http.c:1882
+msgid ""
+"Cannot convert timestamp to http format. Falling back to time 0 as last "
+"modification time.\n"
+msgstr ""
+"Không thể chuyển đổi dấu vết thời gian sang định dạng http. Quay lại dùng 0 "
+"làm thời điểm sửa lần cuối.\n"
+
+#: src/http.c:1986
 #, c-format
 msgid "BODY data file %s missing: %s\n"
 msgstr "Thiếu tập tin dữ liệu BODY %s: %s\n"
 
-#: src/http.c:1971
+#: src/http.c:2078
 #, c-format
 msgid "Reusing existing connection to [%s]:%d.\n"
 msgstr "Dùng lại kết nối đã có tới [%s]:%d.\n"
 
-#: src/http.c:1976
+#: src/http.c:2083
 #, c-format
 msgid "Reusing existing connection to %s:%d.\n"
 msgstr "Dùng lại kết nối đã có tới %s:%d.\n"
 
-#: src/http.c:2048
+#: src/http.c:2149
 #, c-format
 msgid "Failed reading proxy response: %s\n"
-msgstr "Lỗi đọc trả lời từ uỷ nhiệm: %s\n"
+msgstr "Gặp lỗi khi đọc trả lời từ ủy nhiệm: %s\n"
 
-#: src/http.c:2068 src/http.c:2235 src/http.c:3287
+#: src/http.c:2168 src/http.c:3407 src/http.c:4483
 #, c-format
 msgid "%s ERROR %d: %s.\n"
 msgstr "%s LỖI %d: %s.\n"
 
-#: src/http.c:2070 src/http.c:2237 src/http.c:2572
+#: src/http.c:2170 src/http.c:3409 src/http.c:3597
 msgid "Malformed status line"
-msgstr "Dòng trạng thái dạng sai"
+msgstr "Dòng trạng thái sai dạng"
 
-#: src/http.c:2081
+#: src/http.c:2181
 #, c-format
 msgid "Proxy tunneling failed: %s"
-msgstr "Lỗi tạo đường hầm uỷ nhiệm: %s"
+msgstr "Gặp lỗi khi tạo đường hầm ủy nhiệm: %s"
 
-#: src/http.c:2175
+#: src/http.c:2417
+msgid "Unknown authentication scheme.\n"
+msgstr "Không hiểu lược đồ xác thực.\n"
+
+#: src/http.c:2435
+#, c-format
+msgid "Authentication selected: %s\n"
+msgstr "Xác thực đã chọn: %s\n"
+
+#: src/http.c:2566
+#, c-format
+msgid "Saving to: %s\n"
+msgstr "Đang ghi vào: %s\n"
+
+#: src/http.c:2785
+#, c-format
+msgid ""
+"When downloading signature:\n"
+"%s: %s.\n"
+msgstr ""
+"Khi đang tải chữ ký:\n"
+"%s: %s.\n"
+
+#: src/http.c:2821
+msgid "Unable to read signature content from temporary file. Skipping.\n"
+msgstr "Không thể đọc nội dung chữ ký từ tập tin tạm. Nên bỏ qua.\n"
+
+#: src/http.c:2844
+msgid "Could not create temporary file. Skipping signature download.\n"
+msgstr "Không thể tạo tập tin tạm. Đang bỏ qua việc tải chữ ký về.\n"
+
+#: src/http.c:2878 src/http.c:2960
+#, c-format
+msgid "Invalid pri value. Assuming %d.\n"
+msgstr "Giá trị pri không hợp lệ. Nên coi là %d.\n"
+
+#: src/http.c:3064
+msgid ""
+"Could not find acceptable digest for Metalink resources.\n"
+"Ignoring them.\n"
+msgstr ""
+"Không thể tìm thấy tóm lược được chấp thuận cho nguồn Metalink.\n"
+"Nên bỏ qua chúng.\n"
+
+#: src/http.c:3201
+msgid "Disabling SSL due to encountered errors.\n"
+msgstr "Tắt SSL vì gặp lỗi.\n"
+
+#: src/http.c:3343
 #, c-format
 msgid "%s request sent, awaiting response... "
-msgstr "Đã gửi yêu cầu %s, đang đợi câu trả lời... "
+msgstr "Đã gửi yêu cầu %s, đang đợi câu trả lời… "
 
-#: src/http.c:2210
+#: src/http.c:3383
 msgid "No data received.\n"
 msgstr "Không nhận được dữ liệu.\n"
 
-#: src/http.c:2217
+#: src/http.c:3389
 #, c-format
 msgid "Read error (%s) in headers.\n"
 msgstr "Lỗi đọc (%s) trong phần đầu.\n"
 
-#: src/http.c:2389
-msgid "Unknown authentication scheme.\n"
-msgstr "Kiểu xác thực lạ.\n"
-
-#: src/http.c:2574
+#: src/http.c:3599
 msgid "(no description)"
 msgstr "(không mô tả)"
 
-#: src/http.c:2650
+#: src/http.c:3768
 #, c-format
 msgid "Location: %s%s\n"
-msgstr "Vị trí: %s%s\n"
+msgstr "Địa điểm: %s%s\n"
 
-#: src/http.c:2651 src/http.c:2820
+#: src/http.c:3769 src/http.c:4013
 msgid "unspecified"
 msgstr "không xác định"
 
-#: src/http.c:2652
+#: src/http.c:3770
 msgid " [following]"
 msgstr " [theo]"
 
-#: src/http.c:2765
+#: src/http.c:3853
+#, c-format
+msgid ""
+"File %s not modified on server. Omitting download.\n"
+"\n"
+msgstr "Tập tin %s chưa bị sửa trên máy chủ. Nên bỏ qua không tải về.\n"
+
+#: src/http.c:3924
+#, c-format
+msgid ""
+"Server ignored If-Modified-Since header for file %s.\n"
+"You might want to add --no-if-modified-since option.\n"
+"\n"
+msgstr ""
+"Máy chủ bỏ qua phần đầu If-Modified-Since header cho tập tin %s.\n"
+"Bạn có lẽ nên thêm tùy chọn --no-if-modified-since.\n"
+"\n"
+
+#: src/http.c:3954
 msgid ""
 "\n"
 "    The file is already fully retrieved; nothing to do.\n"
@@ -977,75 +1135,82 @@ msgstr ""
 "    Đã nhận tập tin đầy đủ; không cần làm gì nữa.\n"
 "\n"
 
-#: src/http.c:2800
+#: src/http.c:3993
 msgid "Length: "
 msgstr "Kích thước: "
 
-#: src/http.c:2820
+#: src/http.c:4013
 msgid "ignored"
 msgstr "bỏ qua"
 
-#: src/http.c:2961
-#, c-format
-msgid "Saving to: %s\n"
-msgstr "Đang ghi vào: %s\n"
-
-#: src/http.c:3031
+#: src/http.c:4181
 msgid "Warning: wildcards not supported in HTTP.\n"
 msgstr "Cảnh báo: không hỗ trợ ký tự đại diện trong HTTP.\n"
 
-#: src/http.c:3096
+#: src/http.c:4263
 msgid "Spider mode enabled. Check if remote file exists.\n"
 msgstr "Đã bật chế độ nhện. Hãy kiểm tra tập tin trên máy chủ tồn tại không.\n"
 
-#: src/http.c:3185
+#: src/http.c:4353
 #, c-format
 msgid "Cannot write to %s (%s).\n"
 msgstr "Không thể ghi vào %s (%s).\n"
 
-#: src/http.c:3196
+#: src/http.c:4364
 msgid "Required attribute missing from Header received.\n"
 msgstr "Thiếu thuộc tính cần thiết từ Phần đầu nhận được.\n"
 
-#: src/http.c:3201
+#: src/http.c:4369
 msgid "Username/Password Authentication Failed.\n"
-msgstr "Phương thức xác thực Tài_khoản/Mật_khẩu bị lỗi.\n"
+msgstr "Phương thức xác thực Tài-khoản/Mật_khẩu bị lỗi.\n"
 
-#: src/http.c:3207
+#: src/http.c:4375
 msgid "Cannot write to WARC file.\n"
 msgstr "Không thể ghi vào tập tin WARC.\n"
 
-#: src/http.c:3213
+#: src/http.c:4381
 msgid "Cannot write to temporary WARC file.\n"
 msgstr "Không thể ghi vào tập tin tạm thời WARC.\n"
 
-#: src/http.c:3218
+#: src/http.c:4386
 msgid "Unable to establish SSL connection.\n"
 msgstr "Không thiết lập được kết nối SSL.\n"
 
-#: src/http.c:3224
+#: src/http.c:4392
 #, c-format
 msgid "Cannot unlink %s (%s).\n"
 msgstr "Không thể hủy liên kết %s (%s).\n"
 
-#: src/http.c:3234
+#: src/http.c:4402
 #, c-format
 msgid "ERROR: Redirection (%d) without location.\n"
 msgstr "LỖI: Chuyển hướng (%d) mà không có vị trí.\n"
 
-#: src/http.c:3282
+#: src/http.c:4424
+msgid ""
+"Could not find Metalink data in HTTP response. Downloading file using HTTP "
+"GET.\n"
+msgstr ""
+"Không thể tìm thấy dữ liệu Metalink trong phần HTTP trả về. Đang tải các tập "
+"tin dùng HTTP GET.\n"
+
+#: src/http.c:4433
+msgid "Metalink headers found. Switching to Metalink mode.\n"
+msgstr "Tìm thấy phần đầu Metalink. Nên chuyển sang chế độ Metalink.\n"
+
+#: src/http.c:4473
 msgid "Remote file does not exist -- broken link!!!\n"
 msgstr "Tập tin trên máy chủ không tồn tại -- liên kết hỏng!!!\n"
 
-#: src/http.c:3304
+#: src/http.c:4500
 msgid "Last-modified header missing -- time-stamps turned off.\n"
 msgstr "Thiếu phần đầu “Last-modified” -- time-stamp bị tắt.\n"
 
-#: src/http.c:3312
+#: src/http.c:4508
 msgid "Last-modified header invalid -- time-stamp ignored.\n"
 msgstr "Sai phần đầu “Last-modified” -- time-stamp bị bỏ qua.\n"
 
-#: src/http.c:3342
+#: src/http.c:4538
 #, c-format
 msgid ""
 "Server file no newer than local file %s -- not retrieving.\n"
@@ -1054,16 +1219,16 @@ msgstr ""
 "Tập tin %s trên máy chủ không mới hơn tập tin cục bộ -- không nhận.\n"
 "\n"
 
-#: src/http.c:3350
+#: src/http.c:4546
 #, c-format
 msgid "The sizes do not match (local %s) -- retrieving.\n"
 msgstr "Kích thước tập tin không tương ứng (cục bộ %s) - đang nhận.\n"
 
-#: src/http.c:3359
+#: src/http.c:4555
 msgid "Remote file is newer, retrieving.\n"
 msgstr "Tập tin trên máy chủ mới hơn, đang nhận.\n"
 
-#: src/http.c:3377
+#: src/http.c:4573
 msgid ""
 "Remote file exists and could contain links to other resources -- "
 "retrieving.\n"
@@ -1073,7 +1238,7 @@ msgstr ""
 "đang lấy về.\n"
 "\n"
 
-#: src/http.c:3383
+#: src/http.c:4579
 msgid ""
 "Remote file exists but does not contain any link -- not retrieving.\n"
 "\n"
@@ -1081,7 +1246,7 @@ msgstr ""
 "Tập tin trên máy chủ tồn tại nhưng không chứa liên kết --  không lấy về.\n"
 "\n"
 
-#: src/http.c:3392
+#: src/http.c:4588
 msgid ""
 "Remote file exists and could contain further links,\n"
 "but recursion is disabled -- not retrieving.\n"
@@ -1091,7 +1256,7 @@ msgstr ""
 "nhưng đệ quy bị tắt -- không lấy về.\n"
 "\n"
 
-#: src/http.c:3398
+#: src/http.c:4594
 msgid ""
 "Remote file exists.\n"
 "\n"
@@ -1099,12 +1264,12 @@ msgstr ""
 "Tập tin trên máy chủ đã sẵn có.\n"
 "\n"
 
-#: src/http.c:3407
+#: src/http.c:4603
 #, c-format
 msgid "%s URL: %s %2d %s\n"
 msgstr "%s URL: %s %2d %s\n"
 
-#: src/http.c:3457
+#: src/http.c:4653
 #, c-format
 msgid ""
 "%s (%s) - written to stdout %s[%s/%s]\n"
@@ -1113,7 +1278,7 @@ msgstr ""
 "%s (%s) — ghi vào đầu ra chuẩn %s[%s/%s]\n"
 "\n"
 
-#: src/http.c:3458
+#: src/http.c:4654
 #, c-format
 msgid ""
 "%s (%s) - %s saved [%s/%s]\n"
@@ -1122,57 +1287,58 @@ msgstr ""
 "%s (%s) — đã lưu %s [%s/%s]\n"
 "\n"
 
-#: src/http.c:3519
+#: src/http.c:4715
 #, c-format
 msgid "%s (%s) - Connection closed at byte %s. "
 msgstr "%s (%s) - Đóng kết nối tại byte %s. "
 
-#: src/http.c:3542
+#: src/http.c:4738
 #, c-format
 msgid "%s (%s) - Read error at byte %s (%s)."
 msgstr "%s (%s) - Lỗi đọc tại byte %s (%s)."
 
-#: src/http.c:3551
+#: src/http.c:4747
 #, c-format
 msgid "%s (%s) - Read error at byte %s/%s (%s). "
 msgstr "%s (%s) - Lỗi đọc tại byte %s/%s (%s). "
 
-#: src/http.c:3786
+#: src/http.c:4985
 #, c-format
 msgid "Unsupported quality of protection '%s'.\n"
 msgstr "Không hỗ trợ chất lượng bảo vệ “%s”.\n"
 
-#: src/http.c:3792
+#: src/http.c:4990
 #, c-format
 msgid "Unsupported algorithm '%s'.\n"
 msgstr "Không hỗ trợ thuật toán “%s”.\n"
 
-#: src/init.c:500
-#, c-format
-msgid "%s: WGETRC points to %s, which doesn't exist.\n"
+#: src/init.c:582
+#, fuzzy, c-format
+msgid ""
+"%s: WGETRC points to %s, which couldn't be accessed because of error: %s.\n"
 msgstr "%s: WGETRC chỉ tới %s, mà nó lại không tồn tại.\n"
 
-#: src/init.c:605 src/netrc.c:246
+#: src/init.c:683 src/netrc.c:246
 #, c-format
 msgid "%s: Cannot read %s (%s).\n"
 msgstr "%s: Không đọc được %s (%s).\n"
 
-#: src/init.c:622
+#: src/init.c:700
 #, c-format
 msgid "%s: Error in %s at line %d.\n"
 msgstr "%s: Lỗi trong %s trên dòng %d.\n"
 
-#: src/init.c:628
+#: src/init.c:706
 #, c-format
 msgid "%s: Syntax error in %s at line %d.\n"
 msgstr "%s: Lỗi cú pháp trong %s trên dòng %d.\n"
 
-#: src/init.c:633
+#: src/init.c:711
 #, c-format
 msgid "%s: Unknown command %s in %s at line %d.\n"
 msgstr "%s: Lệnh không biết %s trong %s trên dòng %d.\n"
 
-#: src/init.c:670
+#: src/init.c:750
 #, c-format
 msgid ""
 "Parsing system wgetrc file (env SYSTEM_WGETRC) failed.  Please check\n"
@@ -1183,7 +1349,7 @@ msgstr ""
 "Xin hãy kiểm tra “%s”,\n"
 "hay chỉ định một tập tin khác sử dụng tùy chọn --config.\n"
 
-#: src/init.c:685
+#: src/init.c:765
 #, c-format
 msgid ""
 "Parsing system wgetrc file failed.  Please check\n"
@@ -1194,133 +1360,140 @@ msgstr ""
 "“%s”,\n"
 "hay chỉ định một tập tin khác sử dụng tùy chọn --config.\n"
 
-#: src/init.c:701
+#: src/init.c:781
 #, c-format
 msgid "%s: Warning: Both system and user wgetrc point to %s.\n"
 msgstr "%s: Cảnh báo: Cả wgetrc của hệ thống và người dùng đều chỉ tới %s.\n"
 
-#: src/init.c:891
+#: src/init.c:976
 #, c-format
 msgid "%s: Invalid --execute command %s\n"
 msgstr "%s: Câu lệnh “--execute” không đúng %s\n"
 
-#: src/init.c:936
+#: src/init.c:1037
 #, c-format
 msgid "%s: %s: Invalid boolean %s; use `on' or `off'.\n"
 msgstr "%s: %s: Giá trị %s không đúng; dùng “on” (bật) hay “off” (tắt)\n"
 
-#: src/init.c:953
+#: src/init.c:1070
+#, c-format
+msgid "%s: %s: Invalid %s; use `on', `off' or `quiet'.\n"
+msgstr ""
+"%s: %s: %s không hợp lệ; dùng “on” (bật), “off” (tắt) hay “quiet” (im "
+"lặng).\n"
+
+#: src/init.c:1088
 #, c-format
 msgid "%s: %s: Invalid number %s.\n"
 msgstr "%s: %s: Số %s sai.\n"
 
-#: src/init.c:1175 src/init.c:1194
+#: src/init.c:1169
+#, c-format
+msgid "%s: %s must only be used once\n"
+msgstr "%s: %s chỉ được dùng một lần\n"
+
+#: src/init.c:1324 src/init.c:1343
 #, c-format
 msgid "%s: %s: Invalid byte value %s\n"
 msgstr "%s: %s: Giá trị byte %s sai.\n"
 
-#: src/init.c:1219
+#: src/init.c:1368
 #, c-format
 msgid "%s: %s: Invalid time period %s\n"
 msgstr "%s: %s: Khoảng thời gian %s sai.\n"
 
-#: src/init.c:1273 src/init.c:1384 src/init.c:1440 src/init.c:1504
-#: src/init.c:1523 src/init.c:1548
+#: src/init.c:1430 src/main.c:1859
+#, c-format
+msgid ""
+"use-askpass requires a string or either environment variable WGET_ASKPASS or "
+"SSH_ASKPASS to be set.\n"
+msgstr ""
+"use-askpass yêu cầu một chuỗi hoặc là một biến môi trường WGET_ASKPASS hoặc "
+"là SSH_ASKPASS được đặt.\n"
+
+#: src/init.c:1448 src/init.c:1470 src/init.c:1578 src/init.c:1634
+#: src/init.c:1700 src/init.c:1719 src/init.c:1744
 #, c-format
 msgid "%s: %s: Invalid value %s.\n"
 msgstr "%s: %s: Giá trị %s sai.\n"
 
-#: src/init.c:1310
+#: src/init.c:1504
 #, c-format
 msgid "%s: %s: Invalid header %s.\n"
 msgstr "%s: %s: Phần đầu %s sai.\n"
 
-#: src/init.c:1331
+#: src/init.c:1525
 #, c-format
 msgid "%s: %s: Invalid WARC header %s.\n"
 msgstr "%s: %s: Phần đầu WARC không hợp lệ %s.\n"
 
-#: src/init.c:1397
+#: src/init.c:1591
 #, c-format
 msgid "%s: %s: Invalid progress type %s.\n"
 msgstr "%s: %s: Sai kiểu tiến độ %s.\n"
 
-#: src/init.c:1477
+#: src/init.c:1673
 #, c-format
 msgid ""
 "%s: %s: Invalid restriction %s,\n"
-"    use [unix|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
+"    use [unix|vms|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
 msgstr ""
 "%s: %s: Sai giới hạn %s,\n"
-"    dùng: [unix|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
+"    dùng: [unix|vms|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
 
-#: src/iri.c:101
+#: src/iri.c:114
 #, c-format
 msgid "Encoding %s isn't valid\n"
 msgstr "Bảng mã %s không hợp lệ\n"
 
-#: src/iri.c:126
+#: src/iri.c:140 src/url.c:1572
 #, c-format
 msgid "Conversion from %s to %s isn't supported\n"
 msgstr "Không hỗ trợ chức năng chuyển đổi từ %s sang %s\n"
 
-#: src/iri.c:149 src/iri.c:190
-#, c-format
-msgid "converted '%s' (%s) -> '%s' (%s)\n"
-msgstr ""
-
-#: src/iri.c:158
+#: src/iri.c:180 src/url.c:1600
 msgid "Incomplete or invalid multibyte sequence encountered\n"
 msgstr "Gặp chuỗi byte không hoàn chỉnh hoặc không hợp lệ\n"
 
-#: src/iri.c:183
+#: src/iri.c:199 src/url.c:1617
 #, c-format
 msgid "Unhandled errno %d\n"
 msgstr "Mã lỗi %d không được xử lý\n"
 
-#: src/iri.c:204
+#: src/iri.c:236
 msgid "locale_to_utf8: locale is unset\n"
 msgstr "locale_to_utf8: chưa đặt miền địa phương\n"
 
-#: src/iri.c:238
+#: src/iri.c:282 src/iri.c:297
 #, c-format
 msgid "idn_encode failed (%d): %s\n"
 msgstr "idn_encode bị lỗi (%d): %s\n"
 
-#: src/iri.c:257
+#: src/iri.c:289
 #, c-format
-msgid "idn_decode failed (%d): %s\n"
-msgstr "idn_decode bị lỗi (%d): %s\n"
+msgid "Failed to convert to lower: %d: %s\n"
+msgstr "Gặp lỗi khi chuyển sang chữ thường: %d: %s\n"
 
-#: src/log.c:867
-#, c-format
-msgid ""
-"\n"
-"%s received, redirecting output to %s.\n"
-msgstr ""
-"\n"
-"đã nhận %s, chuyển hướng kết xuất tới %s.\n"
-
-#: src/log.c:877
+#: src/log.c:921 src/log.c:940
 #, c-format
 msgid ""
 "\n"
-"%s received.\n"
+"Redirecting output to %s.\n"
 msgstr ""
 "\n"
-"Đã nhận %s.\n"
+"Chuyển hướng kết xuất tới %s.\n"
 
-#: src/log.c:878
+#: src/log.c:933
 #, c-format
 msgid "%s: %s; disabling logging.\n"
 msgstr "%s: %s; không ghi nhật ký.\n"
 
-#: src/main.c:414
+#: src/main.c:557
 #, c-format
 msgid "Usage: %s [OPTION]... [URL]...\n"
-msgstr "Cách dùng: %s [TÙY CHỌN]... [URL]...\n"
+msgstr "Cách dùng: %s [TÙY CHỌN]… [URL]…\n"
 
-#: src/main.c:426
+#: src/main.c:569
 msgid ""
 "Mandatory arguments to long options are mandatory for short options too.\n"
 "\n"
@@ -1328,1052 +1501,1186 @@ msgstr ""
 "Tùy chọn dài bắt buộc phải có tham số đi kèm thì tùy chọn ngắn cũng vậy.\n"
 "\n"
 
-#: src/main.c:428
+#: src/main.c:571
 msgid "Startup:\n"
 msgstr "Khởi động:\n"
 
-#: src/main.c:430
-#, fuzzy
+#: src/main.c:573
 msgid ""
-"  -V,  --version                   display the version of Wget and exit.\n"
-msgstr "  -V,  --version           hiển thị phiên bản của Wget rồi thoát.\n"
+"  -V,  --version                   display the version of Wget and exit\n"
+msgstr ""
+"  -V,  --version                   hiển thị phiên bản của Wget rồi thoát.\n"
 
-#: src/main.c:432
-#, fuzzy
-msgid "  -h,  --help                      print this help.\n"
-msgstr "  -h,  --help              hiển thị trợ giúp này.\n"
+#: src/main.c:575
+msgid "  -h,  --help                      print this help\n"
+msgstr "  -h,  --help                      hiển thị trợ giúp này.\n"
 
-#: src/main.c:434
-#, fuzzy
-msgid "  -b,  --background                go to background after startup.\n"
-msgstr "  -b,  --background        chuyển chạy nền sau sau khi khởi động.\n"
+#: src/main.c:577
+msgid "  -b,  --background                go to background after startup\n"
+msgstr ""
+"  -b,  --background                chuyển chạy nền sau sau khi khởi động.\n"
 
-#: src/main.c:436
-#, fuzzy
-msgid "  -e,  --execute=COMMAND           execute a `.wgetrc'-style command.\n"
-msgstr "  -e,  --execute=LỆNH      thực hiện một câu lệnh kiểu-“.wgetrc”.\n"
+#: src/main.c:579
+msgid "  -e,  --execute=COMMAND           execute a `.wgetrc'-style command\n"
+msgstr ""
+"  -e,  --execute=LỆNH              thực hiện một câu lệnh kiểu-“.wgetrc”.\n"
 
-#: src/main.c:440
+#: src/main.c:583
 msgid "Logging and input file:\n"
 msgstr "Tập tin nhật ký và đầu vào:\n"
 
-#: src/main.c:442
-#, fuzzy
-msgid "  -o,  --output-file=FILE          log messages to FILE.\n"
-msgstr "  -o,  --output-file=TẬP-TIN ghi nhật ký vào TẬP-TIN.\n"
+#: src/main.c:585
+msgid "  -o,  --output-file=FILE          log messages to FILE\n"
+msgstr "  -o,  --output-file=TẬP-TIN       ghi nhật ký vào TẬP-TIN.\n"
 
-#: src/main.c:444
-#, fuzzy
-msgid "  -a,  --append-output=FILE        append messages to FILE.\n"
-msgstr "  -a,  --append-output=TẬP-TIN nối thêm các lời nhắn vào TẬP-TIN.\n"
+#: src/main.c:587
+msgid "  -a,  --append-output=FILE        append messages to FILE\n"
+msgstr ""
+"  -a,  --append-output=TẬP-TIN     nối thêm các lời nhắn vào TẬP-TIN.\n"
 
-#: src/main.c:447
-#, fuzzy
+#: src/main.c:590
 msgid ""
-"  -d,  --debug                     print lots of debugging information.\n"
+"  -d,  --debug                     print lots of debugging information\n"
 msgstr ""
-"  -d,  --debug               hiển thị nhiều thông tin để tìm và sửa lỗi.\n"
+"  -d,  --debug                     hiển thị nhiều thông tin để tìm và sửa "
+"lỗi.\n"
 
-#: src/main.c:451
-#, fuzzy
-msgid "       --wdebug                    print Watt-32 debug output.\n"
+#: src/main.c:594
+msgid "       --wdebug                    print Watt-32 debug output\n"
 msgstr ""
-"       --wdebug              hiển thị kết xuất để gỡ lỗi bằng Watt-32.\n"
+"       --wdebug                    hiển thị kết xuất để gỡ lỗi bằng "
+"Watt-32.\n"
 
-#: src/main.c:454
-#, fuzzy
-msgid "  -q,  --quiet                     quiet (no output).\n"
-msgstr "  -q,  --quiet               im lặng (không kết xuất ra màn hình).\n"
+#: src/main.c:597
+msgid "  -q,  --quiet                     quiet (no output)\n"
+msgstr ""
+"  -q,  --quiet                     im lặng (không kết xuất ra màn hình).\n"
 
-#: src/main.c:456
-#, fuzzy
-msgid "  -v,  --verbose                   be verbose (this is the default).\n"
-msgstr "  -v,  --verbose             hiển thị chi tiết (đây là mặc định).\n"
+#: src/main.c:599
+msgid "  -v,  --verbose                   be verbose (this is the default)\n"
+msgstr ""
+"  -v,  --verbose                   hiển thị chi tiết (đây là mặc định).\n"
 
-#: src/main.c:458
-#, fuzzy
+#: src/main.c:601
 msgid ""
 "  -nv, --no-verbose                turn off verboseness, without being "
-"quiet.\n"
-msgstr "  -nv, --no-verbose          không chi tiết, cũng không im lặng.\n"
-
-#: src/main.c:460
-#, fuzzy
-msgid ""
-"       --report-speed=TYPE         Output bandwidth as TYPE.  TYPE can be "
-"bits.\n"
+"quiet\n"
 msgstr ""
-"       --report-speed=KIỂU   Hiển thị băng thông (bandwidth) cho KIỂU.\n"
-"                             KIỂU có thể là các bít.\n"
+"  -nv, --no-verbose                không chi tiết, cũng không im lặng.\n"
 
-#: src/main.c:462
-#, fuzzy
+#: src/main.c:603
+msgid ""
+"       --report-speed=TYPE         output bandwidth as TYPE.  TYPE can be "
+"bits\n"
+msgstr ""
+"       --report-speed=KIỂU         Hiển thị băng thông (bandwidth) cho "
+"KIỂU.\n"
+"                                     KIỂU có thể là các bít.\n"
+
+#: src/main.c:605
 msgid ""
 "  -i,  --input-file=FILE           download URLs found in local or external "
-"FILE.\n"
+"FILE\n"
 msgstr ""
-"  -i,  --input-file=TẬP_TIN  tải các URL trong TẬP_TIN cục bộ hay bên "
+"  -i,  --input-file=TẬP-TIN        tải các URL trong TẬP-TIN cục bộ hay bên "
 "ngoài.\n"
 
-#: src/main.c:464
-#, fuzzy
-msgid "  -F,  --force-html                treat input file as HTML.\n"
-msgstr "  -F,  --force-html          coi tập tin nhập là HTML.\n"
+#: src/main.c:608
+msgid ""
+"       --input-metalink=FILE       download files covered in local Metalink "
+"FILE\n"
+msgstr ""
+"       --input-metalink=TẬP-TIN    tải các URL tìm thấy trong TẬP-TIN "
+"Metalink cục bộ.\n"
 
-#: src/main.c:466
-#, fuzzy
+#: src/main.c:611
+msgid "  -F,  --force-html                treat input file as HTML\n"
+msgstr "  -F,  --force-html                coi tập tin đầu vào là HTML.\n"
+
+#: src/main.c:613
 msgid ""
 "  -B,  --base=URL                  resolves HTML input-file links (-i -F)\n"
-"                                   relative to URL.\n"
+"                                     relative to URL\n"
 msgstr ""
-"  -B,  --base=URL            chuyển đổi liên kết tập tin nhập HTML (-i -F)\n"
-"                             tương đối so với URL này.\n"
+"  -B,  --base=URL                  chuyển đổi liên kết tập tin nhập HTML (-i "
+"-F)\n"
+"                                     tương đối so với URL này\n"
 
-#: src/main.c:469
-#, fuzzy
-msgid "       --config=FILE               Specify config file to use.\n"
-msgstr "       --config=TẬP-TIN      Chỉ định tập tin cấu hình sẽ sử dụng.\n"
+#: src/main.c:616
+msgid "       --config=FILE               specify config file to use\n"
+msgstr ""
+"       --config=TẬP-TIN            chỉ định tập tin cấu hình sẽ sử dụng\n"
 
-#: src/main.c:471
-#, fuzzy
-msgid "       --no-config                 Do not read any config file.\n"
-msgstr "       --no-cookies            không dùng cookies.\n"
+#: src/main.c:618
+msgid "       --no-config                 do not read any config file\n"
+msgstr ""
+"       --no-config                 đừng đọc bất kỳ tập tin cấu hình nào\n"
 
-#: src/main.c:475
+#: src/main.c:620
+msgid ""
+"       --rejected-log=FILE         log reasons for URL rejection to FILE\n"
+msgstr ""
+"       --rejected-log=TẬP-TIN      ghi nhật ký các lý do URL bị từ chối vào "
+"TẬP-TIN\n"
+
+#: src/main.c:624
 msgid "Download:\n"
 msgstr "Tải về:\n"
 
-#: src/main.c:477
-#, fuzzy
+#: src/main.c:626
 msgid ""
 "  -t,  --tries=NUMBER              set number of retries to NUMBER (0 "
-"unlimits).\n"
+"unlimits)\n"
 msgstr ""
-"  -t,  --tries=SỐ                đặt số lần thử lại (0 = không giới hạn).\n"
+"  -t,  --tries=SỐ                  đặt số lần thử lại (0 = không giới hạn).\n"
 
-#: src/main.c:479
-#, fuzzy
+#: src/main.c:628
 msgid ""
-"       --retry-connrefused         retry even if connection is refused.\n"
-msgstr "       --retry-connrefused       cố tải dù kết nối bị từ chối.\n"
+"       --retry-connrefused         retry even if connection is refused\n"
+msgstr "       --retry-connrefused         cố tải dù kết nối bị từ chối.\n"
 
-#: src/main.c:481
-#, fuzzy
-msgid "  -O,  --output-document=FILE      write documents to FILE.\n"
-msgstr "  -O,  --output-document=TẬP-TIN ghi dữ liệu vào TẬP-TIN này.\n"
+#: src/main.c:630
+msgid "  -O,  --output-document=FILE      write documents to FILE\n"
+msgstr "  -O,  --output-document=TẬP-TIN   ghi dữ liệu vào TẬP-TIN này.\n"
 
-#: src/main.c:483
-#, fuzzy
+#: src/main.c:632
 msgid ""
 "  -nc, --no-clobber                skip downloads that would download to\n"
-"                                   existing files (overwriting them).\n"
+"                                     existing files (overwriting them)\n"
 msgstr ""
-"  -nc, --no-clobber              bỏ qua những công việc sẽ tải tới tập tin\n"
-"                                 đã có (ghi đè lên chúng).\n"
+"  -nc, --no-clobber                bỏ qua những công việc sẽ tải tới tập "
+"tin\n"
+"                                     đã có (ghi đè lên chúng).\n"
 
-#: src/main.c:486
+#: src/main.c:635
 #, fuzzy
+msgid ""
+"       --no-netrc                  don't try to obtain credentials from ."
+"netrc\n"
+msgstr ""
+"       --no-config                 đừng đọc bất kỳ tập tin cấu hình nào\n"
+
+#: src/main.c:637
 msgid ""
 "  -c,  --continue                  resume getting a partially-downloaded "
-"file.\n"
+"file\n"
 msgstr ""
-"  -c,  --continue                tiếp tục tải phần còn tại của một tập tin.\n"
+"  -c,  --continue                  tiếp tục tải phần còn tại của một tập "
+"tin.\n"
 
-#: src/main.c:488
+#: src/main.c:639
 msgid ""
 "       --start-pos=OFFSET          start downloading from zero-based "
-"position OFFSET.\n"
+"position OFFSET\n"
 msgstr ""
+"       --start-pos=OFFSET          bắt đầu tải về từ vị trí bù này tính từ "
+"mốc không\n"
 
-#: src/main.c:490
-#, fuzzy
-msgid "       --progress=TYPE             select progress gauge type.\n"
-msgstr "       --progress=KIỂU           chọn dạng mô tả tiến độ.\n"
+#: src/main.c:641
+msgid "       --progress=TYPE             select progress gauge type\n"
+msgstr "       --progress=KIỂU             chọn dạng mô tả tiến độ.\n"
 
-#: src/main.c:492
-#, fuzzy
+#: src/main.c:643
 msgid ""
 "       --show-progress             display the progress bar in any verbosity "
-"mode.\n"
-msgstr "       --progress=KIỂU           chọn dạng mô tả tiến độ.\n"
+"mode\n"
+msgstr "       --progress=KIỂU             chọn dạng mô tả tiến độ.\n"
 
-#: src/main.c:494
-#, fuzzy
+#: src/main.c:645
 msgid ""
 "  -N,  --timestamping              don't re-retrieve files unless newer "
 "than\n"
-"                                   local.\n"
+"                                     local\n"
 msgstr ""
-"  -N,  --timestamping            không nhận lại tập tin trừ khi mới hơn\n"
-"                                 nội bộ.\n"
+"  -N,  --timestamping              không nhận lại tập tin trừ khi mới hơn\n"
+"                                     nội bộ.\n"
 
-#: src/main.c:497
-#, fuzzy
+#: src/main.c:648
 msgid ""
-"  --no-use-server-timestamps       don't set the local file's timestamp by\n"
-"                                   the one on the server.\n"
+"       --no-if-modified-since      don't use conditional if-modified-since "
+"get\n"
+"                                     requests in timestamping mode\n"
 msgstr ""
-"  --no-use-server-timestamps     đừng đặt nhãn thời gian của tập tin cục bộ\n"
-"                                 tùy theo nhãn thời gian trên máy phục vụ.\n"
+"       --no-if-modified-since      đừng dùng điều kiện if-modified-since\n"
+"                                     trong chế độ dấu vết thời gian\n"
 
-#: src/main.c:500
-#, fuzzy
-msgid "  -S,  --server-response           print server response.\n"
-msgstr "  -S,  --server-response         in ra đáp ứng của máy chủ.\n"
-
-#: src/main.c:502
-#, fuzzy
-msgid "       --spider                    don't download anything.\n"
-msgstr "       --spider                  không tải xuống gì hết.\n"
-
-#: src/main.c:504
-#, fuzzy
-msgid "  -T,  --timeout=SECONDS           set all timeout values to SECONDS.\n"
-msgstr ""
-"  -T,  --timeout=GIÂY            đặt mọi giá trị thời hạn là số GIÂY.\n"
-
-#: src/main.c:506
-#, fuzzy
+#: src/main.c:651
 msgid ""
-"       --dns-timeout=SECS          set the DNS lookup timeout to SECS.\n"
+"       --no-use-server-timestamps  don't set the local file's timestamp by\n"
+"                                     the one on the server\n"
 msgstr ""
-"       --dns-timeout=GIÂY        đặt thời gian chờ tìm DNS thành GIÂY.\n"
+"       --no-use-server-timestamps  đừng đặt dấu vết thời gian của tập tin "
+"cục bộ\n"
+"                                     tùy theo nhãn thời gian trên máy phục "
+"vụ.\n"
 
-#: src/main.c:508
-#, fuzzy
-msgid "       --connect-timeout=SECS      set the connect timeout to SECS.\n"
+#: src/main.c:654
+msgid "  -S,  --server-response           print server response\n"
+msgstr "  -S,  --server-response           in ra đáp ứng của máy chủ.\n"
+
+#: src/main.c:656
+msgid "       --spider                    don't download anything\n"
+msgstr "       --spider                    không tải xuống gì hết.\n"
+
+#: src/main.c:658
+msgid "  -T,  --timeout=SECONDS           set all timeout values to SECONDS\n"
 msgstr ""
-"       --connect-timeout=GIÂY    đặt thời gian chờ kết nối thành GIÂY.\n"
+"  -T,  --timeout=GIÂY              đặt mọi giá trị thời hạn là số GIÂY.\n"
 
-#: src/main.c:510
-#, fuzzy
-msgid "       --read-timeout=SECS         set the read timeout to SECS.\n"
-msgstr "       --read-timeout=GIÂY       đặt thời gian chờ đọc thành GIÂY.\n"
-
-#: src/main.c:512
-#, fuzzy
-msgid "  -w,  --wait=SECONDS              wait SECONDS between retrievals.\n"
+#: src/main.c:661
+msgid ""
+"       --dns-servers=ADDRESSES     list of DNS servers to query (comma "
+"separated)\n"
 msgstr ""
-"  -w,  --wait=GIÂY               chờ số GIÂY này giữa các lần phục hồi.\n"
+"       --dns-servers=ĐỊA_CHỈ       liệt kê các máy phục vụ DNS muốn truy vấn "
+"(ngăn cách bằng dấu phẩy)\n"
 
-#: src/main.c:514
-#, fuzzy
+#: src/main.c:663
+msgid ""
+"       --bind-dns-address=ADDRESS  bind DNS resolver to ADDRESS (hostname or "
+"IP) on local host\n"
+msgstr ""
+"       --bind-dns-address=ĐỊA-CHỈ  buộc vào ĐỊA_CHỈ này (tên máy hoặc IP)\n"
+"                                     trên máy nội bộ.\n"
+
+#: src/main.c:666
+msgid "       --dns-timeout=SECS          set the DNS lookup timeout to SECS\n"
+msgstr ""
+"       --dns-timeout=GIÂY          đặt thời gian chờ tìm DNS thành GIÂY.\n"
+
+#: src/main.c:668
+msgid "       --connect-timeout=SECS      set the connect timeout to SECS\n"
+msgstr ""
+"       --connect-timeout=GIÂY      đặt thời gian chờ kết nối thành GIÂY.\n"
+
+#: src/main.c:670
+msgid "       --read-timeout=SECS         set the read timeout to SECS\n"
+msgstr "       --read-timeout=GIÂY         đặt thời gian chờ đọc thành GIÂY.\n"
+
+#: src/main.c:672
+msgid "  -w,  --wait=SECONDS              wait SECONDS between retrievals\n"
+msgstr ""
+"  -w,  --wait=GIÂY                 chờ số GIÂY này giữa các lần phục hồi.\n"
+
+#: src/main.c:674
 msgid ""
 "       --waitretry=SECONDS         wait 1..SECONDS between retries of a "
-"retrieval.\n"
-msgstr "       --waitretry=GIÂY          chờ 1..GIÂY giữa các lần thử lấy.\n"
+"retrieval\n"
+msgstr "       --waitretry=GIÂY            chờ 1..GIÂY giữa các lần thử lấy.\n"
 
-#: src/main.c:516
-#, fuzzy
+#: src/main.c:676
 msgid ""
 "       --random-wait               wait from 0.5*WAIT...1.5*WAIT secs "
-"between retrievals.\n"
+"between retrievals\n"
 msgstr ""
-"       --random-wait             chờ 0.5*WAIT...1.5*WAIT giây giữa hai lần "
+"       --random-wait               chờ 0.5*WAIT…1.5*WAIT giây giữa hai lần "
 "lấy.\n"
 
-#: src/main.c:518
-#, fuzzy
-msgid "       --no-proxy                  explicitly turn off proxy.\n"
-msgstr "       --no-proxy                không dùng máy chủ ủy nhiệm.\n"
+#: src/main.c:678
+msgid "       --no-proxy                  explicitly turn off proxy\n"
+msgstr "       --no-proxy                  không dùng máy chủ ủy nhiệm.\n"
 
-#: src/main.c:520
-#, fuzzy
-msgid "  -Q,  --quota=NUMBER              set retrieval quota to NUMBER.\n"
+#: src/main.c:680
+msgid "  -Q,  --quota=NUMBER              set retrieval quota to NUMBER\n"
 msgstr ""
-"  -Q,  --quota=SỐ                đặt giới hạn số phục hồi thành SỐ này.\n"
+"  -Q,  --quota=SỐ                  đặt giới hạn số phục hồi thành SỐ này.\n"
 
-#: src/main.c:522
-#, fuzzy
+#: src/main.c:682
 msgid ""
 "       --bind-address=ADDRESS      bind to ADDRESS (hostname or IP) on local "
-"host.\n"
+"host\n"
 msgstr ""
-"       --bind-address=ĐỊA_CHỈ    buộc vào ĐỊA_CHỈ này (tên máy hoặc IP)\n"
-"                                 trên máy nội bộ.\n"
+"       --bind-address=ĐỊA-CHỈ      buộc vào ĐỊA_CHỈ này (tên máy hoặc IP)\n"
+"                                     trên máy nội bộ.\n"
 
-#: src/main.c:524
-#, fuzzy
-msgid "       --limit-rate=RATE           limit download rate to RATE.\n"
+#: src/main.c:684
+msgid "       --limit-rate=RATE           limit download rate to RATE\n"
 msgstr ""
-"       --limit-rate=TỐC_ĐỘ       giới hạn tốc độ tải xuống thành TỐC_ĐỘ "
+"       --limit-rate=TỐC-ĐỘ         giới hạn tốc độ tải xuống thành TỐC_ĐỘ "
 "này.\n"
 
-#: src/main.c:526
-#, fuzzy
-msgid "       --no-dns-cache              disable caching DNS lookups.\n"
-msgstr "       --no-dns-cache            không dùng bộ nhớ đệm tìm kiếm DNS.\n"
+#: src/main.c:686
+msgid "       --no-dns-cache              disable caching DNS lookups\n"
+msgstr ""
+"       --no-dns-cache              không dùng bộ nhớ đệm tìm kiếm DNS.\n"
 
-#: src/main.c:528
-#, fuzzy
+#: src/main.c:688
 msgid ""
 "       --restrict-file-names=OS    restrict chars in file names to ones OS "
-"allows.\n"
+"allows\n"
 msgstr ""
-"       --restrict-file-names=OS  giới hạn ký tự trong tên tập tin thành\n"
-"                                 những gì hệ điều hành cho phép.\n"
+"       --restrict-file-names=OS    giới hạn ký tự trong tên tập tin thành\n"
+"                                     những gì hệ điều hành cho phép.\n"
 
-#: src/main.c:530
-#, fuzzy
+#: src/main.c:690
 msgid ""
 "       --ignore-case               ignore case when matching files/"
-"directories.\n"
+"directories\n"
 msgstr ""
-"       --ignore-case             không phân biệt chữ HOA/thường khi khớp "
+"       --ignore-case               không phân biệt chữ HOA/thường khi khớp "
 "mẫu\n"
-"                                 tập tin/thư mục.\n"
+"                                     tin/thư mục.\n"
 
-#: src/main.c:533
-#, fuzzy
-msgid "  -4,  --inet4-only                connect only to IPv4 addresses.\n"
-msgstr "  -4,  --inet4-only              chỉ kết nối tới các địa chỉ IPv4.\n"
+#: src/main.c:693
+msgid "  -4,  --inet4-only                connect only to IPv4 addresses\n"
+msgstr "  -4,  --inet4-only                chỉ kết nối tới các địa chỉ IPv4.\n"
 
-#: src/main.c:535
-#, fuzzy
-msgid "  -6,  --inet6-only                connect only to IPv6 addresses.\n"
-msgstr "  -6,  --inet6-only              chỉ kết nối tới các địa chỉ IPv6.\n"
+#: src/main.c:695
+msgid "  -6,  --inet6-only                connect only to IPv6 addresses\n"
+msgstr "  -6,  --inet6-only                chỉ kết nối tới các địa chỉ IPv6.\n"
 
-#: src/main.c:537
-#, fuzzy
+#: src/main.c:697
 msgid ""
 "       --prefer-family=FAMILY      connect first to addresses of specified "
 "family,\n"
-"                                   one of IPv6, IPv4, or none.\n"
+"                                     one of IPv6, IPv4, or none\n"
 msgstr ""
-"       --prefer-family=NHÓM      đầu tiên kết nối tới địa chỉ của nhóm chỉ "
+"       --prefer-family=NHÓM        đầu tiên kết nối tới địa chỉ của nhóm chỉ "
 "ra,\n"
-"                                 một trong IPv6, IPv4, hoặc none (không).\n"
+"                                     một trong IPv6, IPv4, hoặc none "
+"(không).\n"
 
-#: src/main.c:541
-#, fuzzy
-msgid ""
-"       --user=USER                 set both ftp and http user to USER.\n"
-msgstr "       --user=TÀI_KHOẢN          đặt người dùng cho cả ftp và http.\n"
-
-#: src/main.c:543
-#, fuzzy
-msgid ""
-"       --password=PASS             set both ftp and http password to PASS.\n"
+#: src/main.c:701
+msgid "       --user=USER                 set both ftp and http user to USER\n"
 msgstr ""
-"       --password=MẬT_KHẨU       đặt cả mật khẩu ftp và http thành "
-"MẬT_KHẨU.\n"
+"       --user=TÀI-KHOẢN            đặt người dùng cho cả ftp và http.\n"
 
-#: src/main.c:545
-#, fuzzy
-msgid "       --ask-password              prompt for passwords.\n"
-msgstr "       --ask-password            nhắc nhập mật khẩu.\n"
-
-#: src/main.c:547
-#, fuzzy
-msgid "       --no-iri                    turn off IRI support.\n"
-msgstr "       --no-iri                  tắt hỗ trợ IRI.\n"
-
-#: src/main.c:549
-#, fuzzy
+#: src/main.c:703
 msgid ""
-"       --local-encoding=ENC        use ENC as the local encoding for IRIs.\n"
+"       --password=PASS             set both ftp and http password to PASS\n"
 msgstr ""
-"       --local-encoding=BẢNG_MÃ  dùng bảng mã này làm bảng mã cục bộ cho "
+"       --password=MẬT-KHẨU         đặt cả mật khẩu ftp và http thành MẬT-"
+"KHẨU.\n"
+
+#: src/main.c:705
+msgid "       --ask-password              prompt for passwords\n"
+msgstr "       --ask-password              nhắc nhập mật khẩu.\n"
+
+#: src/main.c:707
+msgid ""
+"       --use-askpass=COMMAND       specify credential handler for "
+"requesting \n"
+"                                     username and password.  If no COMMAND "
+"is \n"
+"                                     specified the WGET_ASKPASS or the "
+"SSH_ASKPASS \n"
+"                                     environment variable is used.\n"
+msgstr ""
+"       --use-askpass=LỆNH          chỉ định bộ xử lý ủy nhiệm cho tài khoản "
+"và\n"
+"                                     mật khẩu yêu cầu. Nếu không đưa ra "
+"LỆNH\n"
+"                                     thì biến môi trường WGET_ASKPASS hoặc "
+"SSH_ASKPASS \n"
+"                                     sẽ được dùng.\n"
+
+#: src/main.c:712
+msgid "       --no-iri                    turn off IRI support\n"
+msgstr "       --no-iri                    tắt hỗ trợ IRI.\n"
+
+#: src/main.c:714
+msgid ""
+"       --local-encoding=ENC        use ENC as the local encoding for IRIs\n"
+msgstr ""
+"       --local-encoding=BẢNG-MÃ    dùng bảng mã này làm bảng mã cục bộ cho "
 "IRI.\n"
 
-#: src/main.c:551
-#, fuzzy
+#: src/main.c:716
 msgid ""
-"       --remote-encoding=ENC       use ENC as the default remote encoding.\n"
+"       --remote-encoding=ENC       use ENC as the default remote encoding\n"
 msgstr ""
-"       --remote-encoding=BẢNG_MÃ dùng bảng mã này làm bảng mã từ xa mặc "
+"       --remote-encoding=BẢNG-MÃ   dùng bảng mã này làm bảng mã từ xa mặc "
 "định.\n"
 
-#: src/main.c:553
-#, fuzzy
-msgid "       --unlink                    remove file before clobber.\n"
-msgstr "       --unlink                  gỡ bỏ tập tin trước khi ghi đè.\n"
+#: src/main.c:718
+msgid "       --unlink                    remove file before clobber\n"
+msgstr "       --unlink                    gỡ bỏ tập tin trước khi ghi đè.\n"
 
-#: src/main.c:557
+#: src/main.c:721
+msgid ""
+"       --keep-badhash              keep files with checksum mismatch "
+"(append .badhash)\n"
+msgstr ""
+"       --keep-badhash              giữ lại các tập tin mà không khớp tổng "
+"kiểm (treo thêm .badhash)\n"
+
+#: src/main.c:723
+msgid ""
+"       --metalink-index=NUMBER     Metalink application/metalink4+xml "
+"metaurl ordinal NUMBER\n"
+msgstr ""
+"       --metalink-index=SỐ        SỐ thứ tự Metalink application/"
+"metalink4+xml metaurl\n"
+
+#: src/main.c:725
+msgid ""
+"       --metalink-over-http        use Metalink metadata from HTTP response "
+"headers\n"
+msgstr ""
+"       --metalink-over-http        dùng siêu dữ liệu Metalink từ phần đầu "
+"HTTP trả về\n"
+
+#: src/main.c:727
+msgid ""
+"       --preferred-location        preferred location for Metalink "
+"resources\n"
+msgstr "       --preferred-location        vị trí ưu tiên cho nguồn Metalink\n"
+
+#: src/main.c:731
+msgid ""
+"       --no-xattr                  turn off storage of metadata in extended "
+"file attributes\n"
+msgstr ""
+"       --no-xattr                  tắt kho chứa của siêu dữ liệu trong các "
+"thuộc tính tập tin mở rộng\n"
+
+#: src/main.c:736
 msgid "Directories:\n"
 msgstr "Thư mục:\n"
 
-#: src/main.c:559
-#, fuzzy
-msgid "  -nd, --no-directories            don't create directories.\n"
-msgstr "  -nd, --no-directories           không tạo thư mục.\n"
+#: src/main.c:738
+msgid "  -nd, --no-directories            don't create directories\n"
+msgstr "  -nd, --no-directories            không tạo thư mục.\n"
 
-#: src/main.c:561
-#, fuzzy
-msgid "  -x,  --force-directories         force creation of directories.\n"
-msgstr "  -x,  --force-directories        ép buộc tạo thư mục.\n"
+#: src/main.c:740
+msgid "  -x,  --force-directories         force creation of directories\n"
+msgstr "  -x,  --force-directories         ép buộc tạo thư mục.\n"
 
-#: src/main.c:563
-#, fuzzy
-msgid "  -nH, --no-host-directories       don't create host directories.\n"
-msgstr "  -nH, --no-host-directories      không tạo thư mục máy.\n"
+#: src/main.c:742
+msgid "  -nH, --no-host-directories       don't create host directories\n"
+msgstr "  -nH, --no-host-directories       không tạo thư mục máy.\n"
 
-#: src/main.c:565
-#, fuzzy
-msgid "       --protocol-directories      use protocol name in directories.\n"
-msgstr "       --protocol-directories     dùng tên giao thức trong thư mục.\n"
+#: src/main.c:744
+msgid "       --protocol-directories      use protocol name in directories\n"
+msgstr "       --protocol-directories      dùng tên giao thức trong thư mục.\n"
 
-#: src/main.c:567
-#, fuzzy
-msgid "  -P,  --directory-prefix=PREFIX   save files to PREFIX/...\n"
-msgstr "  -P,  --directory-prefix=TIỀN_TỐ ghi tập tin vào TIỀN_TỐ/...\n"
+#: src/main.c:746
+msgid "  -P,  --directory-prefix=PREFIX   save files to PREFIX/..\n"
+msgstr "  -P,  --directory-prefix=TIỀN-TỐ  ghi tập tin vào TIỀN-TỐ/..\n"
 
-#: src/main.c:569
-#, fuzzy
+#: src/main.c:748
 msgid ""
 "       --cut-dirs=NUMBER           ignore NUMBER remote directory "
-"components.\n"
-msgstr "       --cut-dirs=SỐ              lời đi SỐ thư mục trên máy chủ.\n"
+"components\n"
+msgstr "       --cut-dirs=SỐ               lời đi SỐ thư mục trên máy chủ.\n"
 
-#: src/main.c:573
+#: src/main.c:752
 msgid "HTTP options:\n"
 msgstr "Tùy chọn HTTP:\n"
 
-#: src/main.c:575
-#, fuzzy
-msgid "       --http-user=USER            set http user to USER.\n"
+#: src/main.c:754
+msgid "       --http-user=USER            set http user to USER\n"
 msgstr ""
-"       --http-user=TÀI_KHOẢN   đặt người dùng http thành TÀI_KHOẢN này.\n"
+"       --http-user=TÀI-KHOẢN       đặt người dùng http thành TÀI-KHOẢN này.\n"
 
-#: src/main.c:577
-#, fuzzy
-msgid "       --http-password=PASS        set http password to PASS.\n"
-msgstr "       --http-password=MKHẨU  đặt mật khẩu http thành MẬT_KHẨU này.\n"
-
-#: src/main.c:579
-#, fuzzy
-msgid "       --no-cache                  disallow server-cached data.\n"
+#: src/main.c:756
+msgid "       --http-password=PASS        set http password to PASS\n"
 msgstr ""
-"       --no-cache              không cho phép dữ liệu cache trên server.\n"
+"       --http-password=MKHẨU       đặt mật khẩu http thành MẬT-KHẨU này.\n"
 
-#: src/main.c:581
-#, fuzzy
+#: src/main.c:758
+msgid "       --no-cache                  disallow server-cached data\n"
+msgstr ""
+"       --no-cache                  không cho phép dữ liệu cache trên "
+"server.\n"
+
+#: src/main.c:760
 msgid ""
-"       --default-page=NAME         Change the default page name (normally\n"
-"                                   this is `index.html'.).\n"
+"       --default-page=NAME         change the default page name (normally\n"
+"                                     this is 'index.html'.)\n"
 msgstr ""
-"       --default-page=TÊN      Thay đổi TÊN trang mặc định\n"
-"                               (bình thường là “index.html”.).\n"
+"       --default-page=TÊN          thay đổi TÊN trang mặc định\n"
+"                                     (bình thường là “index.html”.).\n"
 
-#: src/main.c:584
-#, fuzzy
+#: src/main.c:763
 msgid ""
 "  -E,  --adjust-extension          save HTML/CSS documents with proper "
-"extensions.\n"
+"extensions\n"
 msgstr ""
-"  -E,  --adjust-extension      lưu tài liệu HTML/CSS với phần mở rộng phù "
-"hợp\n"
+"  -E,  --adjust-extension          lưu tài liệu HTML/CSS với phần mở rộng "
+"phù hợp\n"
 
-#: src/main.c:586
-#, fuzzy
+#: src/main.c:765
 msgid ""
-"       --ignore-length             ignore `Content-Length' header field.\n"
+"       --ignore-length             ignore 'Content-Length' header field\n"
 msgstr ""
-"       --ignore-length         bỏ qua trường “Content-Length” của phần đầu.\n"
-
-#: src/main.c:588
-#, fuzzy
-msgid "       --header=STRING             insert STRING among the headers.\n"
-msgstr "       --header=CHUỖI          chèn CHUỖI vào giữa các phần đầu.\n"
-
-#: src/main.c:590
-#, fuzzy
-msgid ""
-"       --max-redirect              maximum redirections allowed per page.\n"
-msgstr ""
-"       --max-redirect          số chuyển hướng tối đa cho phép trên mỗi "
-"trang.\n"
-
-#: src/main.c:592
-#, fuzzy
-msgid "       --proxy-user=USER           set USER as proxy username.\n"
-msgstr ""
-"       --proxy-user=TÀIKHOẢN   đặt TÀIKHOẢN làm tên người dùng ủy nhiệm.\n"
-
-#: src/main.c:594
-#, fuzzy
-msgid "       --proxy-password=PASS       set PASS as proxy password.\n"
-msgstr ""
-"       --proxy-password=MẬTKHẨU dùng MẬT KHẨU này để làm mật khẩu ủy nhiệm.\n"
-
-#: src/main.c:596
-#, fuzzy
-msgid ""
-"       --referer=URL               include `Referer: URL' header in HTTP "
-"request.\n"
-msgstr ""
-"       --referer=URL           thêm phần đầu “Referer: URL” vào yêu cầu "
-"HTTP.\n"
-
-#: src/main.c:598
-#, fuzzy
-msgid "       --save-headers              save the HTTP headers to file.\n"
-msgstr "       --save-headers          ghi phần đầu HTTP vào tập tin.\n"
-
-#: src/main.c:600
-#, fuzzy
-msgid ""
-"  -U,  --user-agent=AGENT          identify as AGENT instead of Wget/"
-"VERSION.\n"
-msgstr ""
-"  -U,  --user-agent=TÁC_NHÂN   dùng đại diện này thay thế Wget/PHIÊN_BẢN.\n"
-
-#: src/main.c:602
-#, fuzzy
-msgid ""
-"       --no-http-keep-alive        disable HTTP keep-alive (persistent "
-"connections).\n"
-msgstr ""
-"       --no-http-keep-alive    không giữ HTTP sống (kết nối lâu dài).\n"
-
-#: src/main.c:604
-#, fuzzy
-msgid "       --no-cookies                don't use cookies.\n"
-msgstr "       --no-cookies            không dùng cookies.\n"
-
-#: src/main.c:606
-#, fuzzy
-msgid ""
-"       --load-cookies=FILE         load cookies from FILE before session.\n"
-msgstr ""
-"       --load-cookies=TẬP_TIN  lấy cookie từ TẬP_TIN trước khi làm việc.\n"
-
-#: src/main.c:608
-#, fuzzy
-msgid ""
-"       --save-cookies=FILE         save cookies to FILE after session.\n"
-msgstr ""
-"       --save-cookies=TẬP_TIN  ghi cookie vào TẬP_TIN sau khi làm việc.\n"
-
-#: src/main.c:610
-#, fuzzy
-msgid ""
-"       --keep-session-cookies      load and save session (non-permanent) "
-"cookies.\n"
-msgstr ""
-"       --keep-session-cookies  nạp và ghi cookie phiên làm việc (không\n"
-"                               thường trực).\n"
-
-#: src/main.c:612
-#, fuzzy
-msgid ""
-"       --post-data=STRING          use the POST method; send STRING as the "
-"data.\n"
-msgstr ""
-"       --post-data=CHUỖI       dùng phương pháp POST; gửi CHUỖI làm dữ "
-"liệu.\n"
-
-#: src/main.c:614
-#, fuzzy
-msgid ""
-"       --post-file=FILE            use the POST method; send contents of "
-"FILE.\n"
-msgstr ""
-"       --post-file=TẬP_TIN     dùng phương thức POST; gửi nội dung của "
-"TẬP_TIN.\n"
-
-#: src/main.c:616
-#, fuzzy
-msgid ""
-"       --method=HTTPMethod         use method \"HTTPMethod\" in the "
-"request.\n"
-msgstr ""
-"       --method=HTTPMethod     dùng phương thức \"HTTPMethod\" trong phần "
+"       --ignore-length             bỏ qua trường “Content-Length” của phần "
 "đầu.\n"
 
-#: src/main.c:618
+#: src/main.c:767
+msgid "       --header=STRING             insert STRING among the headers\n"
+msgstr "       --header=CHUỖI              chèn CHUỖI vào giữa các phần đầu.\n"
+
+#: src/main.c:770
 #, fuzzy
 msgid ""
-"       --body-data=STRING          Send STRING as data. --method MUST be "
-"set.\n"
-msgstr ""
-"       --body-data=CHUỖI       Gửi CHUỖI làm dữ liệu. --method phải được "
-"đặt.\n"
+"       --compression=TYPE          choose compression, one of auto, gzip and "
+"none\n"
+msgstr "       --progress=KIỂU             chọn dạng mô tả tiến độ.\n"
 
-#: src/main.c:620
-#, fuzzy
+#: src/main.c:773
 msgid ""
-"       --body-file=FILE            Send contents of FILE. --method MUST be "
-"set.\n"
+"       --max-redirect              maximum redirections allowed per page\n"
 msgstr ""
-"       --body-file=TẬP_TIN     Gửi nội dung của TẬP_TIN. --method phải được "
+"       --max-redirect              số chuyển hướng tối đa cho phép trên mỗi "
+"trang.\n"
+
+#: src/main.c:775
+msgid "       --proxy-user=USER           set USER as proxy username\n"
+msgstr ""
+"       --proxy-user=TÀIKHOẢN       đặt TÀIKHOẢN làm tên người dùng ủy "
+"nhiệm.\n"
+
+#: src/main.c:777
+msgid "       --proxy-password=PASS       set PASS as proxy password\n"
+msgstr ""
+"       --proxy-password=MẬTKHẨU    dùng MẬT KHẨU này để làm mật khẩu ủy "
+"nhiệm.\n"
+
+#: src/main.c:779
+msgid ""
+"       --referer=URL               include 'Referer: URL' header in HTTP "
+"request\n"
+msgstr ""
+"       --referer=URL               thêm phần đầu “Referer: URL” vào yêu cầu "
+"HTTP.\n"
+
+#: src/main.c:781
+msgid "       --save-headers              save the HTTP headers to file\n"
+msgstr "       --save-headers              ghi phần đầu HTTP vào tập tin.\n"
+
+#: src/main.c:783
+msgid ""
+"  -U,  --user-agent=AGENT          identify as AGENT instead of Wget/"
+"VERSION\n"
+msgstr ""
+"  -U,  --user-agent=TÁC-NHÂN       dùng đại diện này thay thế Wget/PHIÊN-"
+"BẢN.\n"
+
+#: src/main.c:785
+msgid ""
+"       --no-http-keep-alive        disable HTTP keep-alive (persistent "
+"connections)\n"
+msgstr ""
+"       --no-http-keep-alive        không giữ HTTP sống (kết nối lâu dài).\n"
+
+#: src/main.c:787
+msgid "       --no-cookies                don't use cookies\n"
+msgstr "       --no-cookies                không dùng cookies.\n"
+
+#: src/main.c:789
+msgid ""
+"       --load-cookies=FILE         load cookies from FILE before session\n"
+msgstr ""
+"       --load-cookies=TẬP-TIN      lấy cookie từ TẬP-TIN trước khi làm "
+"việc.\n"
+
+#: src/main.c:791
+msgid "       --save-cookies=FILE         save cookies to FILE after session\n"
+msgstr ""
+"       --save-cookies=TẬP-TIN      ghi cookie vào TẬP-TIN sau khi làm việc.\n"
+
+#: src/main.c:793
+msgid ""
+"       --keep-session-cookies      load and save session (non-permanent) "
+"cookies\n"
+msgstr ""
+"       --keep-session-cookies      nạp và ghi cookie phiên làm việc (không\n"
+"                                      thường trực).\n"
+
+#: src/main.c:795
+msgid ""
+"       --post-data=STRING          use the POST method; send STRING as the "
+"data\n"
+msgstr ""
+"       --post-data=CHUỖI           dùng phương pháp POST; gửi CHUỖI làm dữ "
+"liệu.\n"
+
+#: src/main.c:797
+msgid ""
+"       --post-file=FILE            use the POST method; send contents of "
+"FILE\n"
+msgstr ""
+"       --post-file=TẬP-TIN         dùng phương thức POST; gửi nội dung của "
+"TẬP-TIN.\n"
+
+#: src/main.c:799
+msgid ""
+"       --method=HTTPMethod         use method \"HTTPMethod\" in the request\n"
+msgstr ""
+"       --method=HTTPMethod         dùng phương thức \"HTTPMethod\" trong "
+"phần đầu.\n"
+
+#: src/main.c:801
+msgid ""
+"       --body-data=STRING          send STRING as data. --method MUST be "
+"set\n"
+msgstr ""
+"       --body-data=CHUỖI           gửi CHUỖI làm dữ liệu. --method phải được "
 "đặt.\n"
 
-#: src/main.c:622
-#, fuzzy
+#: src/main.c:803
+msgid ""
+"       --body-file=FILE            send contents of FILE. --method MUST be "
+"set\n"
+msgstr ""
+"       --body-file=TẬP-TIN         gửi nội dung của TẬP-TIN. --method phải "
+"được đặt.\n"
+
+#: src/main.c:805
 msgid ""
 "       --content-disposition       honor the Content-Disposition header "
 "when\n"
-"                                   choosing local file names "
-"(EXPERIMENTAL).\n"
+"                                     choosing local file names "
+"(EXPERIMENTAL)\n"
 msgstr ""
-"       --content-disposition   tùy theo dòng đầu “Content-Disposition”\n"
-"                               (sắp đặt nội dung) khi chọn tên tập tin cục "
-"bộ\n"
-"                               (THỬ NGHIỆM)\n"
+"       --content-disposition       tùy theo dòng đầu “Content-Disposition”\n"
+"                                    (sắp đặt nội dung) khi chọn tên tập tin "
+"cục bộ\n"
+"                                    (THỬ NGHIỆM)\n"
 
-#: src/main.c:625
-#, fuzzy
+#: src/main.c:808
 msgid ""
 "       --content-on-error          output the received content on server "
-"errors.\n"
+"errors\n"
 msgstr ""
-"       --content-on-error      kết xuất nội dung đã nhận với lỗi trên máy "
-"chủ.\n"
+"       --content-on-error          kết xuất nội dung đã nhận với lỗi trên "
+"máy chủ.\n"
 
-#: src/main.c:627
-#, fuzzy
+#: src/main.c:810
 msgid ""
 "       --auth-no-challenge         send Basic HTTP authentication "
 "information\n"
-"                                   without first waiting for the server's\n"
-"                                   challenge.\n"
+"                                     without first waiting for the server's\n"
+"                                     challenge\n"
 msgstr ""
-"       --auth-no-challenge     Gửi thông tin xác thực HTTP Cơ bản\n"
-"                               mà không đợi yêu cầu của máy phục vụ.\n"
+"       --auth-no-challenge         gửi thông tin xác thực HTTP Cơ bản\n"
+"                                     mà không đợi yêu cầu của máy phục vụ.\n"
 
-#: src/main.c:634
+#: src/main.c:817
 msgid "HTTPS (SSL/TLS) options:\n"
 msgstr "Tùy chọn HTTPS (SSL/TLS):\n"
 
-#: src/main.c:636
+#: src/main.c:819
 #, fuzzy
 msgid ""
 "       --secure-protocol=PR        choose secure protocol, one of auto, "
 "SSLv2,\n"
-"                                   SSLv3, TLSv1 and PFS.\n"
+"                                     SSLv3, TLSv1, TLSv1_1, TLSv1_2 and PFS\n"
 msgstr ""
-"       --secure-protocol=PR     chọn giao thức bảo mật, một trong số:\n"
-"                                 auto, SSLv2, SSLv3, và PFS.\n"
+"       --secure-protocol=PR        chọn giao thức bảo mật, một trong số:\n"
+"                                     auto, SSLv2, SSLv3, và PFS.\n"
 
-#: src/main.c:639
-#, fuzzy
+#: src/main.c:822
 msgid "       --https-only                only follow secure HTTPS links\n"
-msgstr "       --https-only             chỉ theo các liên kết HTTPS bảo mật\n"
+msgstr ""
+"       --https-only                chỉ theo các liên kết HTTPS bảo mật\n"
 
-#: src/main.c:641
-#, fuzzy
+#: src/main.c:824
 msgid ""
-"       --no-check-certificate      don't validate the server's certificate.\n"
+"       --no-check-certificate      don't validate the server's certificate\n"
 msgstr ""
-"       --no-check-certificate   không kiểm tra tính hợp lệ của chứng\n"
-"                                thực của máy chủ.\n"
+"       --no-check-certificate      không kiểm tra tính hợp lệ của chứng\n"
+"                                     thực của máy chủ.\n"
 
-#: src/main.c:643
-#, fuzzy
-msgid "       --certificate=FILE          client certificate file.\n"
+#: src/main.c:826
+msgid "       --certificate=FILE          client certificate file\n"
 msgstr ""
-"       --certificate=TẬP_TIN    tập tin chứng nhận của ứng dụng khách\n"
+"       --certificate=TẬP-TIN       tập tin chứng nhận của ứng dụng khách\n"
 
-#: src/main.c:645
-#, fuzzy
+#: src/main.c:828
 msgid ""
-"       --certificate-type=TYPE     client certificate type, PEM or DER.\n"
+"       --certificate-type=TYPE     client certificate type, PEM or DER\n"
 msgstr ""
-"       --certificate-type=KIỂU  dạng chứng nhận ứng dụng khách, PEM hoặc "
+"       --certificate-type=KIỂU     dạng chứng nhận ứng dụng khách, PEM hoặc "
 "DER.\n"
 
-#: src/main.c:647
-#, fuzzy
-msgid "       --private-key=FILE          private key file.\n"
-msgstr "       --private-key=TẬP_TIN    TẬP TIN chứa khóa riêng.\n"
+#: src/main.c:830
+msgid "       --private-key=FILE          private key file\n"
+msgstr "       --private-key=TẬP-TIN       TẬP TIN chứa khóa riêng.\n"
 
-#: src/main.c:649
-#, fuzzy
-msgid "       --private-key-type=TYPE     private key type, PEM or DER.\n"
+#: src/main.c:832
+msgid "       --private-key-type=TYPE     private key type, PEM or DER\n"
 msgstr ""
-"       --private-key-type=KIỂU  kiểu chìa khóa riêng tư, PEM hoặc DER.\n"
+"       --private-key-type=KIỂU     kiểu chìa khóa riêng tư, PEM hoặc DER.\n"
 
-#: src/main.c:651
-#, fuzzy
-msgid "       --ca-certificate=FILE       file with the bundle of CA's.\n"
-msgstr "       --ca-certificate=TẬP_TIN tập tin đóng gói các CA.\n"
+#: src/main.c:834
+msgid "       --ca-certificate=FILE       file with the bundle of CAs\n"
+msgstr "       --ca-certificate=TẬP-TIN    tập tin đóng gói các CA.\n"
 
-#: src/main.c:653
-#, fuzzy
+#: src/main.c:836
 msgid ""
-"       --ca-directory=DIR          directory where hash list of CA's is "
-"stored.\n"
+"       --ca-directory=DIR          directory where hash list of CAs is "
+"stored\n"
 msgstr ""
-"       --ca-directory=DIR       thư mục chứa danh sách mã băm của CA.\n"
+"       --ca-directory=DIR          thư mục chứa danh sách mã băm của CA.\n"
 
-#: src/main.c:655
-#, fuzzy
+#: src/main.c:838
+msgid "       --crl-file=FILE             file with bundle of CRLs\n"
+msgstr "       --ca-certificate=TẬP-TIN    tập tin đóng gói các CA.\n"
+
+#: src/main.c:840
+msgid ""
+"       --pinnedpubkey=FILE/HASHES  Public key (PEM/DER) file, or any number\n"
+"                                   of base64 encoded sha256 hashes preceded "
+"by\n"
+"                                   'sha256//' and separated by ';', to "
+"verify\n"
+"                                   peer against\n"
+msgstr ""
+"       --pinnedpubkey=TẬP_TIN/MÃ_BĂM  Tập tin khóa công (PEM/DER), hay bất "
+"kỳ\n"
+"                                   số của mã băm sha256 mã hóa bằng base64 "
+"treo\n"
+"                                   trước bằng “sha256//” và ngăn cách bằng "
+"“;”,\n"
+"                                   để kiểm tra lại căn cứ vào mạng ngang "
+"hàng\n"
+
+#: src/main.c:846
 msgid ""
 "       --random-file=FILE          file with random data for seeding the SSL "
-"PRNG.\n"
+"PRNG\n"
 msgstr ""
-"       --random-file=TẬP_TIN    tập tin với dữ liệu theo xác suất\n"
-"                                để tạo thành SSL PRNG.\n"
+"       --random-file=TẬP-TIN       tập tin với dữ liệu theo xác suất\n"
+"                                     để tạo thành SSL PRNG.\n"
 
-#: src/main.c:657
-#, fuzzy
+#: src/main.c:850
 msgid ""
 "       --egd-file=FILE             file naming the EGD socket with random "
-"data.\n"
+"data\n"
 msgstr ""
-"       --egd-file=TẬP_TIN       đặt tên socket EGD với dữ liệu dữ liệu\n"
+"       --egd-file=TẬP-TIN          đặt tên socket EGD với dữ liệu dữ liệu\n"
 
-#: src/main.c:662
+#: src/main.c:857
+msgid "HSTS options:\n"
+msgstr "Tùy chọn HSTS:\n"
+
+#: src/main.c:859
+msgid "       --no-hsts                   disable HSTS\n"
+msgstr "       --no-hsts                   tắt HSTS\n"
+
+#: src/main.c:861
+msgid ""
+"       --hsts-file                 path of HSTS database (will override "
+"default)\n"
+msgstr ""
+"       --hsts-file                 đường dẫn của cơ sở dữ liệu HSTS (sẽ ghi "
+"đè theo mặc định)\n"
+
+#: src/main.c:866
 msgid "FTP options:\n"
 msgstr "Tùy chọn FTP:\n"
 
-#: src/main.c:665
-#, fuzzy
+#: src/main.c:869
 msgid ""
-"       --ftp-stmlf                 Use Stream_LF format for all binary FTP "
-"files.\n"
+"       --ftp-stmlf                 use Stream_LF format for all binary FTP "
+"files\n"
 msgstr ""
-"       --ftp-stmlf             Dùng định dạng Stream_LF cho mọi tập tin FTP "
-"nhị phân.\n"
+"       --ftp-stmlf                 dùng định dạng Stream_LF cho mọi tập tin "
+"FTP nhị phân.\n"
 
-#: src/main.c:668
-#, fuzzy
-msgid "       --ftp-user=USER             set ftp user to USER.\n"
-msgstr "       --ftp-user=TÀI_KHOẢN    dùng TÀI_KHOẢN này để đăng nhập ftp.\n"
-
-#: src/main.c:670
-#, fuzzy
-msgid "       --ftp-password=PASS         set ftp password to PASS.\n"
-msgstr "       --ftp-password=MẬT-KHẨU dùng mật khẩu này để đăng nhập ftp.\n"
-
-#: src/main.c:672
-#, fuzzy
-msgid "       --no-remove-listing         don't remove `.listing' files.\n"
-msgstr "       --no-remove-listing     không xóa bỏ tập tin “.listing”.\n"
-
-#: src/main.c:674
-#, fuzzy
-msgid "       --no-glob                   turn off FTP file name globbing.\n"
+#: src/main.c:872
+msgid "       --ftp-user=USER             set ftp user to USER\n"
 msgstr ""
-"       --no-glob               không dùng globbing cho tên tập tin FTP.\n"
+"       --ftp-user=TÀI-KHOẢN        dùng TÀI-KHOẢN này để đăng nhập ftp.\n"
 
-#: src/main.c:676
-#, fuzzy
+#: src/main.c:874
+msgid "       --ftp-password=PASS         set ftp password to PASS\n"
+msgstr ""
+"       --ftp-password=MẬT-KHẨU     dùng mật khẩu này để đăng nhập ftp.\n"
+
+#: src/main.c:876
+msgid "       --no-remove-listing         don't remove '.listing' files\n"
+msgstr "       --no-remove-listing         không xóa bỏ tập tin “.listing”.\n"
+
+#: src/main.c:878
+msgid "       --no-glob                   turn off FTP file name globbing\n"
+msgstr ""
+"       --no-glob                   không dùng globbing cho tên tập tin FTP.\n"
+
+#: src/main.c:880
 msgid ""
-"       --no-passive-ftp            disable the \"passive\" transfer mode.\n"
+"       --no-passive-ftp            disable the \"passive\" transfer mode\n"
 msgstr ""
-"       --no-passive-ftp        tắt chế độ truyền \"passive\" (thụ động).\n"
+"       --no-passive-ftp            tắt chế độ truyền \"passive\" (thụ "
+"động).\n"
 
-#: src/main.c:678
-#, fuzzy
-msgid "       --preserve-permissions      preserve remote file permissions.\n"
-msgstr "       --preserve-permissions  duy trì quyền của tập tin từ máy chủ.\n"
+#: src/main.c:882
+msgid "       --preserve-permissions      preserve remote file permissions\n"
+msgstr ""
+"       --preserve-permissions      duy trì quyền của tập tin từ máy chủ.\n"
 
-#: src/main.c:680
-#, fuzzy
+#: src/main.c:884
 msgid ""
 "       --retr-symlinks             when recursing, get linked-to files (not "
-"dir).\n"
+"dir)\n"
 msgstr ""
-"       --retr-symlinks         khi đệ quy, lấy tập tin được liên kết đến\n"
-"                               (không phải thư mục).\n"
+"       --retr-symlinks             khi đệ quy, lấy tập tin được liên kết "
+"đến\n"
+"                                     (không phải thư mục).\n"
 
-#: src/main.c:684
+#: src/main.c:889
+msgid "FTPS options:\n"
+msgstr "Tùy chọn FTPS:\n"
+
+#: src/main.c:891
+msgid ""
+"       --ftps-implicit                 use implicit FTPS (default port is "
+"990)\n"
+msgstr ""
+"       --ftps-implicit                 dùng FTPS ngầm định (cổng mặc định là "
+"990)\n"
+
+#: src/main.c:893
+msgid ""
+"       --ftps-resume-ssl               resume the SSL/TLS session started in "
+"the control connection when\n"
+"                                         opening a data connection\n"
+msgstr ""
+"       --ftps-resume-ssl               coi rằng phiên SSL/TLS được bắt đầu "
+"trong kết nối điều khiển\n"
+"                                         khi mở kết nối dữ liệu\n"
+
+#: src/main.c:896
+msgid ""
+"       --ftps-clear-data-connection    cipher the control channel only; all "
+"the data will be in plaintext\n"
+msgstr ""
+"       --ftps-clear-data-connection    chỉ mã hóa kênh điều khiển; mọi dữ "
+"liệu sẽ ở dạng thường\n"
+
+#: src/main.c:898
+msgid ""
+"       --ftps-fallback-to-ftp          fall back to FTP if FTPS is not "
+"supported in the target server\n"
+msgstr ""
+"       --ftps-fallback-to-ftp          quay lại dùng FTP nếu FTPS không được "
+"hỗ trợ ở máy đích\n"
+
+#: src/main.c:902
 msgid "WARC options:\n"
 msgstr "Tùy chọn về WARC:\n"
 
-#: src/main.c:686
-#, fuzzy
+#: src/main.c:904
 msgid ""
 "       --warc-file=FILENAME        save request/response data to a .warc.gz "
-"file.\n"
+"file\n"
 msgstr ""
-"       --warc-file=TẬP-TIN       ghi dữ liệu request/response (yêu cầu/trả "
+"       --warc-file=TẬP-TIN         ghi dữ liệu request/response (yêu cầu/trả "
 "lời)\n"
-"                                 vào tập tin .warc.gz.\n"
+"                                     vào tập tin .warc.gz.\n"
 
-#: src/main.c:688
-#, fuzzy
+#: src/main.c:906
 msgid ""
-"       --warc-header=STRING        insert STRING into the warcinfo record.\n"
-msgstr "       --warc-header=CHUỖI       chèn CHUỖI vào bản ghi warcinfo.\n"
+"       --warc-header=STRING        insert STRING into the warcinfo record\n"
+msgstr "       --warc-header=CHUỖI         chèn CHUỖI vào bản ghi warcinfo.\n"
 
-#: src/main.c:690
-#, fuzzy
+#: src/main.c:908
 msgid ""
-"       --warc-max-size=NUMBER      set maximum size of WARC files to "
-"NUMBER.\n"
+"       --warc-max-size=NUMBER      set maximum size of WARC files to NUMBER\n"
 msgstr ""
-"       --warc-max-size=SỐ        đặt kích thước tối đa cho các tập tin "
+"       --warc-max-size=SỐ          đặt kích thước tối đa cho các tập tin "
 "WARC.\n"
 
-#: src/main.c:692
-#, fuzzy
-msgid "       --warc-cdx                  write CDX index files.\n"
-msgstr "       --warc-cdx                ghi tập tin chỉ mục CDX.\n"
+#: src/main.c:910
+msgid "       --warc-cdx                  write CDX index files\n"
+msgstr "       --warc-cdx                  ghi tập tin chỉ mục CDX.\n"
 
-#: src/main.c:694
-#, fuzzy
+#: src/main.c:912
 msgid ""
 "       --warc-dedup=FILENAME       do not store records listed in this CDX "
-"file.\n"
+"file\n"
 msgstr ""
-"       --warc-dedup=TẬP-TIN      không lưu các bản ghi được liệt kê\n"
-"                                 trong tập tin CDX này.\n"
+"       --warc-dedup=TẬP-TIN        không lưu các bản ghi được liệt kê\n"
+"                                     trong tập tin CDX này.\n"
 
-#: src/main.c:697
-#, fuzzy
+#: src/main.c:915
 msgid ""
-"       --no-warc-compression       do not compress WARC files with GZIP.\n"
+"       --no-warc-compression       do not compress WARC files with GZIP\n"
 msgstr ""
-"       --no-warc-compression     không nén các tập tin WARC bằng GZIP.\n"
+"       --no-warc-compression       không nén các tập tin WARC bằng GZIP.\n"
 
-#: src/main.c:700
-#, fuzzy
-msgid "       --no-warc-digests           do not calculate SHA1 digests.\n"
-msgstr "       --no-warc-digests         không tính giá trị băm SHA1.\n"
+#: src/main.c:918
+msgid "       --no-warc-digests           do not calculate SHA1 digests\n"
+msgstr "       --no-warc-digests           không tính giá trị băm SHA1.\n"
 
-#: src/main.c:702
-#, fuzzy
+#: src/main.c:920
 msgid ""
 "       --no-warc-keep-log          do not store the log file in a WARC "
-"record.\n"
+"record\n"
 msgstr ""
-"       --no-warc-keep-log        không lưu tập tin nhật ký trong bản ghi "
+"       --no-warc-keep-log          không lưu tập tin nhật ký trong bản ghi "
 "WARC.\n"
 
-#: src/main.c:704
-#, fuzzy
+#: src/main.c:922
 msgid ""
 "       --warc-tempdir=DIRECTORY    location for temporary files created by "
 "the\n"
-"                                   WARC writer.\n"
+"                                     WARC writer\n"
 msgstr ""
-"       --warc-tempdir=THƯMỤC     vị trí để lưu các tập tin tạm được tạo bởi\n"
-"                                 bộ ghi WARC.\n"
+"       --warc-tempdir=THƯMỤC       vị trí để lưu các tập tin tạm được tạo "
+"bởi\n"
+"                                     bộ ghi WARC.\n"
 
-#: src/main.c:709
+#: src/main.c:927
 msgid "Recursive download:\n"
 msgstr "Tải đệ quy:\n"
 
-#: src/main.c:711
-#, fuzzy
-msgid "  -r,  --recursive                 specify recursive download.\n"
-msgstr "  -r,  --recursive          dùng tải đệ quy.\n"
+#: src/main.c:929
+msgid "  -r,  --recursive                 specify recursive download\n"
+msgstr "  -r,  --recursive                 dùng tải đệ quy.\n"
 
-#: src/main.c:713
-#, fuzzy
+#: src/main.c:931
 msgid ""
 "  -l,  --level=NUMBER              maximum recursion depth (inf or 0 for "
-"infinite).\n"
+"infinite)\n"
 msgstr ""
-"  -l,  --level=SỐ           độ sâu lớn nhất của đệ quy (inf hoặc 0 = vô "
-"hạn).\n"
+"  -l,  --level=SỐ                  độ sâu lớn nhất của đệ quy (inf hoặc 0 = "
+"vô hạn).\n"
 
-#: src/main.c:715
-#, fuzzy
+#: src/main.c:933
 msgid ""
 "       --delete-after              delete files locally after downloading "
-"them.\n"
-msgstr "       --delete-after       xóa tập tin nội bộ sau khi tải xong.\n"
+"them\n"
+msgstr ""
+"       --delete-after              xóa tập tin nội bộ sau khi tải xong.\n"
 
-#: src/main.c:717
-#, fuzzy
+#: src/main.c:935
 msgid ""
 "  -k,  --convert-links             make links in downloaded HTML or CSS "
 "point to\n"
-"                                   local files.\n"
+"                                     local files\n"
 msgstr ""
-"  -k,  --convert-links      làm cho liên kết trong mã HTML hay CSS đã tải "
-"xuống\n"
-"                            chỉ tới tập tin cục bộ.\n"
+"  -k,  --convert-links             làm cho liên kết trong mã HTML hay CSS đã "
+"tải xuống\n"
+"                                     chỉ tới tập tin cục bộ.\n"
 
-#: src/main.c:720
-#, fuzzy
+#: src/main.c:938
+msgid ""
+"       --convert-file-only         convert the file part of the URLs only "
+"(usually known as the basename)\n"
+msgstr ""
+"       --convert-file-only         chỉ chuyển đổi bộ phận tập tin của URL "
+"(thường được đến là tên cơ sở)\n"
+
+#: src/main.c:940
 msgid ""
 "       --backups=N                 before writing file X, rotate up to N "
-"backup files.\n"
+"backup files\n"
 msgstr ""
-"       --backups=N          trước khi ghi tập tin X, sao lưu thành N bản.\n"
+"       --backups=N                 trước khi ghi tập tin X, sao lưu thành N "
+"bản.\n"
 
-#: src/main.c:724
-#, fuzzy
+#: src/main.c:944
 msgid ""
 "  -K,  --backup-converted          before converting file X, back up as "
-"X_orig.\n"
+"X_orig\n"
 msgstr ""
-"  -K,  --backup-converted   trước khi chuyển đổi tập tin X, sao lưu thành "
-"X_orig.\n"
+"  -K,  --backup-converted          trước khi chuyển đổi tập tin X, sao lưu "
+"thành X_orig.\n"
 
-#: src/main.c:727
-#, fuzzy
+#: src/main.c:947
 msgid ""
 "  -K,  --backup-converted          before converting file X, back up as X."
-"orig.\n"
+"orig\n"
 msgstr ""
-"  -K,  --backup-converted   trước khi chuyển đổi tập tin X,\n"
-"                            sao lưu thành X.orig.\n"
+"  -K,  --backup-converted          trước khi chuyển đổi tập tin X,\n"
+"                                     sao lưu thành X.orig.\n"
 
-#: src/main.c:730
-#, fuzzy
+#: src/main.c:950
 msgid ""
 "  -m,  --mirror                    shortcut for -N -r -l inf --no-remove-"
-"listing.\n"
+"listing\n"
 msgstr ""
-"  -m,  --mirror             tùy chọn rút gọn tương đương với\n"
-"                            “-N -r -l inf --no-remove-listing”.\n"
+"  -m,  --mirror                    tùy chọn rút gọn tương đương với\n"
+"                                     “-N -r -l inf --no-remove-listing”.\n"
 
-#: src/main.c:732
-#, fuzzy
+#: src/main.c:952
 msgid ""
 "  -p,  --page-requisites           get all images, etc. needed to display "
-"HTML page.\n"
+"HTML page\n"
 msgstr ""
-"  -p,  --page-requisites    lấy mọi hình ảnh, v.v... cần thiết để\n"
-"                            hiển thị trang HTML.\n"
+"  -p,  --page-requisites           lấy mọi hình ảnh, v.v… cần thiết để\n"
+"                                     hiển thị trang HTML.\n"
 
-#: src/main.c:734
-#, fuzzy
+#: src/main.c:954
 msgid ""
 "       --strict-comments           turn on strict (SGML) handling of HTML "
-"comments.\n"
+"comments\n"
 msgstr ""
-"       --strict-comments    bật xử lý chặt (SGML) cho chú thích HTML.\n"
+"       --strict-comments           bật xử lý chặt (SGML) cho chú thích "
+"HTML.\n"
 
-#: src/main.c:738
+#: src/main.c:958
 msgid "Recursive accept/reject:\n"
 msgstr "Chấp nhận/từ chối đệ quy:\n"
 
-#: src/main.c:740
+#: src/main.c:960
 msgid ""
 "  -A,  --accept=LIST               comma-separated list of accepted "
-"extensions.\n"
+"extensions\n"
 msgstr ""
-"  -A,  --accept=DANH_SÁCH          danh sách phần đuôi mở rộng được chấp "
+"  -A,  --accept=DANH-SÁCH          danh sách phần đuôi mở rộng được chấp "
 "nhận\n"
-"                                          được ngăn cách bằng dấu phẩy.\n"
+"                                     được ngăn cách bằng dấu phẩy\n"
 
-#: src/main.c:742
+#: src/main.c:962
 msgid ""
 "  -R,  --reject=LIST               comma-separated list of rejected "
-"extensions.\n"
+"extensions\n"
 msgstr ""
-"  -R,  --reject=DANH_SÁCH          danh sách phần đuôi mở rộng bị loại trừ.\n"
+"  -R,  --reject=DANH-SÁCH          danh sách phần đuôi mở rộng bị loại trừ\n"
 
-#: src/main.c:744
-msgid "       --accept-regex=REGEX        regex matching accepted URLs.\n"
+#: src/main.c:964
+msgid "       --accept-regex=REGEX        regex matching accepted URLs\n"
 msgstr ""
 "       --accept-regex=BTCQ         chấp nhận các URL khớp biểu thức chính "
-"qui.\n"
+"qui\n"
 
-#: src/main.c:746
-msgid "       --reject-regex=REGEX        regex matching rejected URLs.\n"
+#: src/main.c:966
+msgid "       --reject-regex=REGEX        regex matching rejected URLs\n"
 msgstr ""
-"       --reject-regex=BTCQ         từ chối các URL khớp biểu thức chính "
-"qui.\n"
+"       --reject-regex=BTCQ         từ chối các URL khớp biểu thức chính qui\n"
 
-#: src/main.c:749
-msgid "       --regex-type=TYPE           regex type (posix|pcre).\n"
+#: src/main.c:969
+msgid "       --regex-type=TYPE           regex type (posix|pcre)\n"
 msgstr ""
-"       --regex-type=KIỂU           kiểu biểu thức chính qui (posix|pcre).\n"
+"       --regex-type=KIỂU           kiểu biểu thức chính qui (posix|pcre)\n"
 
-#: src/main.c:752
-msgid "       --regex-type=TYPE           regex type (posix).\n"
-msgstr "       --regex-type=KIỂU           kiểu biểu thức chính qui (posix).\n"
+#: src/main.c:972
+msgid "       --regex-type=TYPE           regex type (posix)\n"
+msgstr "       --regex-type=KIỂU           kiểu biểu thức chính qui (posix)\n"
 
-#: src/main.c:755
+#: src/main.c:975
 msgid ""
-"  -D,  --domains=LIST              comma-separated list of accepted "
-"domains.\n"
+"  -D,  --domains=LIST              comma-separated list of accepted domains\n"
 msgstr ""
-"  -D,  --domains=DANH_SÁCH         miền chấp nhận cách nhau bằng dấu phẩy.\n"
+"  -D,  --domains=DANH-SÁCH         miền chấp nhận cách nhau bằng dấu phẩy\n"
 
-#: src/main.c:757
+#: src/main.c:977
 msgid ""
-"       --exclude-domains=LIST      comma-separated list of rejected "
-"domains.\n"
+"       --exclude-domains=LIST      comma-separated list of rejected domains\n"
 msgstr ""
-"       --exclude-domains=DANH_SÁCH miền loại trừ cách nhau bằng dấu phẩy.\n"
+"       --exclude-domains=DANH-SÁCH miền loại trừ cách nhau bằng dấu phẩy\n"
 
-#: src/main.c:759
+#: src/main.c:979
 msgid ""
-"       --follow-ftp                follow FTP links from HTML documents.\n"
+"       --follow-ftp                follow FTP links from HTML documents\n"
 msgstr ""
-"       --follow-ftp                theo liên kết FTP từ tài liệu HTML.\n"
+"       --follow-ftp                theo liên kết FTP từ tài liệu HTML\n"
 
-#: src/main.c:761
+#: src/main.c:981
 msgid ""
 "       --follow-tags=LIST          comma-separated list of followed HTML "
-"tags.\n"
-msgstr "       --follow-tags=DANH_SÁCH     những thẻ HTML có thể theo.\n"
+"tags\n"
+msgstr "       --follow-tags=DANH-SÁCH     những thẻ HTML có thể theo\n"
 
-#: src/main.c:763
+#: src/main.c:983
 msgid ""
 "       --ignore-tags=LIST          comma-separated list of ignored HTML "
-"tags.\n"
-msgstr "       --ignore-tags=DANH_SÁCH     những thẻ HTML bị bỏ qua.\n"
+"tags\n"
+msgstr "       --ignore-tags=DANH-SÁCH     những thẻ HTML bị bỏ qua\n"
 
-#: src/main.c:765
-msgid ""
-"  -H,  --span-hosts                go to foreign hosts when recursive.\n"
-msgstr "  -H,  --span-hosts                đi tới máy khác khi đệ quy.\n"
+#: src/main.c:985
+msgid "  -H,  --span-hosts                go to foreign hosts when recursive\n"
+msgstr "  -H,  --span-hosts                đi tới máy khác khi đệ quy\n"
 
-#: src/main.c:767
-msgid "  -L,  --relative                  follow relative links only.\n"
-msgstr "  -L,  --relative                  chỉ đi theo liên kết tương đối.\n"
+#: src/main.c:987
+msgid "  -L,  --relative                  follow relative links only\n"
+msgstr "  -L,  --relative                  chỉ đi theo liên kết tương đối\n"
 
-#: src/main.c:769
-msgid "  -I,  --include-directories=LIST  list of allowed directories.\n"
-msgstr "  -I,  --include-directories=DANH-SÁCH những thư mục cho phép.\n"
+#: src/main.c:989
+msgid "  -I,  --include-directories=LIST  list of allowed directories\n"
+msgstr "  -I,  --include-directories=DANH-SÁCH những thư mục cho phép\n"
 
-#: src/main.c:771
-#, fuzzy
+#: src/main.c:991
 msgid ""
 "       --trust-server-names        use the name specified by the "
 "redirection\n"
-"                                   url last component.\n"
+"                                     URL's last component\n"
 msgstr ""
 "  --trust-server-names             dùng tên được chỉ định bởi thành phần\n"
-"                                   cuối cùng của địa chỉ URL chuyển hướng.\n"
+"                                   cuối cùng của địa chỉ URL chuyển hướng\n"
 
-#: src/main.c:774
-msgid "  -X,  --exclude-directories=LIST  list of excluded directories.\n"
-msgstr "  -X,  --exclude-directories=DANH_SÁCH  những thư mục loại trừ.\n"
+#: src/main.c:994
+msgid "  -X,  --exclude-directories=LIST  list of excluded directories\n"
+msgstr "  -X,  --exclude-directories=DANH-SÁCH  những thư mục loại trừ\n"
 
-#: src/main.c:776
+#: src/main.c:996
 msgid ""
-"  -np, --no-parent                 don't ascend to the parent directory.\n"
-msgstr "  -np, --no-parent                 không đi ngược lên thư mục mẹ.\n"
+"  -np, --no-parent                 don't ascend to the parent directory\n"
+msgstr "  -np, --no-parent                 không đi ngược lên thư mục mẹ\n"
 
-#: src/main.c:779
-msgid "Mail bug reports and suggestions to <bug-wget@gnu.org>.\n"
+#: src/main.c:999
+msgid "Mail bug reports and suggestions to <bug-wget@gnu.org>\n"
 msgstr ""
-"Gửi báo cáo lỗi và gợi ý tới <bug-wget@gnu.org>.\n"
+"Gửi báo cáo lỗi và gợi ý tới <bug-wget@gnu.org>\n"
 "Gửi thông báo về lỗi dịch cho <http://translationproject.org/team/vi.html>\n"
 
-#: src/main.c:784
+#: src/main.c:1004
 #, c-format
 msgid "GNU Wget %s, a non-interactive network retriever.\n"
 msgstr "GNU Wget %s, chương trình tải dữ liệu từ mạng không tương tác.\n"
 
-#: src/main.c:827
+#: src/main.c:1047
 #, c-format
 msgid "Password for user %s: "
 msgstr "Mật khẩu cho tài khoản %s: "
 
-#: src/main.c:829
+#: src/main.c:1049
 #, c-format
 msgid "Password: "
 msgstr "Mật khẩu: "
 
-#: src/main.c:885
+#: src/main.c:1068
+#, c-format
+msgid "Cannot create pipe\n"
+msgstr "Không thể tạo ống dẫn\n"
+
+#: src/main.c:1076
+#, c-format
+msgid "Error initializing spawn file actions for use-askpass: %d\n"
+msgstr ""
+"Gặp lỗi khi khởi tạo thao tác sản sinh tập tin dùng cho use-askpass: %d\n"
+
+#: src/main.c:1085
+#, c-format
+msgid "Error setting spawn file actions for use-askpass: %d\n"
+msgstr "Lỗi cài đặt thao tác sản sinh tập tin để dùng cho use-askpass: %d\n"
+
+#: src/main.c:1109
+#, c-format
+msgid "Error reading response from command \"%s %s\": %s\n"
+msgstr "Gặp lỗi khi đọc trả lời từ lệnh \"%s %s\": %s\n"
+
+#: src/main.c:1132
+#, c-format
+msgid "Username for '%s%s': "
+msgstr "Tài khoản cho “%s%s”: "
+
+#: src/main.c:1142
+#, c-format
+msgid "Password for '%s%s@%s': "
+msgstr "Mật khẩu cho “%s%s@%s”: "
+
+#: src/main.c:1214
 msgid "Wgetrc: "
 msgstr "Wgetrc: "
 
-#: src/main.c:886
+#: src/main.c:1215
 msgid "Locale: "
 msgstr "Miền địa phương: "
 
-#: src/main.c:887
+#: src/main.c:1216
 msgid "Compile: "
 msgstr "Biên dịch: "
 
-#: src/main.c:888
+#: src/main.c:1217
 msgid "Link: "
 msgstr "Liên kết: "
 
-#: src/main.c:892
+#: src/main.c:1221
 #, c-format
 msgid ""
 "GNU Wget %s built on %s.\n"
@@ -2382,29 +2689,29 @@ msgstr ""
 "GNU Wget %s được biên dịch dành cho %s.\n"
 "\n"
 
-#: src/main.c:919
+#: src/main.c:1248
 #, c-format
 msgid "    %s (env)\n"
 msgstr "    %s (môi trường)\n"
 
-#: src/main.c:926
+#: src/main.c:1255
 #, c-format
 msgid "    %s (user)\n"
 msgstr "    %s (người dùng)\n"
 
-#: src/main.c:931
+#: src/main.c:1260
 #, c-format
 msgid "    %s (system)\n"
 msgstr "    %s (hệ thống)\n"
 
 #. TRANSLATORS: When available, an actual copyright character
 #. (circle-c) should be used in preference to "(C)".
-#: src/main.c:959
-#, fuzzy, c-format
+#: src/main.c:1288
+#, c-format
 msgid "Copyright (C) %s Free Software Foundation, Inc.\n"
-msgstr "Tác quyền © năm 2011 của Tổ chức Phần mềm Tự do, Inc.\n"
+msgstr "Tác quyền © năm %s của Tổ chức Phần mềm Tự do, Inc.\n"
 
-#: src/main.c:962
+#: src/main.c:1291
 msgid ""
 "License GPLv3+: GNU GPL version 3 or later\n"
 "<http://www.gnu.org/licenses/gpl.html>.\n"
@@ -2418,7 +2725,7 @@ msgstr ""
 
 #. TRANSLATORS: When available, please use the proper diacritics for
 #. names such as this one. See en_US.po for reference.
-#: src/main.c:970
+#: src/main.c:1299
 msgid ""
 "\n"
 "Originally written by Hrvoje Niksic <hniksic@xemacs.org>.\n"
@@ -2426,36 +2733,38 @@ msgstr ""
 "\n"
 "Nguyên bản được viết bởi Hrvoje Niksic <hniksic@xemacs.org>.\n"
 
-#: src/main.c:973
+#: src/main.c:1302
 msgid "Please send bug reports and questions to <bug-wget@gnu.org>.\n"
-msgstr "Hãy gửi thông báo lỗi và các câu hỏi cho <bug-wget@gnu.org>.\n"
+msgstr ""
+"Hãy gửi thông báo lỗi và các câu hỏi cho <bug-wget@gnu.org>.\n"
+"Thông báo lỗi dịch cho: <http://translationproject.org/team/vi.html>.\n"
 
-#: src/main.c:1024 src/main.c:1515
+#: src/main.c:1351 src/main.c:1882
 #, c-format
 msgid "Memory allocation problem\n"
 msgstr "Vấn đề về cấp phát bộ nhớ\n"
 
-#: src/main.c:1075
+#: src/main.c:1401
 #, c-format
 msgid "Exiting due to error in %s\n"
 msgstr "Thoát ra bởi vì lỗi trong %s\n"
 
-#: src/main.c:1104 src/main.c:1174 src/main.c:1376
+#: src/main.c:1430 src/main.c:1501 src/main.c:1733
 #, c-format
 msgid "Try `%s --help' for more options.\n"
 msgstr "Thử “%s --help” để biết thêm tùy chọn.\n"
 
-#: src/main.c:1170
+#: src/main.c:1497
 #, c-format
 msgid "%s: illegal option -- `-n%c'\n"
 msgstr "%s: tùy chọn không hợp lệ -- “-n%c”\n"
 
-#: src/main.c:1213
+#: src/main.c:1540
 #, c-format
 msgid "Debugging support not compiled in. Ignoring --debug flag.\n"
-msgstr ""
+msgstr "Việc hỗ trợ gỡ lỗi không được biên dịch cùng. Bỏ qua cờ --debug\n"
 
-#: src/main.c:1225
+#: src/main.c:1553
 #, c-format
 msgid ""
 "Both --no-clobber and --convert-links were specified, only --convert-links "
@@ -2464,33 +2773,44 @@ msgstr ""
 "Nếu cả hai tùy chọn --no-clobber và --convert-links được chỉ ra, chỉ --"
 "convert-links được dùng.\n"
 
-#: src/main.c:1255
+#: src/main.c:1555
+#, c-format
+msgid ""
+"Both --no-clobber and --convert-file-only were specified, only --convert-"
+"file-only will be used.\n"
+msgstr ""
+"Cả hai tùy chọn --no-clobber và --convert-file-only được chỉ ra, chỉ --"
+"convert-file-only được dùng.\n"
+
+#: src/main.c:1588
 #, c-format
 msgid "Can't be verbose and quiet at the same time.\n"
 msgstr "Không thể dùng --verbose và --quiet cùng lúc.\n"
 
-#: src/main.c:1261
+#: src/main.c:1594
 #, c-format
 msgid "Can't timestamp and not clobber old files at the same time.\n"
 msgstr ""
 "Không thể cùng một lúc đánh dấu thời gian và không ghi đè tập tin cũ.\n"
 
-#: src/main.c:1270
+#: src/main.c:1603
 #, c-format
 msgid "Cannot specify both --inet4-only and --inet6-only.\n"
 msgstr ""
 "Không thể chỉ ra đồng thời cả hai tùy chọn --inet4-only và --inet6-only.\n"
 
-#: src/main.c:1280
+#: src/main.c:1613
 msgid ""
-"Cannot specify both -k and -O if multiple URLs are given, or in combination\n"
+"Cannot specify both -k or --convert-file-only and -O if multiple URLs are "
+"given, or in combination\n"
 "with -p or -r. See the manual for details.\n"
 "\n"
 msgstr ""
-"Không thể xác định cả hai -k và -O với nhiều địa chỉ URL, hoặc dùng kèm\n"
+"Không chỉ đinh cả hai -k hay --convert-file-only và -O với nhiều địa chỉ "
+"URL, hoặc dùng kèm\n"
 "với -p hay -r. Xem sổ tay để biết chi tiết.\n"
 
-#: src/main.c:1289
+#: src/main.c:1622
 msgid ""
 "WARNING: combining -O with -r or -p will mean that all downloaded content\n"
 "will be placed in the single file you specified.\n"
@@ -2499,7 +2819,7 @@ msgstr ""
 "CẢNH BÁO: tổ hợp tùy chọn “-O” với “-r” hay “-p” gây ra\n"
 "tất cả nội dung đã tải lên được đặt vào tập tin riêng lẻ bạn đã chỉ ra.\n"
 
-#: src/main.c:1295
+#: src/main.c:1628
 msgid ""
 "WARNING: timestamping does nothing in combination with -O. See the manual\n"
 "for details.\n"
@@ -2509,12 +2829,12 @@ msgstr ""
 "Xem sổ tay để tìm chi tiết.\n"
 "\n"
 
-#: src/main.c:1304
+#: src/main.c:1637
 #, c-format
 msgid "File `%s' already there; not retrieving.\n"
 msgstr "Tập tin “%s” đã có ở đây nên không nhận lại nữa.\n"
 
-#: src/main.c:1315
+#: src/main.c:1648
 #, c-format
 msgid ""
 "WARC output does not work with --no-clobber, --no-clobber will be disabled.\n"
@@ -2522,7 +2842,7 @@ msgstr ""
 "Kết xuất WARC không làm việc với tùy chọn --no-clobber, --no-clobber sẽ bị "
 "tắt đi.\n"
 
-#: src/main.c:1322
+#: src/main.c:1655
 #, c-format
 msgid ""
 "WARC output does not work with timestamping, timestamping will be disabled.\n"
@@ -2530,62 +2850,72 @@ msgstr ""
 "Kết xuất WARC không làm việc với tùy chọn timestamping, timestamping sẽ bị "
 "tắt đi.\n"
 
-#: src/main.c:1329
+#: src/main.c:1662
 #, c-format
 msgid "WARC output does not work with --spider.\n"
 msgstr "Kết xuất WARC không làm việc với tùy chọn --spider.\n"
 
-#: src/main.c:1335
-#, fuzzy, c-format
+#: src/main.c:1668
+#, c-format
 msgid ""
 "WARC output does not work with --continue or --start-pos, they will be "
 "disabled.\n"
 msgstr ""
-"Kết xuất WARC không làm việc với tùy chọn --continue, --continue sẽ bị tắt "
-"đi.\n"
+"Kết xuất WARC không làm việc với tùy chọn --continue hay --start-pos, chúng "
+"sẽ bị tắt đi.\n"
 
-#: src/main.c:1343
+#: src/main.c:1676
 #, c-format
 msgid ""
 "Digests are disabled; WARC deduplication will not find duplicate records.\n"
 msgstr ""
-"Tóm lược (băm) bị tắt đi; WARC sẽ không tìm những bản ghi trùng nhau.\n"
+"Tóm lược (mã băm) bị tắt đi; WARC sẽ không tìm những bản ghi trùng nhau.\n"
 
-#: src/main.c:1355
+#: src/main.c:1697
+#, fuzzy, c-format
+msgid ""
+"Compression does not work with --continue or --start-pos, they will be "
+"disabled.\n"
+msgstr ""
+"Kết xuất WARC không làm việc với tùy chọn --continue hay --start-pos, chúng "
+"sẽ bị tắt đi.\n"
+
+#: src/main.c:1708
 #, c-format
 msgid "Cannot specify both --ask-password and --password.\n"
 msgstr ""
 "Không thể chỉ ra đồng thời cả hai tùy chọn “--ask-password” và “--"
 "password”.\n"
 
-#: src/main.c:1363
+#: src/main.c:1716
 #, c-format
 msgid ""
 "Specifying both --start-pos and --continue is not recommended; --continue "
 "will be disabled.\n"
 msgstr ""
+"Chỉ ra cả --start-pos và --continue là không nên; --continue sẽ bị tắt.\n"
 
-#: src/main.c:1371
+#: src/main.c:1728
 #, c-format
 msgid "%s: missing URL\n"
 msgstr "%s: thiếu URL\n"
 
-#: src/main.c:1412
+#: src/main.c:1769
 #, c-format
 msgid "You cannot specify both --post-data and --post-file.\n"
 msgstr ""
 "Không thể chỉ ra đồng thời cả hai tùy chọn “--post-data” và “--post-file”.\n"
 
-#: src/main.c:1417
+#: src/main.c:1774
 #, c-format
 msgid ""
 "You cannot use --post-data or --post-file along with --method. --method "
-"expects data through --body-data and --body-file options"
+"expects data through --body-data and --body-file options\n"
 msgstr ""
 "Bạn không thể dùng tùy chọn --post-data hay --post-file cùng với --method. --"
-"method cần dữ liệu thông qua các tùy chọn --body-data và --body-file"
+"method cần dữ liệu thông qua các tùy chọn --body-data và --body-file\n"
 
-#: src/main.c:1426
+#: src/main.c:1783
 #, c-format
 msgid ""
 "You must specify a method through --method=HTTPMethod to use with --body-"
@@ -2594,30 +2924,70 @@ msgstr ""
 "Bạn phải chọn phương thức thông qua --method=HTTPMethod hay dùng với --body-"
 "data hoặc --body-file.\n"
 
-#: src/main.c:1432
+#: src/main.c:1789
 #, c-format
 msgid "You cannot specify both --body-data and --body-file.\n"
 msgstr ""
 "Không thể chỉ ra đồng thời cả hai tùy chọn --body-data và --body-file.\n"
 
-#: src/main.c:1484
+#: src/main.c:1841
 #, c-format
 msgid "This version does not have support for IRIs\n"
 msgstr "Phiên bản này không hỗ trợ IRI\n"
 
-#: src/main.c:1584
+#: src/main.c:1951
 #, c-format
-msgid "-k can be used together with -O only if outputting to a regular file.\n"
+msgid ""
+"-k or -r can be used together with -O only if outputting to a regular file.\n"
 msgstr ""
-"“-k” có thể được dùng cùng với “-O” chỉ khi xuất vào một tập tin thông "
-"thường.\n"
+"“-k” hay “-r” chỉ có thể được dùng cùng với “-O” chỉ khi xuất vào một tập "
+"tin thông thường.\n"
 
-#: src/main.c:1689
+#: src/main.c:1957
+#, c-format
+msgid ""
+"--convert-links or --convert-file-only can be used together only if "
+"outputting to a regular file.\n"
+msgstr ""
+"--convert-links hay --convert-file-only chỉ có thể được dùng cùng với nhau "
+"chỉ khi xuất vào một tập tin thông thường.\n"
+
+#: src/main.c:1968
+#, c-format
+msgid "Failed to init libcares\n"
+msgstr "Gặp lỗi khi khởi tạo libcares\n"
+
+#: src/main.c:1974
+#, c-format
+msgid "Failed to init c-ares channel\n"
+msgstr "Gặp lỗi khi khởi tạo kênh c-ares\n"
+
+#: src/main.c:1997
+#, c-format
+msgid "Failed to parse IP address '%s'\n"
+msgstr "Gặp lỗi khi phân tích địa chỉ IP %s\n"
+
+#: src/main.c:2008
+#, c-format
+msgid "Failed to set DNS server(s) '%s' (%d)\n"
+msgstr "Gặp lỗi khi đặt máy phục vụ DNS “%s” (%d).\n"
+
+#: src/main.c:2136
 #, c-format
 msgid "No URLs found in %s.\n"
 msgstr "Không tìm thấy địa chỉ URL trong %s.\n"
 
-#: src/main.c:1710
+#: src/main.c:2152
+#, c-format
+msgid "Unable to parse metalink file %s.\n"
+msgstr "Không thể phân tích cú pháp tập tin metalink %s.\n"
+
+#: src/main.c:2182 src/metalink.c:337
+#, c-format
+msgid "Could not download all resources from %s.\n"
+msgstr "Không thể tải về mọi nguồn tài nguyên từ %s.\n"
+
+#: src/main.c:2209
 #, c-format
 msgid ""
 "FINISHED --%s--\n"
@@ -2628,96 +2998,260 @@ msgstr ""
 "Tổng thời gian: %s\n"
 "Đã tải về: %d tập tin, %s trong %s (%s)\n"
 
-#: src/main.c:1724
+#: src/main.c:2223
 #, c-format
 msgid "Download quota of %s EXCEEDED!\n"
 msgstr "VƯỢT GIỚI HẠN tải về %s!\n"
 
-#: src/mswindows.c:100
+#: src/metalink.c:93
+msgid "-O not supported for metalink download. Ignoring.\n"
+msgstr "-O không được hỗ trợ với tải về metalink. Nên bỏ qua.\n"
+
+#: src/metalink.c:172
+#, c-format
+msgid "[--trust-server-names %s, --directory-prefix=%s]\n"
+msgstr "[--trust-server-names %s, --directory-prefix=%s]\n"
+
+#: src/metalink.c:176
+#, c-format
+msgid "Planned metalink file: %s\n"
+msgstr "Tập tin metalink đã lên kế hoạch: %s\n"
+
+#: src/metalink.c:179
+#, c-format
+msgid "Secured metalink file: %s\n"
+msgstr "Tập tin metalink an ninh: %s\n"
+
+#: src/metalink.c:184
+msgid "Rejecting metalink file. Unsafe name.\n"
+msgstr "Từ chối tập tin metalink. Tên không an toàn.\n"
+
+#: src/metalink.c:238
+#, c-format
+msgid "Processing metaurl %s...\n"
+msgstr "Đang xử lý metaurl %s…\n"
+
+#: src/metalink.c:251
+#, c-format
+msgid "Rejecting metaurl file %s. Unsafe name.\n"
+msgstr "Từ chối tập tin metalink %s. Tên không an toàn.\n"
+
+#: src/metalink.c:268
+#, c-format
+msgid "Failed to download %s. Skipping metaurl.\n"
+msgstr "Gặp lỗi khi tải %s. Nên bỏ qua metaurl.\n"
+
+#: src/metalink.c:285
+#, c-format
+msgid "Unable to parse metaurl file %s.\n"
+msgstr "Không thể phân tích cú pháp tập tin metaurl %s.\n"
+
+#: src/metalink.c:354
+msgid "Metaurls processing returned with error.\n"
+msgstr "Việc xử lý Metaurls trả về lỗi.\n"
+
+#: src/metalink.c:386
+#, c-format
+msgid "Resource type %s not supported, ignoring...\n"
+msgstr "Tài nguyên kiểu %s không được hỗ trợ, nên bỏ qua…\n"
+
+#: src/metalink.c:509
+msgid "Could not open downloaded file.\n"
+msgstr "Không thể mở tập tin đã tải về.\n"
+
+#: src/metalink.c:514
+#, c-format
+msgid "Computing size for %s\n"
+msgstr "Đang tính kích cỡ của %s\n"
+
+#: src/metalink.c:519
+msgid "File size not declared. Skipping check.\n"
+msgstr "Kích thước tập tin chưa được công bố. Nên bỏ qua việc kiểm tra.\n"
+
+#: src/metalink.c:527
+msgid "Could not get downloaded file's size.\n"
+msgstr "Không thể lẫy cỡ của tập tin đã tải về.\n"
+
+#: src/metalink.c:539
+#, c-format
+msgid "Size mismatch for file %s.\n"
+msgstr "Cỡ của tập tin không khớp với tập tin %s.\n"
+
+#: src/metalink.c:547
+msgid "Size matches.\n"
+msgstr "Kích cỡ khớp nhau.\n"
+
+#: src/metalink.c:600
+#, c-format
+msgid "Computing checksum for %s\n"
+msgstr "Đang tính tổng kiểm của %s\n"
+
+#: src/metalink.c:678
+msgid "Checksum matches.\n"
+msgstr "Tổng kiểm khớp nhau.\n"
+
+#: src/metalink.c:683
+#, c-format
+msgid "Checksum mismatch for file %s.\n"
+msgstr "Tổng kiểm không khớp với tập tin %s.\n"
+
+#: src/metalink.c:723
+msgid "Could not open downloaded file for signature verification.\n"
+msgstr "Không thể mở đã tải về để xác thực chữ ký.\n"
+
+#: src/metalink.c:782
+#, c-format
+msgid "GPGME data_new_from_mem: %s\n"
+msgstr "GPGME data_new_from_mem: %s\n"
+
+#: src/metalink.c:794
+#, c-format
+msgid "GPGME op_verify: %s\n"
+msgstr "GPGME op_verify: %s\n"
+
+#: src/metalink.c:807
+msgid "GPGME op_verify_result: NULL\n"
+msgstr "GPGME op_verify_result: NULL\n"
+
+#: src/metalink.c:823
+msgid "Signature validation succeeded.\n"
+msgstr "Việc xác nhận chữ ký đã thành công.\n"
+
+#: src/metalink.c:831
+msgid "Invalid signature. Rejecting resource.\n"
+msgstr "Chữ ký không hợp lệ. Từ chối tài nguyên.\n"
+
+#: src/metalink.c:840
+msgid "Data matches signature, but signature is not trusted.\n"
+msgstr "Dữ liệu khớp với chữ ký, nhưng chữ ký lại không đáng tin.\n"
+
+#: src/metalink.c:867
+msgid "No checksums found.\n"
+msgstr "Không tìm thấy tổng kiểm.\n"
+
+#: src/metalink.c:873
+#, c-format
+msgid "Failed to download %s. Skipping resource.\n"
+msgstr "Gặp lỗi khi tải %s. Nên bỏ qua tài nguyên.\n"
+
+#: src/metalink.c:880
+#, c-format
+msgid "File %s retrieved but size does not match. \n"
+msgstr "Tập tin %s đã được tải về nhưng kích cỡ lại không khớp. \n"
+
+#: src/metalink.c:887
+#, c-format
+msgid "File %s retrieved but checksum does not match. \n"
+msgstr "Tập tin %s đã được tải về nhưng tổng kiểm lại không khớp. \n"
+
+#: src/metalink.c:896
+#, c-format
+msgid "File %s retrieved but signature does not match. \n"
+msgstr "Tập tin %s đã được tải về nhưng chữ ký lại không khớp. \n"
+
+#: src/metalink.c:1115
+#, c-format
+msgid "Renaming %s to %s.\n"
+msgstr "Đang đổi %s thành %s.\n"
+
+#: src/mswindows.c:97
 #, c-format
 msgid "Continuing in background.\n"
 msgstr "Tiếp tục chạy nền.\n"
 
-#: src/mswindows.c:293
+#: src/mswindows.c:290
 #, c-format
 msgid "Continuing in background, pid %lu.\n"
 msgstr "Tiếp tục ở nền, pid %lu.\n"
 
-#: src/mswindows.c:295 src/utils.c:481
+#: src/mswindows.c:292 src/utils.c:510
 #, c-format
 msgid "Output will be written to %s.\n"
 msgstr "Kết quả sẽ được ghi vào %s.\n"
 
-#: src/mswindows.c:327
+#: src/mswindows.c:324
 #, c-format
 msgid "fake_fork_child() failed\n"
 msgstr "fake_fork_child() (giả tạo tiến trình con?) gặp lỗi\n"
 
-#: src/mswindows.c:335
+#: src/mswindows.c:332
 #, c-format
 msgid "fake_fork() failed\n"
 msgstr "fake_fork() gặp lỗi\n"
 
-#: src/mswindows.c:463 src/mswindows.c:470
+#: src/mswindows.c:460 src/mswindows.c:467
 #, c-format
 msgid "%s: Couldn't find usable socket driver.\n"
-msgstr "%s: Không tìm thấy trình điều khiển socket dùng được.\n"
+msgstr "%s: Không tìm thấy trình điều khiển ổ cắm dùng được.\n"
 
-#: src/mswindows.c:650
+#: src/mswindows.c:647
 #, c-format
 msgid "ioctl() failed.  The socket could not be set as blocking.\n"
-msgstr "ioctl() gặp lỗi.  Socket không thể được đặt như là kiểu khối.\n"
+msgstr "ioctl() gặp lỗi.  Ổ cắm không thể được đặt như là kiểu khối.\n"
 
-#: src/netrc.c:354
+#: src/netrc.c:366
 #, c-format
 msgid "%s: %s:%d: warning: %s token appears before any machine name\n"
 msgstr "%s: %s:%d: cảnh báo: hiệu bài %s xuất hiện trước bất kỳ tên máy nào\n"
 
-#: src/netrc.c:385
+#: src/netrc.c:407
 #, c-format
 msgid "%s: %s:%d: unknown token \"%s\"\n"
 msgstr "%s: %s:%d: không rõ hiệu bài “%s”\n"
 
-#: src/netrc.c:448
+#: src/netrc.c:470
 #, c-format
 msgid "Usage: %s NETRC [HOSTNAME]\n"
 msgstr "Cách dùng: %s NETRC [TÊN MÁY]\n"
 
-#: src/netrc.c:466
+#: src/netrc.c:488
 #, c-format
 msgid "%s: cannot stat %s: %s\n"
 msgstr "%s: không thể lấy thống kê (stat) %s: %s\n"
 
-#: src/openssl.c:118
+#: src/openssl.c:123
 msgid "WARNING: using a weak random seed.\n"
 msgstr "CẢNH BÁO: sử dụng mầm số ngẫu nhiên yếu.\n"
 
-#: src/openssl.c:189
+#: src/openssl.c:195
 msgid "Could not seed PRNG; consider using --random-file.\n"
 msgstr "Không thể tạo mầm PRNG, coi như sử dụng --random-file.\n"
 
-#: src/openssl.c:630
+#: src/openssl.c:245
+msgid "Your OpenSSL version is too old to support TLSv1.1\n"
+msgstr "Phiên bản OpenSSL của bạn quá cũ để hỗ trợ TLSv1.1\n"
+
+#: src/openssl.c:249
+msgid "Your OpenSSL version is too old to support TLSv1.2\n"
+msgstr "Phiên bản OpenSSL của bạn quá cũ để hỗ trợ TLSv1.2\n"
+
+#: src/openssl.c:254
+#, c-format
+msgid "OpenSSL: unimplemented 'secure-protocol' option value %d\n"
+msgstr "OpenSSL: giá trị tùy chọn “secure-protocol” chưa được thực hiện %d\n"
+
+#: src/openssl.c:798
 #, c-format
 msgid "%s: cannot verify %s's certificate, issued by %s:\n"
 msgstr "%s: không thể thẩm tra chứng nhận của %s, cấp bởi %s:\n"
 
-#: src/openssl.c:639
+#: src/openssl.c:809
 msgid "  Unable to locally verify the issuer's authority.\n"
 msgstr "  Không thể thẩm tra cục bộ quyền của nhà cấp.\n"
 
-#: src/openssl.c:644
+#: src/openssl.c:814
 msgid "  Self-signed certificate encountered.\n"
 msgstr "  Gặp chứng nhận tự ký.\n"
 
-#: src/openssl.c:647
+#: src/openssl.c:817
 msgid "  Issued certificate not yet valid.\n"
 msgstr "  Chứng nhận đã cấp nhưng chưa hợp lệ.\n"
 
-#: src/openssl.c:650
+#: src/openssl.c:820
 msgid "  Issued certificate has expired.\n"
 msgstr "  Chứng nhận đã cấp cũng đã hết hạn dùng.\n"
 
-#: src/openssl.c:735
+#: src/openssl.c:908
 #, c-format
 msgid ""
 "%s: no certificate subject alternative name matches\n"
@@ -2726,14 +3260,15 @@ msgstr ""
 "%s: không có tên thay thế của chủ thể chứng nhận mà\n"
 "\ttương ứng với tên máy yêu cầu %s.\n"
 
-#: src/openssl.c:752
+#: src/openssl.c:927
 #, c-format
 msgid ""
 "    %s: certificate common name %s doesn't match requested host name %s.\n"
 msgstr ""
-"    %s: tên chung của chứng nhận %s không tương ứng tên máy yêu cầu %s.\n"
+"    %s: tên thường gọi của chứng nhận %s không tương ứng tên máy yêu cầu "
+"%s.\n"
 
-#: src/openssl.c:784
+#: src/openssl.c:959
 #, c-format
 msgid ""
 "    %s: certificate common name is invalid (contains a NUL character).\n"
@@ -2745,12 +3280,12 @@ msgstr ""
 "vệ\n"
 "    (do vậy, máy không phải là %s thật).\n"
 
-#: src/openssl.c:802
+#: src/openssl.c:984
 #, c-format
 msgid "To connect to %s insecurely, use `--no-check-certificate'.\n"
 msgstr "Để kết nối không an toàn tới %s, hãy dùng “-no-check-certificate”.\n"
 
-#: src/progress.c:244
+#: src/progress.c:245
 #, c-format
 msgid ""
 "\n"
@@ -2759,65 +3294,65 @@ msgstr ""
 "\n"
 "%*s[ nhảy qua %sK ]"
 
-#: src/progress.c:465
+#: src/progress.c:466
 #, c-format
 msgid "Invalid dot style specification %s; leaving unchanged.\n"
 msgstr "Lỗi trong định dạng dấu chấm %s, để nguyên.\n"
 
 #. TRANSLATORS: "ETA" is English-centric, but this must
 #. be short, ideally 3 chars.  Abbreviate if necessary.
-#: src/progress.c:854
-#, fuzzy, c-format
-msgid "   eta %s"
-msgstr "  eta %s"
+#: src/progress.c:858
+#, c-format
+msgid "    eta %s"
+msgstr "    cần %s"
 
-#: src/progress.c:1150
-msgid "   in "
-msgstr "   trong "
+#: src/progress.c:1148
+msgid "    in "
+msgstr "    trong "
 
 #: src/ptimer.c:158
 #, c-format
 msgid "Cannot get REALTIME clock frequency: %s\n"
 msgstr "Không thể lấy tần số đồng hồ THỜI GIAN THỰC: %s\n"
 
-#: src/recur.c:434
+#: src/recur.c:514
 #, c-format
 msgid "Removing %s since it should be rejected.\n"
 msgstr "Xóa %s vì nó sẽ bị từ chối.\n"
 
-#: src/res.c:391
+#: src/res.c:392
 #, c-format
 msgid "Cannot open %s: %s"
 msgstr "Không thể mở %s: %s"
 
-#: src/res.c:550
+#: src/res.c:551
 msgid "Loading robots.txt; please ignore errors.\n"
-msgstr "Nạp robots.txt; xin hãy bỏ qua các thông báo lỗi.\n"
+msgstr "Đang tải robots.txt; xin hãy bỏ qua các thông báo lỗi.\n"
 
-#: src/retr.c:768
+#: src/retr.c:913
 #, c-format
 msgid "Error parsing proxy URL %s: %s.\n"
 msgstr "Lỗi phân tích URL của proxy %s: %s.\n"
 
-#: src/retr.c:778
+#: src/retr.c:925
 #, c-format
 msgid "Error in proxy URL %s: Must be HTTP.\n"
 msgstr "Lỗi trong URL của proxy %s: Phải là HTTP.\n"
 
-#: src/retr.c:879
+#: src/retr.c:1054
 #, c-format
 msgid "%d redirections exceeded.\n"
-msgstr "Vượt quá giới hạn %d lần chuyển hướng.\n"
+msgstr "Vượt quá mức giới hạn %d lần chuyển hướng.\n"
 
-#: src/retr.c:1126
+#: src/retr.c:1318
 msgid ""
 "Giving up.\n"
 "\n"
 msgstr ""
-"Bỏ cuộc.\n"
+"Chịu thua.\n"
 "\n"
 
-#: src/retr.c:1126
+#: src/retr.c:1318
 msgid ""
 "Retrying.\n"
 "\n"
@@ -2825,111 +3360,138 @@ msgstr ""
 "Đang thử lại.\n"
 "\n"
 
-#: src/spider.c:75
-msgid ""
-"Found no broken links.\n"
-"\n"
-msgstr ""
-"Không tìm thấy liên kết hỏng.\n"
-"\n"
-
-#: src/spider.c:82
-#, c-format
-msgid ""
-"Found %d broken link.\n"
-"\n"
-msgid_plural ""
-"Found %d broken links.\n"
-"\n"
-msgstr[0] ""
-"Tìm thấy %d liên kết hỏng.\n"
-"\n"
-
-#: src/url.c:639
+#: src/url.c:676
 msgid "No error"
 msgstr "Không có lỗi"
 
-#: src/url.c:641
+#: src/url.c:678
 #, c-format
 msgid "Unsupported scheme %s"
 msgstr "Lược đồ không được hỗ trợ %s"
 
-#: src/url.c:643
+#: src/url.c:680
 msgid "Scheme missing"
 msgstr "Thiếu lược đồ"
 
-#: src/url.c:645
+#: src/url.c:682
 msgid "Invalid host name"
 msgstr "Sai tên máy"
 
-#: src/url.c:647
+#: src/url.c:684
 msgid "Bad port number"
 msgstr "Sai số hiệu cổng"
 
-#: src/url.c:649
+#: src/url.c:686
 msgid "Invalid user name"
 msgstr "Sai tên người dùng"
 
-#: src/url.c:651
+#: src/url.c:688
 msgid "Unterminated IPv6 numeric address"
 msgstr "Địa chỉ số IPv6 không có giới hạn"
 
-#: src/url.c:653
+#: src/url.c:690
 msgid "IPv6 addresses not supported"
 msgstr "Không hỗ trợ địa chỉ IPv6"
 
-#: src/url.c:655
+#: src/url.c:692
 msgid "Invalid IPv6 numeric address"
 msgstr "Sai địa chỉ IPv6 dạng số"
 
-#: src/url.c:959
+#: src/url.c:1008
 msgid "HTTPS support not compiled in"
 msgstr "Chưa biên dịch để hỗ trợ HTTPS"
 
-#: src/utils.c:116
+#: src/url.c:1603
+#, fuzzy
+msgid "Unconvertable multibyte sequence encountered\n"
+msgstr "Gặp chuỗi byte không hoàn chỉnh hoặc không hợp lệ\n"
+
+#: src/utils.c:130
 #, c-format
 msgid "%s: %s: Failed to allocate enough memory; memory exhausted.\n"
-msgstr "%s: %s: Không cấp pháp được đủ bộ nhớ; cạn bộ nhớ.\n"
+msgstr "%s: %s: Gặp lỗi khi cấp pháp đủ bộ nhớ; do hết bộ nhớ.\n"
 
-#: src/utils.c:122
+#: src/utils.c:136
 #, c-format
 msgid "%s: %s: Failed to allocate %ld bytes; memory exhausted.\n"
 msgstr "%s: %s: Gặp lỗi khi cấp phát %ld byte; do hết bộ nhớ.\n"
 
-#: src/utils.c:336
+#: src/utils.c:356
 #, c-format
-msgid "%s: aprintf: text buffer is too big (%ld bytes), aborting.\n"
-msgstr "%s: aprintf: vùng đệm văn bản quá lớn (%ld byte), nên hủy bỏ.\n"
+msgid "%s: aprintf: text buffer is too big (%d bytes), aborting.\n"
+msgstr "%s: aprintf: vùng đệm văn bản quá lớn (%d byte), nên hủy bỏ.\n"
 
-#: src/utils.c:479
+#: src/utils.c:508
 #, c-format
 msgid "Continuing in background, pid %d.\n"
 msgstr "Tiếp tục chạy nền, pid %d.\n"
 
-#: src/utils.c:555
+#: src/utils.c:584
 #, c-format
 msgid "Failed to unlink symlink %s: %s\n"
 msgstr "Bỏ liên kết mềm %s không thành công: %s\n"
 
-#: src/utils.c:2273 src/utils.c:2292
+#: src/utils.c:884
+#, fuzzy, c-format
+msgid "Failed to Fopen file %s\n"
+msgstr "Gặp lỗi khi khởi tạo libcares\n"
+
+#: src/utils.c:890
+#, fuzzy, c-format
+msgid "Failed to get FD for file %s\n"
+msgstr "Gặp lỗi khi phân quyền cho %s.\n"
+
+#: src/utils.c:897
+#, fuzzy, c-format
+msgid "Failed to stat file %s, (check permissions)\n"
+msgstr "Gặp lỗi khi phân quyền cho %s.\n"
+
+#: src/utils.c:907
+#, c-format
+msgid "File %s changed since the last check. Security check failed."
+msgstr ""
+
+#: src/utils.c:942
+#, fuzzy, c-format
+msgid "Failed to open file %s, reason :%s\n"
+msgstr "Gặp lỗi khi phân tích địa chỉ IP %s\n"
+
+#: src/utils.c:948
+#, fuzzy, c-format
+msgid "Failed to stat file %s, error: %s\n"
+msgstr "Gặp lỗi khi phân quyền cho %s.\n"
+
+#: src/utils.c:957
+#, c-format
+msgid ""
+"Trying to open file %s but it changed since last check. Security check "
+"failed."
+msgstr ""
+
+#: src/utils.c:2461 src/utils.c:2480
 #, c-format
 msgid "Invalid regular expression %s, %s\n"
 msgstr "Biểu thức chính qui không hợp lệ %s, %s\n"
 
-#: src/utils.c:2315 src/utils.c:2339
+#: src/utils.c:2504 src/utils.c:2528
 #, c-format
 msgid "Error while matching %s: %d\n"
 msgstr "Gặp lỗi khi so khớp %s: %d\n"
 
-#: src/warc.c:222
+#: src/utils.c:2821
+#, c-format
+msgid "Skipping key with wrong size (%d/%d): %s\n"
+msgstr ""
+
+#: src/warc.c:223
 msgid "Error opening GZIP stream to WARC file.\n"
 msgstr "Lỗi mở dòng dữ liệu GZIP tới tập tin WARC.\n"
 
-#: src/warc.c:710
+#: src/warc.c:798
 msgid "Error writing warcinfo record to WARC file.\n"
 msgstr "Lỗi ghi bản ghi warcinfo vào tập tin WARC.\n"
 
-#: src/warc.c:771
+#: src/warc.c:861
 #, c-format
 msgid ""
 "Opening WARC file %s.\n"
@@ -2938,24 +3500,24 @@ msgstr ""
 "Đang mở tập tin WARC %s.\n"
 "\n"
 
-#: src/warc.c:777
+#: src/warc.c:867
 #, c-format
 msgid "Error opening WARC file %s.\n"
 msgstr "Gặp lỗi trong khi mở tập tin WARC %s.\n"
 
-#: src/warc.c:974
+#: src/warc.c:1064
 msgid "CDX file does not list original urls. (Missing column 'a'.)\n"
 msgstr "Tập tin CDX không liệt kê url gốc. (Thiếu cột “a”.)\n"
 
-#: src/warc.c:977
+#: src/warc.c:1067
 msgid "CDX file does not list checksums. (Missing column 'k'.)\n"
 msgstr "Tập tin CDX không liệt kê mã băm tổng kiểm tra. (Thiếu cột “k”.)\n"
 
-#: src/warc.c:980
+#: src/warc.c:1070
 msgid "CDX file does not list record ids. (Missing column 'u'.)\n"
 msgstr "Tập tin CDX không liệt kê id bản ghi. (Thiếu cột “u”.)\n"
 
-#: src/warc.c:1002
+#: src/warc.c:1094
 #, c-format
 msgid ""
 "Loaded %d record from CDX.\n"
@@ -2967,46 +3529,69 @@ msgstr[0] ""
 "Đã tải %d bản ghi từ CDX.\n"
 "\n"
 
-#: src/warc.c:1047
+#: src/warc.c:1140
 #, c-format
 msgid "Could not read CDX file %s for deduplication.\n"
 msgstr "Không thể đọc tập tin CDX %s cho tái nhân bản.\n"
 
-#: src/warc.c:1057
+#: src/warc.c:1150
 msgid "Could not open temporary WARC manifest file.\n"
 msgstr "Không thể mở tập tin kê khai tạm thời WARC.\n"
 
-#: src/warc.c:1067
+#: src/warc.c:1160
 msgid "Could not open temporary WARC log file.\n"
 msgstr "Không thể ghi vào tập tin nhật ký tạm thời WARC.\n"
 
-#: src/warc.c:1076
+#: src/warc.c:1169
 msgid "Could not open WARC file.\n"
 msgstr "Không thể mở tập tin WARC.\n"
 
-#: src/warc.c:1085
+#: src/warc.c:1178
 msgid "Could not open CDX file for output.\n"
 msgstr "Không thể mở tệp tin CDX cho đầu ra.\n"
 
-#: src/warc.c:1113
+#: src/warc.c:1208
 msgid "Could not open temporary WARC file.\n"
 msgstr "Không thể mở tập tin tạm thời WARC.\n"
 
-#: src/warc.c:1370
+#: src/warc.c:1476
 msgid "Found exact match in CDX file. Saving revisit record to WARC.\n"
 msgstr ""
 "Tìm thấy khớp hoàn toàn trong tập tin CDX. Đang ghi bản ghi truy cập lại vào "
 "WARC.\n"
 
-#~ msgid "Authorization failed.\n"
-#~ msgstr "Xác thực không thành công.\n"
+#~ msgid ""
+#~ "Found no broken links.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "Không tìm thấy liên kết hỏng.\n"
+#~ "\n"
 
 #~ msgid ""
-#~ "       --metalink-file       download URLs found in local or external "
-#~ "metalink FILE.\n"
+#~ "Found %d broken link.\n"
+#~ "\n"
+#~ msgid_plural ""
+#~ "Found %d broken links.\n"
+#~ "\n"
+#~ msgstr[0] ""
+#~ "Tìm thấy %d liên kết hỏng.\n"
+#~ "\n"
+
+#~ msgid "Invalid UTF-8 sequence: %s\n"
+#~ msgstr "Chuỗi UTF-8 không hợp lệ: %s\n"
+
+#~ msgid "idn_decode failed (%d): %s\n"
+#~ msgstr "idn_decode bị lỗi (%d): %s\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "%s received.\n"
 #~ msgstr ""
-#~ "       --metalink-file       tải các URL tìm thấy trong TẬP_TIN metalink "
-#~ "cục bộ hay bên ngoài.\n"
+#~ "\n"
+#~ "Đã nhận %s.\n"
+
+#~ msgid "Authorization failed.\n"
+#~ msgstr "Xác thực không thành công.\n"
 
 #~ msgid ""
 #~ "       --retries                 specify the number of retries for a "

@@ -1,3 +1,68 @@
+NEWS for the Nettle 3.2 release
+
+	Bug fixes:
+
+	* The SHA3 implementation is updated according to the FIPS 202
+	  standard. It is not interoperable with earlier versions of
+	  Nettle. Thanks to Nikos Mavrogiannopoulos. To easily
+	  differentiate at compile time, sha3.h defines the constant
+	  NETTLE_SHA3_FIPS202.
+
+	* Fix corner-case carry propagation bugs affecting elliptic
+	  curve operations on the curves secp_256r1 and secp_384r1 on
+	  certain platforms, including x86_64. Reported by Hanno Böck.
+
+	New features:
+
+	* New functions for RSA private key operations, identified by
+	  the "_tr" suffix, with better resistance to side channel
+	  attacks and to hardware or software failures which could
+	  break the CRT optimization. See the Nettle manual for
+	  details. Initial patch by Nikos Mavrogiannopoulos.
+
+	* New functions nettle_version_major, nettle_version_minor, as
+	  a run-time variant of the compile-time constants
+	  NETTLE_VERSION_MAJOR and NETTLE_VERSION_MINOR.
+
+	Optimizations:
+
+	* New ARM Neon implementation of the chacha stream cipher.
+
+	Miscellaneous:
+
+	* ABI detection on mips, with improved default libdir
+	  location. Contributed by Klaus Ziegler.
+
+	* Fixes for ARM assembly syntax, to work better with the clang
+	  assembler. Thanks to Jukka Ukkonen.
+
+	* Disabled use of ifunc relocations for fat builds, to fix
+	  problems most easily triggered by using dlopen RTLD_NOW.
+
+	The shared library names are libnettle.so.6.2 and
+	libhogweed.so.4.2, with sonames still libnettle.so.6 and
+	libhogweed.so.4. It is intended to be fully binary compatible
+	with nettle-3.1.
+
+NEWS for the Nettle 3.1.1 release
+
+	This release fixes a couple of non-critical bugs.
+
+	Bug fixes:
+
+	* By accident, nettle-3.1 disabled the assembly code for the
+	  secp_224r1 and secp_521r1 elliptic curves on all x86_64
+	  configurations, making signature operations on those curves
+	  10%-30% slower. This code is now re-enabled.
+
+	* The x86_64 assembly implementation of gcm hashing has been
+          fixed to work with the Sun/Oracle assembler.
+
+	The shared library names are libnettle.so.6.1 and
+	libhogweed.so.4.1, with sonames still libnettle.so.6 and
+	libhogweed.so.4. It is intended to be fully binary compatible
+	with nettle-3.1.
+
 NEWS for the Nettle 3.1 release
 
 	This release adds a couple of new features.

@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 
-#   Copyright (C) 1999, 2000, 2001, 2003, 2007, 2009, 2010, 2011 Free
-#   Software Foundation, Inc.
+#   Copyright (C) 1999, 2000, 2001, 2003, 2007, 2009, 2010, 2011, 2015
+#   Free Software Foundation, Inc.
 
 # This file is part of GCC.
 
@@ -314,6 +314,8 @@ die "No filename or title\n" unless defined $fn && defined $tl;
 
 $sects{NAME} = "$fn \- $tl\n";
 $sects{FOOTNOTES} .= "=back\n" if exists $sects{FOOTNOTES};
+
+print "=encoding utf-8\n\n";
 
 for $sect (qw(NAME SYNOPSIS DESCRIPTION OPTIONS ENVIRONMENT EXITSTATUS
            FILES BUGS NOTES FOOTNOTES SEEALSO AUTHOR COPYRIGHT)) {

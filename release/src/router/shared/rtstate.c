@@ -6,7 +6,7 @@
 #include <bcmdevs.h>
 #include <shutils.h>
 #include <shared.h>
-#include <rtstate.h>
+
 
 /* keyword for rc_support 	*/
 /* ipv6 mssid update parental 	*/
@@ -32,45 +32,149 @@ void add_rc_support(char *feature)
 		nvram_set("rc_support", feature);
 }
 
+void del_rc_support(char *features)
+{
+	char *tmp = nvram_safe_get("rc_support");
+	char *rcsupport = NULL;
+
+	if (!(features && *features))
+		return;
+
+	rcsupport = malloc(strlen(tmp) + 1);
+
+	if (rcsupport == NULL) {
+		_dprintf("del_rc_support fail\n");
+		return;
+	}
+	memset(rcsupport, 0, strlen(tmp) + 1);
+	strncpy(rcsupport, tmp, strlen(tmp));
+
+	if (*rcsupport) {
+		char word[256];
+		char *next;
+
+		foreach(word,features,next) {
+			remove_from_list(word, rcsupport, strlen(tmp) + 1);
+		}
+
+		nvram_set("rc_support", rcsupport);
+		free(rcsupport);
+	}
+	else{
+		_dprintf("del_rc_support fail\n");
+	}
+}
+
+int get_wan_state(int unit){
+	char tmp[100], prefix[16];
+
+	snprintf(prefix, 16, "wan%d_", unit);
+
+	return nvram_get_int(strcat_r(prefix, "state_t", tmp));
+}
+
+int get_wan_sbstate(int unit){
+	char tmp[100], prefix[16];
+
+	snprintf(prefix, 16, "wan%d_", unit);
+
+	return nvram_get_int(strcat_r(prefix, "sbstate_t", tmp));
+}
+
+int get_wan_auxstate(int unit){
+	char tmp[100], prefix[16];
+
+	snprintf(prefix, 16, "wan%d_", unit);
+
+	return nvram_get_int(strcat_r(prefix, "auxstate_t", tmp));
+}
+
+char *link_wan_nvname(int unit, char *buf, int size){
+	if(buf == NULL)
+		return NULL;
+
+	if(unit == WAN_UNIT_FIRST)
+		snprintf(buf, size, "link_wan");
+	else
+		snprintf(buf, size, "link_wan%d", unit);
+
+	return buf;
+}
+
+int is_internet_connect(int unit){
+	int link_internet, wan_auxstate;
+
+	if(!is_wan_connect(unit))
+		return 0;
+
+	if(nvram_match("wans_mode", "lb")){
+		link_internet = nvram_get_int("link_internet");
+		if(link_internet == 2)
+			return 1;
+	}
+	else{
+		wan_auxstate = get_wan_auxstate(unit);
+		if(wan_auxstate == WAN_AUXSTATE_NONE)
+			return 1;
+	}
+
+	return 0;
+}
+
 int is_wan_connect(int unit){
-	char tmp[100], prefix[]="wanXXXXXX_";
 	int wan_state, wan_sbstate, wan_auxstate;
 
-	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+	if(!is_phy_connect(unit))
+		return 0;
 
-	wan_state = nvram_get_int(strcat_r(prefix, "state_t", tmp));
-	wan_sbstate = nvram_get_int(strcat_r(prefix, "sbstate_t", tmp));
-	wan_auxstate = nvram_get_int(strcat_r(prefix, "auxstate_t", tmp));
+	wan_state = get_wan_state(unit);
+	wan_sbstate = get_wan_sbstate(unit);
+	wan_auxstate = get_wan_auxstate(unit);
 
-	if(wan_state == 2 && wan_sbstate == 0 &&
-			(wan_auxstate == 0 || wan_auxstate == 2)
+	if(wan_state == WAN_STATE_CONNECTED && wan_sbstate == WAN_STOPPED_REASON_NONE &&
+			(wan_auxstate == WAN_AUXSTATE_NONE || wan_auxstate == WAN_AUXSTATE_NO_INTERNET_ACTIVITY)
 			)
 		return 1;
 	else
 		return 0;
 }
 
+// auxstate will be reset by update_wan_state(), but wanduck cannot set it soon sometimes.
+// only link_wan will be safe.
 int is_phy_connect(int unit){
-	char tmp[100], prefix[]="wanXXXXXX_";
-	int wan_auxstate;
+	char prefix[sizeof("link_wanXXXXXX")], *ptr;
+	int link_wan;
 
-	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+	link_wan_nvname(unit, prefix, sizeof(prefix));
 
-	wan_auxstate = nvram_get_int(strcat_r(prefix, "auxstate_t", tmp));
+	ptr = nvram_safe_get(prefix);
+	if(strlen(ptr) > 0){
+		link_wan = atoi(ptr);
 
-	if(wan_auxstate == 0 || wan_auxstate == 2)
+		if(link_wan)
+			return 1;
+		else
+			return 0;
+	}
+	else
+#ifdef RTCONFIG_USB_MODEM
+	if(dualwan_unit__usbif(unit))
+		return 1;
+	else
+#endif
+		return get_wanports_status(unit);
+}
+
+int is_ip_conflict(int unit){
+	int wan_state, wan_sbstate;
+
+	wan_state = get_wan_state(unit);
+	wan_sbstate = get_wan_sbstate(unit);
+
+	if(wan_state == WAN_STATE_STOPPED && wan_sbstate == WAN_STOPPED_REASON_INVALID_IPADDR)
 		return 1;
 	else
 		return 0;
-}
-
-int get_wan_state(int unit)
-{
-	char tmp[100], prefix[]="wanXXXXXX_";
-
-	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-
-	return nvram_get_int(strcat_r(prefix, "state_t", tmp));
 }
 
 // get wan_unit from device ifname or hw device ifname
@@ -223,13 +327,20 @@ char *get_wan6_ifname(int unit)
 }
 #endif
 
+int get_ports_status(unsigned int port_mask)
+{
+#if defined(RTCONFIG_QCA) && defined(RTCONFIG_SOC_IPQ40XX)
+	return rtkswitch_Port_phyStatus(port_mask);
+#else
+	return -1;
+#endif
+}
+
 // OR all lan port status
 int get_lanports_status(void)
 {
 	return lanport_status();
 }
-
-extern int wanport_status(int wan_unit);
 
 // OR all wan port status
 int get_wanports_status(int wan_unit)
@@ -317,6 +428,30 @@ wan_primary_ifunit(void)
 	}
 
 	return 0;
+}
+
+int
+wan_primary_ifunit_ipv6(void)
+{
+#ifdef RTCONFIG_DUALWAN
+#if 0
+	int unit = wan_primary_ifunit();
+
+	if (!strstr(nvram_safe_get("wans_dualwan"), "none")
+	    && !strcmp(nvram_safe_get("wans_mode"), "lb")
+#ifdef RTCONFIG_IPV6
+	    && get_ipv6_service_by_unit(unit) == IPV6_DISABLED
+#endif
+	)
+		return (1 - unit);
+
+	return unit;
+#else
+	return 0;
+#endif
+#else
+	return wan_primary_ifunit();
+#endif
 }
 
 #ifdef RTCONFIG_MEDIA_SERVER
@@ -463,7 +598,7 @@ int get_usb_port_host(const char *usb_port)
 }
 #endif
 
-#ifdef RTCONFIG_DUALWAN
+#if defined(RTCONFIG_DUALWAN)
 void set_wanscap_support(char *feature)
 {
 	nvram_set("wans_cap", feature);
@@ -485,6 +620,7 @@ void add_wanscap_support(char *feature)
 int get_wans_dualwan(void) 
 {
 	int caps=0;
+	char word[80], *next;
 	char *wancaps = nvram_get("wans_dualwan");
 
 	if(wancaps == NULL)
@@ -497,12 +633,15 @@ int get_wans_dualwan(void)
 		wancaps = DEF_SECOND_WANIF;
 	}
 
-	if(strstr(wancaps, "lan")) caps |= WANSCAP_LAN;
-	if(strstr(wancaps, "2g")) caps |= WANSCAP_2G;
-	if(strstr(wancaps, "5g")) caps |= WANSCAP_5G;
-	if(strstr(wancaps, "usb")) caps |= WANSCAP_USB;
-	if(strstr(wancaps, "dsl")) caps |= WANSCAP_DSL;
-	if(strstr(wancaps, "wan")) caps |= WANSCAP_WAN;
+	foreach(word, wancaps, next) {
+		if (!strcmp(word,"lan")) caps |= WANSCAP_LAN;
+		if (!strcmp(word,"2g")) caps |= WANSCAP_2G;
+		if (!strcmp(word,"5g")) caps |= WANSCAP_5G;
+		if (!strcmp(word,"usb")) caps |= WANSCAP_USB;
+		if (!strcmp(word,"dsl")) caps |= WANSCAP_DSL;
+		if (!strcmp(word,"wan")) caps |= WANSCAP_WAN;
+		if (!strcmp(word,"wan2")) caps |= WANSCAP_WAN2;
+	}
 
 	return caps;
 }
@@ -521,8 +660,8 @@ int get_dualwan_by_unit(int unit)
 #ifdef RTCONFIG_MULTICAST_IPTV
 	if(unit == WAN_UNIT_IPTV)
 		return WAN_UNIT_IPTV;
-        if(unit == WAN_UNIT_VOIP)
-                return WAN_UNIT_VOIP;
+	if(unit == WAN_UNIT_VOIP)
+		return WAN_UNIT_VOIP;
 #endif
 
 	i = 0;
@@ -531,15 +670,31 @@ int get_dualwan_by_unit(int unit)
 			if (!strcmp(word,"lan")) return WANS_DUALWAN_IF_LAN;
 			if (!strcmp(word,"2g")) return WANS_DUALWAN_IF_2G;
 			if (!strcmp(word,"5g")) return WANS_DUALWAN_IF_5G;
-			if (!strcmp(word,"usb")) return WANS_DUALWAN_IF_USB;	
+			if (!strcmp(word,"usb")) return WANS_DUALWAN_IF_USB;
 			if (!strcmp(word,"dsl")) return WANS_DUALWAN_IF_DSL;
 			if (!strcmp(word,"wan")) return WANS_DUALWAN_IF_WAN;
+			if (!strcmp(word,"wan2")) return WANS_DUALWAN_IF_WAN2;
+#ifdef RTCONFIG_USB_MULTIMODEM
+			if (!strcmp(word,"usb2")) return WANS_DUALWAN_IF_USB2;
+#endif
 			return WANS_DUALWAN_IF_NONE;
 		}
 		i++;
 	}
 
 	return WANS_DUALWAN_IF_NONE;
+}
+
+int get_wanunit_by_type(int wan_type){
+	int unit;
+
+	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+		if(get_dualwan_by_unit(unit) == wan_type){
+			return unit;
+		}
+	}
+
+	return WAN_UNIT_NONE;
 }
 
 // imply: unit 0: primary, unit 1: secondary
@@ -552,7 +707,50 @@ int get_dualwan_secondary(void)
 {
 	return get_dualwan_by_unit(1);
 }
-#endif
+
+/**
+ * Return total number of WAN unit.
+ * @return:
+ */
+int get_nr_wan_unit(void)
+{
+	int i, c = 0;
+
+	for (i = WAN_UNIT_FIRST; i < WAN_UNIT_MAX; ++i) {
+		if (get_dualwan_by_unit(i) != WANS_DUALWAN_IF_NONE)
+			c++;
+	}
+
+	return c;
+}
+
+int get_gate_num(void){
+	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
+	char wan_ip[32], wan_gate[32];
+	int unit;
+	int gate_num = 0;
+
+	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){ // Multipath
+		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+		snprintf(wan_ip, sizeof(wan_ip), "%s", nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)));
+		snprintf(wan_gate, sizeof(wan_gate), "%s", nvram_safe_get(strcat_r(prefix, "gateway", tmp)));
+
+		// when wan_down().
+		if(!is_wan_connect(unit))
+			continue;
+
+		if(strlen(wan_ip) <= 0 || !strcmp(wan_ip, "0.0.0.0"))
+			continue;
+
+		if(strlen(wan_gate) <= 0 || !strcmp(wan_gate, "0.0.0.0"))
+			continue;
+
+		++gate_num;
+	}
+
+	return gate_num;
+}
+#endif	/* RTCONFIG_DUALWAN || RTCONFIG_MULTICAST_IPTV */
 
 // no more to use
 /*
@@ -582,15 +780,15 @@ void set_lan_phy(char *phy)
 
 void add_lan_phy(char *phy)
 {
-	char phys[128];
+	char phys[128], *ifnames;
 
-	strcpy(phys, nvram_safe_get("lan_ifnames"));
+	if (phy == NULL || *phy == '\0')
+		return;
 
-	if(strlen(phys)==0) nvram_set("lan_ifnames", phy);
-	else {
-		sprintf(phys, "%s %s", phys, phy);
-		nvram_set("lan_ifnames", phys);
-	}
+	ifnames = nvram_safe_get("lan_ifnames");
+	snprintf(phys, sizeof(phys), "%s%s%s", ifnames,
+		(*ifnames && *phy) ? " " : "", phy);
+	nvram_set("lan_ifnames", phys);
 }
 
 void set_wan_phy(char *phy)
@@ -600,14 +798,14 @@ void set_wan_phy(char *phy)
 
 void add_wan_phy(char *phy)
 {
-	char phys[128];
+	char phys[128], *ifnames;
 
-	strcpy(phys, nvram_safe_get("wan_ifnames"));
+	if (phy == NULL || *phy == '\0')
+		return;
 
-	if(strlen(phys)==0) nvram_set("wan_ifnames", phy);
-	else {
-		sprintf(phys, "%s %s", phys, phy);
-		nvram_set("wan_ifnames", phys);
-	}
+	ifnames = nvram_safe_get("wan_ifnames");
+	snprintf(phys, sizeof(phys), "%s%s%s", ifnames,
+		(*ifnames && *phy) ? " " : "", phy);
+	nvram_set("wan_ifnames", phys);
 }
 

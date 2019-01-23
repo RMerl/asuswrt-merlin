@@ -22,32 +22,32 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef _AUTH_H_
-#define _AUTH_H_
+#ifndef DROPBEAR_AUTH_H_
+#define DROPBEAR_AUTH_H_
 
 #include "includes.h"
 #include "signkey.h"
 #include "chansession.h"
 
-void svr_authinitialise();
-void cli_authinitialise();
+void svr_authinitialise(void);
+void cli_authinitialise(void);
 
 /* Server functions */
-void recv_msg_userauth_request();
+void recv_msg_userauth_request(void);
 void send_msg_userauth_failure(int partial, int incrfail);
-void send_msg_userauth_success();
+void send_msg_userauth_success(void);
 void send_msg_userauth_banner(buffer *msg);
-void svr_auth_password();
-void svr_auth_pubkey();
-void svr_auth_pam();
+void svr_auth_password(void);
+void svr_auth_pubkey(void);
+void svr_auth_pam(void);
 
 #ifdef ENABLE_SVR_PUBKEY_OPTIONS
-int svr_pubkey_allows_agentfwd();
-int svr_pubkey_allows_tcpfwd();
-int svr_pubkey_allows_x11fwd();
-int svr_pubkey_allows_pty();
+int svr_pubkey_allows_agentfwd(void);
+int svr_pubkey_allows_tcpfwd(void);
+int svr_pubkey_allows_x11fwd(void);
+int svr_pubkey_allows_pty(void);
 void svr_pubkey_set_forced_command(struct ChanSess *chansess);
-void svr_pubkey_options_cleanup();
+void svr_pubkey_options_cleanup(void);
 int svr_add_pubkey_options(buffer *options_buf, int line_num, const char* filename);
 #else
 /* no option : success */
@@ -56,34 +56,34 @@ int svr_add_pubkey_options(buffer *options_buf, int line_num, const char* filena
 #define svr_pubkey_allows_x11fwd() 1
 #define svr_pubkey_allows_pty() 1
 static inline void svr_pubkey_set_forced_command(struct ChanSess *chansess) { }
-static inline void svr_pubkey_options_cleanup() { }
+static inline void svr_pubkey_options_cleanup(void) { }
 #define svr_add_pubkey_options(x,y,z) DROPBEAR_SUCCESS
 #endif
 
 /* Client functions */
-void recv_msg_userauth_failure();
-void recv_msg_userauth_success();
-void recv_msg_userauth_specific_60();
-void recv_msg_userauth_pk_ok();
-void recv_msg_userauth_info_request();
-void cli_get_user();
-void cli_auth_getmethods();
-int cli_auth_try();
-void recv_msg_userauth_banner();
-void cli_pubkeyfail();
-void cli_auth_password();
-int cli_auth_pubkey();
-void cli_auth_interactive();
+void recv_msg_userauth_failure(void);
+void recv_msg_userauth_success(void);
+void recv_msg_userauth_specific_60(void);
+void recv_msg_userauth_pk_ok(void);
+void recv_msg_userauth_info_request(void);
+void cli_get_user(void);
+void cli_auth_getmethods(void);
+int cli_auth_try(void);
+void recv_msg_userauth_banner(void);
+void cli_pubkeyfail(void);
+void cli_auth_password(void);
+int cli_auth_pubkey(void);
+void cli_auth_interactive(void);
 char* getpass_or_cancel(char* prompt);
-void cli_auth_pubkey_cleanup();
+void cli_auth_pubkey_cleanup(void);
 
 
 #define MAX_USERNAME_LEN 25 /* arbitrary for the moment */
 
 #define AUTH_TYPE_NONE      1
-#define AUTH_TYPE_PUBKEY    1 << 1
-#define AUTH_TYPE_PASSWORD  1 << 2
-#define AUTH_TYPE_INTERACT  1 << 3
+#define AUTH_TYPE_PUBKEY    (1 << 1)
+#define AUTH_TYPE_PASSWORD  (1 << 2)
+#define AUTH_TYPE_INTERACT  (1 << 3)
 
 #define AUTH_METHOD_NONE "none"
 #define AUTH_METHOD_NONE_LEN 4
@@ -133,8 +133,8 @@ struct PubKeyOptions {
 	int no_x11_forwarding_flag;
 	int no_pty_flag;
 	/* "command=" option. */
-	unsigned char * forced_command;
+	char * forced_command;
 };
 #endif
 
-#endif /* _AUTH_H_ */
+#endif /* DROPBEAR_AUTH_H_ */

@@ -1,5 +1,5 @@
-# fcntl.m4 serial 5
-dnl Copyright (C) 2009-2014 Free Software Foundation, Inc.
+# fcntl.m4 serial 9
+dnl Copyright (C) 2009-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -27,20 +27,51 @@ AC_DEFUN([gl_FUNC_FCNTL],
     dnl haiku alpha 2 F_DUPFD has wrong errno
     AC_CACHE_CHECK([whether fcntl handles F_DUPFD correctly],
       [gl_cv_func_fcntl_f_dupfd_works],
-      [AC_RUN_IFELSE([AC_LANG_PROGRAM([[
-#include <fcntl.h>
-#include <errno.h>
-]], [[int result = 0;
-      if (fcntl (0, F_DUPFD, -1) != -1) result |= 1;
-      if (errno != EINVAL) result |= 2;
-      return result;
-         ]])],
+      [AC_RUN_IFELSE(
+         [AC_LANG_PROGRAM(
+            [[#include <errno.h>
+              #include <fcntl.h>
+              #include <limits.h>
+              #include <sys/resource.h>
+              #include <unistd.h>
+              #ifndef RLIM_SAVED_CUR
+              # define RLIM_SAVED_CUR RLIM_INFINITY
+              #endif
+              #ifndef RLIM_SAVED_MAX
+              # define RLIM_SAVED_MAX RLIM_INFINITY
+              #endif
+            ]],
+            [[int result = 0;
+              int bad_fd = INT_MAX;
+              struct rlimit rlim;
+              if (getrlimit (RLIMIT_NOFILE, &rlim) == 0
+                  && 0 <= rlim.rlim_cur && rlim.rlim_cur <= INT_MAX
+                  && rlim.rlim_cur != RLIM_INFINITY
+                  && rlim.rlim_cur != RLIM_SAVED_MAX
+                  && rlim.rlim_cur != RLIM_SAVED_CUR)
+                bad_fd = rlim.rlim_cur;
+              if (fcntl (0, F_DUPFD, -1) != -1) result |= 1;
+              if (errno != EINVAL) result |= 2;
+              if (fcntl (0, F_DUPFD, bad_fd) != -1) result |= 4;
+              if (errno != EINVAL) result |= 8;
+              /* On OS/2 kLIBC, F_DUPFD does not work on a directory fd */
+              {
+                int fd;
+                fd = open (".", O_RDONLY);
+                if (fd == -1)
+                  result |= 16;
+                else if (fcntl (fd, F_DUPFD, STDERR_FILENO + 1) == -1)
+                  result |= 32;
+
+                close (fd);
+              }
+              return result;]])],
          [gl_cv_func_fcntl_f_dupfd_works=yes],
          [gl_cv_func_fcntl_f_dupfd_works=no],
-         [# Guess that it works on glibc systems
-          case $host_os in #((
-            *-gnu*) gl_cv_func_fcntl_f_dupfd_works="guessing yes";;
-            *)      gl_cv_func_fcntl_f_dupfd_works="guessing no";;
+         [case $host_os in
+            aix* | cygwin* | haiku*)
+               gl_cv_func_fcntl_f_dupfd_works="guessing no" ;;
+            *) gl_cv_func_fcntl_f_dupfd_works="guessing yes" ;;
           esac])])
     case $gl_cv_func_fcntl_f_dupfd_works in
       *yes) ;;

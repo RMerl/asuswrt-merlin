@@ -1,7 +1,7 @@
 /* Declarations for retr.c.
    Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation,
-   Inc.
+   2005, 2006, 2007, 2008, 2009, 2010, 2011, 2015 Free Software
+   Foundation, Inc.
 
 This file is part of GNU Wget.
 
@@ -34,6 +34,8 @@ as that of the covered work.  */
 
 #include "url.h"
 
+extern int numurls;
+
 /* These global vars should be made static to retr.c and exported via
    functions! */
 extern SUM_SIZE_INT total_downloaded_bytes;
@@ -47,7 +49,9 @@ enum {
   rb_skip_startpos = 2,
 
   /* Used by HTTP/HTTPS*/
-  rb_chunked_transfer_encoding = 4
+  rb_chunked_transfer_encoding = 4,
+
+  rb_compressed_gzip = 8
 };
 
 int fd_read_body (const char *, int, FILE *, wgint, wgint, wgint *, wgint *, double *, int, FILE *);

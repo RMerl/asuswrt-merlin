@@ -1,4 +1,4 @@
-/* * Copyright (c) 2012-2015, The Tor Project, Inc. */
+/* * Copyright (c) 2012-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -51,6 +51,14 @@ void channel_tls_update_marks(or_connection_t *conn);
 
 /* Cleanup at shutdown */
 void channel_tls_free_all(void);
+
+extern uint64_t stats_n_authorize_cells_processed;
+extern uint64_t stats_n_authenticate_cells_processed;
+extern uint64_t stats_n_versions_cells_processed;
+extern uint64_t stats_n_netinfo_cells_processed;
+extern uint64_t stats_n_vpadding_cells_processed;
+extern uint64_t stats_n_certs_cells_processed;
+extern uint64_t stats_n_auth_challenge_cells_processed;
 
 #ifdef CHANNELTLS_PRIVATE
 STATIC void channel_tls_process_certs_cell(var_cell_t *cell,

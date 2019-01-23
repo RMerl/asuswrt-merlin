@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2017 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -16,10 +16,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -35,49 +34,49 @@
 #include "memdbg.h"
 
 void
-interval_init (struct interval *top, int horizon, int refresh)
+interval_init(struct interval *top, int horizon, int refresh)
 {
-  CLEAR (*top);
-  top->refresh = refresh;
-  top->horizon = horizon;
+    CLEAR(*top);
+    top->refresh = refresh;
+    top->horizon = horizon;
 }
 
 bool
-event_timeout_trigger (struct event_timeout *et,
-		       struct timeval *tv,
-		       const int et_const_retry)
+event_timeout_trigger(struct event_timeout *et,
+                      struct timeval *tv,
+                      const int et_const_retry)
 {
-  bool ret = false;
-  const time_t local_now = now;
+    bool ret = false;
+    const time_t local_now = now;
 
-  if (et->defined)
+    if (et->defined)
     {
-      int wakeup = (int) et->last + et->n - local_now;
-      if (wakeup <= 0)
-	{
+        int wakeup = (int) et->last + et->n - local_now;
+        if (wakeup <= 0)
+        {
 #if INTERVAL_DEBUG
-	  dmsg (D_INTERVAL, "EVENT event_timeout_trigger (%d) etcr=%d", et->n, et_const_retry);
+            dmsg(D_INTERVAL, "EVENT event_timeout_trigger (%d) etcr=%d", et->n, et_const_retry);
 #endif
-	  if (et_const_retry < 0)
-	    {
-	      et->last = local_now;
-	      wakeup = et->n;
-	      ret = true;
-	    }
-	  else
-	    {
-	      wakeup = et_const_retry;
-	    }
-	}
+            if (et_const_retry < 0)
+            {
+                et->last = local_now;
+                wakeup = et->n;
+                ret = true;
+            }
+            else
+            {
+                wakeup = et_const_retry;
+            }
+        }
 
-      if (tv && wakeup < tv->tv_sec)
-	{
+        if (tv && wakeup < tv->tv_sec)
+        {
 #if INTERVAL_DEBUG
-	  dmsg (D_INTERVAL, "EVENT event_timeout_wakeup (%d/%d) etcr=%d", wakeup, et->n, et_const_retry);
+            dmsg(D_INTERVAL, "EVENT event_timeout_wakeup (%d/%d) etcr=%d", wakeup, et->n, et_const_retry);
 #endif
-	  tv->tv_sec = wakeup;
-	  tv->tv_usec = 0;
-	}
+            tv->tv_sec = wakeup;
+            tv->tv_usec = 0;
+        }
     }
-  return ret;
+    return ret;
 }

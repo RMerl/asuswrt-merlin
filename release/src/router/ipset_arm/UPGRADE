@@ -1,0 +1,19 @@
+ipset 6.x, 5.x upgrade notices
+
+- From ipset 5.0-5.3 to 5.4 or above:
+
+  Due to the source code reorganization, some macros were moved to
+  the netlink.patch. Therefore when upgrading, you have two choices:
+
+  a. force the application of the new netlink.patch
+
+     kernel-source-dir # patch -p1 -f < ipset-curr-dir/netlink.patch
+
+  b. remove the earlier netlink.patch and apply the new one:
+
+     kernel-source-dir # patch -p1 -R < ipset-before-5.4-dir/netlink.patch
+     kernel-source-dir # patch -p1 < ipset-curr-dir/netlink.patch
+
+  You do not need to recompile your kernel.
+
+  Of course the kernel modules in ipset must be compiled and installed.

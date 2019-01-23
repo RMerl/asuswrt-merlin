@@ -138,6 +138,8 @@ typedef struct pjsua_call
 	pj_sockaddr *turn_mapped_addr; // TURN tunnel mapped address.
 	int use_sctp;   
 
+	int tnl_build_spent_sec;
+
 } pjsua_call;
 
 
@@ -641,6 +643,11 @@ pjsip_generic_int_hdr* pjsua_im_create_rport(pj_pool_t *pool, pj_str_t *rport);
  * Create timeout header for MESSAGE.
  */
 pjsip_generic_int_hdr* pjsua_im_create_timeout(pj_pool_t *pool, pj_str_t *timeout);
+
+/**
+ * Create process name header for MESSAGE.
+ */
+pjsip_generic_int_hdr* pjsua_im_create_proc_name(pj_pool_t *pool, pj_str_t *proc_name_value);
 
 /*
  * Add additional headers etc in msg_data specified by application

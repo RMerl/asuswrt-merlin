@@ -44,8 +44,6 @@ var folderlist = new Array();
 
 function initial(){
 	show_menu();
-	document.getElementById("_APP_Installation").innerHTML = '<table><tbody><tr><td><div class="_APP_Installation"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
-	document.getElementById("_APP_Installation").className = "menu_clicked";
 	
 	document.aidiskForm.protocol.value = PROTOCOL;
 	
@@ -196,12 +194,12 @@ function showAccountMenu(){
 			account_menu_code += '<div class="userIcon" id="';
 			account_menu_code += "account"+i;		
 			if(decodeURIComponent(this.accounts[i]).length > 18){
-				account_menu_code += '" onClick="setSelectAccount('+i+');" style="white-space:nowrap;font-family:Courier New, Courier, mono;" title="'+decodeURIComponent(this.accounts[i])+'">'
-				account_menu_code += decodeURIComponent(this.accounts[i]).substring(0,15) + '...';
+				account_menu_code += '" onClick="setSelectAccount('+i+');" style="white-space:nowrap;font-family:Courier New, Courier, mono;" title="'+htmlEnDeCode.htmlEncode(decodeURIComponent(this.accounts[i]))+'">'
+				account_menu_code += htmlEnDeCode.htmlEncode(decodeURIComponent(this.accounts[i])).substring(0,15) + '...';
 			}	
 			else{
 				account_menu_code += '" onClick="setSelectAccount('+i+');" style="white-space:nowrap;font-family:Courier New, Courier, mono;">'
-				account_menu_code += decodeURIComponent(this.accounts[i]);		
+				account_menu_code += htmlEnDeCode.htmlEncode(decodeURIComponent(this.accounts[i]));
 			}
 			
 			account_menu_code += '</div>\n';	
@@ -274,12 +272,12 @@ function show_permissions_of_account(account_order, protocol){
 					continue;
 
 				permissions = get_account_permissions_in_pool(accountName, poolName);
-				for(var j = 1; j < permissions.length; ++j){
-					var folderBarCode = get_folderBarCode_in_pool(poolName, permissions[j][0]);
+				for(var k = 1; k < permissions.length; ++k){
+					var folderBarCode = get_folderBarCode_in_pool(poolName, permissions[k][0]);
 					if(protocol == "cifs")
-						showPermissionRadio(folderBarCode, permissions[j][1]);
+						showPermissionRadio(folderBarCode, permissions[k][1]);
 					else if(protocol == "ftp")
-						showPermissionRadio(folderBarCode, permissions[j][2]);
+						showPermissionRadio(folderBarCode, permissions[k][2]);
 					else{
 						alert("Wrong protocol when get permission!");	// system error msg. must not be translate
 						return;
@@ -794,6 +792,16 @@ function validForm(){
 					</td>
 				</tr>
 				<tr>
+					<th>Enable SMB2 protocol (default: No)</th>
+					<td>
+						<select name="smbd_protocol" class="input_option">
+							<option class="content_input_fd" value="0" <% nvram_match("smbd_protocol", "0","selected"); %>>SMBv1</option>
+							<option class="content_input_fd" value="1" <% nvram_match("smbd_protocol", "1","selected"); %>>SMBv2</option>
+							<option class="content_input_fd" value="2" <% nvram_match("smbd_protocol", "2","selected"); %>>SMBv1 + SMBv2</option>
+						</select>
+					</td>
+                                </tr>
+				<tr>
 					<th>Simpler share naming<br><i>(without the disk name)</i></th>
 					<td>
 						<input type="radio" name="smbd_simpler_naming" class="input" value="1" <% nvram_match_x("", "smbd_simpler_naming", "1", "checked"); %>><#checkbox_Yes#>
@@ -802,13 +810,13 @@ function validForm(){
 				</tr>
 
 				<tr>
-					<th>Force as Master Browser</i></th>
+					<th>Force as Master Browser</th>
 					<td>
 						<input type="radio" name="smbd_master" class="input" value="1" <% nvram_match_x("", "smbd_master", "1", "checked"); %>><#checkbox_Yes#>
 						<input type="radio" name="smbd_master" class="input" value="0" <% nvram_match_x("", "smbd_master", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
-					<th>Set as WINS server</i></th>
+					<th>Set as WINS server</th>
 					<td>
 						<input type="radio" name="smbd_wins" class="input" value="1" <% nvram_match_x("", "smbd_wins", "1", "checked"); %>><#checkbox_Yes#>
 						<input type="radio" name="smbd_wins" class="input" value="0" <% nvram_match_x("", "smbd_wins", "0", "checked"); %>><#checkbox_No#>

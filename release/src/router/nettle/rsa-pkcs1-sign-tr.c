@@ -34,11 +34,11 @@
 #if HAVE_CONFIG_H
 # include "config.h"
 #endif
-
 #include "rsa.h"
 
 #include "pkcs1.h"
 
+/* Side-channel resistant version of rsa_pkcs1_sign() */
 int
 rsa_pkcs1_sign_tr(const struct rsa_public_key *pub,
   	          const struct rsa_private_key *key,
@@ -46,23 +46,14 @@ rsa_pkcs1_sign_tr(const struct rsa_public_key *pub,
 	          size_t length, const uint8_t *digest_info,
    	          mpz_t s)
 {
-  mpz_t ri;
+  mpz_t m;
+  int ret;
 
-  if (pkcs1_rsa_digest_encode (s, key->size, length, digest_info))
-    {
-      mpz_init (ri);
+  mpz_init(m);
 
-      _rsa_blind (pub, random_ctx, random, s, ri);
-      rsa_compute_root(key, s, s);
-      _rsa_unblind (pub, s, ri);
-
-      mpz_clear (ri);
-
-      return 1;
-    }
-  else
-    {
-      mpz_set_ui(s, 0);
-      return 0;
-    }    
+  ret = (pkcs1_rsa_digest_encode (m, key->size, length, digest_info)
+	 && rsa_compute_root_tr (pub, key, random_ctx, random,
+				 s, m));
+  mpz_clear(m);
+  return ret;
 }

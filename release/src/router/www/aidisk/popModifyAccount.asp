@@ -17,7 +17,7 @@ var selectedAccount = parent.getSelectedAccount();
 
 function initial(){
 	document.getElementById("new_account").value = decodeURIComponent(selectedAccount);
-	showtext(document.getElementById("selected_account"), decodeURIComponent(selectedAccount));	
+	showtext(document.getElementById("selected_account"),  htmlEnDeCode.htmlEncode(decodeURIComponent(selectedAccount)));
 	clickevent();
 }
 

@@ -20,10 +20,14 @@
 #ifndef __PJMEDIA_NATNL_H__
 #define __PJMEDIA_NATNL_H__
 
-/**
- * @file natnl.h
- * @brief NAT tunnel system.
- */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+	/**
+	 * @file natnl.h
+	 * @brief NAT tunnel system.
+	 */
 #include <pjsua-lib/pjsua.h>
 #include <pjsua-lib/pjsua_internal.h>
 
@@ -32,69 +36,68 @@
 #define NULL_SND_DEV_ID          -99
 
 #define RTP_HDR_SIZE              12
-/**
- * @defgroup PJMEDIA_NATNL NAT tunnel system
- * @ingroup PJSUA.H
- * @brief The simplest type of NAT tunnel system.
- * @{
- */
+	 /**
+	  * @defgroup PJMEDIA_NATNL NAT tunnel system
+	  * @ingroup PJSUA.H
+	  * @brief The simplest type of NAT tunnel system.
+	  * @{
+	  */
 
+	extern char userid[64];
 
-PJ_BEGIN_DECL
+	/**
+	 * Set maximum number of the instance of pjsua
+	 */
+	PJ_DECL(void) set_max_instances(unsigned max_insts);
 
-extern char userid[64];
+	/**
+	 * Get maximum number of the instance of pjsua
+	 */
+	PJ_DECL(int) get_max_instances();
 
-/**
- * Set maximum number of the instance of pjsua
- */
-PJ_DECL(void) set_max_instances(unsigned max_insts);
+	extern void pjsua_media_config_dup(pj_pool_t *pool,
+		pjsua_media_config *dst,
+		const pjsua_media_config *src);
 
-/**
- * Get maximum number of the instance of pjsua
- */
-PJ_DECL(int) get_max_instances();
+	//#if  defined(NATNL_LIB) && !defined(PJ_ANDROID) && PJ_CONFIG_IPHONE!=1
+	//extern char callee[128], registrar_uri[128];
+	//#endif
 
-extern void pjsua_media_config_dup(pj_pool_t *pool,
-								   pjsua_media_config *dst,
-								   const pjsua_media_config *src);
+	PJ_DECL(pj_status_t) natnl_logging_endpt_create(pjsua_inst_id inst_id,
+		const pjsua_logging_config *log_cfg);
 
-//#if  defined(NATNL_LIB) && !defined(PJ_ANDROID) && PJ_CONFIG_IPHONE!=1
-//extern char callee[128], registrar_uri[128];
-//#endif
+	//PJ_DECL(pj_status_t) natnl_logging_endpt_destroy(pjsua_inst_id inst_id);
 
-PJ_DECL(pj_status_t) natnl_logging_endpt_create(pjsua_inst_id inst_id,
-												const pjsua_logging_config *log_cfg);
+	PJ_DECL(pj_status_t) natnl_create(pjsua_inst_id inst_id);
 
-//PJ_DECL(pj_status_t) natnl_logging_endpt_destroy(pjsua_inst_id inst_id);
+	/**
+	 * Initialize natnl with the specified settings. All the settings are
+	 * optional, and the default values will be used when the config is not
+	 * specified.
+	 *
+	 * Note that #pjsua_create() MUST be called before calling this function.
+	 *
+	 * @param ua_cfg    User agent configuration.
+	 * @param log_cfg   Optional logging configuration.
+	 * @param media_cfg Optional media configuration.
+	 *
+	 * @return      PJ_SUCCESS on success, or the appropriate error code.
+	 */
+	PJ_DECL(pj_status_t) natnl_init(pjsua_inst_id inst_id,
+		const pjsua_config *ua_cfg,
+		const pjsua_logging_config *log_cfg,
+		const pjsua_media_config *media_cfg);
 
-PJ_DECL(pj_status_t) natnl_create(pjsua_inst_id inst_id);
+	PJ_DECL(pjsua_call *) pjsua_get_call(pjsua_inst_id inst_id, pjsua_call_id call_id);
+	PJ_DECL(pjmedia_transport *) pjsua_get_media_transport(pjsua_inst_id inst_id, pjsua_call_id call_id);
 
-/**
- * Initialize natnl with the specified settings. All the settings are
- * optional, and the default values will be used when the config is not
- * specified.
- *
- * Note that #pjsua_create() MUST be called before calling this function.
- *
- * @param ua_cfg    User agent configuration.
- * @param log_cfg   Optional logging configuration.
- * @param media_cfg Optional media configuration.
- *
- * @return      PJ_SUCCESS on success, or the appropriate error code.
- */
-PJ_DECL(pj_status_t) natnl_init(pjsua_inst_id inst_id,
-								const pjsua_config *ua_cfg,
-								const pjsua_logging_config *log_cfg,
-								const pjsua_media_config *media_cfg);
+	extern struct natnl_callback natnl_callback;
+	PJ_DECL(void) natnl_call_callback(struct natnl_tnl_event *tnl_event);
+	PJ_DECL(void) natnl_call_callback2(struct natnl_tnl_event *tnl_event, int use_pj_log);
 
-PJ_DECL(pjsua_call *) pjsua_get_call(pjsua_inst_id inst_id, pjsua_call_id call_id);
-PJ_DECL(pjmedia_transport *) pjsua_get_media_transport(pjsua_inst_id inst_id, pjsua_call_id call_id);
-
-extern struct natnl_callback natnl_callback;
-PJ_DECL(void) natnl_call_callback(struct natnl_tnl_event *tnl_event);
-PJ_DECL(void) natnl_call_callback2(struct natnl_tnl_event *tnl_event, int use_pj_log);
-
-PJ_END_DECL
+#ifdef __cplusplus
+}
+#endif
 
 /**
  * @}

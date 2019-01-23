@@ -20,6 +20,7 @@ endif
 
 ifeq ($(RTCONFIG_QCA),y)
 CFLAGS += -I./sysdeps/qca -I$(TOP)/wireless_tools/ -DWE_NOLIBM
+CFLAGS += $(if $(RTCONFIG_SOC_IPQ8064),-DSMP)
 endif
 
 ifeq ($(RTCONFIG_BCMWL6),y)
@@ -67,9 +68,10 @@ endif
 
 OBJS = shutils.o linux_timer.o defaults.o model.o rtstate.o boardapi.o
 OBJS += misc.o version.o files.o strings.o process.o 
-OBJS += bin_sem_asus.o semaphore.o pids.o notify_rc.o discover.o
+OBJS += bin_sem_asus.o semaphore.o pids.o $(if $(wildcard notify_rc.c),notify_rc.o,prebuild/notify_rc.o) discover.o
 OBJS += base64.o
 OBJS += nvparse.o
+OBJS += scripts.o
 ifeq ($(RTCONFIG_BCM7),y)
 OBJS += et_linux.o bcmwifi_channels.o
 else ifeq ($(RTCONFIG_HSPOT),y)
@@ -98,7 +100,14 @@ endif
 else ifeq ($(RTCONFIG_QCA),y)
 # Qualcomm Atheros
 OBJS += $(TOP)/wireless_tools/iwlib.o
-OBJS += flash_mtd.o api-qca.o qca8337.o
+OBJS += flash_mtd.o api-qca.o 
+ifeq ($(or $(RTCONFIG_SWITCH_RTL8370M_PHY_QCA8033_X2),$(RTCONFIG_SWITCH_RTL8370MB_PHY_QCA8033_X2)),y)
+OBJS += qca8033_rtl8370m.o mdio.o
+else ifeq ($(RTCONFIG_SOC_IPQ40XX),y)
+OBJS += ipq40xx.o
+else
+OBJS += qca8337.o
+endif
 else
 # Broadcom
 OBJS += wl.o wl_linux.o
@@ -118,12 +127,24 @@ endif
 
 ifeq ($(RTCONFIG_USB),y)
 OBJS += usb.o
-OBJS += $(TOP)/busybox/util-linux/volume_id/ext.o
-OBJS += $(TOP)/busybox/util-linux/volume_id/util2.o
-OBJS += $(TOP)/busybox/util-linux/volume_id/fat.o
-OBJS += $(TOP)/busybox/util-linux/volume_id/ntfs.o
-OBJS += $(TOP)/busybox/util-linux/volume_id/linux_swap.o
-OBJS += $(if $(HFS),$(TOP)/busybox/util-linux/volume_id/hfs.o)
+
+ID_CFLAGS += -I$(TOP)/busybox/include
+ID_CFLAGS += -I$(TOP)/busybox/util-linux/volume_id
+ID_CFLAGS += -include $(TOP)/busybox/include/autoconf.h
+ID_CFLAGS += -D_GNU_SOURCE -DNDEBUG -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+#ID_CFLAGS += -fdata-sections -ffunction-sections
+ID_OBJS  = $(TOP)/busybox/util-linux/volume_id/util.o
+ID_OBJS += $(TOP)/busybox/util-linux/volume_id/linux_swap.o
+ID_OBJS += $(TOP)/busybox/util-linux/volume_id/ext.o
+ID_OBJS += $(TOP)/busybox/util-linux/volume_id/fat.o
+ID_OBJS += $(TOP)/busybox/util-linux/volume_id/ntfs.o
+ID_OBJS += $(if $(HFS),$(TOP)/busybox/util-linux/volume_id/hfs.o)
+ID_OBJS += $(if $(HFS),$(patsubst %.c,%.o,$(wildcard $(TOP)/busybox/libbb/hash_md5.c)))
+ID_OBJS += $(if $(HFS),$(patsubst %.c,%.o,$(wildcard $(TOP)/busybox/libbb/bb_bswap_64.c)))
+ID_OBJS += volume_id.o
+#OBJS += volume_id.lib.o
+OBJS += $(notdir $(ID_OBJS))
+
 ifeq ($(RTCONFIG_USB_MODEM),y)
 OBJS += at_cmd.o
 endif
@@ -150,14 +171,14 @@ OBJS	+= $(if $(wildcard plc_utils.c),plc_utils.o,prebuild/plc_utils.o)
 endif
 
 ifeq ($(RTCONFIG_TCODE),y)
-OBJS    += tcode.o
+OBJS	+= $(if $(wildcard tcode.c),tcode.o,prebuild/tcode.o)
 endif
 
 ifeq ($(CONFIG_BCMWL5),y)
 ifneq ($(RTCONFIG_DSL),y)
 CFLAGS += -DTRX_NEW
 endif
-OBJS += private.o
+OBJS += $(if $(wildcard private.c),private.o,prebuild/private.o)
 OBJS += wlif_utils.o UdpLib.o bcmutils.o
 OBJS += bcmwifi_channels.o
 endif
@@ -197,9 +218,19 @@ install: all
 clean:
 	rm -f *.o *.so *.a .*.depend *.prep sysdeps/*.o sysdeps/broadcom/*.o sysdeps/ralink/*.o sysdeps/qtn/*.o
 
-%.o: prebuild/%.o
-	@echo " [shared] cp $@"
-	@cp -f $< $@
+prebuild/%.o:
+	#nothing to do...
+
+ifeq ($(RTCONFIG_USB),y)
+vpath %.c $(sort $(dir $(ID_OBJS)))
+
+$(notdir $(ID_OBJS)): %.o: %.c .%.depend
+	@echo " [shared] CC $@"
+	@$(CC) $(CFLAGS) $(ID_CFLAGS) -o $@ -c $<
+
+$(patsubst %.o,.%.depend,$(notdir $(ID_OBJS))): .%.depend: %.c
+	@$(CC) $(CFLAGS) $(ID_CFLAGS) -M $< > $@
+endif
 
 %.o: %.c .%.depend
 	@echo " [shared] CC $@"

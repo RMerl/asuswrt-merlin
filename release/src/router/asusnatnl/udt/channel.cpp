@@ -55,8 +55,6 @@ written by
 #endif
 #include "common.h" //for CTimer::getTime()
 
-// +Roger
-//#include "natnl.h"
 #include <pjmedia/natnl_stream.h>	
 #include <pjmedia/stream.h>
 //------------------------------//

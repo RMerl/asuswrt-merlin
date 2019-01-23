@@ -1,3 +1,4 @@
+
 % -*- mode: latex; TeX-master: "Vorbis_I_spec"; -*-
 %!TEX root = Vorbis_I_spec.tex
 % $Id$
@@ -28,7 +29,7 @@ Each header packet begins with the same header fields.
 
 
 \begin{Verbatim}[commandchars=\\\{\}]
-  1) [packet_type] : 8 bit value
+  1) [packet\_type] : 8 bit value
   2) 0x76, 0x6f, 0x72, 0x62, 0x69, 0x73: the characters 'v','o','r','b','i','s' as six octets
 \end{Verbatim}
 
@@ -48,23 +49,23 @@ relevant pieces of information about the audio stream. The
 identification header is coded as follows:
 
 \begin{Verbatim}[commandchars=\\\{\}]
- 1) [vorbis_version] = read 32 bits as unsigned integer
- 2) [audio_channels] = read 8 bit integer as unsigned
- 3) [audio_sample_rate] = read 32 bits as unsigned integer
- 4) [bitrate_maximum] = read 32 bits as signed integer
- 5) [bitrate_nominal] = read 32 bits as signed integer
- 6) [bitrate_minimum] = read 32 bits as signed integer
- 7) [blocksize_0] = 2 exponent (read 4 bits as unsigned integer)
- 8) [blocksize_1] = 2 exponent (read 4 bits as unsigned integer)
- 9) [framing_flag] = read one bit
+ 1) [vorbis\_version] = read 32 bits as unsigned integer
+ 2) [audio\_channels] = read 8 bit integer as unsigned
+ 3) [audio\_sample\_rate] = read 32 bits as unsigned integer
+ 4) [bitrate\_maximum] = read 32 bits as signed integer
+ 5) [bitrate\_nominal] = read 32 bits as signed integer
+ 6) [bitrate\_minimum] = read 32 bits as signed integer
+ 7) [blocksize\_0] = 2 exponent (read 4 bits as unsigned integer)
+ 8) [blocksize\_1] = 2 exponent (read 4 bits as unsigned integer)
+ 9) [framing\_flag] = read one bit
 \end{Verbatim}
 
-\varname{[vorbis_version]} is to read '0' in order to be compatible
-with this document.  Both \varname{[audio_channels]} and
-\varname{[audio_sample_rate]} must read greater than zero.  Allowed final
+\varname{[vorbis\_version]} is to read '0' in order to be compatible
+with this document.  Both \varname{[audio\_channels]} and
+\varname{[audio\_sample\_rate]} must read greater than zero.  Allowed final
 blocksize values are 64, 128, 256, 512, 1024, 2048, 4096 and 8192 in
-Vorbis I.  \varname{[blocksize_0]} must be less than or equal to
-\varname{[blocksize_1]}.  The framing bit must be nonzero.  Failure to
+Vorbis I.  \varname{[blocksize\_0]} must be less than or equal to
+\varname{[blocksize\_1]}.  The framing bit must be nonzero.  Failure to
 meet any of these conditions renders a stream undecodable.
 
 The bitrate fields above are used only as hints. The nominal bitrate
@@ -107,11 +108,11 @@ proceeds in the following order:
 \paragraph{Codebooks}
 
 \begin{enumerate}
-\item \varname{[vorbis_codebook_count]} = read eight bits as unsigned integer and add one
-\item Decode \varname{[vorbis_codebook_count]} codebooks in order as defined
+\item \varname{[vorbis\_codebook\_count]} = read eight bits as unsigned integer and add one
+\item Decode \varname{[vorbis\_codebook\_count]} codebooks in order as defined
 in \xref{vorbis:spec:codebook}.  Save each configuration, in
 order, in an array of
-codebook configurations \varname{[vorbis_codebook_configurations]}.
+codebook configurations \varname{[vorbis\_codebook\_configurations]}.
 \end{enumerate}
 
 
@@ -123,8 +124,8 @@ configuration placeholder values must be read to maintain bitstream
 sync.
 
 \begin{enumerate}
-\item \varname{[vorbis_time_count]} = read 6 bits as unsigned integer and add one
-\item read \varname{[vorbis_time_count]} 16 bit values; each value should be zero.  If any value is nonzero, this is an error condition and the stream is undecodable.
+\item \varname{[vorbis\_time\_count]} = read 6 bits as unsigned integer and add one
+\item read \varname{[vorbis\_time\_count]} 16 bit values; each value should be zero.  If any value is nonzero, this is an error condition and the stream is undecodable.
 \end{enumerate}
 
 
@@ -135,17 +136,17 @@ Vorbis uses two floor types; header decode is handed to the decode
 abstraction of the appropriate type.
 
 \begin{enumerate}
- \item \varname{[vorbis_floor_count]} = read 6 bits as unsigned integer and add one
- \item For each \varname{[i]} of \varname{[vorbis_floor_count]} floor numbers:
+ \item \varname{[vorbis\_floor\_count]} = read 6 bits as unsigned integer and add one
+ \item For each \varname{[i]} of \varname{[vorbis\_floor\_count]} floor numbers:
   \begin{enumerate}
-   \item read the floor type: vector \varname{[vorbis_floor_types]} element \varname{[i]} =
+   \item read the floor type: vector \varname{[vorbis\_floor\_types]} element \varname{[i]} =
 read 16 bits as unsigned integer
    \item If the floor type is zero, decode the floor
 configuration as defined in \xref{vorbis:spec:floor0}; save
 this
-configuration in slot \varname{[i]} of the floor configuration array \varname{[vorbis_floor_configurations]}.
+configuration in slot \varname{[i]} of the floor configuration array \varname{[vorbis\_floor\_configurations]}.
    \item If the floor type is one,
-decode the floor configuration as defined in \xref{vorbis:spec:floor1}; save this configuration in slot \varname{[i]} of the floor configuration array \varname{[vorbis_floor_configurations]}.
+decode the floor configuration as defined in \xref{vorbis:spec:floor1}; save this configuration in slot \varname{[i]} of the floor configuration array \varname{[vorbis\_floor\_configurations]}.
    \item If the the floor type is greater than one, this stream is undecodable; ERROR CONDITION
   \end{enumerate}
 
@@ -159,13 +160,13 @@ Vorbis uses three residue types; header decode of each type is identical.
 
 
 \begin{enumerate}
-\item \varname{[vorbis_residue_count]} = read 6 bits as unsigned integer and add one
+\item \varname{[vorbis\_residue\_count]} = read 6 bits as unsigned integer and add one
 
-\item For each of \varname{[vorbis_residue_count]} residue numbers:
+\item For each of \varname{[vorbis\_residue\_count]} residue numbers:
  \begin{enumerate}
-  \item read the residue type; vector \varname{[vorbis_residue_types]} element \varname{[i]} = read 16 bits as unsigned integer
+  \item read the residue type; vector \varname{[vorbis\_residue\_types]} element \varname{[i]} = read 16 bits as unsigned integer
   \item If the residue type is zero,
-one or two, decode the residue configuration as defined in \xref{vorbis:spec:residue}; save this configuration in slot \varname{[i]} of the residue configuration array \varname{[vorbis_residue_configurations]}.
+one or two, decode the residue configuration as defined in \xref{vorbis:spec:residue}; save this configuration in slot \varname{[i]} of the residue configuration array \varname{[vorbis\_residue\_configurations]}.
   \item If the the residue type is greater than two, this stream is undecodable; ERROR CONDITION
  \end{enumerate}
 
@@ -184,8 +185,8 @@ uses a single mapping type (0), with implicit PCM channel mappings.
 % rewrite this pseudocode using listings or algoritmicx or some other
 % package geared towards this.
 \begin{enumerate}
- \item \varname{[vorbis_mapping_count]} = read 6 bits as unsigned integer and add one
- \item For each \varname{[i]} of \varname{[vorbis_mapping_count]} mapping numbers:
+ \item \varname{[vorbis\_mapping\_count]} = read 6 bits as unsigned integer and add one
+ \item For each \varname{[i]} of \varname{[vorbis\_mapping\_count]} mapping numbers:
   \begin{enumerate}
    \item read the mapping type: 16 bits as unsigned integer.  There's no reason to save the mapping type in Vorbis I.
    \item If the mapping type is nonzero, the stream is undecodable
@@ -193,8 +194,8 @@ uses a single mapping type (0), with implicit PCM channel mappings.
     \begin{enumerate}
      \item read 1 bit as a boolean flag
       \begin{enumerate}
-       \item if set, \varname{[vorbis_mapping_submaps]} = read 4 bits as unsigned integer and add one
-       \item if unset, \varname{[vorbis_mapping_submaps]} = 1
+       \item if set, \varname{[vorbis\_mapping\_submaps]} = read 4 bits as unsigned integer and add one
+       \item if unset, \varname{[vorbis\_mapping\_submaps]} = 1
       \end{enumerate}
 
 
@@ -202,39 +203,39 @@ uses a single mapping type (0), with implicit PCM channel mappings.
        \begin{enumerate}
          \item if set, square polar channel mapping is in use:
            \begin{itemize}
-             \item \varname{[vorbis_mapping_coupling_steps]} = read 8 bits as unsigned integer and add one
-             \item for \varname{[j]} each of \varname{[vorbis_mapping_coupling_steps]} steps:
+             \item \varname{[vorbis\_mapping\_coupling\_steps]} = read 8 bits as unsigned integer and add one
+             \item for \varname{[j]} each of \varname{[vorbis\_mapping\_coupling\_steps]} steps:
                \begin{itemize}
-                 \item vector \varname{[vorbis_mapping_magnitude]} element \varname{[j]}= read \link{vorbis:spec:ilog}{ilog}(\varname{[audio_channels]} - 1) bits as unsigned integer
-                 \item vector \varname{[vorbis_mapping_angle]} element \varname{[j]}= read \link{vorbis:spec:ilog}{ilog}(\varname{[audio_channels]} - 1) bits as unsigned integer
-                 \item the numbers read in the above two steps are channel numbers representing the channel to treat as magnitude and the channel to treat as angle, respectively.  If for any coupling step the angle channel number equals the magnitude channel number, the magnitude channel number is greater than \varname{[audio_channels]}-1, or the angle channel is greater than \varname{[audio_channels]}-1, the stream is undecodable.
+                 \item vector \varname{[vorbis\_mapping\_magnitude]} element \varname{[j]}= read \link{vorbis:spec:ilog}{ilog}(\varname{[audio\_channels]} - 1) bits as unsigned integer
+                 \item vector \varname{[vorbis\_mapping\_angle]} element \varname{[j]}= read \link{vorbis:spec:ilog}{ilog}(\varname{[audio\_channels]} - 1) bits as unsigned integer
+                 \item the numbers read in the above two steps are channel numbers representing the channel to treat as magnitude and the channel to treat as angle, respectively.  If for any coupling step the angle channel number equals the magnitude channel number, the magnitude channel number is greater than \varname{[audio\_channels]}-1, or the angle channel is greater than \varname{[audio\_channels]}-1, the stream is undecodable.
                \end{itemize}
 
 
            \end{itemize}
 
 
-         \item if unset, \varname{[vorbis_mapping_coupling_steps]} = 0
+         \item if unset, \varname{[vorbis\_mapping\_coupling\_steps]} = 0
        \end{enumerate}
 
 
      \item read 2 bits (reserved field); if the value is nonzero, the stream is undecodable
-     \item if \varname{[vorbis_mapping_submaps]} is greater than one, we read channel multiplex settings. For each \varname{[j]} of \varname{[audio_channels]} channels:
+     \item if \varname{[vorbis\_mapping\_submaps]} is greater than one, we read channel multiplex settings. For each \varname{[j]} of \varname{[audio\_channels]} channels:
       \begin{enumerate}
-       \item vector \varname{[vorbis_mapping_mux]} element \varname{[j]} = read 4 bits as unsigned integer
-       \item if the value is greater than the highest numbered submap (\varname{[vorbis_mapping_submaps]} - 1), this in an error condition rendering the stream undecodable
+       \item vector \varname{[vorbis\_mapping\_mux]} element \varname{[j]} = read 4 bits as unsigned integer
+       \item if the value is greater than the highest numbered submap (\varname{[vorbis\_mapping\_submaps]} - 1), this in an error condition rendering the stream undecodable
       \end{enumerate}
 
-     \item for each submap \varname{[j]} of \varname{[vorbis_mapping_submaps]} submaps, read the floor and residue numbers for use in decoding that submap:
+     \item for each submap \varname{[j]} of \varname{[vorbis\_mapping\_submaps]} submaps, read the floor and residue numbers for use in decoding that submap:
       \begin{enumerate}
        \item read and discard 8 bits (the unused time configuration placeholder)
-       \item read 8 bits as unsigned integer for the floor number; save in vector \varname{[vorbis_mapping_submap_floor]} element \varname{[j]}
+       \item read 8 bits as unsigned integer for the floor number; save in vector \varname{[vorbis\_mapping\_submap\_floor]} element \varname{[j]}
        \item verify the floor number is not greater than the highest number floor configured for the bitstream. If it is, the bitstream is undecodable
-       \item read 8 bits as unsigned integer for the residue number; save in vector \varname{[vorbis_mapping_submap_residue]} element \varname{[j]}
+       \item read 8 bits as unsigned integer for the residue number; save in vector \varname{[vorbis\_mapping\_submap\_residue]} element \varname{[j]}
        \item verify the residue number is not greater than the highest number residue configured for the bitstream.  If it is, the bitstream is undecodable
       \end{enumerate}
 
-     \item save this mapping configuration in slot \varname{[i]} of the mapping configuration array \varname{[vorbis_mapping_configurations]}.
+     \item save this mapping configuration in slot \varname{[i]} of the mapping configuration array \varname{[vorbis\_mapping\_configurations]}.
     \end{enumerate}
 
   \end{enumerate}
@@ -246,18 +247,18 @@ uses a single mapping type (0), with implicit PCM channel mappings.
 \paragraph{Modes}
 
 \begin{enumerate}
- \item \varname{[vorbis_mode_count]} = read 6 bits as unsigned integer and add one
- \item For each of \varname{[vorbis_mode_count]} mode numbers:
+ \item \varname{[vorbis\_mode\_count]} = read 6 bits as unsigned integer and add one
+ \item For each of \varname{[vorbis\_mode\_count]} mode numbers:
   \begin{enumerate}
-  \item \varname{[vorbis_mode_blockflag]} = read 1 bit
-  \item \varname{[vorbis_mode_windowtype]} = read 16 bits as unsigned integer
-  \item \varname{[vorbis_mode_transformtype]} = read 16 bits as unsigned integer
-  \item \varname{[vorbis_mode_mapping]} = read 8 bits as unsigned integer
+  \item \varname{[vorbis\_mode\_blockflag]} = read 1 bit
+  \item \varname{[vorbis\_mode\_windowtype]} = read 16 bits as unsigned integer
+  \item \varname{[vorbis\_mode\_transformtype]} = read 16 bits as unsigned integer
+  \item \varname{[vorbis\_mode\_mapping]} = read 8 bits as unsigned integer
   \item verify ranges; zero is the only legal value in Vorbis I for
-\varname{[vorbis_mode_windowtype]}
-and \varname{[vorbis_mode_transformtype]}.  \varname{[vorbis_mode_mapping]} must not be greater than the highest number mapping in use.  Any illegal values render the stream undecodable.
+\varname{[vorbis\_mode\_windowtype]}
+and \varname{[vorbis\_mode\_transformtype]}.  \varname{[vorbis\_mode\_mapping]} must not be greater than the highest number mapping in use.  Any illegal values render the stream undecodable.
   \item save this mode configuration in slot \varname{[i]} of the mode configuration array
-\varname{[vorbis_mode_configurations]}.
+\varname{[vorbis\_mode\_configurations]}.
  \end{enumerate}
 
 \item read 1 bit as a framing flag.  If unset, a framing error occurred and the stream is not
@@ -285,25 +286,25 @@ must ignore the packet and not attempt decoding it to audio}.
 \subsubsection{packet type, mode and window decode}
 
 \begin{enumerate}
- \item read 1 bit \varname{[packet_type]}; check that packet type is 0 (audio)
- \item read \link{vorbis:spec:ilog}{ilog}([vorbis_mode_count]-1) bits
-\varname{[mode_number]}
- \item decode blocksize \varname{[n]} is equal to \varname{[blocksize_0]} if
-\varname{[vorbis_mode_blockflag]} is 0, else \varname{[n]} is equal to \varname{[blocksize_1]}.
+ \item read 1 bit \varname{[packet\_type]}; check that packet type is 0 (audio)
+ \item read \link{vorbis:spec:ilog}{ilog}([vorbis\_mode\_count]-1) bits
+\varname{[mode\_number]}
+ \item decode blocksize \varname{[n]} is equal to \varname{[blocksize\_0]} if
+\varname{[vorbis\_mode\_blockflag]} is 0, else \varname{[n]} is equal to \varname{[blocksize\_1]}.
  \item perform window selection and setup; this window is used later by the inverse MDCT:
   \begin{enumerate}
-   \item if this is a long window (the \varname{[vorbis_mode_blockflag]} flag of this mode is
+   \item if this is a long window (the \varname{[vorbis\_mode\_blockflag]} flag of this mode is
 set):
     \begin{enumerate}
-     \item read 1 bit for \varname{[previous_window_flag]}
-     \item read 1 bit for \varname{[next_window_flag]}
-     \item if \varname{[previous_window_flag]} is not set, the left half
+     \item read 1 bit for \varname{[previous\_window\_flag]}
+     \item read 1 bit for \varname{[next\_window\_flag]}
+     \item if \varname{[previous\_window\_flag]} is not set, the left half
          of the window will be a hybrid window for lapping with a
          short block.  See \xref{vorbis:spec:window} for an illustration of overlapping
 dissimilar
          windows. Else, the left half window will have normal long
          shape.
-     \item if \varname{[next_window_flag]} is not set, the right half of
+     \item if \varname{[next\_window\_flag]} is not set, the right half of
          the window will be a hybrid window for lapping with a short
          block.  See \xref{vorbis:spec:window} for an
 illustration of overlapping dissimilar
@@ -323,44 +324,44 @@ lapping requirements can affect overall shape.  Window generation
 proceeds as follows:
 
 \begin{enumerate}
- \item  \varname{[window_center]} = \varname{[n]} / 2
- \item  if (\varname{[vorbis_mode_blockflag]} is set and \varname{[previous_window_flag]} is
+ \item  \varname{[window\_center]} = \varname{[n]} / 2
+ \item  if (\varname{[vorbis\_mode\_blockflag]} is set and \varname{[previous\_window\_flag]} is
 not set) then
   \begin{enumerate}
-   \item \varname{[left_window_start]} = \varname{[n]}/4 -
-\varname{[blocksize_0]}/4
-   \item \varname{[left_window_end]} = \varname{[n]}/4 + \varname{[blocksize_0]}/4
-   \item \varname{[left_n]} = \varname{[blocksize_0]}/2
+   \item \varname{[left\_window\_start]} = \varname{[n]}/4 -
+\varname{[blocksize\_0]}/4
+   \item \varname{[left\_window\_end]} = \varname{[n]}/4 + \varname{[blocksize\_0]}/4
+   \item \varname{[left\_n]} = \varname{[blocksize\_0]}/2
   \end{enumerate}
  else
   \begin{enumerate}
-   \item \varname{[left_window_start]} = 0
-   \item \varname{[left_window_end]} = \varname{[window_center]}
-   \item \varname{[left_n]} = \varname{[n]}/2
+   \item \varname{[left\_window\_start]} = 0
+   \item \varname{[left\_window\_end]} = \varname{[window\_center]}
+   \item \varname{[left\_n]} = \varname{[n]}/2
   \end{enumerate}
 
- \item  if (\varname{[vorbis_mode_blockflag]} is set and \varname{[next_window_flag]} is not
+ \item  if (\varname{[vorbis\_mode\_blockflag]} is set and \varname{[next\_window\_flag]} is not
 set) then
   \begin{enumerate}
-   \item \varname{[right_window_start]} = \varname{[n]*3}/4 -
-\varname{[blocksize_0]}/4
-   \item \varname{[right_window_end]} = \varname{[n]*3}/4 +
-\varname{[blocksize_0]}/4
-   \item \varname{[right_n]} = \varname{[blocksize_0]}/2
+   \item \varname{[right\_window\_start]} = \varname{[n]*3}/4 -
+\varname{[blocksize\_0]}/4
+   \item \varname{[right\_window\_end]} = \varname{[n]*3}/4 +
+\varname{[blocksize\_0]}/4
+   \item \varname{[right\_n]} = \varname{[blocksize\_0]}/2
   \end{enumerate}
  else
   \begin{enumerate}
-   \item \varname{[right_window_start]} = \varname{[window_center]}
-   \item \varname{[right_window_end]} = \varname{[n]}
-   \item \varname{[right_n]} = \varname{[n]}/2
+   \item \varname{[right\_window\_start]} = \varname{[window\_center]}
+   \item \varname{[right\_window\_end]} = \varname{[n]}
+   \item \varname{[right\_n]} = \varname{[n]}/2
   \end{enumerate}
 
- \item  window from range 0 ... \varname{[left_window_start]}-1 inclusive is zero
- \item  for \varname{[i]} in range \varname{[left_window_start]} ...
-\varname{[left_window_end]}-1, window(\varname{[i]}) = $\sin(\frac{\pi}{2} * \sin^2($ (\varname{[i]}-\varname{[left_window_start]}+0.5) / \varname{[left_n]} $* \frac{\pi}{2})$ )
- \item  window from range \varname{[left_window_end]} ... \varname{[right_window_start]}-1
-inclusive is one\item  for \varname{[i]} in range \varname{[right_window_start]} ... \varname{[right_window_end]}-1, window(\varname{[i]}) = $\sin(\frac{\pi}{2} * \sin^2($ (\varname{[i]}-\varname{[right_window_start]}+0.5) / \varname{[right_n]} $ * \frac{\pi}{2} + \frac{\pi}{2})$ )
-\item  window from range \varname{[right_window_start]} ... \varname{[n]}-1 is
+ \item  window from range 0 ... \varname{[left\_window\_start]}-1 inclusive is zero
+ \item  for \varname{[i]} in range \varname{[left\_window\_start]} ...
+\varname{[left\_window\_end]}-1, window(\varname{[i]}) = $\sin(\frac{\pi}{2} * \sin^2($ (\varname{[i]}-\varname{[left\_window\_start]}+0.5) / \varname{[left\_n]} $* \frac{\pi}{2})$ )
+ \item  window from range \varname{[left\_window\_end]} ... \varname{[right\_window\_start]}-1
+inclusive is one\item  for \varname{[i]} in range \varname{[right\_window\_start]} ... \varname{[right\_window\_end]}-1, window(\varname{[i]}) = $\sin(\frac{\pi}{2} * \sin^2($ (\varname{[i]}-\varname{[right\_window\_start]}+0.5) / \varname{[right\_n]} $ * \frac{\pi}{2} + \frac{\pi}{2})$ )
+\item  window from range \varname{[right\_window\_start]} ... \varname{[n]}-1 is
 zero
 \end{enumerate}
 
@@ -374,30 +375,30 @@ occurrence.
 \subsubsection{floor curve decode}
 
 From this point on, we assume out decode context is using mode number
-\varname{[mode_number]} from configuration array
-\varname{[vorbis_mode_configurations]} and the map number
-\varname{[vorbis_mode_mapping]} (specified by the current mode) taken
+\varname{[mode\_number]} from configuration array
+\varname{[vorbis\_mode\_configurations]} and the map number
+\varname{[vorbis\_mode\_mapping]} (specified by the current mode) taken
 from the mapping configuration array
-\varname{[vorbis_mapping_configurations]}.
+\varname{[vorbis\_mapping\_configurations]}.
 
 Floor curves are decoded one-by-one in channel order.
 
-For each floor \varname{[i]} of \varname{[audio_channels]}
+For each floor \varname{[i]} of \varname{[audio\_channels]}
  \begin{enumerate}
-  \item \varname{[submap_number]} = element \varname{[i]} of vector [vorbis_mapping_mux]
-  \item \varname{[floor_number]} = element \varname{[submap_number]} of vector
-[vorbis_submap_floor]
+  \item \varname{[submap\_number]} = element \varname{[i]} of vector [vorbis\_mapping\_mux]
+  \item \varname{[floor\_number]} = element \varname{[submap\_number]} of vector
+[vorbis\_submap\_floor]
   \item if the floor type of this
-floor (vector \varname{[vorbis_floor_types]} element
-\varname{[floor_number]}) is zero then decode the floor for
+floor (vector \varname{[vorbis\_floor\_types]} element
+\varname{[floor\_number]}) is zero then decode the floor for
 channel \varname{[i]} according to the
 \xref{vorbis:spec:floor0-decode}
   \item if the type of this floor
 is one then decode the floor for channel \varname{[i]} according
 to the \xref{vorbis:spec:floor1-decode}
   \item save the needed decoded floor information for channel for later synthesis
-  \item if the decoded floor returned 'unused', set vector \varname{[no_residue]} element
-\varname{[i]} to true, else set vector \varname{[no_residue]} element \varname{[i]} to
+  \item if the decoded floor returned 'unused', set vector \varname{[no\_residue]} element
+\varname{[i]} to true, else set vector \varname{[no\_residue]} element \varname{[i]} to
 false
  \end{enumerate}
 
@@ -417,13 +418,13 @@ coded in the stream, save for one complication.  If some vectors are
 used and some are not, channel coupling could result in mixing a
 zeroed and nonzeroed vector to produce two nonzeroed vectors.
 
-for each \varname{[i]} from 0 ... \varname{[vorbis_mapping_coupling_steps]}-1
+for each \varname{[i]} from 0 ... \varname{[vorbis\_mapping\_coupling\_steps]}-1
 
 \begin{enumerate}
- \item if either \varname{[no_residue]} entry for channel
-(\varname{[vorbis_mapping_magnitude]} element \varname{[i]})
+ \item if either \varname{[no\_residue]} entry for channel
+(\varname{[vorbis\_mapping\_magnitude]} element \varname{[i]})
 or channel
-(\varname{[vorbis_mapping_angle]} element \varname{[i]})
+(\varname{[vorbis\_mapping\_angle]} element \varname{[i]})
 are set to false, then both must be set to false.  Note that an 'unused'
 floor has no decoded floor information; it is important that this is
 remembered at floor curve synthesis time.
@@ -437,34 +438,34 @@ remembered at floor curve synthesis time.
 Unlike floors, which are decoded in channel order, the residue vectors
 are decoded in submap order.
 
-for each submap \varname{[i]} in order from 0 ... \varname{[vorbis_mapping_submaps]}-1
+for each submap \varname{[i]} in order from 0 ... \varname{[vorbis\_mapping\_submaps]}-1
 
 \begin{enumerate}
  \item \varname{[ch]} = 0
- \item for each channel \varname{[j]} in order from 0 ... \varname{[audio_channels]} - 1
+ \item for each channel \varname{[j]} in order from 0 ... \varname{[audio\_channels]} - 1
   \begin{enumerate}
-   \item if channel \varname{[j]} in submap \varname{[i]} (vector \varname{[vorbis_mapping_mux]} element \varname{[j]} is equal to \varname{[i]})
+   \item if channel \varname{[j]} in submap \varname{[i]} (vector \varname{[vorbis\_mapping\_mux]} element \varname{[j]} is equal to \varname{[i]})
     \begin{enumerate}
-     \item if vector \varname{[no_residue]} element \varname{[j]} is true
+     \item if vector \varname{[no\_residue]} element \varname{[j]} is true
       \begin{enumerate}
-       \item vector \varname{[do_not_decode_flag]} element \varname{[ch]} is set
+       \item vector \varname{[do\_not\_decode\_flag]} element \varname{[ch]} is set
       \end{enumerate}
      else
       \begin{enumerate}
-       \item vector \varname{[do_not_decode_flag]} element \varname{[ch]} is unset
+       \item vector \varname{[do\_not\_decode\_flag]} element \varname{[ch]} is unset
       \end{enumerate}
 
      \item increment \varname{[ch]}
     \end{enumerate}
 
   \end{enumerate}
- \item \varname{[residue_number]} = vector \varname{[vorbis_mapping_submap_residue]} element \varname{[i]}
- \item \varname{[residue_type]} = vector \varname{[vorbis_residue_types]} element \varname{[residue_number]}
- \item decode \varname{[ch]} vectors using residue \varname{[residue_number]}, according to type \varname{[residue_type]}, also passing vector \varname{[do_not_decode_flag]} to indicate which vectors in the bundle should not be decoded. Correct per-vector decode length is \varname{[n]}/2.
+ \item \varname{[residue\_number]} = vector \varname{[vorbis\_mapping\_submap\_residue]} element \varname{[i]}
+ \item \varname{[residue\_type]} = vector \varname{[vorbis\_residue\_types]} element \varname{[residue\_number]}
+ \item decode \varname{[ch]} vectors using residue \varname{[residue\_number]}, according to type \varname{[residue\_type]}, also passing vector \varname{[do\_not\_decode\_flag]} to indicate which vectors in the bundle should not be decoded. Correct per-vector decode length is \varname{[n]}/2.
  \item \varname{[ch]} = 0
- \item for each channel \varname{[j]} in order from 0 ... \varname{[audio_channels]}
+ \item for each channel \varname{[j]} in order from 0 ... \varname{[audio\_channels]}
   \begin{enumerate}
-   \item if channel \varname{[j]} is in submap \varname{[i]} (vector \varname{[vorbis_mapping_mux]} element \varname{[j]} is equal to \varname{[i]})
+   \item if channel \varname{[j]} is in submap \varname{[i]} (vector \varname{[vorbis\_mapping\_mux]} element \varname{[j]} is equal to \varname{[i]})
     \begin{enumerate}
      \item residue vector for channel \varname{[j]} is set to decoded residue vector \varname{[ch]}
      \item increment \varname{[ch]}
@@ -478,26 +479,26 @@ for each submap \varname{[i]} in order from 0 ... \varname{[vorbis_mapping_subma
 
 \subsubsection{inverse coupling}
 
-for each \varname{[i]} from \varname{[vorbis_mapping_coupling_steps]}-1 descending to 0
+for each \varname{[i]} from \varname{[vorbis\_mapping\_coupling\_steps]}-1 descending to 0
 
 \begin{enumerate}
- \item \varname{[magnitude_vector]} = the residue vector for channel
-(vector \varname{[vorbis_mapping_magnitude]} element \varname{[i]})
- \item \varname{[angle_vector]} = the residue vector for channel (vector
-\varname{[vorbis_mapping_angle]} element \varname{[i]})
- \item for each scalar value \varname{[M]} in vector \varname{[magnitude_vector]} and the corresponding scalar value \varname{[A]} in vector \varname{[angle_vector]}:
+ \item \varname{[magnitude\_vector]} = the residue vector for channel
+(vector \varname{[vorbis\_mapping\_magnitude]} element \varname{[i]})
+ \item \varname{[angle\_vector]} = the residue vector for channel (vector
+\varname{[vorbis\_mapping\_angle]} element \varname{[i]})
+ \item for each scalar value \varname{[M]} in vector \varname{[magnitude\_vector]} and the corresponding scalar value \varname{[A]} in vector \varname{[angle\_vector]}:
   \begin{enumerate}
    \item if (\varname{[M]} is greater than zero)
     \begin{enumerate}
      \item if (\varname{[A]} is greater than zero)
       \begin{enumerate}
-       \item \varname{[new_M]} = \varname{[M]}
-       \item \varname{[new_A]} = \varname{[M]}-\varname{[A]}
+       \item \varname{[new\_M]} = \varname{[M]}
+       \item \varname{[new\_A]} = \varname{[M]}-\varname{[A]}
       \end{enumerate}
      else
       \begin{enumerate}
-       \item \varname{[new_A]} = \varname{[M]}
-       \item \varname{[new_M]} = \varname{[M]}+\varname{[A]}
+       \item \varname{[new\_A]} = \varname{[M]}
+       \item \varname{[new\_M]} = \varname{[M]}+\varname{[A]}
       \end{enumerate}
 
     \end{enumerate}
@@ -505,19 +506,19 @@ for each \varname{[i]} from \varname{[vorbis_mapping_coupling_steps]}-1 descendi
     \begin{enumerate}
      \item if (\varname{[A]} is greater than zero)
       \begin{enumerate}
-       \item \varname{[new_M]} = \varname{[M]}
-       \item \varname{[new_A]} = \varname{[M]}+\varname{[A]}
+       \item \varname{[new\_M]} = \varname{[M]}
+       \item \varname{[new\_A]} = \varname{[M]}+\varname{[A]}
       \end{enumerate}
      else
       \begin{enumerate}
-       \item \varname{[new_A]} = \varname{[M]}
-       \item \varname{[new_M]} = \varname{[M]}-\varname{[A]}
+       \item \varname{[new\_A]} = \varname{[M]}
+       \item \varname{[new\_M]} = \varname{[M]}-\varname{[A]}
       \end{enumerate}
 
     \end{enumerate}
 
-   \item set scalar value \varname{[M]} in vector \varname{[magnitude_vector]} to \varname{[new_M]}
-   \item set scalar value \varname{[A]} in vector \varname{[angle_vector]} to \varname{[new_A]}
+   \item set scalar value \varname{[M]} in vector \varname{[magnitude\_vector]} to \varname{[new\_M]}
+   \item set scalar value \varname{[A]} in vector \varname{[angle\_vector]} to \varname{[new\_A]}
   \end{enumerate}
 
 \end{enumerate}
@@ -572,7 +573,7 @@ function used for the MDCT is the function described earlier.
 
 
 
-\subsubsection{overlap_add}
+\subsubsection{overlap\_add}
 
 Windowed MDCT output is overlapped and added with the right hand data
 of the previous window such that the 3/4 point of the previous window
@@ -606,10 +607,17 @@ offset is '0' (as no data has been returned yet).
 
 Vorbis I specifies only a channel mapping type 0.  In mapping type 0,
 channel mapping is implicitly defined as follows for standard audio
-applications:
+applications. As of revision 16781 (20100113), the specification adds
+defined channel locations for 6.1 and 7.1 surround.  Ordering/location
+for greater-than-eight channels remains 'left to the implementation'.
+
+These channel orderings refer to order within the encoded stream.  It
+is naturally possible for a decoder to produce output with channels in
+any order. Any such decoder should explicitly document channel
+reordering behavior.
 
 \begin{description} %[style=nextline]
- \item[three channels]
+ \item[one channel]
 	the stream is monophonic
 
 \item[two channels]
@@ -625,13 +633,22 @@ front right, rear left, rear right
 
 \item[five channels]
 	the stream is five-channel surround.  channel order: front left,
-front center, front right, rear left, rear right
+center, front right, rear left, rear right
 
 \item[six channels]
-	the stream is 5.1 surround.  channel order: front left, front
-center, front right, rear left, rear right, LFE
+	the stream is 5.1 surround.  channel order: front left, center, 
+front right, rear left, rear right, LFE
 
-\item[greater than six channels]
+\item[seven channels]
+        the stream is 6.1 surround.  channel order: front left, center, 
+front right, side left, side right, rear center, LFE
+
+\item[eight channels]
+        the stream is 7.1 surround.  channel order: front left, center, 
+front right, side left, side right, rear left, rear right, 
+LFE
+
+\item[greater than eight channels]
 	channel use and order is defined by the application
 
 \end{description}

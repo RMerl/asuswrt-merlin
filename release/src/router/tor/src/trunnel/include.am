@@ -36,3 +36,7 @@ src_trunnel_libor_trunnel_testing_a_CPPFLAGS = -DTRUNNEL_LOCAL_H $(AM_CPPFLAGS) 
 src_trunnel_libor_trunnel_testing_a_CFLAGS = $(AM_CFLAGS) $(TEST_CFLAGS)
 
 noinst_HEADERS+= $(TRUNNELHEADERS)
+
+EXTRA_DIST += \
+	src/trunnel/README
+

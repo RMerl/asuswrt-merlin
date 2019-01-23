@@ -144,8 +144,6 @@ function daapd_display(){
 
 function initial(){
 	show_menu();
-	document.getElementById("_APP_Installation").innerHTML = '<table><tbody><tr><td><div class="_APP_Installation"></div></td><td><div style="width:120px;"><#Menu_usb_application#></div></td></tr></tbody></table>';
-	document.getElementById("_APP_Installation").className = "menu_clicked";
 
 	document.aidiskForm.protocol.value = PROTOCOL;
 	initial_dir();
@@ -157,11 +155,6 @@ function initial(){
 	do_get_friendly_name("dms");
 	check_dms_status();
 	
-	if((calculate_height-3)*52 + 20 > 535)
-		document.getElementById("upnp_icon").style.height = (calculate_height-3)*52 -70 + "px";
-	else
-		document.getElementById("upnp_icon").style.height = "500px";
-		
 	if(noiTunes_support){		
 		document.getElementById("iTunes_div").style.display = "none";		
 	}
@@ -724,12 +717,12 @@ function show_dlna_path(){
 		for(var i = 1; i < dms_dir_x_array_row.length; i++){
 			var tmp_type = "";
 			code +='<tr id="row'+i+'">';
-			if(dms_dir_x_array_row[i].length > 35){
-				temp = dms_dir_x_array_row[i].substr(0,35) + "...";
-				code +='<td width="45%" class="dlna_path_td" title="'+ dms_dir_x_array_row[i] +'">'+ temp +'</td>';
+			if(decodeURIComponent(dms_dir_x_array_row[i]).length > 35){
+				temp = decodeURIComponent(dms_dir_x_array_row[i]).substr(0,35) + "...";
+				code +='<td width="45%" class="dlna_path_td" title="'+ decodeURIComponent(dms_dir_x_array_row[i]) +'">'+ temp +'</td>';
 			}
 			else{
-				code +='<td width="45%" class="dlna_path_td" title="'+ dms_dir_x_array_row[i] +'">'+ dms_dir_x_array_row[i] +'</td>';
+				code +='<td width="45%" class="dlna_path_td" title="'+ decodeURIComponent(dms_dir_x_array_row[i]) +'">'+ decodeURIComponent(dms_dir_x_array_row[i]) +'</td>';
 			}
 				tmp_type += dms_dir_type_x_array_row[i].indexOf("A")>=0? "Audio " : "";
 				tmp_type += dms_dir_type_x_array_row[i].indexOf("P")>=0? "Image " : "";
@@ -963,6 +956,21 @@ function set_dms_dir(obj){
         	<td><span id="dmsStatus" style="margin-left:15px">Idle</span>
         	</td>
        	</tr>
+	<tr>
+		<th>Rebuild entire database at start</th>
+		<td>
+			<input type="radio" name="dms_rebuild" class="input" value="1" <% nvram_match_x("", "dms_rebuild", "1", "checked"); %>><#checkbox_Yes#>
+			<input type="radio" name="dms_rebuild" class="input" value="0" <% nvram_match_x("", "dms_rebuild", "0", "checked"); %>><#checkbox_No#>
+		</td>
+	</tr>
+	<tr>
+		<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,17);">Enable status webpage</a</th>
+		<td>
+			<input type="radio" name="dms_web" class="input" value="1" <% nvram_match_x("", "dms_web", "1", "checked"); %>><#checkbox_Yes#>
+			<input type="radio" name="dms_web" class="input" value="0" <% nvram_match_x("", "dms_web", "0", "checked"); %>><#checkbox_No#>
+		</td>
+	</tr>
+
    			<tr>
         	<th><#DLNA_path_setting#></th>
         	<td>

@@ -1,0 +1,74 @@
+## Here is an example for Gentoo ebuilds/eclasses,
+## and (further down) one for Portage control files.
+
+syntax "ebuild" "\.e(build|class|blit)$"
+comment "#"
+
+## All the standard portage functions:
+color brightgreen "(^|\<default_)src_(unpack|prepare|configure|compile|install|test)\>"
+color brightgreen "^pkg_(config|nofetch|info|pretend|setup|(pre|post)(inst|rm))\>"
+color brightgreen "\<default(_pkg_nofetch|_src_(unpack|prepare|configure|compile|test))?\>"
+## Bash-related syntax:
+color green "\<(break|case|continue|do|done|elif|else|esac|exit|fi|for|function|if|in|read|return|select|shift|then|time|until|while)\>"
+color green "\<(declare|eval|exec|export|let|local)\>"
+color green "[{}():;|`$<>!=&\\]" "(\]|\[)"
+color green "-[defhnrsuwxzL]\>"
+color green "-(eq|ne|gt|lt|ge|le)\>"
+## Variables... official portage ones in red, all others in bright red:
+color brightred "\$[-0-9@*#?$!]" "\$[[:alpha:]_][[:alnum:]_]*"
+color brightred "\$\{[#!]?([-@*#?$!]|[0-9]+|[[:alpha:]_][[:alnum:]_]*)(\[([[:digit:]]|@)+\])?(([#%/]|:?[-=?+])[^}]*\}|\[|\})"
+color red "\<(EAPI|ARCH|HOMEPAGE|DESCRIPTION|IUSE|SRC_URI|LICENSE|SLOT|KEYWORDS|[HPR]?DEPEND|PROVIDE|PROPERTIES|REQUIRED_USE|RESTRICT|USERLAND)\>"
+color red "\<(S|E?D|T|PV|PF|P|PN|PR|PVR|A|CATEGORY|DISTDIR|FILESDIR|EPREFIX|E?ROOT|WORKDIR)\>"
+color red "\<(AS|C(PP|XX)?|LD)FLAGS\>" "\<C(HOST|TARGET|BUILD)\>" "\<(MERGE_TYPE|REPLACING_VERSIONS|REPLACED_BY_VERSION)\>"
+color red "\<EBUILD_PHASE(_FUNC)?\>"
+color red "\<QA_((TEXTRELS|EXECSTACK|WX_LOAD)(_[a-zA-Z_0-9]+)?|DT_HASH|PRESTRIPPED)\>"
+color red "\<(PATCHES|(HTML_)?DOCS)\>" "\<WANT_(AUTO(CONF|MAKE)|LIBTOOL)\>" "\<AT_M4DIR\>"
+## Portage commands:
+color magenta "\<(use(_(with|enable|if_iuse)|x)?|in_iuse)\> [!a-zA-Z0-9_+ -]*" "inherit.*"
+color brightblue "\<e(begin|end|conf|install|make|qmake4|ant|(qa)?warn|infon?|error|log|patch(_user)?|new(group|user))\>"
+color brightblue "\<e(pause|beep|mktemp|(cvs|svn)_clean|punt_cxx)\>" "\<e(aclocal|auto(reconf|header|conf|make)|libtoolize)\>"
+color brightblue "\<e(stack|shopts|umask)_(push|pop)\>" "\<version_is_at_least\>"
+color brightblue "\<make_desktop_entry\>" "\<unpack(_(makeself|pdv))?\>"
+color brightblue "\<(die|hasv?|inherit|nonfatal)\>" "\<(use(_(with|enable|if_iuse)|x)?|in_iuse)\>" "\<(has|best)_version\>"
+color brightblue "\<(do|new)(ins|(games)?s?bin|doc|lib(\.so|\.a)?|man|info|exe|initd|confd|envd|pam|menu|icon)\>"
+color brightblue "\<do(compress|header|python|sed|dir|hard|sym|html|jar|mo)\>" "\<keepdir\>"
+color brightblue "\<prepall(docs|info|man|strip)?\>" "\<prep(info|lib|lib\.(so|a)|man|strip|gamesdirs)\>"
+color brightblue "\<(doc|ins|exe)?into\>" "\<(f|games)(owners|perms)\>" "\<(exe|ins|dir)opts\>"
+color brightblue "\<tc-get(BUILD_)?(AR|AS|CC|CPP|CXX|LD|NM|OBJCOPY|PKG_CONFIG|RANLIB)\>"
+color brightblue "\<tc-(arch(-kernel)?|export|has-(tls|openmp))\>"
+## Common commands used in ebuilds:
+color blue "\<(awk|cat|cd|chmod|chown|cp|echo|env|find|e?grep|ln|make|mkdir|mv|popd|printf|pushd|rm|rmdir|sed|set|tar|touch|unset|xargs)\>"
+## Comments (doesn't work that well):
+color yellow "(^|[[:space:]])#.*$"
+## Strings (doesn't work that well):
+color brightyellow ""(\\.|[^\"])*"" "'(\\.|[^'])*'"
+## Trailing space is bad!
+color ,green "[[:space:]]+$"
+## Mixed whitespace is also bad.
+color ,green " 	"
+
+
+syntax "/etc/portage" "\.(accept_keywords|env|keywords|mask|unmask|use)(/.+)?$"
+comment "#"
+
+## Base text:
+color green "^.+$"
+## Likely version and slot numbers:
+color magenta "-[[:digit:].]+(_(alpha|beta|pre|rc|p)[[:digit:]]*)*(-r[[:digit:]]+)?([:[:space:]]|$)"
+color magenta ":[^[:space:]]+([[:space:]]|$)"
+## Use flags (must come after version/slot):
+color brightred "[[:space:]]+\+?[A-Za-z0-9+_@-]+"
+color brightblue "[[:space:]]+-[A-Za-z0-9+_@-]+"
+## Accepted arches:
+color white "[~-]?\<(alpha|amd64|arm(64)?|hppa|ia64|m68k|mips|nios2|ppc(64)?|riscv|s390|sh|sparc|x86)(-(aix|(f|free|net|open)bsd|cygwin|hpux|interix|linux|macos|mint|solaris|winnt))?\>"
+color white "[[:space:]][*~-]?\*"
+## Categories:
+color cyan "^[[:space:]]*[^/]*/"
+## Masking regulators:
+color brightmagenta "^[[:space:]]*(=|~|<|<=|>|>=)"
+## Comments:
+color yellow "#.*$"
+## Trailing space is bad!
+color ,green "[[:space:]]+$"
+## Mixed whitespace is also bad.
+color ,green " 	"

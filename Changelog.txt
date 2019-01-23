@@ -1,7 +1,642 @@
 Asuswrt-Merlin Changelog
 ========================
 
-380.60 (xx-xxx-2016)
+380.70 (8-Apr-2018)
+  - NOTE: This will be the final 380.xx release for
+          all models.  The RT-N66U and RT-AC66U
+          support will be dropped, and all other
+          models have been migrated to the new gen
+          branch, as of release 384.4.
+
+          People who wish to keep getting updates for
+          these two older models should look at the
+          john9527 fork: https://bit.ly/2EV5Oat
+
+  - CHANGED: Tightened security around some config files.
+  - CHANGED: Samba protocol support can now be set to
+             SMBv1, SMBv2, or SMBv1 + SMBv2 (the new default).
+             This will result in a performance drop on all
+             models, but will be more secure.
+             Ideally, people should change it to SMBv2 only,
+             and then reboot all their client devices to start
+             using only the new protocol.
+             If performance is more important than security to
+             you, then you can switch it back to SMBv1, which is
+             the old default behaviour.
+  - CHANGED: Switched to the new Entware repo for armv7 models.
+             To upgrade, run the following commands TWICE:
+
+             opkg update; opkg upgrade
+
+  - FIXED: Apply button not working on the OpenVPN
+           Client page.
+  - FIXED: Potential racing condition that could lead to two
+           instances of miniupnpd running at boot time.
+  - FIXED: Broken FAQ links (backport from 380_8120)
+  - FIXED: Security issue in httpd (CVE-2018-8879).
+  - FIXED: Security issues in httpd (backports from 380_8228)
+
+
+380.69_2 (28-Jan-2018)
+  - NOTE: The official IRC channel has moved to
+          Freenode (#asuswrt).
+
+  - CHANGED: Quantenna watchdog is less likely now to
+             incorrectly assume the QTN CPU has crashed
+             (which can lead to router reboots). (RT-AC87U)
+  - FIXED: IE11 field validation issues on OpenVPN and
+           DHCP pages.
+  - FIXED: Router crash when importing an OpenVPN certificate
+           longer than 3499 characters (the supported limit)
+  - FIXED: Users were allowed to enter invalid characters on
+           some of the OpenVPN client page fields.
+  - FIXED: CVE-2018-5999 in httpd (backport from 384_10007)
+  - FIXED: CVE-2018-5721 in httpd (Merlin & theMIROn)
+
+
+380.69 (11-Dec-2017)
+  - NEW: Added option to disable the Asus NAT tunnel service under
+         Other Settings -> Tweak.  Not quite sure what this
+         partly closed source service is for, but it eats a
+         fair amount of CPU and RAM (backport from 382)
+
+  - CHANGED: Updated odhcp6c to be in sync with upstream
+             (patch by theMIRon)
+  - CHANGED: Updated libogg to 1.3.3 and libvorbis to 1.3.5.
+  - CHANGED: Updated wget to 1.19.2 (fixing connectivity to some
+             TLS 1.2 servers)
+  - CHANGED: Updated RT-N66U and RT-AC66U SDK to GPL 380_8120's
+             (fixing KRACK in repeater/bridge mode)
+  - CHANGED: Updated openssl to 1.0.2n.
+  - CHANGED: Updated tor to 0.2.9.14.
+  - FIXED: allow IA_NA mode downgrade with forced IA_PD
+           (for ISPs with broken IPv6 support)
+           (patch by theMIRon)
+  - FIXED: Trend Micro signature check might randomly fail the
+           RSA validation.
+  - FIXED: Security issues CVE-2017-15275, CVE-2017-12163
+           and CVE-2017-12150 (backported to Samba 3.6 and 3.5)
+  - FIXED: Httpd crash when accessing certain webui pages with
+           no connected Ethernet clients
+  - FIXED: DNSFILTER rules would have priority over OPENVPN Client
+           rules (when client has DNS set to Exclusive mode).
+  - FIXED: traffic routing from the router itself would fail when
+           restarting the firewall while using an ovpn client with
+           policy rules in effect.
+
+
+380.68_4 (4-Oct-2017)
+  - CHANGED: Updated dnsmasq to 2.78 (contains a number of
+             security fixes).
+  - FIXED: rstats could crash at start time in some situations.
+  - FIXED: QOS Scheduler would revert back to sfq after you had
+           re-enabled QOS while (fq_)codel was already selected.
+  - FIXED: Missing tabs on the Parental Control page.
+  - FIXED: Realtek port status wouldn't auto-refresh on the Sysinfo
+           page.
+  - FIXED: Incorrect sort by remaining time on the DHCP Lease page.
+  - FIXED: Some LAN clients couldn't be added to the TOR redirected
+           client list.
+
+
+380.68_2 (12-Sept-2017)
+  - FIXED: Some models would show the wrong menu options while in
+           Repeater mode.
+  - FIXED: USB modem page not displayed if WAN type was set to USB.
+  - FIXED: CVE-2017-12754 security issue.
+  - FIXED: Incorrect LAN ports order on Networkmap (RT-AC3200)
+           (Asus bug)
+  - FIXED: Extra OpenVPN CA not properly handled for OpenVPN
+           clients 3, 4 and 5.
+  - FIXED: Invalid txrate shown on Wireless Client page if client
+           isn't authenticated yet
+
+
+380.68 (18-Aug-2017)
+  - IMPORTANT: due to major webui changes, you will need to
+               either flush your browser cache, or force it
+               to reload the page (shift-reload) the first time
+               you access the webui after upgrading to 380.68.
+
+  - NEW: Merged GPL 380_7743 binary blobs for the RT-N66U.
+  - NEW: Backported Ethernet port status report on the Network Map
+         from GPL 382.
+  - NEW: Description field added to OpenVPN client configuration
+  - NEW: Added missing hash types to ipset_arm (Patch by john9527)
+  - NEW: Added hostname Busybox applet, used by some Entware packages
+  - NEW: Added TPROXY netfilter target module (ARM only)
+  - CHANGED: Switched webui menu generation code to GPL 382 code.
+             This new code is easier for me to maintain.
+  - CHANGED: Used webui menu icons from GPL 382.
+  - CHANGED: Re-organized VPN pages, merging some together.
+  - CHANGED: Reworked VPNStatus page, will now refresh itself every
+             5 seconds.  It will also report a client's local
+             and public IP addresses.
+  - CHANGED: Re-designed webui interface for managing SSL
+             certificate.  Added Upload button, and revamped
+             certificate info display (includes some backports
+             from GPL 382)
+  - CHANGED: Removed option to enable/disable persistent webui
+             certificate - they are now always persistent.
+  - CHANGED: Reworked Tools -> Sysinfo page, dynamic data will
+             refresh itself every 3 seconds, also port
+             ordering will be more consistent, and display based
+             on the new tableAPI from GPL 382.
+  - CHANGED: Backported system log page from GPL 382: moved logging
+             settings to it, added option to set a remote syslog
+             server's port, and shown log will auto refresh.
+  - CHANGED: Re-designed DHCP Lease log page to use the new
+             tableAPI, with sortable fields (defaults to IP sort)
+  - CHANGED: Do not alternate between ntp server from webui and
+             the one hardcoded in nvram - use webui one, unless
+             it's empty - then use the second server set in nvram.
+  - CHANGED: Moved App icon out of the notification area and into
+             the footer of the page, with other links.
+  - CHANGED: Updated Curl to 7.54.1
+  - CHANGED: Updated nano to 2.8.6
+  - CHANGED: Re-designed the way the Tor database gets backed up,
+             so it won't grow stale by never being updated.
+  - CHANGED: Define and forward a small range of ports
+             (57535-57565) for use for passive FTP (needed for
+             TLS over WAN).
+  - CHANGED: Reduce the amount of logging done while configuring
+             policy-based routing for an OpenVPN client when
+             using the default log verbosity level of 3.
+  - FIXED: Duplicate LAN port 1 shown for the RT-AC87U on
+           the Sysinfo page.
+  - FIXED: Port forward/UPNP issues with CTF enabled depending on
+           selected NAT loopback mode.
+  - FIXED: URL filtering wasn't working over IPv4.
+  - FIXED: OpenVPN instances could potentially start too early at
+           boot time (before clock was set)
+  - FIXED: When multiple OpenVPN clients are connected to the router,
+           their username wouldn't show as Connected.
+  - FIXED: Progress report would go to 200% if you changed a setting
+           and started or stopped an OpenVPN client or server.
+  - FIXED: Security issues CVE-2017-11344, CVE-2017-11345 and
+           CVE-2017-11420 in networkmap (patches by
+           Kilo Foxtrot Papa)
+  - FIXED: Webui self-generated certificate could sometime be
+           invalid due to a race condition between the SSL and
+           non-SSL httpd instances starting at the same time.
+  - FIXED: Tor would fail to start if there was a backed up
+           database in /jffs/.tordb, due to bad permissions.
+  - FIXED: SMB sharing without user authentication would fail if
+           router's admin username was changed from "admin"
+           (Asus bug)
+  - FIXED: SMB sharing without user authentication would cause
+           SMB2 to downgrade to SMB1.
+  - FIXED: 5GHz-2 would show an "undefined" channel on the
+           Wireless-> General and in the wifi popup if
+           5GHz-1 was disabled (Asus bug).
+
+
+380.67 (16-July-2017)
+  - NEW: Merged with GPL 380_7743 code, with binary blobs from
+         7378 for N66U
+  - NEW: Custom config support for quagga/ripd.
+  - NEW: Webui SSL certificate can now be saved so it gets reused
+         instead of a new one being constantly generated.  It will
+         be stored under /jffs/ssl/, you can also easily provide
+         your own by storing cert.pem and key.pem in that location.
+         Settings to control this can be found under
+         Administration -> System.
+  - NEW: TLS support in vsftpd.  Key and certs are automatically
+         generated, and can also be replaced by your own, as
+         ftp.key and ftp.crt under /jffs/ssl/
+  - NEW: fq_codel and configurable overhead support in Adaptive QoS.
+  - NEW: PEAP/MSCHAPv2 support via 802.1x on WAN interface, in
+         addition to existing MD5 support (patch by Rafi Khardalian)
+  - CHANGED: Remember chosen sort method on DHCP static reservations
+             page.
+  - CHANGED: Updated minidlna to 1.2.0.
+  - CHANGED: Updated nano to 2.8.5.
+  - CHANGED: Updated openssl to 1.0.2l.
+  - CHANGED: Updated ipset (ARM) to 6.32.
+  - CHANGED: Upgraded from vsftpd 2.0.4 to 3.0.3.  You might need to
+             revise any custom configuration you have done (if any).
+  - CHANGED: Moved SMB2 support switch to the main samba page.
+  - CHANGED: Optimized all webui images for size
+  - CHANGED: Tor now runs as a limited user instead of as root
+  - CHANGED: Limited number of supported OpenVPN clients to 2 on
+             the RT-AC3200, to save on nvram.
+  - CHANGED: Removed tweak that allowed to disable/enable bridge
+             multicast snooping, as Asus now disables it upstream
+             at the kernel level.
+  - FIXED: OpenVPN client would be shown as having failed to connect
+           if a reconnect attempt initially failed to authenticate,
+           but succesfully connected afterward.
+  - FIXED: Quagga's log could fill up RAM, reduced the amount of
+           logging generated by it.
+  - FIXED: NFS sometimes failing to start properly (patch by john9527)
+  - FIXED: Layout issue of the status bar under Chrome when window
+           is larger than 1800px (patch by Cyrus Dargahi)
+  - FIXED: UPNP and SNMP issues in Dual WAN mode.
+  - FIXED: NAT Loopback (merlin mode) in Dual WAN mode wasn't supported.
+  - FIXED: Internal and external port specifications were swapped in
+           miniupnpd's config file (Asus/Tomato bug)
+  - FIXED: Enabling policy-based routing for a client connecting to
+           a server that doesn't push a redirect-gateway would fail
+           to properly route traffic (for instance with StrongVPN)
+  - FIXED: Invalid port trigger rules when specifying a port range
+           (patch by John Bacho)
+  - FIXED: OpenVPN client with a password containing an "&" could get
+           corrupted when re-editing that client's config.
+  - FIXED: Some remote syslogd would choke on syslog entries sent by
+           the router if there were spaces in the tag parameter.
+           Removed spaces where this was the case.
+
+
+380.66_6 (22-June-2017)
+  - CHANGED: Updated OpenVPN to 2.4.3
+  - FIXED: Corrupted firewall rules if enabling SSHD brute-force
+           protection and Respond to WAN Ping at the same time
+           while in Dual WAN mode.
+
+
+380.66_4 (26-May-2017)
+  - CHANGED: Updated dropbear to 2017.75
+  - FIXED: Security issue CVE-2017-7494 in Samba.
+
+
+380.66_2 (16-May-2017)
+  - FIXED: AiCloud fail to start on RT-N66U and RT-AC66U.
+  - FIXED: The generated key/cert for httpds and AiCloud could
+           sometimes be invalid due to a timing probblem.
+
+
+380.66 (12-May-2017)
+  - NEW: Merged with GPL 380_7378
+         Notable changes:
+            * Port forwards can select a specific source IP
+            * Security fixes for CVE-2017-5891, CVE-2017-5892
+              and CVE-2017-6547
+         Note:
+            * If you are experiencing new wifi stability
+              issues, try disabling Airtime Fairness on
+              the Wireless -> Professional page (on all
+              bands).
+
+  - NEW: Option to disable Wanduck's constant DNS probing
+         for WAN state (Tools -> Other Settings)
+  - NEW: Allow disabling the use of DH, by entering
+         "none" in the DH field for OpenVPN server config.
+  - NEW: Added new Internet redirection mode to OpenVPN clients
+         called "Policy Rule (Strict)".  The difference from the
+         existing "Policy Rule" mode is that in strict mode,
+         only rules that specifically target the tunnel's
+         interface will be used.  This ensures that you don't
+         leak traffic through global or other tunnel routes,
+         however it also means any static route you might have
+         defined at the WAN level will not be copied either.
+  - CHANGED: Ovpn importer now recognizes the "port" and
+             "reneg-sec" parameters.
+  - CHANGED: Ovpn importer now support a third argument for
+             the "remote" parameter, allowing to specify the
+             protocol.
+  - CHANGED: Updated Tor to 0.2.9.10
+  - CHANGED: Updated nano to 2.8.1
+  - CHANGED: Updated OpenVPN to 2.4.2
+  - CHANGED: Updated LZ4 to 1.7.5 (used by OpenVPN)
+  - CHANGED: SSL certificate generated for httpds will now
+             contain SANs for hostname, router.asus.com, IP
+             and DDNS hostname.
+  - CHANGED: Make minidlna always use the same uuid, based on
+             the LAN MAC (original patch by john9527)
+  - CHANGED: Better feedback provided when an ovpn file upload
+             generates a problem due to a key/cert that's
+             not provided inline.  Inform the user which of
+             these he will need to manually provide.
+  - CHANGED: Disable bridge multicast_snooping, as this should be
+             unnecessary, and it could interfere with EMF, UPNP and
+             other multicast applications.  Can be re-enabled from
+             the Tools -> Other Settings page.
+  - REMOVED: The Virtual Server page no longer allows users to
+             edit existing port forwards (our existing code is
+             incompatible with Asus's newer webui code and will
+             need to be re-implemented.)
+  - FIXED: WOL page fails to load if adding a client with a
+           quote in its name.
+  - FIXED: Couldn't add a DHCP reservation client if its name
+           contained a quote.
+  - FIXED: New outbound connections weren't logged if firewall
+           logging was enabled.
+  - FIXED: OpenVPN server didn't always work properly in udp mode
+           when in a dual stack IPv4/IPv6 environment (backport
+           from GPL 382_9736)
+  - FIXED: When disabling NCP support in OpenVPN, the router
+           could still be trying to use it if the remote end
+           had it enabled.
+  - FIXED: Potential CVE-2016-10229 security issue in kernel
+           (unsure whether our kernel was vulnerable or not)
+  - FIXED: ovpn file import would fail to import auth hash or
+           cipher if they weren't uppercase.
+  - FIXED: Couldn't edit SMB permissions if the disk had
+           multiple partitions (Asus bug) (patch by
+           Jeremy Goss)
+  - FIXED: Exporting a client.ovpn file with no existing CA
+           could generate garbled output in the generated
+           file.
+
+
+380.65_4 (28-Mar-2017)
+   - FIXED: Various LAN/WAN issues with the RT-AC3200 due to
+            incorrect GMAC state checks (Asus bug) (patch
+            by john9527)
+   - FIXED: Some models would sometime randomly fail to start one
+            of their wifi radio, possibly due to a hardware design
+            issue.  Partly revert the 380.65 changes that removed
+            the automatic reboot if one radio was disabled at boot
+            time, but reduced the maximum number of reboots to 1.
+
+
+380.65_2 (10-Mar-2017)
+   - FIXED: CVE-2017-6549 (implemented temporary workaround,
+            until a proper fix from Asus)
+   - FIXED: CVE-2017-6548 (backport from GPL 7266)
+   - FIXED: WOL page fails to load if adding a client with a
+            quote in its name.
+   - FIXED: Couldn't add a DHCP reservation client if its name
+            contained a quote.
+
+
+380.65 (3-Feb-2017)
+   - NEW: Merged with parts of Asus GPL 380_4180, left out
+          most of it because of too many bugs in it.
+   - NEW: Upgraded to OpenVPN 2.4.0, and implemented support
+          for many of its new features:
+            * GCM ciphers
+            * LZ4 compression
+            * tls-crypt (uses the Static Key field)
+            * Cipher negotiation (NCP), with (optional)
+              fallback to legacy "cipher" parameter when
+              an OpenVPN 2.3 client connects to the
+              router's 2.4 server.
+          Please refer to the OpenVPN 2.4 documentation for
+          more info on these new features.
+
+          You will be warned if any server setting would
+          generate an exportable ovpn file that would be
+          incompatible with older clients.
+
+          Existing client config shouldn't need to be changed,
+          unless you modify the router's server configuration.
+
+   - NEW: Upgraded Busybox to 1.25.1 (patch by theMIROn)
+   - NEW: Added the following Busybox applets: ntpd, time, uniq,
+          xargs and getopt, for feature parity with John's fork.
+   - NEW: Option on Media Server page to enable minidlna's
+          built-in status web page.  Default URL is
+          http://router.asus.com:8200 .
+   - NEW: Support for Vodafone R226 USB LTE (patch by
+          Gernot Pansy)
+   - NEW: New "update-notification" user script, that gets run
+          when a scheduled firmware check detects a new version
+          is available.
+
+   - CHANGED: Removed support for all RC ciphers on OpenVPN.
+              DES is staying for now, but should still be avoided
+              whenever possible.
+   - CHANGED: Updated openssl to 1.0.2k
+   - CHANGED: Updated tor to 0.2.9.9 (0.2.9.x patch by blackfuel)
+   - CHANGED: Updated nano to 2.7.4.
+   - CHANGED: hosts file will now give a higher priority to the
+              user-configured hostname for the router ahead of
+              hardcoded ones (like router.asus.com).
+   - CHANGED: Create a system log entry if a new firmware 
+              version is available.
+   - CHANGED: Display name and icon for clients configured on the
+              Tor page.
+   - CHANGED: Streamlined miniupnpd stop/start events during boot,
+              so there are fewer of them now.
+   - FIXED: Invalid DUID used when requesting an IPv6 prefix
+            for some of the newer router models, which would
+            prevent them from getting working IPv6 (Asus bug)
+   - FIXED: Network Service Firewall rules not applied
+            under certain configurations
+   - FIXED: Port triggering wasn't working if traffic had
+            been whitelisted by Network Service Firewall
+   - FIXED: Avahi wasn't rejecting connections from
+            secondary WAN interface
+   - FIXED: Sorting clients by connection time would incorrectly
+            treat 10 hours as shorter than 9 hours, as it was
+            handling it as a string (Asus bug)
+   - FIXED: Exported ovpn client file wouldn't use the
+            user-configured hostname when using DDNS custom mode.
+   - FIXED: Exported OpenVPN client config didn't work when
+            using static key authentication.
+   - FIXED: Exported OpenVPN client config wasn't editable with
+            Notepad, the default editor used by Windows's
+            OpenVPN GUI.
+   - FIXED: OpenVPN was killed too quickly on disconnection,
+            causing issues when using explicit-exit-notify
+            (patch by john9527)
+   - FIXED: OpenVPN client/server instances weren't properly
+            restarted on a WAN restart (patch by john9527)
+   - FIXED: Some models (N66/AC66/AC5300) would reboot 3 times
+            if one of the radios was found disabled by the user
+            while booting (Asus bug).
+   - FIXED: Webui layout was broken under Chrome 56.
+
+
+380.64_2 (8-Jan-2017)
+   - FIXED: IPv6 client list failing to properly show hostnames
+            (regression in 64_1)
+   - FIXED: A few potential buffer overruns in httpd
+
+
+380.64_1 (6-Jan-2017)
+   - FIXED: Security issues in httpd (backport from GPL 4180 +
+            additional fixes of my own)
+
+
+380.64 (16-Dec-2016)
+   - NEW: New firmware availability notification.  The router will
+          notify you if a new firmware is available, and will also
+          let you view the changelog before sending you to the
+          download page (the update process remains manual).
+
+          Note that the automated check will only report new
+          final releases.  The Check button on the Firmware Upgrade
+          will immediately check for final releases or beta (if you
+          select that option), but not both at the same time.
+   - NEW: Added iptables MASK support on MIPS kernel (patch
+          by john9527)
+   - NEW: Webui warning shown in the notification area if running
+          low on free nvram.
+   - CHANGED: Updated nano to 2.7.1.
+   - CHANGED: Updated OpenVPN to 2.3.14.
+   - CHANGED: Updated curl to 7.51.0, resolving numerous security
+              and stability issues.
+   - CHANGED: Tor clients will now route other TCP ports than just
+              80/443, and drop UDP and ICMP traffic (patch by
+              blackfuel)
+   - CHANGED: QoS Stats info will automatically refresh every
+              3 seconds (user-configurable)
+   - CHANGED: IPTraffic charts now show sorted slices, so the
+              clients with the least traffic will get grouped
+              under "Others" if truncating the list of shown
+              clients.
+   - CHANGED: Enabled IPv6 support in curl.
+   - CHANGED: Improved webui performance, by caching large static
+              Javascript files such as jquery, and increased cache
+              life from 5 mins to 1 hour.
+   - CHANGED: No longer include Download Master packages in the
+              firmware for those models that still included them,
+              reducing firmware size by a few megabytes.
+              Those were always outdated, the router will download
+              the latest versions from Asus's servers at install
+              time.
+   - CHANGED: Improved webui protection against CSS/XSS attacks
+              (backport from GPL 4164)
+   - FIXED: Web server crash if importing an ovpn file with an
+            invalid key or certificate (Asus bug)
+   - FIXED: App icon at the top wouldn't work on Firefox,
+            generating a Javascript error (Asus bug)
+   - FIXED: Firefox would sometime fail to display the client
+            list, reporting a JSON parsing error in the console.
+   - FIXED: HMAC setting not properly set when importing an ovpn
+            file for a config based on TLS authentication mode.
+            (backport from GPL 4164)
+
+
+380.63_2 (12-Nov-2016)
+   - CHANGED: Added detection for iPhone 7 models in networkmap
+              (patch by Andrei Coman).
+   - CHANGED: Enabled --dns-loop-detect support in dnsmasq
+   - CHANGED: Move Dual WAN static routes to a lower priority, so VPN
+              policy rules will have priority over them
+   - FIXED: Traditional QoS labels were off by one on the Stats page.
+   - FIXED: Adaptive QoS upload stats couldn't be retrieved because
+            qosd seems to be hardcoded to always set up classes on eth0
+            rather than on the real WAN interface.
+   - FIXED: USB driver was removed too early at shutdown time on the
+            RT-AC56U and RT-AC87U (fix by john9527)
+
+
+380.63 (6-Nov-2016)
+   - NEW: QoS Statistics page, showing the amount of traffic assigned to
+          each available classes, as well as the current throughput.
+   - NEW: Charts added to various Traffic Monitor pages.
+          Note that you can click on legend items to reveal/hide the
+          DL/UL data.  Hovering over a bar or a pie slice will
+          display the exact value for that item.
+   - NEW: Added pc_delete() to the helper script (patch by john95287)
+   - NEW: IPv6 firewall now supports fixed interface ID (EUI64) ipv6
+          destination addresses (Patch by john9527)
+   - CHANGED: Updated Tor to 0.2.8.9
+   - CHANGED: Updated OUI database.
+   - CHANGED: ipset was updated to version 6.29 on ARM models.
+              IMPORTANT: this means you will probably need to
+              update your script to the new syntax.  You need to
+              load the xt_set.ko module at the start of your script.
+              There has been no change to MIPS models, due to their
+              older kernel.  (original code by Shibby and Victek,
+              Asuswrt port by john9527) (ARM only)
+  - CHANGED: OpenVPN policy rules now start at prio 10000 instead of 1000
+  - CHANGED: Added help popups to various settings that are unique to
+             Asuswrt-Merlin.
+  - FIXED: Custom group/shadow/passwd weren't applied at boot time.
+  - FIXED: CVE-2016-5195 (Dirty COW) vulnerability in kernel
+           (patches by blackfuel and Joseph A. Yasi)
+  - FIXED: Network Service Filter rules would only apply to clients
+           under Parental Control if that was enabled (original
+           debugging by john9527) (Asus bug)
+  - FIXED: A few memory leaks in httpd and rc services.
+
+
+
+380.62_1 (29-Sept-2016)
+   - CHANGED: Updated OpenSSL to 1.0.2j
+
+
+380.62 (23-Sept-2016)
+   - NEW: Added nano 2.7.0 (user-friendly text editor)
+          Documentation: https://www.nano-editor.org/dist/v2.6/nano.html
+          Note that for space reasons, some of its features are disabled
+          for the RT-N66U and RT-AC66U.  Entware users might want to
+          uninstall the Entware version if they had it installed and want
+          to use the built-in version instead.
+   - NEW: Option to toggle the display of passwords on the PPTPD and
+          OpenVPN server pages.
+   - NEW: Allow providing a vendor class on the WAN page (DHCP option 60)
+   - NEW: Add option to disable sending a RELEASE request when odhcp6c
+          exits, allowing you to retain your received prefix with some
+          ISPs.
+   - CHANGED: Updated nettle to 3.2 (used for dnssec) and increased
+              optimization level.
+   - CHANGED: Updated minidlna to 1.1.6
+   - CHANGED: Updated OpenVPN to 2.3.12
+   - CHANGED: Updated OpenSSL to 1.0.2i
+   - CHANGED: Revamped the Wireless Log page:
+                - Merged some columns to gain more horizontal space
+                - Longer hostname shown (truncated names are now
+                  shown in a tooltip)
+                - Display clients' IPv6 if they have one
+   - CHANGED: Accept up to 250 characters for OpenVPN client's
+              username and password (one provider needs 64).
+   - CHANGED: Hide the WPA key on the Wireless config page, and only
+              reveal it when you click on the field to edit it.
+   - FIXED: OpenVPN client shouldn't display policy routing settings
+            when using a TAP interface.
+   - FIXED: DSL/ATM overhead setting was visible on MIPS models, which
+            don't support it.
+   - FIXED: Editing OpenVPN or PPTP users with any value longer than
+            32 chars could lead to corruption of the user list.
+   - FIXED: Custom config file for igmpproxy wasn't working.
+   - FIXED: After turning off a Guest network, the next visit to the
+            Wireless Settings page would show that guest network's settings
+            instead of the parent band settings (Asus bug)
+   - FIXED: Smart Connect rules didn't apply on the RT-AC88U (backported
+            fix from 380_3941).
+   - FIXED: Numerous memory leaks in the networkmap service. (Asus bug)
+   - FIXED: Potential buffer overrun in the networkmap service. (Asus bug)
+   - FIXED: Broken IPv6 connectivity if enabling SSH brute force
+            protection (only MIPS models were affected)
+   - FIXED: 5G LED would fail to turn back on when exiting stealth mode.
+   - FIXED: Only hostname was used as remote server in an exported
+            OpenVPN client config when using Namecheap DDNS.
+   - FIXED: Security vulnerability (XSS/CSR) in httpd (backported
+            fix from 380_4005).
+   - FIXED: Chrome would try to autofill some fields (such as on the
+            DDNS configuration page), which could be problematic.
+   - FIXED: IPTraffic database was no longer properly named after
+            the router's MAC address on the AC88/AC3100/AC5300.
+            If you recently enabled it, you will need to either
+            re-create a new database, or rename the existing
+            database from tomato_cstats_000000000000.gz to
+            tomato_cstats_XXXXXXXXXXXX.gz, where "XXXXXXXXXXXX" is
+            your MAC as found with "nvram get et2macaddr", in
+            lowercase (AC88/AC3100/AC5300 only).
+
+            Regular traffic monitoring (stored in
+            tomato_rstats_XXXXXXXXXXXX.gz) is fine.
+
+
+380.61 (4-Aug-2016)
+   - FIXED: Connected OpenVPN clients reporting as disconnected
+            on the status page following any wireless config change
+            (Asus bug)
+   - FIXED: OpenVPN server would report being "Initializing"
+            while it already was ready, following any
+            wireless config change (Asus bug)
+   - FIXED: Various stability issues with minidlna (reverted some
+            of Asus's customizations)
+
+
+380.61 Beta 1 (31-July-2016)
+   - NEW: Merged with GPL 3831.
+   - CHANGED: updated dropbear to 2016.74.
+   - FIXED: Do not enforce b/g mode as "auto" if wireless mode
+            is also set to Auto.
+
+
+380.60
+    There was no non-beta release, due to limited model support
+    and unsolved WAN stability issues.
+
+
+380.60 Beta 2 (5-July-2016)
     IMPORTANT: The firmware image file format was changed by Asus.
                Starting with 380.60, you will no longer be able to
                flash versions older than 380.60, or Asus versions

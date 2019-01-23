@@ -7,7 +7,6 @@ from misc.wget_file import WgetFile
     This test ensures that Wget correctly handles responses to HEAD requests
     and does not actually download any data
 """
-TEST_NAME = "HEAD Requests"
 ############# File Definitions ###############################################
 File1 = "You shall not pass!"
 
@@ -35,7 +34,6 @@ post_test = {
 }
 
 err = HTTPTest (
-                name=TEST_NAME,
                 pre_hook=pre_test,
                 test_params=test_options,
                 post_hook=post_test

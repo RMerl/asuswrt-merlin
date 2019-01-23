@@ -7,7 +7,6 @@ from misc.wget_file import WgetFile
     This test ensures that Wget parses the Content-Disposition header
     correctly and creates a local file accordingly.
 """
-TEST_NAME = "Content Disposition Header"
 ############# File Definitions ###############################################
 File1 = """All that is gold does not glitter,
         Not all those who wander are lost;
@@ -47,7 +46,6 @@ post_test = {
 }
 
 err = HTTPTest (
-                name=TEST_NAME,
                 pre_hook=pre_test,
                 test_params=test_options,
                 post_hook=post_test

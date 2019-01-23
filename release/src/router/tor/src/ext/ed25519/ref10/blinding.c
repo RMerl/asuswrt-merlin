@@ -10,7 +10,7 @@
 #include "crypto.h"
 
 static void
-gettweak(unsigned char *out, const unsigned char *param)
+ed25519_ref10_gettweak(unsigned char *out, const unsigned char *param)
 {
   const char str[] = "Derive temporary signing key";
   crypto_hash_sha512_2(out, (const unsigned char*)str, strlen(str), param, 32);
@@ -26,7 +26,7 @@ int ed25519_ref10_blind_secret_key(unsigned char *out,
   const char str[] = "Derive temporary signing key hash input";
   unsigned char tweak[64];
   unsigned char zero[32];
-  gettweak(tweak, param);
+  ed25519_ref10_gettweak(tweak, param);
 
   memset(zero, 0, 32);
   sc_muladd(out, inp, tweak, zero);
@@ -50,7 +50,7 @@ int ed25519_ref10_blind_public_key(unsigned char *out,
   ge_p3 A;
   ge_p2 Aprime;
 
-  gettweak(tweak, param);
+  ed25519_ref10_gettweak(tweak, param);
 
   memset(zero, 0, sizeof(zero));
   /* Not the greatest implementation of all of this.  I wish I had

@@ -1,0 +1,9 @@
+Name: test
+Type: list:set
+Header: size 8
+Size in memory: 224
+References: 0
+Number of entries: 2
+Members:
+foo
+bar

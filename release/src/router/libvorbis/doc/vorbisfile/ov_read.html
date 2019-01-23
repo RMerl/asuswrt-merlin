@@ -9,7 +9,7 @@
 <table border=0 width=100%>
 <tr>
 <td><p class=tiny>Vorbisfile documentation</p></td>
-<td align=right><p class=tiny>vorbisfile version 1.2.0 - 20070723</p></td>
+<td align=right><p class=tiny>vorbisfile version 1.3.2 - 20101101</p></td>
 </tr>
 </table>
 
@@ -25,9 +25,30 @@
    If the passed in buffer is large, <tt>ov_read()</tt> will not fill
    it; the passed in buffer size is treated as a <em>limit</em> and
    not a request.
-<p>
-   
-Note that up to this point, the Vorbisfile API could more or less hide the
+
+<p>The output channels are in stream order and not remapped. Vorbis I
+defines channel order as follows:
+
+<ul>
+<li>one channel - the stream is monophonic
+<li>two channels - the stream is stereo.  channel order: left, right
+<li>three channels - the stream is a 1d-surround encoding.  channel order: left,
+center, right
+<li>four channels - the stream is quadraphonic surround.  channel order: front left,
+front right, rear left, rear right
+<li>five channels - the stream is five-channel surround.  channel order: front left,
+center, front right, rear left, rear right
+<li>six channels - the stream is 5.1 surround.  channel order: front left, center, 
+front right, rear left, rear right, LFE
+<li>seven channels - the stream is 6.1 surround.  channel order: front left, center, 
+front right, side left, side right, rear center, LFE
+<li>eight channels - the stream is 7.1 surround.  channel order: front left, center, 
+front right, side left, side right, rear left, rear right, 
+LFE
+<li>greater than eight channels - channel use and order is undefined
+</ul>
+
+<p>Note that up to this point, the Vorbisfile API could more or less hide the
    multiple logical bitstream nature of chaining from the toplevel
    application if the toplevel application didn't particularly care.
    However, when reading audio back, the application must be aware
@@ -114,11 +135,11 @@ little-endian samples.
 <hr noshade>
 <table border=0 width=100%>
 <tr valign=top>
-<td><p class=tiny>copyright &copy; 2007 Xiph.org</p></td>
+<td><p class=tiny>copyright &copy; 2000-2010 Xiph.Org</p></td>
 <td align=right><p class=tiny><a href="http://www.xiph.org/ogg/vorbis/">Ogg Vorbis</a></p></td>
 </tr><tr>
 <td><p class=tiny>Vorbisfile documentation</p></td>
-<td align=right><p class=tiny>vorbisfile version 1.2.0 - 20070723</p></td>
+<td align=right><p class=tiny>vorbisfile version 1.3.2 - 20101101</p></td>
 </tr>
 </table>
 

@@ -39,6 +39,7 @@ SERVER_LIST_FILE=
 TEMP_LIST_FILE=/tmp/Packages.gz
 LIST_DIR=$APPS_PATH/lib/ipkg/lists
 apps_local_space=`nvram get apps_local_space`
+apps_new_arm=`nvram get apps_new_arm`  #sherry add 2016.7.3
 
 if [ ! -f "$CONF_FILE" ]; then
 	echo "No conf file of ipkg!"
@@ -50,9 +51,18 @@ if [ "$link_internet" != "2" ]; then
 	exit 1
 fi
 
+#2016.7.1 sherry new oleg arm{
+#if [ "$pkg_type" == "arm" ]; then
+#	sed -i '/^#src\/gz.*ASUSWRT$/c src/gz optware.mbwe-bluering http://ipkg.nslu2-linux.org/feeds/optware/mbwe-bluering/cross/stable' $CONF_FILE
+
 if [ "$pkg_type" == "arm" ]; then
-	sed -i '/^#src\/gz.*ASUSWRT$/c src/gz optware.mbwe-bluering http://ipkg.nslu2-linux.org/feeds/optware/mbwe-bluering/cross/stable' $CONF_FILE
+	if [ $apps_new_arm -eq 1 ]; then
+		sed -i '/^#src\/gz.*ASUSWRT$/c src/gz optware.armeabi-ng http://ipkg.nslu2-linux.org/optware-ng/buildroot-armeabi-ng' $CONF_FILE 
+	else
+		sed -i '/^#src\/gz.*ASUSWRT$/c src/gz optware.mbwe-bluering http://ipkg.nslu2-linux.org/feeds/optware/mbwe-bluering/cross/stable' $CONF_FILE
+	fi
 fi
+#end sherry modify
 
 grep -n '^src.*' $CONF_FILE |sort -r |awk '{print $2 " " $3}' > $TEMP_FILE
 row_num=`wc -l < $TEMP_FILE`
@@ -72,6 +82,15 @@ while [ $i -lt $row_num ]; do
 	if [ -n "$1" ] && [ "$1" != "$list_name" ]; then
 		continue;
 	fi
+
+	#2016.7.7 sherry add for use the Packages_new.gz
+	if [ $apps_new_arm -eq 1 ] && [ "$list_name" == "optware.asus" ]; then
+		SERVER_LIST_FILES="Packages_new.gz"
+	else
+		SERVER_LIST_FILES="Packages.gz Packages.zip"			
+	fi
+	#end sherry add }
+
 
 	if [ "$list_name" == "optware.asus" ]; then
 		if [ "$pkg_type" != "arm" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then

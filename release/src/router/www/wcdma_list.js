@@ -250,8 +250,8 @@ function gen_list(){
 	}
 	else if(country == "NZ"){
 		protolist = new Array("1", "1", "1");
-		isplist = new Array("CHT", "Vodafone", "2degrees");
-		apnlist = new Array("internet", "www.vodafone.net.nz", "2degrees");
+		isplist = new Array("2degrees", "Spark", "Vodafone");
+		apnlist = new Array("internet", "internet", "internet");
 		daillist = new Array("*99#", "*99#", "*99#");
 		userlist = new Array("", "", "");
 		passlist = new Array("", "", "");
@@ -346,7 +346,7 @@ function gen_list(){
 	}
 	else if(country == "TW"){
 		protolist = new Array("1", "1", "1", "1", "4");
-		isplist = new Array("Far EasTone", "Chunghwa Telecom", "TW Mobile", "VIBO", "GMC");
+		isplist = new Array("Far EasTone", "Chunghwa Telecom", "TW Mobile", "T Star", "GMC");
 		apnlist = new Array("internet", "internet", "internet", "internet", "");
 		daillist = new Array("*99#", "*99***1#", "*99#", "*99#", "");
 		userlist = new Array("", "", "", "", "");

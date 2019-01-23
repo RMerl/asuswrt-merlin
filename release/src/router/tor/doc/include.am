@@ -34,12 +34,18 @@ nodist_man1_MANS =
 doc_DATA =
 endif
 
-EXTRA_DIST+= doc/HACKING doc/asciidoc-helper.sh			\
+EXTRA_DIST+= doc/asciidoc-helper.sh			\
              $(html_in) $(man_in) $(txt_in)			\
              doc/state-contents.txt				\
              doc/torrc_format.txt 				\
 	     doc/TUNING						\
-	     doc/WritingTests.txt
+	     doc/HACKING/README.1st.md				\
+	     doc/HACKING/CodingStandards.md 			\
+	     doc/HACKING/GettingStarted.md 			\
+	     doc/HACKING/HelpfulTools.md 			\
+	     doc/HACKING/HowToReview.md  			\
+	     doc/HACKING/ReleasingTor.md                        \
+	     doc/HACKING/WritingTests.md
 
 docdir = @docdir@
 
@@ -84,5 +90,5 @@ doc/tor-gencert.1: doc/tor-gencert.1.in
 doc/tor-resolve.1: doc/tor-resolve.1.in
 doc/torify.1: doc/torify.1.in
 
-CLEANFILES+= $(asciidoc_product) config.log
+CLEANFILES+= $(asciidoc_product)
 DISTCLEANFILES+= $(html_in) $(man_in)

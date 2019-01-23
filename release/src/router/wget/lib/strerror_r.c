@@ -1,6 +1,6 @@
 /* strerror_r.c --- POSIX compatible system error routine
 
-   Copyright (C) 2010-2014 Free Software Foundation, Inc.
+   Copyright (C) 2010-2017 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -34,9 +34,13 @@
 #if (__GLIBC__ >= 2 || defined __UCLIBC__ || defined __CYGWIN__) && HAVE___XPG_STRERROR_R /* glibc >= 2.3.4, cygwin >= 1.7.9 */
 
 # define USE_XPG_STRERROR_R 1
-extern int __xpg_strerror_r (int errnum, char *buf, size_t buflen);
+extern
+#ifdef __cplusplus
+"C"
+#endif
+int __xpg_strerror_r (int errnum, char *buf, size_t buflen);
 
-#elif HAVE_DECL_STRERROR_R && !(__GLIBC__ >= 2 || defined __UCLIBC__ || defined __CYGWIN__)
+#elif HAVE_DECL_STRERROR_R_ORIG && !(__GLIBC__ >= 2 || defined __UCLIBC__ || defined __CYGWIN__)
 
 /* The system's strerror_r function is OK, except that its third argument
    is 'int', not 'size_t', or its return type is wrong.  */
@@ -63,6 +67,10 @@ extern int __xpg_strerror_r (int errnum, char *buf, size_t buflen);
 #   include <nl_types.h>
 #  endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Get sys_nerr, sys_errlist on HP-UX (otherwise only declared in C++ mode).
    Get sys_nerr, sys_errlist on IRIX (otherwise only declared with _SGIAPI).  */
 #  if defined __hpux || defined __sgi
@@ -74,6 +82,10 @@ extern char *sys_errlist[];
 #  if defined __sun && !defined _LP64
 extern int sys_nerr;
 #  endif
+
+#ifdef __cplusplus
+}
+#endif
 
 # else
 

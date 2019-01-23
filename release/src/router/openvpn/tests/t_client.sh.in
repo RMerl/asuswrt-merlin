@@ -24,6 +24,24 @@ else
     exit 77
 fi
 
+# Check for external dependencies
+which fping > /dev/null
+if [ $? -ne 0 ]; then
+    echo "$0: fping is not available in \$PATH" >&2
+    exit 77
+fi
+which fping6 > /dev/null
+if [ $? -ne 0 ]; then
+    echo "$0: fping6 is not available in \$PATH" >&2
+    exit 77
+fi
+
+KILL_EXEC=`which kill`
+if [ $? -ne 0 ]; then
+    echo "$0: kill not found in \$PATH" >&2
+    exit 77
+fi
+
 if [ ! -x "${top_builddir}/src/openvpn/openvpn" ]
 then
     echo "no (executable) openvpn binary in current build tree. FAIL." >&2
@@ -46,17 +64,45 @@ if [ -z "$TEST_RUN_LIST" ] ; then
     exit 77
 fi
 
+# Ensure PREFER_KSU is in a known state
+PREFER_KSU="${PREFER_KSU:-0}"
+
 # make sure we have permissions to run ifconfig/route from OpenVPN
 # can't use "id -u" here - doesn't work on Solaris
 ID=`id`
 if expr "$ID" : "uid=0" >/dev/null
 then :
 else
+    if [ "${PREFER_KSU}" -eq 1 ];
+    then
+        # Check if we have a valid kerberos ticket
+        klist -l 1>/dev/null 2>/dev/null
+        if [ $? -ne 0 ];
+        then
+            # No kerberos ticket found, skip ksu and fallback to RUN_SUDO
+            PREFER_KSU=0
+            echo "$0: No Kerberos ticket available.  Will not use ksu."
+        else
+            RUN_SUDO="ksu -q -e"
+        fi
+    fi
+
     if [ -z "$RUN_SUDO" ]
     then
         echo "$0: this test must run be as root, or RUN_SUDO=... " >&2
         echo "      must be set correctly in 't_client.rc'. SKIP." >&2
         exit 77
+    else
+        # We have to use sudo. Make sure that we (hopefully) do not have
+        # to ask the users password during the test. This is done to
+        # prevent timing issues, e.g. when the waits for openvpn to start
+	if $RUN_SUDO $KILL_EXEC -0 $$
+	then
+	    echo "$0: $RUN_SUDO $KILL_EXEC -0 succeeded, good."
+	else
+	    echo "$0: $RUN_SUDO $KILL_EXEC -0 failed, cannot go on. SKIP." >&2
+	    exit 77
+	fi
     fi
 fi
 
@@ -73,6 +119,7 @@ exit_code=0
 # ----------------------------------------------------------
 # helper functions
 # ----------------------------------------------------------
+
 # print failure message, increase FAIL counter
 fail()
 {
@@ -118,6 +165,12 @@ get_ifconfig_route()
 	   ;;
 	SunOS)
 	   echo "-- Solaris --"
+	   @IFCONFIG@ -a | egrep "(flags=|inet)"
+	   @NETSTAT@ -rn | awk '$3 !~ /^UHL/ { print $1,$2,$3,$6 }'
+	   return
+	   ;;
+	AIX)
+	   echo "-- AIX --"
 	   @IFCONFIG@ -a | egrep "(flags=|inet)"
 	   @NETSTAT@ -rn | awk '$3 !~ /^UHL/ { print $1,$2,$3,$6 }'
 	   return
@@ -178,8 +231,8 @@ run_ping_tests()
     do
 	echo "run IPv$proto ping tests ($want), $bytes byte packets..."
 
-	echo "$cmd -b $bytes -C 20 -p 250 -q $targetlist" >>$LOGDIR/$SUF:fping.out
-	$cmd -b $bytes -C 20 -p 250 -q $targetlist >>$LOGDIR/$SUF:fping.out 2>&1
+	echo "$cmd -b $bytes -C 20 -p 250 -q $FPING_EXTRA_ARGS $targetlist" >>$LOGDIR/$SUF:fping.out
+	$cmd -b $bytes -C 20 -p 250 -q $FPING_EXTRA_ARGS $targetlist >>$LOGDIR/$SUF:fping.out 2>&1
 
 	# while OpenVPN is running, pings must succeed (want='want_ok')
 	# before OpenVPN is up, pings must NOT succeed (want='want_fail')
@@ -209,6 +262,9 @@ SUMMARY_FAIL=
 for SUF in $TEST_RUN_LIST
 do
     # get config variables
+    eval test_prep=\"\$PREPARE_$SUF\"
+    eval test_postinit=\"\$POSTINIT_CMD_$SUF\"
+    eval test_cleanup=\"\$CLEANUP_$SUF\"
     eval test_run_title=\"\$RUN_TITLE_$SUF\"
     eval openvpn_conf=\"\$OPENVPN_CONF_$SUF\"
     eval expect_ifconfig4=\"\$EXPECT_IFCONFIG4_$SUF\"
@@ -216,8 +272,21 @@ do
     eval ping4_hosts=\"\$PING4_HOSTS_$SUF\"
     eval ping6_hosts=\"\$PING6_HOSTS_$SUF\"
 
+    # If EXCEPT_IFCONFIG* variables for this test are missing, run an --up
+    # script to generate them dynamically.
+    if [ -z "$expect_ifconfig4" ] || [ -z "$expect_ifconfig6" ]; then
+        up="--setenv TESTNUM $SUF --setenv TOP_BUILDDIR ${top_builddir} --script-security 2 --up ${srcdir}/update_t_client_ips.sh"
+    else
+        up=""
+    fi
+
     echo -e "\n### test run $SUF: '$test_run_title' ###\n"
     fail_count=0
+
+    if [ -n "$test_prep" ]; then
+        echo -e "running preparation: '$test_prep'"
+        eval $test_prep
+    fi
 
     echo "save pre-openvpn ifconfig + route"
     get_ifconfig_route >$LOGDIR/$SUF:ifconfig_route_pre.txt
@@ -233,27 +302,55 @@ do
 	continue
     fi
 
+    pidfile="${top_builddir}/tests/$LOGDIR/openvpn-$SUF.pid"
+    openvpn_conf="$openvpn_conf --writepid $pidfile $up"
     echo " run openvpn $openvpn_conf"
     echo "# src/openvpn/openvpn $openvpn_conf" >$LOGDIR/$SUF:openvpn.log
+    umask 022
     $RUN_SUDO "${top_builddir}/src/openvpn/openvpn" $openvpn_conf >>$LOGDIR/$SUF:openvpn.log &
-    opid=$!
+    sudopid=$!
+
+    # Check if OpenVPN has initialized before continuing.  It will check every 3rd second up
+    # to $ovpn_init_check times.
+    ovpn_init_check=10
+    ovpn_init_success=0
+    while [ $ovpn_init_check -gt 0 ];
+    do
+       sleep 3  # Wait for OpenVPN to initialize and have had time to write the pid file
+       grep "Initialization Sequence Completed" $LOGDIR/$SUF:openvpn.log >/dev/null
+       if [ $? -eq 0 ]; then
+           ovpn_init_check=0
+           ovpn_init_success=1
+       fi
+       ovpn_init_check=$(( $ovpn_init_check - 1 ))
+    done
+
+    opid=`cat $pidfile`
+    if [ -n "$opid" ]; then
+        echo "  OpenVPN running with PID $opid"
+    else
+        echo "  Could not read OpenVPN PID file" >&2
+    fi
+
+    # If OpenVPN did not start
+    if [ $ovpn_init_success -ne 1 -o -z "$opid" ]; then
+        echo "$0:  OpenVPN did not initialize in a reasonable time" >&2
+        if [ -n "$opid" ]; then
+           $RUN_SUDO $KILL_EXEC $opid
+        fi
+        $RUN_SUDO $KILL_EXEC $sudopid
+	echo "tail -5 $SUF:openvpn.log" >&2
+	tail -5 $LOGDIR/$SUF:openvpn.log >&2
+	echo -e "\nFAIL. skip rest of sub-tests for test run $SUF.\n" >&2
+	trap - 0 1 2 3 15
+	SUMMARY_FAIL="$SUMMARY_FAIL $SUF"
+	exit_code=30
+	continue
+    fi
 
     # make sure openvpn client is terminated in case shell exits
-    trap "$RUN_SUDO kill $opid" 0
-    trap "$RUN_SUDO kill $opid ; trap - 0 ; exit 1" 1 2 3 15
-
-    echo "wait for connection to establish..."
-    sleep ${SETUP_TIME_WAIT:-10}
-
-    # test whether OpenVPN process is still there
-    if $RUN_SUDO kill -0 $opid
-    then :
-    else
-	echo -e "OpenVPN process has failed to start up, check log ($LOGDIR/$SUF:openvpn.log).  FAIL.\ntail of logfile follows:\n..." >&2
-	tail $LOGDIR/$SUF:openvpn.log >&2
-	trap - 0 1 2 3 15
-	exit 10
-    fi
+    trap "$RUN_SUDO $KILL_EXEC $opid" 0
+    trap "$RUN_SUDO $KILL_EXEC $opid ; trap - 0 ; exit 1" 1 2 3 15
 
     # compare whether anything changed in ifconfig/route setup?
     echo "save ifconfig+route"
@@ -268,6 +365,12 @@ do
 	echo -e " OK!\n"
     fi
 
+    # post init script needed?
+    if [ -n "$test_postinit" ]; then
+        echo -e "running post-init cmd: '$test_postinit'"
+        eval $test_postinit
+    fi
+
     # expected ifconfig values in there?
     check_ifconfig 4 "$expect_ifconfig4"
     check_ifconfig 6 "$expect_ifconfig6"
@@ -277,7 +380,7 @@ do
     echo -e "ping tests done.\n"
 
     echo "stopping OpenVPN"
-    $RUN_SUDO kill $opid
+    $RUN_SUDO $KILL_EXEC $opid
     wait $!
     rc=$?
     if [ $rc != 0 ] ; then
@@ -304,6 +407,12 @@ do
 	SUMMARY_FAIL="$SUMMARY_FAIL $SUF"
 	exit_code=30
     fi
+
+    if [ -n "$test_cleanup" ]; then
+        echo -e "cleaning up: '$test_cleanup'"
+        eval $test_cleanup
+    fi
+
 done
 
 if [ -z "$SUMMARY_OK" ] ; then SUMMARY_OK=" none"; fi

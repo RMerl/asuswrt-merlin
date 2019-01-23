@@ -88,6 +88,7 @@ rm -rf /mnt/jffs2/bootcfg
 rm -f /tmp/bootcfg.tgz
 
 echo_with_logging "=== Running start-prod"
+${INVOKE_QCSAPI} wps_upnp_enable wifi0 0
 ${INVOKE_QCSAPI} startprod
 
 # On non PCIe boards we may lose ability to use QCSAPI RPC if we don't know slave IP address
@@ -102,6 +103,8 @@ fi
 # Waiting for start-prod to finish
 echo_with_logging "=== waiting start-prod"
 sleep 10
+
+${INVOKE_QCSAPI} wps_upnp_enable wifi0 0
 
 echo_with_logging "=== Setting security parameters"
 

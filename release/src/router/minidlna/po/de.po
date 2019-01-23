@@ -83,6 +83,10 @@ msgstr "Ordner"
 msgid "Playlists"
 msgstr "Wiedergabelisten"
 
+#: scanner.c:598
+msgid "Recently Added"
+msgstr "Kürzlich hinzugefügt"
+
 #: scanner.c:536
 msgid "Video"
 msgstr "Video"

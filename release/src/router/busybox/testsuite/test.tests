@@ -76,4 +76,24 @@ testing "test ! a = b -a ! c = d: should be true (0)" \
 	"0\n" \
 	"" ""
 
+testing "test '!' = '!': should be true (0)" \
+	"busybox test '!' = '!'; echo \$?" \
+	"0\n" \
+	"" ""
+
+testing "test '(' = '(': should be true (0)" \
+	"busybox test '(' = '('; echo \$?" \
+	"0\n" \
+	"" ""
+
+testing "test '!' '!' = '!': should be false (1)" \
+	"busybox test '!' '!' = '!'; echo \$?" \
+	"1\n" \
+	"" ""
+
+testing "test '!' '(' = '(': should be false (1)" \
+	"busybox test '!' '(' = '('; echo \$?" \
+	"1\n" \
+	"" ""
+
 exit $FAILCOUNT

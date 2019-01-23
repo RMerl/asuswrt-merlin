@@ -432,9 +432,9 @@ main(int argc, char *argv[])
     openlog("pppoe", LOG_PID, LOG_DAEMON);
 
 #ifdef DEBUGGING_ENABLED
-    options = "I:VAT:D:hS:C:Usm:np:e:kdf:F:t:";
+    options = "I:VAT:D:hS:C:UW:sm:np:e:kdf:F:t:";
 #else
-    options = "I:VAT:hS:C:Usm:np:e:kdf:F:t:";
+    options = "I:VAT:hS:C:UW:sm:np:e:kdf:F:t:W:";
 #endif
     while((opt = getopt(argc, argv, options)) != -1) {
 	switch(opt) {
@@ -522,8 +522,24 @@ main(int argc, char *argv[])
 	    conn.synchronous = 1;
 	    break;
 	case 'U':
-	    conn.useHostUniq = 1;
+	    conn->useHostUniq = 1;
+	    if(conn->hostUniq.length) {
+		fprintf(stderr, "-U and -W are mutually exclusive\n");
+		exit(EXIT_FAILURE);
+	    }
+            char pidbuf[5];
+            snprintf(pidbuf, sizeof(pidbuf), "%04x", getpid());
+            parseHostUniq(pidbuf, &conn->hostUniq);
 	    break;
+	case 'W':
+	    if(conn->hostUniq.length) {
+		fprintf(stderr, "-U and -W are mutually exclusive\n");
+		exit(EXIT_FAILURE);
+	    }
+	    if (!parseHostUniq(optarg, &conn->hostUniq)) {
+                fprintf(stderr, "Invalid host-uniq argument: %s\n", optarg);
+                exit(EXIT_FAILURE);
+            }
 #ifdef DEBUGGING_ENABLED
 	case 'D':
 	    switchToRealID();

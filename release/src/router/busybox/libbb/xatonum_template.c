@@ -59,7 +59,7 @@ unsigned type FAST_FUNC xstrtou(_range_sfx)(const char *numstr, int base,
 	}
 
 	/* Note: trailing space is an error.
-	   It would be easy enough to allow though if desired. */
+	 * It would be easy enough to allow though if desired. */
 	if (*e)
 		goto inval;
  chk_range:

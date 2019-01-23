@@ -190,7 +190,7 @@ jpeg_memory_src(j_decompress_ptr cinfo, const unsigned char * buffer, size_t buf
 	src->pub.bytes_in_buffer = bufsize;
 }
 
-jmp_buf setjmp_buffer;
+static jmp_buf setjmp_buffer;
 /* Don't exit on error like libjpeg likes to do */
 static void
 libjpeg_error_handler(j_common_ptr cinfo)
@@ -730,7 +730,7 @@ image_downsize(image_s * pdest, image_s * psrc, int32_t width, int32_t height)
 				{
 					vcol = get_pix(psrc, ((int32_t)rx)-half_square_width+i,
 					                     ((int32_t)ry)-half_square_height+j);
-          
+
 					if(((j == 0) || (j == (half_square_height<<1)-1)) && 
 					   ((i == 0) || (i == (half_square_width<<1)-1)))
 					{
@@ -762,12 +762,12 @@ image_downsize(image_s * pdest, image_s * psrc, int32_t width, int32_t height)
 					}
 				}
 			}
-      
+
 			red   /= width_scale*height_scale;
 			green /= width_scale*height_scale;
 			blue  /= width_scale*height_scale;
 			alpha /= width_scale*height_scale;
-      
+
 			/* on sature les valeurs */
 			red   = (red   > 255.0)? 255.0 : ((red   < 0.0)? 0.0:red  );
 			green = (green > 255.0)? 255.0 : ((green < 0.0)? 0.0:green);
@@ -857,7 +857,7 @@ image_save_to_jpeg_file(image_s * pimage, char * path)
 	buf = image_save_to_jpeg_buf(pimage, &size);
 	if( !buf )
 		return NULL;
- 	dst_file = fopen(path, "w");
+	dst_file = fopen(path, "w");
 	if( !dst_file )
 	{
 		free(buf);

@@ -108,8 +108,6 @@ int
 start_wps_method(void)
 {
 	int wps_band;
-	int wps_action;
-//	int wps_method;
 	char *wps_sta_pin;
 	char prefix[]="wlXXXXXX_", tmp[100];
 	char buf[256] = "SET ";
@@ -120,10 +118,8 @@ start_wps_method(void)
 		return 0;
 	}
 
-	wps_band = nvram_get_int("wps_band");
+	wps_band = nvram_get_int("wps_band_x");
 	snprintf(prefix, sizeof(prefix), "wl%d_", wps_band);
-	wps_action = nvram_get_int("wps_action");
-//	wps_method = nvram_get_int("wps_method"); // useless
 	wps_sta_pin = nvram_safe_get("wps_sta_pin");
 
 #ifdef RTCONFIG_QTN
@@ -169,24 +165,27 @@ start_wps_method(void)
 	else
 		len += sprintf(buf + len, "wps_sta_pin=00000000 ");
 
-//	len += sprintf(buf + len, "wps_action=%d ", wps_action);
 	len += sprintf(buf + len, "wps_action=%d ", WPS_UI_ACT_ADDENROLLEE);
 
 	len += sprintf(buf + len, "wps_config_command=%d ", WPS_UI_CMD_START);
 
 	nvram_set("wps_proc_status", "0");
+	nvram_set("wps_proc_status_x", "0");
 
 	len += sprintf(buf + len, "wps_pbc_method=%d ", WPS_UI_PBC_SW);
 	len += sprintf(buf + len, "wps_ifname=%s ", nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
 
 	dbG("wps env buffer: %s\n", buf);
 
-//	nvram_unset("wps_sta_devname");
-//	nvram_unset("wps_sta_mac");
-//	nvram_unset("wps_pinfail");
-//	nvram_unset("wps_pinfail_mac");
-//	nvram_unset("wps_pinfail_name");
-//	nvram_unset("wps_pinfail_state");
+#if 0
+	nvram_unset("wps_sta_devname");
+	nvram_unset("wps_sta_mac");
+	nvram_unset("wps_pinfail");
+	nvram_unset("wps_pinfail_mac");
+	nvram_unset("wps_pinfail_name");
+	nvram_unset("wps_pinfail_state");
+#endif
+	nvram_unset("wps_band");
 
 	nvram_set("wps_env_buf", buf);
 	nvram_set_int("wps_restart_war", 1);
@@ -196,34 +195,6 @@ start_wps_method(void)
 	nvram_set("wps_uptime", tmp);
 
 	return 0;
-}
-
-void
-restart_wps_monitor(void)
-{
-	int unit;
-	char word[256], *next;
-	char tmp[100], prefix[]="wlXXXXXXX_";
-	char *wps_argv[] = {"/bin/wps_monitor", NULL};
-	pid_t pid;
-
-	unlink("/tmp/wps_monitor.pid");
-
-	if (nvram_match("wps_enable", "1"))
-	{
-		unit = 0;
-		foreach(word, nvram_safe_get("wl_ifnames"), next)
-		{
-			snprintf(prefix, sizeof(prefix), "wl%d_", unit);
-			nvram_set(strcat_r(prefix, "wps_mode", tmp), "enabled");
-
-			unit++;
-		}
-
-		killall_tk("wps_monitor");
-
-		_eval(wps_argv, NULL, 0, &pid);
-	}
 }
 
 int
@@ -248,12 +219,6 @@ stop_wps_method(void)
 
 	set_wps_env(buf);
 
-	usleep(100*1000);
-
-	int status = nvram_get_int("wps_proc_status");
-	if (status != 2 && status != 7)
-	restart_wps_monitor();
-
 	return 0;
 }
 
@@ -270,6 +235,8 @@ int is_wps_stopped(void)
 	time_t wps_uptime = strtoul(nvram_safe_get("wps_uptime"), NULL, 10);
 	char tmp[100];
 
+	nvram_set_int("wps_proc_status_x", status);
+
 	if ((now - wps_uptime) < 2)
 		return 0;
 
@@ -280,7 +247,7 @@ int is_wps_stopped(void)
 #ifdef RTCONFIG_WPS_DUALBAND
 	if (nvram_get_int("wps_enable"))
 #else
-	if (nvram_get_int("wps_enable") && nvram_get_int("wps_band"))
+	if (nvram_get_int("wps_enable") && nvram_get_int("wps_band_x"))
 #endif
 	{
 		retval = rpc_qcsapi_wps_get_state(WIFINAME, wps_state, sizeof(wps_state));
@@ -358,6 +325,25 @@ int is_wps_stopped(void)
 			break;
 		case 4: /* WPS_TIMEOUT */
 			dbg("WPS Fail due to time out!\n");
+			break;
+		case 5: /* WPS_UI_SENDM2 */
+			ret = 0;
+			dbg("Send M2\n");
+			break;
+		case 6: /* WPS_UI_SENDM7 */
+			ret = 0;
+			dbg("Send M7\n");
+			break;
+		case 8: /* WPS_OVERLAP */
+			dbg("WPS Fail due to PBC session overlap!\n");
+			break;
+		case 9: /* WPS_UI_FIND_PBC_AP */
+			ret = 0;
+			dbg("Finding a PBC access point...\n");
+			break;
+		case 10: /* WPS_UI_ASSOCIATING */
+			ret = 0;
+			dbg("Assciating with access point...\n");
 			break;
 		default:
 			ret = 0;

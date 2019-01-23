@@ -1,9 +1,39 @@
-/* * Copyright (c) 2012-2015, The Tor Project, Inc. */
+/* * Copyright (c) 2012-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
  * \file channel.c
- * \brief OR-to-OR channel abstraction layer
+ *
+ * \brief OR/OP-to-OR channel abstraction layer. A channel's job is to
+ * transfer cells from Tor instance to Tor instance.
+ * Currently, there is only one implementation of the channel abstraction: in
+ * channeltls.c.
+ *
+ * Channels are a higher-level abstraction than or_connection_t: In general,
+ * any means that two Tor relays use to exchange cells, or any means that a
+ * relay and a client use to exchange cells, is a channel.
+ *
+ * Channels differ from pluggable transports in that they do not wrap an
+ * underlying protocol over which cells are transmitted: they <em>are</em> the
+ * underlying protocol.
+ *
+ * This module defines the generic parts of the channel_t interface, and
+ * provides the machinery necessary for specialized implementations to be
+ * created.  At present, there is one specialized implementation in
+ * channeltls.c, which uses connection_or.c to send cells over a TLS
+ * connection.
+ *
+ * Every channel implementation is responsible for being able to transmit
+ * cells that are added to it with channel_write_cell() and related functions,
+ * and to receive incoming cells with the channel_queue_cell() and related
+ * functions.  See the channel_t documentation for more information.
+ *
+ * When new cells arrive on a channel, they are passed to cell handler
+ * functions, which can be set by channel_set_cell_handlers()
+ * functions. (Tor's cell handlers are in command.c.)
+ *
+ * Tor flushes cells to channels from relay.c in
+ * channel_flush_from_first_active_circuit().
  **/
 
 /*
@@ -118,7 +148,7 @@ STATIC uint64_t estimated_total_queue_size = 0;
  * If more than one channel exists, follow the next_with_same_id pointer
  * as a linked list.
  */
-HT_HEAD(channel_idmap, channel_idmap_entry_s) channel_identity_map =
+static HT_HEAD(channel_idmap, channel_idmap_entry_s) channel_identity_map =
   HT_INITIALIZER();
 
 typedef struct channel_idmap_entry_s {
@@ -127,13 +157,13 @@ typedef struct channel_idmap_entry_s {
   TOR_LIST_HEAD(channel_list_s, channel_s) channel_list;
 } channel_idmap_entry_t;
 
-static INLINE unsigned
+static inline unsigned
 channel_idmap_hash(const channel_idmap_entry_t *ent)
 {
   return (unsigned) siphash24g(ent->digest, DIGEST_LEN);
 }
 
-static INLINE int
+static inline int
 channel_idmap_eq(const channel_idmap_entry_t *a,
                   const channel_idmap_entry_t *b)
 {
@@ -141,9 +171,9 @@ channel_idmap_eq(const channel_idmap_entry_t *a,
 }
 
 HT_PROTOTYPE(channel_idmap, channel_idmap_entry_s, node, channel_idmap_hash,
-             channel_idmap_eq);
+             channel_idmap_eq)
 HT_GENERATE2(channel_idmap, channel_idmap_entry_s, node, channel_idmap_hash,
-             channel_idmap_eq, 0.5,  tor_reallocarray_, tor_free_);
+             channel_idmap_eq, 0.5,  tor_reallocarray_, tor_free_)
 
 static cell_queue_entry_t * cell_queue_entry_dup(cell_queue_entry_t *q);
 #if 0
@@ -834,7 +864,7 @@ channel_free(channel_t *chan)
   }
 
   /* Call a free method if there is one */
-  if (chan->free) chan->free(chan);
+  if (chan->free_fn) chan->free_fn(chan);
 
   channel_clear_remote_end(chan);
 
@@ -874,7 +904,7 @@ channel_listener_free(channel_listener_t *chan_l)
   tor_assert(!(chan_l->registered));
 
   /* Call a free method if there is one */
-  if (chan_l->free) chan_l->free(chan_l);
+  if (chan_l->free_fn) chan_l->free_fn(chan_l);
 
   /*
    * We're in CLOSED or ERROR, so the incoming channel queue is already
@@ -912,7 +942,7 @@ channel_force_free(channel_t *chan)
   }
 
   /* Call a free method if there is one */
-  if (chan->free) chan->free(chan);
+  if (chan->free_fn) chan->free_fn(chan);
 
   channel_clear_remote_end(chan);
 
@@ -954,7 +984,7 @@ channel_listener_force_free(channel_listener_t *chan_l)
             chan_l);
 
   /* Call a free method if there is one */
-  if (chan_l->free) chan_l->free(chan_l);
+  if (chan_l->free_fn) chan_l->free_fn(chan_l);
 
   /*
    * The incoming list just gets emptied and freed; we request close on
@@ -2652,6 +2682,11 @@ channel_process_cells(channel_t *chan)
   /*
    * Process cells until we're done or find one we have no current handler
    * for.
+   *
+   * We must free the cells here after calling the handler, since custody
+   * of the buffer was given to the channel layer when they were queued;
+   * see comments on memory management in channel_queue_cell() and in
+   * channel_queue_var_cell() below.
    */
   while (NULL != (q = TOR_SIMPLEQ_FIRST(&chan->incoming_queue))) {
     tor_assert(q);
@@ -2669,6 +2704,7 @@ channel_process_cells(channel_t *chan)
                 q->u.fixed.cell, chan,
                 U64_PRINTF_ARG(chan->global_identifier));
       chan->cell_handler(chan, q->u.fixed.cell);
+      tor_free(q->u.fixed.cell);
       tor_free(q);
     } else if (q->type == CELL_QUEUE_VAR &&
                chan->var_cell_handler) {
@@ -2681,6 +2717,7 @@ channel_process_cells(channel_t *chan)
                 q->u.var.var_cell, chan,
                 U64_PRINTF_ARG(chan->global_identifier));
       chan->var_cell_handler(chan, q->u.var.var_cell);
+      tor_free(q->u.var.var_cell);
       tor_free(q);
     } else {
       /* Can't handle this one */
@@ -2701,6 +2738,7 @@ channel_queue_cell(channel_t *chan, cell_t *cell)
 {
   int need_to_queue = 0;
   cell_queue_entry_t *q;
+  cell_t *cell_copy = NULL;
 
   tor_assert(chan);
   tor_assert(cell);
@@ -2728,8 +2766,19 @@ channel_queue_cell(channel_t *chan, cell_t *cell)
               U64_PRINTF_ARG(chan->global_identifier));
     chan->cell_handler(chan, cell);
   } else {
-    /* Otherwise queue it and then process the queue if possible. */
-    q = cell_queue_entry_new_fixed(cell);
+    /*
+     * Otherwise queue it and then process the queue if possible.
+     *
+     * We queue a copy, not the original pointer - it might have been on the
+     * stack in connection_or_process_cells_from_inbuf() (or another caller
+     * if we ever have a subclass other than channel_tls_t), or be freed
+     * there after we return.  This is the uncommon case; the non-copying
+     * fast path occurs in the if (!need_to_queue) case above when the
+     * upper layer has installed cell handlers.
+     */
+    cell_copy = tor_malloc_zero(sizeof(cell_t));
+    memcpy(cell_copy, cell, sizeof(cell_t));
+    q = cell_queue_entry_new_fixed(cell_copy);
     log_debug(LD_CHANNEL,
               "Queueing incoming cell_t %p for channel %p "
               "(global ID " U64_FORMAT ")",
@@ -2755,6 +2804,7 @@ channel_queue_var_cell(channel_t *chan, var_cell_t *var_cell)
 {
   int need_to_queue = 0;
   cell_queue_entry_t *q;
+  var_cell_t *cell_copy = NULL;
 
   tor_assert(chan);
   tor_assert(var_cell);
@@ -2783,8 +2833,18 @@ channel_queue_var_cell(channel_t *chan, var_cell_t *var_cell)
               U64_PRINTF_ARG(chan->global_identifier));
     chan->var_cell_handler(chan, var_cell);
   } else {
-    /* Otherwise queue it and then process the queue if possible. */
-    q = cell_queue_entry_new_var(var_cell);
+    /*
+     * Otherwise queue it and then process the queue if possible.
+     *
+     * We queue a copy, not the original pointer - it might have been on the
+     * stack in connection_or_process_cells_from_inbuf() (or another caller
+     * if we ever have a subclass other than channel_tls_t), or be freed
+     * there after we return.  This is the uncommon case; the non-copying
+     * fast path occurs in the if (!need_to_queue) case above when the
+     * upper layer has installed cell handlers.
+     */
+    cell_copy = var_cell_copy(var_cell);
+    q = cell_queue_entry_new_var(cell_copy);
     log_debug(LD_CHANNEL,
               "Queueing incoming var_cell_t %p for channel %p "
               "(global ID " U64_FORMAT ")",
@@ -2834,7 +2894,7 @@ channel_assert_counter_consistency(void)
       (n_channel_bytes_in_queues + n_channel_bytes_passed_to_lower_layer));
 }
 
-/** DOCDOC */
+/* DOCDOC */
 static int
 is_destroy_cell(channel_t *chan,
                 const cell_queue_entry_t *q, circid_t *circid_out)
@@ -3476,7 +3536,7 @@ channel_dump_statistics, (channel_t *chan, int severity))
   have_remote_addr = channel_get_addr_if_possible(chan, &remote_addr);
   if (have_remote_addr) {
     char *actual = tor_strdup(channel_get_actual_remote_descr(chan));
-    remote_addr_str = tor_dup_addr(&remote_addr);
+    remote_addr_str = tor_addr_to_str_dup(&remote_addr);
     tor_log(severity, LD_GENERAL,
         " * Channel " U64_FORMAT " says its remote address"
         " is %s, and gives a canonical description of \"%s\" and an "
@@ -4490,8 +4550,8 @@ channel_update_xmit_queue_size(channel_t *chan)
   /* Next, adjust by the overhead factor, if any is available */
   if (chan->get_overhead_estimate) {
     overhead = chan->get_overhead_estimate(chan);
-    if (overhead >= 1.0f) {
-      queued *= overhead;
+    if (overhead >= 1.0) {
+      queued = (uint64_t)(queued * overhead);
     } else {
       /* Ignore silly overhead factors */
       log_notice(LD_CHANNEL, "Ignoring silly overhead factor %f", overhead);

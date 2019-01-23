@@ -1,0 +1,9 @@
+#
+# hosts.allow	This file describes the names of the hosts which are
+#		allowed to use the local INET services, as decided
+#		by the '/usr/sbin/tcpd' server.
+#
+
+vsftpd: 192.168.1.3: setenv VSFTPD_LOAD_CONF /etc/vsftpd_tcp_wrap.conf
+vsftpd: 192.168.1.4: DENY
+

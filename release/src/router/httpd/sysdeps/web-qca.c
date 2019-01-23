@@ -105,6 +105,97 @@ extern u_int ieee80211_mhz2ieee(u_int freq);
 extern int get_channel_list_via_driver(int unit, char *buffer, int len);
 extern int get_channel_list_via_country(int unit, const char *country_code, char *buffer, int len);
 
+#define WL_A		(1U << 0)
+#define WL_B		(1U << 1)
+#define WL_G		(1U << 2)
+#define WL_N		(1U << 3)
+#define WL_AC		(1U << 4)
+
+static const struct mode_s {
+	unsigned int mask;
+	char *mode;
+} mode_tbl[] = {
+	{ WL_A,	"a" },
+	{ WL_B,	"b" },
+	{ WL_G, "g" },
+	{ WL_N, "n" },
+	{ WL_AC, "ac" },
+	{ 0, NULL },
+};
+
+/**
+ * Run "iwpriv XXX get_XXX" and return string behind colon.
+ * Expected result is shown below:
+ * ath1      get_mode:11ACVHT40
+ *                    ^^^^^^^^^
+ * @iface:	interface name
+ * @cmd:	get cmd
+ * @buf:	pointer to memory area which is used to keep result.
+ * 		it is guarantee as valid/empty string, if it is valid pointer
+ * @buf_len:	length of @buf
+ * @return:
+ * 	0:	success
+ *     -1:	invalid parameter
+ *     -2:	run iwpriv command fail
+ *     -3:	read result strin fail
+ */
+static int __iwpriv_get(char *iface, char *cmd, char *buf, unsigned int buf_len)
+{
+	int len;
+	FILE *fp;
+	char *p = NULL, iwpriv_cmd[64], tmp[128];
+
+	if (!iface || *iface == '\0' || !cmd || *cmd == '\0' || !buf || buf_len <= 1)
+		return -1;
+
+	if (strncmp(cmd, "get_", 4) && strncmp(cmd, "g_", 2)) {
+		dbg("%s: iface [%s] cmd [%s] may not be supported!\n",
+			__func__, iface, cmd);
+	}
+
+	*buf = '\0';
+	sprintf(iwpriv_cmd, "iwpriv %s %s", iface, cmd);
+	if (!(fp = popen(iwpriv_cmd, "r")))
+		return -2;
+
+	len = fread(tmp, 1, sizeof(tmp), fp);
+	pclose(fp);
+	if (len < 1)
+		return -3;
+
+	tmp[len-1] = '\0';
+	if (!(p = strchr(tmp, ':'))) {
+		dbg("%s: parsing [%s] of cmd [%s] error!", __func__, tmp, cmd);
+		return -4;
+	}
+	p++;
+	chomp(p);
+	strlcpy(buf, p, buf_len);
+
+	return 0;
+}
+
+/**
+ * Run "iwpriv XXX get_XXX" and return string behind colon.
+ * Expected result is shown below:
+ * ath1      get_mode:11ACVHT40
+ *                    ^^^^^^^^^ result
+ * @iface:	interface name
+ * @cmd:	get cmd
+ * @return:
+ * 	NULL	invalid parameter or error.
+ *  otherwise:	success
+ */
+static char *iwpriv_get(char *iface, char *cmd)
+{
+	static char result[256];
+
+	if (__iwpriv_get(iface, cmd, result, sizeof(result)))
+		return NULL;
+
+	return result;
+}
+
 static void getWPSConfig(int unit, WPS_CONFIGURED_VALUE *result)
 {
 	char buf[128];
@@ -167,30 +258,91 @@ static void getWPSConfig(int unit, WPS_CONFIGURED_VALUE *result)
 	//dbg("%s: SSID[%s], Configured[%d], WPAKey[%s], AuthMode[%s], Encryp[%s]\n", __FUNCTION__, result->SSID, result->Configured, result->WPAKey, result->AuthMode, result->Encryp);
 }
 
+static char *__get_wlifname(int band, int subunit, char *buf)
+{
+	if (!buf)
+		return buf;
+
+	if (!subunit)
+		strcpy(buf, (!band)? WIF_2G:WIF_5G);
+	else
+		sprintf(buf, "%s0%d", (!band)? WIF_2G:WIF_5G, subunit);
+
+	return buf;
+}
+
+#define MAX_NO_MSSID	4
+static int get_wlsubnet(int band, const char *ifname)
+{
+	int subnet, sidx;
+	char buf[32];
+
+	for (subnet = 0, sidx = 0; subnet < MAX_NO_MSSID; subnet++)
+	{
+		if(!nvram_match(wl_nvname("bss_enabled", band, subnet), "1")) {
+			if (!subnet)
+				sidx++;
+			continue;
+		}
+
+		if(strcmp(ifname, __get_wlifname(band, sidx, buf)) == 0)
+			return subnet;
+
+		sidx++;
+	}
+	return -1;
+}
+
 char *getAPPhyMode(int unit)
 {
-	char buf[64];
-	FILE *fp;
-	int len;
-	char *pt1, *pt2;
+	static char result[sizeof("11b/g/nXXXXXX")] = "";
+	const struct mode_s *q;
+	char *mode, *puren, *p, *sep, *iface;
+	unsigned int m = 0;
 
-	sprintf(buf, "iwpriv %s get_mode", get_wifname(unit));
-	fp = popen(buf, "r");
-	if (fp) {
-		memset(buf, 0, sizeof(buf));
-		len = fread(buf, 1, sizeof(buf), fp);
-		pclose(fp);
-		if (len > 1) {
-			buf[len-1] = '\0';
-			pt1 = strstr(buf, "get_mode:");
-			if (pt1) {
-				pt2 = pt1 + strlen("get_mode:");
-				chomp(pt2);
-				return pt2;
-			}
-		}
+	iface = (char*) get_wifname(unit);
+	mode = iwpriv_get(iface, "get_mode");
+	if (!mode)
+		return "";
+
+	/* Ref to phymode_strings of qca-wifi driver. */
+	if (!strcmp(mode, "11A") || !strcmp(mode, "TA"))
+		m = WL_A;
+	else if (!strcmp(mode, "11G") || !strcmp(mode, "TG"))
+		m = WL_G | WL_B;
+	else if (!strcmp(mode, "11B"))
+		m = WL_B;
+	else if (!strncmp(mode, "11NA", 4))
+		m = WL_N | WL_A;
+	else if (!strncmp(mode, "11NG", 4))
+		m = WL_N | WL_G | WL_B;
+	else if (!strncmp(mode, "11ACVHT", 7))
+		m = WL_AC | WL_N | WL_A;
+	else {
+		dbg("%s: Unknown mode [%s]\n", __func__, mode);
 	}
-	return "";
+
+	/* If puren is enabled, remove a/g/b. */
+	puren = iwpriv_get(iface, "get_puren");
+	if (atoi(puren))
+		m &= ~(WL_A | WL_B | WL_G);
+
+	p = result;
+	*p = '\0';
+	sep = "11";
+	for (q = &mode_tbl[0]; m > 0 && q->mask; ++q) {
+		if (!(m & q->mask))
+			continue;
+
+		m &= ~q->mask;
+		strcat(p, sep);
+		p += strlen(sep);
+		strcat(p, q->mode);
+		p += strlen(q->mode);
+		sep = "/";
+	}
+
+	return result;
 }
 
 unsigned int getAPChannel(int unit)
@@ -234,6 +386,22 @@ unsigned int getAPChannel(int unit)
 	return 0;
 }
 
+int
+ej_wl_control_channel(int eid, webs_t wp, int argc, char_t **argv)
+{
+        int ret = 0;
+        int channel_24 = 0, channel_50 = 0;
+        
+	channel_24 = getAPChannel(0);
+
+        if (!(channel_50 = getAPChannel(1)))
+                ret = websWrite(wp, "[\"%d\", \"%d\"]", channel_24, 0);
+        else
+                ret = websWrite(wp, "[\"%d\", \"%d\"]", channel_24, channel_50);
+	
+        return ret;
+}
+
 long getSTAConnTime(char *ifname, char *bssid)
 {
 	char buf[8192];
@@ -264,8 +432,8 @@ typedef struct _WLANCONFIG_LIST {
 	char addr[18];
 	unsigned int aid;
 	unsigned int chan;
-	char txrate[6];
-	char rxrate[6];
+	char txrate[7];
+	char rxrate[10];
 	unsigned int rssi;
 	unsigned int idle;
 	unsigned int txseq;
@@ -285,9 +453,14 @@ typedef struct _WLANCONFIG_LIST {
 	unsigned int u_erp;
 	unsigned int u_state_maxrate;
 	unsigned int u_psmode;
+	int subunit;
 } WLANCONFIG_LIST;
 
+#if defined(RTCONFIG_WIFI_QCA9990_QCA9990) || defined(RTCONFIG_WIFI_QCA9994_QCA9994)
+#define MAX_STA_NUM 512
+#else
 #define MAX_STA_NUM 256
+#endif
 typedef struct _WIFI_STA_TABLE {
 	int Num;
 	WLANCONFIG_LIST Entry[ MAX_STA_NUM ];
@@ -316,13 +489,13 @@ static int getSTAInfo(int unit, WIFI_STA_TABLE *sta_info)
 {
 	#define STA_INFO_PATH "/tmp/wlanconfig_athX_list"
 	FILE *fp;
-	int ret = 0, r1, r2, r3, l2_offset;
+	int ret = 0, l2_offset, subunit;
 	char *unit_name;
 	char *p, *ifname, *l2, *l3;
 	char *wl_ifnames;
 	char line_buf[300]; // max 14x
 
-	sta_info->Num = 0;
+	memset(sta_info, 0, sizeof(*sta_info));
 	unit_name = strdup(get_wifname(unit));
 	if (!unit_name)
 		return ret;
@@ -337,6 +510,10 @@ static int getSTAInfo(int unit, WIFI_STA_TABLE *sta_info)
 		if (*ifname == 0) break;
 		if(strncmp(ifname,unit_name,strlen(unit_name)))
 			continue;
+
+		subunit = get_wlsubnet(unit, ifname);
+		if (subunit < 0)
+			subunit = 0;
 
 		doSystem("wlanconfig %s list > %s", ifname, STA_INFO_PATH);
 		fp = fopen(STA_INFO_PATH, "r");
@@ -358,26 +535,27 @@ ADDR               AID CHAN TXRATE RXRATE RSSI IDLE  TXSEQ  RXSEQ  CAPS        A
 			}
 			while ( fgets(line_buf, sizeof(line_buf), fp) ) {
 				WLANCONFIG_LIST *r = &sta_info->Entry[sta_info->Num++];
-				memset(r, 0, sizeof(*r));
 
+				r->subunit = subunit;
 				/* IEs may be empty string, find IEEE80211_MODE_ before parsing mode and psmode. */
-				r1 = 0;
 				l3 = strstr(line_buf, "IEEE80211_MODE_");
 				if (l3) {
 					*(l3 - 1) = '\0';
-					r1 = sscanf(l3, "IEEE80211_MODE_%s %d", r->mode, &r->u_psmode);
+					sscanf(l3, "IEEE80211_MODE_%s %d", r->mode, &r->u_psmode);
 				}
 				*(l2 - 1) = '\0';
-				r2 = sscanf(line_buf, "%s%u%u%s%s%u%u%u%u%[^\n]",
+				sscanf(line_buf, "%s%u%u%s%s%u%u%u%u%[^\n]",
 					r->addr, &r->aid, &r->chan, r->txrate,
 					r->rxrate, &r->rssi, &r->idle, &r->txseq,
 					&r->rxseq, r->caps);
-				r3 = sscanf(l2, "%u%x%u%s%s%[^\n]",
+				sscanf(l2, "%u%x%u%s%s%[^\n]",
 					&r->u_acaps, &r->u_erp, &r->u_state_maxrate, r->htcaps, r->conn_time, r->ie);
+				if (strlen(r->rxrate) >= 6)
+					strcpy(r->rxrate, "0M");
 #if 0
-				dbg("r %d,%d,%d - [%s][%u][%u][%s][%s][%u][%u][%u][%u][%s]"
+				dbg("[%s][%u][%u][%s][%s][%u][%u][%u][%u][%s]"
 					"[%u][%u][%x][%s][%s][%s][%d]\n",
-					r1, r2, r3, r->addr, r->aid, r->chan, r->txrate, r->rxrate,
+					r->addr, r->aid, r->chan, r->txrate, r->rxrate,
 					r->rssi, r->idle, r->txseq, r->rxseq, r->caps,
 					r->u_acaps, r->u_erp, r->u_state_maxrate, r->htcaps, r->ie,
 					r->mode, r->u_psmode);
@@ -582,6 +760,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	int ret = 0, wl_mode_x, i;
 	WIFI_STA_TABLE *sta_info;
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_", *ifname, *op_mode;
+	char subunit_str[8];
 
 #if defined(RTCONFIG_WIRELESSREPEATER) && defined(RTCONFIG_PROXYSTA)
 	if (mediabridge_mode()) {
@@ -626,20 +805,24 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		else if (wl_mode_x == 2)
 			op_mode = "Hybrid";
 		ret += show_wliface_info(wp, unit, ifname, op_mode, nvram_safe_get(strcat_r(prefix, "ssid", tmp)));
-		ret += websWrite(wp, "\nStations List			   \n");
-		ret += websWrite(wp, "----------------------------------------\n");
+		ret += websWrite(wp, "\nStations List\n");
+		ret += websWrite(wp, "----------------------------------------------------------------\n");
 #if 0 //barton++
 		ret += websWrite(wp, "%-18s%-4s%-8s%-4s%-4s%-4s%-5s%-5s%-12s\n",
 				   "MAC", "PSM", "PhyMode", "BW", "MCS", "SGI", "STBC", "Rate", "Connect Time");
 #else
-		ret += websWrite(wp, "%-17s %-15s %-6s %-6s %-11s\n",
-				   "MAC", "PhyMode", "TXRATE", "RXRATE", "Connect Time");
+		ret += websWrite(wp, "%-3s %-17s %-15s %-6s %-6s %-12s\n",
+			"idx", "MAC", "PhyMode", "TXRATE", "RXRATE", "Connect Time");
 #endif
 
 		if ((sta_info = malloc(sizeof(*sta_info))) != NULL) {
 			getSTAInfo(unit, sta_info);
 			for(i = 0; i < sta_info->Num; i++) {
-				ret += websWrite(wp, "%-17s %-15s %6s %6s %11s\n",
+				*subunit_str = '\0';
+				if (sta_info->Entry[i].subunit)
+					snprintf(subunit_str, sizeof(subunit_str), "%d", sta_info->Entry[i].subunit);
+				ret += websWrite(wp, "%3s %-17s %-15s %6s %6s %12s\n",
+					subunit_str,
 					sta_info->Entry[i].addr,
 					sta_info->Entry[i].mode,
 					sta_info->Entry[i].txrate,
@@ -728,6 +911,60 @@ int ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 	return 0;
 }
 
+#if defined(RTCONFIG_STAINFO)
+/**
+ * Format:
+ * 	[ MAC, TX_RATE, RX_RATE, CONNECT_TIME, IDX ]
+ * IDX:	main/GN1/GN2/GN3
+ */
+static int wl_stainfo_list(int unit, webs_t wp)
+{
+	WIFI_STA_TABLE *sta_info;
+	WLANCONFIG_LIST *r;
+	char idx_str[8];
+	int i, s, firstRow = 1;
+
+	if ((sta_info = malloc(sizeof(*sta_info))) == NULL)
+		return 0 ;
+
+	getSTAInfo(unit, sta_info);
+	for(i = 0, r = &sta_info->Entry[0]; i < sta_info->Num; i++, r++) {
+		if (firstRow == 1)
+			firstRow = 0;
+		else
+			websWrite(wp, ", ");
+
+		websWrite(wp, "[");
+		websWrite(wp, "\"%s\"", r->addr);
+		websWrite(wp, ", \"%s\"", r->txrate);
+		websWrite(wp, ", \"%s\"", r->rxrate);
+		websWrite(wp, ", \"%s\"", r->conn_time);
+		s = r->subunit;
+		if (s < 0 || s > 3)
+			s = 0;
+		if (!s)
+			strcpy(idx_str, "main");
+		else
+			sprintf(idx_str, "GN%d", s);
+		websWrite(wp, ", \"%s\"", idx_str);
+		websWrite(wp, "]");
+	}
+	free(sta_info);
+	return 0;
+}
+
+int
+ej_wl_stainfo_list_2g(int eid, webs_t wp, int argc, char_t **argv)
+{
+	return wl_stainfo_list(0, wp);
+}
+
+int
+ej_wl_stainfo_list_5g(int eid, webs_t wp, int argc, char_t **argv)
+{
+	return wl_stainfo_list(1, wp);
+}
+#endif	/* RTCONFIG_STAINFO */
 
 char *getWscStatus(int unit)
 {
@@ -776,6 +1013,8 @@ char *getAPPIN(int unit)
 		if (len > 1) {
 			buffer[len] = '\0';
 			//dbg("%s: AP PIN[%s]\n", __FUNCTION__, buffer);
+			if(!strncmp(buffer,"FAIL",4))
+			   strcpy(buffer,nvram_get("secret_code"));
 			return buffer;
 		}
 	}
@@ -855,6 +1094,7 @@ wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		retval += websWrite(wp, "%s%s%s\n", tag1, tmpstr, tag2);
 
 		//6. WPS WPAKey
+#if 0	//hide for security
 		if (!strlen(result.WPAKey))
 			retval += websWrite(wp, "%sNone%s\n", tag1, tag2);
 		else
@@ -863,13 +1103,16 @@ wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			char_to_ascii(tmpstr, result.WPAKey);
 			retval += websWrite(wp, "%s%s%s\n", tag1, tmpstr, tag2);
 		}
-
+#else
+		retval += websWrite(wp, "%s%s\n", tag1, tag2);
+#endif
 		//7. AP PIN Code
 		memset(tmpstr, 0, sizeof(tmpstr));
 		strcpy(tmpstr, getAPPIN(u));
 		retval += websWrite(wp, "%s%s%s\n", tag1, tmpstr, tag2);
 
 		//8. Saved WPAKey
+#if 0	//hide for security
 		if (!strlen(nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp))))
 			retval += websWrite(wp, "%s%s%s\n", tag1, "None", tag2);
 		else
@@ -877,7 +1120,9 @@ wl_wps_info(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			char_to_ascii(tmpstr, nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp)));
 			retval += websWrite(wp, "%s%s%s\n", tag1, tmpstr, tag2);
 		}
-
+#else
+		retval += websWrite(wp, "%s%s\n", tag1, tag2);
+#endif
 		//9. WPS enable?
 		if (!strcmp(nvram_safe_get(strcat_r(prefix, "wps_mode", tmp)), "enabled"))
 			retval += websWrite(wp, "%s%s%s\n", tag1, "None", tag2);
@@ -1028,7 +1273,8 @@ static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	char *pt1,*pt2;
 	char a1[10],a2[10];
 	char ssid_str[256];
-	char ch[4],ssid[33],address[18],enc[9],auth[16],sig[9],wmode[8];
+	char ch[4] = "", ssid[33] = "", address[18] = "", enc[9] = "";
+	char auth[16] = "", sig[9] = "", wmode[8] = "";
 	int  lock;
 
 	dbg("Please wait...");
@@ -1132,7 +1378,9 @@ static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 		//sig
 	        pt1 = strstr(buf[3], "Quality=");	
-		pt2 = strstr(pt1,"/");
+		pt2 = NULL;
+		if (pt1 != NULL)
+			pt2 = strstr(pt1,"/");
 		if(pt1 && pt2)
 		{
 			memset(sig,0,sizeof(sig));
@@ -1387,6 +1635,11 @@ static int ej_wl_channel_list(int eid, webs_t wp, int argc, char_t **argv, int u
 	if (band != 0 && band != 1) return retval;
 
 	//try getting channel list via wifi driver first
+#if defined(RTAC58U)
+	if (band == 0 && !strncmp(nvram_safe_get("territory_code"), "CX", 2))
+		retval += websWrite(wp, "[1,2,3,4,5,6,7,8,9,10,11]");
+	else
+#endif
 	if(get_channel_list_via_driver(unit, chList, sizeof(chList)) > 0)
 	{
 		retval += websWrite(wp, "[%s]", chList);

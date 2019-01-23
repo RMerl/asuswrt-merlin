@@ -31,10 +31,10 @@
 
 #ifdef ENABLE_CLI_INTERACT_AUTH
 
-static unsigned char* get_response(unsigned char* prompt)
+static char* get_response(char* prompt)
 {
 	FILE* tty = NULL;
-	unsigned char* response = NULL;
+	char* response = NULL;
 	/* not a password, but a reasonable limit */
 	char buf[DROPBEAR_MAX_CLI_PASS];
 	char* ret = NULL;
@@ -50,13 +50,13 @@ static unsigned char* get_response(unsigned char* prompt)
 	}
 
 	if (ret == NULL) {
-		response = (unsigned char*)m_strdup("");
+		response = m_strdup("");
 	} else {
 		unsigned int buflen = strlen(buf);
 		/* fgets includes newlines */
 		if (buflen > 0 && buf[buflen-1] == '\n')
 			buf[buflen-1] = '\0';
-		response = (unsigned char*)m_strdup(buf);
+		response = m_strdup(buf);
 	}
 
 	m_burn(buf, sizeof(buf));
@@ -66,14 +66,14 @@ static unsigned char* get_response(unsigned char* prompt)
 
 void recv_msg_userauth_info_request() {
 
-	unsigned char *name = NULL;
-	unsigned char *instruction = NULL;
+	char *name = NULL;
+	char *instruction = NULL;
 	unsigned int num_prompts = 0;
 	unsigned int i;
 
-	unsigned char *prompt = NULL;
+	char *prompt = NULL;
 	unsigned int echo = 0;
-	unsigned char *response = NULL;
+	char *response = NULL;
 
 	TRACE(("enter recv_msg_recv_userauth_info_request"))
 
@@ -121,7 +121,7 @@ void recv_msg_userauth_info_request() {
 		echo = buf_getbool(ses.payload);
 
 		if (!echo) {
-			unsigned char* p = getpass_or_cancel(prompt);
+			char* p = getpass_or_cancel(prompt);
 			response = m_strdup(p);
 			m_burn(p, strlen(p));
 		} else {
@@ -153,7 +153,7 @@ void cli_auth_interactive() {
 			strlen(cli_opts.username));
 
 	/* service name */
-	buf_putstring(ses.writepayload, SSH_SERVICE_CONNECTION, 
+	buf_putstring(ses.writepayload, SSH_SERVICE_CONNECTION,
 			SSH_SERVICE_CONNECTION_LEN);
 
 	/* method */

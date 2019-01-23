@@ -22,7 +22,7 @@ int blkid_main(int argc UNUSED_PARAM, char **argv)
 
 	while (*++argv) {
 		/* Note: bogus device names don't cause any error messages */
-		add_to_uuid_cache(*argv, 0);
+		add_to_uuid_cache(*argv);
 		scan_devices = 0;
 	}
 

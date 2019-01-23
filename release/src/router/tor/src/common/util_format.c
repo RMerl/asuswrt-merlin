@@ -1,8 +1,15 @@
 /* Copyright (c) 2001, Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
+
+/**
+ * \file util_format.c
+ *
+ * \brief Miscellaneous functions for encoding and decoding various things
+ *   in base{16,32,64}.
+ */
 
 #include "orconfig.h"
 #include "torlog.h"
@@ -14,33 +21,48 @@
 #include <string.h>
 #include <stdlib.h>
 
-/** Implements base32 encoding as in RFC 4648.  Limitation: Requires
- * that srclen*8 is a multiple of 5.
- */
+/* Return the base32 encoded size in bytes using the source length srclen.
+ * The NUL terminated byte is added as well since every base32 encoding
+ * requires enough space for it. */
+size_t
+base32_encoded_size(size_t srclen)
+{
+  size_t enclen;
+  enclen = CEIL_DIV(srclen*8, 5) + 1;
+  tor_assert(enclen < INT_MAX && enclen > srclen);
+  return enclen;
+}
+
+/** Implements base32 encoding as in RFC 4648. */
 void
 base32_encode(char *dest, size_t destlen, const char *src, size_t srclen)
 {
   unsigned int i, v, u;
-  size_t nbits = srclen * 8, bit;
+  size_t nbits = srclen * 8;
+  size_t bit;
 
   tor_assert(srclen < SIZE_T_CEILING/8);
-  tor_assert((nbits%5) == 0); /* We need an even multiple of 5 bits. */
-  tor_assert((nbits/5)+1 <= destlen); /* We need enough space. */
+  /* We need enough space for the encoded data and the extra NUL byte. */
+  tor_assert(base32_encoded_size(srclen) <= destlen);
   tor_assert(destlen < SIZE_T_CEILING);
+
+  /* Make sure we leave no uninitialized data in the destination buffer. */
+  memset(dest, 0, destlen);
 
   for (i=0,bit=0; bit < nbits; ++i, bit+=5) {
     /* set v to the 16-bit value starting at src[bits/8], 0-padded. */
     v = ((uint8_t)src[bit/8]) << 8;
-    if (bit+5<nbits) v += (uint8_t)src[(bit/8)+1];
-    /* set u to the 5-bit value at the bit'th bit of src. */
+    if (bit+5<nbits)
+      v += (uint8_t)src[(bit/8)+1];
+    /* set u to the 5-bit value at the bit'th bit of buf. */
     u = (v >> (11-(bit%8))) & 0x1F;
     dest[i] = BASE32_CHARS[u];
   }
   dest[i] = '\0';
 }
 
-/** Implements base32 decoding as in RFC 4648.  Limitation: Requires
- * that srclen*5 is a multiple of 8. Returns 0 if successful, -1 otherwise.
+/** Implements base32 decoding as in RFC 4648.
+ * Returns 0 if successful, -1 otherwise.
  */
 int
 base32_decode(char *dest, size_t destlen, const char *src, size_t srclen)
@@ -50,13 +72,13 @@ base32_decode(char *dest, size_t destlen, const char *src, size_t srclen)
   unsigned int i;
   size_t nbits, j, bit;
   char *tmp;
-  nbits = srclen * 5;
+  nbits = ((srclen * 5) / 8) * 8;
 
   tor_assert(srclen < SIZE_T_CEILING / 5);
-  tor_assert((nbits%8) == 0); /* We need an even multiple of 8 bits. */
   tor_assert((nbits/8) <= destlen); /* We need enough space. */
   tor_assert(destlen < SIZE_T_CEILING);
 
+  /* Make sure we leave no uninitialized data in the destination buffer. */
   memset(dest, 0, destlen);
 
   /* Convert base32 encoded chars to the 5-bit values that they represent. */
@@ -66,7 +88,7 @@ base32_decode(char *dest, size_t destlen, const char *src, size_t srclen)
     else if (src[j] > 0x31 && src[j] < 0x38) tmp[j] = src[j] - 0x18;
     else if (src[j] > 0x40 && src[j] < 0x5B) tmp[j] = src[j] - 0x41;
     else {
-      log_warn(LD_BUG, "illegal character in base32 encoded string");
+      log_warn(LD_GENERAL, "illegal character in base32 encoded string");
       tor_free(tmp);
       return -1;
     }
@@ -179,7 +201,8 @@ base64_encode(char *dest, size_t destlen, const char *src, size_t srclen,
   if (enclen > INT_MAX)
     return -1;
 
-  memset(dest, 0, enclen);
+  /* Make sure we leave no uninitialized data in the destination buffer. */
+  memset(dest, 0, destlen);
 
   /* XXX/Yawning: If this ends up being too slow, this can be sped up
    * by separating the multiline format case and the normal case, and
@@ -242,7 +265,7 @@ base64_encode(char *dest, size_t destlen, const char *src, size_t srclen,
     break;
   default:
     /* Something went catastrophically wrong. */
-    tor_fragile_assert();
+    tor_fragile_assert(); // LCOV_EXCL_LINE
     return -1;
   }
 
@@ -380,6 +403,7 @@ base64_decode(char *dest, size_t destlen, const char *src, size_t srclen)
   if (destlen > SIZE_T_CEILING)
     return -1;
 
+  /* Make sure we leave no uninitialized data in the destination buffer. */
   memset(dest, 0, destlen);
 
   /* Iterate over all the bytes in src.  Each one will add 0 or 6 bits to the
@@ -454,6 +478,9 @@ base16_encode(char *dest, size_t destlen, const char *src, size_t srclen)
   tor_assert(destlen >= srclen*2+1);
   tor_assert(destlen < SIZE_T_CEILING);
 
+  /* Make sure we leave no uninitialized data in the destination buffer. */
+  memset(dest, 0, destlen);
+
   cp = dest;
   end = src+srclen;
   while (src<end) {
@@ -465,7 +492,7 @@ base16_encode(char *dest, size_t destlen, const char *src, size_t srclen)
 }
 
 /** Helper: given a hex digit, return its value, or -1 if it isn't hex. */
-static INLINE int
+static inline int
 hex_decode_digit_(char c)
 {
   switch (c) {
@@ -497,20 +524,24 @@ hex_decode_digit(char c)
   return hex_decode_digit_(c);
 }
 
-/** Given a hexadecimal string of <b>srclen</b> bytes in <b>src</b>, decode it
- * and store the result in the <b>destlen</b>-byte buffer at <b>dest</b>.
- * Return 0 on success, -1 on failure. */
+/** Given a hexadecimal string of <b>srclen</b> bytes in <b>src</b>, decode
+ * it and store the result in the <b>destlen</b>-byte buffer at <b>dest</b>.
+ * Return the number of bytes decoded on success, -1 on failure. If
+ * <b>destlen</b> is greater than INT_MAX or less than half of
+ * <b>srclen</b>, -1 is returned. */
 int
 base16_decode(char *dest, size_t destlen, const char *src, size_t srclen)
 {
   const char *end;
-
+  char *dest_orig = dest;
   int v1,v2;
+
   if ((srclen % 2) != 0)
     return -1;
-  if (destlen < srclen/2 || destlen > SIZE_T_CEILING)
+  if (destlen < srclen/2 || destlen > INT_MAX)
     return -1;
 
+  /* Make sure we leave no uninitialized data in the destination buffer. */
   memset(dest, 0, destlen);
 
   end = src+srclen;
@@ -523,6 +554,9 @@ base16_decode(char *dest, size_t destlen, const char *src, size_t srclen)
     ++dest;
     src+=2;
   }
-  return 0;
+
+  tor_assert((dest-dest_orig) <= (ptrdiff_t) destlen);
+
+  return (int) (dest-dest_orig);
 }
 

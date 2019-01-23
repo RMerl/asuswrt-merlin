@@ -140,8 +140,8 @@ function initial(){
 	}
 
 	change_tabclick();
-	if(document.getElementById("t1").className == "tabclick_NW" && 	parent.Rawifi_support)	//no exist Rawifi
-		document.getElementById("wl_txbf_tr").style.display = "";		//Viz Add 2011.12 for RT-N56U Ralink 			
+	/*if(document.getElementById("t1").className == "tabclick_NW" && 	parent.Rawifi_support)	//no exist Rawifi
+		document.getElementById("wl_txbf_tr").style.display = "";		//Viz Add 2011.12 for RT-N56U Ralink     */
 
 	document.form.wl_ssid.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl_ssid"); %>');
 	document.form.wl_wpa_psk.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl_wpa_psk"); %>');
@@ -645,7 +645,7 @@ function change_smart_connect(v){
 <input type="hidden" name="wl_key3_org" value="<% nvram_char_to_ascii("WLANConfig11b", "wl_key3"); %>">
 <input type="hidden" name="wl_key4_org" value="<% nvram_char_to_ascii("WLANConfig11b", "wl_key4"); %>">
 <input type="hidden" name="wl_nmode_x" value="<% nvram_get("wl_nmode_x"); %>"><!--Lock Add 20091210 for n only-->
-<input type="hidden" name="wps_band" value="<% nvram_get("wps_band"); %>">
+<input type="hidden" name="wps_band" value="<% nvram_get("wps_band_x"); %>">
 <input type="hidden" name="wl_unit" value="<% nvram_get("wl_unit"); %>">
 <input type="hidden" name="wl_subunit" value="-1">
 <input type="hidden" name="wl_radio" value="<% nvram_get("wl_radio"); %>">

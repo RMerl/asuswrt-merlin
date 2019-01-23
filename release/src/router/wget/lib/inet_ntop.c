@@ -1,6 +1,6 @@
 /* inet_ntop.c -- convert IPv4 and IPv6 addresses from binary to text form
 
-   Copyright (C) 2005-2006, 2008-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2006, 2008-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@
 /* Use this to suppress gcc's "...may be used before initialized" warnings.
    Beware: The Code argument must not contain commas.  */
 #ifndef IF_LINT
-# ifdef lint
+# if defined GCC_LINT || defined lint
 #  define IF_LINT(Code) Code
 # else
 #  define IF_LINT(Code) /* empty */

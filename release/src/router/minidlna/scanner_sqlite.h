@@ -5,7 +5,7 @@
  * Author  : Douglas Carmichael
  *
  * MiniDLNA media server
- * Copyright (C) 2008-2009  Justin Maggard
+ * Copyright (C) 2008-2017  Justin Maggard
  *
  * This file is part of MiniDLNA.
  *
@@ -29,7 +29,8 @@ char create_objectTable_sqlite[] = "CREATE TABLE OBJECTS ("
 					"REF_ID TEXT DEFAULT NULL, "
 					"CLASS TEXT NOT NULL, "
 					"DETAIL_ID INTEGER DEFAULT NULL, "
-                                        "NAME TEXT DEFAULT NULL);";
+					"NAME TEXT DEFAULT NULL"
+					");";
 
 char create_detailTable_sqlite[] = "CREATE TABLE DETAILS ("
 					"ID INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -54,12 +55,13 @@ char create_detailTable_sqlite[] = "CREATE TABLE DETAILS ("
 					"ALBUM_ART INTEGER DEFAULT 0, "
 					"ROTATION INTEGER, "
 					"DLNA_PN TEXT, "
-                                        "MIME TEXT);";
+					"MIME TEXT"
+					");";
 
 char create_albumArtTable_sqlite[] = "CREATE TABLE ALBUM_ART ("
 					"ID INTEGER PRIMARY KEY AUTOINCREMENT, "
 					"PATH TEXT NOT NULL"
-                                        ");";
+					");";
 
 char create_captionTable_sqlite[] = "CREATE TABLE CAPTIONS ("
 					"ID INTEGER PRIMARY KEY, "
@@ -68,7 +70,8 @@ char create_captionTable_sqlite[] = "CREATE TABLE CAPTIONS ("
 
 char create_bookmarkTable_sqlite[] = "CREATE TABLE BOOKMARKS ("
 					"ID INTEGER PRIMARY KEY, "
-					"SEC INTEGER"
+					"SEC INTEGER, "
+					"WATCH_COUNT INTEGER"
 					");";
 
 char create_playlistTable_sqlite[] = "CREATE TABLE PLAYLISTS ("
@@ -83,5 +86,3 @@ char create_settingsTable_sqlite[] = "CREATE TABLE SETTINGS ("
 					"KEY TEXT NOT NULL, "
 					"VALUE TEXT"
 					");";
-
-

@@ -18,6 +18,17 @@
  *	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+//kbuild:lib-$(CONFIG_FEATURE_VOLUMEID_ISO9660) += iso9660.o
+
+//config:
+//config:config FEATURE_VOLUMEID_ISO9660
+//config:	bool "iso9660 filesystem"
+//config:	default y
+//config:	depends on VOLUMEID
+//config:	help
+//config:	  TODO
+//config:
+
 #include "volume_id_internal.h"
 
 #define ISO_SUPERBLOCK_OFFSET		0x8000

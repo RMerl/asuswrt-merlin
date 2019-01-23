@@ -255,15 +255,11 @@ typedef struct pj_pipe_t pj_pipe_t;
 typedef void *pj_oshandle_t;
 
 /** Socket handle. */
-//charles debug
-typedef pj_size_t pj_sock_t;
-/*
-#if defined(PJ_HAS_INT64) && PJ_HAS_INT64!=0
-typedef unsigned __int64  pj_sock_t;
+#if defined(PJ_WIN64) && PJ_WIN64!=0
+typedef pj_int64_t pj_sock_t;
 #else
 typedef long pj_sock_t;
 #endif
-*/
 
 /** Generic socket address. */
 typedef void pj_sockaddr_t;

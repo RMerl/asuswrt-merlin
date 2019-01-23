@@ -1,4 +1,4 @@
-/* Copyright (c) 2007-2015, The Tor Project, Inc. */
+/* Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -7,6 +7,24 @@
  * to summarizing client connections by country to entry guards, bridges,
  * and directory servers; and for statistics on answering network status
  * requests.
+ *
+ * There are two main kinds of functions in this module: geoip functions,
+ * which map groups of IPv4 and IPv6 addresses to country codes, and
+ * statistical functions, which collect statistics about different kinds of
+ * per-country usage.
+ *
+ * The geoip lookup tables are implemented as sorted lists of disjoint address
+ * ranges, each mapping to a singleton geoip_country_t.  These country objects
+ * are also indexed by their names in a hashtable.
+ *
+ * The tables are populated from disk at startup by the geoip_load_file()
+ * function.  For more information on the file format they read, see that
+ * function.  See the scripts and the README file in src/config for more
+ * information about how those files are generated.
+ *
+ * Tor uses GeoIP information in order to implement user requests (such as
+ * ExcludeNodes {cc}), and to keep track of how much usage relays are getting
+ * for each country.
  */
 
 #define GEOIP_PRIVATE
@@ -18,7 +36,6 @@
 #include "geoip.h"
 #include "routerlist.h"
 
-static void clear_geoip_db(void);
 static void init_geoip_countries(void);
 
 /** An entry from the GeoIP IPv4 file: maps an IPv4 range to a country. */
@@ -81,9 +98,9 @@ geoip_add_entry(const tor_addr_t *low, const tor_addr_t *high,
   intptr_t idx;
   void *idxplus1_;
 
-  if (tor_addr_family(low) != tor_addr_family(high))
+  IF_BUG_ONCE(tor_addr_family(low) != tor_addr_family(high))
     return;
-  if (tor_addr_compare(high, low, CMP_EXACT) < 0)
+  IF_BUG_ONCE(tor_addr_compare(high, low, CMP_EXACT) < 0)
     return;
 
   idxplus1_ = strmap_get_lc(country_idxplus1_by_lc_code, country);
@@ -111,8 +128,8 @@ geoip_add_entry(const tor_addr_t *low, const tor_addr_t *high,
     smartlist_add(geoip_ipv4_entries, ent);
   } else if (tor_addr_family(low) == AF_INET6) {
     geoip_ipv6_entry_t *ent = tor_malloc_zero(sizeof(geoip_ipv6_entry_t));
-    ent->ip_low = *tor_addr_to_in6(low);
-    ent->ip_high = *tor_addr_to_in6(high);
+    ent->ip_low = *tor_addr_to_in6_assert(low);
+    ent->ip_high = *tor_addr_to_in6_assert(high);
     ent->country = idx;
     smartlist_add(geoip_ipv6_entries, ent);
   }
@@ -145,6 +162,7 @@ geoip_parse_entry(const char *line, sa_family_t family)
   if (*line == '#')
     return 0;
 
+  char buf[512];
   if (family == AF_INET) {
     unsigned int low, high;
     if (tor_sscanf(line,"%u,%u,%2s", &low, &high, c) == 3 ||
@@ -155,7 +173,6 @@ geoip_parse_entry(const char *line, sa_family_t family)
       goto fail;
     country = c;
   } else {                      /* AF_INET6 */
-    char buf[512];
     char *low_str, *high_str;
     struct in6_addr low, high;
     char *strtok_state;
@@ -483,7 +500,7 @@ static HT_HEAD(clientmap, clientmap_entry_t) client_history =
      HT_INITIALIZER();
 
 /** Hashtable helper: compute a hash of a clientmap_entry_t. */
-static INLINE unsigned
+static inline unsigned
 clientmap_entry_hash(const clientmap_entry_t *a)
 {
   unsigned h = (unsigned) tor_addr_hash(&a->addr);
@@ -494,7 +511,7 @@ clientmap_entry_hash(const clientmap_entry_t *a)
   return h;
 }
 /** Hashtable helper: compare two clientmap_entry_t values for equality. */
-static INLINE int
+static inline int
 clientmap_entries_eq(const clientmap_entry_t *a, const clientmap_entry_t *b)
 {
   if (strcmp_opt(a->transport_name, b->transport_name))
@@ -505,7 +522,7 @@ clientmap_entries_eq(const clientmap_entry_t *a, const clientmap_entry_t *b)
 }
 
 HT_PROTOTYPE(clientmap, clientmap_entry_t, node, clientmap_entry_hash,
-             clientmap_entries_eq);
+             clientmap_entries_eq)
 HT_GENERATE2(clientmap, clientmap_entry_t, node, clientmap_entry_hash,
              clientmap_entries_eq, 0.6, tor_reallocarray_, tor_free_)
 
@@ -719,7 +736,7 @@ dirreq_map_ent_hash(const dirreq_map_entry_t *entry)
 }
 
 HT_PROTOTYPE(dirreqmap, dirreq_map_entry_t, node, dirreq_map_ent_hash,
-             dirreq_map_ent_eq);
+             dirreq_map_ent_eq)
 HT_GENERATE2(dirreqmap, dirreq_map_entry_t, node, dirreq_map_ent_hash,
              dirreq_map_ent_eq, 0.6, tor_reallocarray_, tor_free_)
 
@@ -825,7 +842,6 @@ geoip_get_transport_history(void)
   static const char* no_transport_str = "<OR>";
 
   clientmap_entry_t **ent;
-  const char *transport_name = NULL;
   smartlist_t *string_chunks = smartlist_new();
   char *the_string = NULL;
 
@@ -851,7 +867,7 @@ geoip_get_transport_history(void)
   HT_FOREACH(ent, clientmap, &client_history) {
     uintptr_t val;
     void *ptr;
-    transport_name = (*ent)->transport_name;
+    const char *transport_name = (*ent)->transport_name;
     if (!transport_name)
       transport_name = no_transport_str;
 
@@ -917,13 +933,13 @@ geoip_get_dirreq_history(dirreq_type_t type)
   smartlist_t *dirreq_completed = NULL;
   uint32_t complete = 0, timeouts = 0, running = 0;
   int bufsize = 1024, written;
-  dirreq_map_entry_t **ptr, **next, *ent;
+  dirreq_map_entry_t **ptr, **next;
   struct timeval now;
 
   tor_gettimeofday(&now);
   dirreq_completed = smartlist_new();
   for (ptr = HT_START(dirreqmap, &dirreq_map); ptr; ptr = next) {
-    ent = *ptr;
+    dirreq_map_entry_t *ent = *ptr;
     if (ent->type != type) {
       next = HT_NEXT(dirreqmap, &dirreq_map, ptr);
       continue;
@@ -970,7 +986,7 @@ geoip_get_dirreq_history(dirreq_type_t type)
                                                &ent->completion_time);
       if (time_diff == 0)
         time_diff = 1; /* Avoid DIV/0; "instant" answers are impossible
-                        * by law of nature or something, but a milisecond
+                        * by law of nature or something, but a millisecond
                         * is a bit greater than "instantly" */
       bytes_per_second = (uint32_t)(1000 * ent->response_size / time_diff);
       dltimes[ent_sl_idx] = bytes_per_second;
@@ -1025,7 +1041,7 @@ geoip_get_client_history(geoip_client_action_t action,
   smartlist_t *entries = NULL;
   int n_countries = geoip_get_n_countries();
   int i;
-  clientmap_entry_t **ent;
+  clientmap_entry_t **cm_ent;
   unsigned *counts = NULL;
   unsigned total = 0;
   unsigned ipv4_count = 0, ipv6_count = 0;
@@ -1034,17 +1050,17 @@ geoip_get_client_history(geoip_client_action_t action,
     return -1;
 
   counts = tor_calloc(n_countries, sizeof(unsigned));
-  HT_FOREACH(ent, clientmap, &client_history) {
+  HT_FOREACH(cm_ent, clientmap, &client_history) {
     int country;
-    if ((*ent)->action != (int)action)
+    if ((*cm_ent)->action != (int)action)
       continue;
-    country = geoip_get_country_by_addr(&(*ent)->addr);
+    country = geoip_get_country_by_addr(&(*cm_ent)->addr);
     if (country < 0)
       country = 0; /** unresolved requests are stored at index 0. */
     tor_assert(0 <= country && country < n_countries);
     ++counts[country];
     ++total;
-    switch (tor_addr_family(&(*ent)->addr)) {
+    switch (tor_addr_family(&(*cm_ent)->addr)) {
     case AF_INET:
       ipv4_count++;
       break;
@@ -1207,9 +1223,9 @@ geoip_format_dirreq_stats(time_t now)
 {
   char t[ISO_TIME_LEN+1];
   int i;
-  char *v3_ips_string, *v3_reqs_string, *v3_direct_dl_string,
-       *v3_tunneled_dl_string;
-  char *result;
+  char *v3_ips_string = NULL, *v3_reqs_string = NULL,
+       *v3_direct_dl_string = NULL, *v3_tunneled_dl_string = NULL;
+  char *result = NULL;
 
   if (!start_of_dirreq_stats_interval)
     return NULL; /* Not initialized. */
@@ -1280,6 +1296,8 @@ geoip_dirreq_stats_write(time_t now)
 
   /* Generate history string .*/
   str = geoip_format_dirreq_stats(now);
+  if (! str)
+    goto done;
 
   /* Write dirreq-stats string to disk. */
   if (!check_or_create_data_subdir("stats")) {
@@ -1666,7 +1684,7 @@ getinfo_helper_geoip(control_connection_t *control_conn,
 }
 
 /** Release all storage held by the GeoIP databases and country list. */
-static void
+STATIC void
 clear_geoip_db(void)
 {
   if (geoip_countries) {

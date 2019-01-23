@@ -1,5 +1,6 @@
 /* Declarations for css-url.c.
-   Copyright (C) 2006, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2006, 2009, 2010, 2011, 2015 Free Software Foundation,
+   Inc.
 
 This file is part of GNU Wget.
 
@@ -30,7 +31,6 @@ as that of the covered work.  */
 #ifndef CSS_URL_H
 #define CSS_URL_H
 
-void get_urls_css (struct map_context *, int, int);
 void get_urls_css (struct map_context *, int, int);
 struct urlpos *get_urls_css_file (const char *, const char *);
 

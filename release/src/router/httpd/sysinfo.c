@@ -32,6 +32,7 @@
 #include <stdarg.h>
 #include <sys/wait.h>
 #include <dirent.h>
+#include <sys/ioctl.h>
 
 #include <typedefs.h>
 #include <bcmutils.h>
@@ -70,7 +71,6 @@ typedef unsigned long long u64;
 #include <linux/major.h>
 #include <rtk_switch.h>
 #include <rtk_types.h>
-#include <sys/ioctl.h>
 
 #define RTKSWITCH_DEV   "/dev/rtkswitch"
 
@@ -131,6 +131,10 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				tmp = strstr(buffer, "Processor");
 				if (tmp)
 					sscanf(tmp, "Processor  :  %[^\n]", model);
+				else {
+					tmp = buffer;
+					strcpy(model, "&lt;unknown&gt;");
+				}
 
 				while ( (tmp = strstr(tmp,"processor")) != NULL ) {
 					tmp++;
@@ -252,6 +256,8 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			if (fp) {
 				if (fgets(result, sizeof(result), fp) == NULL)
 					strcpy(result, "error");
+				else
+					result[strcspn(result, "\n")] = 0;
 				fclose(fp);
 			}
 		} else if(strcmp(type,"conn.active") == 0) {
@@ -276,6 +282,8 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			if (fp) {
 				if (fgets(result, sizeof(result), fp) == NULL)
 					strcpy(result, "error");
+				else
+					result[strcspn(result, "\n")] = 0;
 				fclose(fp);
 			}
 		} else if(strncmp(type,"conn.wifi",9) == 0) {
@@ -345,6 +353,31 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			if (strlen(service))
 				sprintf(result, "%d", pidof(service));
 
+		} else if(strncmp(type, "vpnip",5) == 0 ) {
+			int instance = 1;
+			int fd;
+			struct ifreq ifr;
+			char buf[18];
+
+			strcpy(result, "0.0.0.0");
+
+			fd = socket(AF_INET, SOCK_DGRAM, 0);
+			if (fd) {
+				ifr.ifr_addr.sa_family = AF_INET;
+				sscanf(type,"vpnip.%d", &instance);
+				snprintf(ifr.ifr_name, IFNAMSIZ - 1, "tun1%d", instance);
+				if (ioctl(fd, SIOCGIFADDR, &ifr) == 0) {
+					strlcpy(result, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), sizeof result);
+
+					snprintf(buf, sizeof buf, "vpn_client%d_rip", instance);
+					if (!strlen(nvram_safe_get(buf))) {
+						sprintf(buf, "%d", instance);
+						eval("/usr/sbin/gettunnelip.sh", buf);
+					}
+				}
+				close(fd);
+			}
+
 		} else if(strncmp(type,"vpnstatus",9) == 0 ) {
 			int num = 0;
 			char service[10], buf[256];
@@ -368,6 +401,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 					char *buffer = read_whole_file(buf);
 					if (buffer)
 					{
+						replace_char(buffer, '\n', '>');
 						strlcpy(result, buffer, sizeof(result));
 						free(buffer);
 					}
@@ -407,8 +441,8 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				}
 #ifdef RTCONFIG_QTN
 				j = GetPhyStatus_qtn();
-				snprintf(result, sizeof result, (j > 0 ? "%sPort 5: %dFD enabled stp: none vlan: 1 jumbo: off mac: 00:00:00:00:00:00>" :
-							 "%sPort 5: DOWN enabled stp: none vlan: 1 jumbo: off mac: 00:00:00:00:00:00>"),
+				snprintf(result, sizeof result, (j > 0 ? "%sPort 10: %dFD enabled stp: none vlan: 1 jumbo: off mac: 00:00:00:00:00:00>" :
+							 "%sPort 10: DOWN enabled stp: none vlan: 1 jumbo: off mac: 00:00:00:00:00:00>"),
 							  buffer, j);
 #else
                                 strlcpy(result, buffer, sizeof result);

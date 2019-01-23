@@ -29,26 +29,19 @@ typedef packedelem32 packed32bignum25519[5];
 typedef packedelem64 packed64bignum25519[10];
 
 static const packedelem32 bot32bitmask = {{0xffffffff, 0x00000000, 0xffffffff, 0x00000000}};
-static const packedelem32 top32bitmask = {{0x00000000, 0xffffffff, 0x00000000, 0xffffffff}};
 static const packedelem32 top64bitmask = {{0x00000000, 0x00000000, 0xffffffff, 0xffffffff}};
 static const packedelem32 bot64bitmask = {{0xffffffff, 0xffffffff, 0x00000000, 0x00000000}};
 
 /* reduction masks */
 static const packedelem64 packedmask26 = {{0x03ffffff, 0x03ffffff}};
 static const packedelem64 packedmask25 = {{0x01ffffff, 0x01ffffff}};
-static const packedelem32 packedmask2625 = {{0x3ffffff,0,0x1ffffff,0}};
 static const packedelem32 packedmask26262626 = {{0x03ffffff, 0x03ffffff, 0x03ffffff, 0x03ffffff}};
 static const packedelem32 packedmask25252525 = {{0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff}};
 
 /* multipliers */
 static const packedelem64 packednineteen = {{19, 19}};
-static const packedelem64 packednineteenone = {{19, 1}};
 static const packedelem64 packedthirtyeight = {{38, 38}};
 static const packedelem64 packed3819 = {{19*2,19}};
-static const packedelem64 packed9638 = {{19*4,19*2}};
-
-/* 121666,121665 */
-static const packedelem64 packed121666121665 = {{121666, 121665}};
 
 /* 2*(2^255 - 19) = 0 mod p */
 static const packedelem32 packed2p0 = {{0x7ffffda,0x3fffffe,0x7fffffe,0x3fffffe}};

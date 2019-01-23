@@ -277,6 +277,7 @@ $cflags.=" -DOPENSSL_NO_SOCK" if $no_sock;
 $cflags.=" -DOPENSSL_NO_SSL2" if $no_ssl2;
 $cflags.=" -DOPENSSL_NO_SSL3" if $no_ssl3;
 $cflags.=" -DOPENSSL_NO_TLSEXT" if $no_tlsext;
+$cflags.=" -DOPENSSL_NO_TLS1" if $no_tls1;
 $cflags.=" -DOPENSSL_NO_SRP" if $no_srp;
 $cflags.=" -DOPENSSL_NO_CMS" if $no_cms;
 $cflags.=" -DOPENSSL_NO_ERR"  if $no_err;
@@ -427,7 +428,7 @@ EOF
 		{
 		$extra_install .= <<"EOF"
 	\$(MKDIR) \"\$(INSTALLTOP)${o}lib${o}engines\"
-	\$(CP) \"\$(E_SHLIB)\" \"\$(INSTALLTOP)${o}lib${o}engines\"
+	\$(CP) \$(E_SHLIB) \"\$(INSTALLTOP)${o}lib${o}engines\"
 EOF
 		}
 	}
@@ -607,7 +608,7 @@ install: all
 	\$(MKDIR) \"\$(INSTALLTOP)${o}include${o}openssl\"
 	\$(MKDIR) \"\$(INSTALLTOP)${o}lib\"
 	\$(CP) \"\$(INCO_D)${o}*.\[ch\]\" \"\$(INSTALLTOP)${o}include${o}openssl\"
-	\$(CP) \"\$(BIN_D)$o\$(E_EXE)$exep \$(INSTALLTOP)${o}bin\"
+	\$(CP) \"\$(BIN_D)$o\$(E_EXE)$exep\" \"\$(INSTALLTOP)${o}bin\"
 	\$(MKDIR) \"\$(OPENSSLDIR)\"
 	\$(CP) apps${o}openssl.cnf \"\$(OPENSSLDIR)\"
 $extra_install
@@ -692,8 +693,8 @@ $rules.=&do_copy_rule("\$(INCL_D)",$header,"");
 $defs.=&do_defs("EXHEADER",$exheader,"\$(INCO_D)","");
 $rules.=&do_copy_rule("\$(INCO_D)",$exheader,"");
 
-$defs.=&do_defs("T_OBJ",$test,"\$(OBJ_D)",$obj);
-$rules.=&do_compile_rule("\$(OBJ_D)",$test,"\$(APP_CFLAGS)");
+$defs.=&do_defs("T_OBJ","$test test${o}ssltestlib","\$(OBJ_D)",$obj);
+$rules.=&do_compile_rule("\$(OBJ_D)","$test test${o}ssltestlib","\$(APP_CFLAGS)");
 
 $defs.=&do_defs("E_OBJ",$e_exe,"\$(OBJ_D)",$obj);
 $rules.=&do_compile_rule("\$(OBJ_D)",$e_exe,'-DMONOLITH $(APP_CFLAGS)');
@@ -764,6 +765,7 @@ foreach (split(/\s+/,$test))
 	{
 	$t=&bname($_);
 	$tt="\$(OBJ_D)${o}$t${obj}";
+	$tt.=" \$(OBJ_D)${o}ssltestlib${obj}" if $t eq "dtlstest" or $t eq "fatalerrtest";
 	$rules.=&do_link_rule("\$(TEST_D)$o$t$exep",$tt,"\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)");
 	}
 
@@ -1204,6 +1206,8 @@ sub read_options
 		"no-ssl3" => \$no_ssl3,
 		"no-ssl3-method" => 0,
 		"no-tlsext" => \$no_tlsext,
+		"no-tls1" => \$no_tls1,
+		"no-dtls1" => 0,
 		"no-srp" => \$no_srp,
 		"no-cms" => \$no_cms,
 		"no-jpake" => \$no_jpake,

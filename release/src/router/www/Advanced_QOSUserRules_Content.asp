@@ -790,14 +790,17 @@ function linkport(obj){
 		  			<tr>
           				<td height="5"><img src="images/New_ui/export/line_export.png" /></td>
         			</tr>
-					<tr id="is_qos_enable_desc">
+					<tr>
 					<td>
-		  			<div class="formfontdesc" style="font-style: italic;font-size: 14px;color:#FFCC00;">
+		  			<div id="is_qos_enable_desc" class="formfontdesc" style="font-style: italic;font-size: 14px;color:#FFCC00;">
 							<ul>
 									<li><#UserQoSRule_desc_zero#></li>
 									<li><#UserQoSRule_desc_one#></li>
 							</ul>
 					</div>
+					<div class="formfontdesc"><a style="text-decoration:underline;" href="https://www.asus.com/support/FAQ/1010951/" target="_blank">QoS FAQ</a></div>
+
+					</div>	
 					</td>
 					</tr>
 					<tr>

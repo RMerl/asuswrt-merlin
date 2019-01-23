@@ -906,7 +906,7 @@ PHYSICALPATH_FUNC(mod_compress_physical) {
 
 	return HANDLER_GO_ON;
 }
-
+#ifndef APP_IPKG
 int mod_compress_plugin_init(plugin *p);
 int mod_compress_plugin_init(plugin *p) {
 	p->version     = LIGHTTPD_VERSION_ID;
@@ -921,3 +921,19 @@ int mod_compress_plugin_init(plugin *p) {
 
 	return 0;
 }
+#else
+int aicloud_mod_compress_plugin_init(plugin *p);
+int aicloud_mod_compress_plugin_init(plugin *p) {
+    p->version     = LIGHTTPD_VERSION_ID;
+    p->name        = buffer_init_string("compress");
+
+    p->init        = mod_compress_init;
+    p->set_defaults = mod_compress_setdefaults;
+    p->handle_subrequest_start  = mod_compress_physical;
+    p->cleanup     = mod_compress_free;
+
+    p->data        = NULL;
+
+    return 0;
+}
+#endif

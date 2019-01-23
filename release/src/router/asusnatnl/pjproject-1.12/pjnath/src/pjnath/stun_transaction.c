@@ -495,3 +495,11 @@ PJ_DEF(char *)pj_stun_tsx_get_obj_name(pj_stun_client_tsx *tsx)
 	}
 	return "";
 }
+
+PJ_DEF(int)pj_stun_tsx_tansmit_count(pj_stun_client_tsx *tsx)
+{
+	if (tsx) {
+		return tsx->transmit_count;
+	}
+	return 0;
+}

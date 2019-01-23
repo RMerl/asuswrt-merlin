@@ -1,8 +1,17 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
+
+/**
+ * \file circpathbias.c
+ *
+ * \brief Code to track success/failure rates of circuits built through
+ * different tor nodes, in an attempt to detect attacks where
+ * an attacker deliberately causes circuits to fail until the client
+ * choses a path they like.
+ */
 
 #include "or.h"
 #include "channel.h"
@@ -76,7 +85,6 @@ pathbias_get_notice_rate(const or_options_t *options)
                                    DFLT_PATH_BIAS_NOTICE_PCT, 0, 100)/100.0;
 }
 
-/* XXXX024 I'd like to have this be static again, but entrynodes.c needs it. */
 /** The circuit success rate below which we issue a warn */
 static double
 pathbias_get_warn_rate(const or_options_t *options)
@@ -89,7 +97,7 @@ pathbias_get_warn_rate(const or_options_t *options)
                                    DFLT_PATH_BIAS_WARN_PCT, 0, 100)/100.0;
 }
 
-/* XXXX024 I'd like to have this be static again, but entrynodes.c needs it. */
+/* XXXX I'd like to have this be static again, but entrynodes.c needs it. */
 /**
  * The extreme rate is the rate at which we would drop the guard,
  * if pb_dropguard is also set. Otherwise we just warn.
@@ -105,7 +113,7 @@ pathbias_get_extreme_rate(const or_options_t *options)
                                    DFLT_PATH_BIAS_EXTREME_PCT, 0, 100)/100.0;
 }
 
-/* XXXX024 I'd like to have this be static again, but entrynodes.c needs it. */
+/* XXXX I'd like to have this be static again, but entrynodes.c needs it. */
 /**
  * If 1, we actually disable use of guards that fall below
  * the extreme_pct.

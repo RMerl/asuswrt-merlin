@@ -57,6 +57,8 @@ struct qmi_wwan_state {
 /* default ethernet address used by the modem */
 static const u8 default_modem_addr[ETH_ALEN] = {0x02, 0x50, 0xf3};
 
+static const u8 buggy_fw_addr[ETH_ALEN] = {0x00, 0xa0, 0xc6, 0x00, 0x00, 0x00};
+
 /* Make up an ethernet header if the packet doesn't have one.
  *
  * A firmware bug common among several devices cause them to send raw
@@ -311,10 +313,12 @@ next_desc:
 		usb_driver_release_interface(driver, info->data);
 	}
 
-	/* Never use the same address on both ends of the link, even
-	 * if the buggy firmware told us to.
+	/* Never use the same address on both ends of the link, even if the
+	 * buggy firmware told us to. Or, if device is assigned the well-known
+	 * buggy firmware MAC address, replace it with a random address,
 	 */
-	if (!compare_ether_addr(dev->net->dev_addr, default_modem_addr))
+	if (!compare_ether_addr(dev->net->dev_addr, default_modem_addr) ||
+	    !compare_ether_addr(dev->net->dev_addr, buggy_fw_addr))
 		random_ether_addr(dev->net->dev_addr);
 
 	/* make MAC addr easily distinguishable from an IP header */

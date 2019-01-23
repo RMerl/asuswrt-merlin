@@ -676,7 +676,7 @@ function _change_wl_advanced_unit_status(__unit){
 <input type="hidden" name="wl_wps_mode" value="<% nvram_get("wl_wps_mode"); %>" disabled>
 <input type="hidden" name="wl_auth_mode_x" value="<% nvram_get("wl_auth_mode_x"); %>">
 <input type="hidden" name="wl_wep_x" value="<% nvram_get("wl_wep_x"); %>">
-<input type="hidden" name="wps_band" value="<% nvram_get("wps_band"); %>">
+<input type="hidden" name="wps_band" value="<% nvram_get("wps_band_x"); %>">
 <input type="hidden" name="wps_dualband" value="<% nvram_get("wps_dualband"); %>">
 <input type="hidden" name="wl_crypto" value="<% nvram_get("wl_crypto"); %>">
 <input type="hidden" name="wps_multiband" value="<% nvram_get("wps_multiband"); %>">
@@ -809,9 +809,9 @@ function _change_wl_advanced_unit_status(__unit){
 		  	</td>
 				<td  id="wps_select" style="display:none">
 						<select name="wps_unit" class="input_option" onChange="SelectBand();">
-							<option id="wps_opt0" class="content_input_fd" value="0" <% nvram_match("wps_band", "0","selected"); %>>2.4GHz</option>
-							<option id="wps_opt1" class="content_input_fd" value="1" <% nvram_match("wps_band", "1","selected"); %>>5GHz-1</option>
-							<option id="wps_opt2" class="content_input_fd" value="2" <% nvram_match("wps_band", "2","selected"); %>>5GHz-2</option>
+							<option id="wps_opt0" class="content_input_fd" value="0" <% nvram_match("wps_band_x", "0","selected"); %>>2.4GHz</option>
+							<option id="wps_opt1" class="content_input_fd" value="1" <% nvram_match("wps_band_x", "1","selected"); %>>5GHz-1</option>
+							<option id="wps_opt2" class="content_input_fd" value="2" <% nvram_match("wps_band_x", "2","selected"); %>>5GHz-2</option>
 						</select>			
 				</td>
 			</tr>

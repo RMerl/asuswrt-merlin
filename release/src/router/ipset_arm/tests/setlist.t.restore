@@ -1,0 +1,10 @@
+create a hash:ip
+create b hash:ip
+create c hash:ip
+create d hash:ip
+create e hash:ip
+create test list:set timeout 5 size 4
+add test a
+add test b
+add test c
+add test d

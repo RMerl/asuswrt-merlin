@@ -46,7 +46,8 @@ body{
 	width:50px;
 	height:40px;
 	position:absolute;
-	left:0px;
+	left: 0;
+	top: 0;
 	border-top-left-radius:5px;
 	border-bottom-left-radius:5px;
 }
@@ -55,7 +56,7 @@ body{
 		top:0;
 	}
 }
-@supports (-ms-accelerator:true) {		/*Edge Browser Hack*/
+@supports (-ms-accelerator:true) {		/*Edge Browser Hack, not work on Edge 38*/
   	.container::after{
 		top:0;
 	}
@@ -71,8 +72,7 @@ body{
 }
 @media all and (-ms-high-contrast:none)
 {
-    .container::after { margin-top:-26px} /* IE10 */
-    *::-ms-backdrop, .container::after { margin-top:-26px} /* IE11 */
+    *::-ms-backdrop, .container::after { margin-top: 0px} /* IE11 */
 }
 .btn{
 	background-color: #990000;
@@ -161,7 +161,7 @@ function check_game_boost(){
 				<div id="tabMenu" style="*margin-top: -160px;"></div>
 				<br>
 		<!--=====Beginning of Main Content=====-->
-				<div id="applist_table" style="background:url('images/New_ui/mainimage_img_Game.jpg');background-repeat: no-repeat;margin-top:-155px;border-radius:3px;">
+				<div id="applist_table" style="background:url('images/New_ui/mainimage_img_Game.jpg');background-repeat: no-repeat;border-radius:3px;">
 					<table style="padding-left:10px;">
 						<tr>
 							<td class="formfonttitle">

@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2017 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,6 +18,10 @@
 #define DHCP_SERVER_ALTPORT 1067
 #define DHCP_CLIENT_ALTPORT 1068
 #define PXE_PORT 4011
+
+/* These each hold a DHCP option max size 255
+   and get a terminating zero added */
+#define DHCP_BUFF_SZ 256
 
 #define BOOTREQUEST              1
 #define BOOTREPLY                2

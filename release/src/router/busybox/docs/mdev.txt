@@ -51,9 +51,9 @@ device nodes if your system needs something more than the default root/root
 660 permissions.
 
 The file has the format:
-	[-]<device regex>	<uid>:<gid> <permissions>
+	[-][envmatch]<device regex>	<uid>:<gid> <permissions>
 or
-	@<maj[,min1[-min2]]>	<uid>:<gid> <permissions>
+	[envmatch]@<maj[,min1[-min2]]>	<uid>:<gid> <permissions>
 or
 	$envvar=<regex>		<uid>:<gid> <permissions>
 

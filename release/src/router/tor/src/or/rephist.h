@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -111,6 +111,13 @@ void rep_hist_free_all(void);
 void rep_hist_note_negotiated_link_proto(unsigned link_proto,
                                          int started_here);
 void rep_hist_log_link_protocol_counts(void);
+
+extern uint64_t rephist_total_alloc;
+extern uint32_t rephist_total_num;
+#ifdef TOR_UNIT_TESTS
+extern int onion_handshakes_requested[MAX_ONION_HANDSHAKE_TYPE+1];
+extern int onion_handshakes_assigned[MAX_ONION_HANDSHAKE_TYPE+1];
+#endif
 
 #endif
 

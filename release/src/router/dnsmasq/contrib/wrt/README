@@ -4,7 +4,7 @@ reboot, then it will eventually be restored as hosts renew their
 leases. Until a host renews (which may take hours/days) it will
 not exist in the DNS if dnsmasq's DDNS function is in use.
 
-*WRT systems remount all non-volatile fileystems read-only after boot,
+*WRT systems remount all non-volatile filesystems read-only after boot,
 so the normal leasefile will not work. They do, however have NV
 storage, accessed with the nvram command:
 
@@ -62,7 +62,7 @@ about 100 bytes, so restricting the number of leases to 50 will limit
 use to half that. (The default limit in the distributed source is 150)
 
 Any UI script which reads the dnsmasq leasefile will have to be
-ammended, probably by changing it to read the output of 
+amended, probably by changing it to read the output of 
 `lease_update init` instead.
  
 

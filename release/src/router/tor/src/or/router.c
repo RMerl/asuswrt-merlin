@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #define ROUTER_PRIVATE
@@ -23,6 +23,7 @@
 #include "networkstatus.h"
 #include "nodelist.h"
 #include "policies.h"
+#include "protover.h"
 #include "relay.h"
 #include "rephist.h"
 #include "router.h"
@@ -36,11 +37,24 @@
 
 /**
  * \file router.c
- * \brief OR functionality, including key maintenance, generating
- * and uploading server descriptors, retrying OR connections.
+ * \brief Miscellaneous relay functionality, including RSA key maintenance,
+ * generating and uploading server descriptors, picking an address to
+ * advertise, and so on.
+ *
+ * This module handles the job of deciding whether we are a Tor relay, and if
+ * so what kind. (Mostly through functions like server_mode() that inspect an
+ * or_options_t, but in some cases based on our own capabilities, such as when
+ * we are deciding whether to be a directory cache in
+ * router_has_bandwidth_to_be_dirserver().)
+ *
+ * Also in this module are the functions to generate our own routerinfo_t and
+ * extrainfo_t, and to encode those to signed strings for upload to the
+ * directory authorities.
+ *
+ * This module also handles key maintenance for RSA and Curve25519-ntor keys,
+ * and for our TLS context. (These functions should eventually move to
+ * routerkeys.c along with the code that handles Ed25519 keys now.)
  **/
-
-extern long stats_n_seconds_working;
 
 /************************************************************/
 
@@ -269,8 +283,8 @@ client_identity_key_is_set(void)
 
 /** Return the key certificate for this v3 (voting) authority, or NULL
  * if we have no such certificate. */
-authority_cert_t *
-get_my_v3_authority_cert(void)
+MOCK_IMPL(authority_cert_t *,
+get_my_v3_authority_cert, (void))
 {
   return authority_key_certificate;
 }
@@ -454,7 +468,8 @@ init_key_from_file(const char *fname, int generate, int severity,
           goto error;
         }
       } else {
-        log_info(LD_GENERAL, "No key found in \"%s\"", fname);
+        tor_log(severity, LD_GENERAL, "No key found in \"%s\"", fname);
+        goto error;
       }
       return prkey;
     case FN_FILE:
@@ -562,7 +577,7 @@ load_authority_keyset(int legacy, crypto_pk_t **key_out,
 
   fname = get_datadir_fname2("keys",
                  legacy ? "legacy_signing_key" : "authority_signing_key");
-  signing_key = init_key_from_file(fname, 0, LOG_INFO, 0);
+  signing_key = init_key_from_file(fname, 0, LOG_ERR, 0);
   if (!signing_key) {
     log_warn(LD_DIR, "No version 3 directory key found in %s", fname);
     goto done;
@@ -1026,6 +1041,7 @@ init_keys(void)
     ds = trusted_dir_server_new(options->Nickname, NULL,
                                 router_get_advertised_dir_port(options, 0),
                                 router_get_advertised_or_port(options),
+                                NULL,
                                 digest,
                                 v3_digest,
                                 type, 0.0);
@@ -1053,7 +1069,8 @@ init_keys(void)
     log_info(LD_DIR, "adding my own v3 cert");
     if (trusted_dirs_load_certs_from_string(
                       cert->cache_info.signed_descriptor_body,
-                      TRUSTED_DIRS_CERTS_SRC_SELF, 0)<0) {
+                      TRUSTED_DIRS_CERTS_SRC_SELF, 0,
+                      NULL)<0) {
       log_warn(LD_DIR, "Unable to parse my own v3 cert! Failing.");
       return -1;
     }
@@ -1078,63 +1095,93 @@ router_reset_reachability(void)
   can_reach_or_port = can_reach_dir_port = 0;
 }
 
-/** Return 1 if ORPort is known reachable; else return 0. */
-int
-check_whether_orport_reachable(void)
+/** Return 1 if we won't do reachability checks, because:
+ *   - AssumeReachable is set, or
+ *   - the network is disabled.
+ * Otherwise, return 0.
+ */
+static int
+router_reachability_checks_disabled(const or_options_t *options)
 {
-  const or_options_t *options = get_options();
   return options->AssumeReachable ||
+         net_is_disabled();
+}
+
+/** Return 0 if we need to do an ORPort reachability check, because:
+ *   - no reachability check has been done yet, or
+ *   - we've initiated reachability checks, but none have succeeded.
+ *  Return 1 if we don't need to do an ORPort reachability check, because:
+ *   - we've seen a successful reachability check, or
+ *   - AssumeReachable is set, or
+ *   - the network is disabled.
+ */
+int
+check_whether_orport_reachable(const or_options_t *options)
+{
+  int reach_checks_disabled = router_reachability_checks_disabled(options);
+  return reach_checks_disabled ||
          can_reach_or_port;
 }
 
-/** Return 1 if we don't have a dirport configured, or if it's reachable. */
+/** Return 0 if we need to do a DirPort reachability check, because:
+ *   - no reachability check has been done yet, or
+ *   - we've initiated reachability checks, but none have succeeded.
+ *  Return 1 if we don't need to do a DirPort reachability check, because:
+ *   - we've seen a successful reachability check, or
+ *   - there is no DirPort set, or
+ *   - AssumeReachable is set, or
+ *   - the network is disabled.
+ */
 int
-check_whether_dirport_reachable(void)
+check_whether_dirport_reachable(const or_options_t *options)
 {
-  const or_options_t *options = get_options();
-  return !options->DirPort_set ||
-         options->AssumeReachable ||
-         net_is_disabled() ||
+  int reach_checks_disabled = router_reachability_checks_disabled(options) ||
+                              !options->DirPort_set;
+  return reach_checks_disabled ||
          can_reach_dir_port;
 }
 
-/** Look at a variety of factors, and return 0 if we don't want to
- * advertise the fact that we have a DirPort open. Else return the
- * DirPort we want to advertise.
- *
- * Log a helpful message if we change our mind about whether to publish
- * a DirPort.
+/** The lower threshold of remaining bandwidth required to advertise (or
+ * automatically provide) directory services */
+/* XXX Should this be increased? */
+#define MIN_BW_TO_ADVERTISE_DIRSERVER 51200
+
+/** Return true iff we have enough configured bandwidth to cache directory
+ * information. */
+static int
+router_has_bandwidth_to_be_dirserver(const or_options_t *options)
+{
+  if (options->BandwidthRate < MIN_BW_TO_ADVERTISE_DIRSERVER) {
+    return 0;
+  }
+  if (options->RelayBandwidthRate > 0 &&
+      options->RelayBandwidthRate < MIN_BW_TO_ADVERTISE_DIRSERVER) {
+    return 0;
+  }
+  return 1;
+}
+
+/** Helper: Return 1 if we have sufficient resources for serving directory
+ * requests, return 0 otherwise.
+ * dir_port is either 0 or the configured DirPort number.
+ * If AccountingMax is set less than our advertised bandwidth, then don't
+ * serve requests. Likewise, if our advertised bandwidth is less than
+ * MIN_BW_TO_ADVERTISE_DIRSERVER, don't bother trying to serve requests.
  */
 static int
-decide_to_advertise_dirport(const or_options_t *options, uint16_t dir_port)
+router_should_be_directory_server(const or_options_t *options, int dir_port)
 {
   static int advertising=1; /* start out assuming we will advertise */
   int new_choice=1;
   const char *reason = NULL;
 
-  /* Section one: reasons to publish or not publish that aren't
-   * worth mentioning to the user, either because they're obvious
-   * or because they're normal behavior. */
-
-  if (!dir_port) /* short circuit the rest of the function */
-    return 0;
-  if (authdir_mode(options)) /* always publish */
-    return dir_port;
-  if (net_is_disabled())
-    return 0;
-  if (!check_whether_dirport_reachable())
-    return 0;
-  if (!router_get_advertised_dir_port(options, dir_port))
-    return 0;
-
-  /* Section two: reasons to publish or not publish that the user
-   * might find surprising. These are generally config options that
-   * make us choose not to publish. */
-
-  if (accounting_is_enabled(options)) {
+  if (accounting_is_enabled(options) &&
+    get_options()->AccountingRule != ACCT_IN) {
     /* Don't spend bytes for directory traffic if we could end up hibernating,
      * but allow DirPort otherwise. Some people set AccountingMax because
-     * they're confused or to get statistics. */
+     * they're confused or to get statistics. Directory traffic has a much
+     * larger effect on output than input so there is no reason to turn it
+     * off if using AccountingRule in. */
     int interval_length = accounting_get_interval_length();
     uint32_t effective_bw = get_effective_bwrate(options);
     uint64_t acc_bytes;
@@ -1143,10 +1190,11 @@ decide_to_advertise_dirport(const or_options_t *options, uint16_t dir_port)
                        "seconds long. Raising to 1.");
       interval_length = 1;
     }
-    log_info(LD_GENERAL, "Calculating whether to disable dirport: effective "
+    log_info(LD_GENERAL, "Calculating whether to advertise %s: effective "
                          "bwrate: %u, AccountingMax: "U64_FORMAT", "
-                         "accounting interval length %d", effective_bw,
-                         U64_PRINTF_ARG(options->AccountingMax),
+                         "accounting interval length %d",
+                         dir_port ? "dirport" : "begindir",
+                         effective_bw, U64_PRINTF_ARG(options->AccountingMax),
                          interval_length);
 
     acc_bytes = options->AccountingMax;
@@ -1157,10 +1205,7 @@ decide_to_advertise_dirport(const or_options_t *options, uint16_t dir_port)
       new_choice = 0;
       reason = "AccountingMax enabled";
     }
-#define MIN_BW_TO_ADVERTISE_DIRPORT 51200
-  } else if (options->BandwidthRate < MIN_BW_TO_ADVERTISE_DIRPORT ||
-             (options->RelayBandwidthRate > 0 &&
-              options->RelayBandwidthRate < MIN_BW_TO_ADVERTISE_DIRPORT)) {
+  } else if (! router_has_bandwidth_to_be_dirserver(options)) {
     /* if we're advertising a small amount */
     new_choice = 0;
     reason = "BandwidthRate under 50KB";
@@ -1168,26 +1213,104 @@ decide_to_advertise_dirport(const or_options_t *options, uint16_t dir_port)
 
   if (advertising != new_choice) {
     if (new_choice == 1) {
-      log_notice(LD_DIR, "Advertising DirPort as %d", dir_port);
+      if (dir_port > 0)
+        log_notice(LD_DIR, "Advertising DirPort as %d", dir_port);
+      else
+        log_notice(LD_DIR, "Advertising directory service support");
     } else {
       tor_assert(reason);
-      log_notice(LD_DIR, "Not advertising DirPort (Reason: %s)", reason);
+      log_notice(LD_DIR, "Not advertising Dir%s (Reason: %s)",
+                 dir_port ? "Port" : "ectory Service support", reason);
     }
     advertising = new_choice;
   }
 
-  return advertising ? dir_port : 0;
+  return advertising;
+}
+
+/** Return 1 if we are configured to accept either relay or directory requests
+ * from clients and we aren't at risk of exceeding our bandwidth limits, thus
+ * we should be a directory server. If not, return 0.
+ */
+int
+dir_server_mode(const or_options_t *options)
+{
+  if (!options->DirCache)
+    return 0;
+  return options->DirPort_set ||
+    (server_mode(options) && router_has_bandwidth_to_be_dirserver(options));
+}
+
+/** Look at a variety of factors, and return 0 if we don't want to
+ * advertise the fact that we have a DirPort open or begindir support, else
+ * return 1.
+ *
+ * Where dir_port or supports_tunnelled_dir_requests are not relevant, they
+ * must be 0.
+ *
+ * Log a helpful message if we change our mind about whether to publish.
+ */
+static int
+decide_to_advertise_dir_impl(const or_options_t *options,
+                             uint16_t dir_port,
+                             int supports_tunnelled_dir_requests)
+{
+  /* Part one: reasons to publish or not publish that aren't
+   * worth mentioning to the user, either because they're obvious
+   * or because they're normal behavior. */
+
+  /* short circuit the rest of the function */
+  if (!dir_port && !supports_tunnelled_dir_requests)
+    return 0;
+  if (authdir_mode(options)) /* always publish */
+    return 1;
+  if (net_is_disabled())
+    return 0;
+  if (dir_port && !router_get_advertised_dir_port(options, dir_port))
+    return 0;
+  if (supports_tunnelled_dir_requests &&
+      !router_get_advertised_or_port(options))
+    return 0;
+
+  /* Part two: consider config options that could make us choose to
+   * publish or not publish that the user might find surprising. */
+  return router_should_be_directory_server(options, dir_port);
+}
+
+/** Front-end to decide_to_advertise_dir_impl(): return 0 if we don't want to
+ * advertise the fact that we have a DirPort open, else return the
+ * DirPort we want to advertise.
+ */
+static int
+decide_to_advertise_dirport(const or_options_t *options, uint16_t dir_port)
+{
+  /* supports_tunnelled_dir_requests is not relevant, pass 0 */
+  return decide_to_advertise_dir_impl(options, dir_port, 0) ? dir_port : 0;
+}
+
+/** Front-end to decide_to_advertise_dir_impl(): return 0 if we don't want to
+ * advertise the fact that we support begindir requests, else return 1.
+ */
+static int
+decide_to_advertise_begindir(const or_options_t *options,
+                             int supports_tunnelled_dir_requests)
+{
+  /* dir_port is not relevant, pass 0 */
+  return decide_to_advertise_dir_impl(options, 0,
+                                      supports_tunnelled_dir_requests);
 }
 
 /** Allocate and return a new extend_info_t that can be used to build
- * a circuit to or through the router <b>r</b>. Use the primary
- * address of the router unless <b>for_direct_connect</b> is true, in
- * which case the preferred address is used instead. */
+ * a circuit to or through the router <b>r</b>. Uses the primary
+ * address of the router, so should only be called on a server. */
 static extend_info_t *
 extend_info_from_router(const routerinfo_t *r)
 {
   tor_addr_port_t ap;
   tor_assert(r);
+
+  /* Make sure we don't need to check address reachability */
+  tor_assert_nonfatal(router_skip_or_reachability(get_options(), 0));
 
   router_get_prim_orport(r, &ap);
   return extend_info_new(r->nickname, r->cache_info.identity_digest,
@@ -1210,9 +1333,9 @@ void
 consider_testing_reachability(int test_or, int test_dir)
 {
   const routerinfo_t *me = router_get_my_routerinfo();
-  int orport_reachable = check_whether_orport_reachable();
-  tor_addr_t addr;
   const or_options_t *options = get_options();
+  int orport_reachable = check_whether_orport_reachable(options);
+  tor_addr_t addr;
   if (!me)
     return;
 
@@ -1243,14 +1366,15 @@ consider_testing_reachability(int test_or, int test_dir)
     extend_info_free(ei);
   }
 
+  /* XXX IPv6 self testing */
   tor_addr_from_ipv4h(&addr, me->addr);
-  if (test_dir && !check_whether_dirport_reachable() &&
+  if (test_dir && !check_whether_dirport_reachable(options) &&
       !connection_get_by_type_addr_port_purpose(
                 CONN_TYPE_DIR, &addr, me->dir_port,
                 DIR_PURPOSE_FETCH_SERVERDESC)) {
     /* ask myself, via tor, for my server descriptor. */
-    directory_initiate_command(&addr,
-                               me->or_port, me->dir_port,
+    directory_initiate_command(&addr, me->or_port,
+                               &addr, me->dir_port,
                                me->cache_info.identity_digest,
                                DIR_PURPOSE_FETCH_SERVERDESC,
                                ROUTER_PURPOSE_GENERAL,
@@ -1263,17 +1387,19 @@ void
 router_orport_found_reachable(void)
 {
   const routerinfo_t *me = router_get_my_routerinfo();
+  const or_options_t *options = get_options();
   if (!can_reach_or_port && me) {
     char *address = tor_dup_ip(me->addr);
     log_notice(LD_OR,"Self-testing indicates your ORPort is reachable from "
                "the outside. Excellent.%s",
-               get_options()->PublishServerDescriptor_ != NO_DIRINFO ?
+               options->PublishServerDescriptor_ != NO_DIRINFO
+               && check_whether_dirport_reachable(options) ?
                  " Publishing server descriptor." : "");
     can_reach_or_port = 1;
     mark_my_descriptor_dirty("ORPort found reachable");
     /* This is a significant enough change to upload immediately,
      * at least in a test network */
-    if (get_options()->TestingTorNetwork == 1) {
+    if (options->TestingTorNetwork == 1) {
       reschedule_descriptor_update_check();
     }
     control_event_server_status(LOG_NOTICE,
@@ -1288,16 +1414,20 @@ void
 router_dirport_found_reachable(void)
 {
   const routerinfo_t *me = router_get_my_routerinfo();
+  const or_options_t *options = get_options();
   if (!can_reach_dir_port && me) {
     char *address = tor_dup_ip(me->addr);
     log_notice(LD_DIRSERV,"Self-testing indicates your DirPort is reachable "
-               "from the outside. Excellent.");
+               "from the outside. Excellent.%s",
+               options->PublishServerDescriptor_ != NO_DIRINFO
+               && check_whether_orport_reachable(options) ?
+               " Publishing server descriptor." : "");
     can_reach_dir_port = 1;
-    if (decide_to_advertise_dirport(get_options(), me->dir_port)) {
+    if (decide_to_advertise_dirport(options, me->dir_port)) {
       mark_my_descriptor_dirty("DirPort found reachable");
       /* This is a significant enough change to upload immediately,
        * at least in a test network */
-      if (get_options()->TestingTorNetwork == 1) {
+      if (options->TestingTorNetwork == 1) {
         reschedule_descriptor_update_check();
       }
     }
@@ -1425,7 +1555,7 @@ MOCK_IMPL(int,
 server_mode,(const or_options_t *options))
 {
   if (options->ClientOnly) return 0;
-  /* XXXX024 I believe we can kill off ORListenAddress here.*/
+  /* XXXX I believe we can kill off ORListenAddress here.*/
   return (options->ORPort_set || options->ORListenAddress);
 }
 
@@ -1456,8 +1586,8 @@ static int server_is_advertised=0;
 
 /** Return true iff we have published our descriptor lately.
  */
-int
-advertised_server_mode(void)
+MOCK_IMPL(int,
+advertised_server_mode,(void))
 {
   return server_is_advertised;
 }
@@ -1494,7 +1624,10 @@ proxy_mode(const or_options_t *options)
  * and
  * - We have ORPort set
  * and
- * - We believe we are reachable from the outside; or
+ * - We believe our ORPort and DirPort (if present) are reachable from
+ *   the outside; or
+ * - We believe our ORPort is reachable from the outside, and we can't
+ *   check our DirPort because the consensus has no exits; or
  * - We are an authoritative directory server.
  */
 static int
@@ -1512,8 +1645,15 @@ decide_if_publishable_server(void)
     return 1;
   if (!router_get_advertised_or_port(options))
     return 0;
-
-  return check_whether_orport_reachable();
+  if (!check_whether_orport_reachable(options))
+    return 0;
+  if (router_have_consensus_path() == CONSENSUS_PATH_INTERNAL) {
+    /* All set: there are no exits in the consensus (maybe this is a tiny
+     * test network), so we can't check our DirPort reachability. */
+    return 1;
+  } else {
+    return check_whether_dirport_reachable(options);
+  }
 }
 
 /** Initiate server descriptor upload as reasonable (if server is publishable,
@@ -1684,7 +1824,8 @@ router_upload_dir_desc_to_dirservers(int force)
 int
 router_compare_to_my_exit_policy(const tor_addr_t *addr, uint16_t port)
 {
-  if (!router_get_my_routerinfo()) /* make sure desc_routerinfo exists */
+  const routerinfo_t *me = router_get_my_routerinfo();
+  if (!me) /* make sure routerinfo exists */
     return -1;
 
   /* make sure it's resolved to something. this way we can't get a
@@ -1692,20 +1833,21 @@ router_compare_to_my_exit_policy(const tor_addr_t *addr, uint16_t port)
   if (tor_addr_is_null(addr))
     return -1;
 
-  /* look at desc_routerinfo->exit_policy for both the v4 and the v6
-   * policies.  The exit_policy field in desc_routerinfo is a bit unusual,
-   * in that it contains IPv6 and IPv6 entries.  We don't want to look
-   * at desc_routerinfio->ipv6_exit_policy, since that's a port summary. */
+  /* look at router_get_my_routerinfo()->exit_policy for both the v4 and the
+   * v6 policies.  The exit_policy field in router_get_my_routerinfo() is a
+   * bit unusual, in that it contains IPv6 and IPv6 entries.  We don't want to
+   * look at router_get_my_routerinfo()->ipv6_exit_policy, since that's a port
+   * summary. */
   if ((tor_addr_family(addr) == AF_INET ||
        tor_addr_family(addr) == AF_INET6)) {
     return compare_tor_addr_to_addr_policy(addr, port,
-                    desc_routerinfo->exit_policy) != ADDR_POLICY_ACCEPTED;
+                               me->exit_policy) != ADDR_POLICY_ACCEPTED;
 #if 0
   } else if (tor_addr_family(addr) == AF_INET6) {
     return get_options()->IPv6Exit &&
       desc_routerinfo->ipv6_exit_policy &&
       compare_tor_addr_to_short_policy(addr, port,
-                  desc_routerinfo->ipv6_exit_policy) != ADDR_POLICY_ACCEPTED;
+                               me->ipv6_exit_policy) != ADDR_POLICY_ACCEPTED;
 #endif
   } else {
     return -1;
@@ -1714,13 +1856,13 @@ router_compare_to_my_exit_policy(const tor_addr_t *addr, uint16_t port)
 
 /** Return true iff my exit policy is reject *:*.  Return -1 if we don't
  * have a descriptor */
-int
-router_my_exit_policy_is_reject_star(void)
+MOCK_IMPL(int,
+router_my_exit_policy_is_reject_star,(void))
 {
-  if (!router_get_my_routerinfo()) /* make sure desc_routerinfo exists */
+  if (!router_get_my_routerinfo()) /* make sure routerinfo exists */
     return -1;
 
-  return desc_routerinfo->policy_is_reject_star;
+  return router_get_my_routerinfo()->policy_is_reject_star;
 }
 
 /** Return true iff I'm a server and <b>digest</b> is equal to
@@ -1779,12 +1921,13 @@ const char *
 router_get_my_descriptor(void)
 {
   const char *body;
-  if (!router_get_my_routerinfo())
+  const routerinfo_t *me = router_get_my_routerinfo();
+  if (! me)
     return NULL;
+  tor_assert(me->cache_info.saved_location == SAVED_NOWHERE);
+  body = signed_descriptor_get_body(&me->cache_info);
   /* Make sure this is nul-terminated. */
-  tor_assert(desc_routerinfo->cache_info.saved_location == SAVED_NOWHERE);
-  body = signed_descriptor_get_body(&desc_routerinfo->cache_info);
-  tor_assert(!body[desc_routerinfo->cache_info.signed_descriptor_len]);
+  tor_assert(!body[me->cache_info.signed_descriptor_len]);
   log_debug(LD_GENERAL,"my desc is '%s'", body);
   return body;
 }
@@ -1818,23 +1961,111 @@ static int router_guess_address_from_dir_headers(uint32_t *guess);
 /** Make a current best guess at our address, either because
  * it's configured in torrc, or because we've learned it from
  * dirserver headers. Place the answer in *<b>addr</b> and return
- * 0 on success, else return -1 if we have no guess. */
-int
-router_pick_published_address(const or_options_t *options, uint32_t *addr)
+ * 0 on success, else return -1 if we have no guess.
+ *
+ * If <b>cache_only</b> is true, just return any cached answers, and
+ * don't try to get any new answers.
+ */
+MOCK_IMPL(int,
+router_pick_published_address,(const or_options_t *options, uint32_t *addr,
+                               int cache_only))
 {
+  /* First, check the cached output from resolve_my_address(). */
   *addr = get_last_resolved_addr();
-  if (!*addr &&
-      resolve_my_address(LOG_INFO, options, addr, NULL, NULL) < 0) {
-    log_info(LD_CONFIG, "Could not determine our address locally. "
-             "Checking if directory headers provide any hints.");
-    if (router_guess_address_from_dir_headers(addr) < 0) {
-      log_info(LD_CONFIG, "No hints from directory headers either. "
-               "Will try again later.");
-      return -1;
+  if (*addr)
+    return 0;
+
+  /* Second, consider doing a resolve attempt right here. */
+  if (!cache_only) {
+    if (resolve_my_address(LOG_INFO, options, addr, NULL, NULL) >= 0) {
+      log_info(LD_CONFIG,"Success: chose address '%s'.", fmt_addr32(*addr));
+      return 0;
     }
   }
-  log_info(LD_CONFIG,"Success: chose address '%s'.", fmt_addr32(*addr));
-  return 0;
+
+  /* Third, check the cached output from router_new_address_suggestion(). */
+  if (router_guess_address_from_dir_headers(addr) >= 0)
+    return 0;
+
+  /* We have no useful cached answers. Return failure. */
+  return -1;
+}
+
+/* Like router_check_descriptor_address_consistency, but specifically for the
+ * ORPort or DirPort.
+ * listener_type is either CONN_TYPE_OR_LISTENER or CONN_TYPE_DIR_LISTENER. */
+static void
+router_check_descriptor_address_port_consistency(uint32_t ipv4h_desc_addr,
+                                                 int listener_type)
+{
+  tor_assert(listener_type == CONN_TYPE_OR_LISTENER ||
+             listener_type == CONN_TYPE_DIR_LISTENER);
+
+  /* The first advertised Port may be the magic constant CFG_AUTO_PORT.
+   */
+  int port_v4_cfg = get_first_advertised_port_by_type_af(listener_type,
+                                                         AF_INET);
+  if (port_v4_cfg != 0 &&
+      !port_exists_by_type_addr32h_port(listener_type,
+                                        ipv4h_desc_addr, port_v4_cfg, 1)) {
+        const tor_addr_t *port_addr = get_first_advertised_addr_by_type_af(
+                                                                listener_type,
+                                                                AF_INET);
+        /* If we're building a descriptor with no advertised address,
+         * something is terribly wrong. */
+        tor_assert(port_addr);
+
+        tor_addr_t desc_addr;
+        char port_addr_str[TOR_ADDR_BUF_LEN];
+        char desc_addr_str[TOR_ADDR_BUF_LEN];
+
+        tor_addr_to_str(port_addr_str, port_addr, TOR_ADDR_BUF_LEN, 0);
+
+        tor_addr_from_ipv4h(&desc_addr, ipv4h_desc_addr);
+        tor_addr_to_str(desc_addr_str, &desc_addr, TOR_ADDR_BUF_LEN, 0);
+
+        const char *listener_str = (listener_type == CONN_TYPE_OR_LISTENER ?
+                                    "OR" : "Dir");
+        log_warn(LD_CONFIG, "The IPv4 %sPort address %s does not match the "
+                 "descriptor address %s. If you have a static public IPv4 "
+                 "address, use 'Address <IPv4>' and 'OutboundBindAddress "
+                 "<IPv4>'. If you are behind a NAT, use two %sPort lines: "
+                 "'%sPort <PublicPort> NoListen' and '%sPort <InternalPort> "
+                 "NoAdvertise'.",
+                 listener_str, port_addr_str, desc_addr_str, listener_str,
+                 listener_str, listener_str);
+      }
+}
+
+/* Tor relays only have one IPv4 address in the descriptor, which is derived
+ * from the Address torrc option, or guessed using various methods in
+ * router_pick_published_address().
+ * Warn the operator if there is no ORPort on the descriptor address
+ * ipv4h_desc_addr.
+ * Warn the operator if there is no DirPort on the descriptor address.
+ * This catches a few common config errors:
+ *  - operators who expect ORPorts and DirPorts to be advertised on the
+ *    ports' listen addresses, rather than the torrc Address (or guessed
+ *    addresses in the absence of an Address config). This includes
+ *    operators who attempt to put their ORPort and DirPort on different
+ *    addresses;
+ *  - discrepancies between guessed addresses and configured listen
+ *    addresses (when the Address option isn't set).
+ * If a listener is listening on all IPv4 addresses, it is assumed that it
+ * is listening on the configured Address, and no messages are logged.
+ * If an operators has specified NoAdvertise ORPorts in a NAT setting,
+ * no messages are logged, unless they have specified other advertised
+ * addresses.
+ * The message tells operators to configure an ORPort and DirPort that match
+ * the Address (using NoListen if needed).
+ */
+static void
+router_check_descriptor_address_consistency(uint32_t ipv4h_desc_addr)
+{
+  router_check_descriptor_address_port_consistency(ipv4h_desc_addr,
+                                                   CONN_TYPE_OR_LISTENER);
+  router_check_descriptor_address_port_consistency(ipv4h_desc_addr,
+                                                   CONN_TYPE_DIR_LISTENER);
 }
 
 /** Build a fresh routerinfo, signed server descriptor, and extra-info document
@@ -1854,10 +2085,14 @@ router_build_fresh_descriptor(routerinfo_t **r, extrainfo_t **e)
   int hibernating = we_are_hibernating();
   const or_options_t *options = get_options();
 
-  if (router_pick_published_address(options, &addr) < 0) {
+  if (router_pick_published_address(options, &addr, 0) < 0) {
     log_warn(LD_CONFIG, "Don't know my address while generating descriptor");
     return -1;
   }
+
+  /* Log a message if the address in the descriptor doesn't match the ORPort
+   * and DirPort addresses configured by the operator. */
+  router_check_descriptor_address_consistency(addr);
 
   ri = tor_malloc_zero(sizeof(routerinfo_t));
   ri->cache_info.routerlist_index = -1;
@@ -1865,6 +2100,8 @@ router_build_fresh_descriptor(routerinfo_t **r, extrainfo_t **e)
   ri->addr = addr;
   ri->or_port = router_get_advertised_or_port(options);
   ri->dir_port = router_get_advertised_dir_port(options, 0);
+  ri->supports_tunnelled_dir_requests =
+    directory_permits_begindir_requests(options);
   ri->cache_info.published_on = time(NULL);
   ri->onion_pkey = crypto_pk_dup_key(get_onion_key()); /* must invoke from
                                                         * main thread */
@@ -1880,7 +2117,10 @@ router_build_fresh_descriptor(routerinfo_t **r, extrainfo_t **e)
           ! p->server_cfg.no_advertise &&
           ! p->server_cfg.bind_ipv4_only &&
           tor_addr_family(&p->addr) == AF_INET6) {
-        if (! tor_addr_is_internal(&p->addr, 0)) {
+        /* Like IPv4, if the relay is configured using the default
+         * authorities, disallow internal IPs. Otherwise, allow them. */
+        const int default_auth = using_default_dir_authorities(options);
+        if (! tor_addr_is_internal(&p->addr, 0) || ! default_auth) {
           ipv6_orport = p;
           break;
         } else {
@@ -1888,7 +2128,7 @@ router_build_fresh_descriptor(routerinfo_t **r, extrainfo_t **e)
           log_warn(LD_CONFIG,
                    "Unable to use configured IPv6 address \"%s\" in a "
                    "descriptor. Skipping it. "
-                   "Try specifying a globally reachable address explicitly. ",
+                   "Try specifying a globally reachable address explicitly.",
                    tor_addr_to_str(addrbuf, &p->addr, sizeof(addrbuf), 1));
         }
       }
@@ -1905,10 +2145,13 @@ router_build_fresh_descriptor(routerinfo_t **r, extrainfo_t **e)
     routerinfo_free(ri);
     return -1;
   }
-  ri->signing_key_cert = tor_cert_dup(get_master_signing_key_cert());
+  ri->cache_info.signing_key_cert =
+    tor_cert_dup(get_master_signing_key_cert());
 
   get_platform_str(platform, sizeof(platform));
   ri->platform = tor_strdup(platform);
+
+  ri->protocol_list = tor_strdup(protover_get_supported_protocols());
 
   /* compute ri->bandwidthrate as the min of various options */
   ri->bandwidthrate = get_effective_bwrate(options);
@@ -1922,12 +2165,12 @@ router_build_fresh_descriptor(routerinfo_t **r, extrainfo_t **e)
     /* DNS is screwed up; don't claim to be an exit. */
     policies_exit_policy_append_reject_star(&ri->exit_policy);
   } else {
-    policies_parse_exit_policy_from_options(options,ri->addr,&ri->ipv6_addr,1,
+    policies_parse_exit_policy_from_options(options,ri->addr,&ri->ipv6_addr,
                                             &ri->exit_policy);
   }
   ri->policy_is_reject_star =
-    policy_is_reject_star(ri->exit_policy, AF_INET) &&
-    policy_is_reject_star(ri->exit_policy, AF_INET6);
+    policy_is_reject_star(ri->exit_policy, AF_INET, 1) &&
+    policy_is_reject_star(ri->exit_policy, AF_INET6, 1);
 
   if (options->IPv6Exit) {
     char *p_tmp = policy_summarize(ri->exit_policy, AF_INET6);
@@ -1997,7 +2240,9 @@ router_build_fresh_descriptor(routerinfo_t **r, extrainfo_t **e)
   ei->cache_info.is_extrainfo = 1;
   strlcpy(ei->nickname, get_options()->Nickname, sizeof(ei->nickname));
   ei->cache_info.published_on = ri->cache_info.published_on;
-  ei->signing_key_cert = tor_cert_dup(get_master_signing_key_cert());
+  ei->cache_info.signing_key_cert =
+    tor_cert_dup(get_master_signing_key_cert());
+
   memcpy(ei->cache_info.identity_digest, ri->cache_info.identity_digest,
          DIGEST_LEN);
   if (extrainfo_dump_to_string(&ei->cache_info.signed_descriptor_body,
@@ -2023,7 +2268,7 @@ router_build_fresh_descriptor(routerinfo_t **r, extrainfo_t **e)
     memcpy(ri->cache_info.extra_info_digest,
            ei->cache_info.signed_descriptor_digest,
            DIGEST_LEN);
-    memcpy(ri->extra_info_digest256,
+    memcpy(ri->cache_info.extra_info_digest256,
            ei->digest256,
            DIGEST256_LEN);
   } else {
@@ -2064,7 +2309,9 @@ router_build_fresh_descriptor(routerinfo_t **r, extrainfo_t **e)
                          ri->cache_info.signed_descriptor_digest);
 
   if (ei) {
-    tor_assert(! routerinfo_incompatible_with_extrainfo(ri, ei, NULL, NULL));
+    tor_assert(!
+          routerinfo_incompatible_with_extrainfo(ri->identity_pkey, ei,
+                                                 &ri->cache_info, NULL));
   }
 
   *r = ri;
@@ -2087,7 +2334,7 @@ router_rebuild_descriptor(int force)
   if (desc_clean_since && !force)
     return 0;
 
-  if (router_pick_published_address(options, &addr) < 0 ||
+  if (router_pick_published_address(options, &addr, 0) < 0 ||
       router_get_advertised_or_port(options) == 0) {
     /* Stop trying to rebuild our descriptor every second. We'll
      * learn that it's time to try again when ip_address_changed()
@@ -2185,10 +2432,10 @@ check_descriptor_bandwidth_changed(time_t now)
 {
   static time_t last_changed = 0;
   uint64_t prev, cur;
-  if (!desc_routerinfo)
+  if (!router_get_my_routerinfo())
     return;
 
-  prev = desc_routerinfo->bandwidthcapacity;
+  prev = router_get_my_routerinfo()->bandwidthcapacity;
   cur = we_are_hibernating() ? 0 : rep_hist_bandwidth_assess();
   if ((prev != cur && (!prev || !cur)) ||
       cur > prev*2 ||
@@ -2242,11 +2489,11 @@ check_descriptor_ipaddress_changed(time_t now)
 
   (void) now;
 
-  if (!desc_routerinfo)
+  if (router_get_my_routerinfo() == NULL)
     return;
 
   /* XXXX ipv6 */
-  prev = desc_routerinfo->addr;
+  prev = router_get_my_routerinfo()->addr;
   if (resolve_my_address(LOG_INFO, options, &cur, &method, &hostname) < 0) {
     log_info(LD_CONFIG,"options->Address didn't resolve into an IP.");
     return;
@@ -2318,7 +2565,7 @@ router_new_address_suggestion(const char *suggestion,
   if (tor_addr_eq(&d_conn->base_.addr, &addr)) {
     /* Don't believe anybody who says our IP is their IP. */
     log_debug(LD_DIR, "A directory server told us our IP address is %s, "
-              "but he's just reporting his own IP address. Ignoring.",
+              "but they are just reporting their own IP address. Ignoring.",
               suggestion);
     return;
   }
@@ -2393,10 +2640,12 @@ router_dump_router_to_string(routerinfo_t *router,
   const or_options_t *options = get_options();
   smartlist_t *chunks = NULL;
   char *output = NULL;
-  const int emit_ed_sigs = signing_keypair && router->signing_key_cert;
+  const int emit_ed_sigs = signing_keypair &&
+    router->cache_info.signing_key_cert;
   char *ed_cert_line = NULL;
   char *rsa_tap_cc_line = NULL;
   char *ntor_cc_line = NULL;
+  char *proto_line = NULL;
 
   /* Make sure the identity key matches the one in the routerinfo. */
   if (!crypto_pk_eq_keys(ident_key, router->identity_pkey)) {
@@ -2405,12 +2654,12 @@ router_dump_router_to_string(routerinfo_t *router,
     goto err;
   }
   if (emit_ed_sigs) {
-    if (!router->signing_key_cert->signing_key_included ||
-        !ed25519_pubkey_eq(&router->signing_key_cert->signed_key,
+    if (!router->cache_info.signing_key_cert->signing_key_included ||
+        !ed25519_pubkey_eq(&router->cache_info.signing_key_cert->signed_key,
                            &signing_keypair->pubkey)) {
       log_warn(LD_BUG, "Tried to sign a router descriptor with a mismatched "
                "ed25519 key chain %d",
-               router->signing_key_cert->signing_key_included);
+               router->cache_info.signing_key_cert->signing_key_included);
       goto err;
     }
   }
@@ -2426,14 +2675,14 @@ router_dump_router_to_string(routerinfo_t *router,
     char ed_cert_base64[256];
     char ed_fp_base64[ED25519_BASE64_LEN+1];
     if (base64_encode(ed_cert_base64, sizeof(ed_cert_base64),
-                      (const char*)router->signing_key_cert->encoded,
-                      router->signing_key_cert->encoded_len,
-                      BASE64_ENCODE_MULTILINE) < 0) {
+                    (const char*)router->cache_info.signing_key_cert->encoded,
+                    router->cache_info.signing_key_cert->encoded_len,
+                    BASE64_ENCODE_MULTILINE) < 0) {
       log_err(LD_BUG,"Couldn't base64-encode signing key certificate!");
       goto err;
     }
     if (ed25519_public_to_base64(ed_fp_base64,
-                                 &router->signing_key_cert->signing_key)<0) {
+                       &router->cache_info.signing_key_cert->signing_key)<0) {
       log_err(LD_BUG,"Couldn't base64-encode identity key\n");
       goto err;
     }
@@ -2460,15 +2709,15 @@ router_dump_router_to_string(routerinfo_t *router,
   }
 
   /* Cross-certify with RSA key */
-  if (tap_key && router->signing_key_cert &&
-      router->signing_key_cert->signing_key_included) {
+  if (tap_key && router->cache_info.signing_key_cert &&
+      router->cache_info.signing_key_cert->signing_key_included) {
     char buf[256];
     int tap_cc_len = 0;
     uint8_t *tap_cc =
       make_tap_onion_key_crosscert(tap_key,
-                                   &router->signing_key_cert->signing_key,
-                                   router->identity_pkey,
-                                   &tap_cc_len);
+                            &router->cache_info.signing_key_cert->signing_key,
+                            router->identity_pkey,
+                            &tap_cc_len);
     if (!tap_cc) {
       log_warn(LD_BUG,"make_tap_onion_key_crosscert failed!");
       goto err;
@@ -2490,16 +2739,16 @@ router_dump_router_to_string(routerinfo_t *router,
   }
 
   /* Cross-certify with onion keys */
-  if (ntor_keypair && router->signing_key_cert &&
-      router->signing_key_cert->signing_key_included) {
+  if (ntor_keypair && router->cache_info.signing_key_cert &&
+      router->cache_info.signing_key_cert->signing_key_included) {
     int sign = 0;
     char buf[256];
     /* XXXX Base the expiration date on the actual onion key expiration time?*/
     tor_cert_t *cert =
       make_ntor_onion_key_crosscert(ntor_keypair,
-                                &router->signing_key_cert->signing_key,
-                                router->cache_info.published_on,
-                                MIN_ONION_KEY_LIFETIME, &sign);
+                         &router->cache_info.signing_key_cert->signing_key,
+                         router->cache_info.published_on,
+                         MIN_ONION_KEY_LIFETIME, &sign);
     if (!cert) {
       log_warn(LD_BUG,"make_ntor_onion_key_crosscert failed!");
       goto err;
@@ -2538,9 +2787,9 @@ router_dump_router_to_string(routerinfo_t *router,
     char extra_info_digest[HEX_DIGEST_LEN+1];
     base16_encode(extra_info_digest, sizeof(extra_info_digest),
                   router->cache_info.extra_info_digest, DIGEST_LEN);
-    if (!tor_digest256_is_zero(router->extra_info_digest256)) {
+    if (!tor_digest256_is_zero(router->cache_info.extra_info_digest256)) {
       char d256_64[BASE64_DIGEST256_LEN+1];
-      digest256_to_base64(d256_64, router->extra_info_digest256);
+      digest256_to_base64(d256_64, router->cache_info.extra_info_digest256);
       tor_asprintf(&extra_info_line, "extra-info-digest %s %s\n",
                    extra_info_digest, d256_64);
     } else {
@@ -2561,6 +2810,12 @@ router_dump_router_to_string(routerinfo_t *router,
     }
   }
 
+  if (router->protocol_list) {
+    tor_asprintf(&proto_line, "proto %s\n", router->protocol_list);
+  } else {
+    proto_line = tor_strdup("");
+  }
+
   address = tor_dup_ip(router->addr);
   chunks = smartlist_new();
 
@@ -2570,7 +2825,7 @@ router_dump_router_to_string(routerinfo_t *router,
                     "%s"
                     "%s"
                     "platform %s\n"
-                    "protocols Link 1 2 Circuit 1\n"
+                    "%s"
                     "published %s\n"
                     "fingerprint %s\n"
                     "uptime %ld\n"
@@ -2587,6 +2842,7 @@ router_dump_router_to_string(routerinfo_t *router,
     ed_cert_line ? ed_cert_line : "",
     extra_or_address ? extra_or_address : "",
     router->platform,
+    proto_line,
     published,
     fingerprint,
     stats_n_seconds_working,
@@ -2611,12 +2867,25 @@ router_dump_router_to_string(routerinfo_t *router,
     smartlist_add_asprintf(chunks, "contact %s\n", ci);
   }
 
+  if (options->BridgeRelay) {
+    const char *bd;
+    if (options->PublishServerDescriptor_ & BRIDGE_DIRINFO)
+      bd = "any";
+    else
+      bd = "none";
+    smartlist_add_asprintf(chunks, "bridge-distribution-request %s\n", bd);
+  }
+
   if (router->onion_curve25519_pkey) {
     char kbuf[128];
     base64_encode(kbuf, sizeof(kbuf),
                   (const char *)router->onion_curve25519_pkey->public_key,
                   CURVE25519_PUBKEY_LEN, BASE64_ENCODE_MULTILINE);
     smartlist_add_asprintf(chunks, "ntor-onion-key %s", kbuf);
+  } else {
+    /* Authorities will start rejecting relays without ntor keys in 0.2.9 */
+    log_err(LD_BUG, "A relay must have an ntor onion key");
+    goto err;
   }
 
   /* Write the exit policy to the end of 's'. */
@@ -2639,6 +2908,11 @@ router_dump_router_to_string(routerinfo_t *router,
                             "ipv6-policy %s\n", p6);
     }
     tor_free(p6);
+  }
+
+  if (decide_to_advertise_begindir(options,
+                                   router->supports_tunnelled_dir_requests)) {
+    smartlist_add(chunks, tor_strdup("tunnelled-dir-server\n"));
   }
 
   /* Sign the descriptor with Ed25519 */
@@ -2714,6 +2988,7 @@ router_dump_router_to_string(routerinfo_t *router,
   tor_free(rsa_tap_cc_line);
   tor_free(ntor_cc_line);
   tor_free(extra_info_line);
+  tor_free(proto_line);
 
   return output;
 }
@@ -2728,44 +3003,13 @@ router_dump_exit_policy_to_string(const routerinfo_t *router,
                                   int include_ipv4,
                                   int include_ipv6)
 {
-  smartlist_t *exit_policy_strings;
-  char *policy_string = NULL;
-
   if ((!router->exit_policy) || (router->policy_is_reject_star)) {
     return tor_strdup("reject *:*");
   }
 
-  exit_policy_strings = smartlist_new();
-
-  SMARTLIST_FOREACH_BEGIN(router->exit_policy, addr_policy_t *, tmpe) {
-    char *pbuf;
-    int bytes_written_to_pbuf;
-    if ((tor_addr_family(&tmpe->addr) == AF_INET6) && (!include_ipv6)) {
-      continue; /* Don't include IPv6 parts of address policy */
-    }
-    if ((tor_addr_family(&tmpe->addr) == AF_INET) && (!include_ipv4)) {
-      continue; /* Don't include IPv4 parts of address policy */
-    }
-
-    pbuf = tor_malloc(POLICY_BUF_LEN);
-    bytes_written_to_pbuf = policy_write_item(pbuf,POLICY_BUF_LEN, tmpe, 1);
-
-    if (bytes_written_to_pbuf < 0) {
-      log_warn(LD_BUG, "router_dump_exit_policy_to_string ran out of room!");
-      tor_free(pbuf);
-      goto done;
-    }
-
-    smartlist_add(exit_policy_strings,pbuf);
-  } SMARTLIST_FOREACH_END(tmpe);
-
-  policy_string = smartlist_join_strings(exit_policy_strings, "\n", 0, NULL);
-
- done:
-  SMARTLIST_FOREACH(exit_policy_strings, char *, str, tor_free(str));
-  smartlist_free(exit_policy_strings);
-
-  return policy_string;
+  return policy_dump_to_string(router->exit_policy,
+                               include_ipv4,
+                               include_ipv6);
 }
 
 /** Copy the primary (IPv4) OR port (IP address and TCP port) for
@@ -2872,7 +3116,8 @@ extrainfo_dump_to_string(char **s_out, extrainfo_t *extrainfo,
   time_t now = time(NULL);
   smartlist_t *chunks = smartlist_new();
   extrainfo_t *ei_tmp = NULL;
-  const int emit_ed_sigs = signing_keypair && extrainfo->signing_key_cert;
+  const int emit_ed_sigs = signing_keypair &&
+    extrainfo->cache_info.signing_key_cert;
   char *ed_cert_line = NULL;
 
   base16_encode(identity, sizeof(identity),
@@ -2880,19 +3125,19 @@ extrainfo_dump_to_string(char **s_out, extrainfo_t *extrainfo,
   format_iso_time(published, extrainfo->cache_info.published_on);
   bandwidth_usage = rep_hist_get_bandwidth_lines();
   if (emit_ed_sigs) {
-    if (!extrainfo->signing_key_cert->signing_key_included ||
-        !ed25519_pubkey_eq(&extrainfo->signing_key_cert->signed_key,
+    if (!extrainfo->cache_info.signing_key_cert->signing_key_included ||
+        !ed25519_pubkey_eq(&extrainfo->cache_info.signing_key_cert->signed_key,
                            &signing_keypair->pubkey)) {
       log_warn(LD_BUG, "Tried to sign a extrainfo descriptor with a "
                "mismatched ed25519 key chain %d",
-               extrainfo->signing_key_cert->signing_key_included);
+               extrainfo->cache_info.signing_key_cert->signing_key_included);
       goto err;
     }
     char ed_cert_base64[256];
     if (base64_encode(ed_cert_base64, sizeof(ed_cert_base64),
-                      (const char*)extrainfo->signing_key_cert->encoded,
-                      extrainfo->signing_key_cert->encoded_len,
-                      BASE64_ENCODE_MULTILINE) < 0) {
+                 (const char*)extrainfo->cache_info.signing_key_cert->encoded,
+                 extrainfo->cache_info.signing_key_cert->encoded_len,
+                 BASE64_ENCODE_MULTILINE) < 0) {
       log_err(LD_BUG,"Couldn't base64-encode signing key certificate!");
       goto err;
     }
@@ -2966,17 +3211,17 @@ extrainfo_dump_to_string(char **s_out, extrainfo_t *extrainfo,
   }
 
   if (emit_ed_sigs) {
-    char digest[DIGEST256_LEN];
+    char sha256_digest[DIGEST256_LEN];
     smartlist_add(chunks, tor_strdup("router-sig-ed25519 "));
-    crypto_digest_smartlist_prefix(digest, DIGEST256_LEN,
+    crypto_digest_smartlist_prefix(sha256_digest, DIGEST256_LEN,
                                    ED_DESC_SIGNATURE_PREFIX,
                                    chunks, "", DIGEST_SHA256);
-    ed25519_signature_t sig;
+    ed25519_signature_t ed_sig;
     char buf[ED25519_SIG_BASE64_LEN+1];
-    if (ed25519_sign(&sig, (const uint8_t*)digest, DIGEST256_LEN,
+    if (ed25519_sign(&ed_sig, (const uint8_t*)sha256_digest, DIGEST256_LEN,
                      signing_keypair) < 0)
       goto err;
-    if (ed25519_signature_to_base64(buf, &sig) < 0)
+    if (ed25519_signature_to_base64(buf, &ed_sig) < 0)
       goto err;
 
     smartlist_add_asprintf(chunks, "%s\n", buf);
@@ -3050,7 +3295,7 @@ extrainfo_dump_to_string(char **s_out, extrainfo_t *extrainfo,
 
  done:
   tor_free(s);
-  SMARTLIST_FOREACH(chunks, char *, cp, tor_free(cp));
+  SMARTLIST_FOREACH(chunks, char *, chunk, tor_free(chunk));
   smartlist_free(chunks);
   tor_free(s_dup);
   tor_free(ed_cert_line);
@@ -3380,28 +3625,16 @@ router_free_all(void)
 
 /** Return a smartlist of tor_addr_port_t's with all the OR ports of
     <b>ri</b>. Note that freeing of the items in the list as well as
-    the smartlist itself is the callers responsibility.
-
-    XXX duplicating code from node_get_all_orports(). */
+    the smartlist itself is the callers responsibility. */
 smartlist_t *
 router_get_all_orports(const routerinfo_t *ri)
 {
-  smartlist_t *sl = smartlist_new();
   tor_assert(ri);
-
-  if (ri->addr != 0) {
-    tor_addr_port_t *ap = tor_malloc(sizeof(tor_addr_port_t));
-    tor_addr_from_ipv4h(&ap->addr, ri->addr);
-    ap->port = ri->or_port;
-    smartlist_add(sl, ap);
-  }
-  if (!tor_addr_is_null(&ri->ipv6_addr)) {
-    tor_addr_port_t *ap = tor_malloc(sizeof(tor_addr_port_t));
-    tor_addr_copy(&ap->addr, &ri->ipv6_addr);
-    ap->port = ri->or_port;
-    smartlist_add(sl, ap);
-  }
-
-  return sl;
+  node_t fake_node;
+  memset(&fake_node, 0, sizeof(fake_node));
+  /* we don't modify ri, fake_node is passed as a const node_t *
+   */
+  fake_node.ri = (routerinfo_t *)ri;
+  return node_get_all_orports(&fake_node);
 }
 

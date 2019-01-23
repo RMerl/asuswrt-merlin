@@ -11761,7 +11761,7 @@ sctp_send_resp_msg(struct sockaddr *src, struct sockaddr *dst,
 		/* Don't alloc/free for each packet */
 		if (len <= sizeof(static_buf)) {
 			m_copydata(mout, 0, len, static_buf);
-			SCTP_BASE_VAR(conn_output)(sconn->sconn_addr, buffer, len, 0, 0);
+			SCTP_BASE_VAR(conn_output)(sconn->sconn_addr, static_buf, len, 0, 0);
 		} else {
 			if ((buffer = malloc(len)) != NULL) {
 				m_copydata(mout, 0, len, buffer);

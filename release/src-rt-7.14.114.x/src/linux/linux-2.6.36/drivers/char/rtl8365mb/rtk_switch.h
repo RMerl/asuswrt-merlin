@@ -108,6 +108,8 @@ typedef enum rtk_switch_maxPktLen_linkSpeed_e {
      CASEID(SET_PHY_REG9),			\
      CASEID(GET_TMODE),				\
      CASEID(SET_TMODE),				\
+     CASEID(GET_GREEN_ETHERNET),		\
+     CASEID(SET_GREEN_ETHERNET),		\
      CASEID(MAX_REQ),				\
 }
 

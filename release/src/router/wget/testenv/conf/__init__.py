@@ -3,6 +3,7 @@ import os
 # this file implements the mechanism of conf class auto-registration,
 # don't modify this file if you have no idea what you're doing
 
+
 def gen_hook():
     hook_table = {}
 

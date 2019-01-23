@@ -1,6 +1,6 @@
 /* NTLM code.
-   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software
-   Foundation, Inc.
+   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2015 Free
+   Software Foundation, Inc.
    Contributed by Daniel Stenberg.
 
 This file is part of GNU Wget.
@@ -74,13 +74,13 @@ as that of the covered work.  */
 /* Define this to make the type-3 message include the NT response message */
 #define USE_NTRESPONSES 1
 
-
+
 /* Flag bits definitions available at on
    http://davenport.sourceforge.net/ntlm.html */
 
 #define NTLMFLAG_NEGOTIATE_OEM                   (1<<1)
 #define NTLMFLAG_NEGOTIATE_NTLM_KEY              (1<<9)
-
+
 /*
   (*) = A "security buffer" is a triplet consisting of two shorts and one
   long:
@@ -122,7 +122,7 @@ ntlm_input (struct ntlmdata *ntlm, const char *header)
 
       DEBUGP (("Received a type-2 NTLM message.\n"));
 
-      size = base64_decode (header, buffer);
+      size = wget_base64_decode (header, buffer, strlen (header));
       if (size < 0)
         return false;           /* malformed base64 from server */
 
@@ -411,7 +411,7 @@ ntlm_output (struct ntlmdata *ntlm, const char *user, const char *passwd,
     size = 32 + hostlen + domlen;
 
     base64 = (char *) alloca (BASE64_LENGTH (size) + 1);
-    base64_encode (ntlmbuf, size, base64);
+    wget_base64_encode (ntlmbuf, size, base64);
 
     output = concat_strings ("NTLM ", base64, (char *) 0);
     break;
@@ -474,82 +474,82 @@ ntlm_output (struct ntlmdata *ntlm, const char *user, const char *passwd,
 
     /* Create the big type-3 message binary blob */
 
-    size = (size_t) snprintf (ntlmbuf, sizeof(ntlmbuf),
-                     "NTLMSSP%c"
-                     "\x03%c%c%c" /* type-3, 32 bits */
+    snprintf (ntlmbuf, sizeof (ntlmbuf),
+              "NTLMSSP%c"
+              "\x03%c%c%c" /* type-3, 32 bits */
 
-                     "%c%c%c%c" /* LanManager length + allocated space */
-                     "%c%c" /* LanManager offset */
-                     "%c%c" /* 2 zeroes */
+              "%c%c%c%c" /* LanManager length + allocated space */
+              "%c%c" /* LanManager offset */
+              "%c%c" /* 2 zeroes */
 
-                     "%c%c" /* NT-response length */
-                     "%c%c" /* NT-response allocated space */
-                     "%c%c" /* NT-response offset */
-                     "%c%c" /* 2 zeroes */
+              "%c%c" /* NT-response length */
+              "%c%c" /* NT-response allocated space */
+              "%c%c" /* NT-response offset */
+              "%c%c" /* 2 zeroes */
 
-                     "%c%c"  /* domain length */
-                     "%c%c"  /* domain allocated space */
-                     "%c%c"  /* domain name offset */
-                     "%c%c"  /* 2 zeroes */
+              "%c%c" /* domain length */
+              "%c%c" /* domain allocated space */
+              "%c%c" /* domain name offset */
+              "%c%c" /* 2 zeroes */
 
-                     "%c%c"  /* user length */
-                     "%c%c"  /* user allocated space */
-                     "%c%c"  /* user offset */
-                     "%c%c"  /* 2 zeroes */
+              "%c%c" /* user length */
+              "%c%c" /* user allocated space */
+              "%c%c" /* user offset */
+              "%c%c" /* 2 zeroes */
 
-                     "%c%c"  /* host length */
-                     "%c%c"  /* host allocated space */
-                     "%c%c"  /* host offset */
-                     "%c%c%c%c%c%c"  /* 6 zeroes */
+              "%c%c" /* host length */
+              "%c%c" /* host allocated space */
+              "%c%c" /* host offset */
+              "%c%c%c%c%c%c" /* 6 zeroes */
 
-                     "\xff\xff"  /* message length */
-                     "%c%c"  /* 2 zeroes */
+              "\xff\xff" /* message length */
+              "%c%c" /* 2 zeroes */
 
-                     "\x01\x82" /* flags */
-                     "%c%c"  /* 2 zeroes */
+              "\x01\x82" /* flags */
+              "%c%c" /* 2 zeroes */
 
-                     /* domain string */
-                     /* user string */
-                     /* host string */
-                     /* LanManager response */
-                     /* NT response */
-                     ,
-                     0, /* zero termination */
-                     0,0,0, /* type-3 long, the 24 upper bits */
+              /* domain string */
+              /* user string */
+              /* host string */
+              /* LanManager response */
+              /* NT response */
+              ,
+              0, /* zero termination */
+              0, 0, 0, /* type-3 long, the 24 upper bits */
 
-                     SHORTPAIR(0x18),  /* LanManager response length, twice */
-                     SHORTPAIR(0x18),
-                     SHORTPAIR(lmrespoff),
-                     0x0, 0x0,
+              SHORTPAIR (0x18), /* LanManager response length, twice */
+              SHORTPAIR (0x18),
+              SHORTPAIR (lmrespoff),
+              0x0, 0x0,
 
 #ifdef USE_NTRESPONSES
-                     SHORTPAIR(0x18),  /* NT-response length, twice */
-                     SHORTPAIR(0x18),
+              SHORTPAIR (0x18), /* NT-response length, twice */
+              SHORTPAIR (0x18),
 #else
-                     0x0, 0x0,
-                     0x0, 0x0,
+              0x0, 0x0,
+              0x0, 0x0,
 #endif
-                     SHORTPAIR(ntrespoff),
-                     0x0, 0x0,
+              SHORTPAIR (ntrespoff),
+              0x0, 0x0,
 
-                     SHORTPAIR(domlen),
-                     SHORTPAIR(domlen),
-                     SHORTPAIR(domoff),
-                     0x0, 0x0,
+              SHORTPAIR (domlen),
+              SHORTPAIR (domlen),
+              SHORTPAIR (domoff),
+              0x0, 0x0,
 
-                     SHORTPAIR(userlen),
-                     SHORTPAIR(userlen),
-                     SHORTPAIR(useroff),
-                     0x0, 0x0,
+              SHORTPAIR (userlen),
+              SHORTPAIR (userlen),
+              SHORTPAIR (useroff),
+              0x0, 0x0,
 
-                     SHORTPAIR(hostlen),
-                     SHORTPAIR(hostlen),
-                     SHORTPAIR(hostoff),
-                     0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+              SHORTPAIR (hostlen),
+              SHORTPAIR (hostlen),
+              SHORTPAIR (hostoff),
+              0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
 
-                     0x0, 0x0,
+              0x0, 0x0,
 
-                     0x0, 0x0);
+              0x0, 0x0);
 
     /* size is now 64 */
     size=64;
@@ -584,7 +584,7 @@ ntlm_output (struct ntlmdata *ntlm, const char *user, const char *passwd,
 
     /* convert the binary blob into base64 */
     base64 = (char *) alloca (BASE64_LENGTH (size) + 1);
-    base64_encode (ntlmbuf, size, base64);
+    wget_base64_encode (ntlmbuf, size, base64);
 
     output = concat_strings ("NTLM ", base64, (char *) 0);
 

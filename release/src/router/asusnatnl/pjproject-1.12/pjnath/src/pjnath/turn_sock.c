@@ -860,6 +860,16 @@ static void turn_on_state(pj_turn_session *sess,
 	return;
     }
 
+    if (old_state == PJ_TURN_STATE_ALLOCATING &&
+	new_state == PJ_TURN_STATE_RESOLVED)
+    {
+	/* TURN session won't destroy itself upon allocation failure, it will
+	 * just revert back TURN state to PJ_TURN_STATE_RESOLVED. So, let's
+	 * avoid infinite loop here (see ticket #1942).
+	 */
+	return;
+    }
+
     /* Notify app first */
     if (turn_sock->cb.on_state) {
 	(*turn_sock->cb.on_state)(turn_sock, old_state, new_state);
@@ -881,8 +891,8 @@ static void turn_on_state(pj_turn_session *sess,
 	char addrtxt[PJ_INET6_ADDRSTRLEN+8];
 	int sock_type;
 	pj_sock_t sock;
+	pj_activesock_cfg asock_cfg;
 	pj_activesock_cb asock_cb;
-    pj_activesock_cfg asock_cfg;
 
 	/* Close existing connection, if any. This happens when
 	 * we're switching to alternate TURN server when either TCP

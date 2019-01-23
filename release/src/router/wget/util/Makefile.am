@@ -1,6 +1,6 @@
 # Makefile for `wget' utility
-# Copyright (C) 1995, 1996, 1997, 2007, 2008, 2009, 2010, 2011 Free
-# Software Foundation, Inc.
+# Copyright (C) 1995, 1996, 1997, 2007, 2008, 2009, 2010, 2011, 2015
+# Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 # as that of the covered work.
 
 #
-# Version: $(VERSION)
+# Version: @VERSION@
 #
 
 EXTRA_DIST = README rmold.pl trunc.c

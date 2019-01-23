@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -148,20 +148,15 @@ relay_digest_matches(crypto_digest_t *digest, cell_t *cell)
  *
  * If <b>encrypt_mode</b> is 1 then encrypt, else decrypt.
  *
- * Return -1 if the crypto fails, else return 0.
+ * Returns 0.
  */
 static int
 relay_crypt_one_payload(crypto_cipher_t *cipher, uint8_t *in,
                         int encrypt_mode)
 {
-  int r;
   (void)encrypt_mode;
-  r = crypto_cipher_crypt_inplace(cipher, (char*) in, CELL_PAYLOAD_SIZE);
+  crypto_cipher_crypt_inplace(cipher, (char*) in, CELL_PAYLOAD_SIZE);
 
-  if (r) {
-    log_warn(LD_BUG,"Error during relay encryption");
-    return -1;
-  }
   return 0;
 }
 
@@ -260,12 +255,12 @@ circuit_receive_relay_cell(cell_t *cell, circuit_t *circ,
     if (! CIRCUIT_IS_ORIGIN(circ) &&
         TO_OR_CIRCUIT(circ)->rend_splice &&
         cell_direction == CELL_DIRECTION_OUT) {
-      or_circuit_t *splice = TO_OR_CIRCUIT(circ)->rend_splice;
+      or_circuit_t *splice_ = TO_OR_CIRCUIT(circ)->rend_splice;
       tor_assert(circ->purpose == CIRCUIT_PURPOSE_REND_ESTABLISHED);
-      tor_assert(splice->base_.purpose == CIRCUIT_PURPOSE_REND_ESTABLISHED);
-      cell->circ_id = splice->p_circ_id;
+      tor_assert(splice_->base_.purpose == CIRCUIT_PURPOSE_REND_ESTABLISHED);
+      cell->circ_id = splice_->p_circ_id;
       cell->command = CELL_RELAY; /* can't be relay_early anyway */
-      if ((reason = circuit_receive_relay_cell(cell, TO_CIRCUIT(splice),
+      if ((reason = circuit_receive_relay_cell(cell, TO_CIRCUIT(splice_),
                                                CELL_DIRECTION_IN)) < 0) {
         log_warn(LD_REND, "Error relaying cell across rendezvous; closing "
                  "circuits");
@@ -387,6 +382,11 @@ circuit_package_relay_cell(cell_t *cell, circuit_t *circ,
                            const char *filename, int lineno)
 {
   channel_t *chan; /* where to send the cell */
+
+  if (circ->marked_for_close) {
+    /* Circuit is marked; send nothing. */
+    return 0;
+  }
 
   if (cell_direction == CELL_DIRECTION_OUT) {
     crypt_path_t *thishop; /* counter for repeated crypts */
@@ -701,6 +701,12 @@ connection_edge_send_command(edge_connection_t *fromconn,
     return -1;
   }
 
+  if (circ->marked_for_close) {
+    /* The circuit has been marked, but not freed yet. When it's freed, it
+     * will mark this connection for close. */
+    return -1;
+  }
+
   return relay_send_command_from_edge(fromconn->stream_id, circ,
                                       relay_command, payload,
                                       payload_len, cpath_layer);
@@ -833,7 +839,7 @@ connection_ap_process_end_not_open(
             }
           }
         }
-        /* check if he *ought* to have allowed it */
+        /* check if the exit *ought* to have allowed it */
 
         adjust_exit_policy_from_exitpolicy_failure(circ,
                                                    conn,
@@ -864,6 +870,7 @@ connection_ap_process_end_not_open(
           break; /* break means it'll close, below */
         /* Else fall through: expire this circuit, clear the
          * chosen_exit_name field, and try again. */
+        /* Falls through. */
       case END_STREAM_REASON_RESOLVEFAILED:
       case END_STREAM_REASON_TIMEOUT:
       case END_STREAM_REASON_MISC:
@@ -1304,6 +1311,7 @@ connection_edge_process_relay_cell_not_open(
              "Got 'connected' while not in state connect_wait. Dropping.");
       return 0;
     }
+    CONNECTION_AP_EXPECT_NONPENDING(entry_conn);
     conn->base_.state = AP_CONN_STATE_OPEN;
     log_info(LD_APP,"'connected' received for circid %u streamid %d "
              "after %d seconds.",
@@ -1378,7 +1386,7 @@ connection_edge_process_relay_cell_not_open(
     /* This is definitely a success, so forget about any pending data we
      * had sent. */
     if (entry_conn->pending_optimistic_data) {
-      generic_buffer_free(entry_conn->pending_optimistic_data);
+      buf_free(entry_conn->pending_optimistic_data);
       entry_conn->pending_optimistic_data = NULL;
     }
 
@@ -1503,7 +1511,8 @@ connection_edge_process_relay_cell(cell_t *cell, circuit_t *circ,
                "Begin cell for known stream. Dropping.");
         return 0;
       }
-      if (rh.command == RELAY_COMMAND_BEGIN_DIR) {
+      if (rh.command == RELAY_COMMAND_BEGIN_DIR &&
+          circ->purpose != CIRCUIT_PURPOSE_S_REND_JOINED) {
         /* Assign this circuit and its app-ward OR connection a unique ID,
          * so that we can measure download times. The local edge and dir
          * connection will be assigned the same ID when they are created
@@ -1880,7 +1889,7 @@ connection_edge_package_raw_inbuf(edge_connection_t *conn, int package_partial,
     entry_conn->sending_optimistic_data != NULL;
 
   if (PREDICT_UNLIKELY(sending_from_optimistic)) {
-    bytes_to_process = generic_buffer_len(entry_conn->sending_optimistic_data);
+    bytes_to_process = buf_datalen(entry_conn->sending_optimistic_data);
     if (PREDICT_UNLIKELY(!bytes_to_process)) {
       log_warn(LD_BUG, "sending_optimistic_data was non-NULL but empty");
       bytes_to_process = connection_get_inbuf_len(TO_CONN(conn));
@@ -1908,9 +1917,9 @@ connection_edge_package_raw_inbuf(edge_connection_t *conn, int package_partial,
     /* XXXX We could be more efficient here by sometimes packing
      * previously-sent optimistic data in the same cell with data
      * from the inbuf. */
-    generic_buffer_get(entry_conn->sending_optimistic_data, payload, length);
-    if (!generic_buffer_len(entry_conn->sending_optimistic_data)) {
-        generic_buffer_free(entry_conn->sending_optimistic_data);
+    fetch_from_buf(payload, length, entry_conn->sending_optimistic_data);
+    if (!buf_datalen(entry_conn->sending_optimistic_data)) {
+        buf_free(entry_conn->sending_optimistic_data);
         entry_conn->sending_optimistic_data = NULL;
     }
   } else {
@@ -1925,8 +1934,8 @@ connection_edge_package_raw_inbuf(edge_connection_t *conn, int package_partial,
     /* This is new optimistic data; remember it in case we need to detach and
        retry */
     if (!entry_conn->pending_optimistic_data)
-      entry_conn->pending_optimistic_data = generic_buffer_new();
-    generic_buffer_add(entry_conn->pending_optimistic_data, payload, length);
+      entry_conn->pending_optimistic_data = buf_new();
+    write_to_buf(payload, length, entry_conn->pending_optimistic_data);
   }
 
   if (connection_edge_send_command(conn, RELAY_COMMAND_DATA,
@@ -2255,7 +2264,7 @@ circuit_consider_sending_sendme(circuit_t *circ, crypt_path_t *layer_hint)
 static size_t total_cells_allocated = 0;
 
 /** Release storage held by <b>cell</b>. */
-static INLINE void
+static inline void
 packed_cell_free_unchecked(packed_cell_t *cell)
 {
   --total_cells_allocated;
@@ -2299,7 +2308,7 @@ dump_cell_pool_usage(int severity)
 }
 
 /** Allocate a new copy of packed <b>cell</b>. */
-static INLINE packed_cell_t *
+static inline packed_cell_t *
 packed_cell_copy(const cell_t *cell, int wide_circ_ids)
 {
   packed_cell_t *c = packed_cell_new();
@@ -2324,14 +2333,12 @@ cell_queue_append_packed_copy(circuit_t *circ, cell_queue_t *queue,
                               int exitward, const cell_t *cell,
                               int wide_circ_ids, int use_stats)
 {
-  struct timeval now;
   packed_cell_t *copy = packed_cell_copy(cell, wide_circ_ids);
   (void)circ;
   (void)exitward;
   (void)use_stats;
-  tor_gettimeofday_cached_monotonic(&now);
 
-  copy->inserted_time = (uint32_t)tv_to_msec(&now);
+  copy->inserted_time = (uint32_t) monotime_coarse_absolute_msec();
 
   cell_queue_append(queue, copy);
 }
@@ -2378,7 +2385,7 @@ packed_cell_mem_cost(void)
   return sizeof(packed_cell_t);
 }
 
-/** DOCDOC */
+/* DOCDOC */
 STATIC size_t
 cell_queues_get_total_allocation(void)
 {
@@ -2460,7 +2467,7 @@ update_circuit_on_cmux_(circuit_t *circ, cell_direction_t direction,
 
   /* Cmux sanity check */
   if (! circuitmux_is_circuit_attached(cmux, circ)) {
-    log_warn(LD_BUG, "called on non-attachd circuit from %s:%d",
+    log_warn(LD_BUG, "called on non-attached circuit from %s:%d",
              file, lineno);
     return;
   }
@@ -2529,7 +2536,7 @@ set_streams_blocked_on_circ(circuit_t *circ, channel_t *chan,
       edge->edge_blocked_on_circ = block;
     }
 
-    if (!conn->read_event && !HAS_BUFFEREVENT(conn)) {
+    if (!conn->read_event) {
       /* This connection is a placeholder for something; probably a DNS
        * request.  It can't actually stop or start reading.*/
       continue;
@@ -2619,6 +2626,15 @@ channel_flush_from_first_active_circuit, (channel_t *chan, int max))
     }
 
     /* Circuitmux told us this was active, so it should have cells */
+    if (/*BUG(*/ queue->n == 0 /*)*/) {
+      log_warn(LD_BUG, "Found a supposedly active circuit with no cells "
+               "to send. Trying to recover.");
+      circuitmux_set_num_cells(cmux, circ, 0);
+      if (! circ->marked_for_close)
+        circuit_mark_for_close(circ, END_CIRC_REASON_INTERNAL);
+      continue;
+    }
+
     tor_assert(queue->n > 0);
 
     /*
@@ -2632,9 +2648,8 @@ channel_flush_from_first_active_circuit, (channel_t *chan, int max))
     if (get_options()->CellStatistics ||
         get_options()->TestingEnableCellStatsEvent) {
       uint32_t msec_waiting;
-      struct timeval tvnow;
-      tor_gettimeofday_cached(&tvnow);
-      msec_waiting = ((uint32_t)tv_to_msec(&tvnow)) - cell->inserted_time;
+      uint32_t msec_now = (uint32_t)monotime_coarse_absolute_msec();
+      msec_waiting = msec_now - cell->inserted_time;
 
       if (get_options()->CellStatistics && !CIRCUIT_IS_ORIGIN(circ)) {
         or_circ = TO_OR_CIRCUIT(circ);

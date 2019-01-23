@@ -1,6 +1,6 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #define ADDRESSMAP_PRIVATE
@@ -81,14 +81,14 @@ test_addr_basic(void *arg)
 #define test_op_ip6_(a,op,b,e1,e2)                               \
   STMT_BEGIN                                                     \
   tt_assert_test_fmt_type(a,b,e1" "#op" "e2,struct in6_addr*,    \
-    (memcmp(val1_->s6_addr, val2_->s6_addr, 16) op 0),           \
+    (fast_memcmp(val1_->s6_addr, val2_->s6_addr, 16) op 0),      \
     char *, "%s",                                                \
-    { int i; char *cp;                                           \
+    { char *cp;                                                  \
       cp = print_ = tor_malloc(64);                              \
-      for (i=0;i<16;++i) {                                       \
-        tor_snprintf(cp, 3,"%02x", (unsigned)value_->s6_addr[i]);\
+      for (int ii_=0;ii_<16;++ii_) {                             \
+        tor_snprintf(cp, 3,"%02x", (unsigned)value_->s6_addr[ii_]);     \
         cp += 2;                                                 \
-        if (i != 15) *cp++ = ':';                                \
+        if (ii_ != 15) *cp++ = ':';                              \
       }                                                          \
     },                                                           \
     { tor_free(print_); },                                       \
@@ -302,6 +302,7 @@ test_addr_ip6_helpers(void *arg)
 
   //test_ntop6_reduces("0:0:0:0:0:0:c0a8:0101", "::192.168.1.1");
   test_ntop6_reduces("0:0:0:0:0:ffff:c0a8:0101", "::ffff:192.168.1.1");
+  test_ntop6_reduces("0:0:0:0:0:0:c0a8:0101", "::192.168.1.1");
   test_ntop6_reduces("002:0:0000:0:3::4", "2::3:0:0:4");
   test_ntop6_reduces("0:0::1:0:3", "::1:0:3");
   test_ntop6_reduces("008:0::0", "8::");
@@ -353,6 +354,15 @@ test_addr_ip6_helpers(void *arg)
   test_pton6_bad("1.2.3.4");
   test_pton6_bad(":1.2.3.4");
   test_pton6_bad(".2.3.4");
+  /* Regression tests for 22789. */
+  test_pton6_bad("0xfoo");
+  test_pton6_bad("0x88");
+  test_pton6_bad("0xyxxy");
+  test_pton6_bad("0XFOO");
+  test_pton6_bad("0X88");
+  test_pton6_bad("0XYXXY");
+  test_pton6_bad("0x");
+  test_pton6_bad("0X");
 
   /* test internal checking */
   test_external_ip("fbff:ffff::2:7", 0);
@@ -1036,17 +1046,17 @@ test_addr_make_null(void *data)
   (void) data;
   /* Ensure that before tor_addr_make_null, addr != 0's */
   memset(addr, 1, sizeof(*addr));
-  tt_int_op(memcmp(addr, zeros, sizeof(*addr)), OP_NE, 0);
+  tt_int_op(fast_memcmp(addr, zeros, sizeof(*addr)), OP_NE, 0);
   /* Test with AF == AF_INET */
   zeros->family = AF_INET;
   tor_addr_make_null(addr, AF_INET);
-  tt_int_op(memcmp(addr, zeros, sizeof(*addr)), OP_EQ, 0);
+  tt_int_op(fast_memcmp(addr, zeros, sizeof(*addr)), OP_EQ, 0);
   tt_str_op(tor_addr_to_str(buf, addr, sizeof(buf), 0), OP_EQ, "0.0.0.0");
   /* Test with AF == AF_INET6 */
   memset(addr, 1, sizeof(*addr));
   zeros->family = AF_INET6;
   tor_addr_make_null(addr, AF_INET6);
-  tt_int_op(memcmp(addr, zeros, sizeof(*addr)), OP_EQ, 0);
+  tt_int_op(fast_memcmp(addr, zeros, sizeof(*addr)), OP_EQ, 0);
   tt_str_op(tor_addr_to_str(buf, addr, sizeof(buf), 0), OP_EQ, "::");
  done:
   tor_free(addr);

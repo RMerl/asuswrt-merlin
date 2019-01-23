@@ -3,10 +3,6 @@
 # Copyright (c) 2007-2015, The Tor Project, Inc.
 # See LICENSE for licensing information
 
-# "foreign" means we don't follow GNU package layout standards
-# 1.9 means we require automake vesion 1.9
-AUTOMAKE_OPTIONS = foreign 1.9 subdir-objects
-
 ACLOCAL_AMFLAGS = -I m4
 
 noinst_LIBRARIES=
@@ -19,8 +15,15 @@ noinst_PROGRAMS=
 DISTCLEANFILES=
 bin_SCRIPTS=
 AM_CPPFLAGS=
-AM_CFLAGS = @TOR_SYSTEMD_CFLAGS@
-SHELL = @SHELL@
+AM_CFLAGS=@TOR_SYSTEMD_CFLAGS@ @CFLAGS_BUGTRAP@
+SHELL=@SHELL@
+
+if COVERAGE_ENABLED
+TESTING_TOR_BINARY=$(top_builddir)/src/or/tor-cov$(EXEEXT)
+else
+TESTING_TOR_BINARY=$(top_builddir)/src/or/tor$(EXEEXT)
+endif
+
 include src/include.am
 include doc/include.am
 include contrib/include.am
@@ -33,9 +36,16 @@ EXTRA_DIST+= \
 	README						\
 	ReleaseNotes
 
+## This tells etags how to find mockable function definitions.
+AM_ETAGSFLAGS=--regex='{c}/MOCK_IMPL([^,]+,\W*\([a-zA-Z0-9_]+\)\W*,/\1/s'
+
 if COVERAGE_ENABLED
 TEST_CFLAGS=-fno-inline -fprofile-arcs -ftest-coverage
+if DISABLE_ASSERTS_IN_UNIT_TESTS
+TEST_CPPFLAGS=-DTOR_UNIT_TESTS -DTOR_COVERAGE -DDISABLE_ASSERTS_IN_UNIT_TESTS
+else
 TEST_CPPFLAGS=-DTOR_UNIT_TESTS -DTOR_COVERAGE
+endif
 TEST_NETWORK_FLAGS=--coverage --hs-multi-client 1
 else
 TEST_CFLAGS=
@@ -66,8 +76,6 @@ dist-rpm: dist-gzip
 	echo "RPM build finished";						\
 	#end of dist-rpm
 
-dist: check
-
 doxygen:
 	doxygen && cd doc/doxygen/latex && make
 
@@ -88,18 +96,18 @@ need-chutney-path:
 
 # Note that test-network requires a copy of Chutney in $CHUTNEY_PATH.
 # Chutney can be cloned from https://git.torproject.org/chutney.git .
-test-network: need-chutney-path all
+test-network: need-chutney-path $(TESTING_TOR_BINARY) src/tools/tor-gencert
 	$(top_srcdir)/src/test/test-network.sh $(TEST_NETWORK_FLAGS)
 
 # Run all available tests using automake's test-driver
 # only run IPv6 tests if we can ping6 ::1 (localhost)
 # some IPv6 tests will fail without an IPv6 DNS server (see #16971 and #17011)
 # only run mixed tests if we have a tor-stable binary
-# see #17015 for autodetection of different tor versions
-test-network-all: need-chutney-path all test-driver
+# Try both the BSD and the Linux ping6 syntax, because they're incompatible
+test-network-all: need-chutney-path test-driver $(TESTING_TOR_BINARY) src/tools/tor-gencert
 	mkdir -p $(TEST_NETWORK_ALL_LOG_DIR)
 	@flavors="$(TEST_CHUTNEY_FLAVORS)"; \
-	if ping6 -q -o ::1 >/dev/null 2>&1; then \
+	if ping6 -q -c 1 -o ::1 >/dev/null 2>&1 || ping6 -q -c 1 -W 1 ::1 >/dev/null 2>&1; then \
 		echo "ping6 ::1 succeeded, running IPv6 flavors: $(TEST_CHUTNEY_FLAVORS_IPV6)."; \
 		flavors="$$flavors $(TEST_CHUTNEY_FLAVORS_IPV6)"; \
 	else \
@@ -117,7 +125,7 @@ test-network-all: need-chutney-path all test-driver
 		echo "SKIP: $$f"; \
 	done; \
 	for f in $$flavors; do \
-		./test-driver --test-name $$f --log-file $(TEST_NETWORK_ALL_LOG_DIR)/$$f.log --trs-file $(TEST_NETWORK_ALL_LOG_DIR)/$$f.trs $(TEST_NETWORK_ALL_DRIVER_FLAGS) $(top_srcdir)/src/test/test-network.sh --flavor $$f $(TEST_NETWORK_FLAGS); \
+		$(SHELL) $(top_srcdir)/test-driver --test-name $$f --log-file $(TEST_NETWORK_ALL_LOG_DIR)/$$f.log --trs-file $(TEST_NETWORK_ALL_LOG_DIR)/$$f.trs $(TEST_NETWORK_ALL_DRIVER_FLAGS) $(top_srcdir)/src/test/test-network.sh --flavor $$f $(TEST_NETWORK_FLAGS); \
 	done; \
 	echo "Log and result files are available in $(TEST_NETWORK_ALL_LOG_DIR)."; \
 	! grep -q FAIL test_network_log/*.trs
@@ -130,10 +138,10 @@ need-stem-path:
 	fi
 
 test-stem: need-stem-path $(TESTING_TOR_BINARY)
-	@$(PYTHON) "$$STEM_SOURCE_DIR"/run_tests.py --tor $(TESTING_TOR_BINARY) --all --log notice --target RUN_ALL;
+	@$(PYTHON) "$$STEM_SOURCE_DIR"/run_tests.py --tor "$(TESTING_TOR_BINARY)" --all --log notice --target RUN_ALL;
 
 test-stem-full: need-stem-path $(TESTING_TOR_BINARY)
-	@$(PYTHON) "$$STEM_SOURCE_DIR"/run_tests.py --tor $(TESTING_TOR_BINARY) --all --log notice --target RUN_ALL,ONLINE -v;
+	@$(PYTHON) "$$STEM_SOURCE_DIR"/run_tests.py --tor "$(TESTING_TOR_BINARY)" --all --log notice --target RUN_ALL,ONLINE -v;
 
 test-full: need-stem-path need-chutney-path check test-network test-stem
 
@@ -171,7 +179,7 @@ coverage-html-full: all
 	genhtml --branch-coverage -o "$(HTML_COVER_DIR)" "$(HTML_COVER_DIR)/lcov.info"
 
 # Avoid strlcpy.c, strlcat.c, aes.c, OpenBSD_malloc_Linux.c, sha256.c,
-# eventdns.[hc], tinytest*.[ch]
+# tinytest*.[ch]
 check-spaces:
 	$(top_srcdir)/scripts/maint/checkSpace.pl -C \
 		$(top_srcdir)/src/common/*.[ch] \

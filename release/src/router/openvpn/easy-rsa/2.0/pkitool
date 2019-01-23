@@ -322,7 +322,7 @@ if [ -d "$KEY_DIR" ] && [ "$KEY_CONFIG" ]; then
 
     # Build root CA
     if [ $DO_ROOT -eq 1 ]; then
-	$OPENSSL req $BATCH -days $CA_EXPIRE $NODES_REQ -new -newkey rsa:$KEY_SIZE -sha1 \
+	$OPENSSL req $BATCH -days $CA_EXPIRE $NODES_REQ -new -newkey rsa:$KEY_SIZE -sha256 \
 	    -x509 -keyout "$CA.key" -out "$CA.crt" -config "$KEY_CONFIG" && \
 	    chmod 0600 "$CA.key"
     else        
@@ -356,7 +356,7 @@ if [ -d "$KEY_DIR" ] && [ "$KEY_CONFIG" ]; then
 	( [ $DO_REQ -eq 0 ] || $OPENSSL req $BATCH -days $KEY_EXPIRE $NODES_REQ -new -newkey rsa:$KEY_SIZE \
 	        -keyout "$FN.key" -out "$FN.csr" $REQ_EXT -config "$KEY_CONFIG" $PKCS11_ARGS ) && \
 	    ( [ $DO_CA -eq 0 ]  || $OPENSSL ca $BATCH -days $KEY_EXPIRE -out "$FN.crt" \
-	        -in "$FN.csr" $CA_EXT -md sha1 -config "$KEY_CONFIG" ) && \
+	        -in "$FN.csr" $CA_EXT -md sha256 -config "$KEY_CONFIG" ) && \
 	    ( [ $DO_P12 -eq 0 ] || $OPENSSL pkcs12 -export -inkey "$FN.key" \
 	        -in "$FN.crt" -certfile "$CA.crt" -out "$FN.p12" $NODES_P12 ) && \
 	    ( [ $DO_CA -eq 0 -o $DO_P11 -eq 1 ]  || chmod 0600 "$FN.key" ) && \

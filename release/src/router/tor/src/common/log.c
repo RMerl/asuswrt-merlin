@@ -1,7 +1,7 @@
 /* Copyright (c) 2001, Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -47,6 +47,8 @@
 #define TRUNCATED_STR_LEN 14
 /** @} */
 
+#define raw_assert(x) assert(x) // assert OK
+
 /** Information for a single logfile; only used in log.c */
 typedef struct logfile_t {
   struct logfile_t *next; /**< Next logfile_t in the linked list. */
@@ -64,7 +66,7 @@ typedef struct logfile_t {
 static void log_free(logfile_t *victim);
 
 /** Helper: map a log severity to descriptive string. */
-static INLINE const char *
+static inline const char *
 sev_to_string(int severity)
 {
   switch (severity) {
@@ -75,12 +77,12 @@ sev_to_string(int severity)
     case LOG_ERR:     return "err";
     default:          /* Call assert, not tor_assert, since tor_assert
                        * calls log on failure. */
-                      assert(0); return "UNKNOWN";
+                      raw_assert(0); return "UNKNOWN"; // LCOV_EXCL_LINE
   }
 }
 
 /** Helper: decide whether to include the function name in the log message. */
-static INLINE int
+static inline int
 should_log_function_name(log_domain_mask_t domain, int severity)
 {
   switch (severity) {
@@ -95,7 +97,7 @@ should_log_function_name(log_domain_mask_t domain, int severity)
       return (domain & (LD_BUG|LD_NOFUNCNAME)) == LD_BUG;
     default:
       /* Call assert, not tor_assert, since tor_assert calls log on failure. */
-      assert(0); return 0;
+      raw_assert(0); return 0; // LCOV_EXCL_LINE
   }
 }
 
@@ -149,10 +151,14 @@ static int pretty_fn_has_parens = 0;
 
 /** Lock the log_mutex to prevent others from changing the logfile_t list */
 #define LOCK_LOGS() STMT_BEGIN                                          \
+  tor_assert(log_mutex_initialized);                                    \
   tor_mutex_acquire(&log_mutex);                                        \
   STMT_END
 /** Unlock the log_mutex */
-#define UNLOCK_LOGS() STMT_BEGIN tor_mutex_release(&log_mutex); STMT_END
+#define UNLOCK_LOGS() STMT_BEGIN                                        \
+  tor_assert(log_mutex_initialized);                                    \
+  tor_mutex_release(&log_mutex);                                        \
+  STMT_END
 
 /** What's the lowest log level anybody cares about?  Checking this lets us
  * bail out early from log_debug if we aren't debugging.  */
@@ -163,7 +169,7 @@ static void close_log(logfile_t *victim);
 
 static char *domain_to_string(log_domain_mask_t domain,
                              char *buf, size_t buflen);
-static INLINE char *format_msg(char *buf, size_t buf_len,
+static inline char *format_msg(char *buf, size_t buf_len,
            log_domain_mask_t domain, int severity, const char *funcname,
            const char *suffix,
            const char *format, va_list ap, size_t *msg_len_out)
@@ -199,7 +205,7 @@ set_log_time_granularity(int granularity_msec)
 /** Helper: Write the standard prefix for log lines to a
  * <b>buf_len</b> character buffer in <b>buf</b>.
  */
-static INLINE size_t
+static inline size_t
 log_prefix_(char *buf, size_t buf_len, int severity)
 {
   time_t t;
@@ -266,7 +272,7 @@ log_tor_version(logfile_t *lf, int reset)
   return 0;
 }
 
-const char bug_suffix[] = " (on Tor " VERSION
+static const char bug_suffix[] = " (on Tor " VERSION
 #ifndef _MSC_VER
   " "
 #include "micro-revision.i"
@@ -278,7 +284,7 @@ const char bug_suffix[] = " (on Tor " VERSION
  * than once.)  Return a pointer to the first character of the message
  * portion of the formatted string.
  */
-static INLINE char *
+static inline char *
 format_msg(char *buf, size_t buf_len,
            log_domain_mask_t domain, int severity, const char *funcname,
            const char *suffix,
@@ -289,7 +295,7 @@ format_msg(char *buf, size_t buf_len,
   char *end_of_prefix;
   char *buf_end;
 
-  assert(buf_len >= 16); /* prevent integer underflow and general stupidity */
+  raw_assert(buf_len >= 16); /* prevent integer underflow and stupidity */
   buf_len -= 2; /* subtract 2 characters so we have room for \n\0 */
   buf_end = buf+buf_len; /* point *after* the last char we can write to */
 
@@ -393,7 +399,7 @@ pending_log_message_free(pending_log_message_t *msg)
 /** Return true iff <b>lf</b> would like to receive a message with the
  * specified <b>severity</b> in the specified <b>domain</b>.
  */
-static INLINE int
+static inline int
 logfile_wants_message(const logfile_t *lf, int severity,
                       log_domain_mask_t domain)
 {
@@ -416,7 +422,7 @@ logfile_wants_message(const logfile_t *lf, int severity,
  * we already deferred this message for pending callbacks and don't need to do
  * it again.  Otherwise, if we need to do it, do it, and set
  * <b>callbacks_deferred</b> to 1. */
-static INLINE void
+static inline void
 logfile_deliver(logfile_t *lf, const char *buf, size_t msg_len,
                 const char *msg_after_prefix, log_domain_mask_t domain,
                 int severity, int *callbacks_deferred)
@@ -478,13 +484,16 @@ logv,(int severity, log_domain_mask_t domain, const char *funcname,
   int callbacks_deferred = 0;
 
   /* Call assert, not tor_assert, since tor_assert calls log on failure. */
-  assert(format);
+  raw_assert(format);
   /* check that severity is sane.  Overrunning the masks array leads to
    * interesting and hard to diagnose effects */
-  assert(severity >= LOG_ERR && severity <= LOG_DEBUG);
+  raw_assert(severity >= LOG_ERR && severity <= LOG_DEBUG);
+  /* check that we've initialised the log mutex before we try to lock it */
+  raw_assert(log_mutex_initialized);
   LOCK_LOGS();
 
-  if ((! (domain & LD_NOCB)) && smartlist_len(pending_cb_messages))
+  if ((! (domain & LD_NOCB)) && pending_cb_messages
+      && smartlist_len(pending_cb_messages))
     flush_pending_log_callbacks();
 
   if (queue_startup_messages &&
@@ -527,6 +536,11 @@ tor_log(int severity, log_domain_mask_t domain, const char *format, ...)
   if (severity > log_global_min_severity_)
     return;
   va_start(ap,format);
+#ifdef TOR_UNIT_TESTS
+  if (domain & LD_NO_MOCK)
+    logv__real(severity, domain, NULL, NULL, format, ap);
+  else
+#endif
   logv(severity, domain, NULL, NULL, format, ap);
   va_end(ap);
 }
@@ -646,7 +660,7 @@ tor_log_update_sigsafe_err_fds(void)
   if (!found_real_stderr &&
       int_array_contains(sigsafe_log_fds, n_sigsafe_log_fds, STDOUT_FILENO)) {
     /* Don't use a virtual stderr when we're also logging to stdout. */
-    assert(n_sigsafe_log_fds >= 2); /* Don't use assert inside log functions*/
+    raw_assert(n_sigsafe_log_fds >= 2); /* Don't tor_assert inside log fns */
     sigsafe_log_fds[0] = sigsafe_log_fds[--n_sigsafe_log_fds];
   }
 
@@ -939,7 +953,7 @@ flush_pending_log_callbacks(void)
   smartlist_t *messages, *messages_tmp;
 
   LOCK_LOGS();
-  if (0 == smartlist_len(pending_cb_messages)) {
+  if (!pending_cb_messages || 0 == smartlist_len(pending_cb_messages)) {
     UNLOCK_LOGS();
     return;
   }
@@ -1064,13 +1078,13 @@ mark_logs_temp(void)
  */
 int
 add_file_log(const log_severity_list_t *severity, const char *filename,
-             const int truncate)
+             const int truncate_log)
 {
   int fd;
   logfile_t *lf;
 
   int open_flags = O_WRONLY|O_CREAT;
-  open_flags |= truncate ? O_TRUNC : O_APPEND;
+  open_flags |= truncate_log ? O_TRUNC : O_APPEND;
 
   fd = tor_open_cloexec(filename, open_flags, 0644);
   if (fd<0)
@@ -1097,14 +1111,25 @@ add_file_log(const log_severity_list_t *severity, const char *filename,
 #ifdef HAVE_SYSLOG_H
 /**
  * Add a log handler to send messages to they system log facility.
+ *
+ * If this is the first log handler, opens syslog with ident Tor or
+ * Tor-<syslog_identity_tag> if that is not NULL.
  */
 int
-add_syslog_log(const log_severity_list_t *severity)
+add_syslog_log(const log_severity_list_t *severity,
+               const char* syslog_identity_tag)
 {
   logfile_t *lf;
-  if (syslog_count++ == 0)
+  if (syslog_count++ == 0) {
     /* This is the first syslog. */
-    openlog("Tor", LOG_PID | LOG_NDELAY, LOGFACILITY);
+    static char buf[256];
+    if (syslog_identity_tag) {
+      tor_snprintf(buf, sizeof(buf), "Tor-%s", syslog_identity_tag);
+    } else {
+      tor_snprintf(buf, sizeof(buf), "Tor");
+    }
+    openlog(buf, LOG_PID | LOG_NDELAY, LOGFACILITY);
+  }
 
   lf = tor_malloc_zero(sizeof(logfile_t));
   lf->fd = -1;

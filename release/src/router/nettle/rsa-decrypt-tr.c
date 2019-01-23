@@ -48,18 +48,14 @@ rsa_decrypt_tr(const struct rsa_public_key *pub,
 	       size_t *length, uint8_t *message,
 	       const mpz_t gibberish)
 {
-  mpz_t m, ri;
+  mpz_t m;
   int res;
 
   mpz_init_set(m, gibberish);
-  mpz_init (ri);
 
-  _rsa_blind (pub, random_ctx, random, m, ri);
-  rsa_compute_root(key, m, m);
-  _rsa_unblind (pub, m, ri);
-  mpz_clear (ri);
+  res = (rsa_compute_root_tr (pub, key, random_ctx, random, m, gibberish)
+	 && pkcs1_decrypt (key->size, m, length, message));
 
-  res = pkcs1_decrypt (key->size, m, length, message);
   mpz_clear(m);
   return res;
 }

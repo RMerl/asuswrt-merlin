@@ -9,6 +9,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/un.h>
@@ -147,6 +149,11 @@ int callmgr_main(int argc, char **argv, char **envp)
         default: /* Parent. Return status to caller. */
             exit(0);
     }
+
+    /* Set high priority for echo packets */
+    if (setpriority(PRIO_PROCESS, 0, -20) < 0)
+	warn("Could not set high priority: %m");
+
     /* re-open stderr as /dev/null to release it */
     file2fd("/dev/null", "wb", STDERR_FILENO);
     /* Step 1c: Clean up unix socket on TERM */
@@ -191,8 +198,10 @@ int callmgr_main(int argc, char **argv, char **envp)
                     FD_ISSET (max_fd, &write_set))
                 break;
         }
+    again:
         /* Step 4: Wait on INET or UNIX event */
         if ((rc = select(max_fd + 1, &read_set, &write_set, NULL, NULL)) <0) {
+	  if (errno == EINTR) goto again;
 	  if (errno == EBADF) break;
 	  /* a signal or somesuch. */
 	  continue;
@@ -279,7 +288,9 @@ shutdown:
         pptp_fd_set(conn, &read_set, &write_set, &max_fd);
 	tv.tv_sec = 0;
 	tv.tv_usec = 0;
-	select(max_fd + 1, &read_set, &write_set, NULL, &tv);
+	while (select(max_fd + 1, &read_set, &write_set, NULL, &tv) < 0) {
+	  if (errno != EINTR) break;
+	}
         rc = pptp_dispatch(conn, &read_set, &write_set);
 	if (rc > 0) {
 	  /* wait for a respond, a timeout because there might not be one */
@@ -288,7 +299,9 @@ shutdown:
 	  pptp_fd_set(conn, &read_set, &write_set, &max_fd);
 	  tv.tv_sec = 2;
 	  tv.tv_usec = 0;
-	  select(max_fd + 1, &read_set, &write_set, NULL, &tv);
+	  while (select(max_fd + 1, &read_set, &write_set, NULL, &tv) < 0) {
+	    if (errno != EINTR) break;
+	  }
 	  rc = pptp_dispatch(conn, &read_set, &write_set);
 	  if (rc > 0) {
 	    if (i > 0) sleep(2);
@@ -300,7 +313,9 @@ shutdown:
 	    pptp_fd_set(conn, &read_set, &write_set, &max_fd);
 	    tv.tv_sec = 2;
 	    tv.tv_usec = 0;
-	    select(max_fd + 1, &read_set, &write_set, NULL, &tv);
+	    while (select(max_fd + 1, &read_set, &write_set, NULL, &tv) < 0) {
+	      if (errno != EINTR) break;
+	    }
 	    pptp_dispatch(conn, &read_set, &write_set);
 	    if (rc > 0) sleep(2);
 	  }

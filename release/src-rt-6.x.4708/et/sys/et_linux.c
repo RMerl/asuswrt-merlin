@@ -2284,7 +2284,7 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 	bool skip_check = SKIP_TCP_CTRL_CHECK(et);
 #endif /* USBAP */
 #endif /* PKTC */
-	uint16 ether_type;
+	uint16 ether_type, vlan_type;
 
 	/* read the buffers first */
 	while ((p = (*chops->rx)(ch))) {
@@ -2313,8 +2313,10 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 
 		evh = PKTDATA(et->osh, p) + dataoff;
 
-		ether_type = ((struct ether_header *) evh)->ether_type;
-		if (ether_type == HTON16(ETHER_TYPE_BRCM)) {
+		ether_type = ((struct ethervlan_header *) evh)->ether_type;
+		vlan_type = ((struct ethervlan_header *) evh)->vlan_type;
+		if (ether_type == HTON16(ETHER_TYPE_BRCM) ||
+			vlan_type == HTON16(ETHER_TYPE_BRCM)) {
 			PKTFREE(osh, p, FALSE);
 			continue;
 		}
@@ -2422,12 +2424,6 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 		} else
 			PKTCENQTAIL(h, t, p);
 #else /* PKTC */
-                ether_type = ((struct ether_header *) PKTDATA(et->osh, p))->ether_type;
-                if (ether_type == HTON16(ETHER_TYPE_BRCM)) {
-                        PKTFREE(osh, p, FALSE);
-                        continue;
-                }
-
 		PKTSETLINK(p, NULL);
 		if (t == NULL)
 			h = t = p;

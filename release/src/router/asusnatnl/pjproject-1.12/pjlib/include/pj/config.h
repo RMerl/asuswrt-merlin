@@ -72,11 +72,49 @@
     /* Also define Win32 */
 #   define PJ_WIN32 1
 
-#elif defined(PJ_WIN32) || defined(_WIN32) || defined(__WIN32__) || \
-	defined(_WIN64) || defined(WIN32) || defined(__TOS_WIN__)
+#elif defined(PJ_WIN32_WINPHONE8) || defined(_WIN32_WINPHONE8)
     /*
-     * Win32
+     * Windows Phone 8
      */
+#   undef PJ_WIN32_WINPHONE8
+#   define PJ_WIN32_WINPHONE8   1
+#   include <pj/compat/os_winphone8.h>
+
+    /* Also define Win32 */
+#   define PJ_WIN32 1
+
+#elif defined(PJ_WIN32_UWP) || defined(_WIN32_UWP)
+    /*
+     * Windows UWP
+     */
+#   undef PJ_WIN32_UWP
+#   define PJ_WIN32_UWP   1
+#   include <pj/compat/os_winuwp.h>
+
+    /* Define Windows phone */
+#   define PJ_WIN32_WINPHONE8 1
+
+    /* Also define Win32 */
+#   define PJ_WIN32 1
+
+#   if defined(PJ_WIN64) || defined(_WIN64) || defined(WIN64)
+	/*
+	* Win64
+	*/
+#	undef PJ_WIN64
+#	define PJ_WIN64 1
+#   endif
+
+#elif defined(PJ_WIN32) || defined(_WIN32) || defined(__WIN32__) || \
+	defined(WIN32) || defined(PJ_WIN64) || defined(_WIN64) || \
+	defined(WIN64) || defined(__TOS_WIN__) 
+#   if defined(PJ_WIN64) || defined(_WIN64) || defined(WIN64)
+	/*
+	 * Win64
+	 */
+#	undef PJ_WIN64
+#	define PJ_WIN64 1
+#   endif
 #   undef PJ_WIN32
 #   define PJ_WIN32 1
 #   include <pj/compat/os_win32.h>
@@ -145,12 +183,10 @@
 
 #elif defined (PJ_M_I386) || defined(_i386_) || defined(i_386_) || \
 	defined(_X86_) || defined(x86) || defined(__i386__) || \
-	defined(__i386) || /*defined(_M_IX86) ||*/ defined(__I86__)
-	
+	defined(__i386) || defined(_M_IX86) || defined(__I86__)
     /*
      * Generic i386 processor family, little-endian
      */
-
 #   undef PJ_M_I386
 #   define PJ_M_I386		1
 #   define PJ_M_NAME		"i386"
@@ -158,9 +194,10 @@
 #   define PJ_IS_LITTLE_ENDIAN	1
 #   define PJ_IS_BIG_ENDIAN	0
 
+
 #elif defined (PJ_M_X86_64) || defined(__amd64__) || defined(__amd64) || \
-	defined(__x86_64__) || defined(__x86_64)
-	
+	defined(__x86_64__) || defined(__x86_64) || \
+	defined(_M_X64) || defined(_M_AMD64)
     /*
      * AMD 64bit processor, little endian
      */

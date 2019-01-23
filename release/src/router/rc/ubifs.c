@@ -107,6 +107,9 @@ void start_ubifs(void)
 	int dev, part, size;
 	const char *p;
 	struct statfs sf;
+#if defined(RTCONFIG_TEST_BOARDDATA_FILE)
+	int r;
+#endif
 
 	if (!nvram_match("ubifs_on", "1")) {
 		notice_set("ubifs", "");
@@ -172,6 +175,13 @@ void start_ubifs(void)
 		}
 	}
 
+	if (nvram_get_int("ubifs_clean_fs")) {
+		_dprintf("Clean /jffs/*\n");
+		system("rm -fr /jffs/*");
+		nvram_unset("ubifs_clean_fs");
+		nvram_commit_x();
+	}
+
 	notice_set("ubifs", format ? "Formatted" : "Loaded");
 
 	if (((p = nvram_get("ubifs_exec")) != NULL) && (*p != 0)) {
@@ -181,6 +191,19 @@ void start_ubifs(void)
 	}
 	run_userfile(UBIFS_MNT_DIR, ".asusrouter", UBIFS_MNT_DIR, 3);
 
+#if defined(RTCONFIG_TEST_BOARDDATA_FILE)
+	/* Copy /lib/firmware to /tmp/firmware, and
+	 * bind mount /tmp/firmware to /lib/firmware.
+	 */
+	if (!d_exists(UBIFS_MNT_DIR "/firmware")) {
+		_dprintf("Rebuild /lib/firmware on " UBIFS_MNT_DIR "/firmware!\n");
+		eval("cp", "-a", "/lib/firmware", UBIFS_MNT_DIR "/firmware");
+		sync();
+	}
+	if ((r = mount(UBIFS_MNT_DIR "/firmware", "/lib/firmware", NULL, MS_BIND, NULL)) != 0)
+		_dprintf("%s: bind mount " UBIFS_MNT_DIR "/firmware fail! (r = %d)\n", __func__, r);
+#endif
+
 }
 
 void stop_ubifs(int stop)
@@ -188,6 +211,9 @@ void stop_ubifs(int stop)
 	struct statfs sf;
 #if defined(RTCONFIG_PSISTLOG)
 	int restart_syslogd = 0;
+#endif
+#if defined(RTCONFIG_TEST_BOARDDATA_FILE)
+	struct mntent *mnt;
 #endif
 
 	if (!wait_action_idle(10))
@@ -203,6 +229,15 @@ void stop_ubifs(int stop)
 		restart_syslogd = 1;
 		stop_syslogd();
 		eval("cp", UBIFS_MNT_DIR "/syslog.log", UBIFS_MNT_DIR "/syslog.log-1", "/tmp");
+	}
+#endif
+
+#if defined(RTCONFIG_TEST_BOARDDATA_FILE)
+	if ((mnt = findmntents("/lib/firmware", 0, NULL, 0)) != NULL) {
+		_dprintf("Unmount /lib/firmware\n");
+		sync();
+		if (umount("/lib/firmware"))
+			umount2("/lib/firmware", MNT_DETACH);
 	}
 #endif
 

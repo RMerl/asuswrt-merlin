@@ -90,7 +90,7 @@
 
 
 var MULTIFILTER_ENABLE = '<% nvram_get("MULTIFILTER_ENABLE"); %>'.replace(/&#62/g, ">");
-var MULTIFILTER_MAC = '<% nvram_get("MULTIFILTER_MAC"); %>'.replace(/&#62/g, ">");
+var MULTIFILTER_MAC = '<% nvram_get("MULTIFILTER_MAC"); %>'.replace(/&#62/g, ">").toUpperCase();
 var MULTIFILTER_DEVICENAME = decodeURIComponent('<% nvram_char_to_ascii("","MULTIFILTER_DEVICENAME"); %>').replace(/&#62/g, ">");
 var MULTIFILTER_MACFILTER_DAYTIME = '<% nvram_get("MULTIFILTER_MACFILTER_DAYTIME"); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<");
 
@@ -198,10 +198,11 @@ function register_event(){
 
 function initial(){
 	show_menu();
+	if(based_modelid == "GT-AC5300" || based_modelid == "GT-AC9600" || based_modelid == "RT-AC1200" || based_modelid == "RT-AC1200GU"){
+		$("#nat_desc").hide();
+	}
+
 	if(bwdpi_support){
-		//show_inner_tab();
-		document.getElementById("_AiProtection_HomeSecurity").innerHTML = '<table><tbody><tr><td><div class="_AiProtection_HomeSecurity"></div></td><td><div style="width:120px;"><#AiProtection_title#></div></td></tr></tbody></table>';
-		document.getElementById("_AiProtection_HomeSecurity").className = "menu_clicked";
 		document.getElementById('guest_image').style.background = "url(images/New_ui/TimeLimits.png)";
 		document.getElementById('content_title').innerHTML = "<#AiProtection_title#> - <#Time_Scheduling#>";
 		document.getElementById('desc_title').innerHTML = "<#ParentalCtrl_Desc_TS#>";
@@ -754,7 +755,7 @@ function addRow_main(upper){
 		return false;
 	}
 	
-	if(MULTIFILTER_MAC.search(document.form.PC_mac.value) > -1){
+	if(MULTIFILTER_MAC.search(document.form.PC_mac.value.toUpperCase()) > -1){
 		alert("<#JS_duplicate#>");
 		document.form.PC_mac.focus();
 		return false;
@@ -777,13 +778,13 @@ function addRow_main(upper){
 	else
 		MULTIFILTER_ENABLE += "0";
 
-	var clientObj = clientList[document.form.PC_mac.value];
+	var clientObj = clientList[document.form.PC_mac.value.toUpperCase()];
 	var clientName = "New device";
 	if(clientObj) {
 		clientName = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
 	}
 	MULTIFILTER_DEVICENAME += clientName;
-	MULTIFILTER_MAC += document.form.PC_mac.value;
+	MULTIFILTER_MAC += document.form.PC_mac.value.toUpperCase();
 
 	if(MULTIFILTER_MACFILTER_DAYTIME != "")
 		MULTIFILTER_MACFILTER_DAYTIME += ">";
@@ -1029,7 +1030,7 @@ function show_inner_tab(){
 						<span id="desc_note" style="color:#FC0;"><#ADSL_FW_note#></span>
 						<ol style="color:#FC0;margin:-5px 0px 3px -18px;*margin-left:18px;">
 							<li><#ParentalCtrl_default#></li>
-							<li><#ParentalCtrl_disable_NAT#></li>
+							<li id="nat_desc"><#ParentalCtrl_disable_NAT#></li>
 						</ol>	
 					</td>
 				</tr>

@@ -1,0 +1,29 @@
+2002-08-21  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* gettext.m4: Upgrade to gettext-0.11.5.
+	* ulonglong.m4: New file, from gettext-0.11.5.
+	* iconv.m4: Upgrade to gettext-0.11.5.
+	* intdiv0.m4: New file, from gettext-0.11.5.
+	* inttypes.m4: New file, from gettext-0.11.5.
+	* inttypes_h.m4: New file, from gettext-0.11.5.
+	* inttypes-pri.m4: New file, from gettext-0.11.5.
+	* lcmessage.m4: Upgrade to gettext-0.11.5.
+	* lib-link.m4: Upgrade to gettext-0.11.5.
+	* stdint_h.m4: New file, from gettext-0.11.5.
+	* uintmax_t.m4: New file, from gettext-0.11.5.
+	* Makefile.am (EXTRA_DIST): Add the new files.
+
+2002-06-03  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* codeset.m4: Upgrade to gettext-0.11.2.
+	* gettext.m4: Upgrade to gettext-0.11.2.
+	* glibc21.m4: Upgrade to gettext-0.11.2.
+	* iconv.m4: Upgrade to gettext-0.11.2.
+	* isc-posix.m4: New file, from gettext-0.11.2.
+	* lcmessage.m4: Upgrade to gettext-0.11.2.
+	* lib-ld.m4: New file, from gettext-0.11.2.
+	* lib-link.m4: New file, from gettext-0.11.2.
+	* lib-prefix.m4: New file, from gettext-0.11.2.
+	* progtest.m4: Upgrade to gettext-0.11.2.
+	* Makefile.am (EXTRA_DIST): Add the new files.
+

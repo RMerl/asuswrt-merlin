@@ -448,7 +448,12 @@ unsigned int nf_nat_packet(struct nf_conn *ct,
 #endif /* HNDCTF */
 		if (!manip_pkt(target.dst.protonum, skb, 0, &target, mtype))
 			return NF_DROP;
+	} else {
+#ifdef HNDCTF
+		ip_conntrack_ipct_add(skb, hooknum, ct, ctinfo, NULL);
+#endif /* HNDCTF */
 	}
+
 	return NF_ACCEPT;
 }
 EXPORT_SYMBOL_GPL(nf_nat_packet);
@@ -487,6 +492,7 @@ unsigned int nf_nat_packet(struct nf_conn *ct,
 			return NF_DROP;
 	} else {
 #ifdef HNDCTF
+		ip_conntrack_ipct_add(skb, hooknum, ct, ctinfo, NULL);
 #endif /* HNDCTF */
 	}
 

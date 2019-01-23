@@ -25,8 +25,14 @@ ifeq ($(RTCONFIG_BCMARM),y)
 vpath %.o $(SRCBASE)/router/libbcmcrypto/prebuilt.arm
 else ifeq ($(RTCONFIG_RALINK),y)
 vpath %.o $(SRCBASE)/router/libbcmcrypto/prebuilt.mipsel
+else ifeq ($(RTCONFIG_QCA_ARM),y)
+vpath %.o $(SRCBASE)/router/libbcmcrypto/prebuilt.qca_arm
 else ifeq ($(RTCONFIG_QCA),y)
+ifeq ($(ARCH),arm)
+vpath %.o $(SRCBASE)/router/libbcmcrypto/prebuilt.qca.ipq806x
+else
 vpath %.o $(SRCBASE)/router/libbcmcrypto/prebuilt.qca
+endif
 else
 vpath %.o $(SRCBASE)/router/libbcmcrypto/prebuilt.mipsel
 endif

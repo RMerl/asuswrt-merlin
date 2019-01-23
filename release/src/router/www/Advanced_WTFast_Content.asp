@@ -217,10 +217,10 @@ var wtfast_rulelist_row = wtfast_rulelist.split('<');
 for(var i = 1; i < wtfast_rulelist_row.length; i ++) {
 	var  wtfast_rulelist_col = wtfast_rulelist_row[i].split('>');
 	if(wtfast_rulelist_col.length == 4){
-		wtfast_rulelist_array[i-1] = [wtfast_rulelist_col[0], wtfast_rulelist_col[1], wtfast_rulelist_col[2], "none", wtfast_rulelist_col[3]];
+		wtfast_rulelist_array[i-1] = [wtfast_rulelist_col[0], wtfast_rulelist_col[1].toUpperCase(), wtfast_rulelist_col[2], "none", wtfast_rulelist_col[3]];
 	}
-	else	
-		wtfast_rulelist_array[i-1] = [wtfast_rulelist_col[0], wtfast_rulelist_col[1], wtfast_rulelist_col[2], wtfast_rulelist_col[3], wtfast_rulelist_col[4]];
+	else
+		wtfast_rulelist_array[i-1] = [wtfast_rulelist_col[0], wtfast_rulelist_col[1].toUpperCase(), wtfast_rulelist_col[2], wtfast_rulelist_col[3], wtfast_rulelist_col[4]];
 }
 
 var saved_game_list = decodeURIComponent('<% nvram_char_to_ascii("", "wtf_game_list"); %>');
@@ -272,8 +272,6 @@ function initial(){
 	  rv = -1;
 	}
 	show_menu();
-	document.getElementById("_GameBoost").innerHTML = '<table><tbody><tr><td><div class="_GameBoost"></div></td><td><div style="width:120px;"><#Game_Boost#></div></td></tr></tbody></table>';
-	document.getElementById("_GameBoost").className = "menu_clicked";
 
 	var GB_login_str = "<#Game_Boost_login#>";
 	GB_login_str = GB_login_str.replace(/WTFast/gi,"<span><img src=\"/images/wtfast_logo.png\" style=\"margin-bottom:-5px; margin-left:10px;\"></span>");
@@ -448,7 +446,7 @@ function change_enable(obj){
 
 function addRule(){
 	var rule_num = Object.keys(wtfast_rulelist_array).length;
-	var mac = document.form.clientmac_x_0.value;
+	var mac = document.form.clientmac_x_0.value.toUpperCase();
 	var rule_enable = cur_rule_enable;
 	var addRule = 1;
 
@@ -462,7 +460,7 @@ function addRule(){
 	}
 
 	if(cur_rule_enable == "1" && enable_num == wtfast_status.Max_Computers){
-		alert("The number of enabled rules reaches the limitiation of the account. The added rule will be default disabled.");
+		alert("<#GB_rulelist_addmax#>");
 		rule_enable = "0";
 	}
 
@@ -475,7 +473,7 @@ function addRule(){
 	}
 	else if(check_macaddr(document.form.clientmac_x_0, check_hwaddr_flag(document.form.clientmac_x_0)) == true){
 		Object.keys(wtfast_rulelist_array).forEach(function(key){
-			if(wtfast_rulelist_array[key][1] == mac){
+			if(wtfast_rulelist_array[key][1].toUpperCase() == mac){
 				alert("<#JS_duplicate#>");
 				document.form.clientmac_x_0.focus();
 				document.form.clientmac_x_0.select();
@@ -484,7 +482,7 @@ function addRule(){
 		});
 
 		if(addRule){
-			wtfast_rulelist_array.push([rule_enable, document.form.clientmac_x_0.value, document.form.server_1_list.value, document.form.server_2_list.value, document.form.game_list.value]);
+			wtfast_rulelist_array.push([rule_enable, document.form.clientmac_x_0.value.toUpperCase(), document.form.server_1_list.value, document.form.server_2_list.value, document.form.game_list.value]);
 			if(rule_enable == "1" && (wtf_enable_games.indexOf(document.form.game_list.value) == -1)){
 				wtf_enable_games += "<" + document.form.game_list.value;
 			}
@@ -552,7 +550,7 @@ function show_rulelist(){
 			code += '<table style="width:100%;"><tr><td style="width:40%;height:52px;border:0px;">';
 			var userIconBase64 = "NoIcon";
 			var clientName, deviceType, deviceVender, clientIP;
-			var clientMac = wtfast_rulelist_array[key][1];
+			var clientMac = wtfast_rulelist_array[key][1].toUpperCase();
 			if(clientList[clientMac]) {
 				clientName = (clientList[clientMac].nickName == "") ? clientList[clientMac].name : clientList[clientMac].nickName;
 				deviceType = clientList[clientMac].type;
@@ -693,7 +691,7 @@ function enable_wtfast_rule(index, enable){
 
 	if(enable == "1"){
 		if(enable_num == wtfast_status.Max_Computers){
-			alert("The number of enabled rules reaches the limitiation of the account. You can't enable rule unless you disable one existed enabled rule first.");
+			alert("<#GB_rulelist_enablemax#>");
 			return;
 		}
 	}

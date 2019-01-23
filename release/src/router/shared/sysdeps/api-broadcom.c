@@ -175,80 +175,6 @@ skip:
 	return SWITCH_UNKNOWN;
 }
 
-#ifdef MISSING_PRIVATE
-#ifdef RTCONFIG_BCM5301X_TRAFFIC_MONITOR
-
-uint32_t robo_ioctl_len(int fd, int write, int page, int reg, uint32_t *value, uint32_t len)
-{
-	static int __ioctl_args[2] = { SIOCGETCROBORD, SIOCSETCROBOWR };
-	struct ifreq ifr;
-	int ret, vecarg[4];
-	int i;
-
-	memset(&ifr, 0, sizeof(ifr));
-	strcpy(ifr.ifr_name, "eth0");
-	ifr.ifr_data = (caddr_t) vecarg;
-
-	vecarg[0] = (page << 16) | reg;
-	vecarg[1] = len;
-
-	ret = ioctl(fd, __ioctl_args[write], (caddr_t)&ifr);
-
-	*value = vecarg[2];
-
-	return ret;
-}
-
-void traffic_wanlan(char *ifname, uint32_t *rx, uint32_t *tx)
-{
-	int fd, model;
-	uint32_t value;
-	char port_name[30] = {0};
-	char port[30], *next;
-
-	*rx = 0;
-	*tx = 0;
-
-	strcat_r(ifname, "ports", port_name);
-
-	fd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (fd < 0) return;
-
-	/* RX */
-	foreach (port, nvram_safe_get(port_name), next) {
-		if(strncmp(port, CPU_PORT, 1) != 0
-#ifdef RTAC87U
-			&& strncmp(port, RGMII_PORT, 1) != 0
-#endif
-		){
-			if (robo_ioctl_len(fd, 0 /* robord */, MIB_P0_PAGE + atoi(port), MIB_RX_REG, &value, 8) < 0)
-				_dprintf("et ioctl SIOCGETCROBORD failed!\n");
-			else{
-				*rx = *rx + value;
-			}
-		}
-	}
-
-	/* TX */
-	foreach (port, nvram_safe_get(port_name), next) {
-		if(strncmp(port, CPU_PORT, 1) != 0
-#ifdef RTAC87U
-			&& strncmp(port, RGMII_PORT, 1) != 0
-#endif
-		){
-			if (robo_ioctl_len(fd, 0 /* robord */, MIB_P0_PAGE + atoi(port), MIB_TX_REG, &value, 8) < 0)
-				_dprintf("et ioctl SIOCGETCROBORD failed!\n");
-			else{
-				*tx = *tx  + value;
-			}
-		}
-	}
-	close(fd);
-	return;
-}
-#endif	/* RTCONFIG_BCM5301X_TRAFFIC_MONITOR */
-#endif /* MISSING_PRIVATE */
-
 int robo_ioctl(int fd, int write, int page, int reg, uint32_t *value)
 {
 	static int __ioctl_args[2] = { SIOCGETCROBORD, SIOCSETCROBOWR };
@@ -686,6 +612,13 @@ void set_radio(int on, int unit, int subunit)
 char *get_lan_mac_name(void)
 {
 #ifdef RTCONFIG_BCMARM
+#ifdef RTCONFIG_GMAC3
+	char *et2macaddr;
+	if (!nvram_match("stop_gmac3", "1") && (et2macaddr = nvram_get("et2macaddr")) &&
+	    *et2macaddr && strcmp(et2macaddr, "00:00:00:00:00:00") != 0) {
+		return "et2macaddr";
+	}
+#endif
 	switch(get_model()) {
 		case MODEL_RTAC87U:
 		case MODEL_RTAC5300:
@@ -705,6 +638,13 @@ char *get_lan_mac_name(void)
 char *get_wan_mac_name(void)
 {
 #ifdef RTCONFIG_BCMARM
+#ifdef RTCONFIG_GMAC3
+	char *et2macaddr;
+	if (!nvram_match("stop_gmac3", "1") && (et2macaddr = nvram_get("et2macaddr")) &&
+	    *et2macaddr && strcmp(et2macaddr, "00:00:00:00:00:00") != 0) {
+		return "et2macaddr";
+	}
+#endif
 	switch(get_model()) {
 		case MODEL_RTAC87U:
 		case MODEL_RTAC5300:

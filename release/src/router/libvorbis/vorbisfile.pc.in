@@ -8,7 +8,7 @@ includedir=@includedir@
 Name: vorbisfile
 Description: vorbisfile is a library that provides a convenient high-level API for decoding and basic manipulation of all Vorbis I audio streams
 Version: @VERSION@
-Requires: vorbis
+Requires.private: vorbis
 Conflicts:
 Libs: -L${libdir} -lvorbisfile
 Cflags: -I${includedir}

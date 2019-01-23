@@ -46,15 +46,15 @@ unaligned 32 bit little endian unsigned integers.
 The comment header is decoded as follows:
 
 \begin{programlisting}
-  1) [vendor_length] = read an unsigned integer of 32 bits
-  2) [vendor_string] = read a UTF-8 vector as [vendor_length] octets
-  3) [user_comment_list_length] = read an unsigned integer of 32 bits
-  4) iterate [user_comment_list_length] times {
+  1) [vendor\_length] = read an unsigned integer of 32 bits
+  2) [vendor\_string] = read a UTF-8 vector as [vendor\_length] octets
+  3) [user\_comment\_list\_length] = read an unsigned integer of 32 bits
+  4) iterate [user\_comment\_list\_length] times {
        5) [length] = read an unsigned integer of 32 bits
        6) this iteration's user comment = read a UTF-8 vector as [length] octets
      }
-  7) [framing_bit] = read a single bit as boolean
-  8) if ( [framing_bit] unset or end-of-packet ) then ERROR
+  7) [framing\_bit] = read a single bit as boolean
+  8) if ( [framing\_bit] unset or end-of-packet ) then ERROR
   9) done.
 \end{programlisting}
 
@@ -124,7 +124,7 @@ info)
 Use Permitted', a URL to a license such as a Creative Commons license
 ("www.creativecommons.org/blahblah/license.html") or the EFF Open
 Audio License ('distributed under the terms of the Open Audio
-License. see http://www.eff.org/IP/Open_licenses/eff_oal.html for
+License. see http://www.eff.org/IP/Open\_licenses/eff\_oal.html for
 details'), etc.
 
 \item[ORGANIZATION]
@@ -231,7 +231,7 @@ bitstream octet first):
 \end{enumerate}
 
 
-This is actually somewhat easier to describe in code; implementation of the above can be found in \filename{vorbis/lib/info.c}, \function{_vorbis_pack_comment()} and \function{_vorbis_unpack_comment()}.
+This is actually somewhat easier to describe in code; implementation of the above can be found in \filename{vorbis/lib/info.c}, \function{\_vorbis\_pack\_comment()} and \function{\_vorbis\_unpack\_comment()}.
 
 
 

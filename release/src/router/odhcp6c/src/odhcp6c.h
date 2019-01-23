@@ -20,6 +20,7 @@
 
 #define _unused __attribute__((unused))
 #define _packed __attribute__((packed))
+#define _aligned(n) __attribute__((aligned(n)))
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
@@ -33,7 +34,7 @@
 #define DHCPV6_REB_MAX_RT 600
 #define DHCPV6_INF_MAX_RT 120
 
-#define DEFAULT_MIN_UPDATE_INTERVAL 30
+#define RA_MIN_ADV_INTERVAL 3   /* RFC 4861 paragraph 6.2.1 */
 
 enum dhcvp6_opt {
 	DHCPV6_OPT_CLIENTID = 1,
@@ -228,6 +229,7 @@ struct dhcpv6_server_cand {
 	int16_t preference;
 	uint8_t duid_len;
 	uint8_t duid[130];
+	struct in6_addr server_addr;
 	uint32_t sol_max_rt;
 	uint32_t inf_max_rt;
 	void *ia_na;
@@ -283,6 +285,10 @@ enum dhcpv6_mode {
 	DHCPV6_STATEFUL
 };
 
+enum ra_config {
+	RA_RDNSS_DEFAULT_LIFETIME = 1,
+};
+
 enum odhcp6c_ia_mode {
 	IA_MODE_NONE,
 	IA_MODE_TRY,
@@ -303,6 +309,14 @@ struct odhcp6c_entry {
 	uint32_t iaid;
 	uint8_t auxtarget[];
 };
+
+// Include padding after auxtarget to align the next entry
+#define odhcp6c_entry_size(entry) \
+	(sizeof(struct odhcp6c_entry) +	(((entry)->auxlen + 3) & ~3))
+
+#define odhcp6c_next_entry(entry) \
+	((struct odhcp6c_entry *)((uint8_t *)(entry) + odhcp6c_entry_size(entry)))
+
 
 struct odhcp6c_request_prefix {
 	uint32_t iaid;
@@ -332,6 +346,7 @@ bool odhcp6c_signal_process(void);
 uint64_t odhcp6c_get_milli_time(void);
 int odhcp6c_random(void *buf, size_t len);
 bool odhcp6c_is_bound(void);
+bool odhcp6c_addr_in_scope(const struct in6_addr *addr);
 
 // State manipulation
 void odhcp6c_clear_state(enum odhcp6c_state state);
@@ -343,7 +358,8 @@ void* odhcp6c_move_state(enum odhcp6c_state state, size_t *len);
 void* odhcp6c_get_state(enum odhcp6c_state state, size_t *len);
 
 // Entry manipulation
-bool odhcp6c_update_entry(enum odhcp6c_state state, struct odhcp6c_entry *new, uint32_t safe, bool filterexcess);
+bool odhcp6c_update_entry(enum odhcp6c_state state, struct odhcp6c_entry *new,
+				uint32_t safe, unsigned int holdoff_interval);
 
 void odhcp6c_expire(void);
 uint32_t odhcp6c_elapsed(void);

@@ -623,12 +623,19 @@ int asus_private(void)
 	int i, l, c;
 	unsigned long secret;
 	unsigned char *p, user[256], hwaddr[6], hwaddr_str[18], key[64], msg[256], ipbuf[20], bin_pwd[16];
+#if defined(RTCONFIG_SOC_IPQ8064)
+	unsigned char mac_buf[6], mac_buf_str[18];
+#endif
 
 	memset (hwaddr, 0, sizeof (hwaddr));
 	memset (key, 0, sizeof (key));
 	memset (msg, 0, sizeof (msg));
 	memset (user, 0, sizeof (user));
 	memset (bin_pwd, 0, sizeof (bin_pwd));
+
+	/* Some model use LAN MAC address to register ASUSDDNS account.
+	 * To keep consistency, don't use get_wan_hwaddr() to rewrite below code.
+	 */
 #ifdef RTCONFIG_RGMII_BRCM5301X
 	p = nvram_get ("et1macaddr");
 #else
@@ -637,6 +644,7 @@ int asus_private(void)
 	else
 	p = nvram_get ("et0macaddr");
 #endif
+
 #ifdef RTCONFIG_GMAC3
 	if(nvram_match("gmac3_enable", "1"))
 		p = nvram_safe_get ("et2macaddr");
@@ -645,6 +653,15 @@ int asus_private(void)
 		PRINT ("ERROR: %s() can not take MAC address from et0macaddr\n");
 		return -1;
 	}
+
+#if defined(RTCONFIG_SOC_IPQ8064)
+	/* Make sure last bytes of MAC address is aligned to 4. */
+	ether_atoe(p, mac_buf);
+	mac_buf[5] &= 0xFC;
+	ether_etoa(mac_buf, mac_buf_str);
+	p = mac_buf_str;
+#endif
+
 	strncpy (hwaddr_str, p, sizeof (hwaddr_str));
 	p = hwaddr_str;
 	strtok (hwaddr_str, ":");

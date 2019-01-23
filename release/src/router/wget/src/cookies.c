@@ -1,6 +1,6 @@
 /* Support for cookies.
    Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   2010, 2011, 2015 Free Software Foundation, Inc.
 
 This file is part of GNU Wget.
 
@@ -45,6 +45,7 @@ as that of the covered work.  */
 
 #include "wget.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -58,7 +59,9 @@ as that of the covered work.  */
 #include "hash.h"
 #include "cookies.h"
 #include "http.h"               /* for http_atotm */
-
+#include "c-strcase.h"
+
+
 /* Declarations of `struct cookie' and the most basic functions. */
 
 /* Cookie jar serves as cookie storage and a means of retrieving
@@ -151,13 +154,13 @@ cookie_expired_p (const struct cookie *c)
 static void
 delete_cookie (struct cookie *cookie)
 {
-  xfree_null (cookie->domain);
-  xfree_null (cookie->path);
-  xfree_null (cookie->attr);
-  xfree_null (cookie->value);
+  xfree (cookie->domain);
+  xfree (cookie->path);
+  xfree (cookie->attr);
+  xfree (cookie->value);
   xfree (cookie);
 }
-
+
 /* Functions for storing cookies.
 
    All cookies can be reached beginning with jar->chains.  The key in
@@ -302,7 +305,12 @@ discard_matching_cookie (struct cookie_jar *jar, struct cookie *cookie)
 
           res = hash_table_get_pair (jar->chains, victim->domain,
                                      &chain_key, NULL);
-          assert (res != 0);
+
+          if (res == 0)
+            {
+              logprintf (LOG_VERBOSE, _("Unable to get cookie for %s\n"),
+                         victim->domain);
+            }
           if (!victim->next)
             {
               /* VICTIM was the only cookie in the chain.  Destroy the
@@ -317,7 +325,7 @@ discard_matching_cookie (struct cookie_jar *jar, struct cookie *cookie)
       DEBUGP (("Discarded old cookie.\n"));
     }
 }
-
+
 /* Functions for parsing the `Set-Cookie' header, and creating new
    cookies from the wire.  */
 
@@ -369,7 +377,7 @@ parse_set_cookie (const char *set_cookie, bool silent)
         {
           if (!TOKEN_NON_EMPTY (value))
             goto error;
-          xfree_null (cookie->domain);
+          xfree (cookie->domain);
           /* Strictly speaking, we should set cookie->domain_exact if the
              domain doesn't begin with a dot.  But many sites set the
              domain to "foo.com" and expect "subhost.foo.com" to get the
@@ -382,7 +390,7 @@ parse_set_cookie (const char *set_cookie, bool silent)
         {
           if (!TOKEN_NON_EMPTY (value))
             goto error;
-          xfree_null (cookie->path);
+          xfree (cookie->path);
           cookie->path = strdupdelim (value.b, value.e);
         }
       else if (TOKEN_IS (name, "expires"))
@@ -456,7 +464,7 @@ parse_set_cookie (const char *set_cookie, bool silent)
 
 #undef TOKEN_IS
 #undef TOKEN_NON_EMPTY
-
+
 /* Sanity checks.  These are important, otherwise it is possible for
    mailcious attackers to destroy important cookie information and/or
    violate your privacy.  */
@@ -477,7 +485,7 @@ parse_set_cookie (const char *set_cookie, bool silent)
 /* Check whether ADDR matches <digits>.<digits>.<digits>.<digits>.
 
    We don't want to call network functions like inet_addr() because
-   all we need is a check, preferrably one that is small, fast, and
+   all we need is a check, preferably one that is small, fast, and
    well-defined.  */
 
 static bool
@@ -508,7 +516,7 @@ numeric_address_p (const char *addr)
    psl on our own, if libpsl is compiled without a public suffix list,
    fall back to using the original "tail matching" heuristic. Also if
    libpsl is unable to convert the domain to lowercase, which means that
-   it doesnt have any runtime conversion support, we again fall back to
+   it doesn't have any runtime conversion support, we again fall back to
    "tail matching" since libpsl states the results are unpredictable with
    upper case strings.
    */
@@ -518,19 +526,51 @@ check_domain_match (const char *cookie_domain, const char *host)
 {
 
 #ifdef HAVE_LIBPSL
-  DEBUGP (("cdm: 1"));
+  static int init_psl;
+  static const psl_ctx_t *psl;
+
   char *cookie_domain_lower = NULL;
   char *host_lower = NULL;
-  const psl_ctx_t *psl;
   int is_acceptable;
 
-  if (!(psl = psl_builtin()))
+  DEBUGP (("cdm: 1\n"));
+  if (!init_psl)
     {
-      DEBUGP (("\nlibpsl not built with a public suffix list. "
-               "Falling back to simple heuristics.\n"));
-      goto no_psl;
-    }
+      init_psl = 1;
 
+#ifdef HAVE_PSL_LATEST
+      if ((psl = psl_latest (NULL)))
+        goto have_psl;
+
+      DEBUGP (("\nPSL: Failed to load any PSL data. "
+               "Falling back to insecure heuristics.\n"));
+#else
+      if ((psl = psl_builtin ()) && !psl_builtin_outdated ())
+        goto have_psl;
+
+      DEBUGP (("\nPSL: built-in data outdated. "
+               "Trying to load data from %s.\n",
+              quote (psl_builtin_filename ())));
+
+      if ((psl = psl_load_file (psl_builtin_filename ())))
+        goto have_psl;
+
+      DEBUGP (("\nPSL: %s not found or not readable. "
+               "Falling back to built-in data.\n",
+              quote (psl_builtin_filename ())));
+
+      if (!(psl = psl_builtin ()))
+        {
+          DEBUGP (("\nPSL: libpsl not built with a public suffix list. "
+                   "Falling back to insecure heuristics.\n"));
+          goto no_psl;
+        }
+#endif
+    }
+  else if (!psl)
+    goto no_psl;
+
+have_psl:
   if (psl_str_to_utf8lower (cookie_domain, NULL, NULL, &cookie_domain_lower) == PSL_SUCCESS &&
       psl_str_to_utf8lower (host, NULL, NULL, &host_lower) == PSL_SUCCESS)
     {
@@ -555,13 +595,13 @@ no_psl:
 #endif
 
   /* For efficiency make some elementary checks first */
-  DEBUGP (("cdm: 2"));
+  DEBUGP (("cdm: 2\n"));
 
   /* For the sake of efficiency, check for exact match first. */
   if (0 == strcasecmp (cookie_domain, host))
     return true;
 
-  DEBUGP ((" 3"));
+  DEBUGP (("cdm: 3\n"));
 
   /* HOST must match the tail of cookie_domain. */
   if (!match_tail (host, cookie_domain, true))
@@ -601,7 +641,7 @@ no_psl:
     if (*p == '.')
       /* Ignore leading period in this calculation. */
       ++p;
-    DEBUGP ((" 4"));
+    DEBUGP (("cdm: 4\n"));
     for (out = 0; !out; p++)
       switch (*p)
         {
@@ -627,12 +667,12 @@ no_psl:
           ++ldcl;
         }
 
-    DEBUGP ((" 5"));
+    DEBUGP (("cdm: 5\n"));
 
     if (dccount < 2)
       return false;
 
-    DEBUGP ((" 6"));
+    DEBUGP (("cdm: 6\n"));
 
     if (dccount == 2)
       {
@@ -652,7 +692,7 @@ no_psl:
       }
   }
 
-  DEBUGP ((" 7"));
+  DEBUGP (("cdm: 7\n"));
 
   /* Don't allow the host "foobar.com" to set a cookie for domain
      "bar.com".  */
@@ -667,7 +707,7 @@ no_psl:
         return false;
     }
 
-  DEBUGP ((" 8"));
+  DEBUGP (("cdm: 8\n"));
 
   return true;
 }
@@ -692,7 +732,7 @@ check_path_match (const char *cookie_path, const char *path)
   s = PS_newstr;                                                \
 } while (0)
 
-
+
 /* Process the HTTP `Set-Cookie' header.  This results in storing the
    cookie or discarding a matching one, or ignoring it completely, all
    depending on the contents.  */
@@ -776,7 +816,7 @@ cookie_handle_set_cookie (struct cookie_jar *jar,
   if (cookie)
     delete_cookie (cookie);
 }
-
+
 /* Support for sending out cookies in HTTP requests, based on
    previously stored cookies.  Entry point is
    `build_cookies_request'.  */
@@ -1011,7 +1051,7 @@ cookie_header (struct cookie_jar *jar, const char *host,
 
   struct cookie *cookie;
   struct weighed_cookie *outgoing;
-  int count, i, ocnt;
+  size_t count, i, ocnt;
   char *result;
   int result_size, pos;
   PREPEND_SLASH (path);         /* see cookie_handle_set_cookie */
@@ -1025,7 +1065,7 @@ cookie_header (struct cookie_jar *jar, const char *host,
   chain_count = find_chains_of_host (jar, host, chains);
 
   /* No cookies for this host. */
-  if (!chain_count)
+  if (chain_count <= 0)
     return NULL;
 
   cookies_now = time (NULL);
@@ -1036,7 +1076,7 @@ cookie_header (struct cookie_jar *jar, const char *host,
 
   /* Count the number of matching cookies. */
   count = 0;
-  for (i = 0; i < chain_count; i++)
+  for (i = 0; i < (unsigned) chain_count; i++)
     for (cookie = chains[i]; cookie; cookie = cookie->next)
       if (cookie_matches_url (cookie, host, port, path, secflag, NULL))
         ++count;
@@ -1044,12 +1084,14 @@ cookie_header (struct cookie_jar *jar, const char *host,
     return NULL;                /* no cookies matched */
 
   /* Allocate the array. */
-  outgoing = alloca_array (struct weighed_cookie, count);
+  if (count > SIZE_MAX / sizeof (struct weighed_cookie))
+    return NULL;                /* unable to process so many cookies */
+  outgoing = xmalloc (count * sizeof (struct weighed_cookie));
 
   /* Fill the array with all the matching cookies from the chains that
      match HOST. */
   ocnt = 0;
-  for (i = 0; i < chain_count; i++)
+  for (i = 0; i < (unsigned) chain_count; i++)
     for (cookie = chains[i]; cookie; cookie = cookie->next)
       {
         int pg;
@@ -1104,10 +1146,11 @@ cookie_header (struct cookie_jar *jar, const char *host,
         }
     }
   result[pos++] = '\0';
+  xfree (outgoing);
   assert (pos == result_size);
   return result;
 }
-
+
 /* Support for loading and saving cookies.  The format used for
    loading and saving should be the format of the `cookies.txt' file
    used by Netscape and Mozilla, at least the Unix versions.
@@ -1346,7 +1389,7 @@ cookie_jar_save (struct cookie_jar *jar, const char *file)
 
   DEBUGP (("Done saving cookies.\n"));
 }
-
+
 /* Clean up cookie-related data. */
 
 void
@@ -1369,7 +1412,7 @@ cookie_jar_delete (struct cookie_jar *jar)
   hash_table_destroy (jar->chains);
   xfree (jar);
 }
-
+
 /* Test cases.  Currently this is only tests parse_set_cookies.  To
    use, recompile Wget with -DTEST_COOKIES and call test_cookies()
    from main.  */
@@ -1438,8 +1481,8 @@ test_cookies (void)
               printf ("Invalid value %d for '%s' (expected '%s', got '%s')\n",
                       j / 2 + 1, data, expected[j + 1], v);
             j += 2;
-            free (n);
-            free (v);
+            xfree (n);
+            xfree (v);
           }
         if (expected[j])
           printf ("Too few parameters for '%s'\n", data);

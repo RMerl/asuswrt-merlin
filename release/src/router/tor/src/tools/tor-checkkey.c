@@ -9,6 +9,7 @@
 #include "torlog.h"
 #include "util.h"
 #include "compat.h"
+#include "compat_openssl.h"
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 
@@ -70,7 +71,15 @@ main(int c, char **v)
     printf("%s\n",digest);
   } else {
     rsa = crypto_pk_get_rsa_(env);
-    str = BN_bn2hex(rsa->n);
+
+    const BIGNUM *rsa_n;
+#ifdef OPENSSL_1_1_API
+    const BIGNUM *rsa_e, *rsa_d;
+    RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
+#else
+    rsa_n = rsa->n;
+#endif
+    str = BN_bn2hex(rsa_n);
 
     printf("%s\n", str);
   }

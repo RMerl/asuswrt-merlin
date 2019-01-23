@@ -62,6 +62,7 @@
 //usage:       " 2990 andersen andersen R ps\n"
 
 #include "libbb.h"
+#include "common_bufsiz.h"
 #ifdef __linux__
 # include <sys/sysinfo.h>
 #endif
@@ -70,7 +71,7 @@
 enum { MAX_WIDTH = 2*1024 };
 
 #if ENABLE_FEATURE_PS_TIME || ENABLE_FEATURE_PS_LONG
-static long get_uptime(void)
+static unsigned long get_uptime(void)
 {
 #ifdef __linux__
 	struct sysinfo info;
@@ -78,12 +79,15 @@ static long get_uptime(void)
 		return 0;
 	return info.uptime;
 #elif 1
-	char buf[64];
-	long uptime;
+	unsigned long uptime;
+	char buf[sizeof(uptime)*3 + 2];
+	/* /proc/uptime is "UPTIME_SEC.NN IDLE_SEC.NN\n"
+	 * (where IDLE is cumulative over all CPUs)
+	 */
 	if (open_read_close("/proc/uptime", buf, sizeof(buf)) <= 0)
-		bb_perror_msg_and_die("can't read %s", "/proc/uptime");
+		bb_perror_msg_and_die("can't read '%s'", "/proc/uptime");
 	buf[sizeof(buf)-1] = '\0';
-	sscanf(buf, "%l", &uptime);
+	sscanf(buf, "%lu", &uptime);
 	return uptime;
 #else
 	struct timespec ts;
@@ -138,10 +142,10 @@ struct globals {
 	unsigned terminal_width;
 #if ENABLE_FEATURE_PS_TIME
 	unsigned kernel_HZ;
-	unsigned long long seconds_since_boot;
+	unsigned long seconds_since_boot;
 #endif
 } FIX_ALIASING;
-#define G (*(struct globals*)&bb_common_bufsiz1)
+#define G (*(struct globals*)bb_common_bufsiz1)
 #define out                (G.out               )
 #define out_cnt            (G.out_cnt           )
 #define print_header       (G.print_header      )
@@ -149,14 +153,13 @@ struct globals {
 #define buffer             (G.buffer            )
 #define terminal_width     (G.terminal_width    )
 #define kernel_HZ          (G.kernel_HZ         )
-#define seconds_since_boot (G.seconds_since_boot)
-#define INIT_G() do { } while (0)
+#define INIT_G() do { setup_common_bufsiz(); } while (0)
 
 #if ENABLE_FEATURE_PS_TIME
 /* for ELF executables, notes are pushed before environment and args */
-static ptrdiff_t find_elf_note(ptrdiff_t findme)
+static uintptr_t find_elf_note(uintptr_t findme)
 {
-	ptrdiff_t *ep = (ptrdiff_t *) environ;
+	uintptr_t *ep = (uintptr_t *) environ;
 
 	while (*ep++)
 		continue;
@@ -222,7 +225,6 @@ static inline unsigned get_HZ_by_waiting(void)
 
 static unsigned get_kernel_HZ(void)
 {
-
 	if (kernel_HZ)
 		return kernel_HZ;
 
@@ -231,7 +233,7 @@ static unsigned get_kernel_HZ(void)
 	if (kernel_HZ == (unsigned)-1)
 		kernel_HZ = get_HZ_by_waiting();
 
-	seconds_since_boot = get_uptime();
+	G.seconds_since_boot = get_uptime();
 
 	return kernel_HZ;
 }
@@ -298,8 +300,7 @@ static void put_lu(char *buf, int size, unsigned long u)
 	char buf4[5];
 
 	/* see http://en.wikipedia.org/wiki/Tera */
-	smart_ulltoa4(u, buf4, " mgtpezy");
-	buf4[4] = '\0';
+	smart_ulltoa4(u, buf4, " mgtpezy")[0] = '\0';
 	sprintf(buf, "%.*s", size, buf4);
 }
 
@@ -350,7 +351,7 @@ static void func_etime(char *buf, int size, const procps_status_t *ps)
 
 	mm = ps->start_time / get_kernel_HZ();
 	/* must be after get_kernel_HZ()! */
-	mm = seconds_since_boot - mm;
+	mm = G.seconds_since_boot - mm;
 	ss = mm % 60;
 	mm /= 60;
 	snprintf(buf, size+1, "%3lu:%02u", mm, ss);
@@ -588,7 +589,7 @@ int ps_main(int argc UNUSED_PARAM, char **argv)
 	// -o col1,col2,col3=header
 	//     Select which columns to display
 	/* We allow (and ignore) most of the above. FIXME.
-	 * -T is picked for threads (POSIX hasn't it standardized).
+	 * -T is picked for threads (POSIX hasn't standardized it).
 	 * procps v3.2.7 supports -T and shows tids as SPID column,
 	 * it also supports -L where it shows tids as LWP column.
 	 */
@@ -599,7 +600,9 @@ int ps_main(int argc UNUSED_PARAM, char **argv)
 			parse_o(llist_pop(&opt_o));
 		} while (opt_o);
 	} else {
-		/* Below: parse_o() needs char*, NOT const char*, can't give it default_o */
+		/* Below: parse_o() needs char*, NOT const char*,
+		 * can't pass it constant string. Need to make a copy first.
+		 */
 #if ENABLE_SELINUX
 		if (!(opt & OPT_Z) || !is_selinux_enabled()) {
 			/* no -Z or no SELinux: do not show LABEL */
@@ -620,7 +623,7 @@ int ps_main(int argc UNUSED_PARAM, char **argv)
 	 * and such large widths */
 	terminal_width = MAX_WIDTH;
 	if (isatty(1)) {
-		get_terminal_width_height(0, &terminal_width, NULL);
+		terminal_width = get_terminal_width(0);
 		if (--terminal_width > MAX_WIDTH)
 			terminal_width = MAX_WIDTH;
 	}
@@ -652,12 +655,12 @@ int ps_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 		OPT_l = (1 << ENABLE_SELINUX) * (1 << ENABLE_FEATURE_SHOW_THREADS) * ENABLE_FEATURE_PS_LONG,
 	};
 #if ENABLE_FEATURE_PS_LONG
-	time_t now = now;
-	long uptime;
+	time_t now = now; /* for compiler */
+	unsigned long uptime = uptime;
 #endif
-	int opts = 0;
 	/* If we support any options, parse argv */
 #if ENABLE_SELINUX || ENABLE_FEATURE_SHOW_THREADS || ENABLE_FEATURE_PS_WIDE || ENABLE_FEATURE_PS_LONG
+	int opts = 0;
 # if ENABLE_FEATURE_PS_WIDE
 	/* -w is a bit complicated */
 	int w_count = 0;
@@ -670,7 +673,7 @@ int ps_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 	if (w_count) {
 		terminal_width = (w_count == 1) ? 132 : MAX_WIDTH;
 	} else {
-		get_terminal_width_height(0, &terminal_width, NULL);
+		terminal_width = get_terminal_width(0);
 		/* Go one less... */
 		if (--terminal_width > MAX_WIDTH)
 			terminal_width = MAX_WIDTH;
@@ -711,10 +714,10 @@ int ps_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
  * We also show STIME (standard says that -f shows it, -l doesn't).
  */
 		puts("S   UID   PID  PPID   VSZ   RSS TTY   STIME TIME     CMD");
-#if ENABLE_FEATURE_PS_LONG
+# if ENABLE_FEATURE_PS_LONG
 		now = time(NULL);
 		uptime = get_uptime();
-#endif
+# endif
 	}
 	else {
 		puts("  PID USER       VSZ STAT COMMAND");
@@ -737,8 +740,7 @@ int ps_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 #endif
 		{
 			char buf6[6];
-			smart_ulltoa5(p->vsz, buf6, " mgtpezy");
-			buf6[5] = '\0';
+			smart_ulltoa5(p->vsz, buf6, " mgtpezy")[0] = '\0';
 #if ENABLE_FEATURE_PS_LONG
 			if (opts & OPT_l) {
 				char bufr[6], stime_str[6];
@@ -749,8 +751,7 @@ int ps_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 				time_t start = now - elapsed;
 				struct tm *tm = localtime(&start);
 
-				smart_ulltoa5(p->rss, bufr, " mgtpezy");
-				bufr[5] = '\0';
+				smart_ulltoa5(p->rss, bufr, " mgtpezy")[0] = '\0';
 
 				if (p->tty_major == 136)
 					/* It should be pts/N, not ptsN, but N > 9
@@ -786,9 +787,11 @@ int ps_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 
 		{
 			int sz = terminal_width - len;
-			char buf[sz + 1];
-			read_cmdline(buf, sz, p->pid, p->comm);
-			puts(buf);
+			if (sz >= 0) {
+				char buf[sz + 1];
+				read_cmdline(buf, sz, p->pid, p->comm);
+				puts(buf);
+			}
 		}
 	}
 	if (ENABLE_FEATURE_CLEAN_UP)

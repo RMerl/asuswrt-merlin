@@ -1,5 +1,5 @@
 /* getdtablesize() function for platforms that don't have it.
-   Copyright (C) 2008-2014 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2008.
 
    This program is free software: you can redistribute it and/or modify
@@ -84,24 +84,38 @@ getdtablesize (void)
   return dtablesize;
 }
 
-#elif HAVE_GETDTABLESIZE
+#else
 
+# include <limits.h>
 # include <sys/resource.h>
-# undef getdtablesize
+
+# ifndef RLIM_SAVED_CUR
+#  define RLIM_SAVED_CUR RLIM_INFINITY
+# endif
+# ifndef RLIM_SAVED_MAX
+#  define RLIM_SAVED_MAX RLIM_INFINITY
+# endif
+
+# ifdef __CYGWIN__
+  /* Cygwin 1.7.25 auto-increases the RLIMIT_NOFILE soft limit until it
+     hits the compile-time constant hard limit of 3200.  We might as
+     well just report the hard limit.  */
+#  define rlim_cur rlim_max
+# endif
 
 int
-rpl_getdtablesize(void)
+getdtablesize (void)
 {
-  /* To date, this replacement is only compiled for Cygwin 1.7.25,
-     which auto-increased the RLIMIT_NOFILE soft limit until it
-     hits the compile-time constant hard limit of 3200.  Although
-     that version of cygwin supported a child process inheriting
-     a smaller soft limit, the smaller limit is not enforced, so
-     we might as well just report the hard limit.  */
   struct rlimit lim;
-  if (!getrlimit (RLIMIT_NOFILE, &lim) && lim.rlim_max != RLIM_INFINITY)
-    return lim.rlim_max;
-  return getdtablesize ();
+
+  if (getrlimit (RLIMIT_NOFILE, &lim) == 0
+      && 0 <= lim.rlim_cur && lim.rlim_cur <= INT_MAX
+      && lim.rlim_cur != RLIM_INFINITY
+      && lim.rlim_cur != RLIM_SAVED_CUR
+      && lim.rlim_cur != RLIM_SAVED_MAX)
+    return lim.rlim_cur;
+
+  return INT_MAX;
 }
 
 #endif

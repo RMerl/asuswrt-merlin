@@ -60,7 +60,7 @@ function initial(){
 	if(noaidisk_support)
 		document.getElementById("aidisk_hyperlink").style.display = "none";
 	
-	if((based_modelid == "RT-AC87U" || based_modelid == "RT-AC5300" || based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100") && parent.currentUsbPort == 0){
+	if((based_modelid == "RT-AC87U" || based_modelid == "RT-AC5300" || based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC58U" || based_modelid == "RT-AC82U" ) && parent.currentUsbPort == 0){
 		document.getElementById('reduce_usb3_table').style.display = "";
 	}		
 }
@@ -106,11 +106,8 @@ function gotoDM(){
 		dm_http_port = "8081";
 
 	var dm_url = "";
-	if(parent.location.host.split(":").length > 1)
-		dm_url = "http://" + parent.location.host.split(":")[0] + ":" + dm_http_port;
-	else
-		dm_url = "http://" + parent.location.host + ":" + dm_http_port;
-
+	var header_info = [<% get_header_info(); %>];
+	dm_url = "http://" + header_info[0].host + ":" + dm_http_port;
 	window.open(dm_url);
 }
 

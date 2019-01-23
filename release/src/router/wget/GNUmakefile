@@ -5,7 +5,7 @@
 # It is necessary if you want to build targets usually of interest
 # only to the maintainer.
 
-# Copyright (C) 2001, 2003, 2006-2014 Free Software Foundation, Inc.
+# Copyright (C) 2001, 2003, 2006-2017 Free Software Foundation, Inc.
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

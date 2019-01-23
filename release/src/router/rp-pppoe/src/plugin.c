@@ -64,6 +64,7 @@ char pppd_version[] = VERSION;
 
 static int seen_devnam[2] = {0, 0};
 static char *pppoe_reqd_mac = NULL;
+static char *host_uniq = NULL;
 
 /* From sys-linux.c in pppd -- MUST FIX THIS! */
 extern int new_style_driver;
@@ -89,6 +90,8 @@ static option_t Options[] = {
       "Be verbose about discovered access concentrators"},
     { "rp_pppoe_mac", o_string, &pppoe_reqd_mac,
       "Only connect to specified MAC address" },
+    { "host-uniq", o_string, &host_uniq,
+      "Specify custom Host-Uniq" },
     { NULL }
 };
 int (*OldDevnameHook)(char *cmd, char **argv, int doit) = NULL;
@@ -120,7 +123,6 @@ PPPOEInitDevice(void)
     SET_STRING(conn->ifName, devnam);
     conn->discoverySocket = -1;
     conn->sessionSocket = -1;
-    conn->useHostUniq = 1;
     conn->printACNames = printACNames;
     conn->discoveryTimeout = PADI_TIMEOUT;
     return 1;
@@ -177,6 +179,9 @@ PPPOEConnectDevice(void)
 	error("Failed to create PPPoE socket: %m");
 	return -1;
     }
+
+    if (host_uniq && !parseHostUniq(host_uniq, &conn->hostUniq))
+	fatal("Illegal value for host-uniq option");
 
     if (acName) {
 	SET_STRING(conn->acName, acName);

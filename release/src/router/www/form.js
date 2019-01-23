@@ -59,11 +59,14 @@ function cal_panel_block(obj, multiple) {
 		}
 	};
 	var blockmarginLeft;
+	var winWidth = 0;
 	if (window.innerWidth) {
 		winWidth = window.innerWidth;
 	}
 	else if ((document.body) && (document.body.clientWidth)) {
 		winWidth = document.body.clientWidth;
+	} else {
+		winWidth = 1105;
 	}
 
 	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth) {

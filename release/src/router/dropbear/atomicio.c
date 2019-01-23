@@ -53,6 +53,7 @@ atomicio(f, fd, _s, n)
 			if (errno == EINTR || errno == EAGAIN)
 #endif
 				continue;
+			/* FALLTHROUGH */
 		case 0:
 			return (res);
 		default:

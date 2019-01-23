@@ -1,12 +1,36 @@
-/* * Copyright (c) 2012-2015, The Tor Project, Inc. */
+/* * Copyright (c) 2012-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
  * \file circuitmux_ewma.c
  * \brief EWMA circuit selection as a circuitmux_t policy
+ *
+ * The "EWMA" in this module stands for the "exponentially weighted moving
+ * average" of the number of cells sent on each circuit.  The goal is to
+ * prioritize cells on circuits that have been quiet recently, by looking at
+ * those that have sent few cells over time, prioritizing recent times
+ * more than older ones.
+ *
+ * Specifically, a cell sent at time "now" has weight 1, but a time X ticks
+ * before now has weight ewma_scale_factor ^ X , where ewma_scale_factor is
+ * between 0.0 and 1.0.
+ *
+ * For efficiency, we do not re-scale these averages every time we send a
+ * cell: that would be horribly inefficient.  Instead, we we keep the cell
+ * count on all circuits on the same circuitmux scaled relative to a single
+ * tick.  When we add a new cell, we scale its weight depending on the time
+ * that has elapsed since the tick.  We do re-scale the circuits on the
+ * circuitmux periodically, so that we don't overflow double.
+ *
+ *
+ * This module should be used through the interfaces in circuitmux.c, which it
+ * implements.
+ *
  **/
 
 #define TOR_CIRCUITMUX_EWMA_C_
+
+#include "orconfig.h"
 
 #include <math.h>
 
@@ -26,9 +50,10 @@
 
 /*** Some useful constant #defines ***/
 
-/*DOCDOC*/
+/** Any halflife smaller than this number of seconds is considered to be
+ * "disabled". */
 #define EPSILON 0.00001
-/*DOCDOC*/
+/** The natural logarithm of 0.5. */
 #define LOG_ONEHALF -0.69314718055994529
 
 /*** EWMA structures ***/
@@ -115,7 +140,7 @@ TO_EWMA_POL_CIRC_DATA(circuitmux_policy_circ_data_t *);
  * if the cast is impossible.
  */
 
-static INLINE ewma_policy_data_t *
+static inline ewma_policy_data_t *
 TO_EWMA_POL_DATA(circuitmux_policy_data_t *pol)
 {
   if (!pol) return NULL;
@@ -130,7 +155,7 @@ TO_EWMA_POL_DATA(circuitmux_policy_data_t *pol)
  * and assert if the cast is impossible.
  */
 
-static INLINE ewma_policy_circ_data_t *
+static inline ewma_policy_circ_data_t *
 TO_EWMA_POL_CIRC_DATA(circuitmux_policy_circ_data_t *pol)
 {
   if (!pol) return NULL;
@@ -147,7 +172,7 @@ static int compare_cell_ewma_counts(const void *p1, const void *p2);
 static unsigned cell_ewma_tick_from_timeval(const struct timeval *now,
                                             double *remainder_out);
 static circuit_t * cell_ewma_to_circuit(cell_ewma_t *ewma);
-static INLINE double get_scale_factor(unsigned from_tick, unsigned to_tick);
+static inline double get_scale_factor(unsigned from_tick, unsigned to_tick);
 static cell_ewma_t * pop_first_cell_ewma(ewma_policy_data_t *pol);
 static void remove_cell_ewma(ewma_policy_data_t *pol, cell_ewma_t *ewma);
 static void scale_single_cell_ewma(cell_ewma_t *ewma, unsigned cur_tick);
@@ -644,7 +669,7 @@ cell_ewma_set_scale_factor(const or_options_t *options,
 
 /** Return the multiplier necessary to convert the value of a cell sent in
  * 'from_tick' to one sent in 'to_tick'. */
-static INLINE double
+static inline double
 get_scale_factor(unsigned from_tick, unsigned to_tick)
 {
   /* This math can wrap around, but that's okay: unsigned overflow is

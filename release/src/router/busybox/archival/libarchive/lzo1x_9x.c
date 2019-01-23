@@ -71,7 +71,6 @@ typedef struct {
 	uint8_t *out;
 
 	unsigned r1_lit;
-
 } lzo1x_999_t;
 
 #define getbyte(c)  ((c).ip < (c).in_end ? *((c).ip)++ : (-1))
@@ -94,7 +93,7 @@ typedef struct {
 	( ((0x9f5f * ((((b[p]<<5)^b[p+1])<<5) ^ b[p+2])) >> 5) & (SWD_HSIZE-1) )
 
 #if defined(LZO_UNALIGNED_OK_2)
-#  define HEAD2(b,p)      (* (uint16_t *) &(b[p]))
+#  define HEAD2(b,p)      (* (bb__aliased_uint16_t *) &(b[p]))
 #else
 #  define HEAD2(b,p)      (b[p] ^ ((unsigned)b[p+1]<<8))
 #endif
@@ -466,7 +465,6 @@ static int find_match(lzo1x_999_t *c, lzo_swd_p s,
 	}
 
 	s->m_len = 1;
-	s->m_len = 1;
 #ifdef SWD_BEST_OFF
 	if (s->use_best_off)
 		memset(s->best_pos, 0, sizeof(s->best_pos));
@@ -644,7 +642,7 @@ static int len_of_coded_match(unsigned m_len, unsigned m_off, unsigned lit)
 
 
 static int min_gain(unsigned ahead, unsigned lit1,
-		    unsigned lit2, int l1, int l2, int l3)
+			unsigned lit2, int l1, int l2, int l3)
 {
 	int lazy_match_min_gain = 0;
 
@@ -673,7 +671,7 @@ static int min_gain(unsigned ahead, unsigned lit1,
 #if defined(SWD_BEST_OFF)
 
 static void better_match(const lzo_swd_p swd,
-			   unsigned *m_len, unsigned *m_off)
+			unsigned *m_len, unsigned *m_off)
 {
 	if (*m_len <= M2_MIN_LEN)
 		return;
@@ -914,8 +912,8 @@ int lzo1x_999_compress_level(const uint8_t *in, unsigned in_len,
 
 	compression_level -= 7;
 	return lzo1x_999_compress_internal(in, in_len, out, out_len, wrkmem,
-					   c[compression_level].good_length,
-					   c[compression_level].max_lazy,
-					   c[compression_level].max_chain,
-					   c[compression_level].use_best_off);
+					c[compression_level].good_length,
+					c[compression_level].max_lazy,
+					c[compression_level].max_chain,
+					c[compression_level].use_best_off);
 }

@@ -1,6 +1,6 @@
 /* HTML parser for Wget.
    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   2007, 2008, 2009, 2010, 2011, 2015 Free Software Foundation, Inc.
 
 This file is part of GNU Wget.
 
@@ -176,8 +176,8 @@ struct pool {
   P->orig_size = P->size;                                       \
 } while (0)
 
-/* Grow the pool to accomodate at least SIZE new bytes.  If the pool
-   already has room to accomodate SIZE bytes of data, this is a no-op.  */
+/* Grow the pool to accommodate at least SIZE new bytes.  If the pool
+   already has room to accommodate SIZE bytes of data, this is a no-op.  */
 
 #define POOL_GROW(p, increase)                                  \
   GROW_ARRAY ((p)->contents, (p)->size, (p)->tail + (increase), \
@@ -253,7 +253,7 @@ struct pool {
       (sizevar) = ga_newsize;                                                   \
     }                                                                           \
 } while (0)
-
+
 /* Test whether n+1-sized entity name fits in P.  We don't support
    IE-style non-terminated entities, e.g. "&ltfoo" -> "<foo".
    However, "&lt;foo" will work, as will "&lt!foo", "&lt", etc.  In
@@ -517,7 +517,7 @@ convert_and_copy (struct pool *pool, const char *beg, const char *end, int flags
         *p = c_tolower (*p);
     }
 }
-
+
 /* Originally we used to adhere to rfc 1866 here, and allowed only
    letters, digits, periods, and hyphens as names (of tags or
    attributes).  However, this broke too many pages which used
@@ -770,7 +770,7 @@ find_comment_end (const char *beg, const char *end)
       }
   return NULL;
 }
-
+
 /* Return true if the string containing of characters inside [b, e) is
    present in hash table HT.  */
 
@@ -797,14 +797,6 @@ name_allowed (const struct hash_table *ht, const char *b, const char *e)
 
 #define SKIP_WS(p) do {                         \
   while (c_isspace (*p)) {                        \
-    ADVANCE (p);                                \
-  }                                             \
-} while (0)
-
-/* Skip non-whitespace, if any. */
-
-#define SKIP_NON_WS(p) do {                     \
-  while (!c_isspace (*p)) {                       \
     ADVANCE (p);                                \
   }                                             \
 } while (0)
@@ -881,7 +873,7 @@ map_html_tags (const char *text, int size,
     if (*p == '!')
       {
         if (!(flags & MHT_STRICT_COMMENTS)
-            && p < end + 3 && p[1] == '-' && p[2] == '-')
+            && p + 3 < end && p[1] == '-' && p[2] == '-')
           {
             /* If strict comments are not enforced and if we know
                we're looking at a comment, simply look for the
@@ -1167,7 +1159,7 @@ map_html_tags (const char *text, int size,
 #undef ADVANCE
 #undef SKIP_WS
 #undef SKIP_NON_WS
-
+
 #ifdef STANDALONE
 static void
 test_mapper (struct taginfo *taginfo, void *arg)

@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2015, The Tor Project, Inc. */
+/* Copyright (c) 2013-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #define CONNECTION_PRIVATE
@@ -309,15 +309,14 @@ test_ext_or_cookie_auth(void *arg)
   tor_free(client_hash2);
 }
 
-static int
+static void
 crypto_rand_return_tse_str(char *to, size_t n)
 {
   if (n != 32) {
     TT_FAIL(("Asked for %d bytes, not 32", (int)n));
-    return -1;
+    return;
   }
   memcpy(to, "te road There is always another ", 32);
-  return 0;
 }
 
 static void

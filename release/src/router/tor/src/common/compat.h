@@ -1,6 +1,6 @@
 /* Copyright (c) 2003-2004, Roger Dingledine
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #ifndef TOR_COMPAT_H
@@ -42,6 +42,17 @@
 #include <netinet6/in6.h>
 #endif
 
+#include "compat_time.h"
+
+#if defined(__has_feature)
+#  if __has_feature(address_sanitizer)
+/* Some of the fancy glibc strcmp() macros include references to memory that
+ * clang rejects because it is off the end of a less-than-3. Clang hates this,
+ * even though those references never actually happen. */
+#    undef strcmp
+#  endif
+#endif
+
 #include <stdio.h>
 #include <errno.h>
 
@@ -73,11 +84,47 @@
 #define CHECK_SCANF(formatIdx, firstArg)
 #endif
 
+/* What GCC do we have? */
+#ifdef __GNUC__
+#define GCC_VERSION (__GNUC__ * 100 + __GNUC_MINOR__)
+#else
+#define GCC_VERSION 0
+#endif
+
+/* Temporarily enable and disable warnings. */
+#ifdef __GNUC__
+#  define PRAGMA_STRINGIFY_(s) #s
+#  define PRAGMA_JOIN_STRINGIFY_(a,b) PRAGMA_STRINGIFY_(a ## b)
+/* Support for macro-generated pragmas (c99) */
+#  define PRAGMA_(x) _Pragma (#x)
+#  ifdef __clang__
+#    define PRAGMA_DIAGNOSTIC_(x) PRAGMA_(clang diagnostic x)
+#  else
+#    define PRAGMA_DIAGNOSTIC_(x) PRAGMA_(GCC diagnostic x)
+#  endif
+#  if defined(__clang__) || GCC_VERSION >= 406
+/* we have push/pop support */
+#    define DISABLE_GCC_WARNING(warningopt) \
+          PRAGMA_DIAGNOSTIC_(push) \
+          PRAGMA_DIAGNOSTIC_(ignored PRAGMA_JOIN_STRINGIFY_(-W,warningopt))
+#    define ENABLE_GCC_WARNING(warningopt) \
+          PRAGMA_DIAGNOSTIC_(pop)
+#  else
+/* older version of gcc: no push/pop support. */
+#    define DISABLE_GCC_WARNING(warningopt) \
+         PRAGMA_DIAGNOSTIC_(ignored PRAGMA_JOIN_STRINGIFY_(-W,warningopt))
+#    define ENABLE_GCC_WARNING(warningopt) \
+         PRAGMA_DIAGNOSTIC_(warning PRAGMA_JOIN_STRINGIFY_(-W,warningopt))
+#  endif
+#else /* ifdef __GNUC__ */
+/* not gcc at all */
+# define DISABLE_GCC_WARNING(warning)
+# define ENABLE_GCC_WARNING(warning)
+#endif
+
 /* inline is __inline on windows. */
 #ifdef _WIN32
-#define INLINE __inline
-#else
-#define INLINE inline
+#define inline __inline
 #endif
 
 /* Try to get a reasonable __func__ substitute in place. */
@@ -118,6 +165,7 @@
 #define ATTR_CONST __attribute__((const))
 #define ATTR_MALLOC __attribute__((malloc))
 #define ATTR_NORETURN __attribute__((noreturn))
+#define ATTR_WUR __attribute__((warn_unused_result))
 /* Alas, nonnull is not at present a good idea for us.  We'd like to get
  * warnings when we pass NULL where we shouldn't (which nonnull does, albeit
  * spottily), but we don't want to tell the compiler to make optimizations
@@ -153,6 +201,7 @@
 #define ATTR_NORETURN
 #define ATTR_NONNULL(x)
 #define ATTR_UNUSED
+#define ATTR_WUR
 #define PREDICT_LIKELY(exp) (exp)
 #define PREDICT_UNLIKELY(exp) (exp)
 #endif
@@ -288,7 +337,7 @@ const void *tor_memmem(const void *haystack, size_t hlen, const void *needle,
                        size_t nlen) ATTR_NONNULL((1,3));
 static const void *tor_memstr(const void *haystack, size_t hlen,
                            const char *needle) ATTR_NONNULL((1,3));
-static INLINE const void *
+static inline const void *
 tor_memstr(const void *haystack, size_t hlen, const char *needle)
 {
   return tor_memmem(haystack, hlen, needle, strlen(needle));
@@ -299,7 +348,7 @@ tor_memstr(const void *haystack, size_t hlen, const char *needle)
 #define DECLARE_CTYPE_FN(name)                                          \
   static int TOR_##name(char c);                                        \
   extern const uint32_t TOR_##name##_TABLE[];                           \
-  static INLINE int TOR_##name(char c) {                                \
+  static inline int TOR_##name(char c) {                                \
     uint8_t u = c;                                                      \
     return !!(TOR_##name##_TABLE[(u >> 5) & 7] & (1u << (u & 31)));     \
   }
@@ -311,8 +360,8 @@ DECLARE_CTYPE_FN(ISXDIGIT)
 DECLARE_CTYPE_FN(ISPRINT)
 DECLARE_CTYPE_FN(ISLOWER)
 DECLARE_CTYPE_FN(ISUPPER)
-extern const char TOR_TOUPPER_TABLE[];
-extern const char TOR_TOLOWER_TABLE[];
+extern const uint8_t TOR_TOUPPER_TABLE[];
+extern const uint8_t TOR_TOLOWER_TABLE[];
 #define TOR_TOLOWER(c) (TOR_TOLOWER_TABLE[(uint8_t)c])
 #define TOR_TOUPPER(c) (TOR_TOUPPER_TABLE[(uint8_t)c])
 
@@ -332,15 +381,6 @@ const char *tor_fix_source_file(const char *fname);
 #endif
 
 /* ===== Time compatibility */
-#if !defined(HAVE_GETTIMEOFDAY) && !defined(HAVE_STRUCT_TIMEVAL_TV_SEC)
-/** Implementation of timeval for platforms that don't have it. */
-struct timeval {
-  time_t tv_sec;
-  unsigned int tv_usec;
-};
-#endif
-
-void tor_gettimeofday(struct timeval *timeval);
 
 struct tm *tor_localtime_r(const time_t *timep, struct tm *result);
 struct tm *tor_gmtime_r(const time_t *timep, struct tm *result);
@@ -421,7 +461,7 @@ typedef int socklen_t;
 
 #ifdef _WIN32
 /* XXX Actually, this should arguably be SOCKET; we use intptr_t here so that
- * any inadvertant checks for the socket being <= 0 or > 0 will probably
+ * any inadvertent checks for the socket being <= 0 or > 0 will probably
  * still work. */
 #define tor_socket_t intptr_t
 #define TOR_SOCKET_T_FORMAT INTPTR_T_FORMAT
@@ -438,7 +478,7 @@ typedef int socklen_t;
 #endif
 
 int tor_close_socket_simple(tor_socket_t s);
-int tor_close_socket(tor_socket_t s);
+MOCK_DECL(int, tor_close_socket, (tor_socket_t s));
 tor_socket_t tor_open_socket_with_extensions(
                                            int domain, int type, int protocol,
                                            int cloexec, int nonblock);
@@ -601,7 +641,7 @@ typedef enum {
 } socks5_reply_status_t;
 
 /* ===== OS compatibility */
-const char *get_uname(void);
+MOCK_DECL(const char *, get_uname, (void));
 
 uint16_t get_uint16(const void *cp) ATTR_NONNULL((1));
 uint32_t get_uint32(const void *cp) ATTR_NONNULL((1));
@@ -613,7 +653,7 @@ void set_uint64(void *cp, uint64_t v) ATTR_NONNULL((1));
 /* These uint8 variants are defined to make the code more uniform. */
 #define get_uint8(cp) (*(const uint8_t*)(cp))
 static void set_uint8(void *cp, uint8_t v);
-static INLINE void
+static inline void
 set_uint8(void *cp, uint8_t v)
 {
   *(uint8_t*)cp = v;
@@ -625,7 +665,18 @@ typedef unsigned long rlim_t;
 int get_max_sockets(void);
 int set_max_file_descriptors(rlim_t limit, int *max);
 int tor_disable_debugger_attach(void);
-int switch_id(const char *user);
+
+#if defined(HAVE_SYS_CAPABILITY_H) && defined(HAVE_CAP_SET_PROC)
+#define HAVE_LINUX_CAPABILITIES
+#endif
+
+int have_capability_support(void);
+
+/** Flag for switch_id; see switch_id() for documentation */
+#define SWITCH_ID_KEEP_BINDLOW    (1<<0)
+/** Flag for switch_id; see switch_id() for documentation */
+#define SWITCH_ID_WARN_IF_NO_CAPS (1<<1)
+int switch_id(const char *user, unsigned flags);
 #ifdef HAVE_PWD_H
 char *get_user_homedir(const char *username);
 #endif
@@ -677,10 +728,6 @@ char *format_win32_error(DWORD err);
 #define VER_SUITE_SINGLEUSERTS 0x00000100
 #endif
 
-#endif
-
-#ifdef TOR_UNIT_TESTS
-void tor_sleep_msec(int msec);
 #endif
 
 #ifdef COMPAT_PRIVATE

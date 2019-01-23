@@ -4,6 +4,10 @@
 ### Start config
 
 ### Manual/hardcoded
+# Append git revision
+export BUILDREV=1
+#export MERLINUPDATE=n
+
 # Set DEFAULTBUILD to "none", then
 # uncomment desired models
 #
@@ -84,7 +88,7 @@ build_fw()
 	FWPATH=$1
 	echo "*** $(date +%R) - Starting building $FWMODEL..."
 	cd ~/$FWPATH
-	make $FWMODEL &>/dev/null
+	make $FWMODEL &> output.txt
 
 	if [ $? -eq 0 ]; then
 		cd image
@@ -92,8 +96,8 @@ build_fw()
 		cp $FWNAME $STAGE_LOC/
 
 		ZIPNAME="${FWNAME%.*}".zip
-		sha256sum $FWNAME | unix2dos > sha256sum.txt
-		zip -j $STAGE_LOC/$ZIPNAME $FWNAME $STAGE_LOC/README-merlin.txt $STAGE_LOC/Changelog.txt sha256sum.txt &>/dev/null
+		sha256sum $FWNAME > sha256sum.sha256
+		zip -j $STAGE_LOC/$ZIPNAME $FWNAME $STAGE_LOC/README-merlin.txt $STAGE_LOC/Changelog.txt sha256sum.sha256 &>/dev/null
 		echo "*** $(date +%R) - Done building $FWMODEL!"
 	else
 		echo "!!! $(date +%R) - $FWMODEL build failed!"

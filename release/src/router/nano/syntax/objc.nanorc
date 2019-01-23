@@ -1,0 +1,41 @@
+## Here is an example for C/C++/Obj-C.
+
+syntax "m" "\.m$"
+comment "//"
+
+# Stuffs,
+color brightwhite "\<[A-Z_][0-9A-Z_]+\>"
+color green "\<(float|double|BOOL|bool|char|int|short|long|id|sizeof|enum|void|static|const|struct|union|typedef|extern|(un)?signed|inline)\>"
+color green "\<[[:alpha:]_][[:alnum:]_]*_t\>"
+color green "\<(class|namespace|template|public|protected|private|typename|this|friend|virtual|using|mutable|volatile|register|explicit)\>"
+color brightgreen "\<(for|if|while|do|else|case|default|switch)\>"
+color brightgreen "\<(try|throw|catch|operator|new|delete)\>"
+color brightgreen "\<(goto|continue|break|return)\>"
+color brightgreen "@\<(en(code|d)|i(mplementation|nterface)|selector)\>"
+
+# GCC builtins.
+color cyan "__attribute__[[:space:]]*\(\([^)]*\)\)" "__(aligned|asm|builtin|hidden|inline|packed|restrict|section|typeof|weak)__"
+
+# Selector/method.
+color brightmagenta "(^|[[:space:]])\[.*[[:space:]].*\]"
+color white ":[[:alnum:]]*"
+color magenta "[[:alnum:]]*:"
+color white "\[[^][:space:]]*\]"
+
+# Strings.
+color brightblack "'([^'\]|(\\["'abfnrtv\\]))'" "'\\(([0-3]?[0-7]{1,2}))'" "'\\x[0-9A-Fa-f]{1,2}'"
+color brightblack "<[^= 	]*>" ""(\\.|[^"])*""
+color brightblue "@"(\\.|[^"])*""
+# Multiline strings.  This regex is VERY resource intensive,
+# and sometimes colours things that shouldn't be coloured.
+###color brightyellow start=""(\\.|[^"])*\\[[:space:]]*$" end="^(\\.|[^"])*""
+
+# Preprocessor commands.
+color brightblue "^[[:space:]]*#[[:space:]]*(define|include|import|(un|ifn?)def|endif|el(if|se)|if|warning|error)"
+
+# Comments.
+color yellow "//.*"
+color yellow start="/\*" end="\*/"
+
+# Trailing whitespace.                                                                                                       
+color ,green "[[:space:]]+$"

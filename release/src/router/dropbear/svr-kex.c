@@ -84,11 +84,12 @@ void recv_msg_kexdh_init() {
 	TRACE(("leave recv_msg_kexdh_init"))
 }
 
+
 #ifdef DROPBEAR_DELAY_HOSTKEY
+
 static void svr_ensure_hostkey() {
 
 	const char* fn = NULL;
-	char *fn_temp = NULL;
 	enum signkey_type type = ses.newkeys->algo_hostkey;
 	void **hostkey = signkey_key_ptr(svr_opts.hostkey, type);
 	int ret = DROPBEAR_FAILURE;
@@ -117,31 +118,17 @@ static void svr_ensure_hostkey() {
 			break;
 #endif
 		default:
-			(void)0;
+			dropbear_assert(0);
 	}
 
 	if (readhostkey(fn, svr_opts.hostkey, &type) == DROPBEAR_SUCCESS) {
 		return;
 	}
 
-	fn_temp = m_malloc(strlen(fn) + 20);
-	snprintf(fn_temp, strlen(fn)+20, "%s.tmp%d", fn, getpid());
-
-	if (signkey_generate(type, 0, fn_temp) == DROPBEAR_FAILURE) {
+	if (signkey_generate(type, 0, fn, 1) == DROPBEAR_FAILURE) {
 		goto out;
 	}
-
-	if (link(fn_temp, fn) < 0) {
-		/* It's OK to get EEXIST - we probably just lost a race
-		with another connection to generate the key */
-		if (errno != EEXIST) {
-			dropbear_log(LOG_ERR, "Failed moving key file to %s: %s", fn,
-				strerror(errno));
-			/* XXX fallback to non-atomic copy for some filesystems? */
-			goto out;
-		}
-	}
-
+	
 	ret = readhostkey(fn, svr_opts.hostkey, &type);
 
 	if (ret == DROPBEAR_SUCCESS) {
@@ -159,11 +146,6 @@ static void svr_ensure_hostkey() {
 	}
 
 out:
-	if (fn_temp) {
-		unlink(fn_temp);
-		m_free(fn_temp);
-	}
-
 	if (ret == DROPBEAR_FAILURE)
 	{
 		dropbear_exit("Couldn't read or generate hostkey %s", fn);
@@ -222,7 +204,7 @@ static void send_msg_kexdh_reply(mp_int *dh_e, buffer *ecdh_qs) {
 			{
 			struct kex_curve25519_param *param = gen_kexcurve25519_param();
 			kexcurve25519_comb_key(param, ecdh_qs, svr_opts.hostkey);
-			buf_putstring(ses.writepayload, param->pub, CURVE25519_LEN);
+			buf_putstring(ses.writepayload, (const char*)param->pub, CURVE25519_LEN);
 			free_kexcurve25519_param(param);
 			}
 #endif

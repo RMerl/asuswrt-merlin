@@ -78,7 +78,7 @@ void initCommonConfig() {
     commonConfig.startupQueryCount = DEFAULT_ROBUSTNESS;
 
     // Default values for leave intervals...
-    commonConfig.lastMemberQueryInterval = INTERVAL_QUERY_RESPONSE;
+    commonConfig.lastMemberQueryInterval = INTERVAL_LASTMEMBER_QUERY;
     commonConfig.lastMemberQueryCount    = DEFAULT_ROBUSTNESS;
 
     // If 1, a leave message is sent upstream on leave messages from downstream.

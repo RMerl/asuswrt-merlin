@@ -1,6 +1,6 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "orconfig.h"
@@ -10,7 +10,8 @@
 #include "crypto_s2k.h"
 #include "crypto_pwbox.h"
 
-#if defined(HAVE_LIBSCRYPT_H)
+#if defined(HAVE_LIBSCRYPT_H) && defined(HAVE_LIBSCRYPT_SCRYPT)
+#define HAVE_LIBSCRYPT
 #include <libscrypt.h>
 #endif
 
@@ -129,14 +130,15 @@ test_crypto_s2k_general(void *arg)
   }
 }
 
-#if defined(HAVE_LIBSCRYPT_H) && defined(HAVE_EVP_PBE_SCRYPT)
+#if defined(HAVE_LIBSCRYPT) && defined(HAVE_EVP_PBE_SCRYPT)
 static void
 test_libscrypt_eq_openssl(void *arg)
 {
   uint8_t buf1[64];
   uint8_t buf2[64];
 
-  uint64_t N, r, p;
+  uint64_t N;
+  uint32_t r, p;
   uint64_t maxmem = 0; // --> SCRYPT_MAX_MEM in OpenSSL.
 
   int libscrypt_retval, openssl_retval;
@@ -276,7 +278,7 @@ test_crypto_s2k_errors(void *arg)
                                     buf, sizeof(buf), "ABC", 3));
 
   /* Truncated output */
-#ifdef HAVE_LIBSCRYPT_H
+#ifdef HAVE_LIBSCRYPT
   tt_int_op(S2K_TRUNCATED, OP_EQ, secret_to_key_new(buf, 50, &sz,
                                                  "ABC", 3, 0));
   tt_int_op(S2K_TRUNCATED, OP_EQ, secret_to_key_new(buf, 50, &sz,
@@ -287,7 +289,7 @@ test_crypto_s2k_errors(void *arg)
   tt_int_op(S2K_TRUNCATED, OP_EQ, secret_to_key_new(buf, 29, &sz,
                                               "ABC", 3, S2K_FLAG_NO_SCRYPT));
 
-#ifdef HAVE_LIBSCRYPT_H
+#ifdef HAVE_LIBSCRYPT
   tt_int_op(S2K_TRUNCATED, OP_EQ, secret_to_key_make_specifier(buf, 18, 0));
   tt_int_op(S2K_TRUNCATED, OP_EQ, secret_to_key_make_specifier(buf, 18,
                                                  S2K_FLAG_LOW_MEM));
@@ -308,7 +310,7 @@ test_crypto_s2k_errors(void *arg)
             secret_to_key_derivekey(buf2, sizeof(buf2),
                                     buf, 18, "ABC", 3));
 
-#ifdef HAVE_LIBSCRYPT_H
+#ifdef HAVE_LIBSCRYPT
   /* It's a bad scrypt buffer if N would overflow uint64 */
   memset(buf, 0, sizeof(buf));
   buf[0] = 2; /* scrypt */
@@ -329,7 +331,7 @@ test_crypto_scrypt_vectors(void *arg)
   uint8_t spec[64], out[64];
 
   (void)arg;
-#ifndef HAVE_LIBSCRYPT_H
+#ifndef HAVE_LIBSCRYPT
   if (1)
     tt_skip();
 #endif
@@ -420,12 +422,16 @@ test_crypto_pbkdf2_vectors(void *arg)
             secret_to_key_compute_key(out, 20, spec, 5, "password", 8, 1));
   test_memeq_hex(out, "4b007901b765489abead49d926f721d065a429c1");
 
+  /* This is the very slow one here.  When enabled, it accounts for roughly
+   * half the time spent in test-slow. */
+  /*
   base16_decode((char*)spec, sizeof(spec),
                 "73616c74" "18" , 10);
   memset(out, 0x00, sizeof(out));
   tt_int_op(20, OP_EQ,
             secret_to_key_compute_key(out, 20, spec, 5, "password", 8, 1));
   test_memeq_hex(out, "eefe3d61cd4da4e4e9945b3d6ba2158c2634e984");
+  */
 
   base16_decode((char*)spec, sizeof(spec),
                 "73616c7453414c5473616c7453414c5473616c745"
@@ -502,12 +508,91 @@ test_crypto_pwbox(void *arg)
   tor_free(decoded);
 }
 
+static void
+test_crypto_ed25519_fuzz_donna(void *arg)
+{
+  const unsigned iters = 1024;
+  uint8_t msg[1024];
+  unsigned i;
+  (void)arg;
+
+  tt_assert(sizeof(msg) == iters);
+  crypto_rand((char*) msg, sizeof(msg));
+
+  /* Fuzz Ed25519-donna vs ref10, alternating the implementation used to
+   * generate keys/sign per iteration.
+   */
+  for (i = 0; i < iters; ++i) {
+    const int use_donna = i & 1;
+    uint8_t blinding[32];
+    curve25519_keypair_t ckp;
+    ed25519_keypair_t kp, kp_blind, kp_curve25519;
+    ed25519_public_key_t pk, pk_blind, pk_curve25519;
+    ed25519_signature_t sig, sig_blind;
+    int bit = 0;
+
+    crypto_rand((char*) blinding, sizeof(blinding));
+
+    /* Impl. A:
+     *  1. Generate a keypair.
+     *  2. Blinded the keypair.
+     *  3. Sign a message (unblinded).
+     *  4. Sign a message (blinded).
+     *  5. Generate a curve25519 keypair, and convert it to Ed25519.
+     */
+    ed25519_set_impl_params(use_donna);
+    tt_int_op(0, OP_EQ, ed25519_keypair_generate(&kp, i&1));
+    tt_int_op(0, OP_EQ, ed25519_keypair_blind(&kp_blind, &kp, blinding));
+    tt_int_op(0, OP_EQ, ed25519_sign(&sig, msg, i, &kp));
+    tt_int_op(0, OP_EQ, ed25519_sign(&sig_blind, msg, i, &kp_blind));
+
+    tt_int_op(0, OP_EQ, curve25519_keypair_generate(&ckp, i&1));
+    tt_int_op(0, OP_EQ, ed25519_keypair_from_curve25519_keypair(
+            &kp_curve25519, &bit, &ckp));
+
+    /* Impl. B:
+     *  1. Validate the public key by rederiving it.
+     *  2. Validate the blinded public key by rederiving it.
+     *  3. Validate the unblinded signature (and test a invalid signature).
+     *  4. Validate the blinded signature.
+     *  5. Validate the public key (from Curve25519) by rederiving it.
+     */
+    ed25519_set_impl_params(!use_donna);
+    tt_int_op(0, OP_EQ, ed25519_public_key_generate(&pk, &kp.seckey));
+    tt_mem_op(pk.pubkey, OP_EQ, kp.pubkey.pubkey, 32);
+
+    tt_int_op(0, OP_EQ, ed25519_public_blind(&pk_blind, &kp.pubkey, blinding));
+    tt_mem_op(pk_blind.pubkey, OP_EQ, kp_blind.pubkey.pubkey, 32);
+
+    tt_int_op(0, OP_EQ, ed25519_checksig(&sig, msg, i, &pk));
+    sig.sig[0] ^= 15;
+    tt_int_op(-1, OP_EQ, ed25519_checksig(&sig, msg, sizeof(msg), &pk));
+
+    tt_int_op(0, OP_EQ, ed25519_checksig(&sig_blind, msg, i, &pk_blind));
+
+    tt_int_op(0, OP_EQ, ed25519_public_key_from_curve25519_public_key(
+            &pk_curve25519, &ckp.pubkey, bit));
+    tt_mem_op(pk_curve25519.pubkey, OP_EQ, kp_curve25519.pubkey.pubkey, 32);
+  }
+
+ done:
+  ;
+}
+
 #define CRYPTO_LEGACY(name)                                            \
   { #name, test_crypto_ ## name , 0, NULL, NULL }
 
+#define ED25519_TEST_ONE(name, fl, which)                               \
+  { #name "/ed25519_" which, test_crypto_ed25519_ ## name, (fl),        \
+    &ed25519_test_setup, (void*)which }
+
+#define ED25519_TEST(name, fl)                  \
+  ED25519_TEST_ONE(name, (fl), "donna"),        \
+  ED25519_TEST_ONE(name, (fl), "ref10")
+
 struct testcase_t slow_crypto_tests[] = {
   CRYPTO_LEGACY(s2k_rfc2440),
-#ifdef HAVE_LIBSCRYPT_H
+#ifdef HAVE_LIBSCRYPT
   { "s2k_scrypt", test_crypto_s2k_general, 0, &passthrough_setup,
     (void*)"scrypt" },
   { "s2k_scrypt_low", test_crypto_s2k_general, 0, &passthrough_setup,
@@ -526,6 +611,7 @@ struct testcase_t slow_crypto_tests[] = {
   { "scrypt_vectors", test_crypto_scrypt_vectors, 0, NULL, NULL },
   { "pbkdf2_vectors", test_crypto_pbkdf2_vectors, 0, NULL, NULL },
   { "pwbox", test_crypto_pwbox, 0, NULL, NULL },
+  ED25519_TEST(fuzz_donna, TT_FORK),
   END_OF_TESTCASES
 };
 

@@ -103,7 +103,15 @@ smaller code. In order to assign it, use SET_PTR_TO_GLOBALS macro:
 
 	SET_PTR_TO_GLOBALS(xzalloc(sizeof(G)));
 
-Typically it is done in <applet>_main().
+Typically it is done in <applet>_main(). Another variation is
+to use stack:
+
+int <applet>_main(...)
+{
+#undef G
+	struct globals G;
+	memset(&G, 0, sizeof(G));
+	SET_PTR_TO_GLOBALS(&G);
 
 Now you can reference "globals" by G.a, G.buf and so on, in any function.
 
@@ -136,13 +144,6 @@ less readable, use #defines:
 
 #define dev_fd (G.dev_fd)
 #define sector (G.sector)
-
-
-		Word of caution
-
-If applet doesn't use much of global data, converting it to use
-one of above methods is not worth the resulting code obfuscation.
-If you have less than ~300 bytes of global data - don't bother.
 
 
 		Finding non-shared duplicated strings
@@ -223,6 +224,14 @@ Result (non-static busybox built against glibc):
 
 
 		Keeping code small
+
+Use scripts/bloat-o-meter to check whether introduced changes
+didn't generate unnecessary bloat. This script needs unstripped binaries
+to generate a detailed report. To automate this, just use
+"make bloatcheck". It requires busybox_old binary to be present,
+use "make baseline" to generate it from unmodified source, or
+copy busybox_unstripped to busybox_old before modifying sources
+and rebuilding.
 
 Set CONFIG_EXTRA_CFLAGS="-fno-inline-functions-called-once",
 produce "make bloatcheck", see the biggest auto-inlined functions.

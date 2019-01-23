@@ -7,7 +7,6 @@ from misc.wget_file import WgetFile
     Test Wget's response when the file requested already exists on disk with
     a filesize greater than or equal to the requested file.
 """
-TEST_NAME = "Test continue option"
 ############# File Definitions ###############################################
 File1 = "abababababababababababababababababababababababababababababababababab"
 File2 = "ababababababababababababababababababab"
@@ -44,7 +43,6 @@ post_test = {
 }
 
 err = HTTPTest (
-                name=TEST_NAME,
                 pre_hook=pre_test,
                 test_params=test_options,
                 post_hook=post_test

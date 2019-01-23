@@ -94,9 +94,9 @@ exceptional conditions.
  #endif
 +#ifdef TIOCPKT
 +	int control;
-+	static const char lflow_on[] =
++	static const char lflow_on[] ALIGN1 =
 +	    {IAC, SB, TELOPT_LFLOW, LFLOW_ON, IAC, SE};
-+	static const char lflow_off[] =
++	static const char lflow_off[] ALIGN1 =
 +	    {IAC, SB, TELOPT_LFLOW, LFLOW_OFF, IAC, SE};
 +# define RESERVED sizeof(lflow_on)
 +#else

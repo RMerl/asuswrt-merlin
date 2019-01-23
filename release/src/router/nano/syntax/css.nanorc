@@ -1,0 +1,11 @@
+## Here is an example for CSS files.
+
+syntax "css" "\.css$"
+comment "/*|*/"
+
+color brightred     "."
+color brightyellow  start="\{" end="\}"
+color brightwhite   start=":" end="([;^\{]|$)"
+color brightblue    ":active|:focus|:hover|:link|:visited|:link|:after|:before|$"
+color brightblue    start="\/\*" end="\\*/"
+color green         ";|:|\{|\}"

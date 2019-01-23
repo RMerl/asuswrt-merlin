@@ -1,0 +1,10 @@
+Name: test
+Type: hash:ip,port,net
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 8776
+References: 0
+Members:
+1.255.255.255,tcp:5,1.1.1.0/24
+2.0.0.0,tcp:5,1.1.1.0/24
+2.0.255.255,tcp:128,2.0.0.0/12
+2.1.0.0,tcp:128,2.0.0.0/12

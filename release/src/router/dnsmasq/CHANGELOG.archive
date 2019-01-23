@@ -56,7 +56,7 @@ release 0.95  Major rewrite: remove calls to gethostbyname() and talk
               any more memory after start-up. The NAT-like forwarding was
               inspired by a suggestion from Eli Chen <eli@routefree.com>
 
-release 0.96  Fixed embarrasing thinko in cache linked-list code.
+release 0.96  Fixed embarrassing thinko in cache linked-list code.
                              
 release 0.98  Some enhancements and bug-fixes. 
               Thanks to "Denis Carre" <denis.carre@laposte.net> and Martin 
@@ -78,7 +78,7 @@ release 0.98  Some enhancements and bug-fixes.
                   ids, to thwart DNS spoofers.
               (7) Dnsmasq no longer forwards queries when the 
 	          "recursion desired" bit is not set in the header.
-	      (8) Fixed getopt code to work on compliers with unsigned char.
+	      (8) Fixed getopt code to work on compilers with unsigned char.
               
 release 0.991 Added -b flag: when set causes dnsmasq to always answer
 	      reverse queries on the RFC 1918 private IP space itself and
@@ -88,7 +88,7 @@ release 0.991 Added -b flag: when set causes dnsmasq to always answer
               Fixed a bug which stopped dnsmasq working on a box with
               two or more interfaces with the same IP address. 
 
-              Fixed cacheing of CNAMEs. Previously, a CNAME which pointed
+              Fixed caching of CNAMEs. Previously, a CNAME which pointed
               to  a name with many A records would not have all the addresses
               returned when being answered from the cache.
 
@@ -191,7 +191,7 @@ release 1.1   Added --user argument to allow user to change to
 
 release 1.2   Added IPv6 DNS record support. AAAA records are cached
               and read from /etc/hosts. Reverse-lookups in the
-	      ip6.int and ip6.arpa domains are suppored. Dnsmasq can
+	      ip6.int and ip6.arpa domains are supported. Dnsmasq can
               talk to upstream servers via IPv6 if it finds IP6 addresses
               in /etc/resolv.conf and it offers DNS service automatically
               if IPv6 support is present in the kernel.
@@ -214,7 +214,7 @@ release 1.3   Some versions of the Linux kernel return EINVAL rather
               starting, rather than after the first query - principle 
               of least surprise applies here.     
 
-release 1.4   Fix a bug with DHPC lease parsing which broke in
+release 1.4   Fix a bug with DHCP lease parsing which broke in
               non-UTC timezones. Thanks to Mark Wormgoor for
               spotting and diagnosing this. Fixed versions in
               the .spec files this time. Fixed bug in Suse startup
@@ -258,7 +258,7 @@ release 1.7   Fix a problem with cache not clearing properly
               on receipt of SIGHUP. Bug spotted by Sat Deshpande.
 
               In group-id changing code:
-	      1) Drop supplimentary groups.
+	      1) Drop supplementary groups.
               2) Change gid before dropping root (patch from Soewono Effendi.)
               3) Change group to "dip" if it exists, to allow access
                  to /etc/ppp/resolv.conf (suggestion from Jorg Sommer.)
@@ -297,7 +297,7 @@ release 1.9   Fixes to rpm .spec files.
               required. The difference is not really visible with
               bloated libcs like glibc, but should dramatically reduce
               memory requirements when linked against ulibc for use on
-              embeded routers, and that's the point really. Thanks to
+              embedded routers, and that's the point really. Thanks to
               Matthew Natalier for prompting this.   
 
 	      Changed debug mode (-d) so that all logging appears on
@@ -319,12 +319,12 @@ release 1.9   Fixes to rpm .spec files.
               uClinux. Thanks to Matthew Natalier for uClinux stuff. 
 
 release 1.10  Log warnings if resolv.conf or dhcp.leases are not
-              accessable for any reason, as suggested by Hinrich Eilts.
+              accessible for any reason, as suggested by Hinrich Eilts.
 
 	      Fixed wrong address printing in error message about
 	      no interface with address.
 
-	      Updated docs and split installation instuctions into setup.html.
+	      Updated docs and split installation instructions into setup.html.
 
 	      Fix bug in CNAME chasing code: One CNAME pointing
 	      to many A records would lose A records after the 
@@ -346,7 +346,7 @@ release 1.10  Log warnings if resolv.conf or dhcp.leases are not
 
 	      Added -S option to directly specify upstream servers and
               added ability to direct queries for specific domains to
-              specfic servers. Suggested by Jens Vonderheide.
+              specific servers. Suggested by Jens Vonderheide.
 
 	      Upgraded random ID generation - patch from Rob Funk.	      
 
@@ -386,13 +386,13 @@ release 1.11  Actually implement the -R flag promised in the 1.10 man page.
               names in /etc/hosts -suggestion from Phil Harman.
 
 	      Always return a zero time-to-live for names derived from 
-	      DHCP which stops anthing else caching these
+	      DHCP which stops anything else caching these
               names. Previously the TTL was derived from the lease
               time but that is incorrect since a lease can be given
               up early: dnsmasq would know this but anything with the
               name cached with long TTL would not be updated.
 
-	      Extended HAVE_IPV6 config flag to allow compliation on
+	      Extended HAVE_IPV6 config flag to allow compilation on
 	      old systems which don't have modern library routines
 	      like inet_ntop(). Thanks to Phil Harman for the patch.
 
@@ -471,7 +471,7 @@ release 1.14  Fixed man page description of -b option which confused
 	      /etc/resolv.conf.
 	      (Thanks to Klaas Teschauer)
 	      
-	      Check that recieved queries have only rfc1035-legal characters
+	      Check that received queries have only rfc1035-legal characters
 	      in them. This check is mainly to avoid bad strings being
 	      sent to syslog.
 
@@ -549,7 +549,7 @@ release 1.16  Allow "/" characters in domain names - this fixes
 
 release 1.17  Fixed crash with DHCP hostnames > 40 characters.
 
-              Fixed name-comparision routines to not depend on Locale,
+              Fixed name-comparison routines to not depend on Locale,
               in theory this versions since 1.15 could lock up or give
               wrong results when run with locale != 'C'.
 
@@ -574,7 +574,7 @@ release 1.18  Added round-robin DNS for names which have more than one
 	      forwarded because -D is in effect, return NXDOMAIN not
 	      an empty reply.
 
-	      Add code to return the software version in repsonse to the
+	      Add code to return the software version in response to the
 	      correct magic query in the same way as BIND. Use  
 	      "dig version.bind chaos txt" to make the query.
 
@@ -635,7 +635,7 @@ release 2.0
              dynamic allocation.
 
 	     Allow dhcp-host options for the same host with different
-	     IP adresses where the correct one will be selected for
+	     IP addresses where the correct one will be selected for
 	     the network the host appears on.
 
 	     Fix parsing of --dhcp-option to allow more than one
@@ -674,7 +674,7 @@ release 2.1
              
              Fix unaligned access warnings on BSD/Alpha.
 
-	     Allow empty DHCP options, like so: dhpc-option=44
+	     Allow empty DHCP options, like so: dhcp-option=44
  
              Allow single-byte DHCP options like so: dhcp-option=20,1
 
@@ -745,7 +745,7 @@ release 2.3
 	     around a bug in the DHCP client in HP Jetdirect printers.
 	     Thanks to Marko Stolle for finding this problem.
 
-	     Return DHCP T1 and T2 times, with "fuzz" to desychronise lease
+	     Return DHCP T1 and T2 times, with "fuzz" to desynchronise lease
 	     renewals, as specified in the RFC.
 	     
 	     Ensure that the END option is always present in DHCP
@@ -838,7 +838,7 @@ release 2.4
 	     by Chad Skeeters.
 
 	     Fixed bug in /etc/ethers parsing code triggered by tab
-	     characters. Qudos to Dag Wieers for hepling to nail that
+	     characters. Kudos to Dag Wieers for helping to nail that
 	     one.
  	     
 	     Added "bind-interfaces" option correctly.	     
@@ -975,7 +975,7 @@ release 2.8
 	     configuration. Specifically: (1) options are matched on
 	     the netids from dhcp-range, dhcp-host, vendor class and
 	     user class(es). Multiple net-ids are allowed and options
-	     are searched on them all. (2) matches agains vendor class
+	     are searched on them all. (2) matches against vendor class
 	     and user class are now on a substring, if the given
 	     string is a substring of the vendor/user class, then a
 	     match occurs. Thanks again to Richard Musil for prompting
@@ -997,7 +997,7 @@ release 2.8
 
 	     Add checks against DHCP clients which return zero-length
 	     hostnames. This avoids the potential lease-loss problems
-	     reffered to above. Also, if a client sends a hostname when
+	     referred to above. Also, if a client sends a hostname when
 	     it creates a lease but subsequently sends no or a
 	     zero-length hostname whilst renewing, continue to use the
 	     existing hostname, don't wipe it out. 
@@ -1019,7 +1019,7 @@ release 2.9
 	     broken. The new algorithm is to pick as before for the
 	     first try, but if a query is retried, to send to all
 	     available servers in parallel. The first one to reply
-	     then becomes prefered for the next query. This should 
+	     then becomes preferred for the next query. This should 
 	     improve reliability without generating significant extra
 	     upstream load.
 
@@ -1027,7 +1027,7 @@ release 2.9
 	     unqualified domains introduced in version 2.8 
 	      
 	     Allow fallback to "bind-interfaces" at runtime: Some
-	     verions of *BSD seem to have enough stuff in the header
+	     versions of *BSD seem to have enough stuff in the header
 	     files to build but no kernel support. Also now log if
 	     "bind-interfaces" is forced on.
 
@@ -1049,7 +1049,7 @@ release 2.9
 	     first name found is now returned for reverse lookups,
 	     rather than all of them.
 
-	     Add back fatal errors when nonexistant 
+	     Add back fatal errors when nonexistent 
 	     interfaces or interface addresses are given but only in
 	     "bind-interfaces" mode. Principle of least surprise applies.
 	     
@@ -1193,7 +1193,7 @@ version 2.14
 
 version 2.15
             Fixed NXDOMAIN/NODATA confusion for locally known
-            names. We now return a NODATA reponse for names which are
+            names. We now return a NODATA response for names which are
             locally known. Now a query for (eg AAAA or MX) for a name
 	    with an IPv4 address in /etc/hosts which fails upstream
             will generate a NODATA response. Note that the query 
@@ -1229,7 +1229,7 @@ version 2.16
 
             Set NONBLOCK on all listening sockets to workaround non-POSIX
             compliance in Linux 2.4 and 2.6. This fixes rare hangs which
-            occured when corrupted packets were received. Thanks to
+            occurred when corrupted packets were received. Thanks to
 	    Joris van Rantwijk for chasing that down.
  
 	    Updated config.h for NetBSD. Thanks to Martin Lambers.
@@ -1297,7 +1297,7 @@ version 2.18
 	    interfaces with more than one IPv6 address. Thanks to
             Martin Pels for help with that.
 
-	    Fix problems which occured when more than one dhcp-range
+	    Fix problems which occurred when more than one dhcp-range
 	    was specified in the same subnet: sometimes parameters
 	    (lease time, network-id tag) from the wrong one would be
 	    used. Thanks to Rory Campbell-Lange for the bug report.
@@ -1314,7 +1314,7 @@ version 2.19
 	    Thanks to Richard Atterer for the bug report.
 
 	    Check for under-length option fields in DHCP packets, a
-	    zero length client-id, in particluar, could seriously
+	    zero length client-id, in particular, could seriously
 	    confuse dnsmasq 'till now. Thanks to Will Murname for help
 	    with that.
 
@@ -1389,7 +1389,7 @@ version 2.21
 	    recursive queries.
 
 	    Fix DHCP address allocation problem when netid tags are in
-	    use. Thanks to Will Murnane for the bug report and
+	    use. Thanks to Will Murname for the bug report and
 	    subsequent testing.
 
 	    Add an additional data section to the reply for MX and SRV
@@ -1505,7 +1505,7 @@ version 2.23
             from dnsmasq --version. Thanks to Dirk Schenkewitz for 
             the suggestion. 
 
-	    Fix pathalogical behaviour when a broken client keeps sending
+	    Fix pathological behaviour when a broken client keeps sending
             DHCPDISCOVER messages repeatedly and fast. Because dealing with
             each of these takes a few seconds, (because of the ping) then a 
 	    queue of DHCP packets could build up. Now, the results of a ping 
@@ -1593,7 +1593,7 @@ version 2.24
 	    than one dhcp-range is available. Thanks to Sorin Panca
 	    for help chasing this down.
 
-	    Added more explict error mesages to the hosts file and
+	    Added more explicit error messages to the hosts file and
 	    ethers file reading code. Markus Kaiserswerth suffered to
 	    make this happen.
 
@@ -1617,7 +1617,7 @@ version 2.25
 
             Fixed Suse spec file - thanks to Steven Springl.
 
-	    Fixed DHCP bug when two distict subnets are on the same
+	    Fixed DHCP bug when two distinct subnets are on the same
 	    physical interface. Thanks to Pawel Zawora for finding
 	    this and suggesting the fix.
 
@@ -1740,7 +1740,7 @@ version 2.28
 	    Fixed regression in netlink code under 2.2.x kernels which 
 	    occurred in 2.27. Erik Jan Tromp is the vintage kernel fan 
 	    who found this. P.S. It looks like this "netlink bind:
-	    permission denied" problem occured in kernels at least as
+	    permission denied" problem occurred in kernels at least as
 	    late a 2.4.18. Good information from Alain Richoux.
 
 	    Added a warning when it's impossible to give a host its
@@ -1761,7 +1761,7 @@ version 2.28
 	    Eric House and Eric Spakman for help in chasing this down.
 
 	    Tolerate configuration screwups which lead to the DHCP
-	    server attemping to allocate its own address to a
+	    server attempting to allocate its own address to a
 	    client; eg setting the whole subnet range as a DHCP
 	    range. Addresses in use by the server are now excluded
 	    from use by clients.
@@ -2273,7 +2273,7 @@ version 2.40
 	    this.
 
 	    Use client-id as hash-seed for DHCP address allocation
-	    with Firewire and Infiniband, as these don't supply an MAC
+	    with Firewire and InfiniBand, as these don't supply an MAC
 	    address. 
 
 	    Tweaked TFTP file-open code to make it behave sensibly
@@ -2307,7 +2307,7 @@ version 2.40
 	    Continue to use unqualified hostnames provided by DHCP
 	    clients, even if the domain part is illegal. (The domain
 	    is	ignored, and an error logged.) Previously in this
-	    situation, the whole name whould have been
+	    situation, the whole name would have been
 	    rejected. Thanks to Jima for the patch.
 	    
 	    Handle EINTR returns from wait() correctly and reap
@@ -2319,7 +2319,7 @@ version 2.40
 	    leases file and passed to the lease-change
 	    script. Suggestion from Ben Voigt.
 
-	    Re-run the lease chamge script with an "old" event for
+	    Re-run the lease change script with an "old" event for
 	    each lease when dnsmasq receives a SIGHUP.
 
 	    Added more useful exit codes, including passing on a
@@ -2417,7 +2417,7 @@ version 2.41
 	    Changed behavior of DHCP server to always return total length of
 	    a new lease in DHCPOFFER, even if an existing lease
 	    exists. (It used to return the time remaining on the lease
-	    whne one existed.) This fixes problems with the Sony Ericsson
+	    when one existed.) This fixes problems with the Sony Ericsson
 	    K610i phone. Thanks to Hakon Stordahl for finding and
 	    fixing this.
 
@@ -2476,7 +2476,7 @@ version 2.42
 
 	    Fix OS detection logic to cope with GNU/FreeBSD.
 
-	    Fix unitialised variable in DBus code - thanks to Roy
+	    Fix uninitialised variable in DBus code - thanks to Roy
 	    Marples.
 
 	    Fix network enumeration code to work on later NetBSD -

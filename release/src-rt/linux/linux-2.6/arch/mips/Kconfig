@@ -705,7 +705,7 @@ config RAM_SIZE
        depends on BCM947XX
 
 config NVRAM_SIZE
-       int "NVRAM size (in kilobytes, 0 = default)"
+       hex "NVRAM size (in kilobytes, 0 = default)"
        depends on BCM947XX
 
 config SHRINKMEM

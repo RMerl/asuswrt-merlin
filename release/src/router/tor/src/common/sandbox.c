@@ -1,7 +1,7 @@
-/* Copyright (c) 2001 Matej Pfajfar.
+ /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -38,8 +38,6 @@
 #define DEBUGGING_CLOSE
 
 #if defined(USE_LIBSECCOMP)
-
-#define _GNU_SOURCE
 
 #include <sys/mman.h>
 #include <sys/syscall.h>
@@ -138,6 +136,9 @@ static int filter_nopar_gen[] = {
 #ifdef HAVE_PIPE
     SCMP_SYS(pipe),
 #endif
+#ifdef __NR_fchmod
+    SCMP_SYS(fchmod),
+#endif
     SCMP_SYS(fcntl),
     SCMP_SYS(fstat),
 #ifdef __NR_fstat64
@@ -157,6 +158,7 @@ static int filter_nopar_gen[] = {
 #ifdef __NR_getgid32
     SCMP_SYS(getgid32),
 #endif
+    SCMP_SYS(getpid),
 #ifdef __NR_getrlimit
     SCMP_SYS(getrlimit),
 #endif
@@ -177,11 +179,26 @@ static int filter_nopar_gen[] = {
     SCMP_SYS(mmap),
 #endif
     SCMP_SYS(munmap),
+#ifdef __NR_prlimit
+    SCMP_SYS(prlimit),
+#endif
+#ifdef __NR_prlimit64
+    SCMP_SYS(prlimit64),
+#endif
     SCMP_SYS(read),
     SCMP_SYS(rt_sigreturn),
     SCMP_SYS(sched_getaffinity),
+#ifdef __NR_sched_yield
+    SCMP_SYS(sched_yield),
+#endif
     SCMP_SYS(sendmsg),
     SCMP_SYS(set_robust_list),
+#ifdef __NR_setrlimit
+    SCMP_SYS(setrlimit),
+#endif
+#ifdef __NR_sigaltstack
+    SCMP_SYS(sigaltstack),
+#endif
 #ifdef __NR_sigreturn
     SCMP_SYS(sigreturn),
 #endif
@@ -199,6 +216,14 @@ static int filter_nopar_gen[] = {
     SCMP_SYS(stat64),
 #endif
 
+#ifdef __NR_getrandom
+    SCMP_SYS(getrandom),
+#endif
+
+#ifdef __NR_sysinfo
+    // qsort uses this..
+    SCMP_SYS(sysinfo),
+#endif
     /*
      * These socket syscalls are not required on x86_64 and not supported with
      * some libseccomp versions (eg: 1.0.1)
@@ -423,11 +448,62 @@ sb_open(scmp_filter_ctx ctx, sandbox_cfg_t *filter)
   }
 
   rc = seccomp_rule_add_1(ctx, SCMP_ACT_ERRNO(EACCES), SCMP_SYS(open),
-                SCMP_CMP_MASKED(1, O_CLOEXEC|O_NONBLOCK|O_NOCTTY, O_RDONLY));
+                SCMP_CMP_MASKED(1, O_CLOEXEC|O_NONBLOCK|O_NOCTTY|O_NOFOLLOW,
+                                O_RDONLY));
   if (rc != 0) {
     log_err(LD_BUG,"(Sandbox) failed to add open syscall, received libseccomp "
         "error %d", rc);
     return rc;
+  }
+
+  return 0;
+}
+
+static int
+sb_chmod(scmp_filter_ctx ctx, sandbox_cfg_t *filter)
+{
+  int rc;
+  sandbox_cfg_t *elem = NULL;
+
+  // for each dynamic parameter filters
+  for (elem = filter; elem != NULL; elem = elem->next) {
+    smp_param_t *param = elem->param;
+
+    if (param != NULL && param->prot == 1 && param->syscall
+        == SCMP_SYS(chmod)) {
+      rc = seccomp_rule_add_1(ctx, SCMP_ACT_ALLOW, SCMP_SYS(chmod),
+            SCMP_CMP_STR(0, SCMP_CMP_EQ, param->value));
+      if (rc != 0) {
+        log_err(LD_BUG,"(Sandbox) failed to add open syscall, received "
+            "libseccomp error %d", rc);
+        return rc;
+      }
+    }
+  }
+
+  return 0;
+}
+
+static int
+sb_chown(scmp_filter_ctx ctx, sandbox_cfg_t *filter)
+{
+  int rc;
+  sandbox_cfg_t *elem = NULL;
+
+  // for each dynamic parameter filters
+  for (elem = filter; elem != NULL; elem = elem->next) {
+    smp_param_t *param = elem->param;
+
+    if (param != NULL && param->prot == 1 && param->syscall
+        == SCMP_SYS(chown)) {
+      rc = seccomp_rule_add_1(ctx, SCMP_ACT_ALLOW, SCMP_SYS(chown),
+            SCMP_CMP_STR(0, SCMP_CMP_EQ, param->value));
+      if (rc != 0) {
+        log_err(LD_BUG,"(Sandbox) failed to add open syscall, received "
+            "libseccomp error %d", rc);
+        return rc;
+      }
+    }
   }
 
   return 0;
@@ -521,7 +597,7 @@ static int
 sb_socket(scmp_filter_ctx ctx, sandbox_cfg_t *filter)
 {
   int rc = 0;
-  int i;
+  int i, j;
   (void) filter;
 
 #ifdef __i386__
@@ -538,20 +614,19 @@ sb_socket(scmp_filter_ctx ctx, sandbox_cfg_t *filter)
 
   for (i = 0; i < 2; ++i) {
     const int pf = i ? PF_INET : PF_INET6;
-
-    rc = seccomp_rule_add_3(ctx, SCMP_ACT_ALLOW, SCMP_SYS(socket),
-      SCMP_CMP(0, SCMP_CMP_EQ, pf),
-      SCMP_CMP_MASKED(1, SOCK_CLOEXEC|SOCK_NONBLOCK, SOCK_STREAM),
-      SCMP_CMP(2, SCMP_CMP_EQ, IPPROTO_TCP));
-    if (rc)
-      return rc;
-
-    rc = seccomp_rule_add_3(ctx, SCMP_ACT_ALLOW, SCMP_SYS(socket),
-      SCMP_CMP(0, SCMP_CMP_EQ, pf),
-      SCMP_CMP_MASKED(1, SOCK_CLOEXEC|SOCK_NONBLOCK, SOCK_DGRAM),
-      SCMP_CMP(2, SCMP_CMP_EQ, IPPROTO_IP));
-    if (rc)
-      return rc;
+    for (j=0; j < 3; ++j) {
+      const int type     = (j == 0) ? SOCK_STREAM :
+                                      SOCK_DGRAM;
+      const int protocol = (j == 0) ? IPPROTO_TCP :
+                           (j == 1) ? IPPROTO_IP :
+                                      IPPROTO_UDP;
+      rc = seccomp_rule_add_3(ctx, SCMP_ACT_ALLOW, SCMP_SYS(socket),
+        SCMP_CMP(0, SCMP_CMP_EQ, pf),
+        SCMP_CMP_MASKED(1, SOCK_CLOEXEC|SOCK_NONBLOCK, type),
+        SCMP_CMP(2, SCMP_CMP_EQ, protocol));
+      if (rc)
+        return rc;
+    }
   }
 
   rc = seccomp_rule_add_3(ctx, SCMP_ACT_ALLOW, SCMP_SYS(socket),
@@ -637,10 +712,26 @@ sb_setsockopt(scmp_filter_ctx ctx, sandbox_cfg_t *filter)
   if (rc)
     return rc;
 
+#ifdef HAVE_SYSTEMD
+  rc = seccomp_rule_add_2(ctx, SCMP_ACT_ALLOW, SCMP_SYS(setsockopt),
+      SCMP_CMP(1, SCMP_CMP_EQ, SOL_SOCKET),
+      SCMP_CMP(2, SCMP_CMP_EQ, SO_SNDBUFFORCE));
+  if (rc)
+    return rc;
+#endif
+
 #ifdef IP_TRANSPARENT
   rc = seccomp_rule_add_2(ctx, SCMP_ACT_ALLOW, SCMP_SYS(setsockopt),
       SCMP_CMP(1, SCMP_CMP_EQ, SOL_IP),
       SCMP_CMP(2, SCMP_CMP_EQ, IP_TRANSPARENT));
+  if (rc)
+    return rc;
+#endif
+
+#ifdef IPV6_V6ONLY
+  rc = seccomp_rule_add_2(ctx, SCMP_ACT_ALLOW, SCMP_SYS(setsockopt),
+      SCMP_CMP(1, SCMP_CMP_EQ, IPPROTO_IPV6),
+      SCMP_CMP(2, SCMP_CMP_EQ, IPV6_V6ONLY));
   if (rc)
     return rc;
 #endif
@@ -669,6 +760,14 @@ sb_getsockopt(scmp_filter_ctx ctx, sandbox_cfg_t *filter)
       SCMP_CMP(2, SCMP_CMP_EQ, SO_ERROR));
   if (rc)
     return rc;
+
+#ifdef HAVE_SYSTEMD
+  rc = seccomp_rule_add_2(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getsockopt),
+      SCMP_CMP(1, SCMP_CMP_EQ, SOL_SOCKET),
+      SCMP_CMP(2, SCMP_CMP_EQ, SO_SNDBUF));
+  if (rc)
+    return rc;
+#endif
 
 #ifdef HAVE_LINUX_NETFILTER_IPV4_H
   rc = seccomp_rule_add_2(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getsockopt),
@@ -757,7 +856,7 @@ sb_epoll_ctl(scmp_filter_ctx ctx, sandbox_cfg_t *filter)
 }
 
 /**
- * Function responsible for setting up the fcntl64 syscall for
+ * Function responsible for setting up the prctl syscall for
  * the seccomp filter sandbox.
  *
  * NOTE: if multiple filters need to be added, the PR_SECCOMP parameter needs
@@ -778,7 +877,7 @@ sb_prctl(scmp_filter_ctx ctx, sandbox_cfg_t *filter)
 }
 
 /**
- * Function responsible for setting up the fcntl64 syscall for
+ * Function responsible for setting up the mprotect syscall for
  * the seccomp filter sandbox.
  *
  * NOTE: does not NEED to be here.. currently only occurs before filter; will
@@ -966,6 +1065,8 @@ static sandbox_filter_func_t filter_func[] = {
 #ifdef __NR_mmap2
     sb_mmap2,
 #endif
+    sb_chown,
+    sb_chmod,
     sb_open,
     sb_openat,
     sb__sysctl,
@@ -1016,7 +1117,7 @@ sandbox_intern_string(const char *str)
   return str;
 }
 
-/** DOCDOC */
+/* DOCDOC */
 static int
 prot_strings_helper(strmap_t *locations,
                     char **pr_mem_next_p,
@@ -1175,7 +1276,7 @@ prot_strings(scmp_filter_ctx ctx, sandbox_cfg_t* cfg)
 
 /**
  * Auxiliary function used in order to allocate a sandbox_cfg_t element and set
- * it's values according the the parameter list. All elements are initialised
+ * its values according the parameter list. All elements are initialised
  * with the 'prot' field set to false, as the pointer is not protected at this
  * point.
  */
@@ -1230,6 +1331,40 @@ sandbox_cfg_allow_open_filename(sandbox_cfg_t **cfg, char *file)
   sandbox_cfg_t *elem = NULL;
 
   elem = new_element(SCMP_SYS(open), file);
+  if (!elem) {
+    log_err(LD_BUG,"(Sandbox) failed to register parameter!");
+    return -1;
+  }
+
+  elem->next = *cfg;
+  *cfg = elem;
+
+  return 0;
+}
+
+int
+sandbox_cfg_allow_chmod_filename(sandbox_cfg_t **cfg, char *file)
+{
+  sandbox_cfg_t *elem = NULL;
+
+  elem = new_element(SCMP_SYS(chmod), file);
+  if (!elem) {
+    log_err(LD_BUG,"(Sandbox) failed to register parameter!");
+    return -1;
+  }
+
+  elem->next = *cfg;
+  *cfg = elem;
+
+  return 0;
+}
+
+int
+sandbox_cfg_allow_chown_filename(sandbox_cfg_t **cfg, char *file)
+{
+  sandbox_cfg_t *elem = NULL;
+
+  elem = new_element(SCMP_SYS(chown), file);
   if (!elem) {
     log_err(LD_BUG,"(Sandbox) failed to register parameter!");
     return -1;
@@ -1343,7 +1478,7 @@ static HT_HEAD(getaddrinfo_cache, cached_getaddrinfo_item_t)
 
 HT_PROTOTYPE(getaddrinfo_cache, cached_getaddrinfo_item_t, node,
              cached_getaddrinfo_item_hash,
-             cached_getaddrinfo_items_eq);
+             cached_getaddrinfo_items_eq)
 HT_GENERATE2(getaddrinfo_cache, cached_getaddrinfo_item_t, node,
              cached_getaddrinfo_item_hash,
              cached_getaddrinfo_items_eq,
@@ -1456,13 +1591,14 @@ sandbox_add_addrinfo(const char *name)
 void
 sandbox_free_getaddrinfo_cache(void)
 {
-  cached_getaddrinfo_item_t **next, **item;
+  cached_getaddrinfo_item_t **next, **item, *this;
 
   for (item = HT_START(getaddrinfo_cache, &getaddrinfo_cache);
        item;
        item = next) {
+    this = *item;
     next = HT_NEXT_RMV(getaddrinfo_cache, &getaddrinfo_cache, item);
-    cached_getaddrinfo_item_free(*item);
+    cached_getaddrinfo_item_free(this);
   }
 
   HT_CLEAR(getaddrinfo_cache, &getaddrinfo_cache);
@@ -1598,7 +1734,7 @@ sigsys_debugging(int nr, siginfo_t *info, void *void_context)
   const char *syscall_name;
   int syscall;
 #ifdef USE_BACKTRACE
-  int depth;
+  size_t depth;
   int n_fds, i;
   const int *fds = NULL;
 #endif
@@ -1630,7 +1766,7 @@ sigsys_debugging(int nr, siginfo_t *info, void *void_context)
 #ifdef USE_BACKTRACE
   n_fds = tor_log_get_sigsafe_err_fds(&fds);
   for (i=0; i < n_fds; ++i)
-    backtrace_symbols_fd(syscall_cb_buf, depth, fds[i]);
+    backtrace_symbols_fd(syscall_cb_buf, (int)depth, fds[i]);
 #endif
 
 #if defined(DEBUGGING_CLOSE)
@@ -1779,6 +1915,20 @@ sandbox_cfg_allow_execve(sandbox_cfg_t **cfg, const char *com)
 
 int
 sandbox_cfg_allow_stat_filename(sandbox_cfg_t **cfg, char *file)
+{
+  (void)cfg; (void)file;
+  return 0;
+}
+
+int
+sandbox_cfg_allow_chown_filename(sandbox_cfg_t **cfg, char *file)
+{
+  (void)cfg; (void)file;
+  return 0;
+}
+
+int
+sandbox_cfg_allow_chmod_filename(sandbox_cfg_t **cfg, char *file)
 {
   (void)cfg; (void)file;
   return 0;

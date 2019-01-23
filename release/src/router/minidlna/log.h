@@ -43,6 +43,9 @@ enum _log_facility
   L_MAX
 };
 
+#ifdef MS_IPK
+int log_file;
+#endif
 extern int log_level[L_MAX];
 extern int log_init(const char *fname, const char *debug);
 extern void log_close(void);

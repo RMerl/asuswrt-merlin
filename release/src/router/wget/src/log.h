@@ -1,6 +1,6 @@
 /* Declarations for log.c.
    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   2007, 2008, 2009, 2010, 2011, 2015 Free Software Foundation, Inc.
 
 This file is part of GNU Wget.
 
@@ -52,6 +52,7 @@ void log_init (const char *, bool);
 void log_close (void);
 void log_cleanup (void);
 void log_request_redirect_output (const char *);
+void redirect_output (bool, const char *);
 
 const char *escnonprint (const char *);
 const char *escnonprint_uri (const char *);

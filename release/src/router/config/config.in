@@ -77,6 +77,10 @@ config RTCONFIG_NV128
 	bool "nvram size 128k"
 	default n
 
+config RTCONFIG_NVRAM_SIZE
+	hex "nvram size"
+	default 0x8000
+
 config RTCONFIG_DHDAP
 	bool "Bcm7 dhdap"
 	default n
@@ -168,8 +172,24 @@ config RTCONFIG_OPENVPN
 	depends on RTCONFIG_LZO
 	default n
 
+config RTCONFIG_IPSECMOD
+	bool "IPsec Modules (RM)"
+	default n
+
 config RTCONFIG_IPSEC
-	bool "IPsec"
+	bool "IPsec Support"
+	default n
+
+config RTCONFIG_OPENSWAN
+	bool "OpenSwan IPSec Support"
+	default n
+
+config RTCONFIG_QUICKSEC
+	bool "InsideSecure QuickSec Support"
+	default n
+
+config RTCONFIG_STRONGSWAN
+	bool "StrongSwan IPSec Support"
 	default n
 
 # !!TB
@@ -234,8 +254,20 @@ config RTCONFIG_PROXYSTA
 	bool "Proxy STA"
 	default n
 
+config RTCONFIG_DISABLE_PROXYSTA_UI
+	bool "Hiden UI Media Bridge Mode"
+	default n
+
 config RTCONFIG_CONCURRENTREPEATER
 	bool "Concurrent Repeater"
+	default n
+
+config RTCONFIG_VHT80_80
+	bool "80+80MHz bandwidth support"
+	default n
+
+config RTCONFIG_VHT160
+	bool "160MHz bandwidth support"
 	default n
 
 config RTCONFIG_IXIAEP
@@ -307,10 +339,6 @@ config RTCONFIG_WIFIPWR
 	bool "WIFI Power option"
 	default n
 
-config RTCONFIG_LEDARRAY
-	bool "wifi led array support"
-	default n
-
 config RTCONFIG_XHCIMODE
 	bool "XHCI mode Support"
 	default n
@@ -318,6 +346,11 @@ config RTCONFIG_XHCIMODE
 config RTCONFIG_MEDIA_SERVER
 	bool "Media Server (MiniDLNA)"
 	depends on RTCONFIG_USB
+	default n
+
+config RTCONFIG_LIMIT_MEDIA_SERVER
+	bool "Small memory optimization on Media Server"
+	depends on RTCONFIG_MEDIA_SERVER
 	default n
 
 config RTCONFIG_CLOUDSYNC
@@ -380,11 +413,6 @@ config RTCONFIG_SAMBA3
 	depends on RTCONFIG_SAMBASRV
 	default n
 
-config RTCONFIG_SAMBA_MODERN
-        bool "Compile with modern Samba 3.6.x"
-        depends on RTCONFIG_SAMBASRV
-        default n
-
 config RTCONFIG_NFS 
 	bool "NFS Support" 
 	depends on RTCONFIG_USB
@@ -396,6 +424,19 @@ config RTCONFIG_IGD2
 
 config RTCONFIG_DNSSEC
 	bool "dnsmasq: Enable DNSSEC support"
+	default n
+
+config RTCONFIG_NANO
+        bool "nano text editor"
+        default n
+
+config RTCONFIG_MERLINUPDATE
+	bool "Check for new firmware version - Merlin-only"
+	default n
+
+config RTCONFIG_SAMBA36X
+	bool "Compile with Samba 3.6.x"
+	depends on RTCONFIG_SAMBASRV
 	default n
 
 config RTCONFIG_USB_EXTRAS
@@ -458,11 +499,6 @@ config RTCONFIG_DISK_MONITOR
 	depends on RTCONFIG_USB
 	default n
 
-config RTCONFIG_DISK_MONITOR
-	bool "Disk monitor Support"
-	depends on RTCONFIG_USB
-	default n
-
 config RTCONFIG_USB_PRINTER
 	bool "USB Printer Support"
 	depends on RTCONFIG_USB
@@ -506,11 +542,6 @@ config RTCONFIG_APP_PREINSTALLED
 config RTCONFIG_APP_NETINSTALLED
 	bool "Install APP Packages through Network Support"
 	depends on RTCONFIG_USB
-	default n
-
-config RTCONFIG_APP_NOLOCALDM
-	bool "Apps are preinstalled except for Downloadmaster"
-	depends on RTCONFIG_APP_NETINSTALLED
 	default n
 
 config RTCONFIG_RALINK
@@ -568,13 +599,71 @@ config RTCONFIG_QCA
 	bool "Qualcomm Atheros Chip Support"
 	default n
 
+config RTCONFIG_NEW_APP_ARM
+	bool "NEW APP ARM"
+	default n
+
+config RTCONFIG_QCA_ARM
+	bool "Qualcomm Atheros Chip Support(ARM)"
+	default n
+
 config RTCONFIG_SOC_QCA9557
 	bool "Qualcomm Atheros QCA9557 SoC"
 	depends on RTCONFIG_QCA
 	default n
 
+config RTCONFIG_SOC_IPQ8064
+	bool "Qualcomm Atheros IPQ8064 SoC"
+	depends on RTCONFIG_QCA
+	default n
+
+config RTCONFIG_NSS_IPSEC
+	bool "Qualcomm NSS IPSec tunnel support"
+	depends on RTCONFIG_SOC_IPQ8064
+	default n
+
+config RTCONFIG_PCIE_QCA9984
+	bool "Qualcomm Atheros QCA9994 WiFi chip (Cascade)"
+	depends on RTCONFIG_QCA
+	default n
+
+config RTCONFIG_PCIE_QCA9888
+	bool "Qualcomm Atheros QCA9888 WiFi chip"
+	depends on RTCONFIG_QCA
+	default n
+
 config RTCONFIG_WIFI_QCA9557_QCA9882
 	bool "Qualcomm Atheros QCA9557 and QCA9882 WiFi chip"
+	depends on RTCONFIG_QCA
+	default n
+
+config RTCONFIG_WIFI_QCA9990_QCA9990
+	bool "Qualcomm Atheros QCA9990 and QCA9990 WiFi chip (Beeliner)"
+	depends on RTCONFIG_QCA
+	default n
+
+config RTCONFIG_WIFI_QCA9994_QCA9994
+	bool "Qualcomm Atheros QCA9994 and QCA9994 WiFi chip (Cascade)"
+	depends on RTCONFIG_QCA
+	default n
+
+config RTCONFIG_TEST_BOARDDATA_FILE
+	bool "Copy /lib/firmware/* to /jffs and bind mount /jffs to /lib/firmware for testing."
+	depends on RTCONFIG_SOC_IPQ8064
+	default n
+
+config RTCONFIG_SWITCH_QCA8337N
+	bool "Qualcomm Atheros QCA8337N switch"
+	depends on RTCONFIG_QCA
+	default n
+
+config RTCONFIG_SWITCH_RTL8370M_PHY_QCA8033_X2
+	bool "Realtek RTL8370M-GR switch + QCA8033 PHY x 2"
+	depends on RTCONFIG_QCA
+	default n
+
+config RTCONFIG_SWITCH_RTL8370MB_PHY_QCA8033_X2
+	bool "Realtek RTL8370MB switch + QCA8033 PHY x 2"
 	depends on RTCONFIG_QCA
 	default n
 
@@ -584,6 +673,14 @@ config RTCONFIG_QCA953X
 
 config RTCONFIG_QCA956X
 	bool "Qualcomm Atheros QCA956X Chip Support"
+	default n
+
+config RTCONFIG_SOC_IPQ40XX
+	bool "Qualcomm Atheros IPQ40XX Chip Support"
+	default n
+
+config RTCONFIG_FITFDT
+	bool "new FITFDT format"
 	default n
 
 config RTCONFIG_QCA_PLC_UTILS
@@ -598,12 +695,24 @@ config RTCONFIG_QCA7500
 	bool "Qualcomm Atheros QCA7500 Powerline Chip Support"
 	default n
 
+config RTCONFIG_AIR_TIME_FAIRNESS
+	bool "Air Time Fairness"
+	default n
+
+config RTCONFIG_POWER_SAVE
+	bool "Power Save"
+	default n
+
 config RTCONFIG_DEFAULT_AP_MODE
 	bool "Default is AP mode"
 	default n
 
 config RTCONFIG_ODMPID
 	bool "ODM Product ID"
+	default n
+
+config RTCONFIG_32BYTES_ODMPID
+	bool "ODM Product ID increase to 32 bytes"
 	default n
 
 config RTCONFIG_TIMEMACHINE
@@ -736,7 +845,7 @@ config RTCONFIG_WPS_ALLLED_BTN
 	bool "HW Button for WPS and LED dual function"
 	default n
 
-config RTCONFIG_TURBO
+config RTCONFIG_LOGO_LED
 	bool "HW Turbo Btn"
 	default n
 
@@ -865,6 +974,14 @@ config RTCONFIG_KYIVSTAR
 	bool "KYIVSTAR specified"
 	default n
 
+config RTCONFIG_WANPORT2
+	bool "2-nd WAN port"
+	default n
+
+config RTCONFIG_MULTIWAN_CFG
+	bool "Seperate WAN related configurations to different sets of nvram variables"
+	default n
+
 config RTCONFIG_ETRON_XHCI
 	bool "Etron XHCI chip support"
 	default n
@@ -889,8 +1006,28 @@ config RTCONFIG_WANRED_LED
 	bool "WAN RED LED"
 	default n
 
+config RTCONFIG_PWRRED_LED
+	bool "Power RED LED"
+	default n
+
+config RTCONFIG_FAILOVER_LED
+	bool "Fail-over LED"
+	default n
+
+config RTCONFIG_SATA_LED
+	bool "SATA LED"
+	default n
+
 config RTCONFIG_BLINK_LED
 	bool "Blink LED(s)"
+	default n
+
+config RTCONFIG_EJUSB_BTN
+	bool "Eject USB mass-storage(s)"
+	default n
+
+config RTCONFIG_M2_SSD
+	bool "M.2 SSD support"
 	default n
 
 config RTCONFIG_CFE_NVRAM_CHK
@@ -1066,6 +1203,14 @@ config RTCONFIG_REBOOT_SCHEDULE
 	bool "Reboot_schedule"
 	default n
 
+config RTCONFIG_IPSEC
+	bool "IPSEC support"
+	default n
+	
+config RTCONFIG_CAPTIVE_PORTAL
+	bool "Captive Portal support"
+	default n
+
 config RTCONFIG_INTERNAL_GOBI
 	bool "built-in Gobi"
 	default n
@@ -1082,8 +1227,24 @@ config RTCONFIG_BONJOUR
 	bool "Apple device query support"
 	default y
 
+config RTCONFIG_FBWIFI
+	bool "enable FBWIFI for FaceBook"
+	default n
+
 config RTCONFIG_FORCE_AUTO_UPGRADE
 	bool "Force auto update"
+	default n
+
+config RTCONFIG_CHILLISPOT
+	bool "chillispot Support"
+	default n
+
+config RTCONFIG_COOVACHILLI
+	bool "coovachilli Support"
+	default n
+
+config RTCONFIG_FREERADIUS
+	bool "freeradius Support"
 	default n
 
 config RTCONFIG_TUXERA_SMBD
@@ -1109,6 +1270,10 @@ config RTCONFIG_DYN_MODEM
 config RTCONFIG_NOTIFICATION_CENTER
 	bool "Notification Center"
 	default y
+
+config RTCONFIG_PROTECTION_SERVER
+	bool "Security Protection Mechanism"
+	default n
 
 config RTCONFIG_6RELAYD
 	bool "IPv6 Relay support"

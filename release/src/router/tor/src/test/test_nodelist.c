@@ -1,4 +1,4 @@
-/* Copyright (c) 2007-2015, The Tor Project, Inc. */
+/* Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -60,12 +60,53 @@ test_nodelist_node_get_verbose_nickname_not_named(void *arg)
   return;
 }
 
+/** A node should be considered a directory server if it has an open dirport
+ * of it accepts tunnelled directory requests.
+ */
+static void
+test_nodelist_node_is_dir(void *arg)
+{
+  (void)arg;
+
+  routerstatus_t rs;
+  routerinfo_t ri;
+  node_t node;
+  memset(&node, 0, sizeof(node_t));
+  memset(&rs, 0, sizeof(routerstatus_t));
+  memset(&ri, 0, sizeof(routerinfo_t));
+
+  tt_assert(!node_is_dir(&node));
+
+  node.rs = &rs;
+  tt_assert(!node_is_dir(&node));
+
+  rs.is_v2_dir = 1;
+  tt_assert(node_is_dir(&node));
+
+  rs.is_v2_dir = 0;
+  rs.dir_port = 1;
+  tt_assert(! node_is_dir(&node));
+
+  node.rs = NULL;
+  tt_assert(!node_is_dir(&node));
+  node.ri = &ri;
+  ri.supports_tunnelled_dir_requests = 1;
+  tt_assert(node_is_dir(&node));
+  ri.supports_tunnelled_dir_requests = 0;
+  ri.dir_port = 1;
+  tt_assert(! node_is_dir(&node));
+
+ done:
+  return;
+}
+
 #define NODE(name, flags) \
   { #name, test_nodelist_##name, (flags), NULL, NULL }
 
 struct testcase_t nodelist_tests[] = {
   NODE(node_get_verbose_nickname_by_id_null_node, TT_FORK),
   NODE(node_get_verbose_nickname_not_named, TT_FORK),
+  NODE(node_is_dir, TT_FORK),
   END_OF_TESTCASES
 };
 

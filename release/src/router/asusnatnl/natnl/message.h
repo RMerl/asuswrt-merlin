@@ -36,6 +36,10 @@
 // +Roger - include UDT
 #include <wrap.h>	
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define KEEP_ALIVE_SECS 20
 #define KEEP_ALIVE_TIMEOUT_SECS (7*60+1) /* has 7 tries to send a keep alive */
 
@@ -43,7 +47,7 @@
 
 #define MAX_PACKET_LEN  3000
 
-//#ifdef PJ_M_MIPS // DEAN
+	//#ifdef PJ_M_MIPS // DEAN
 #define SND_THREAD_DELAY_CNT 100
 #define RCV_THREAD_DELAY_CNT 100
 //#else
@@ -71,105 +75,109 @@
 // If the size of msg_hdr structure has been changed, 
 // please remember to modify SESS_MGR_HEADER_SIZE value that defines in pjlib/include/config_site.h
 #ifndef WIN32
-struct msg_hdr
-{
-	//uint32_t magic;
-	uint16_t length;
-	uint32_t pkt_id;
-	uint16_t client_id;
-	uint8_t type;
-	uint8_t proto;
-	uint8_t qos_priority;
-	uint8_t disable_flow_control;
-	uint16_t speed_limit;
-	uint8_t reserved[6];
-} __attribute__ ((__packed__));
+	struct msg_hdr
+	{
+		//uint32_t magic;
+		uint16_t length;
+		uint32_t pkt_id;
+		uint16_t client_id;
+		uint8_t type;
+		uint8_t proto;
+		uint8_t qos_priority;
+		uint8_t disable_flow_control;
+		uint16_t speed_limit;
+		uint8_t reserved[6];
+	} __attribute__((__packed__));
 #else
 #pragma pack(push, 1)
-struct msg_hdr
-{
-	//uint32_t magic;
-	uint16_t length;
-	uint32_t pkt_id;
-	uint16_t client_id;
-	uint8_t type;
-	uint8_t proto;
-	uint8_t qos_priority;
-	uint8_t disable_flow_control;
-	uint16_t speed_limit;
-	uint8_t reserved[6];
-};
+	struct msg_hdr
+	{
+		//uint32_t magic;
+		uint16_t length;
+		uint32_t pkt_id;
+		uint16_t client_id;
+		uint8_t type;
+		uint8_t proto;
+		uint8_t qos_priority;
+		uint8_t disable_flow_control;
+		uint16_t speed_limit;
+		uint8_t reserved[6];
+	};
 #pragma pack(pop)
 #endif /*WIN32*/
 
-typedef struct msg_hdr msg_hdr_t;
+	typedef struct msg_hdr msg_hdr_t;
 
-int msg_send_msg(pjmedia_transport *tp, uint16_t client_id, uint32_t pkt_id, 
-				 uint8_t type, char *data, int data_len, uint8_t proto, 
-				 uint8_t qos_priority, uint8_t disable_flow_control, uint16_t speed_limit);
-int msg_send_hello(pjmedia_transport *tp, char *host, char *port, uint16_t req_id, uint8_t sock_type,
-				   uint8_t qos_priority, uint8_t disable_flow_control, uint16_t speed_limit);
+	int msg_send_msg(pjmedia_transport *tp, uint16_t client_id, uint32_t pkt_id,
+		uint8_t type, char *data, int data_len, uint8_t proto,
+		uint8_t qos_priority, uint8_t disable_flow_control, uint16_t speed_limit);
+	int msg_send_hello(pjmedia_transport *tp, char *host, char *port, uint16_t req_id, uint8_t sock_type,
+		uint8_t qos_priority, uint8_t disable_flow_control, uint16_t speed_limit);
 
-int msg_recv_msg(socket_t *sock, socket_t *from, char *data, int *data_len);
+	int msg_recv_msg(socket_t *sock, socket_t *from, char *data, int *data_len);
 
-int retrieve_src_addr(socket_t *sock, socket_t *from);
+	int retrieve_src_addr(socket_t *sock, socket_t *from);
 
-/* Inline functions for working with the message header struct */
-static _inline_ void msg_init_header(msg_hdr_t *hdr, uint32_t pkt_id, uint16_t client_id,
-                                   uint8_t type, uint16_t len, uint8_t proto, 
-								   uint8_t qos_priority, uint8_t disable_flow_control, uint16_t speed_limit)
-{
-//    hdr->magic = TUNNEL_HEADER_MAGIC;
-	hdr->pkt_id = htonl(pkt_id);
-	hdr->client_id = htons(client_id);
-	hdr->type = type;
-	hdr->length = htons(len);
-	hdr->proto = proto;
-	hdr->qos_priority = qos_priority;
-	hdr->disable_flow_control = disable_flow_control;
-	hdr->speed_limit = speed_limit;
-	memset(hdr->reserved, 0, sizeof(hdr->reserved));
+	/* Inline functions for working with the message header struct */
+	static _inline_ void msg_init_header(msg_hdr_t *hdr, uint32_t pkt_id, uint16_t client_id,
+		uint8_t type, uint16_t len, uint8_t proto,
+		uint8_t qos_priority, uint8_t disable_flow_control, uint16_t speed_limit)
+	{
+		//    hdr->magic = TUNNEL_HEADER_MAGIC;
+		hdr->pkt_id = htonl(pkt_id);
+		hdr->client_id = htons(client_id);
+		hdr->type = type;
+		hdr->length = htons(len);
+		hdr->proto = proto;
+		hdr->qos_priority = qos_priority;
+		hdr->disable_flow_control = disable_flow_control;
+		hdr->speed_limit = speed_limit;
+		memset(hdr->reserved, 0, sizeof(hdr->reserved));
+	}
+
+	static _inline_ uint16_t msg_get_client_id(msg_hdr_t *h)
+	{
+		return ntohs(h->client_id);
+	}
+
+	static _inline_ uint32_t msg_get_pkt_id(msg_hdr_t *h)
+	{
+		return ntohl(h->pkt_id);
+	}
+
+	static _inline_ uint8_t msg_get_type(msg_hdr_t *h)
+	{
+		return h->type;
+	}
+
+	static _inline_ uint16_t msg_get_length(msg_hdr_t *h)
+	{
+		return ntohs(h->length);
+	}
+
+	static _inline_ uint16_t msg_get_proto(msg_hdr_t *h)
+	{
+		return h->proto;
+	}
+
+	static _inline_ uint8_t msg_get_qos_priority(msg_hdr_t *h)
+	{
+		return h->qos_priority;
+	}
+
+	static _inline_ uint8_t msg_get_disable_flow_control(msg_hdr_t *h)
+	{
+		return h->disable_flow_control;
+	}
+
+	static _inline_ uint16_t msg_get_speed_limit(msg_hdr_t *h)
+	{
+		return h->speed_limit;
+	}
+
+#ifdef __cplusplus
 }
-
-static _inline_ uint16_t msg_get_client_id(msg_hdr_t *h)
-{
-	return ntohs(h->client_id);
-}
-
-static _inline_ uint32_t msg_get_pkt_id(msg_hdr_t *h)
-{
-	return ntohl(h->pkt_id);
-}
-
-static _inline_ uint8_t msg_get_type(msg_hdr_t *h)
-{
-    return h->type;
-}
-
-static _inline_ uint16_t msg_get_length(msg_hdr_t *h)
-{
-	return ntohs(h->length);
-}
-
-static _inline_ uint16_t msg_get_proto(msg_hdr_t *h)
-{
-	return h->proto;
-}
-
-static _inline_ uint8_t msg_get_qos_priority(msg_hdr_t *h)
-{
-	return h->qos_priority;
-}
-
-static _inline_ uint8_t msg_get_disable_flow_control(msg_hdr_t *h)
-{
-	return h->disable_flow_control;
-}
-
-static _inline_ uint16_t msg_get_speed_limit(msg_hdr_t *h)
-{
-	return h->speed_limit;
-}
+#endif
 
 #endif /* AA_MESSAGE_H */
 

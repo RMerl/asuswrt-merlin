@@ -6,7 +6,7 @@ dnl XIPH_PATH_OGG([ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
 dnl Test for libogg, and define OGG_CFLAGS and OGG_LIBS
 dnl
 AC_DEFUN([XIPH_PATH_OGG],
-[dnl 
+[dnl
 dnl Get the cflags and libraries
 dnl
 AC_ARG_WITH(ogg,AC_HELP_STRING([--with-ogg=PFX],[Prefix where libogg is installed (optional)]), ogg_prefix="$withval", ogg_prefix="")

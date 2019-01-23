@@ -26,12 +26,12 @@ my %urls = (
     },
 );
 
-my $cmdline = $WgetTest::WGETPATH . " --local-encoding=iso-8859-1 -S ftp://localhost:{{port}}/fran${ccedilla_l1}ais.txt";
+my $cmdline = $WgetTest::WGETPATH . " --local-encoding=iso-8859-1 --remote-encoding=utf-8 -S ftp://localhost:{{port}}/fran${ccedilla_l1}ais.txt";
 
 my $expected_error_code = 0;
 
 my %expected_downloaded_files = (
-    "fran${ccedilla_u8}ais.txt" => {
+    "fran${ccedilla_l1}ais.txt" => {
         content => $francais,
     },
 );

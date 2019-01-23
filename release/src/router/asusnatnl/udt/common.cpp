@@ -617,10 +617,10 @@ const char* CUDTException::getErrorMessage()
          if (strerror_r(m_iErrno, errmsg, 1024) == 0)
             m_strMsg += errmsg;
       #else
-         LPVOID lpMsgBuf;
-         FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, m_iErrno, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, NULL);
-         m_strMsg += (char*)lpMsgBuf;
-         LocalFree(lpMsgBuf);
+         char lpMsgBuf[1024];
+         FormatMessage(/*FORMAT_MESSAGE_ALLOCATE_BUFFER | */FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, m_iErrno, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, NULL);
+		 m_strMsg += (char*)lpMsgBuf;
+		 //HeapFree(GetProcessHeap(), 0, lpMsgBuf);
       #endif
    }
 

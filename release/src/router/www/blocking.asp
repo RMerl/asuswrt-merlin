@@ -220,11 +220,10 @@ var flag = '<% get_parameter("flag"); %>';
 var block_info = '<% bwdpi_redirect_info(); %>';
 if(block_info != "")
 	block_info = JSON.parse(block_info);
-var client_list_array = '<% get_client_detail_info(); %>';
-var custom_name = decodeURIComponent('<% nvram_char_to_ascii("", "custom_clientlist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<");
+
 var category_info = [["Parental Controls", "1", "<#AiProtection_filter_Adult#>", "<#AiProtection_filter_Adult1#>", "Sites with profane or vulgar content generally considered inappropriate for minors; includes sites that offer erotic content or ads for sexual services, but excludes sites with sexually explicit images."],
 				     ["Parental Controls", "2", "<#AiProtection_filter_Adult#>", "<#AiProtection_filter_Adult1#>", "Sites that provide information about or software for sharing and transferring files related to child pornography."],
-				     ["Parental Controls", "3", "<#AiProtection_filter_Adult#>", "<#AiProtection_filter_Adult1#>", "Sites with sexually explicit imagery designed for sexual arousal, including sites that offer sexual services."],
+				     ["Parental Controls", "3", "<#AiProtection_filter_Adult#>", "<#AiProtection_filter_Adult1#>", "<#block_cate_PC3#>"],
 				     ["Parental Controls", "4", "<#AiProtection_filter_Adult#>", "<#AiProtection_filter_Adult1#>", "Sites with or without explicit images that discuss reproduction, sexuality, birth control, sexually transmitted disease, safe sex, or coping with sexual trauma."],
 				     ["Parental Controls", "5", "<#AiProtection_filter_Adult#>", "<#AiProtection_filter_Adult1#>", "Sites that sell swimsuits or intimate apparel with images of models wearing them."],
 				     ["Parental Controls", "6", "<#AiProtection_filter_Adult#>", "<#AiProtection_filter_Adult1#>", "Sites showing nude or partially nude images that are generally considered artistic, not vulgar or pornographic."],
@@ -284,10 +283,11 @@ function initial(){
 }
 
 function get_target_info(){
+/*
 	var client_list_row = client_list_array.split('<');
 	var custom_name_row = custom_name.split('<');
 	var match_flag = 0;
-	
+
 	for(i=1;i<custom_name_row.length;i++){
 		var custom_name_col = custom_name_row[i].split('>');
 		if(custom_name_col[1] == block_info[0] || custom_name_col[1] == mac_parameter){
@@ -304,8 +304,9 @@ function get_target_info(){
 			}
 		}
 	}
-
+*/
 	if(casenum != ""){		//for AiProtection
+		target_info.name = block_info[0];
 		target_info.mac = block_info[0];
 		target_info.url = block_info[1];
 		target_info.category_id = block_info[2];
@@ -313,7 +314,7 @@ function get_target_info(){
 	}
 	else{		//for Parental Controls (Time Scheduling)
 		target_info.mac = mac_parameter;
-		target_info.desc = "This device is blocked to access the Internet at this time";//untranslated string
+		target_info.desc = "<#block_TS_desc#>";
 	}
 }
 
@@ -341,8 +342,8 @@ function show_information(){
 	var parental_string = "";
 	
 	code = "<ul>";
-	code += "<li><div><span class='desc_info'>Description:</span><br>" + target_info.desc + "</div></li>";
-	code += "<li><div><span class='desc_info'>Host: </span>";
+	code += "<li><div><span class='desc_info'><#Description#>:</span><br>" + target_info.desc + "</div></li>";
+	code += "<li><div><span class='desc_info'><#LANHostConfig_x_DDNSHostNames_itemname#> (MAC): </span>";
 	if(target_info.name == target_info.mac)
 		code += target_info.name;
 	else	
@@ -358,13 +359,13 @@ function show_information(){
 	code += "</ul>";
 	document.getElementById('detail_info').innerHTML = code;
 	
-	if(target_info.category_type == "Parental Controls"){
+	if(target_info.category_type == "Parental Controls"){	//Webs Apps filter
 		code_title = "<div class='er_title' style='height:auto;'>The web page category is filtered</div>"//untranslated string
 		code_suggestion = "<ul>";
-		code_suggestion += "<li><span>If you are a manager and still want to visit this website, please go to for configuration change.</span></li>";//untranslated string
-		code_suggestion += "<li><span>If you are a client and have any problems, please contact your manager.</span></li>";		//untranslated string
+		code_suggestion += "<li><span><#block_PC_suggest1#></span></li>";
+		code_suggestion += "<li><span><#block_TS_suggest3#></span></li>";
 		code_suggestion += "</ul>";
-		document.getElementById('tm_block').style.display = "";
+		document.getElementById('tm_block').style.display = "none";
 		$("#go_btn").click(function(){
 			location.href = "AiProtection_WebProtector.asp";
 		});
@@ -400,15 +401,15 @@ function show_information(){
 		document.getElementById('go_btn').style.display = "";		
 	}	
 	else{		//for Parental Control(Time Scheduling)
-		code_title = "<div class='er_title' style='height:auto;'>Warning! The device can't access the Internet now.</div>"
+		code_title = "<div class='er_title' style='height:auto;'><#block_TS_title#></div>"
 		code_suggestion = "<ul>";
 		if(bwdpi_support)
 			parental_string = "<#Time_Scheduling#>";
 		else
 			parental_string = "<#Parental_Control#>";
 
-		code_suggestion += "<li>If you are a manager and want to access the Internet, please go to "+ parental_string +" for configuration change.</li>";	//untranslated string
-		code_suggestion += "<li>If you are a client and have any problems, please contact your manager.</li>";//untranslated string
+		code_suggestion += "<li><#block_TS_suggest1#> "+ parental_string +" <#block_TS_suggest2#></li>";
+		code_suggestion += "<li><#block_TS_suggest3#></li>";
 		code_suggestion += "</ul>";
 		$("#go_btn").click(function(){
 			location.href = "ParentalControl.asp";
@@ -432,7 +433,7 @@ function show_information(){
 		</div>		
 		<div class="prod_madelName"><#Web_Title2#></div>
 		
-		<div id="main_reason" class="p1 title_gap">Detailed informations:</div><!--untranslated string-->
+		<div id="main_reason" class="p1 title_gap"><#block_DetailInfo#></div>
 		<div ></div>	
 		<div>
 			<div class="p1 title_gap"></div>
@@ -458,3 +459,4 @@ function show_information(){
 	</div>
 </body>
 </html>
+

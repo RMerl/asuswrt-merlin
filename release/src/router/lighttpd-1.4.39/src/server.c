@@ -126,6 +126,9 @@ static void sigaction_handler(int sig, siginfo_t *si, void *context) {
 		break;
 	case SIGCHLD:
 		break;
+	case SIGUSR2:
+		process_share_link_for_router_sync_use();
+		break;
 	}
 }
 #elif defined(HAVE_SIGNAL) || defined(HAVE_SIGACTION)
@@ -1017,6 +1020,20 @@ int main (int argc, char **argv) {
 	signal(SIGINT,  signal_handler);
 #endif
 
+#if EMBEDDED_EANBLE
+	sigset_t sigs_to_catch;	
+
+	/* set the signal handler */ 
+	sigemptyset(&sigs_to_catch); 
+	sigaddset(&sigs_to_catch, SIGTERM);
+	sigaddset(&sigs_to_catch, SIGUSR2);   
+	sigprocmask(SIG_UNBLOCK, &sigs_to_catch, NULL);
+	signal(SIGTERM, sigaction_handler);
+
+	//- 20121108 Sungmin add
+	signal(SIGUSR2, sigaction_handler);
+#endif
+
 #ifdef USE_ALARM
 	signal(SIGALRM, signal_handler);
 
@@ -1056,7 +1073,41 @@ int main (int argc, char **argv) {
 		server_free(srv);
 		return -1;
 	}
+	
+	//- Sungmin add	
+	if (-1 == log_sys_open(srv)) {
+		log_error_write(srv, __FILE__, __LINE__, "s", "Opening syslog failed. Going down.");
 
+		plugins_free(srv);
+		network_close(srv);
+		server_free(srv);
+		return -1;
+	}
+
+	#if EMBEDDED_EANBLE
+	#ifndef APP_IPKG
+	buffer_copy_string( srv->last_login_info, nvram_get_webdav_last_login_info() );
+	buffer_copy_string( srv->cur_login_info, nvram_get_webdav_last_login_info() );
+	#else
+	char *last_login_info = nvram_get_webdav_last_login_info();
+	fprintf(stderr,"last_login_info=%s\n",last_login_info);
+	if(last_login_info == NULL || *last_login_info == '(')
+	{
+		fprintf(stderr,"111\n");
+	}
+	else
+	{
+		buffer_copy_string( srv->last_login_info, last_login_info);
+		buffer_copy_string( srv->cur_login_info, last_login_info);
+		free(last_login_info);
+	}
+	#endif
+	#else
+	buffer_copy_string( srv->last_login_info, "admin>2012/08/08 18:28:28>100.100.100.100" );
+	buffer_copy_string( srv->cur_login_info, "admin>2012/08/08 18:28:28>100.100.100.100" );
+	#endif
+	//////////////////////////////////////////////////////////////////////////////////////////
+	
 	if (HANDLER_GO_ON != plugins_call_set_defaults(srv)) {
 		log_error_write(srv, __FILE__, __LINE__, "s", "Configuration of plugins failed. Going down.");
 		
@@ -1066,7 +1117,7 @@ int main (int argc, char **argv) {
 
 		return -1;
 	}
-
+	
 	/* dump unused config-keys */
 	for (i = 0; i < srv->config_context->used; i++) {
 		array *config = ((data_config *)srv->config_context->data[i])->value;

@@ -1,7 +1,7 @@
 /* HTTP support.
    Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2014 Free Software Foundation,
-   Inc.
+   2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2014, 2015 Free
+   Software Foundation, Inc.
 
 This file is part of GNU Wget.
 
@@ -39,9 +39,11 @@ as that of the covered work.  */
 #include <errno.h>
 #include <time.h>
 #include <locale.h>
+#include <fcntl.h>
 
 #include "hash.h"
 #include "http.h"
+#include "hsts.h"
 #include "utils.h"
 #include "url.h"
 #include "host.h"
@@ -59,6 +61,15 @@ as that of the covered work.  */
 #include "convert.h"
 #include "spider.h"
 #include "warc.h"
+#include "c-strcase.h"
+#include "version.h"
+#ifdef HAVE_METALINK
+# include "metalink.h"
+# include "xstrndup.h"
+#endif
+#ifdef ENABLE_XATTR
+#include "xattr.h"
+#endif
 
 #ifdef TESTING
 #include "test.h"
@@ -68,7 +79,6 @@ as that of the covered work.  */
 # include "vms.h"
 #endif /* def __VMS */
 
-extern char *version_string;
 
 /* Forward decls. */
 struct http_stat;
@@ -80,11 +90,6 @@ static bool known_authentication_scheme_p (const char *, const char *);
 static void ensure_extension (struct http_stat *, const char *, int *);
 static void load_cookies (void);
 
-#ifndef MIN
-# define MIN(x, y) ((x) > (y) ? (y) : (x))
-#endif
-
-
 static bool cookies_loaded_p;
 static struct cookie_jar *wget_cookie_jar;
 
@@ -129,7 +134,8 @@ static struct cookie_jar *wget_cookie_jar;
 #define HTTP_STATUS_NOT_IMPLEMENTED       501
 #define HTTP_STATUS_BAD_GATEWAY           502
 #define HTTP_STATUS_UNAVAILABLE           503
-
+#define HTTP_STATUS_GATEWAY_TIMEOUT       504
+
 enum rp {
   rel_none, rel_name, rel_value, rel_both
 };
@@ -145,7 +151,6 @@ struct request {
   int hcount, hcapacity;
 };
 
-extern int numurls;
 
 /* Create a new, empty request. Set the request's method and its
    arguments.  METHOD should be a literal string (or it should outlive
@@ -235,14 +240,14 @@ request_set_header (struct request *req, const char *name, const char *value,
       /* A NULL value is a no-op; if freeing the name is requested,
          free it now to avoid leaks.  */
       if (release_policy == rel_name || release_policy == rel_both)
-        xfree ((void *)name);
+        xfree (name);
       return;
     }
 
   for (i = 0; i < req->hcount; i++)
     {
       hdr = &req->headers[i];
-      if (0 == strcasecmp (name, hdr->name))
+      if (0 == c_strcasecmp (name, hdr->name))
         {
           /* Replace existing header. */
           release_header (hdr);
@@ -295,7 +300,7 @@ request_remove_header (struct request *req, const char *name)
   for (i = 0; i < req->hcount; i++)
     {
       struct request_header *hdr = &req->headers[i];
-      if (0 == strcasecmp (name, hdr->name))
+      if (0 == c_strcasecmp (name, hdr->name))
         {
           release_header (hdr);
           /* Move the remaining headers by one. */
@@ -340,7 +345,7 @@ request_send (const struct request *req, int fd, FILE *warc_tmp)
   /* "\r\n\0" */
   size += 3;
 
-  p = request_string = alloca_array (char, size);
+  p = request_string = xmalloc (size);
 
   /* Generate the request. */
 
@@ -375,22 +380,31 @@ request_send (const struct request *req, int fd, FILE *warc_tmp)
       /* Write a copy of the data to the WARC record. */
       int warc_tmp_written = fwrite (request_string, 1, size - 1, warc_tmp);
       if (warc_tmp_written != size - 1)
-        return -2;
+        write_error = -2;
     }
+  xfree (request_string);
   return write_error;
 }
 
-/* Release the resources used by REQ. */
+/* Release the resources used by REQ.
+   It is safe to call it with a vaild pointer to a NULL pointer.
+   It is not safe to call it with an invalid or NULL pointer.  */
 
 static void
-request_free (struct request *req)
+request_free (struct request **req_ref)
 {
   int i;
-  xfree_null (req->arg);
+  struct request *req = *req_ref;
+
+  if (!req)
+    return;
+
+  xfree (req->arg);
   for (i = 0; i < req->hcount; i++)
     release_header (&req->headers[i]);
-  xfree_null (req->headers);
+  xfree (req->headers);
   xfree (req);
+  *req_ref = NULL;
 }
 
 static struct hash_table *basic_authed_hosts;
@@ -411,7 +425,7 @@ maybe_send_basic_creds (const char *hostname, const char *user,
       do_challenge = true;
     }
   else if (basic_authed_hosts
-      && hash_table_contains(basic_authed_hosts, hostname))
+      && hash_table_contains (basic_authed_hosts, hostname))
     {
       DEBUGP (("Found %s in basic_authed_hosts.\n", quote (hostname)));
       do_challenge = true;
@@ -437,9 +451,9 @@ register_basic_auth_host (const char *hostname)
     {
       basic_authed_hosts = make_nocase_string_hash_table (1);
     }
-  if (!hash_table_contains(basic_authed_hosts, hostname))
+  if (!hash_table_contains (basic_authed_hosts, hostname))
     {
-      hash_table_put (basic_authed_hosts, xstrdup(hostname), NULL);
+      hash_table_put (basic_authed_hosts, xstrdup (hostname), NULL);
       DEBUGP (("Inserted %s into basic_authed_hosts\n", quote (hostname)));
     }
 }
@@ -503,7 +517,7 @@ body_file_send (int sock, const char *file_name, wgint promised_size, FILE *warc
   DEBUGP (("done]\n"));
   return 0;
 }
-
+
 /* Determine whether [START, PEEKED + PEEKLEN) contains an empty line.
    If so, return the pointer to the position after the line, otherwise
    return NULL.  This is used as callback to fd_read_hunk.  The data
@@ -680,7 +694,7 @@ resp_header_locate (const struct response *resp, const char *name, int start,
       const char *e = headers[i + 1];
       if (e - b > name_len
           && b[name_len] == ':'
-          && 0 == strncasecmp (b, name, name_len))
+          && 0 == c_strncasecmp (b, name, name_len))
         {
           b += name_len + 1;
           while (b < e && c_isspace (*b))
@@ -812,13 +826,22 @@ resp_status (const struct response *resp, char **message)
   return status;
 }
 
-/* Release the resources used by RESP.  */
+/* Release the resources used by RESP.
+   It is safe to call it with a valid pointer to a NULL pointer.
+   It is not safe to call it with a invalid or NULL pointer.  */
 
 static void
-resp_free (struct response *resp)
+resp_free (struct response **resp_ref)
 {
-  xfree_null (resp->headers);
+  struct response *resp = *resp_ref;
+
+  if (!resp)
+    return;
+
+  xfree (resp->headers);
   xfree (resp);
+
+  *resp_ref = NULL;
 }
 
 /* Print a single line of response, the characters [b, e).  We tried
@@ -828,7 +851,7 @@ resp_free (struct response *resp)
    caused crashes in UTF-8 locales.  */
 
 static void
-print_response_line(const char *prefix, const char *b, const char *e)
+print_response_line (const char *prefix, const char *b, const char *e)
 {
   char *copy;
   BOUNDED_TO_ALLOCA(b, e, copy);
@@ -854,7 +877,7 @@ print_server_response (const struct response *resp, const char *prefix)
         --e;
       if (b < e && e[-1] == '\r')
         --e;
-      print_response_line(prefix, b, e);
+      print_response_line (prefix, b, e);
     }
 }
 
@@ -891,9 +914,13 @@ parse_content_range (const char *hdr, wgint *first_byte_ptr,
   ++hdr;
   for (num = 0; c_isdigit (*hdr); hdr++)
     num = 10 * num + (*hdr - '0');
-  if (*hdr != '/' || !c_isdigit (*(hdr + 1)))
+  if (*hdr != '/')
     return false;
   *last_byte_ptr = num;
+  if (!(c_isdigit (*(hdr + 1)) || *(hdr + 1) == '*'))
+    return false;
+  if (*last_byte_ptr < *first_byte_ptr)
+    return false;
   ++hdr;
   if (*hdr == '*')
     num = -1;
@@ -901,6 +928,8 @@ parse_content_range (const char *hdr, wgint *first_byte_ptr,
     for (num = 0; c_isdigit (*hdr); hdr++)
       num = 10 * num + (*hdr - '0');
   *entity_length_ptr = num;
+  if ((*entity_length_ptr <= *last_byte_ptr) && *entity_length_ptr != -1)
+    return false;
   return true;
 }
 
@@ -944,10 +973,13 @@ skip_short_body (int fd, wgint contlen, bool chunked)
               remaining_chunk_size = strtol (line, &endl, 16);
               xfree (line);
 
+              if (remaining_chunk_size < 0)
+                return false;
+
               if (remaining_chunk_size == 0)
                 {
                   line = fd_read_line (fd);
-                  xfree_null (line);
+                  xfree (line);
                   break;
                 }
             }
@@ -1002,18 +1034,18 @@ skip_short_body (int fd, wgint contlen, bool chunked)
    or a fragment of a long parameter value
 */
 static int
-modify_param_name(param_token *name)
+modify_param_name (param_token *name)
 {
   const char *delim1 = memchr (name->b, '*', name->e - name->b);
   const char *delim2 = memrchr (name->b, '*', name->e - name->b);
 
   int result;
 
-  if(delim1 == NULL)
+  if (delim1 == NULL)
     {
       result = NOT_RFC2231;
     }
-  else if(delim1 == delim2)
+  else if (delim1 == delim2)
     {
       if ((name->e - 1) == delim1)
         {
@@ -1131,12 +1163,12 @@ extract_param (const char **source, param_token *name, param_token *value,
     }
   *source = p;
 
-  param_type = modify_param_name(name);
+  param_type = modify_param_name (name);
   if (param_type != NOT_RFC2231)
     {
       if (param_type == RFC2231_ENCODING && is_url_encoded)
         *is_url_encoded = true;
-      modify_param_value(value, param_type);
+      modify_param_value (value, param_type);
     }
   return true;
 }
@@ -1151,17 +1183,14 @@ static void
 append_value_to_filename (char **filename, param_token const * const value,
                           bool is_url_encoded)
 {
-  int original_length = strlen(*filename);
-  int new_length = strlen(*filename) + (value->e - value->b);
+  int original_length = strlen (*filename);
+  int new_length = strlen (*filename) + (value->e - value->b);
   *filename = xrealloc (*filename, new_length+1);
   memcpy (*filename + original_length, value->b, (value->e - value->b));
   (*filename)[new_length] = '\0';
   if (is_url_encoded)
     url_unescape (*filename + original_length);
 }
-
-#undef MAX
-#define MAX(p, q) ((p) > (q) ? (p) : (q))
 
 /* Parse the contents of the `Content-Disposition' header, extracting
    the information useful to Wget.  Content-Disposition is a header
@@ -1189,15 +1218,19 @@ static bool
 parse_content_disposition (const char *hdr, char **filename)
 {
   param_token name, value;
-  *filename = NULL;
   bool is_url_encoded = false;
+
+  char *encodedFilename = NULL;
+  char *unencodedFilename = NULL;
   for ( ; extract_param (&hdr, &name, &value, ';', &is_url_encoded);
         is_url_encoded = false)
     {
-      int isFilename = BOUNDED_EQUAL_NO_CASE ( name.b, name.e, "filename" );
+      int isFilename = BOUNDED_EQUAL_NO_CASE (name.b, name.e, "filename");
       if ( isFilename && value.b != NULL)
         {
           /* Make the file name begin at the last slash or backslash. */
+          bool isEncodedFilename;
+          char **outFilename;
           const char *last_slash = memrchr (value.b, '/', value.e - value.b);
           const char *last_bs = memrchr (value.b, '\\', value.e - value.b);
           if (last_slash && last_bs)
@@ -1207,24 +1240,92 @@ parse_content_disposition (const char *hdr, char **filename)
           if (value.b == value.e)
             continue;
 
-          if (*filename)
-            append_value_to_filename (filename, &value, is_url_encoded);
+          /* Check if the name is "filename*" as specified in RFC 6266.
+           * Since "filename" could be broken up as "filename*N" (RFC 2231),
+           * a check is needed to make sure this is not the case */
+          isEncodedFilename = *name.e == '*' && !c_isdigit (*(name.e + 1));
+          outFilename = isEncodedFilename ? &encodedFilename
+            : &unencodedFilename;
+          if (*outFilename)
+            append_value_to_filename (outFilename, &value, is_url_encoded);
           else
             {
-              *filename = strdupdelim (value.b, value.e);
+              *outFilename = strdupdelim (value.b, value.e);
               if (is_url_encoded)
-                url_unescape (*filename);
+                url_unescape (*outFilename);
             }
         }
     }
-
+  if (encodedFilename)
+    {
+      xfree (unencodedFilename);
+      *filename = encodedFilename;
+    }
+  else
+    {
+      xfree (encodedFilename);
+      *filename = unencodedFilename;
+    }
   if (*filename)
     return true;
   else
     return false;
 }
 
-
+#ifdef HAVE_HSTS
+static bool
+parse_strict_transport_security (const char *header, time_t *max_age, bool *include_subdomains)
+{
+  param_token name, value;
+  const char *c_max_age = NULL;
+  bool is = false; /* includeSubDomains */
+  bool is_url_encoded = false;
+  bool success = false;
+
+  if (header)
+    {
+      /* Process the STS header. Keys should be matched case-insensitively. */
+      for (; extract_param (&header, &name, &value, ';', &is_url_encoded); is_url_encoded = false)
+        {
+          if (BOUNDED_EQUAL_NO_CASE (name.b, name.e, "max-age"))
+            {
+              xfree (c_max_age);
+              c_max_age = strdupdelim (value.b, value.e);
+            }
+          else if (BOUNDED_EQUAL_NO_CASE (name.b, name.e, "includeSubDomains"))
+            is = true;
+        }
+
+      /* pass the parsed values over */
+      if (c_max_age)
+        {
+          /* If the string value goes out of a long's bounds, strtol() will return LONG_MIN or LONG_MAX.
+           * In theory, the HSTS engine should be able to handle it.
+           * Also, time_t is normally defined as a long, so this should not break.
+           */
+          if (max_age)
+            *max_age = (time_t) strtol (c_max_age, NULL, 10);
+          if (include_subdomains)
+            *include_subdomains = is;
+
+          DEBUGP (("Parsed Strict-Transport-Security max-age = %s, includeSubDomains = %s\n",
+                 c_max_age, (is ? "true" : "false")));
+
+          xfree (c_max_age);
+          success = true;
+        }
+      else
+        {
+          /* something weird happened */
+          logprintf (LOG_VERBOSE, "Could not parse String-Transport-Security header\n");
+          success = false;
+        }
+    }
+
+  return success;
+}
+#endif
+
 /* Persistent connections.  Currently, we cache the most recently used
    connection as persistent, provided that the HTTP server agrees to
    make it such.  The persistence data is stored in the variables
@@ -1428,10 +1529,8 @@ persistent_available_p (const char *host, int port, bool ssl,
       if (pconn_active && (fd) == pconn.socket) \
         invalidate_persistent ();               \
       else                                      \
-        {                                       \
           fd_close (fd);                        \
-          fd = -1;                              \
-        }                                       \
+      fd = -1;                                  \
     }                                           \
 } while (0)
 
@@ -1442,7 +1541,17 @@ persistent_available_p (const char *host, int port, bool ssl,
     fd_close (fd);                              \
   fd = -1;                                      \
 } while (0)
-
+
+typedef enum
+{
+  ENC_INVALID = -1,             /* invalid encoding */
+  ENC_NONE = 0,                 /* no special encoding */
+  ENC_GZIP,                     /* gzip compression */
+  ENC_DEFLATE,                  /* deflate compression */
+  ENC_COMPRESS,                 /* compress compression */
+  ENC_BROTLI                    /* brotli compression */
+} encoding_t;
+
 struct http_stat
 {
   wgint len;                    /* received length */
@@ -1470,23 +1579,30 @@ struct http_stat
   wgint orig_file_size;         /* size of file to compare for time-stamping */
   time_t orig_file_tstamp;      /* time-stamp of file to compare for
                                  * time-stamping */
+#ifdef HAVE_METALINK
+  metalink_t *metalink;
+#endif
+
+  encoding_t local_encoding;    /* the encoding of the local file */
+  encoding_t remote_encoding;   /* the encoding of the remote file */
+
+  bool temporary;               /* downloading a temporary file */
 };
 
 static void
 free_hstat (struct http_stat *hs)
 {
-  xfree_null (hs->newloc);
-  xfree_null (hs->remote_time);
-  xfree_null (hs->error);
-  xfree_null (hs->rderrmsg);
-  xfree_null (hs->local_file);
-  xfree_null (hs->orig_file_name);
-  xfree_null (hs->message);
-
-  /* Guard against being called twice. */
-  hs->newloc = NULL;
-  hs->remote_time = NULL;
-  hs->error = NULL;
+  xfree (hs->newloc);
+  xfree (hs->remote_time);
+  xfree (hs->error);
+  xfree (hs->rderrmsg);
+  xfree (hs->local_file);
+  xfree (hs->orig_file_name);
+  xfree (hs->message);
+#ifdef HAVE_METALINK
+  metalink_delete (hs->metalink);
+  hs->metalink = NULL;
+#endif
 }
 
 static void
@@ -1532,6 +1648,7 @@ read_response_body (struct http_stat *hs, int sock, FILE *fp, wgint contlen,
   int warc_payload_offset = 0;
   FILE *warc_tmp = NULL;
   int warcerr = 0;
+  int flags = 0;
 
   if (opt.warc_filename != NULL)
     {
@@ -1568,7 +1685,6 @@ read_response_body (struct http_stat *hs, int sock, FILE *fp, wgint contlen,
     }
 
   /* Read the response body.  */
-  int flags = 0;
   if (contlen != -1)
     /* If content-length is present, read that much; otherwise, read
        until EOF.  The HTTP spec doesn't require the server to
@@ -1580,6 +1696,9 @@ read_response_body (struct http_stat *hs, int sock, FILE *fp, wgint contlen,
     flags |= rb_skip_startpos;
   if (chunked_transfer_encoding)
     flags |= rb_chunked_transfer_encoding;
+
+  if (hs->remote_encoding == ENC_GZIP)
+    flags |= rb_compressed_gzip;
 
   hs->len = hs->restval;
   hs->rd_size = 0;
@@ -1633,7 +1752,7 @@ read_response_body (struct http_stat *hs, int sock, FILE *fp, wgint contlen,
 }
 
 #define BEGINS_WITH(line, string_constant)                               \
-  (!strncasecmp (line, string_constant, sizeof (string_constant) - 1)    \
+  (!c_strncasecmp (line, string_constant, sizeof (string_constant) - 1)    \
    && (c_isspace (line[sizeof (string_constant) - 1])                      \
        || !line[sizeof (string_constant) - 1]))
 
@@ -1659,108 +1778,65 @@ read_response_body (struct http_stat *hs, int sock, FILE *fp, wgint contlen,
 } while (0)
 #endif /* def __VMS [else] */
 
-/* Retrieve a document through HTTP protocol.  It recognizes status
-   code, and correctly handles redirections.  It closes the network
-   socket.  If it receives an error from the functions below it, it
-   will print it if there is enough information to do so (almost
-   always), returning the error to the caller (i.e. http_loop).
+/*
+   Convert time_t to one of valid HTTP date formats
+   ie. rfc1123-date.
 
-   Various HTTP parameters are stored to hs.
+   HTTP-date    = rfc1123-date | rfc850-date | asctime-date
+   rfc1123-date = wkday "," SP date1 SP time SP "GMT"
+   rfc850-date  = weekday "," SP date2 SP time SP "GMT"
+   asctime-date = wkday SP date3 SP time SP 4DIGIT
+   date1        = 2DIGIT SP month SP 4DIGIT
+                  ; day month year (e.g., 02 Jun 1982)
+   date2        = 2DIGIT "-" month "-" 2DIGIT
+                  ; day-month-year (e.g., 02-Jun-82)
+   date3        = month SP ( 2DIGIT | ( SP 1DIGIT ))
+                  ; month day (e.g., Jun  2)
+   time         = 2DIGIT ":" 2DIGIT ":" 2DIGIT
+                  ; 00:00:00 - 23:59:59
+   wkday        = "Mon" | "Tue" | "Wed"
+                | "Thu" | "Fri" | "Sat" | "Sun"
+   weekday      = "Monday" | "Tuesday" | "Wednesday"
+                | "Thursday" | "Friday" | "Saturday" | "Sunday"
+   month        = "Jan" | "Feb" | "Mar" | "Apr"
+                | "May" | "Jun" | "Jul" | "Aug"
+                | "Sep" | "Oct" | "Nov" | "Dec"
 
-   If PROXY is non-NULL, the connection will be made to the proxy
-   server, and u->url will be requested.  */
+   source: RFC2616  */
 static uerr_t
-gethttp (struct url *u, struct http_stat *hs, int *dt, struct url *proxy,
-         struct iri *iri, int count)
+time_to_rfc1123 (time_t time, char *buf, size_t bufsize)
 {
-  struct request *req;
+  static const char *wkday[] = { "Sun", "Mon", "Tue", "Wed",
+                                 "Thu", "Fri", "Sat" };
+  static const char *month[] = { "Jan", "Feb", "Mar", "Apr",
+                                 "May", "Jun", "Jul", "Aug",
+                                 "Sep", "Oct", "Nov", "Dec" };
+  /* rfc1123 example: Thu, 01 Jan 1998 22:12:57 GMT  */
+  static const char *time_format = "%s, %02d %s %04d %02d:%02d:%02d GMT";
 
-  char *type;
-  char *user, *passwd;
-  char *proxyauth;
-  int statcode;
-  int write_error;
-  wgint contlen, contrange;
-  struct url *conn;
-  FILE *fp;
-  int err;
-
-  int sock = -1;
-
-  /* Set to 1 when the authorization has already been sent and should
-     not be tried again. */
-  bool auth_finished = false;
-
-  /* Set to 1 when just globally-set Basic authorization has been sent;
-   * should prevent further Basic negotiations, but not other
-   * mechanisms. */
-  bool basic_auth_finished = false;
-
-  /* Whether NTLM authentication is used for this request. */
-  bool ntlm_seen = false;
-
-  /* Whether our connection to the remote host is through SSL.  */
-  bool using_ssl = false;
-
-  /* Whether a HEAD request will be issued (as opposed to GET or
-     POST). */
-  bool head_only = !!(*dt & HEAD_ONLY);
-
-  char *head;
-  struct response *resp;
-  char hdrval[512];
-  char *message;
-
-  /* Declare WARC variables. */
-  bool warc_enabled = (opt.warc_filename != NULL);
-  FILE *warc_tmp = NULL;
-  char warc_timestamp_str [21];
-  char warc_request_uuid [48];
-  ip_address *warc_ip = NULL;
-  off_t warc_payload_offset = -1;
-
-  /* Whether this connection will be kept alive after the HTTP request
-     is done. */
-  bool keep_alive;
-
-  /* Is the server using the chunked transfer encoding?  */
-  bool chunked_transfer_encoding = false;
-
-  /* Whether keep-alive should be inhibited.  */
-  bool inhibit_keep_alive =
-    !opt.http_keep_alive || opt.ignore_length;
-
-  /* Headers sent when using POST. */
-  wgint body_data_size = 0;
-
-  bool host_lookup_failed = false;
-
-#ifdef HAVE_SSL
-  if (u->scheme == SCHEME_HTTPS)
+  struct tm *gtm = gmtime (&time);
+  if (!gtm)
     {
-      /* Initialize the SSL context.  After this has once been done,
-         it becomes a no-op.  */
-      if (!ssl_init ())
-        {
-          scheme_disable (SCHEME_HTTPS);
-          logprintf (LOG_NOTQUIET,
-                     _("Disabling SSL due to encountered errors.\n"));
-          return SSLINITFAILED;
-        }
+      logprintf (LOG_NOTQUIET,
+                 _("gmtime failed. This is probably a bug.\n"));
+      return TIMECONV_ERR;
     }
-#endif /* HAVE_SSL */
 
-  /* Initialize certain elements of struct http_stat.  */
-  hs->len = 0;
-  hs->contlen = -1;
-  hs->res = -1;
-  hs->rderrmsg = NULL;
-  hs->newloc = NULL;
-  hs->remote_time = NULL;
-  hs->error = NULL;
-  hs->message = NULL;
+  snprintf (buf, bufsize, time_format, wkday[gtm->tm_wday],
+            gtm->tm_mday, month[gtm->tm_mon],
+            gtm->tm_year + 1900, gtm->tm_hour,
+            gtm->tm_min, gtm->tm_sec);
 
-  conn = u;
+  return RETROK;
+}
+
+static struct request *
+initialize_request (const struct url *u, struct http_stat *hs, int *dt, struct url *proxy,
+                    bool inhibit_keep_alive, bool *basic_auth_finished,
+                    wgint *body_data_size, char **user, char **passwd, uerr_t *ret)
+{
+  bool head_only = !!(*dt & HEAD_ONLY);
+  struct request *req;
 
   /* Prepare the request to send. */
   {
@@ -1796,6 +1872,20 @@ gethttp (struct url *u, struct http_stat *hs, int *dt, struct url *proxy,
       /* ... but some HTTP/1.0 caches doesn't implement Cache-Control.  */
       request_set_header (req, "Pragma", "no-cache", rel_none);
     }
+  if (*dt & IF_MODIFIED_SINCE)
+    {
+      char strtime[32];
+      uerr_t err = time_to_rfc1123 (hs->orig_file_tstamp, strtime, countof (strtime));
+
+      if (err != RETROK)
+        {
+          logputs (LOG_VERBOSE, _("Cannot convert timestamp to http format. "
+                                  "Falling back to time 0 as last modification "
+                                  "time.\n"));
+          strcpy (strtime, "Thu, 01 Jan 1970 00:00:00 GMT");
+        }
+      request_set_header (req, "If-Modified-Since", xstrdup (strtime), rel_value);
+    }
   if (hs->restval)
     request_set_header (req, "Range",
                         aprintf ("bytes=%s-",
@@ -1803,22 +1893,49 @@ gethttp (struct url *u, struct http_stat *hs, int *dt, struct url *proxy,
                         rel_value);
   SET_USER_AGENT (req);
   request_set_header (req, "Accept", "*/*", rel_none);
+#ifdef HAVE_LIBZ
+  if (opt.compression != compression_none)
+    request_set_header (req, "Accept-Encoding", "gzip", rel_none);
+  else
+#endif
+    request_set_header (req, "Accept-Encoding", "identity", rel_none);
 
-  /* Find the username and password for authentication. */
-  user = u->user;
-  passwd = u->passwd;
-  search_netrc (u->host, (const char **)&user, (const char **)&passwd, 0);
-  user = user ? user : (opt.http_user ? opt.http_user : opt.user);
-  passwd = passwd ? passwd : (opt.http_passwd ? opt.http_passwd : opt.passwd);
+  /* Find the username with priority */
+  if (u->user)
+    *user = u->user;
+  else if (opt.user && (opt.use_askpass || opt.ask_passwd))
+    *user = opt.user;
+  else if (opt.http_user)
+    *user = opt.http_user;
+  else if (opt.user)
+    *user = opt.user;
+  else
+    *user = NULL;
+
+  /* Find the password with priority */
+  if (u->passwd)
+    *passwd = u->passwd;
+  else if (opt.passwd && (opt.use_askpass || opt.ask_passwd))
+    *passwd = opt.passwd;
+  else if (opt.http_passwd)
+    *passwd = opt.http_passwd;
+  else if (opt.passwd)
+    *passwd = opt.passwd;
+  else
+    *passwd = NULL;
+
+  /* Check for ~/.netrc if none of the above match */
+  if (opt.netrc && (!*user || !*passwd))
+    search_netrc (u->host, (const char **) user, (const char **) passwd, 0);
 
   /* We only do "site-wide" authentication with "global" user/password
    * values unless --auth-no-challange has been requested; URL user/password
    * info overrides. */
-  if (user && passwd && (!u->user || opt.auth_without_challenge))
+  if (*user && *passwd && (!u->user || opt.auth_without_challenge))
     {
       /* If this is a host for which we've already received a Basic
        * challenge, we'll go ahead and send Basic authentication creds. */
-      basic_auth_finished = maybe_send_basic_creds(u->host, user, passwd, req);
+      *basic_auth_finished = maybe_send_basic_creds (u->host, *user, *passwd, req);
     }
 
   /* Generate the Host header, HOST:PORT.  Take into account that:
@@ -1860,23 +1977,1259 @@ gethttp (struct url *u, struct http_stat *hs, int *dt, struct url *proxy,
                               "application/x-www-form-urlencoded", rel_none);
 
           if (opt.body_data)
-            body_data_size = strlen (opt.body_data);
+            *body_data_size = strlen (opt.body_data);
           else
             {
-              body_data_size = file_size (opt.body_file);
-              if (body_data_size == -1)
+              *body_data_size = file_size (opt.body_file);
+              if (*body_data_size == -1)
                 {
                   logprintf (LOG_NOTQUIET, _("BODY data file %s missing: %s\n"),
                              quote (opt.body_file), strerror (errno));
-                  return FILEBADFILE;
+                  request_free (&req);
+                  *ret = FILEBADFILE;
+                  return NULL;
                 }
             }
           request_set_header (req, "Content-Length",
-                              xstrdup (number_to_static_string (body_data_size)),
+                              xstrdup (number_to_static_string (*body_data_size)),
                               rel_value);
+        }
+      else if (c_strcasecmp (opt.method, "post") == 0
+               || c_strcasecmp (opt.method, "put") == 0
+               || c_strcasecmp (opt.method, "patch") == 0)
+        request_set_header (req, "Content-Length", "0", rel_none);
+    }
+  return req;
+}
+
+static void
+initialize_proxy_configuration (const struct url *u, struct request *req,
+                                struct url *proxy, char **proxyauth)
+{
+  char *proxy_user, *proxy_passwd;
+  /* For normal username and password, URL components override
+     command-line/wgetrc parameters.  With proxy
+     authentication, it's the reverse, because proxy URLs are
+     normally the "permanent" ones, so command-line args
+     should take precedence.  */
+  if (opt.proxy_user && opt.proxy_passwd)
+    {
+      proxy_user = opt.proxy_user;
+      proxy_passwd = opt.proxy_passwd;
+    }
+  else
+    {
+      proxy_user = proxy->user;
+      proxy_passwd = proxy->passwd;
+    }
+  /* #### This does not appear right.  Can't the proxy request,
+     say, `Digest' authentication?  */
+  if (proxy_user && proxy_passwd)
+    *proxyauth = basic_authentication_encode (proxy_user, proxy_passwd);
+
+  /* Proxy authorization over SSL is handled below. */
+#ifdef HAVE_SSL
+  if (u->scheme != SCHEME_HTTPS)
+#endif
+    request_set_header (req, "Proxy-Authorization", *proxyauth, rel_value);
+}
+
+static uerr_t
+establish_connection (const struct url *u, const struct url **conn_ref,
+                      struct http_stat *hs, struct url *proxy,
+                      char **proxyauth,
+                      struct request **req_ref, bool *using_ssl,
+                      bool inhibit_keep_alive,
+                      int *sock_ref)
+{
+  bool host_lookup_failed = false;
+  int sock = *sock_ref;
+  struct request *req = *req_ref;
+  const struct url *conn = *conn_ref;
+  struct response *resp;
+  int write_error;
+  int statcode;
+
+  if (! inhibit_keep_alive)
+    {
+      /* Look for a persistent connection to target host, unless a
+         proxy is used.  The exception is when SSL is in use, in which
+         case the proxy is nothing but a passthrough to the target
+         host, registered as a connection to the latter.  */
+      const struct url *relevant = conn;
+#ifdef HAVE_SSL
+      if (u->scheme == SCHEME_HTTPS)
+        relevant = u;
+#endif
+
+      if (persistent_available_p (relevant->host, relevant->port,
+#ifdef HAVE_SSL
+                                  relevant->scheme == SCHEME_HTTPS,
+#else
+                                  0,
+#endif
+                                  &host_lookup_failed))
+        {
+          int family = socket_family (pconn.socket, ENDPOINT_PEER);
+          sock = pconn.socket;
+          *using_ssl = pconn.ssl;
+#if ENABLE_IPV6
+          if (family == AF_INET6)
+             logprintf (LOG_VERBOSE, _("Reusing existing connection to [%s]:%d.\n"),
+                        quotearg_style (escape_quoting_style, pconn.host),
+                         pconn.port);
+          else
+#endif
+             logprintf (LOG_VERBOSE, _("Reusing existing connection to %s:%d.\n"),
+                        quotearg_style (escape_quoting_style, pconn.host),
+                        pconn.port);
+          DEBUGP (("Reusing fd %d.\n", sock));
+          if (pconn.authorized)
+            /* If the connection is already authorized, the "Basic"
+               authorization added by code above is unnecessary and
+               only hurts us.  */
+            request_remove_header (req, "Authorization");
+        }
+      else if (host_lookup_failed)
+        {
+          logprintf(LOG_NOTQUIET,
+                    _("%s: unable to resolve host address %s\n"),
+                    exec_name, quote (relevant->host));
+          return HOSTERR;
+        }
+      else if (sock != -1)
+        {
+          sock = -1;
         }
     }
 
+  if (sock < 0)
+    {
+      sock = connect_to_host (conn->host, conn->port);
+      if (sock == E_HOST)
+        return HOSTERR;
+      else if (sock < 0)
+        return (retryable_socket_connect_error (errno)
+                ? CONERROR : CONIMPOSSIBLE);
+
+#ifdef HAVE_SSL
+      if (proxy && u->scheme == SCHEME_HTTPS)
+        {
+          char *head;
+          char *message;
+          /* When requesting SSL URLs through proxies, use the
+             CONNECT method to request passthrough.  */
+          struct request *connreq = request_new ("CONNECT",
+                              aprintf ("%s:%d", u->host, u->port));
+          SET_USER_AGENT (connreq);
+          if (proxyauth)
+            {
+              request_set_header (connreq, "Proxy-Authorization",
+                                  *proxyauth, rel_value);
+              /* Now that PROXYAUTH is part of the CONNECT request,
+                 zero it out so we don't send proxy authorization with
+                 the regular request below.  */
+              *proxyauth = NULL;
+            }
+          request_set_header (connreq, "Host",
+                              aprintf ("%s:%d", u->host, u->port),
+                              rel_value);
+
+          write_error = request_send (connreq, sock, 0);
+          request_free (&connreq);
+          if (write_error < 0)
+            {
+              CLOSE_INVALIDATE (sock);
+              return WRITEFAILED;
+            }
+
+          head = read_http_response_head (sock);
+          if (!head)
+            {
+              logprintf (LOG_VERBOSE, _("Failed reading proxy response: %s\n"),
+                         fd_errstr (sock));
+              CLOSE_INVALIDATE (sock);
+              return HERR;
+            }
+          message = NULL;
+          if (!*head)
+            {
+              xfree (head);
+              goto failed_tunnel;
+            }
+          DEBUGP (("proxy responded with: [%s]\n", head));
+
+          resp = resp_new (head);
+          statcode = resp_status (resp, &message);
+          if (statcode < 0)
+            {
+              char *tms = datetime_str (time (NULL));
+              logprintf (LOG_VERBOSE, "%d\n", statcode);
+              logprintf (LOG_NOTQUIET, _("%s ERROR %d: %s.\n"), tms, statcode,
+                         quotearg_style (escape_quoting_style,
+                                         _("Malformed status line")));
+              xfree (head);
+              return HERR;
+            }
+          xfree (hs->message);
+          hs->message = xstrdup (message);
+          resp_free (&resp);
+          xfree (head);
+          if (statcode != 200)
+            {
+            failed_tunnel:
+              logprintf (LOG_NOTQUIET, _("Proxy tunneling failed: %s"),
+                         message ? quotearg_style (escape_quoting_style, message) : "?");
+              xfree (message);
+              return CONSSLERR;
+            }
+          xfree (message);
+
+          /* SOCK is now *really* connected to u->host, so update CONN
+             to reflect this.  That way register_persistent will
+             register SOCK as being connected to u->host:u->port.  */
+          conn = u;
+        }
+
+      if (conn->scheme == SCHEME_HTTPS)
+        {
+          if (!ssl_connect_wget (sock, u->host, NULL))
+            {
+              CLOSE_INVALIDATE (sock);
+              return CONSSLERR;
+            }
+          else if (!ssl_check_certificate (sock, u->host))
+            {
+              CLOSE_INVALIDATE (sock);
+              return VERIFCERTERR;
+            }
+          *using_ssl = true;
+        }
+#endif /* HAVE_SSL */
+    }
+  *conn_ref = conn;
+  *req_ref = req;
+  *sock_ref = sock;
+  return RETROK;
+}
+
+static uerr_t
+set_file_timestamp (struct http_stat *hs)
+{
+  size_t filename_len = strlen (hs->local_file);
+  char *filename_plus_orig_suffix = alloca (filename_len + sizeof (ORIG_SFX));
+  bool local_dot_orig_file_exists = false;
+  char *local_filename = NULL;
+  struct stat st;
+
+  if (opt.backup_converted)
+    /* If -K is specified, we'll act on the assumption that it was specified
+        last time these files were downloaded as well, and instead of just
+        comparing local file X against server file X, we'll compare local
+        file X.orig (if extant, else X) against server file X.  If -K
+        _wasn't_ specified last time, or the server contains files called
+        *.orig, -N will be back to not operating correctly with -k. */
+    {
+      /* Would a single s[n]printf() call be faster?  --dan
+
+          Definitely not.  sprintf() is horribly slow.  It's a
+          different question whether the difference between the two
+          affects a program.  Usually I'd say "no", but at one
+          point I profiled Wget, and found that a measurable and
+          non-negligible amount of time was lost calling sprintf()
+          in url.c.  Replacing sprintf with inline calls to
+          strcpy() and number_to_string() made a difference.
+          --hniksic */
+      memcpy (filename_plus_orig_suffix, hs->local_file, filename_len);
+      memcpy (filename_plus_orig_suffix + filename_len,
+              ORIG_SFX, sizeof (ORIG_SFX));
+
+      /* Try to stat() the .orig file. */
+      if (stat (filename_plus_orig_suffix, &st) == 0)
+        {
+          local_dot_orig_file_exists = true;
+          local_filename = filename_plus_orig_suffix;
+        }
+    }
+
+  if (!local_dot_orig_file_exists)
+    /* Couldn't stat() <file>.orig, so try to stat() <file>. */
+    if (stat (hs->local_file, &st) == 0)
+      local_filename = hs->local_file;
+
+  if (local_filename != NULL)
+    /* There was a local file, so we'll check later to see if the version
+        the server has is the same version we already have, allowing us to
+        skip a download. */
+    {
+      hs->orig_file_name = xstrdup (local_filename);
+      hs->orig_file_size = st.st_size;
+      hs->orig_file_tstamp = st.st_mtime;
+#ifdef WINDOWS
+      /* Modification time granularity is 2 seconds for Windows, so
+          increase local time by 1 second for later comparison. */
+      ++hs->orig_file_tstamp;
+#endif
+      hs->timestamp_checked = true;
+    }
+
+  return RETROK;
+}
+
+static uerr_t
+check_file_output (const struct url *u, struct http_stat *hs,
+                   struct response *resp, char *hdrval, size_t hdrsize)
+{
+  /* Determine the local filename if needed. Notice that if -O is used
+   * hstat.local_file is set by http_loop to the argument of -O. */
+  if (!hs->local_file)
+    {
+      char *local_file = NULL;
+
+      /* Honor Content-Disposition whether possible. */
+      if (!opt.content_disposition
+          || !resp_header_copy (resp, "Content-Disposition",
+                                hdrval, hdrsize)
+          || !parse_content_disposition (hdrval, &local_file))
+        {
+          /* The Content-Disposition header is missing or broken.
+           * Choose unique file name according to given URL. */
+          hs->local_file = url_file_name (u, NULL);
+        }
+      else
+        {
+          DEBUGP (("Parsed filename from Content-Disposition: %s\n",
+                  local_file));
+          hs->local_file = url_file_name (u, local_file);
+        }
+
+      xfree (local_file);
+    }
+
+  hs->temporary = opt.delete_after || opt.spider || !acceptable (hs->local_file);
+  if (hs->temporary)
+    {
+      char *tmp = aprintf ("%s.tmp", hs->local_file);
+      xfree (hs->local_file);
+      hs->local_file = tmp;
+    }
+
+  /* TODO: perform this check only once. */
+  if (!hs->existence_checked && file_exists_p (hs->local_file, NULL))
+    {
+      if (opt.noclobber && !opt.output_document)
+        {
+          /* If opt.noclobber is turned on and file already exists, do not
+             retrieve the file. But if the output_document was given, then this
+             test was already done and the file didn't exist. Hence the !opt.output_document */
+          return RETRUNNEEDED;
+        }
+      else if (!ALLOW_CLOBBER)
+        {
+          char *unique = unique_name (hs->local_file, true);
+          if (unique != hs->local_file)
+            xfree (hs->local_file);
+          hs->local_file = unique;
+        }
+    }
+  hs->existence_checked = true;
+
+  /* Support timestamping */
+  if (opt.timestamping && !hs->timestamp_checked)
+    {
+      uerr_t timestamp_err = set_file_timestamp (hs);
+      if (timestamp_err != RETROK)
+        return timestamp_err;
+    }
+  return RETROK;
+}
+
+static uerr_t
+check_auth (const struct url *u, char *user, char *passwd, struct response *resp,
+            struct request *req, bool *ntlm_seen_ref, bool *retry,
+            bool *basic_auth_finished_ref, bool *auth_finished_ref)
+{
+  uerr_t auth_err = RETROK;
+  bool basic_auth_finished = *basic_auth_finished_ref;
+  bool auth_finished = *auth_finished_ref;
+  bool ntlm_seen = *ntlm_seen_ref;
+  *retry = false;
+  if (!auth_finished && (user && passwd))
+    {
+      /* IIS sends multiple copies of WWW-Authenticate, one with
+         the value "negotiate", and other(s) with data.  Loop over
+         all the occurrences and pick the one we recognize.  */
+      int wapos;
+      char *buf;
+      const char *www_authenticate = NULL;
+      const char *wabeg, *waend;
+      const char *digest = NULL, *basic = NULL, *ntlm = NULL;
+      for (wapos = 0; !ntlm
+             && (wapos = resp_header_locate (resp, "WWW-Authenticate", wapos,
+                                             &wabeg, &waend)) != -1;
+           ++wapos)
+        {
+          param_token name, value;
+
+          BOUNDED_TO_ALLOCA (wabeg, waend, buf);
+          www_authenticate = buf;
+
+          for (;!ntlm;)
+            {
+              /* extract the auth-scheme */
+              while (c_isspace (*www_authenticate)) www_authenticate++;
+              name.e = name.b = www_authenticate;
+              while (*name.e && !c_isspace (*name.e)) name.e++;
+
+              if (name.b == name.e)
+                break;
+
+              DEBUGP (("Auth scheme found '%.*s'\n", (int) (name.e - name.b), name.b));
+
+              if (known_authentication_scheme_p (name.b, name.e))
+                {
+                  if (BEGINS_WITH (name.b, "NTLM"))
+                    {
+                      ntlm = name.b;
+                      break; /* this is the most secure challenge, stop here */
+                    }
+                  else if (!digest && BEGINS_WITH (name.b, "Digest"))
+                    digest = name.b;
+                  else if (!basic && BEGINS_WITH (name.b, "Basic"))
+                    basic = name.b;
+                }
+
+              /* now advance over the auth-params */
+              www_authenticate = name.e;
+              DEBUGP (("Auth param list '%s'\n", www_authenticate));
+              while (extract_param (&www_authenticate, &name, &value, ',', NULL) && name.b && value.b)
+                {
+                  DEBUGP (("Auth param %.*s=%.*s\n",
+                           (int) (name.e - name.b), name.b, (int) (value.e - value.b), value.b));
+                }
+            }
+        }
+
+      if (!basic && !digest && !ntlm)
+        {
+          /* If the authentication header is missing or
+             unrecognized, there's no sense in retrying.  */
+          logputs (LOG_NOTQUIET, _("Unknown authentication scheme.\n"));
+        }
+      else if (!basic_auth_finished
+               || !basic)
+        {
+          char *pth = url_full_path (u);
+          const char *value;
+          uerr_t *auth_stat;
+          auth_stat = xmalloc (sizeof (uerr_t));
+          *auth_stat = RETROK;
+
+          if (ntlm)
+            www_authenticate = ntlm;
+          else if (digest)
+            www_authenticate = digest;
+          else
+            www_authenticate = basic;
+
+          logprintf (LOG_NOTQUIET, _("Authentication selected: %s\n"), www_authenticate);
+
+          value =  create_authorization_line (www_authenticate,
+                                              user, passwd,
+                                              request_method (req),
+                                              pth,
+                                              &auth_finished,
+                                              auth_stat);
+
+          auth_err = *auth_stat;
+          if (auth_err == RETROK)
+            {
+              request_set_header (req, "Authorization", value, rel_value);
+
+              if (BEGINS_WITH (www_authenticate, "NTLM"))
+                ntlm_seen = true;
+              else if (!u->user && BEGINS_WITH (www_authenticate, "Basic"))
+                {
+                  /* Need to register this host as using basic auth,
+                   * so we automatically send creds next time. */
+                  register_basic_auth_host (u->host);
+                }
+
+              xfree (pth);
+              xfree (auth_stat);
+              *retry = true;
+              goto cleanup;
+            }
+          else
+            {
+              /* Creating the Authorization header went wrong */
+            }
+        }
+      else
+        {
+          /* We already did Basic auth, and it failed. Gotta
+           * give up. */
+        }
+    }
+
+ cleanup:
+  *ntlm_seen_ref = ntlm_seen;
+  *basic_auth_finished_ref = basic_auth_finished;
+  *auth_finished_ref = auth_finished;
+  return auth_err;
+}
+
+static uerr_t
+open_output_stream (struct http_stat *hs, int count, FILE **fp)
+{
+/* 2005-06-17 SMS.
+   For VMS, define common fopen() optional arguments.
+*/
+#ifdef __VMS
+# define FOPEN_OPT_ARGS "fop=sqo", "acc", acc_cb, &open_id
+# define FOPEN_BIN_FLAG 3
+#else /* def __VMS */
+# define FOPEN_BIN_FLAG true
+#endif /* def __VMS [else] */
+
+  /* Open the local file.  */
+  if (!output_stream)
+    {
+      mkalldirs (hs->local_file);
+      if (opt.backups)
+        rotate_backups (hs->local_file);
+      if (hs->restval)
+        {
+#ifdef __VMS
+          int open_id;
+
+          open_id = 21;
+          *fp = fopen (hs->local_file, "ab", FOPEN_OPT_ARGS);
+#else /* def __VMS */
+          *fp = fopen (hs->local_file, "ab");
+#endif /* def __VMS [else] */
+        }
+      else if (ALLOW_CLOBBER || count > 0)
+        {
+          if (opt.unlink_requested && file_exists_p (hs->local_file, NULL))
+            {
+              if (unlink (hs->local_file) < 0)
+                {
+                  logprintf (LOG_NOTQUIET, "%s: %s\n", hs->local_file,
+                             strerror (errno));
+                  return UNLINKERR;
+                }
+            }
+
+#ifdef __VMS
+          int open_id;
+
+          open_id = 22;
+          *fp = fopen (hs->local_file, "wb", FOPEN_OPT_ARGS);
+#else /* def __VMS */
+          if (hs->temporary)
+            {
+              *fp = fdopen (open (hs->local_file, O_BINARY | O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR), "wb");
+            }
+          else
+            {
+              *fp = fopen (hs->local_file, "wb");
+            }
+
+#endif /* def __VMS [else] */
+        }
+      else
+        {
+          *fp = fopen_excl (hs->local_file, FOPEN_BIN_FLAG);
+          if (!*fp && errno == EEXIST)
+            {
+              /* We cannot just invent a new name and use it (which is
+                 what functions like unique_create typically do)
+                 because we told the user we'd use this name.
+                 Instead, return and retry the download.  */
+              logprintf (LOG_NOTQUIET,
+                         _("%s has sprung into existence.\n"),
+                         hs->local_file);
+              return FOPEN_EXCL_ERR;
+            }
+        }
+      if (!*fp)
+        {
+          logprintf (LOG_NOTQUIET, "%s: %s\n", hs->local_file, strerror (errno));
+          return FOPENERR;
+        }
+    }
+  else
+    *fp = output_stream;
+
+  /* Print fetch message, if opt.verbose.  */
+  logprintf (LOG_VERBOSE, _("Saving to: %s\n"),
+             HYPHENP (hs->local_file) ? quote ("STDOUT") : quote (hs->local_file));
+
+  return RETROK;
+}
+
+/* Set proper type flags based on type string.  */
+static void
+set_content_type (int *dt, const char *type)
+{
+  /* If content-type is not given, assume text/html.  This is because
+     of the multitude of broken CGI's that "forget" to generate the
+     content-type.  */
+  if (!type ||
+      0 == c_strcasecmp (type, TEXTHTML_S) ||
+      0 == c_strcasecmp (type, TEXTXHTML_S))
+    *dt |= TEXTHTML;
+  else
+    *dt &= ~TEXTHTML;
+
+  if (type &&
+      0 == c_strcasecmp (type, TEXTCSS_S))
+    *dt |= TEXTCSS;
+  else
+    *dt &= ~TEXTCSS;
+}
+
+#ifdef HAVE_METALINK
+/* Will return proper metalink_t structure if enough data was found in
+   http response resp. Otherwise returns NULL.
+   Two exit points: one for success and one for failure.  */
+static metalink_t *
+metalink_from_http (const struct response *resp, const struct http_stat *hs,
+                    const struct url *u)
+{
+  metalink_t *metalink = NULL;
+  metalink_file_t *mfile = xnew0 (metalink_file_t);
+  const char *val_beg, *val_end;
+  int res_count = 0, meta_count = 0, hash_count = 0, sig_count = 0, i;
+
+  DEBUGP (("Checking for Metalink in HTTP response\n"));
+
+  /* Initialize metalink file for our simple use case.  */
+  if (hs->local_file)
+    mfile->name = xstrdup (hs->local_file);
+  else
+    mfile->name = url_file_name (u, NULL);
+
+  /* Begin with 1-element array (for 0-termination). */
+  mfile->checksums = xnew0 (metalink_checksum_t *);
+  mfile->resources = xnew0 (metalink_resource_t *);
+  mfile->metaurls = xnew0 (metalink_metaurl_t *);
+
+  /* Process the Content-Type header.  */
+  if (resp_header_locate (resp, "Content-Type", 0, &val_beg, &val_end) != -1)
+    {
+      metalink_metaurl_t murl = {0};
+
+      const char *type_beg, *type_end;
+      char *typestr = NULL;
+      char *namestr = NULL;
+      size_t type_len;
+
+      DEBUGP (("Processing Content-Type header...\n"));
+
+      /* Find beginning of type.  */
+      type_beg = val_beg;
+      while (type_beg < val_end && c_isspace (*type_beg))
+        type_beg++;
+
+      /* Find end of type.  */
+      type_end = type_beg + 1;
+      while (type_end < val_end &&
+             *type_end != ';' &&
+             *type_end != ' ' &&
+             *type_end != '\r' &&
+             *type_end != '\n')
+        type_end++;
+
+      if (type_beg >= val_end || type_end > val_end)
+        {
+          DEBUGP (("Invalid Content-Type header. Ignoring.\n"));
+          goto skip_content_type;
+        }
+
+      type_len = type_end - type_beg;
+      typestr = xstrndup (type_beg, type_len);
+
+      DEBUGP (("Content-Type: %s\n", typestr));
+
+      if (strcmp (typestr, "application/metalink4+xml"))
+        {
+          xfree (typestr);
+          goto skip_content_type;
+        }
+
+      /*
+        Valid ranges for the "pri" attribute are from
+        1 to 999999.  Mirror servers with a lower value of the "pri"
+        attribute have a higher priority, while mirrors with an undefined
+        "pri" attribute are considered to have a value of 999999, which is
+        the lowest priority.
+
+        rfc6249 section 3.1
+      */
+      murl.priority = DEFAULT_PRI;
+
+      murl.mediatype = typestr;
+      typestr = NULL;
+
+      if (opt.content_disposition
+          && resp_header_locate (resp, "Content-Disposition", 0, &val_beg, &val_end) != -1)
+        {
+          find_key_value (val_beg, val_end, "filename", &namestr);
+          murl.name = namestr;
+          namestr = NULL;
+        }
+
+      murl.url = xstrdup (u->url);
+
+      DEBUGP (("URL=%s\n", murl.url));
+      DEBUGP (("MEDIATYPE=%s\n", murl.mediatype));
+      DEBUGP (("NAME=%s\n", murl.name ? murl.name : ""));
+      DEBUGP (("PRIORITY=%d\n", murl.priority));
+
+      /* 1 slot from new resource, 1 slot for null-termination.  */
+      mfile->metaurls = xrealloc (mfile->metaurls,
+                                  sizeof (metalink_metaurl_t *) * (meta_count + 2));
+      mfile->metaurls[meta_count] = xnew0 (metalink_metaurl_t);
+      *mfile->metaurls[meta_count] = murl;
+      meta_count++;
+    }
+skip_content_type:
+
+  /* Find all Link headers.  */
+  for (i = 0;
+       (i = resp_header_locate (resp, "Link", i, &val_beg, &val_end)) != -1;
+       i++)
+    {
+      char *rel = NULL, *reltype = NULL;
+      char *urlstr = NULL;
+      const char *url_beg, *url_end, *attrs_beg;
+      size_t url_len;
+
+      /* Sample Metalink Link headers:
+
+           Link: <http://www2.example.com/dir1/dir2/dir3/dir4/dir5/example.ext>;
+           rel=duplicate; pri=1; pref; geo=gb; depth=4
+
+           Link: <http://example.com/example.ext.asc>; rel=describedby;
+           type="application/pgp-signature"
+       */
+
+      /* Find beginning of URL.  */
+      url_beg = val_beg;
+      while (url_beg < val_end - 1 && c_isspace (*url_beg))
+        url_beg++;
+
+      /* Find end of URL.  */
+      /* The convention here is that end ptr points to one element after
+         end of string. In this case, it should be pointing to the '>', which
+         is one element after end of actual URL. Therefore, it should never point
+         to val_end, which is one element after entire header value string.  */
+      url_end = url_beg + 1;
+      while (url_end < val_end - 1 && *url_end != '>')
+        url_end++;
+
+      if (url_beg >= val_end || url_end >= val_end ||
+          *url_beg != '<' || *url_end != '>')
+        {
+          DEBUGP (("This is not a valid Link header. Ignoring.\n"));
+          continue;
+        }
+
+      /* Skip <.  */
+      url_beg++;
+      url_len = url_end - url_beg;
+
+      /* URL found. Now handle the attributes.  */
+      attrs_beg = url_end + 1;
+
+      /* First we need to find out what type of link it is. Currently, we
+         support rel=duplicate and rel=describedby.  */
+      if (!find_key_value (attrs_beg, val_end, "rel", &rel))
+        {
+          DEBUGP (("No rel value in Link header, skipping.\n"));
+          continue;
+        }
+
+      urlstr = xstrndup (url_beg, url_len);
+      DEBUGP (("URL=%s\n", urlstr));
+      DEBUGP (("rel=%s\n", rel));
+
+      if (!strcmp (rel, "describedby"))
+        find_key_value (attrs_beg, val_end, "type", &reltype);
+
+      /* Handle signatures.
+         Libmetalink only supports one signature per file. Therefore we stop
+         as soon as we successfully get first supported signature.  */
+      if (sig_count == 0 &&
+          reltype && !strcmp (reltype, "application/pgp-signature"))
+        {
+          /* Download the signature to a temporary file.  */
+          FILE *_output_stream = output_stream;
+          bool _output_stream_regular = output_stream_regular;
+
+          output_stream = tmpfile ();
+          if (output_stream)
+            {
+              struct iri *iri = iri_new ();
+              struct url *url;
+              int url_err;
+
+              set_uri_encoding (iri, opt.locale, true);
+              url = url_parse (urlstr, &url_err, iri, false);
+
+              if (!url)
+                {
+                  char *error = url_error (urlstr, url_err);
+                  logprintf (LOG_NOTQUIET, _("When downloading signature:\n"
+                                             "%s: %s.\n"), urlstr, error);
+                  xfree (error);
+                  iri_free (iri);
+                }
+              else
+                {
+                  /* Avoid recursive Metalink from HTTP headers.  */
+                  bool _metalink_http = opt.metalink_over_http;
+                  uerr_t retr_err;
+
+                  opt.metalink_over_http = false;
+                  retr_err = retrieve_url (url, urlstr, NULL, NULL,
+                                           NULL, NULL, false, iri, false);
+                  opt.metalink_over_http = _metalink_http;
+
+                  url_free (url);
+                  iri_free (iri);
+
+                  if (retr_err == RETROK)
+                    {
+                      /* Signature is in the temporary file. Read it into
+                         metalink resource structure.  */
+                      metalink_signature_t msig;
+                      size_t siglen;
+
+                      fseek (output_stream, 0, SEEK_END);
+                      siglen = ftell (output_stream);
+                      fseek (output_stream, 0, SEEK_SET);
+
+                      DEBUGP (("siglen=%lu\n", siglen));
+
+                      msig.signature = xmalloc (siglen + 1);
+                      if (fread (msig.signature, siglen, 1, output_stream) != 1)
+                        {
+                          logputs (LOG_NOTQUIET,
+                                   _("Unable to read signature content from "
+                                     "temporary file. Skipping.\n"));
+                          xfree (msig.signature);
+                        }
+                      else
+                        {
+                          msig.signature[siglen] = '\0'; /* Just in case.  */
+                          msig.mediatype = xstrdup ("application/pgp-signature");
+
+                          DEBUGP (("Signature (%s):\n%s\n",
+                                   msig.mediatype, msig.signature));
+
+                          mfile->signature = xnew (metalink_signature_t);
+                          *mfile->signature = msig;
+
+                          sig_count++;
+                        }
+                    }
+                }
+              fclose (output_stream);
+            }
+          else
+            {
+              logputs (LOG_NOTQUIET, _("Could not create temporary file. "
+                                       "Skipping signature download.\n"));
+            }
+          output_stream_regular = _output_stream_regular;
+          output_stream = _output_stream;
+        } /* Iterate over signatures.  */
+
+        /* Handle Metalink resources.  */
+      else if (!strcmp (rel, "duplicate"))
+        {
+          metalink_resource_t mres = {0};
+          char *pristr;
+
+          /*
+             Valid ranges for the "pri" attribute are from
+             1 to 999999.  Mirror servers with a lower value of the "pri"
+             attribute have a higher priority, while mirrors with an undefined
+             "pri" attribute are considered to have a value of 999999, which is
+             the lowest priority.
+
+             rfc6249 section 3.1
+           */
+          mres.priority = DEFAULT_PRI;
+          if (find_key_value (url_end, val_end, "pri", &pristr))
+            {
+              long pri;
+              char *end_pristr;
+              /* Do not care for errno since 0 is error in this case.  */
+              pri = strtol (pristr, &end_pristr, 10);
+              if (end_pristr != pristr + strlen (pristr) ||
+                  !VALID_PRI_RANGE (pri))
+                {
+                  /* This is against the specification, so let's inform the user.  */
+                  logprintf (LOG_NOTQUIET,
+                             _("Invalid pri value. Assuming %d.\n"),
+                             DEFAULT_PRI);
+                }
+              else
+                mres.priority = pri;
+              xfree (pristr);
+            }
+
+          switch (url_scheme (urlstr))
+            {
+            case SCHEME_HTTP:
+              mres.type = xstrdup ("http");
+              break;
+#ifdef HAVE_SSL
+            case SCHEME_HTTPS:
+              mres.type = xstrdup ("https");
+              break;
+            case SCHEME_FTPS:
+              mres.type = xstrdup ("ftps");
+              break;
+#endif
+            case SCHEME_FTP:
+              mres.type = xstrdup ("ftp");
+              break;
+            default:
+              DEBUGP (("Unsupported url scheme in %s. Skipping resource.\n", urlstr));
+            }
+
+          if (mres.type)
+            {
+              DEBUGP (("TYPE=%s\n", mres.type));
+
+              /* At this point we have validated the new resource.  */
+
+              find_key_value (url_end, val_end, "geo", &mres.location);
+
+              mres.url = urlstr;
+              urlstr = NULL;
+
+              mres.preference = 0;
+              if (has_key (url_end, val_end, "pref"))
+                {
+                  DEBUGP (("This resource has preference\n"));
+                  mres.preference = 1;
+                }
+
+              /* 1 slot from new resource, 1 slot for null-termination.  */
+              mfile->resources = xrealloc (mfile->resources,
+                                           sizeof (metalink_resource_t *) * (res_count + 2));
+              mfile->resources[res_count] = xnew0 (metalink_resource_t);
+              *mfile->resources[res_count] = mres;
+              res_count++;
+            }
+        } /* Handle resource link (rel=duplicate).  */
+
+      /* Handle Metalink/XML resources.  */
+      else if (reltype && !strcmp (reltype, "application/metalink4+xml"))
+        {
+          metalink_metaurl_t murl = {0};
+          char *pristr;
+
+          /*
+             Valid ranges for the "pri" attribute are from
+             1 to 999999.  Mirror servers with a lower value of the "pri"
+             attribute have a higher priority, while mirrors with an undefined
+             "pri" attribute are considered to have a value of 999999, which is
+             the lowest priority.
+
+             rfc6249 section 3.1
+           */
+          murl.priority = DEFAULT_PRI;
+          if (find_key_value (url_end, val_end, "pri", &pristr))
+            {
+              long pri;
+              char *end_pristr;
+              /* Do not care for errno since 0 is error in this case.  */
+              pri = strtol (pristr, &end_pristr, 10);
+              if (end_pristr != pristr + strlen (pristr) ||
+                  !VALID_PRI_RANGE (pri))
+                {
+                  /* This is against the specification, so let's inform the user.  */
+                  logprintf (LOG_NOTQUIET,
+                             _("Invalid pri value. Assuming %d.\n"),
+                             DEFAULT_PRI);
+                }
+              else
+                murl.priority = pri;
+              xfree (pristr);
+            }
+
+          murl.mediatype = xstrdup (reltype);
+
+          DEBUGP (("MEDIATYPE=%s\n", murl.mediatype));
+
+          /* At this point we have validated the new resource.  */
+
+          find_key_value (url_end, val_end, "name", &murl.name);
+
+          murl.url = urlstr;
+          urlstr = NULL;
+
+          /* 1 slot from new resource, 1 slot for null-termination.  */
+          mfile->metaurls = xrealloc (mfile->metaurls,
+                                       sizeof (metalink_metaurl_t *) * (meta_count + 2));
+          mfile->metaurls[meta_count] = xnew0 (metalink_metaurl_t);
+          *mfile->metaurls[meta_count] = murl;
+          meta_count++;
+        } /* Handle resource link (rel=describedby).  */
+      else
+        DEBUGP (("This link header was not used for Metalink\n"));
+
+      xfree (urlstr);
+      xfree (reltype);
+      xfree (rel);
+    } /* Iterate over link headers.  */
+
+  /* Null-terminate resources array.  */
+  mfile->resources[res_count] = 0;
+  mfile->metaurls[meta_count] = 0;
+
+  if (res_count == 0 && meta_count == 0)
+    {
+      DEBUGP (("No valid metalink references found.\n"));
+      goto fail;
+    }
+
+  /* Find all Digest headers.  */
+  for (i = 0;
+       (i = resp_header_locate (resp, "Digest", i, &val_beg, &val_end)) != -1;
+       i++)
+    {
+      const char *dig_pos;
+      char *dig_type, *dig_hash;
+
+      /* Each Digest header can include multiple hashes. Example:
+           Digest: SHA=thvDyvhfIqlvFe+A9MYgxAfm1q5=,unixsum=30637
+           Digest: md5=HUXZLQLMuI/KZ5KDcJPcOA==
+       */
+      for (dig_pos = val_beg;
+           (dig_pos = find_key_values (dig_pos, val_end, &dig_type, &dig_hash));
+           dig_pos++)
+        {
+          /* The hash here is assumed to be base64. We need the hash in hex.
+             Therefore we convert: base64 -> binary -> hex.  */
+          const size_t dig_hash_str_len = strlen (dig_hash);
+          char *bin_hash = alloca (dig_hash_str_len * 3 / 4 + 1);
+          ssize_t hash_bin_len;
+
+          hash_bin_len = wget_base64_decode (dig_hash, bin_hash, dig_hash_str_len * 3 / 4 + 1);
+
+          /* Detect malformed base64 input.  */
+          if (hash_bin_len < 0)
+            {
+              xfree (dig_type);
+              xfree (dig_hash);
+              continue;
+            }
+
+          /* One slot for me, one for zero-termination.  */
+          mfile->checksums =
+                  xrealloc (mfile->checksums,
+                            sizeof (metalink_checksum_t *) * (hash_count + 2));
+          mfile->checksums[hash_count] = xnew (metalink_checksum_t);
+          mfile->checksums[hash_count]->type = dig_type;
+
+          mfile->checksums[hash_count]->hash = xmalloc ((size_t)hash_bin_len * 2 + 1);
+          wg_hex_to_string (mfile->checksums[hash_count]->hash, bin_hash, (size_t)hash_bin_len);
+
+          xfree (dig_hash);
+
+          hash_count++;
+        }
+    }
+
+  /* Zero-terminate checksums array.  */
+  mfile->checksums[hash_count] = 0;
+
+  /*
+    If Instance Digests are not provided by the Metalink servers, the
+    Link header fields pertaining to this specification MUST be ignored.
+
+    rfc6249 section 6
+   */
+  if (res_count && hash_count == 0)
+    {
+      logputs (LOG_VERBOSE,
+               _("Could not find acceptable digest for Metalink resources.\n"
+                 "Ignoring them.\n"));
+      goto fail;
+    }
+
+  /* Metalink data is OK. Now we just need to sort the resources based
+     on their priorities, preference, and perhaps location.  */
+  stable_sort (mfile->resources, res_count, sizeof (metalink_resource_t *), metalink_res_cmp);
+  stable_sort (mfile->metaurls, meta_count, sizeof (metalink_metaurl_t *), metalink_meta_cmp);
+
+  /* Restore sensible preference values (in case someone cares to look).  */
+  for (i = 0; i < res_count; ++i)
+    mfile->resources[i]->preference = 1000000 - mfile->resources[i]->priority;
+
+  metalink = xnew0 (metalink_t);
+  metalink->files = xmalloc (sizeof (metalink_file_t *) * 2);
+  metalink->files[0] = mfile;
+  metalink->files[1] = 0;
+  metalink->origin = xstrdup (u->url);
+  metalink->version = METALINK_VERSION_4;
+  /* Leave other fields set to 0.  */
+
+  return metalink;
+
+fail:
+  /* Free all allocated memory.  */
+  if (metalink)
+    metalink_delete (metalink);
+  else
+    metalink_file_delete (mfile);
+  return NULL;
+}
+#endif /* HAVE_METALINK */
+
+/* Retrieve a document through HTTP protocol.  It recognizes status
+   code, and correctly handles redirections.  It closes the network
+   socket.  If it receives an error from the functions below it, it
+   will print it if there is enough information to do so (almost
+   always), returning the error to the caller (i.e. http_loop).
+
+   Various HTTP parameters are stored to hs.
+
+   If PROXY is non-NULL, the connection will be made to the proxy
+   server, and u->url will be requested.  */
+static uerr_t
+gethttp (const struct url *u, struct url *original_url, struct http_stat *hs,
+         int *dt, struct url *proxy, struct iri *iri, int count)
+{
+  struct request *req = NULL;
+
+  char *type = NULL;
+  char *user, *passwd;
+  char *proxyauth;
+  int statcode;
+  int write_error;
+  wgint contlen, contrange;
+  const struct url *conn;
+  FILE *fp;
+  int err;
+  uerr_t retval;
+#ifdef HAVE_HSTS
+#ifdef TESTING
+  /* we don't link against main.o when we're testing */
+  hsts_store_t hsts_store = NULL;
+#else
+  extern hsts_store_t hsts_store;
+#endif
+  const char *hsts_params;
+  time_t max_age;
+  bool include_subdomains;
+#endif
+
+  int sock = -1;
+
+  /* Set to 1 when the authorization has already been sent and should
+     not be tried again. */
+  bool auth_finished = false;
+
+  /* Set to 1 when just globally-set Basic authorization has been sent;
+   * should prevent further Basic negotiations, but not other
+   * mechanisms. */
+  bool basic_auth_finished = false;
+
+  /* Whether NTLM authentication is used for this request. */
+  bool ntlm_seen = false;
+
+  /* Whether our connection to the remote host is through SSL.  */
+  bool using_ssl = false;
+
+  /* Whether a HEAD request will be issued (as opposed to GET or
+     POST). */
+  bool head_only = !!(*dt & HEAD_ONLY);
+
+  /* Whether conditional get request will be issued.  */
+  bool cond_get = !!(*dt & IF_MODIFIED_SINCE);
+
+#ifdef HAVE_METALINK
+  /* Are we looking for metalink info in HTTP headers?  */
+  bool metalink = !!(*dt & METALINK_METADATA);
+#endif
+
+  char *head = NULL;
+  struct response *resp = NULL;
+  char hdrval[512];
+  char *message = NULL;
+
+  /* Declare WARC variables. */
+  bool warc_enabled = (opt.warc_filename != NULL);
+  FILE *warc_tmp = NULL;
+  char warc_timestamp_str [21];
+  char warc_request_uuid [48];
+  ip_address *warc_ip = NULL;
+  off_t warc_payload_offset = -1;
+
+  /* Whether this connection will be kept alive after the HTTP request
+     is done. */
+  bool keep_alive;
+
+  /* Is the server using the chunked transfer encoding?  */
+  bool chunked_transfer_encoding = false;
+
+  /* Whether keep-alive should be inhibited.  */
+  bool inhibit_keep_alive =
+    !opt.http_keep_alive || opt.ignore_length;
+
+  /* Headers sent when using POST. */
+  wgint body_data_size = 0;
+
+#ifdef HAVE_SSL
+  if (u->scheme == SCHEME_HTTPS)
+    {
+      /* Initialize the SSL context.  After this has once been done,
+         it becomes a no-op.  */
+      if (!ssl_init ())
+        {
+          scheme_disable (SCHEME_HTTPS);
+          logprintf (LOG_NOTQUIET,
+                     _("Disabling SSL due to encountered errors.\n"));
+          retval = SSLINITFAILED;
+          goto cleanup;
+        }
+    }
+#endif /* HAVE_SSL */
+
+  /* Initialize certain elements of struct http_stat.  */
+  hs->len = 0;
+  hs->contlen = -1;
+  hs->res = -1;
+  hs->rderrmsg = NULL;
+  hs->newloc = NULL;
+  xfree (hs->remote_time);
+  hs->error = NULL;
+  hs->message = NULL;
+  hs->local_encoding = ENC_NONE;
+  hs->remote_encoding = ENC_NONE;
+
+  conn = u;
+
+  {
+    uerr_t ret;
+    req = initialize_request (u, hs, dt, proxy, inhibit_keep_alive,
+                              &basic_auth_finished, &body_data_size,
+                              &user, &passwd, &ret);
+    if (req == NULL)
+      {
+        retval = ret;
+        goto cleanup;
+      }
+  }
  retry_with_auth:
   /* We need to come back here when the initial attempt to retrieve
      without authorization header fails.  (Expected to happen at least
@@ -1905,211 +3258,24 @@ gethttp (struct url *u, struct http_stat *hs, int *dt, struct url *proxy,
   proxyauth = NULL;
   if (proxy)
     {
-      char *proxy_user, *proxy_passwd;
-      /* For normal username and password, URL components override
-         command-line/wgetrc parameters.  With proxy
-         authentication, it's the reverse, because proxy URLs are
-         normally the "permanent" ones, so command-line args
-         should take precedence.  */
-      if (opt.proxy_user && opt.proxy_passwd)
-        {
-          proxy_user = opt.proxy_user;
-          proxy_passwd = opt.proxy_passwd;
-        }
-      else
-        {
-          proxy_user = proxy->user;
-          proxy_passwd = proxy->passwd;
-        }
-      /* #### This does not appear right.  Can't the proxy request,
-         say, `Digest' authentication?  */
-      if (proxy_user && proxy_passwd)
-        proxyauth = basic_authentication_encode (proxy_user, proxy_passwd);
-
-      /* If we're using a proxy, we will be connecting to the proxy
-         server.  */
       conn = proxy;
-
-      /* Proxy authorization over SSL is handled below. */
-#ifdef HAVE_SSL
-      if (u->scheme != SCHEME_HTTPS)
-#endif
-        request_set_header (req, "Proxy-Authorization", proxyauth, rel_value);
+      initialize_proxy_configuration (u, req, proxy, &proxyauth);
     }
-
   keep_alive = true;
 
   /* Establish the connection.  */
-
   if (inhibit_keep_alive)
     keep_alive = false;
-  else
-    {
-      /* Look for a persistent connection to target host, unless a
-         proxy is used.  The exception is when SSL is in use, in which
-         case the proxy is nothing but a passthrough to the target
-         host, registered as a connection to the latter.  */
-      struct url *relevant = conn;
-#ifdef HAVE_SSL
-      if (u->scheme == SCHEME_HTTPS)
-        relevant = u;
-#endif
 
-      if (persistent_available_p (relevant->host, relevant->port,
-#ifdef HAVE_SSL
-                                  relevant->scheme == SCHEME_HTTPS,
-#else
-                                  0,
-#endif
-                                  &host_lookup_failed))
-        {
-          int family = socket_family (pconn.socket, ENDPOINT_PEER);
-          sock = pconn.socket;
-          using_ssl = pconn.ssl;
-#if ENABLE_IPV6
-          if (family == AF_INET6)
-             logprintf (LOG_VERBOSE, _("Reusing existing connection to [%s]:%d.\n"),
-                        quotearg_style (escape_quoting_style, pconn.host),
-                         pconn.port);
-          else
-#endif
-             logprintf (LOG_VERBOSE, _("Reusing existing connection to %s:%d.\n"),
-                        quotearg_style (escape_quoting_style, pconn.host),
-                        pconn.port);
-          DEBUGP (("Reusing fd %d.\n", sock));
-          if (pconn.authorized)
-            /* If the connection is already authorized, the "Basic"
-               authorization added by code above is unnecessary and
-               only hurts us.  */
-            request_remove_header (req, "Authorization");
-        }
-      else if (host_lookup_failed)
-        {
-          request_free (req);
-          logprintf(LOG_NOTQUIET,
-                    _("%s: unable to resolve host address %s\n"),
-                    exec_name, quote (relevant->host));
-          return HOSTERR;
-        }
-      else if (sock != -1)
-        {
-          sock = -1;
-        }
-    }
-
-  if (sock < 0)
-    {
-      sock = connect_to_host (conn->host, conn->port);
-      if (sock == E_HOST)
-        {
-          request_free (req);
-          return HOSTERR;
-        }
-      else if (sock < 0)
-        {
-          request_free (req);
-          return (retryable_socket_connect_error (errno)
-                  ? CONERROR : CONIMPOSSIBLE);
-        }
-
-#ifdef HAVE_SSL
-      if (proxy && u->scheme == SCHEME_HTTPS)
-        {
-          /* When requesting SSL URLs through proxies, use the
-             CONNECT method to request passthrough.  */
-          struct request *connreq = request_new ("CONNECT",
-                              aprintf ("%s:%d", u->host, u->port));
-          SET_USER_AGENT (connreq);
-          if (proxyauth)
-            {
-              request_set_header (connreq, "Proxy-Authorization",
-                                  proxyauth, rel_value);
-              /* Now that PROXYAUTH is part of the CONNECT request,
-                 zero it out so we don't send proxy authorization with
-                 the regular request below.  */
-              proxyauth = NULL;
-            }
-          request_set_header (connreq, "Host",
-                              aprintf ("%s:%d", u->host, u->port),
-                              rel_value);
-
-          write_error = request_send (connreq, sock, 0);
-          request_free (connreq);
-          if (write_error < 0)
-            {
-              CLOSE_INVALIDATE (sock);
-              request_free (req);
-              return WRITEFAILED;
-            }
-
-          head = read_http_response_head (sock);
-          if (!head)
-            {
-              logprintf (LOG_VERBOSE, _("Failed reading proxy response: %s\n"),
-                         fd_errstr (sock));
-              CLOSE_INVALIDATE (sock);
-              request_free (req);
-              return HERR;
-            }
-          message = NULL;
-          if (!*head)
-            {
-              xfree (head);
-              goto failed_tunnel;
-            }
-          DEBUGP (("proxy responded with: [%s]\n", head));
-
-          resp = resp_new (head);
-          statcode = resp_status (resp, &message);
-          if (statcode < 0)
-            {
-              char *tms = datetime_str (time (NULL));
-              logprintf (LOG_VERBOSE, "%d\n", statcode);
-              logprintf (LOG_NOTQUIET, _("%s ERROR %d: %s.\n"), tms, statcode,
-                         quotearg_style (escape_quoting_style,
-                                         _("Malformed status line")));
-              xfree (head);
-              request_free (req);
-              return HERR;
-            }
-          hs->message = xstrdup (message);
-          resp_free (resp);
-          xfree (head);
-          if (statcode != 200)
-            {
-            failed_tunnel:
-              logprintf (LOG_NOTQUIET, _("Proxy tunneling failed: %s"),
-                         message ? quotearg_style (escape_quoting_style, message) : "?");
-              xfree_null (message);
-              request_free (req);
-              return CONSSLERR;
-            }
-          xfree_null (message);
-
-          /* SOCK is now *really* connected to u->host, so update CONN
-             to reflect this.  That way register_persistent will
-             register SOCK as being connected to u->host:u->port.  */
-          conn = u;
-        }
-
-      if (conn->scheme == SCHEME_HTTPS)
-        {
-          if (!ssl_connect_wget (sock, u->host))
-            {
-              fd_close (sock);
-              request_free (req);
-              return CONSSLERR;
-            }
-          else if (!ssl_check_certificate (sock, u->host))
-            {
-              fd_close (sock);
-              request_free (req);
-              return VERIFCERTERR;
-            }
-          using_ssl = true;
-        }
-#endif /* HAVE_SSL */
-    }
+  {
+    uerr_t conn_err = establish_connection (u, &conn, hs, proxy, &proxyauth, &req,
+                                            &using_ssl, inhibit_keep_alive, &sock);
+    if (conn_err != RETROK)
+      {
+        retval = conn_err;
+        goto cleanup;
+      }
+  }
 
   /* Open the temporary file where we will write the request. */
   if (warc_enabled)
@@ -2118,8 +3284,8 @@ gethttp (struct url *u, struct http_stat *hs, int *dt, struct url *proxy,
       if (warc_tmp == NULL)
         {
           CLOSE_INVALIDATE (sock);
-          request_free (req);
-          return WARC_TMP_FOPENERR;
+          retval = WARC_TMP_FOPENERR;
+          goto cleanup;
         }
 
       if (! proxy)
@@ -2140,11 +3306,13 @@ gethttp (struct url *u, struct http_stat *hs, int *dt, struct url *proxy,
           write_error = fd_write (sock, opt.body_data, body_data_size, -1);
           if (write_error >= 0 && warc_tmp != NULL)
             {
+              int warc_tmp_written;
+
               /* Remember end of headers / start of payload. */
               warc_payload_offset = ftello (warc_tmp);
 
               /* Write a copy of the data to the WARC record. */
-              int warc_tmp_written = fwrite (opt.body_data, 1, body_data_size, warc_tmp);
+              warc_tmp_written = fwrite (opt.body_data, 1, body_data_size, warc_tmp);
               if (warc_tmp_written != body_data_size)
                 write_error = -2;
             }
@@ -2162,15 +3330,15 @@ gethttp (struct url *u, struct http_stat *hs, int *dt, struct url *proxy,
   if (write_error < 0)
     {
       CLOSE_INVALIDATE (sock);
-      request_free (req);
 
       if (warc_tmp != NULL)
         fclose (warc_tmp);
 
       if (write_error == -2)
-        return WARC_TMP_FWRITEERR;
+        retval = WARC_TMP_FWRITEERR;
       else
-        return WRITEFAILED;
+        retval = WRITEFAILED;
+      goto cleanup;
     }
   logprintf (LOG_VERBOSE, _("%s request sent, awaiting response... "),
              proxy ? "Proxy" : "HTTP");
@@ -2182,8 +3350,9 @@ gethttp (struct url *u, struct http_stat *hs, int *dt, struct url *proxy,
   if (warc_enabled)
     {
       bool warc_result;
+
       /* Generate a timestamp and uuid for this request. */
-      warc_timestamp (warc_timestamp_str);
+      warc_timestamp (warc_timestamp_str, sizeof (warc_timestamp_str));
       warc_uuid_str (warc_request_uuid);
 
       /* Create a request record and store it in the WARC file. */
@@ -2193,63 +3362,72 @@ gethttp (struct url *u, struct http_stat *hs, int *dt, struct url *proxy,
       if (! warc_result)
         {
           CLOSE_INVALIDATE (sock);
-          request_free (req);
-          return WARC_ERR;
+          retval = WARC_ERR;
+          goto cleanup;
         }
 
       /* warc_write_request_record has also closed warc_tmp. */
     }
 
+  /* Repeat while we receive a 10x response code.  */
+  {
+    bool _repeat;
 
-read_header:
-  head = read_http_response_head (sock);
-  if (!head)
-    {
-      if (errno == 0)
-        {
-          logputs (LOG_NOTQUIET, _("No data received.\n"));
-          CLOSE_INVALIDATE (sock);
-          request_free (req);
-          return HEOF;
-        }
-      else
-        {
-          logprintf (LOG_NOTQUIET, _("Read error (%s) in headers.\n"),
-                     fd_errstr (sock));
-          CLOSE_INVALIDATE (sock);
-          request_free (req);
-          return HERR;
-        }
-    }
-  DEBUGP (("\n---response begin---\n%s---response end---\n", head));
+    do
+      {
+        head = read_http_response_head (sock);
+        if (!head)
+          {
+            if (errno == 0)
+              {
+                logputs (LOG_NOTQUIET, _("No data received.\n"));
+                CLOSE_INVALIDATE (sock);
+                retval = HEOF;
+              }
+            else
+              {
+                logprintf (LOG_NOTQUIET, _("Read error (%s) in headers.\n"),
+                           fd_errstr (sock));
+                CLOSE_INVALIDATE (sock);
+                retval = HERR;
+              }
+            goto cleanup;
+          }
+        DEBUGP (("\n---response begin---\n%s---response end---\n", head));
 
-  resp = resp_new (head);
+        resp = resp_new (head);
 
-  /* Check for status line.  */
-  message = NULL;
-  statcode = resp_status (resp, &message);
-  if (statcode < 0)
-    {
-      char *tms = datetime_str (time (NULL));
-      logprintf (LOG_VERBOSE, "%d\n", statcode);
-      logprintf (LOG_NOTQUIET, _("%s ERROR %d: %s.\n"), tms, statcode,
-                 quotearg_style (escape_quoting_style,
-                                 _("Malformed status line")));
-      CLOSE_INVALIDATE (sock);
-      resp_free (resp);
-      request_free (req);
-      xfree (head);
-      return HERR;
-    }
+        /* Check for status line.  */
+        xfree (message);
+        statcode = resp_status (resp, &message);
+        if (statcode < 0)
+          {
+            char *tms = datetime_str (time (NULL));
+            logprintf (LOG_VERBOSE, "%d\n", statcode);
+            logprintf (LOG_NOTQUIET, _("%s ERROR %d: %s.\n"), tms, statcode,
+                       quotearg_style (escape_quoting_style,
+                                       _("Malformed status line")));
+            CLOSE_INVALIDATE (sock);
+            retval = HERR;
+            goto cleanup;
+          }
 
-  if (H_10X (statcode))
-    {
-      DEBUGP (("Ignoring response\n"));
-      resp_free (resp);
-      xfree (head);
-      goto read_header;
-    }
+        if (H_10X (statcode))
+          {
+            xfree (head);
+            resp_free (&resp);
+            _repeat = true;
+            DEBUGP (("Ignoring response\n"));
+          }
+        else
+          {
+            _repeat = false;
+          }
+      }
+    while (_repeat);
+  }
 
+  xfree (hs->message);
   hs->message = xstrdup (message);
   if (!opt.server_response)
     logprintf (LOG_VERBOSE, "%2d %s\n", statcode,
@@ -2286,18 +3464,18 @@ read_header:
     }
 
   /* Check for keep-alive related responses. */
-  if (!inhibit_keep_alive && contlen != -1)
+  if (!inhibit_keep_alive)
     {
       if (resp_header_copy (resp, "Connection", hdrval, sizeof (hdrval)))
         {
-          if (0 == strcasecmp (hdrval, "Close"))
+          if (0 == c_strcasecmp (hdrval, "Close"))
             keep_alive = false;
         }
     }
 
   chunked_transfer_encoding = false;
   if (resp_header_copy (resp, "Transfer-Encoding", hdrval, sizeof (hdrval))
-      && 0 == strcasecmp (hdrval, "chunked"))
+      && 0 == c_strcasecmp (hdrval, "chunked"))
     chunked_transfer_encoding = true;
 
   /* Handle (possibly multiple instances of) the Set-Cookie header. */
@@ -2323,12 +3501,29 @@ read_header:
        when we're done.  This means that we can register it.  */
     register_persistent (conn->host, conn->port, sock, using_ssl);
 
+#ifdef HAVE_METALINK
+  /* We need to check for the Metalink data in the very first response
+     we get from the server (before redirections, authorization, etc.).  */
+  if (metalink)
+    {
+      hs->metalink = metalink_from_http (resp, hs, u);
+      /* Bugfix: hs->local_file is NULL (opt.content_disposition).  */
+      if (!hs->local_file && hs->metalink && hs->metalink->origin)
+        hs->local_file = xstrdup (hs->metalink->origin);
+      xfree (hs->message);
+      retval = RETR_WITH_METALINK;
+      CLOSE_FINISH (sock);
+      goto cleanup;
+    }
+#endif
+
   if (statcode == HTTP_STATUS_UNAUTHORIZED)
     {
       /* Authorization is required.  */
-
+      uerr_t auth_err = RETROK;
+      bool retry;
       /* Normally we are not interested in the response body.
-         But if we are writing a WARC file we are: we like to keep everyting.  */
+         But if we are writing a WARC file we are: we like to keep everything.  */
       if (warc_enabled)
         {
           int _err;
@@ -2338,16 +3533,13 @@ read_header:
                                     u->url, warc_timestamp_str,
                                     warc_request_uuid, warc_ip, type,
                                     statcode, head);
-          xfree_null (type);
+          xfree (type);
 
           if (_err != RETRFINISHED || hs->res < 0)
             {
               CLOSE_INVALIDATE (sock);
-              request_free (req);
-              xfree_null (message);
-              resp_free (resp);
-              xfree (head);
-              return _err;
+              retval = _err;
+              goto cleanup;
             }
           else
             CLOSE_FINISH (sock);
@@ -2363,88 +3555,26 @@ read_header:
         }
 
       pconn.authorized = false;
-      uerr_t auth_err = RETROK;
-      if (!auth_finished && (user && passwd))
-        {
-          /* IIS sends multiple copies of WWW-Authenticate, one with
-             the value "negotiate", and other(s) with data.  Loop over
-             all the occurrences and pick the one we recognize.  */
-          int wapos;
-          const char *wabeg, *waend;
-          char *www_authenticate = NULL;
-          for (wapos = 0;
-               (wapos = resp_header_locate (resp, "WWW-Authenticate", wapos,
-                                            &wabeg, &waend)) != -1;
-               ++wapos)
-            if (known_authentication_scheme_p (wabeg, waend))
-              {
-                BOUNDED_TO_ALLOCA (wabeg, waend, www_authenticate);
-                break;
-              }
 
-          if (!www_authenticate)
-            {
-              /* If the authentication header is missing or
-                 unrecognized, there's no sense in retrying.  */
-              logputs (LOG_NOTQUIET, _("Unknown authentication scheme.\n"));
-            }
-          else if (!basic_auth_finished
-                   || !BEGINS_WITH (www_authenticate, "Basic"))
-            {
-              char *pth = url_full_path (u);
-              const char *value;
-              uerr_t *auth_stat;
-              auth_stat = xmalloc (sizeof (uerr_t));
-              *auth_stat = RETROK;
-
-              value =  create_authorization_line (www_authenticate,
-                                                  user, passwd,
-                                                  request_method (req),
-                                                  pth,
-                                                  &auth_finished,
-                                                  auth_stat);
-
-              auth_err = *auth_stat;
-              if (auth_err == RETROK)
-                {
-                  request_set_header (req, "Authorization", value, rel_value);
-
-                  if (BEGINS_WITH (www_authenticate, "NTLM"))
-                    ntlm_seen = true;
-                  else if (!u->user && BEGINS_WITH (www_authenticate, "Basic"))
-                    {
-                      /* Need to register this host as using basic auth,
-                       * so we automatically send creds next time. */
-                      register_basic_auth_host (u->host);
-                    }
-
-                  xfree (pth);
-                  xfree_null (message);
-                  resp_free (resp);
-                  xfree (head);
-                  xfree (auth_stat);
-                  xfree (hs->message);
-                  goto retry_with_auth;
-                }
-              else
-                {
-                  /* Creating the Authorization header went wrong */
-                }
-            }
-          else
-            {
-              /* We already did Basic auth, and it failed. Gotta
-               * give up. */
-            }
-        }
-      request_free (req);
-      xfree_null (message);
-      resp_free (resp);
-      xfree (head);
+      {
+        auth_err = check_auth (u, user, passwd, resp, req,
+                               &ntlm_seen, &retry,
+                               &basic_auth_finished,
+                               &auth_finished);
+        if (auth_err == RETROK && retry)
+          {
+            xfree (hs->message);
+            resp_free (&resp);
+            xfree (message);
+            xfree (head);
+            goto retry_with_auth;
+          }
+      }
       if (auth_err == RETROK)
-        return AUTHFAILED;
+        retval = AUTHFAILED;
       else
-        return auth_err;
+        retval = auth_err;
+      goto cleanup;
     }
   else /* statcode != HTTP_STATUS_UNAUTHORIZED */
     {
@@ -2453,119 +3583,14 @@ read_header:
         pconn.authorized = true;
     }
 
-  /* Determine the local filename if needed. Notice that if -O is used
-   * hstat.local_file is set by http_loop to the argument of -O. */
-  if (!hs->local_file)
-    {
-      char *local_file = NULL;
-
-      /* Honor Content-Disposition whether possible. */
-      if (!opt.content_disposition
-          || !resp_header_copy (resp, "Content-Disposition",
-                                hdrval, sizeof (hdrval))
-          || !parse_content_disposition (hdrval, &local_file))
-        {
-          /* The Content-Disposition header is missing or broken.
-           * Choose unique file name according to given URL. */
-          hs->local_file = url_file_name (u, NULL);
-        }
-      else
-        {
-          DEBUGP (("Parsed filename from Content-Disposition: %s\n",
-                  local_file));
-          hs->local_file = url_file_name (u, local_file);
-        }
-
-      xfree_null (local_file);
-    }
-
-  /* TODO: perform this check only once. */
-  if (!hs->existence_checked && file_exists_p (hs->local_file))
-    {
-      if (opt.noclobber && !opt.output_document)
-        {
-          /* If opt.noclobber is turned on and file already exists, do not
-             retrieve the file. But if the output_document was given, then this
-             test was already done and the file didn't exist. Hence the !opt.output_document */
-          get_file_flags (hs->local_file, dt);
-          request_free (req);
-          resp_free (resp);
-          xfree (head);
-          xfree_null (message);
-          return RETRUNNEEDED;
-        }
-      else if (!ALLOW_CLOBBER)
-        {
-          char *unique = unique_name (hs->local_file, true);
-          if (unique != hs->local_file)
-            xfree (hs->local_file);
-          hs->local_file = unique;
-        }
-    }
-  hs->existence_checked = true;
-
-  /* Support timestamping */
-  /* TODO: move this code out of gethttp. */
-  if (opt.timestamping && !hs->timestamp_checked)
-    {
-      size_t filename_len = strlen (hs->local_file);
-      char *filename_plus_orig_suffix = alloca (filename_len + sizeof (ORIG_SFX));
-      bool local_dot_orig_file_exists = false;
-      char *local_filename = NULL;
-      struct_stat st;
-
-      if (opt.backup_converted)
-        /* If -K is specified, we'll act on the assumption that it was specified
-           last time these files were downloaded as well, and instead of just
-           comparing local file X against server file X, we'll compare local
-           file X.orig (if extant, else X) against server file X.  If -K
-           _wasn't_ specified last time, or the server contains files called
-           *.orig, -N will be back to not operating correctly with -k. */
-        {
-          /* Would a single s[n]printf() call be faster?  --dan
-
-             Definitely not.  sprintf() is horribly slow.  It's a
-             different question whether the difference between the two
-             affects a program.  Usually I'd say "no", but at one
-             point I profiled Wget, and found that a measurable and
-             non-negligible amount of time was lost calling sprintf()
-             in url.c.  Replacing sprintf with inline calls to
-             strcpy() and number_to_string() made a difference.
-             --hniksic */
-          memcpy (filename_plus_orig_suffix, hs->local_file, filename_len);
-          memcpy (filename_plus_orig_suffix + filename_len,
-                  ORIG_SFX, sizeof (ORIG_SFX));
-
-          /* Try to stat() the .orig file. */
-          if (stat (filename_plus_orig_suffix, &st) == 0)
-            {
-              local_dot_orig_file_exists = true;
-              local_filename = filename_plus_orig_suffix;
-            }
-        }
-
-      if (!local_dot_orig_file_exists)
-        /* Couldn't stat() <file>.orig, so try to stat() <file>. */
-        if (stat (hs->local_file, &st) == 0)
-          local_filename = hs->local_file;
-
-      if (local_filename != NULL)
-        /* There was a local file, so we'll check later to see if the version
-           the server has is the same version we already have, allowing us to
-           skip a download. */
-        {
-          hs->orig_file_name = xstrdup (local_filename);
-          hs->orig_file_size = st.st_size;
-          hs->orig_file_tstamp = st.st_mtime;
-#ifdef WINDOWS
-          /* Modification time granularity is 2 seconds for Windows, so
-             increase local time by 1 second for later comparison. */
-          ++hs->orig_file_tstamp;
-#endif
-        }
-    }
-
-  request_free (req);
+  {
+    uerr_t ret = check_file_output (u, hs, resp, hdrval, sizeof hdrval);
+    if (ret != RETROK)
+      {
+        retval = ret;
+        goto cleanup;
+      }
+  }
 
   hs->statcode = statcode;
   if (statcode == -1)
@@ -2574,7 +3599,29 @@ read_header:
     hs->error = xstrdup (_("(no description)"));
   else
     hs->error = xstrdup (message);
-  xfree_null (message);
+
+#ifdef HAVE_HSTS
+  if (opt.hsts && hsts_store)
+    {
+      hsts_params = resp_header_strdup (resp, "Strict-Transport-Security");
+      if (parse_strict_transport_security (hsts_params, &max_age, &include_subdomains))
+        {
+          /* process strict transport security */
+          if (hsts_store_entry (hsts_store, u->scheme, u->host, u->port, max_age, include_subdomains))
+            DEBUGP(("Added new HSTS host: %s:%u (max-age: %lu, includeSubdomains: %s)\n",
+                   u->host,
+                   (unsigned) u->port,
+                   (unsigned long) max_age,
+                   (include_subdomains ? "true" : "false")));
+          else
+            DEBUGP(("Updated HSTS host: %s:%u (max-age: %lu, includeSubdomains: %s)\n",
+                   u->host,
+                   (unsigned) u->port,
+                   (unsigned long) max_age,
+                   (include_subdomains ? "true" : "false")));
+        }
+    }
+#endif
 
   type = resp_header_strdup (resp, "Content-Type");
   if (type)
@@ -2582,25 +3629,31 @@ read_header:
       char *tmp = strchr (type, ';');
       if (tmp)
         {
+#ifdef ENABLE_IRI
           /* sXXXav: only needed if IRI support is enabled */
           char *tmp2 = tmp + 1;
+#endif
 
           while (tmp > type && c_isspace (tmp[-1]))
             --tmp;
           *tmp = '\0';
 
+#ifdef ENABLE_IRI
           /* Try to get remote encoding if needed */
           if (opt.enable_iri && !opt.encoding_remote)
             {
               tmp = parse_charset (tmp2);
               if (tmp)
                 set_content_encoding (iri, tmp);
-              xfree_null(tmp);
+              xfree (tmp);
             }
+#endif
         }
     }
   hs->newloc = resp_header_strdup (resp, "Location");
   hs->remote_time = resp_header_strdup (resp, "Last-Modified");
+  if (!hs->remote_time) // now look for the Wayback Machine's timestamp
+    hs->remote_time = resp_header_strdup (resp, "X-Archive-Orig-last-modified");
 
   if (resp_header_copy (resp, "Content-Range", hdrval, sizeof (hdrval)))
     {
@@ -2612,7 +3665,73 @@ read_header:
           contlen = last_byte_pos - first_byte_pos + 1;
         }
     }
-  resp_free (resp);
+
+  if (resp_header_copy (resp, "Content-Encoding", hdrval, sizeof (hdrval)))
+    {
+      hs->local_encoding = ENC_INVALID;
+
+      switch (hdrval[0])
+        {
+        case 'b': case 'B':
+          if (0 == c_strcasecmp(hdrval, "br"))
+            hs->local_encoding = ENC_BROTLI;
+          break;
+        case 'c': case 'C':
+          if (0 == c_strcasecmp(hdrval, "compress"))
+            hs->local_encoding = ENC_COMPRESS;
+          break;
+        case 'd': case 'D':
+          if (0 == c_strcasecmp(hdrval, "deflate"))
+            hs->local_encoding = ENC_DEFLATE;
+          break;
+        case 'g': case 'G':
+          if (0 == c_strcasecmp(hdrval, "gzip"))
+            hs->local_encoding = ENC_GZIP;
+          break;
+        case 'i': case 'I':
+          if (0 == c_strcasecmp(hdrval, "identity"))
+            hs->local_encoding = ENC_NONE;
+          break;
+        case 'x': case 'X':
+          if (0 == c_strcasecmp(hdrval, "x-compress"))
+            hs->local_encoding = ENC_COMPRESS;
+          else if (0 == c_strcasecmp(hdrval, "x-gzip"))
+            hs->local_encoding = ENC_GZIP;
+          break;
+        case '\0':
+          hs->local_encoding = ENC_NONE;
+        }
+
+      if (hs->local_encoding == ENC_INVALID)
+        {
+          DEBUGP (("Unrecognized Content-Encoding: %s\n", hdrval));
+          hs->local_encoding = ENC_NONE;
+        }
+#ifdef HAVE_LIBZ
+      else if (hs->local_encoding == ENC_GZIP
+               && opt.compression != compression_none)
+        {
+          /* Make sure the Content-Type is not gzip before decompressing */
+          const char * p = strchr (type, '/');
+          if (p == NULL)
+            {
+              hs->remote_encoding = ENC_GZIP;
+              hs->local_encoding = ENC_NONE;
+            }
+          else
+            {
+              p++;
+              if (c_tolower(p[0]) == 'x' && p[1] == '-')
+                p += 2;
+              if (0 != c_strcasecmp (p, "gzip"))
+                {
+                  hs->remote_encoding = ENC_GZIP;
+                  hs->local_encoding = ENC_NONE;
+                }
+            }
+        }
+#endif
+    }
 
   /* 20x responses are counted among successful by default.  */
   if (H_20X (statcode))
@@ -2628,10 +3747,9 @@ read_header:
       hs->restval = 0;
 
       CLOSE_FINISH (sock);
-      xfree_null (type);
-      xfree (head);
 
-      return RETRFINISHED;
+      retval = RETRFINISHED;
+      goto cleanup;
     }
 
   /* Return if redirected.  */
@@ -2669,9 +3787,8 @@ read_header:
               if (_err != RETRFINISHED || hs->res < 0)
                 {
                   CLOSE_INVALIDATE (sock);
-                  xfree_null (type);
-                  xfree (head);
-                  return _err;
+                  retval = _err;
+                  goto cleanup;
                 }
               else
                 CLOSE_FINISH (sock);
@@ -2686,8 +3803,6 @@ read_header:
                 CLOSE_INVALIDATE (sock);
             }
 
-          xfree_null (type);
-          xfree (head);
           /* From RFC2616: The status codes 303 and 307 have
              been added for servers that wish to make unambiguously
              clear which kind of reaction is expected of the client.
@@ -2706,40 +3821,75 @@ read_header:
           switch (statcode)
             {
             case HTTP_STATUS_TEMPORARY_REDIRECT:
-              return NEWLOCATION_KEEP_POST;
+              retval = NEWLOCATION_KEEP_POST;
+              goto cleanup;
             case HTTP_STATUS_MOVED_PERMANENTLY:
-              if (opt.method && strcasecmp (opt.method, "post") != 0)
-                return NEWLOCATION_KEEP_POST;
+              if (opt.method && c_strcasecmp (opt.method, "post") != 0)
+                {
+                  retval = NEWLOCATION_KEEP_POST;
+                  goto cleanup;
+                }
               break;
             case HTTP_STATUS_MOVED_TEMPORARILY:
-              if (opt.method && strcasecmp (opt.method, "post") != 0)
-                return NEWLOCATION_KEEP_POST;
+              if (opt.method && c_strcasecmp (opt.method, "post") != 0)
+                {
+                  retval = NEWLOCATION_KEEP_POST;
+                  goto cleanup;
+                }
               break;
-            default:
-              return NEWLOCATION;
             }
-          return NEWLOCATION;
+          retval = NEWLOCATION;
+          goto cleanup;
         }
     }
 
-  /* If content-type is not given, assume text/html.  This is because
-     of the multitude of broken CGI's that "forget" to generate the
-     content-type.  */
-  if (!type ||
-        0 == strncasecmp (type, TEXTHTML_S, strlen (TEXTHTML_S)) ||
-        0 == strncasecmp (type, TEXTXHTML_S, strlen (TEXTXHTML_S)))
-    *dt |= TEXTHTML;
-  else
-    *dt &= ~TEXTHTML;
+  set_content_type (dt, type);
 
-  if (type &&
-      0 == strncasecmp (type, TEXTCSS_S, strlen (TEXTCSS_S)))
-    *dt |= TEXTCSS;
-  else
-    *dt &= ~TEXTCSS;
+  if (cond_get)
+    {
+      if (statcode == HTTP_STATUS_NOT_MODIFIED)
+        {
+          logprintf (LOG_VERBOSE,
+                     _ ("File %s not modified on server. Omitting download.\n\n"),
+                     quote (hs->local_file));
+          *dt |= RETROKF;
+          CLOSE_FINISH (sock);
+          retval = RETRUNNEEDED;
+          goto cleanup;
+        }
+    }
 
   if (opt.adjust_extension)
     {
+      const char *encoding_ext = NULL;
+      switch (hs->local_encoding)
+        {
+        case ENC_INVALID:
+        case ENC_NONE:
+          break;
+        case ENC_BROTLI:
+          encoding_ext = ".br";
+          break;
+        case ENC_COMPRESS:
+          encoding_ext = ".Z";
+          break;
+        case ENC_DEFLATE:
+          encoding_ext = ".zlib";
+          break;
+        case ENC_GZIP:
+          encoding_ext = ".gz";
+          break;
+        default:
+          DEBUGP (("No extension found for encoding %d\n",
+                   hs->local_encoding));
+      }
+      if (encoding_ext != NULL)
+        {
+          char *file_ext = strrchr (hs->local_file, '.');
+          /* strip Content-Encoding extension (it will be re-added later) */
+          if (file_ext != NULL && 0 == strcasecmp (file_ext, encoding_ext))
+            *file_ext = '\0';
+        }
       if (*dt & TEXTHTML)
         /* -E / --adjust-extension / adjust_extension = on was specified,
            and this is a text/html file.  If some case-insensitive
@@ -2752,8 +3902,47 @@ read_header:
         {
           ensure_extension (hs, ".css", dt);
         }
+      if (encoding_ext != NULL)
+        {
+          ensure_extension (hs, encoding_ext, dt);
+        }
     }
 
+  if (cond_get)
+    {
+      /* Handle the case when server ignores If-Modified-Since header.  */
+      if (statcode == HTTP_STATUS_OK && hs->remote_time)
+        {
+          time_t tmr = http_atotm (hs->remote_time);
+
+          /* Check if the local file is up-to-date based on Last-Modified header
+             and content length.  */
+          if (tmr != (time_t) - 1 && tmr <= hs->orig_file_tstamp
+              && (contlen == -1 || contlen == hs->orig_file_size))
+            {
+              logprintf (LOG_VERBOSE,
+                         _("Server ignored If-Modified-Since header for file %s.\n"
+                           "You might want to add --no-if-modified-since option."
+                           "\n\n"),
+                         quote (hs->local_file));
+              *dt |= RETROKF;
+              CLOSE_INVALIDATE (sock);
+              retval = RETRUNNEEDED;
+              goto cleanup;
+            }
+        }
+    }
+
+  if (statcode == HTTP_STATUS_RANGE_NOT_SATISFIABLE
+      && hs->restval < (contlen + contrange))
+    {
+      /* The file was not completely downloaded,
+         yet the server claims the range is invalid.
+         Bail out.  */
+      CLOSE_INVALIDATE (sock);
+      retval = RANGEERR;
+      goto cleanup;
+    }
   if (statcode == HTTP_STATUS_RANGE_NOT_SATISFIABLE
       || (!opt.timestamping && hs->restval > 0 && statcode == HTTP_STATUS_OK
           && contrange == 0 && contlen >= 0 && hs->restval >= contlen))
@@ -2769,23 +3958,27 @@ read_header:
       hs->res = 0;
       /* Mark as successfully retrieved. */
       *dt |= RETROKF;
-      xfree_null (type);
-      CLOSE_INVALIDATE (sock);        /* would be CLOSE_FINISH, but there
+      if (statcode == HTTP_STATUS_RANGE_NOT_SATISFIABLE)
+        CLOSE_FINISH (sock);
+      else
+        CLOSE_INVALIDATE (sock);        /* would be CLOSE_FINISH, but there
                                    might be more bytes in the body. */
-      xfree (head);
-      return RETRUNNEEDED;
+      retval = RETRUNNEEDED;
+      goto cleanup;
     }
   if ((contrange != 0 && contrange != hs->restval)
-      || (H_PARTIAL (statcode) && !contrange))
+      || (H_PARTIAL (statcode) && !contrange && hs->restval))
     {
       /* The Range request was somehow misunderstood by the server.
          Bail out.  */
-      xfree_null (type);
       CLOSE_INVALIDATE (sock);
-      xfree (head);
-      return RANGEERR;
+      retval = RANGEERR;
+      goto cleanup;
     }
   if (contlen == -1)
+    hs->contlen = -1;
+  /* If the response is gzipped, the uncompressed size is unknown. */
+  else if (hs->remote_encoding == ENC_GZIP)
     hs->contlen = -1;
   else
     hs->contlen = contlen + contrange;
@@ -2826,7 +4019,7 @@ read_header:
     }
 
   /* Return if we have no intention of further downloading.  */
-  if ((!(*dt & RETROKF) && !opt.content_on_error) || head_only)
+  if ((!(*dt & RETROKF) && !opt.content_on_error) || head_only || (opt.spider && !opt.recursive))
     {
       /* In case the caller cares to look...  */
       hs->len = 0;
@@ -2834,7 +4027,7 @@ read_header:
       hs->restval = 0;
 
       /* Normally we are not interested in the response body of a error responses.
-         But if we are writing a WARC file we are: we like to keep everyting.  */
+         But if we are writing a WARC file we are: we like to keep everything.  */
       if (warc_enabled)
         {
           int _err = read_response_body (hs, sock, NULL, contlen, 0,
@@ -2846,12 +4039,11 @@ read_header:
           if (_err != RETRFINISHED || hs->res < 0)
             {
               CLOSE_INVALIDATE (sock);
-              xfree (head);
-              xfree_null (type);
-              return _err;
+              retval = _err;
+              goto cleanup;
             }
-          else
-            CLOSE_FINISH (sock);
+
+          CLOSE_FINISH (sock);
         }
       else
         {
@@ -2863,6 +4055,9 @@ read_header:
                If not, they can be worked around using
                `--no-http-keep-alive'.  */
             CLOSE_FINISH (sock);
+          else if (opt.spider && !opt.recursive)
+            /* we just want to see if the page exists - no downloading required */
+            CLOSE_INVALIDATE (sock);
           else if (keep_alive
                    && skip_short_body (sock, contlen, chunked_transfer_encoding))
             /* Successfully skipped the body; also keep using the socket. */
@@ -2871,106 +4066,37 @@ read_header:
             CLOSE_INVALIDATE (sock);
         }
 
-      xfree (head);
-      xfree_null (type);
-      return RETRFINISHED;
-    }
-
-/* 2005-06-17 SMS.
-   For VMS, define common fopen() optional arguments.
-*/
-#ifdef __VMS
-# define FOPEN_OPT_ARGS "fop=sqo", "acc", acc_cb, &open_id
-# define FOPEN_BIN_FLAG 3
-#else /* def __VMS */
-# define FOPEN_BIN_FLAG true
-#endif /* def __VMS [else] */
-
-  /* Open the local file.  */
-  if (!output_stream)
-    {
-      mkalldirs (hs->local_file);
-      if (opt.backups)
-        rotate_backups (hs->local_file);
-      if (hs->restval)
-        {
-#ifdef __VMS
-          int open_id;
-
-          open_id = 21;
-          fp = fopen (hs->local_file, "ab", FOPEN_OPT_ARGS);
-#else /* def __VMS */
-          fp = fopen (hs->local_file, "ab");
-#endif /* def __VMS [else] */
-        }
-      else if (ALLOW_CLOBBER || count > 0)
-        {
-          if (opt.unlink && file_exists_p (hs->local_file))
-            {
-              if (unlink (hs->local_file) < 0)
-                {
-                  logprintf (LOG_NOTQUIET, "%s: %s\n", hs->local_file,
-                             strerror (errno));
-                  CLOSE_INVALIDATE (sock);
-                  xfree (head);
-                  xfree_null (type);
-                  return UNLINKERR;
-                }
-            }
-
-#ifdef __VMS
-          int open_id;
-
-          open_id = 22;
-          fp = fopen (hs->local_file, "wb", FOPEN_OPT_ARGS);
-#else /* def __VMS */
-          fp = fopen (hs->local_file, "wb");
-#endif /* def __VMS [else] */
-        }
+      if (statcode == HTTP_STATUS_GATEWAY_TIMEOUT)
+        retval = GATEWAYTIMEOUT;
       else
-        {
-          fp = fopen_excl (hs->local_file, FOPEN_BIN_FLAG);
-          if (!fp && errno == EEXIST)
-            {
-              /* We cannot just invent a new name and use it (which is
-                 what functions like unique_create typically do)
-                 because we told the user we'd use this name.
-                 Instead, return and retry the download.  */
-              logprintf (LOG_NOTQUIET,
-                         _("%s has sprung into existence.\n"),
-                         hs->local_file);
-              CLOSE_INVALIDATE (sock);
-              xfree (head);
-              xfree_null (type);
-              return FOPEN_EXCL_ERR;
-            }
-        }
-      if (!fp)
-        {
-          logprintf (LOG_NOTQUIET, "%s: %s\n", hs->local_file, strerror (errno));
-          CLOSE_INVALIDATE (sock);
-          xfree (head);
-          xfree_null (type);
-          return FOPENERR;
-        }
+        retval = RETRFINISHED;
+
+      goto cleanup;
     }
-  else
-    fp = output_stream;
 
-  /* Print fetch message, if opt.verbose.  */
-      logprintf (LOG_VERBOSE, _("Saving to: %s\n"),
-                 HYPHENP (hs->local_file) ? quote ("STDOUT") : quote (hs->local_file));
+  err = open_output_stream (hs, count, &fp);
+  if (err != RETROK)
+    {
+      CLOSE_INVALIDATE (sock);
+      retval = err;
+      goto cleanup;
+    }
 
+#ifdef ENABLE_XATTR
+  if (opt.enable_xattr)
+    {
+      if (original_url != u)
+        set_file_metadata (u->url, original_url->url, fp);
+      else
+        set_file_metadata (u->url, NULL, fp);
+    }
+#endif
 
   err = read_response_body (hs, sock, fp, contlen, contrange,
                             chunked_transfer_encoding,
                             u->url, warc_timestamp_str,
                             warc_request_uuid, warc_ip, type,
                             statcode, head);
-
-  /* Now we no longer need to store the response header. */
-  xfree (head);
-  xfree_null (type);
 
   if (hs->res >= 0)
     CLOSE_FINISH (sock);
@@ -2980,13 +4106,38 @@ read_header:
   if (!output_stream)
     fclose (fp);
 
-  return err;
+  retval = err;
+
+  cleanup:
+  xfree (head);
+  xfree (type);
+  xfree (message);
+  resp_free (&resp);
+  request_free (&req);
+
+  return retval;
+}
+
+/* Check whether the supplied HTTP status code is among those
+   listed for the --retry-on-http-error option. */
+static bool
+check_retry_on_http_error (const int statcode)
+{
+  const char *tok = opt.retry_on_http_error;
+  while (tok && *tok)
+    {
+      if (atoi (tok) == statcode)
+        return true;
+      if ((tok = strchr (tok, ',')))
+        ++tok;
+    }
+  return false;
 }
 
 /* The genuine HTTP loop!  This is the part where the retrieval is
    retried, and retried, and retried, and...  */
 uerr_t
-http_loop (struct url *u, struct url *original_url, char **newloc,
+http_loop (const struct url *u, struct url *original_url, char **newloc,
            char **local_file, const char *referer, int *dt, struct url *proxy,
            struct iri *iri)
 {
@@ -2999,9 +4150,8 @@ http_loop (struct url *u, struct url *original_url, char **newloc,
   uerr_t err, ret = TRYLIMEXC;
   time_t tmr = -1;               /* remote time-stamp */
   struct http_stat hstat;        /* HTTP status */
-  struct_stat st;
+  struct stat st;
   bool send_head_first = true;
-  char *file_name;
   bool force_full_retrieve = false;
 
 
@@ -3046,7 +4196,7 @@ http_loop (struct url *u, struct url *original_url, char **newloc,
       got_name = true;
     }
 
-  if (got_name && file_exists_p (hstat.local_file) && opt.noclobber && !opt.output_document)
+  if (got_name && file_exists_p (hstat.local_file, NULL) && opt.noclobber && !opt.output_document)
     {
       /* If opt.noclobber is turned on and file already exists, do not
          retrieve the file. But if the output_document was given, then this
@@ -3071,16 +4221,32 @@ http_loop (struct url *u, struct url *original_url, char **newloc,
   if (opt.content_disposition && opt.always_rest)
     send_head_first = true;
 
-  /* Send preliminary HEAD request if -N is given and we have an existing
-   * destination file. */
-  if (!opt.output_document)
-      file_name = url_file_name (opt.trustservernames ? u : original_url, NULL);
-  else
-    file_name = xstrdup (opt.output_document);
-  if (opt.timestamping && (file_exists_p (file_name)
-                           || opt.content_disposition))
-    send_head_first = true;
-  xfree (file_name);
+#ifdef HAVE_METALINK
+  if (opt.metalink_over_http)
+    {
+      *dt |= METALINK_METADATA;
+      send_head_first = true;
+    }
+#endif
+
+  if (opt.timestamping)
+    {
+      /* Use conditional get request if requested
+       * and if timestamp is known at this moment.  */
+      if (opt.if_modified_since && !send_head_first && got_name && file_exists_p (hstat.local_file, NULL))
+        {
+          *dt |= IF_MODIFIED_SINCE;
+          {
+            uerr_t timestamp_err = set_file_timestamp (&hstat);
+            if (timestamp_err != RETROK)
+              return timestamp_err;
+          }
+        }
+        /* Send preliminary HEAD request if -N is given and we have existing
+         * destination file or content disposition is enabled.  */
+      else if (opt.content_disposition || file_exists_p (hstat.local_file, NULL))
+        send_head_first = true;
+    }
 
   /* THE loop */
   do
@@ -3093,8 +4259,8 @@ http_loop (struct url *u, struct url *original_url, char **newloc,
       tms = datetime_str (time (NULL));
 
       if (opt.spider && !got_head)
-        logprintf (LOG_VERBOSE, _("\
-Spider mode enabled. Check if remote file exists.\n"));
+        logprintf (LOG_VERBOSE,
+			  _("Spider mode enabled. Check if remote file exists.\n"));
 
       /* Print fetch message, if opt.verbose.  */
       if (opt.verbose)
@@ -3160,7 +4326,7 @@ Spider mode enabled. Check if remote file exists.\n"));
         *dt &= ~SEND_NOCACHE;
 
       /* Try fetching the document, or at least its head.  */
-      err = gethttp (u, &hstat, dt, proxy, iri, count);
+      err = gethttp (u, original_url, &hstat, dt, proxy, iri, count);
 
       /* Time?  */
       tms = datetime_str (time (NULL));
@@ -3173,11 +4339,13 @@ Spider mode enabled. Check if remote file exists.\n"));
         {
         case HERR: case HEOF: case CONSOCKERR:
         case CONERROR: case READERR: case WRITEFAILED:
-        case RANGEERR: case FOPEN_EXCL_ERR:
+        case RANGEERR: case FOPEN_EXCL_ERR: case GATEWAYTIMEOUT:
           /* Non-fatal errors continue executing the loop, which will
              bring them to "while" statement at the end, to judge
              whether the number of tries was exceeded.  */
           printwhat (count, opt.ntry);
+          xfree (hstat.message);
+          xfree (hstat.error);
           continue;
         case FWRITEERR: case FOPENERR:
           /* Another fatal error.  */
@@ -3247,6 +4415,29 @@ Spider mode enabled. Check if remote file exists.\n"));
         case RETRFINISHED:
           /* Deal with you later.  */
           break;
+#ifdef HAVE_METALINK
+        case RETR_WITH_METALINK:
+          {
+            if (hstat.metalink == NULL)
+              {
+                logputs (LOG_NOTQUIET,
+                         _("Could not find Metalink data in HTTP response. "
+                           "Downloading file using HTTP GET.\n"));
+                *dt &= ~METALINK_METADATA;
+                *dt &= ~HEAD_ONLY;
+                got_head = true;
+                continue;
+              }
+
+            logputs (LOG_VERBOSE,
+                     _("Metalink headers found. "
+                       "Switching to Metalink mode.\n"));
+
+            ret = retrieve_from_metalink (hstat.metalink);
+            goto exit;
+          }
+          break;
+#endif
         default:
           /* All possibilities should have been exhausted.  */
           abort ();
@@ -3282,6 +4473,11 @@ Spider mode enabled. Check if remote file exists.\n"));
               logprintf (LOG_NOTQUIET, _("\
 Remote file does not exist -- broken link!!!\n"));
             }
+          else if (check_retry_on_http_error (hstat.statcode))
+            {
+              printwhat (count, opt.ntry);
+              continue;
+            }
           else
             {
               logprintf (LOG_NOTQUIET, _("%s ERROR %d: %s.\n"),
@@ -3290,12 +4486,12 @@ Remote file does not exist -- broken link!!!\n"));
             }
           logputs (LOG_VERBOSE, "\n");
           ret = WRONGCODE;
-          xfree_null (hurl);
+          xfree (hurl);
           goto exit;
         }
 
       /* Did we get the time-stamp? */
-      if (!got_head)
+      if (!got_head || (opt.spider && !opt.recursive))
         {
           got_head = true;    /* no more time-stamping */
 
@@ -3414,8 +4610,8 @@ Remote file exists.\n\n"));
               got_name = true;
               *dt &= ~HEAD_ONLY;
               count = 0;          /* the retrieve count for HEAD is reset */
-              xfree_null (hstat.message);
-              xfree_null (hstat.error);
+              xfree (hstat.message);
+              xfree (hstat.error);
               continue;
             } /* send_head_first */
         } /* !got_head */
@@ -3448,7 +4644,7 @@ Remote file exists.\n\n"));
 
       if (hstat.len == hstat.contlen)
         {
-          if (*dt & RETROKF)
+          if (*dt & RETROKF || opt.content_on_error)
             {
               bool write_to_stdout = (opt.output_document && HYPHENP (opt.output_document));
 
@@ -3484,7 +4680,7 @@ Remote file exists.\n\n"));
           if (hstat.contlen == -1)  /* We don't know how much we were supposed
                                        to get, so assume we succeeded. */
             {
-              if (*dt & RETROKF)
+              if (*dt & RETROKF || opt.content_on_error)
                 {
                   bool write_to_stdout = (opt.output_document && HYPHENP (opt.output_document));
 
@@ -3562,16 +4758,19 @@ Remote file exists.\n\n"));
   while (!opt.ntry || (count < opt.ntry));
 
 exit:
-  if (ret == RETROK && local_file)
+  if ((ret == RETROK || opt.content_on_error) && local_file)
     {
-      xfree_null (*local_file);
-      *local_file = xstrdup (hstat.local_file);
+      xfree (*local_file);
+      /* Bugfix: Prevent SIGSEGV when hstat.local_file was left NULL
+         (i.e. due to opt.content_disposition).  */
+      if (hstat.local_file)
+        *local_file = xstrdup (hstat.local_file);
     }
   free_hstat (&hstat);
 
   return ret;
 }
-
+
 /* Check whether the result of strptime() indicates success.
    strptime() returns the pointer to how far it got to in the string.
    The processing has been successful if the string is at `GMT' or
@@ -3682,7 +4881,7 @@ http_atotm (const char *time_string)
 
   return ret;
 }
-
+
 /* Authorization support: We support three authorization schemes:
 
    * `Basic' scheme, consisting of base64-ing USER:PASSWORD string;
@@ -3711,7 +4910,7 @@ basic_authentication_encode (const char *user, const char *passwd)
   sprintf (t1, "%s:%s", user, passwd);
 
   t2 = (char *)alloca (BASE64_LENGTH (len1) + 1);
-  base64_encode (t1, len1, t2);
+  wget_base64_encode (t1, len1, t2);
 
   return concat_strings ("Basic ", t2, (char *) 0);
 }
@@ -3758,7 +4957,7 @@ digest_authentication_encode (const char *au, const char *user,
     { "algorithm", &algorithm }
   };
   char cnonce[16] = "";
-  char *res;
+  char *res = NULL;
   int res_len;
   size_t res_size;
   param_token name, value;
@@ -3781,32 +4980,22 @@ digest_authentication_encode (const char *au, const char *user,
           }
     }
 
-  if (qop != NULL && strcmp(qop,"auth"))
+  if (qop && strcmp (qop, "auth"))
     {
       logprintf (LOG_NOTQUIET, _("Unsupported quality of protection '%s'.\n"), qop);
-      xfree_null (qop); /* force freeing mem and return */
-      qop = NULL;
+      xfree (qop); /* force freeing mem and continue */
     }
-  else if (algorithm != NULL && strcmp (algorithm,"MD5") && strcmp (algorithm,"MD5-sess"))
+  else if (algorithm && strcmp (algorithm,"MD5") && strcmp (algorithm,"MD5-sess"))
     {
       logprintf (LOG_NOTQUIET, _("Unsupported algorithm '%s'.\n"), algorithm);
-      xfree_null (qop); /* force freeing mem and return */
-      qop = NULL;
+      xfree (algorithm); /* force freeing mem and continue */
     }
 
-  if (!realm || !nonce || !user || !passwd || !path || !method || !qop)
+  if (!realm || !nonce || !user || !passwd || !path || !method)
     {
-      xfree_null (realm);
-      xfree_null (opaque);
-      xfree_null (nonce);
-      xfree_null (qop);
-      xfree_null (algorithm);
-      if (!qop)
-        *auth_err = UNKNOWNATTR;
-      else
-        *auth_err = ATTRMISSING;
-      return NULL;
-    }
+      *auth_err = ATTRMISSING;
+      goto cleanup;
+   }
 
   /* Calculate the digest value.  */
   {
@@ -3829,10 +5018,11 @@ digest_authentication_encode (const char *au, const char *user,
     if (algorithm && !strcmp (algorithm, "MD5-sess"))
       {
         /* A1BUF = H( H(user ":" realm ":" password) ":" nonce ":" cnonce ) */
-        snprintf (cnonce, sizeof (cnonce), "%08x", random_number(INT_MAX));
+        snprintf (cnonce, sizeof (cnonce), "%08x",
+          (unsigned) random_number (INT_MAX));
 
         md5_init_ctx (&ctx);
-        // md5_process_bytes (hash, MD5_DIGEST_SIZE, &ctx);
+        /* md5_process_bytes (hash, MD5_DIGEST_SIZE, &ctx); */
         md5_process_bytes (a1buf, MD5_DIGEST_SIZE * 2, &ctx);
         md5_process_bytes ((unsigned char *)":", 1, &ctx);
         md5_process_bytes ((unsigned char *)nonce, strlen (nonce), &ctx);
@@ -3851,12 +5041,13 @@ digest_authentication_encode (const char *au, const char *user,
     md5_finish_ctx (&ctx, hash);
     dump_hash (a2buf, hash);
 
-    if (qop && (!strcmp(qop, "auth") || !strcmp (qop, "auth-int")))
+    if (qop && !strcmp (qop, "auth"))
       {
         /* RFC 2617 Digest Access Authentication */
         /* generate random hex string */
         if (!*cnonce)
-          snprintf(cnonce, sizeof(cnonce), "%08x", random_number(INT_MAX));
+          snprintf (cnonce, sizeof (cnonce), "%08x",
+            (unsigned) random_number (INT_MAX));
 
         /* RESPONSE_DIGEST = H(A1BUF ":" nonce ":" noncecount ":" clientnonce ":" qop ": " A2BUF) */
         md5_init_ctx (&ctx);
@@ -3866,9 +5057,9 @@ digest_authentication_encode (const char *au, const char *user,
         md5_process_bytes ((unsigned char *)":", 1, &ctx);
         md5_process_bytes ((unsigned char *)"00000001", 8, &ctx); /* TODO: keep track of server nonce values */
         md5_process_bytes ((unsigned char *)":", 1, &ctx);
-        md5_process_bytes ((unsigned char *)cnonce, strlen(cnonce), &ctx);
+        md5_process_bytes ((unsigned char *)cnonce, strlen (cnonce), &ctx);
         md5_process_bytes ((unsigned char *)":", 1, &ctx);
-        md5_process_bytes ((unsigned char *)qop, strlen(qop), &ctx);
+        md5_process_bytes ((unsigned char *)qop, strlen (qop), &ctx);
         md5_process_bytes ((unsigned char *)":", 1, &ctx);
         md5_process_bytes ((unsigned char *)a2buf, MD5_DIGEST_SIZE * 2, &ctx);
         md5_finish_ctx (&ctx, hash);
@@ -3918,20 +5109,21 @@ digest_authentication_encode (const char *au, const char *user,
 
     if (opaque)
       {
-        res_len += snprintf(res + res_len, res_size - res_len, ", opaque=\"%s\"", opaque);
+        res_len += snprintf (res + res_len, res_size - res_len, ", opaque=\"%s\"", opaque);
       }
 
     if (algorithm)
       {
-        snprintf(res + res_len, res_size - res_len, ", algorithm=\"%s\"", algorithm);
+        snprintf (res + res_len, res_size - res_len, ", algorithm=\"%s\"", algorithm);
       }
   }
 
-  xfree_null (realm);
-  xfree_null (opaque);
-  xfree_null (nonce);
-  xfree_null (qop);
-  xfree_null (algorithm);
+cleanup:
+  xfree (realm);
+  xfree (opaque);
+  xfree (nonce);
+  xfree (qop);
+  xfree (algorithm);
 
   return res;
 }
@@ -3947,7 +5139,7 @@ digest_authentication_encode (const char *au, const char *user,
 #define STARTS(literal, b, e)                           \
   ((e > b) \
    && ((size_t) ((e) - (b))) >= STRSIZE (literal)   \
-   && 0 == strncasecmp (b, literal, STRSIZE (literal))  \
+   && 0 == c_strncasecmp (b, literal, STRSIZE (literal))  \
    && ((size_t) ((e) - (b)) == STRSIZE (literal)          \
        || c_isspace (b[STRSIZE (literal)])))
 
@@ -4003,7 +5195,7 @@ create_authorization_line (const char *au, const char *user,
       abort ();
     }
 }
-
+
 static void
 load_cookies (void)
 {
@@ -4026,7 +5218,7 @@ save_cookies (void)
 void
 http_cleanup (void)
 {
-  xfree_null (pconn.host);
+  xfree (pconn.host);
   if (wget_cookie_jar)
     cookie_jar_delete (wget_cookie_jar);
 }
@@ -4057,23 +5249,69 @@ ensure_extension (struct http_stat *hs, const char *ext, int *dt)
       strcpy (hs->local_file + local_filename_len, ext);
       /* If clobbering is not allowed and the file, as named,
          exists, tack on ".NUMBER.html" instead. */
-      if (!ALLOW_CLOBBER && file_exists_p (hs->local_file))
+      if (!ALLOW_CLOBBER && file_exists_p (hs->local_file, NULL))
         {
           int ext_num = 1;
           do
             sprintf (hs->local_file + local_filename_len,
                      ".%d%s", ext_num++, ext);
-          while (file_exists_p (hs->local_file));
+          while (file_exists_p (hs->local_file, NULL));
         }
       *dt |= ADDED_HTML_EXTENSION;
     }
 }
 
-
 #ifdef TESTING
 
 const char *
-test_parse_content_disposition(void)
+test_parse_range_header (void)
+{
+  unsigned i;
+  static const struct {
+    const char * rangehdr;
+    const wgint firstbyte;
+    const wgint lastbyte;
+    const wgint length;
+    const bool shouldPass;
+  } test_array[] = {
+      { "bytes 0-1000/1000", 0, 1000, 1000, false },
+      { "bytes 0-999/1000", 0, 999, 1000, true },
+      { "bytes 100-99/1000", 100, 99, 1000, false },
+      { "bytes 100-100/1000", 100, 100, 1000, true },
+      { "bytes 0-1000/100000000", 0, 1000, 100000000, true },
+      { "bytes 1-999/1000", 1, 999, 1000, true },
+      { "bytes 42-1233/1234", 42, 1233, 1234, true },
+      { "bytes 42-1233/*", 42, 1233, -1, true },
+      { "bytes 0-2147483648/2147483649", 0, 2147483648U, 2147483649U, true },
+#if SIZEOF_WGINT >= 8
+      { "bytes 2147483648-4294967296/4294967297", 2147483648U, 4294967296ULL, 4294967297ULL, true },
+#endif
+  };
+
+  wgint firstbyteptr[sizeof(wgint)];
+  wgint lastbyteptr[sizeof(wgint)];
+  wgint lengthptr[sizeof(wgint)];
+  bool result;
+  for (i = 0; i < countof (test_array); i++)
+    {
+      result = parse_content_range (test_array[i].rangehdr, firstbyteptr, lastbyteptr, lengthptr);
+#if 0
+      printf ("%ld %ld\n", test_array[i].firstbyte, *firstbyteptr);
+      printf ("%ld %ld\n", test_array[i].lastbyte, *lastbyteptr);
+      printf ("%ld %ld\n", test_array[i].length, *lengthptr);
+      printf ("\n");
+#endif
+      mu_assert ("test_parse_range_header: False Negative", result == test_array[i].shouldPass);
+      mu_assert ("test_parse_range_header: Bad parse", test_array[i].firstbyte == *firstbyteptr &&
+                                                       test_array[i].lastbyte == *lastbyteptr &&
+                                                       test_array[i].length == *lengthptr);
+    }
+
+  return NULL;
+}
+
+const char *
+test_parse_content_disposition (void)
 {
   unsigned i;
   static const struct {
@@ -4086,10 +5324,16 @@ test_parse_content_disposition(void)
     { "attachment; filename=\"file.ext\"; dummy", "file.ext", true },
     { "attachment", NULL, false },
     { "attachement; filename*=UTF-8'en-US'hello.txt", "hello.txt", true },
-    { "attachement; filename*0=\"hello\"; filename*1=\"world.txt\"", "helloworld.txt", true },
+    { "attachement; filename*0=\"hello\"; filename*1=\"world.txt\"",
+      "helloworld.txt", true },
+    { "attachment; filename=\"A.ext\"; filename*=\"B.ext\"", "B.ext", true },
+    { "attachment; filename*=\"A.ext\"; filename*0=\"B\"; filename*1=\"B.ext\"",
+      "A.ext", true },
+    { "filename**0=\"A\"; filename**1=\"A.ext\"; filename*0=\"B\";\
+filename*1=\"B\"", "AA.ext", true },
   };
 
-  for (i = 0; i < countof(test_array); ++i)
+  for (i = 0; i < countof (test_array); ++i)
     {
       char *filename;
       bool res;
@@ -4100,6 +5344,7 @@ test_parse_content_disposition(void)
                  res == test_array[i].result
                  && (res == false
                      || 0 == strcmp (test_array[i].filename, filename)));
+      xfree (filename);
     }
 
   return NULL;

@@ -83,6 +83,10 @@ msgstr "Mape"
 msgid "Playlists"
 msgstr "Seznami predvajanj"
 
+#: scanner.c:598
+msgid "Recently Added"
+msgstr "nedavno dodano"
+
 #: scanner.c:536
 msgid "Video"
 msgstr "Video"

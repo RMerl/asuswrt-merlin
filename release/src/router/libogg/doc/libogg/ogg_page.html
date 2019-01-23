@@ -9,7 +9,7 @@
 <table border=0 width=100%>
 <tr>
 <td><p class=tiny>libogg documentation</p></td>
-<td align=right><p class=tiny>libogg release 1.1.4 - 20090520</p></td>
+<td align=right><p class=tiny>libogg release 1.3.2 - 20140527</p></td>
 </tr>
 </table>
 
@@ -24,8 +24,9 @@ Ogg pages are the fundamental unit of framing and interleave in an ogg bitstream
 They are made up of packet segments of 255 bytes each. There can be as many as
 255 packet segments per page, for a maximum page size of a little under 64 kB.
 This is not a practical limitation as the segments can be joined across
-page boundaries allowing packets of arbitrary size. In practice pages are
-usually around 4 kB.
+page boundaries allowing packets of arbitrary size. In practice many
+applications will not completely fill all pages because they flush the
+accumulated packets periodically order to bound latency more tightly. 
 <p>
 <p>For a complete description of ogg pages and headers, please refer to the <a href="../framing.html">framing document</a>.
 
@@ -61,11 +62,11 @@ typedef struct {
 <hr noshade>
 <table border=0 width=100%>
 <tr valign=top>
-<td><p class=tiny>copyright &copy; 2000-2009 Xiph.Org</p></td>
+<td><p class=tiny>copyright &copy; 2000-2014 Xiph.Org</p></td>
 <td align=right><p class=tiny><a href="http://www.xiph.org/ogg/">Ogg Container Format</a></p></td>
 </tr><tr>
 <td><p class=tiny>libogg documentation</p></td>
-<td align=right><p class=tiny>libogg release 1.1.4 - 20090520</p></td>
+<td align=right><p class=tiny>libogg release 1.3.2 - 20140527</p></td>
 </tr>
 </table>
 

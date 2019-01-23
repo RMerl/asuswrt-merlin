@@ -190,7 +190,6 @@ int get_list_strings_count(char **list, int size, char *str)
 int main(int argc, char *argv[])
 {
 	FILE *fp;
-	char *nv;
 	int n=0;
 	char *p_computer_name = NULL;
 	disk_info_t *follow_disk, *disks_info = NULL;
@@ -250,17 +249,31 @@ int main(int argc, char *argv[])
 //#if defined(RTCONFIG_TFAT) || defined(RTCONFIG_TUXERA_NTFS) || defined(RTCONFIG_TUXERA_HFS)
 		if(nvram_get_int("enable_samba_tuxera") == 1){
 			fprintf(fp, "auth methods = guest\n");
-			fprintf(fp, "guest account = admin\n");
+			fprintf(fp, "guest account = %s\n", nvram_safe_get("http_username"));
 			fprintf(fp, "map to guest = Bad Password\n");
 			fprintf(fp, "guest ok = yes\n");
 		}
 		else{
+#if defined(RTCONFIG_SAMBA36X)
+			fprintf(fp, "auth methods = guest\n");
+			fprintf(fp, "guest account = %s\n", nvram_safe_get("http_username"));
+			fprintf(fp, "map to guest = Bad Password\n");
+			fprintf(fp, "guest ok = yes\n");
+#else
 			fprintf(fp, "security = SHARE\n");
 			fprintf(fp, "guest only = yes\n");
+#endif
 		}
+#else
+#if defined(RTCONFIG_SAMBA36X)
+		fprintf(fp, "auth methods = guest\n");
+		fprintf(fp, "guest account = %s\n", nvram_safe_get("http_username"));
+		fprintf(fp, "map to guest = Bad Password\n");
+		fprintf(fp, "guest ok = yes\n");
 #else
 		fprintf(fp, "security = SHARE\n");
 		fprintf(fp, "guest only = yes\n");
+#endif
 #endif
 	}
 	else{
@@ -271,22 +284,7 @@ int main(int argc, char *argv[])
 	fprintf(fp, "encrypt passwords = yes\n");
 	fprintf(fp, "pam password change = no\n");
 	fprintf(fp, "null passwords = yes\n");		// ASUS add
-#ifdef RTCONFIG_SAMBA_MODERN
-	if (nvram_get_int("smbd_enable_smb2"))
-		fprintf(fp, "max protocol = SMB2\n");
-	else
-		fprintf(fp, "max protocol = NT1\n");
 
-	fprintf(fp, "passdb backend = smbpasswd\n");
-	fprintf(fp, "smb encrypt = disabled\n");
-	fprintf(fp, "smb passwd file = /etc/samba/smbpasswd\n");
-#endif
-#if 0
-#ifdef RTCONFIG_RECVFILE
-	if(!nvram_get_int("stop_samba_recv"))
-		fprintf(fp, "use recvfile = yes\n");
-#endif
-#endif
 	fprintf(fp, "force directory mode = 0777\n");
 	fprintf(fp, "force create mode = 0777\n");
 
@@ -294,9 +292,10 @@ int main(int argc, char *argv[])
 	if (strcmp(nvram_safe_get("st_max_user"), "") != 0)
 		fprintf(fp, "max connections = %s\n", nvram_safe_get("st_max_user"));
 
-        /* remove socket options due to NIC compatible issue */
-	if(!nvram_get_int("stop_samba_speedup")){
-#ifdef RTCONFIG_BCMARM
+	if (!nvram_get_int("stop_samba_speedup")) {
+#if defined(RTCONFIG_SAMBA36X)
+		fprintf(fp, "socket options = IPTOS_LOWDELAY TCP_NODELAY SO_KEEPALIVE SO_RCVBUF=65536 SO_SNDBUF=65536\n");
+#elif defined(RTCONFIG_BCMARM)
 #ifdef RTCONFIG_BCM_7114
 		fprintf(fp, "socket options = IPTOS_LOWDELAY TCP_NODELAY SO_RCVBUF=131072 SO_SNDBUF=131072\n");
 #endif
@@ -307,12 +306,13 @@ int main(int argc, char *argv[])
 	fprintf(fp, "obey pam restrictions = no\n");
 //	fprintf(fp, "use spnego = no\n");		// ASUS add
 //	fprintf(fp, "client use spnego = no\n");	// ASUS add
-//	fprintf(fp, "client use spnego = yes\n");  // ASUS add
+//	fprintf(fp, "client use spnego = yes\n");	// ASUS add
 	fprintf(fp, "disable spoolss = yes\n");		// ASUS add
 	fprintf(fp, "host msdfs = no\n");		// ASUS add
 	fprintf(fp, "strict allocate = No\n");		// ASUS add
 //	fprintf(fp, "mangling method = hash2\n");	// ASUS add
-	fprintf(fp, "bind interfaces only = yes\n");    // ASUS add
+	fprintf(fp, "wide links = no\n"); 		// ASUS add
+	fprintf(fp, "bind interfaces only = yes\n");	// ASUS add
 	fprintf(fp, "interfaces = lo br0 %s/%s %s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"), (is_routing_enabled() && nvram_get_int("smbd_wanac")) ? nvram_safe_get("wan0_ifname") : "");
 #if 0
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD) || defined(RTCONFIG_OPENVPN)
@@ -339,22 +339,17 @@ int main(int argc, char *argv[])
 	fprintf(fp, "hosts allow = 127.0.0.1 %s/%s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
 #endif
 	fprintf(fp, "hosts deny = 0.0.0.0/0\n");
-#endif // #if 0
+#endif //#if 0
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36)
 	fprintf(fp, "use sendfile = no\n");
 #else
 	fprintf(fp, "use sendfile = yes\n");
 #endif
-	if (!strcmp(nvram_safe_get("smbd_wins"), "1")) {
-		fprintf(fp, "wins support = yes\n");
-	}
 
-	if (!strcmp(nvram_safe_get("smbd_master"), "1")) {
-		fprintf(fp, "os level = 255\n");
-		fprintf(fp, "domain master = yes\n");
-		fprintf(fp, "local master = yes\n");
-		fprintf(fp, "preferred master = yes\n");
-	}
+#if 0	//RTCONFIG_RECVFILE
+	if(!nvram_get_int("stop_samba_recv"))
+		fprintf(fp, "use recvfile = yes\n");
+#endif
 
 	fprintf(fp, "map archive = no\n");
 	fprintf(fp, "map hidden = no\n");
@@ -365,21 +360,52 @@ int main(int argc, char *argv[])
 	fprintf(fp, "oplocks = yes\n");
 	fprintf(fp, "level2 oplocks = yes\n");
 	fprintf(fp, "kernel oplocks = no\n");
-	fprintf(fp, "wide links = no\n");
 
-	// If we only want name services then skip share definition
-	if (nvram_match("enable_samba", "0"))
-		goto confpage;
+	if (nvram_get_int("smbd_wins"))
+		fprintf(fp, "wins support = yes\n");
+
+	if (nvram_get_int("smbd_master")) {
+		fprintf(fp, "os level = 255\n");
+		fprintf(fp, "domain master = yes\n");
+		fprintf(fp, "local master = yes\n");
+		fprintf(fp, "preferred master = yes\n");
+	}
+
+#if defined(RTCONFIG_SAMBA36X)
+	fprintf(fp, "enable core files = no\n");
+	fprintf(fp, "deadtime = 30\n");
+//	fprintf(fp, "local master = yes\n");
+//	fprintf(fp, "preferred master = yes\n");
+	fprintf(fp, "load printers = no\n");
+	fprintf(fp, "printable = no\n");
+// 0 - smb1, 1 = smb2, 2 = smb1 + smb2
+	if (nvram_get_int("smbd_protocol") == 0)
+		fprintf(fp, "max protocol = NT1\n");
+	 else
+		fprintf(fp, "max protocol = SMB2\n");
+	if (nvram_get_int("smbd_protocol") == 1)
+		fprintf(fp, "min protocol = SMB2\n");
+
+	fprintf(fp, "smb encrypt = disabled\n");
+	fprintf(fp, "min receivefile size = 16384\n");
+	fprintf(fp, "passdb backend = smbpasswd\n");
+	fprintf(fp, "smb passwd file = /etc/samba/smbpasswd\n");
+#endif
 
 #if 0
 	fprintf(fp, "[ipc$]\n");
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD) || defined(RTCONFIG_OPENVPN)
-	fprintf(fp, "hosts allow = 127.0.0.1 %s/%s %s %s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"), pptpd_subnet, openvpn_subnet);
+	fprintf(fp, "hosts allow = 127.0.0.1 %s/%s %s %s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"), pptpd_subnet, openvpn_subne$
 #else
 	fprintf(fp, "hosts allow = 127.0.0.1 %s/%s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
 #endif
 	fprintf(fp, "hosts deny = 0.0.0.0/0\n");
 #endif // #if 0
+
+	// If we only want name services then skip share definition
+	if (nvram_match("enable_samba", "0"))
+		goto confpage;
+
 	disks_info = read_disk_data();
 	if (disks_info == NULL) {
 		usb_dbg("Couldn't get disk list when writing smb.conf!\n");
@@ -458,11 +484,10 @@ int main(int argc, char *argv[])
 
 						if(samba_right > 0){
 							int count = get_list_strings_count(folder_list, sh_num, folder_list[n]);
-							if ((!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) && (count <= 1)) {
+							if ((!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) && (count <= 1))
 								fprintf(fp, "[%s]\n", folder_list[n]);
-							} else {
+							else
 								fprintf(fp, "[%s (at %s)]\n", folder_list[n], mount_folder);
-							}
 							fprintf(fp, "comment = %s's %s in %s\n", mount_folder, folder_list[n], follow_disk->tag);
 							fprintf(fp, "path = %s/%s\n", follow_partition->mount_point, folder_list[n]);
 							if(samba_right == 3)
@@ -513,11 +538,10 @@ int main(int argc, char *argv[])
 					}
 					else{
 						int count = get_list_strings_count(folder_list, sh_num, folder_list[n]);
-						if ((!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) && (count <= 1)) {
+						if ((!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) && (count <= 1))
 							fprintf(fp, "[%s]\n", folder_list[n]);
-						} else {
+						else
 							fprintf(fp, "[%s (at %s)]\n", folder_list[n], mount_folder);
-						}
 						fprintf(fp, "comment = %s's %s in %s\n", mount_folder, folder_list[n], follow_disk->tag);
 						fprintf(fp, "path = %s/%s\n", follow_partition->mount_point, folder_list[n]);
 					}
@@ -531,7 +555,7 @@ int main(int argc, char *argv[])
 						if(n == -1)
 							samba_right = get_permission(account_list[i], follow_partition->mount_point, NULL, "cifs");
 						else
-							samba_right = get_permission(account_list[i], follow_partition->mount_point, folder_list[n], "cifs");
+							samba_right = get_permission(account_list[i], follow_partition->mount_point, folder_list[n], "\cifs");
 						if (first == 1)
 							first = 0;
 						else
@@ -634,11 +658,10 @@ int main(int argc, char *argv[])
 					int i, first;
 
 					int count = get_list_strings_count(folder_list, sh_num, folder_list[n]);
-					if ((!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) && (count <= 1)) {
+					if ((!strcmp(nvram_safe_get("smbd_simpler_naming"), "1")) && (count <= 1))
 						fprintf(fp, "[%s]\n", folder_list[n]);
-					} else {
+					else
 						fprintf(fp, "[%s (at %s)]\n", folder_list[n], mount_folder);
-					}
 					fprintf(fp, "comment = %s's %s in %s\n", mount_folder, folder_list[n], follow_disk->tag);
 					fprintf(fp, "path = %s/%s\n", follow_partition->mount_point, folder_list[n]);
 
@@ -725,6 +748,7 @@ confpage:
 
 		use_custom_config("smb.conf", SAMBA_CONF);
 		run_postconf("smb", SAMBA_CONF);
+		chmod(SAMBA_CONF, 0644);
 	}
 
 	free_disk_data(&disks_info);

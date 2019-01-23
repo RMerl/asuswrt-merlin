@@ -1,0 +1,33 @@
+--blank-lines-after-declarations
+--blank-lines-after-procedures
+--break-before-boolean-operator
+--no-blank-lines-after-commas
+--braces-on-if-line
+--braces-on-struct-decl-line
+--comment-indentation25
+--declaration-comment-column25
+--no-comment-delimiters-on-blank-lines
+--cuddle-else
+--continuation-indentation4
+--case-indentation0
+--else-endif-column33
+--space-after-cast
+--line-comments-indentation0
+--declaration-indentation1
+--dont-format-first-column-comments
+--dont-format-comments
+--honour-newlines
+--indent-level4
+/* changed from 0 to 4 */
+--parameter-indentation4
+--line-length78 /* changed from 75 */
+--continue-at-parentheses
+--no-space-after-function-call-names
+--dont-break-procedure-type
+--dont-star-comments
+--leave-optional-blank-lines
+--dont-space-special-semicolon
+--tab-size4
+/* additions by Mark */
+--case-brace-indentation0
+--leave-preprocessor-space

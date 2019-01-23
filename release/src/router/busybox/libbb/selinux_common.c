@@ -10,7 +10,7 @@
 #include <selinux/context.h>
 
 context_t FAST_FUNC set_security_context_component(security_context_t cur_context,
-					 char *user, char *role, char *type, char *range)
+			char *user, char *role, char *type, char *range)
 {
 	context_t con = context_new(cur_context);
 	if (!con)

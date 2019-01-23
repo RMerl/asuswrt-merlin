@@ -630,16 +630,12 @@ osl_pktfastfree(osl_t *osh, struct sk_buff *skb)
 #endif
 
 	ctfpool = (ctfpool_t *)CTFPOOLPTR(osh, skb);
-
 #if 0
 	ASSERT(ctfpool != NULL);
 #else
 	if (ctfpool == NULL) {
-		if (skb->destructor)
-			dev_kfree_skb_any(skb);
-		else
-			dev_kfree_skb(skb);
-
+		printk("%s: free skb for NULL ctfpool\n", __FUNCTION__);
+		dev_kfree_skb(skb);
 		return;
 	}
 #endif
@@ -1658,3 +1654,9 @@ osl_os_image_size(void *image)
 	return len;
 }
 /* Linux Kernel: File Operations: end */
+
+#ifdef HNDCTF
+void osl_assert()
+{
+}
+#endif

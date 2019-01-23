@@ -1,0 +1,160 @@
+/*
+ * These are library version numbers in here - not to be confused
+ * with the API numbers used with libtool's -version-info string.
+ */
+LIBIPSET_1.0 {
+global:
+  ipset_strlcpy;
+  ipset_data_flags_test;
+  ipset_data_flags_set;
+  ipset_data_flags_unset;
+  ipset_data_ignored;
+  ipset_data_set;
+  ipset_data_get;
+  ipset_data_setname;
+  ipset_data_family;
+  ipset_data_cidr;
+  ipset_data_flags;
+  ipset_data_reset;
+  ipset_data_init;
+  ipset_data_fini;
+  ipset_data_sizeof;
+  ipset_errcode;
+  id_to_icmp;
+  icmp_to_name;
+  name_to_icmp;
+  id_to_icmpv6;
+  icmpv6_to_name;
+  name_to_icmpv6;
+  ipset_get_nlmsg_type;
+  ipset_parse_ether;
+  ipset_parse_port;
+  ipset_parse_tcpudp_port;
+  ipset_parse_tcp_port;
+  ipset_parse_single_tcp_port;
+  ipset_parse_proto;
+  ipset_parse_icmp;
+  ipset_parse_icmpv6;
+  ipset_parse_proto_port;
+  ipset_parse_family;
+  ipset_parse_ip;
+  ipset_parse_single_ip;
+  ipset_parse_net;
+  ipset_parse_range;
+  ipset_parse_netrange;
+  ipset_parse_iprange;
+  ipset_parse_ipnet;
+  ipset_parse_ip4_single6;
+  ipset_parse_ip4_net6;
+  ipset_parse_name;
+  ipset_parse_before;
+  ipset_parse_after;
+  ipset_parse_setname;
+  ipset_parse_uint32;
+  ipset_parse_uint8;
+  ipset_parse_netmask;
+  ipset_parse_flag;
+  ipset_parse_typename;
+  ipset_parse_iface;
+  ipset_parse_output;
+  ipset_parse_ignored;
+  ipset_parse_elem;
+  ipset_call_parser;
+  ipset_parse_iptimeout;
+  ipset_parse_name_compat;
+  ipset_print_ether;
+  ipset_print_family;
+  ipset_print_type;
+  ipset_print_ip;
+  ipset_print_ipaddr;
+  ipset_print_number;
+  ipset_print_name;
+  ipset_print_port;
+  ipset_print_iface;
+  ipset_print_proto;
+  ipset_print_icmp;
+  ipset_print_icmpv6;
+  ipset_print_proto_port;
+  ipset_print_flag;
+  ipset_print_elem;
+  ipset_print_data;
+  ipset_session_data;
+  ipset_session_handle;
+  ipset_saved_type;
+  ipset_session_lineno;
+  ipset_session_report;
+  ipset_session_report_reset;
+  ipset_session_error;
+  ipset_session_warning;
+  ipset_envopt_parse;
+  ipset_envopt_test;
+  ipset_session_output;
+  ipset_commit;
+  ipset_cmd;
+  ipset_session_init;
+  ipset_session_fini;
+  ipset_debug_msg;
+  ipset_cache_add;
+  ipset_cache_del;
+  ipset_cache_rename;
+  ipset_cache_swap;
+  ipset_cache_init;
+  ipset_cache_fini;
+  ipset_type_get;
+  ipset_type_check;
+  ipset_type_add;
+  ipset_types;
+  ipset_typename_resolve;
+  ipset_match_typename;
+  ipset_match_cmd;
+  ipset_match_option;
+  ipset_match_envopt;
+  ipset_shift_argv;
+
+local: *;
+};
+
+LIBIPSET_2.0 {
+global:
+  ipset_load_types;
+  ipset_port_usage;
+  ipset_parse_timeout;
+  ipset_data_test_ignored;
+} LIBIPSET_1.0;
+
+LIBIPSET_3.0 {
+global:
+  ipset_session_outfn;
+} LIBIPSET_2.0;
+
+LIBIPSET_4.0 {
+global:
+  ipset_parse_uint64;
+} LIBIPSET_3.0;
+
+LIBIPSET_4.1 {
+global:
+  ipset_parse_comment;
+  ipset_print_comment;
+  ipset_strlcat;
+} LIBIPSET_4.0;
+
+LIBIPSET_4.2 {
+global:
+  ipset_parse_mark;
+  ipset_print_mark;
+} LIBIPSET_4.1;
+
+LIBIPSET_4.3 {
+global:
+  ipset_parse_skbmark;
+  ipset_parse_skbprio;
+  ipset_print_skbmark;
+  ipset_print_skbprio;
+} LIBIPSET_4.2;
+
+LIBIPSET_4.4 {
+global:
+  ipset_parse_tcp_udp_port;
+  ipset_parse_uint16;
+} LIBIPSET_4.3;

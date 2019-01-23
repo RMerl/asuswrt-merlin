@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -76,6 +76,14 @@ static const node_t *choose_random_entry_impl(cpath_build_state_t *state,
                                               int *n_options_out);
 static int num_bridges_usable(void);
 
+/* Default number of entry guards in the case where the NumEntryGuards
+ * consensus parameter is not set */
+#define DEFAULT_N_GUARDS 1
+/* Minimum and maximum number of entry guards (in case the NumEntryGuards
+ * consensus parameter is set). */
+#define MIN_N_GUARDS 1
+#define MAX_N_GUARDS 10
+
 /** Return the list of entry guards, creating it if necessary. */
 const smartlist_t *
 get_entry_guards(void)
@@ -87,7 +95,7 @@ get_entry_guards(void)
 
 /** Check whether the entry guard <b>e</b> is usable, given the directory
  * authorities' opinion about the router (stored in <b>ri</b>) and the user's
- * configuration (in <b>options</b>). Set <b>e</b>-&gt;bad_since
+ * configuration (in <b>options</b>). Set <b>e</b>->bad_since
  * accordingly. Return true iff the entry guard's status changes.
  *
  * If it's not usable, set *<b>reason</b> to a static string explaining why.
@@ -117,6 +125,9 @@ entry_guard_set_status(entry_guard_t *e, const node_t *node,
     *reason = "not recommended as a guard";
   else if (routerset_contains_node(options->ExcludeNodes, node))
     *reason = "excluded";
+  /* We only care about OR connection connectivity for entry guards. */
+  else if (!fascist_firewall_allows_node(node, FIREWALL_OR_CONNECTION, 0))
+    *reason = "unreachable by config";
   else if (e->path_bias_disabled)
     *reason = "path-biased";
 
@@ -268,7 +279,7 @@ entry_is_live(const entry_guard_t *e, entry_is_live_flags_t flags,
     *msg = "not fast/stable";
     return NULL;
   }
-  if (!fascist_firewall_allows_node(node)) {
+  if (!fascist_firewall_allows_node(node, FIREWALL_OR_CONNECTION, 0)) {
     *msg = "unreachable by config";
     return NULL;
   }
@@ -485,7 +496,8 @@ decide_num_guards(const or_options_t *options, int for_directory)
     return options->NumEntryGuards;
 
   /* Use the value from the consensus, or 3 if no guidance. */
-  return networkstatus_get_param(NULL, "NumEntryGuards", 3, 1, 10);
+  return networkstatus_get_param(NULL, "NumEntryGuards", DEFAULT_N_GUARDS,
+                                 MIN_N_GUARDS, MAX_N_GUARDS);
 }
 
 /** If the use of entry guards is configured, choose more entry guards
@@ -719,8 +731,9 @@ entry_guards_compute_status(const or_options_t *options, time_t now)
  *
  * If <b>mark_relay_status</b>, also call router_set_status() on this
  * relay.
- *
- * XXX024 change succeeded and mark_relay_status into 'int flags'.
+ */
+/* XXX We could change succeeded and mark_relay_status into 'int flags'.
+ * Too many boolean arguments is a recipe for confusion.
  */
 int
 entry_guard_register_connect_status(const char *digest, int succeeded,
@@ -918,7 +931,8 @@ entry_guards_set_from_config(const or_options_t *options)
     } else if (routerset_contains_node(options->ExcludeNodes, node)) {
       SMARTLIST_DEL_CURRENT(entry_nodes, node);
       continue;
-    } else if (!fascist_firewall_allows_node(node)) {
+    } else if (!fascist_firewall_allows_node(node, FIREWALL_OR_CONNECTION,
+                                             0)) {
       SMARTLIST_DEL_CURRENT(entry_nodes, node);
       continue;
     } else if (! node->is_possible_guard) {
@@ -1152,7 +1166,7 @@ choose_random_entry_impl(cpath_build_state_t *state, int for_directory,
   } else {
     /* Try to have at least 2 choices available. This way we don't
      * get stuck with a single live-but-crummy entry and just keep
-     * using him.
+     * using it.
      * (We might get 2 live-but-crummy entry guards, but so be it.) */
     preferred_min = 2;
   }
@@ -1239,7 +1253,7 @@ entry_guards_parse_state(or_state_t *state, int set, char **msg)
       } else {
         strlcpy(node->nickname, smartlist_get(args,0), MAX_NICKNAME_LEN+1);
         if (base16_decode(node->identity, DIGEST_LEN, smartlist_get(args,1),
-                          strlen(smartlist_get(args,1)))<0) {
+                          strlen(smartlist_get(args,1))) != DIGEST_LEN) {
           *msg = tor_strdup("Unable to parse entry nodes: "
                             "Bad hex digest for EntryGuard");
         }
@@ -1295,8 +1309,9 @@ entry_guards_parse_state(or_state_t *state, int set, char **msg)
         log_warn(LD_BUG, "EntryGuardAddedBy line is not long enough.");
         continue;
       }
-      if (base16_decode(d, sizeof(d), line->value, HEX_DIGEST_LEN)<0 ||
-          line->value[HEX_DIGEST_LEN] != ' ') {
+      if (base16_decode(d, sizeof(d),
+                        line->value, HEX_DIGEST_LEN) != sizeof(d) ||
+                        line->value[HEX_DIGEST_LEN] != ' ') {
         log_warn(LD_BUG, "EntryGuardAddedBy line %s does not begin with "
                  "hex digest", escaped(line->value));
         continue;
@@ -1440,7 +1455,6 @@ entry_guards_parse_state(or_state_t *state, int set, char **msg)
        }
      } else {
        if (state_version) {
-         time_t now = time(NULL);
          e->chosen_on_date = crypto_rand_time_range(now - 3600*24*30, now);
          e->chosen_by_version = tor_strdup(state_version);
        }
@@ -1462,7 +1476,7 @@ entry_guards_parse_state(or_state_t *state, int set, char **msg)
     }
     entry_guards = new_entry_guards;
     entry_guards_dirty = 0;
-    /* XXX024 hand new_entry_guards to this func, and move it up a
+    /* XXX hand new_entry_guards to this func, and move it up a
      * few lines, so we don't have to re-dirty it */
     if (remove_obsolete_entry_guards(now))
       entry_guards_dirty = 1;
@@ -1791,7 +1805,7 @@ get_configured_bridge_by_orports_digest(const char *digest,
 }
 
 /** If we have a bridge configured whose digest matches <b>digest</b>, or a
- * bridge with no known digest whose address matches <b>addr</b>:<b>/port</b>,
+ * bridge with no known digest whose address matches <b>addr</b>:<b>port</b>,
  * return that bridge.  Else return NULL. If <b>digest</b> is NULL, check for
  * address/port matches only. */
 static bridge_info_t *
@@ -1812,6 +1826,30 @@ get_configured_bridge_by_addr_port_digest(const tor_addr_t *addr,
     }
   SMARTLIST_FOREACH_END(bridge);
   return NULL;
+}
+
+/** If we have a bridge configured whose digest matches <b>digest</b>, or a
+ * bridge with no known digest whose address matches <b>addr</b>:<b>port</b>,
+ * return 1.  Else return 0. If <b>digest</b> is NULL, check for
+ * address/port matches only. */
+int
+addr_is_a_configured_bridge(const tor_addr_t *addr,
+                                uint16_t port,
+                                const char *digest)
+{
+  tor_assert(addr);
+  return get_configured_bridge_by_addr_port_digest(addr, port, digest) ? 1 : 0;
+}
+
+/** If we have a bridge configured whose digest matches
+ * <b>ei->identity_digest</b>, or a bridge with no known digest whose address
+ * matches <b>ei->addr</b>:<b>ei->port</b>, return 1.  Else return 0.
+ * If <b>ei->onion_key</b> is NULL, check for address/port matches only. */
+int
+extend_info_is_a_configured_bridge(const extend_info_t *ei)
+{
+  const char *digest = ei->onion_key ? ei->identity_digest : NULL;
+  return addr_is_a_configured_bridge(&ei->addr, ei->port, digest);
 }
 
 /** Wrapper around get_configured_bridge_by_addr_port_digest() to look
@@ -1994,6 +2032,7 @@ bridge_add_from_config(bridge_line_t *bridge_line)
   if (bridge_line->transport_name)
     b->transport_name = bridge_line->transport_name;
   b->fetch_status.schedule = DL_SCHED_BRIDGE;
+  b->fetch_status.backoff = DL_SCHED_RANDOM_EXPONENTIAL;
   b->socks_args = bridge_line->socks_args;
   if (!bridge_list)
     bridge_list = smartlist_new();
@@ -2116,8 +2155,18 @@ launch_direct_bridge_descriptor_fetch(bridge_info_t *bridge)
     return;
   }
 
-  directory_initiate_command(&bridge->addr,
-                             bridge->port, 0/*no dirport*/,
+  /* Until we get a descriptor for the bridge, we only know one address for
+   * it. */
+  if (!fascist_firewall_allows_address_addr(&bridge->addr, bridge->port,
+                                            FIREWALL_OR_CONNECTION, 0, 0)) {
+    log_notice(LD_CONFIG, "Tried to fetch a descriptor directly from a "
+               "bridge, but that bridge is not reachable through our "
+               "firewall.");
+    return;
+  }
+
+  directory_initiate_command(&bridge->addr, bridge->port,
+                             NULL, 0, /*no dirport*/
                              bridge->identity,
                              DIR_PURPOSE_FETCH_SERVERDESC,
                              ROUTER_PURPOSE_BRIDGE,
@@ -2178,7 +2227,9 @@ fetch_bridge_descriptors(const or_options_t *options, time_t now)
                 !options->UpdateBridgesFromAuthority, !num_bridge_auths);
 
       if (ask_bridge_directly &&
-          !fascist_firewall_allows_address_or(&bridge->addr, bridge->port)) {
+          !fascist_firewall_allows_address_addr(&bridge->addr, bridge->port,
+                                                FIREWALL_OR_CONNECTION, 0,
+                                                0)) {
         log_notice(LD_DIR, "Bridge at '%s' isn't reachable by our "
                    "firewall policy. %s.",
                    fmt_addrport(&bridge->addr, bridge->port),
@@ -2205,7 +2256,7 @@ fetch_bridge_descriptors(const or_options_t *options, time_t now)
         log_info(LD_DIR, "Fetching bridge info '%s' from bridge authority.",
                  resource);
         directory_get_from_dirserver(DIR_PURPOSE_FETCH_SERVERDESC,
-                ROUTER_PURPOSE_BRIDGE, resource, 0);
+                ROUTER_PURPOSE_BRIDGE, resource, 0, DL_WANT_AUTHORITY);
       }
     }
   SMARTLIST_FOREACH_END(bridge);
@@ -2226,6 +2277,7 @@ rewrite_node_address_for_bridge(const bridge_info_t *bridge, node_t *node)
    *   does so through an address from any source other than node_get_addr().
    */
   tor_addr_t addr;
+  const or_options_t *options = get_options();
 
   if (node->ri) {
     routerinfo_t *ri = node->ri;
@@ -2258,9 +2310,15 @@ rewrite_node_address_for_bridge(const bridge_info_t *bridge, node_t *node)
       }
     }
 
-    /* Mark which address to use based on which bridge_t we got. */
-    node->ipv6_preferred = (tor_addr_family(&bridge->addr) == AF_INET6 &&
-                            !tor_addr_is_null(&node->ri->ipv6_addr));
+    if (options->ClientPreferIPv6ORPort == -1) {
+      /* Mark which address to use based on which bridge_t we got. */
+      node->ipv6_preferred = (tor_addr_family(&bridge->addr) == AF_INET6 &&
+                              !tor_addr_is_null(&node->ri->ipv6_addr));
+    } else {
+      /* Mark which address to use based on user preference */
+      node->ipv6_preferred = (fascist_firewall_prefer_ipv6_orport(options) &&
+                              !tor_addr_is_null(&node->ri->ipv6_addr));
+    }
 
     /* XXXipv6 we lack support for falling back to another address for
        the same relay, warn the user */
@@ -2269,10 +2327,13 @@ rewrite_node_address_for_bridge(const bridge_info_t *bridge, node_t *node)
       node_get_pref_orport(node, &ap);
       log_notice(LD_CONFIG,
                  "Bridge '%s' has both an IPv4 and an IPv6 address.  "
-                 "Will prefer using its %s address (%s).",
+                 "Will prefer using its %s address (%s) based on %s.",
                  ri->nickname,
-                 tor_addr_family(&ap.addr) == AF_INET6 ? "IPv6" : "IPv4",
-                 fmt_addrport(&ap.addr, ap.port));
+                 node->ipv6_preferred ? "IPv6" : "IPv4",
+                 fmt_addrport(&ap.addr, ap.port),
+                 options->ClientPreferIPv6ORPort == -1 ?
+                 "the configured Bridge address" :
+                 "ClientPreferIPv6ORPort");
     }
   }
   if (node->rs) {
@@ -2360,6 +2421,44 @@ num_bridges_usable(void)
   tor_assert(get_options()->UseBridges);
   (void) choose_random_entry_impl(NULL, 0, 0, &n_options);
   return n_options;
+}
+
+/** Return a smartlist containing all bridge identity digests */
+MOCK_IMPL(smartlist_t *,
+list_bridge_identities, (void))
+{
+  smartlist_t *result = NULL;
+  char *digest_tmp;
+
+  if (get_options()->UseBridges && bridge_list) {
+    result = smartlist_new();
+
+    SMARTLIST_FOREACH_BEGIN(bridge_list, bridge_info_t *, b) {
+      digest_tmp = tor_malloc(DIGEST_LEN);
+      memcpy(digest_tmp, b->identity, DIGEST_LEN);
+      smartlist_add(result, digest_tmp);
+    } SMARTLIST_FOREACH_END(b);
+  }
+
+  return result;
+}
+
+/** Get the download status for a bridge descriptor given its identity */
+MOCK_IMPL(download_status_t *,
+get_bridge_dl_status_by_id, (const char *digest))
+{
+  download_status_t *dl = NULL;
+
+  if (digest && get_options()->UseBridges && bridge_list) {
+    SMARTLIST_FOREACH_BEGIN(bridge_list, bridge_info_t *, b) {
+      if (tor_memeq(digest, b->identity, DIGEST_LEN)) {
+        dl = &(b->fetch_status);
+        break;
+      }
+    } SMARTLIST_FOREACH_END(b);
+  }
+
+  return dl;
 }
 
 /** Return 1 if we have at least one descriptor for an entry guard

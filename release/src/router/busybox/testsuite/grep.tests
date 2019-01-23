@@ -82,6 +82,20 @@ testing "grep -F handles -i" "grep -F -i foo input ; echo \$?" \
 testing "grep can read regexps from stdin" "grep -f - input ; echo \$?" \
 	"two\nthree\n0\n" "tw\ntwo\nthree\n" "tw.\nthr\n"
 
+# -x (whole line match)
+testing "grep -x (full match)" "grep -x foo input ; echo \$?" \
+	"foo\n0\n" "foo\n" ""
+testing "grep -x (partial match 1)" "grep -x foo input ; echo \$?" \
+	"1\n" "foo bar\n" ""
+testing "grep -x (partial match 2)" "grep -x foo input ; echo \$?" \
+	"1\n" "bar foo\n" ""
+testing "grep -x -F (full match)" "grep -x -F foo input ; echo \$?" \
+	"foo\n0\n" "foo\n" ""
+testing "grep -x -F (partial match 1)" "grep -x -F foo input ; echo \$?" \
+	"1\n" "foo bar\n" ""
+testing "grep -x -F (partial match 2)" "grep -x -F foo input ; echo \$?" \
+	"1\n" "bar foo\n" ""
+
 optional FEATURE_GREP_EGREP_ALIAS
 testing "grep -E supports extended regexps" "grep -E fo+" "foo\n" "" \
 	"b\ar\nfoo\nbaz"
@@ -114,6 +128,68 @@ testing "grep -v -f EMPTY_FILE" \
 	"test\n" \
 	"" \
 	"test\n"
+
+testing "grep -Fw matches only words" \
+	"grep -Fw foo input" \
+	"" \
+	"foop\n" \
+	""
+
+testing "grep -Fw doesn't stop on 1st mismatch" \
+	"grep -Fw foo input" \
+	"foop foo\n" \
+	"foop foo\n" \
+	""
+
+testing "grep -w doesn't stop on 1st mismatch" \
+	"grep -w foo input" \
+	"foop foo\n" \
+	"foop foo\n" \
+	""
+
+testing "grep -w ^str doesn't match str not at the beginning" \
+	"grep -w ^str input" \
+	"" \
+	"strstr\n" \
+	""
+
+testing "grep -w ^ doesn't hang" \
+	"grep -w ^ input" \
+	"" \
+	"anything\n" \
+	""
+
+testing "grep -w word doesn't match wordword" \
+	"grep -w word input" \
+	"" \
+	"wordword\n" \
+	""
+
+testing "grep -w word match second word" \
+	"grep -w word input" \
+	"bword,word\n""wordb,word\n""bwordb,word\n" \
+	"bword,word\n""wordb,word\n""bwordb,word\n" \
+	""
+
+# -r on symlink to dir should recurse into dir
+mkdir -p grep.testdir/foo
+echo bar > grep.testdir/foo/file
+ln -s foo grep.testdir/symfoo
+testing "grep -r on symlink to dir" \
+	"grep -r . grep.testdir/symfoo" \
+	"grep.testdir/symfoo/file:bar\n" \
+	"" ""
+rm -Rf grep.testdir
+
+# But -r on dir/symlink_to_dir should not recurse into symlink_to_dir
+mkdir -p grep.testdir/foo
+echo bar > grep.testdir/foo/file
+ln -s foo grep.testdir/symfoo
+testing "grep -r on dir/symlink to dir" \
+	"grep -r . grep.testdir" \
+	"grep.testdir/foo/file:bar\n" \
+	"" ""
+rm -Rf grep.testdir
 
 # testing "test name" "commands" "expected result" "file input" "stdin"
 #   file input will be file called "input"

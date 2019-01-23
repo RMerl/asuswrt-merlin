@@ -12,6 +12,8 @@
 <link rel="stylesheet" type="text/css" href="tmmenu.css">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
@@ -22,6 +24,42 @@
 var daily_history = [];
 <% backup_nvram("wan_ifname,lan_ifname,rstats_enable,cstats_enable"); %>
 <% bandwidth("daily"); %>
+
+var barDataUl, barDataDl, barLabels;
+var myBarChart;
+
+Chart.defaults.global.defaultFontColor = "#CCC";
+
+var barOptions = {
+	segmentShowStroke : false,
+	segmentStrokeColor : "#000",
+	animationEasing : "easeOutQuart",
+	animationSteps : 100,
+	animateScale : true,
+	tooltips: {
+		callbacks: {
+			title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
+			label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].toFixed(2)) + " " + snames[scale]; },
+		}
+	},
+	scales: {
+		xAxes: [{
+			gridLines: { display: false }
+		}],
+		yAxes: [{
+			gridLines: { color: "#282828" },
+			scaleLabel: {
+				display: false,
+				labelString: snames[scale]
+				},
+			ticks: {
+				callback: function(value, index, values) {
+					return comma(value);
+				}
+			}
+		}]
+	}
+};
 
 function redraw(){
 	var h;
@@ -34,6 +72,10 @@ function redraw(){
 	var getYMD = function(n){
 		return [(((n >> 16) & 0xFF) + 1900), ((n >>> 8) & 0xFF), (n & 0xFF)];
 	}
+
+	barDataUl = [];
+	barDataDl = [];
+	barLabels = [];
 
 	if (daily_history.length > 0) {
 		ymd = getYMD(daily_history[0][0]);
@@ -65,6 +107,11 @@ function redraw(){
 			lastd += h[1];
 			lastu += h[2];
 		}
+
+		barDataDl.unshift(h[1] / ((scale == 2) ?  1048576 : ((scale == 1) ? 1024 : 1)));
+		barDataUl.unshift(h[2] / ((scale == 2) ?  1048576 : ((scale == 1) ? 1024 : 1)));
+		barLabels.unshift(months[ymd[1]] + ' ' + ymd[2]);
+
 	}
 
 	if(rows == 0)
@@ -74,6 +121,8 @@ function redraw(){
 	E('last-dn').innerHTML = rescale(lastd);
 	E('last-up').innerHTML = rescale(lastu);
 	E('last-total').innerHTML = rescale(lastu + lastd);
+
+	draw_chart();
 }
 
 function init(){
@@ -112,9 +161,6 @@ function init(){
 	initDate('ymd');
 	daily_history.sort(cmpHist);
 	redraw();
-	if(bwdpi_support){
-		document.getElementById('content_title').innerHTML = "<#menu5_3_2#> - <#traffic_monitor#>";
-	}
 }
 
 function switchPage(page){
@@ -133,6 +179,42 @@ function switchPage(page){
 	else
 		return false;
 }
+
+function draw_chart(){
+	if (barLabels.length == 0) return;
+	if (barLabels.length > 45)
+		border = 0;
+	else
+		border = 1;
+
+	if (myBarChart != undefined) myBarChart.destroy();
+	var ctx = document.getElementById("chart").getContext("2d");
+
+	var barDataset = {
+		labels: barLabels,
+		datasets: [
+			{data: barDataDl,
+			label: "<#tm_reception#> (" + snames[scale].trim() + ")",
+			borderWidth: border,
+			backgroundColor: "#4C8FC0",
+			borderColor: "#000000"
+		},
+			{data: barDataUl,
+			label: "<#tm_transmission#> (" + snames[scale].trim() +")",
+			borderWidth: border,
+			backgroundColor: "#4CC08F",
+			borderColor: "#000000"
+		}]
+	};
+
+	myBarChart = new Chart(ctx, {
+		type: 'bar',
+		options: barOptions,
+		data: barDataset
+	});
+}
+
+
 </script>
 </head>
 
@@ -181,7 +263,7 @@ function switchPage(page){
         			<tr>
 
 						<td  class="formfonttitle" align="left">
-										<div id="content_title" style="margin-top:5px;"><#Menu_TrafficManager#> - <#traffic_monitor#></div>
+										<div style="margin-top:5px;"><#Menu_TrafficManager#> - <#traffic_monitor#></div>
 									</td>
 
           			<td>
@@ -237,7 +319,13 @@ function switchPage(page){
 								</table>
 							</td>
 						</tr>
-						<tr >
+
+						<tr>
+							<td>
+								<div style="background-color:#2f3e44;border-radius:10px;width:730px;"><canvas id="chart" height="140"></div>
+							</td>
+						</tr>
+						<tr>
 							<td>
 								<div id='bwm-daily-grid' style='float:left'></div>
 							</td>

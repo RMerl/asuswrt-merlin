@@ -362,6 +362,128 @@ static int ehci_pci_resume(struct usb_hcd *hcd)
 }
 #endif
 
+#ifdef CONFIG_BCM47XX
+#include <bcmutils.h>
+#include <siutils.h>
+#include <bcmdefs.h>
+#include <bcmdevs.h>
+
+typedef unsigned long uintptr_t;
+
+/* Global SB handle */
+extern si_t *bcm947xx_sih;
+#define sih bcm947xx_sih
+
+#define BCM_USB_DMA_ALIGN 4
+
+struct dma_aligned_buffer {
+	void *kmalloc_ptr;
+	void *old_xfer_buffer;
+	u8 data[0];
+};
+
+static void bcm_free_dma_aligned_buffer(struct urb *urb)
+{
+	struct dma_aligned_buffer *temp;
+	size_t length;
+
+	if (!(urb->transfer_flags & URB_ALIGNED_TEMP_BUFFER))
+		return;
+
+	temp = container_of(urb->transfer_buffer,
+		struct dma_aligned_buffer, data);
+
+	if (usb_urb_dir_in(urb)) {
+		if (usb_pipeisoc(urb->pipe))
+			length = urb->transfer_buffer_length;
+		else
+			length = urb->actual_length;
+
+		memcpy(temp->old_xfer_buffer, temp->data, length);
+	}
+	urb->transfer_buffer = temp->old_xfer_buffer;
+	kfree(temp->kmalloc_ptr);
+
+	urb->transfer_flags &= ~URB_ALIGNED_TEMP_BUFFER;
+}
+
+static int bcm_alloc_dma_aligned_buffer(struct urb *urb, gfp_t mem_flags)
+{
+	struct dma_aligned_buffer *temp, *kmalloc_ptr;
+	size_t kmalloc_size;
+	int length;
+
+#ifdef __mips__
+	if (CHIPID(sih->chip) != BCM4706_CHIP_ID &&
+	    CHIPID(sih->chip) != BCM4716_CHIP_ID)
+		return 0;
+#else
+	if (!BCM4707_CHIP(sih->chip))
+		return 0;
+#endif
+
+	if (urb->num_sgs || urb->sg ||
+	    urb->transfer_buffer_length == 0)
+		return 0;
+
+	length = (uintptr_t)urb->transfer_buffer & (BCM_USB_DMA_ALIGN - 1);
+	if (!length)
+		return 0;
+
+	/* Skip unrelated outgoing data */
+	if (usb_urb_dir_out(urb)) {
+		int maxp = usb_maxpacket(urb->dev, urb->pipe, usb_pipeout(urb->pipe));
+		if (maxp == 0)
+			return 0;
+		length += urb->transfer_buffer_length % maxp;
+		if (length < 5 || length > 7)
+			return 0;
+	}
+
+	/* Allocate a buffer with enough padding for alignment */
+	kmalloc_size = urb->transfer_buffer_length +
+		sizeof(struct dma_aligned_buffer) + BCM_USB_DMA_ALIGN - 1;
+
+	kmalloc_ptr = kmalloc(kmalloc_size, mem_flags);
+	if (!kmalloc_ptr)
+		return -ENOMEM;
+
+	/* Position our struct dma_aligned_buffer such that data is aligned */
+	temp = PTR_ALIGN(kmalloc_ptr + 1, BCM_USB_DMA_ALIGN) - 1;
+	temp->kmalloc_ptr = kmalloc_ptr;
+	temp->old_xfer_buffer = urb->transfer_buffer;
+	if (usb_urb_dir_out(urb))
+		memcpy(temp->data, urb->transfer_buffer,
+		       urb->transfer_buffer_length);
+	urb->transfer_buffer = temp->data;
+
+	urb->transfer_flags |= URB_ALIGNED_TEMP_BUFFER;
+
+	return 0;
+}
+
+static int ehci_map_urb_for_dma(struct usb_hcd *hcd, struct urb *urb, gfp_t mem_flags)
+{
+	int ret;
+
+	ret = bcm_alloc_dma_aligned_buffer(urb, mem_flags);
+	if (ret)
+		return ret;
+
+	ret = usb_hcd_map_urb_for_dma(hcd, urb, mem_flags);
+	if (ret)
+		bcm_free_dma_aligned_buffer(urb);
+
+	return ret;
+}
+
+static void ehci_unmap_urb_for_dma(struct usb_hcd *hcd, struct urb *urb)
+{
+	usb_hcd_unmap_urb_for_dma(hcd, urb);
+	bcm_free_dma_aligned_buffer(urb);
+}
+#endif /* CONFIG_BCM47XX */
+
 static const struct hc_driver ehci_pci_hc_driver = {
 	.description =		hcd_name,
 	.product_desc =		"EHCI Host Controller",
@@ -390,6 +512,10 @@ static const struct hc_driver ehci_pci_hc_driver = {
 	 */
 	.urb_enqueue =		ehci_urb_enqueue,
 	.urb_dequeue =		ehci_urb_dequeue,
+#ifdef CONFIG_BCM47XX
+	.map_urb_for_dma =	ehci_map_urb_for_dma,
+	.unmap_urb_for_dma =	ehci_unmap_urb_for_dma,
+#endif /* CONFIG_BCM47XX */
 	.endpoint_disable =	ehci_endpoint_disable,
 
 	/*

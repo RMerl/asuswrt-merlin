@@ -1,5 +1,12 @@
-/* Copyright (c) 2014, The Tor Project, Inc. */
+/* Copyright (c) 2014-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
+
+/**
+ * \file torcert.c
+ *
+ * \brief Implementation for ed25519-signed certificates as used in the Tor
+ * protocol.
+ */
 
 #include "crypto.h"
 #include "torcert.h"
@@ -100,7 +107,7 @@ tor_cert_create(const ed25519_keypair_t *signing_key,
                             now, lifetime, flags);
 }
 
-/** Release all storage held for <b>cert</>. */
+/** Release all storage held for <b>cert</b>. */
 void
 tor_cert_free(tor_cert_t *cert)
 {

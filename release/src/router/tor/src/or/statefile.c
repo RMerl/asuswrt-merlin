@@ -1,14 +1,39 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
+
+/**
+ * \file statefile.c
+ *
+ * \brief Handles parsing and encoding the persistent 'state' file that carries
+ *  miscellaneous persistent state between Tor invocations.
+ *
+ * This 'state' file is a typed key-value store that allows multiple
+ * entries for the same key.  It follows the same metaformat as described
+ * in confparse.c, and uses the same code to read and write itself.
+ *
+ * The state file is most suitable for small values that don't change too
+ * frequently.  For values that become very large, we typically use a separate
+ * file -- for example, see how we handle microdescriptors, by storing them in
+ * a separate file with a journal.
+ *
+ * The current state is accessed via get_or_state(), which returns a singleton
+ * or_state_t object.  Functions that change it should call
+ * or_state_mark_dirty() to ensure that it will get written to disk.
+ *
+ * The or_state_save() function additionally calls various functioens
+ * throughout Tor that might want to flush more state to the the disk,
+ * including some in rephist.c, entrynodes.c, circuitstats.c, hibernate.c.
+ */
 
 #define STATEFILE_PRIVATE
 #include "or.h"
 #include "circuitstats.h"
 #include "config.h"
 #include "confparse.h"
+#include "connection.h"
 #include "entrynodes.h"
 #include "hibernate.h"
 #include "rephist.h"
@@ -113,6 +138,7 @@ static const config_format_t state_format = {
   OR_STATE_MAGIC,
   STRUCT_OFFSET(or_state_t, magic_),
   state_abbrevs_,
+  NULL,
   state_vars_,
   or_state_validate_cb,
   &state_extra_var,
@@ -341,7 +367,7 @@ or_state_load(void)
     if (config_get_lines(contents, &lines, 0)<0)
       goto done;
     assign_retval = config_assign(&state_format, new_state,
-                                  lines, 0, 0, &errmsg);
+                                  lines, 0, &errmsg);
     config_free_lines(lines);
     if (assign_retval<0)
       badstate = 1;
@@ -372,6 +398,12 @@ or_state_load(void)
     new_state = or_state_new();
   } else if (contents) {
     log_info(LD_GENERAL, "Loaded state from \"%s\"", fname);
+    /* Warn the user if their clock has been set backwards,
+     * they could be tricked into using old consensuses */
+    time_t apparent_skew = new_state->LastWritten - time(NULL);
+    if (apparent_skew > 0)
+      clock_skew_warning(NULL, (long)apparent_skew, 1, LD_GENERAL,
+                         "local state file", fname);
   } else {
     log_info(LD_GENERAL, "Initialized state");
   }

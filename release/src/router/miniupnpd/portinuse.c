@@ -55,7 +55,7 @@
 
 #if defined(USE_NETFILTER)
 /* Hardcoded for now.  Ideally would come from .conf file */
-char *chains_to_check[] = { "PREROUTING" , 0 };
+char *chains_to_check[] = { "VSERVER" , 0 };
 #endif
 
 int

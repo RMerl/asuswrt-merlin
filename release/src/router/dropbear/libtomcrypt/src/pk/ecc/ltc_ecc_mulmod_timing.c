@@ -40,7 +40,7 @@ int ltc_ecc_mulmod(void *k, ecc_point *G, ecc_point *R, void *modulus, int map)
    int        i, j, err;
    void       *mu, *mp;
    unsigned long buf;
-   int        first, bitbuf, bitcpy, bitcnt, mode, digidx;
+   int        bitcnt, mode, digidx;
 
    LTC_ARGCHK(k       != NULL);
    LTC_ARGCHK(G       != NULL);
@@ -98,8 +98,6 @@ int ltc_ecc_mulmod(void *k, ecc_point *G, ecc_point *R, void *modulus, int map)
    bitcnt = 1;
    buf    = 0;
    digidx = mp_get_digit_count(k) - 1;
-   bitcpy = bitbuf = 0;
-   first  = 1;
 
    /* perform ops */
    for (;;) {

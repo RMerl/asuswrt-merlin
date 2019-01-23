@@ -91,10 +91,11 @@ int svr_pubkey_allows_pty() {
 /* Set chansession command to the one forced 
  * by any 'command' public key option. */
 void svr_pubkey_set_forced_command(struct ChanSess *chansess) {
-	if (ses.authstate.pubkey_options) {
+	if (ses.authstate.pubkey_options && ses.authstate.pubkey_options->forced_command) {
 		if (chansess->cmd) {
 			/* original_command takes ownership */
 			chansess->original_command = chansess->cmd;
+			chansess->cmd = NULL;
 		} else {
 			chansess->original_command = m_strdup("");
 		}
@@ -108,6 +109,9 @@ void svr_pubkey_set_forced_command(struct ChanSess *chansess) {
 /* Free potential public key options */
 void svr_pubkey_options_cleanup() {
 	if (ses.authstate.pubkey_options) {
+		if (ses.authstate.pubkey_options->forced_command) {
+			m_free(ses.authstate.pubkey_options->forced_command);
+		}
 		m_free(ses.authstate.pubkey_options);
 		ses.authstate.pubkey_options = NULL;
 	}
@@ -120,7 +124,7 @@ static int match_option(buffer *options_buf, const char *opt_name) {
 	if (options_buf->len - options_buf->pos < len) {
 		return DROPBEAR_FAILURE;
 	}
-	if (strncasecmp(buf_getptr(options_buf, len), opt_name, len) == 0) {
+	if (strncasecmp((const char *) buf_getptr(options_buf, len), opt_name, len) == 0) {
 		buf_incrpos(options_buf, len);
 		return DROPBEAR_SUCCESS;
 	}
@@ -200,8 +204,7 @@ next_option:
 
 bad_option:
 	ret = DROPBEAR_FAILURE;
-	m_free(ses.authstate.pubkey_options);
-	ses.authstate.pubkey_options = NULL;
+	svr_pubkey_options_cleanup();
 	dropbear_log(LOG_WARNING, "Bad public key options at %s:%d", filename, line_num);
 
 end:

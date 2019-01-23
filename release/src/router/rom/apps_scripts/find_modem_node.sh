@@ -9,7 +9,12 @@ modem_pid=`nvram get usb_modem_act_pid`
 usb_gobi2=`nvram get usb_gobi2`
 dev_home=/dev
 
-at_lock="flock -x /tmp/at_cmd_lock"
+stop_lock=`nvram get stop_atlock`
+if [ -n "$stop_lock" ] && [ "$stop_lock" -eq "1" ]; then
+	at_lock=""
+else
+	at_lock="flock -x /tmp/at_cmd_lock"
+fi
 
 
 _find_act_devs(){
@@ -106,7 +111,11 @@ _find_dial_devs(){
 			continue
 		fi
 
-		$at_lock chat -t 1 -e '' 'ATQ0' OK >> /dev/$dev < /dev/$dev 2>/dev/null
+		if [ "$modem_vid" == "4204" -a "$modem_pid" == "14104" ]; then # Pantech UML290VW: VID=0x106c, PID=0x3718
+			$at_lock chat -t 1 -e '' 'ATI' OK >> /dev/$dev < /dev/$dev 2>/dev/null
+		else
+			$at_lock chat -t 1 -e '' 'ATQ0' OK >> /dev/$dev < /dev/$dev 2>/dev/null
+		fi
 		if [ "$?" == "0" ]; then
 			count=$((count+1))
 
@@ -221,7 +230,7 @@ _get_gobi_device(){
 		return
 	fi
 
-	if [ "$1" == "1478" ] && [ "$2" == "36902" -o "$2" == "36903" ]; then
+	if [ "$1" == "1478" ] && [ "$2" == "36901" -o "$2" == "36902" -o "$2" == "36903" ]; then
 		echo "1"
 		return
 	fi
@@ -238,13 +247,20 @@ echo "io_devs=$io_devs."
 
 is_gobi=`_get_gobi_device $modem_vid $modem_pid`
 
-if [ "$modem_type" == "tty" ] && [ "$modem_vid" == "6610" -o "$modem_vid" == "1032" ]; then # e.q. ZTE MF637U, ROYAL Q110.
+if [ "$modem_type" == "tty" ] && [ "$modem_vid" == "6610" -o "$modem_vid" == "1032" -o "$modem_vid" == "6797" ]; then
+	# e.q. ZTE MF637U, ROYAL Q110, Bandluxe C120.
 	first_int_dev=`_find_first_int_dev "$io_devs"`
 	echo "first_int_dev=$first_int_dev."
 
 	first_bulk_dev=""
 	echo "first_bulk_dev=$first_bulk_dev."
 elif [ "$usb_gobi2" != "" ] && [ "$is_gobi" == "1" ]; then # TM-AC1900v2
+	first_int_dev=`_find_first_int_dev "$io_devs"`
+	echo "first_int_dev=$first_int_dev."
+
+	first_bulk_dev=""
+	echo "Can't get the bulk node."
+elif [ "$modem_vid" == "4100" -a "$modem_pid" == "25382" ]; then # Docomo L-03D
 	first_int_dev=`_find_first_int_dev "$io_devs"`
 	echo "first_int_dev=$first_int_dev."
 

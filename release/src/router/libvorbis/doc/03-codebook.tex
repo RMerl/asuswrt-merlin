@@ -41,16 +41,16 @@ byte 1: [ 0 1 0 0 0 0 1 1 ] (0x43)
 byte 2: [ 0 1 0 1 0 1 1 0 ] (0x56)
 \end{Verbatim}
 
-16 bit \varname{[codebook_dimensions]} and 24 bit \varname{[codebook_entries]} fields:
+16 bit \varname{[codebook\_dimensions]} and 24 bit \varname{[codebook\_entries]} fields:
 
 \begin{Verbatim}[commandchars=\\\{\}]
 
 byte 3: [ X X X X X X X X ]
-byte 4: [ X X X X X X X X ] [codebook_dimensions] (16 bit unsigned)
+byte 4: [ X X X X X X X X ] [codebook\_dimensions] (16 bit unsigned)
 
 byte 5: [ X X X X X X X X ]
 byte 6: [ X X X X X X X X ]
-byte 7: [ X X X X X X X X ] [codebook_entries] (24 bit unsigned)
+byte 7: [ X X X X X X X X ] [codebook\_entries] (24 bit unsigned)
 
 \end{Verbatim}
 
@@ -63,9 +63,9 @@ byte 8: [               X ] [ordered] (1 bit)
 \end{Verbatim}
 
 Each entry, numbering a
-total of \varname{[codebook_entries]}, is assigned a codeword length.
+total of \varname{[codebook\_entries]}, is assigned a codeword length.
 We now read the list of codeword lengths and store these lengths in
-the array \varname{[codebook_codeword_lengths]}. Decode of lengths is
+the array \varname{[codebook\_codeword\_lengths]}. Decode of lengths is
 according to whether the \varname{[ordered]} flag is set or unset.
 
 \begin{itemize}
@@ -83,7 +83,7 @@ according to whether the \varname{[ordered]} flag is set or unset.
 byte 8: [             X 1 ] [sparse] flag (1 bit)
 \end{Verbatim}
 
-  The decoder now performs for each of the \varname{[codebook_entries]}
+  The decoder now performs for each of the \varname{[codebook\_entries]}
   codebook entries:
 
 \begin{Verbatim}[commandchars=\\\{\}]
@@ -118,16 +118,16 @@ byte 8: [             X 1 ] [sparse] flag (1 bit)
   codewords per length.  That is, beginning at entry zero:
 
 \begin{Verbatim}[commandchars=\\\{\}]
-  1) [current_entry] = 0;
-  2) [current_length] = read a five bit unsigned integer and add 1;
-  3) [number] = read \link{vorbis:spec:ilog}{ilog}([codebook_entries] - [current_entry]) bits as an unsigned integer
-  4) set the entries [current_entry] through [current_entry]+[number]-1, inclusive,
-    of the [codebook_codeword_lengths] array to [current_length]
-  5) set [current_entry] to [number] + [current_entry]
-  6) increment [current_length] by 1
-  7) if [current_entry] is greater than [codebook_entries] ERROR CONDITION;
+  1) [current\_entry] = 0;
+  2) [current\_length] = read a five bit unsigned integer and add 1;
+  3) [number] = read \link{vorbis:spec:ilog}{ilog}([codebook\_entries] - [current\_entry]) bits as an unsigned integer
+  4) set the entries [current\_entry] through [current\_entry]+[number]-1, inclusive,
+    of the [codebook\_codeword\_lengths] array to [current\_length]
+  5) set [current\_entry] to [number] + [current\_entry]
+  6) increment [current\_length] by 1
+  7) if [current\_entry] is greater than [codebook\_entries] ERROR CONDITION;
     the decoder will not be able to read this stream.
-  8) if [current_entry] is less than [codebook_entries], repeat process starting at 3)
+  8) if [current\_entry] is less than [codebook\_entries], repeat process starting at 3)
   9) done.
 \end{Verbatim}
 
@@ -148,10 +148,10 @@ VQ)
 
 The lookup table type is read as a four bit unsigned integer:
 \begin{Verbatim}[commandchars=\\\{\}]
-  1) [codebook_lookup_type] = read four bits as an unsigned integer
+  1) [codebook\_lookup\_type] = read four bits as an unsigned integer
 \end{Verbatim}
 
-Codebook decode precedes according to \varname{[codebook_lookup_type]}:
+Codebook decode precedes according to \varname{[codebook\_lookup\_type]}:
 \begin{itemize}
 \item
 Lookup type zero indicates no lookup to be read.  Proceed past
@@ -160,32 +160,32 @@ lookup decode.
 Lookup types one and two are similar, differing only in the
 number of lookup values to be read.  Lookup type one reads a list of
 values that are permuted in a set pattern to build a list of vectors,
-each vector of order \varname{[codebook_dimensions]} scalars.  Lookup
+each vector of order \varname{[codebook\_dimensions]} scalars.  Lookup
 type two builds the same vector list, but reads each scalar for each
 vector explicitly, rather than building vectors from a smaller list of
 possible scalar values.  Lookup decode proceeds as follows:
 
 \begin{Verbatim}[commandchars=\\\{\}]
-  1) [codebook_minimum_value] = \link{vorbis:spec:float32:unpack}{float32_unpack}( read 32 bits as an unsigned integer)
-  2) [codebook_delta_value] = \link{vorbis:spec:float32:unpack}{float32_unpack}( read 32 bits as an unsigned integer)
-  3) [codebook_value_bits] = read 4 bits as an unsigned integer and add 1
-  4) [codebook_sequence_p] = read 1 bit as a boolean flag
+  1) [codebook\_minimum\_value] = \link{vorbis:spec:float32:unpack}{float32\_unpack}( read 32 bits as an unsigned integer)
+  2) [codebook\_delta\_value] = \link{vorbis:spec:float32:unpack}{float32\_unpack}( read 32 bits as an unsigned integer)
+  3) [codebook\_value\_bits] = read 4 bits as an unsigned integer and add 1
+  4) [codebook\_sequence\_p] = read 1 bit as a boolean flag
 
-  if ( [codebook_lookup_type] is 1 ) \{
+  if ( [codebook\_lookup\_type] is 1 ) \{
 
-     5) [codebook_lookup_values] = \link{vorbis:spec:lookup1:values}{lookup1_values}(\varname{[codebook_entries]}, \varname{[codebook_dimensions]} )
+     5) [codebook\_lookup\_values] = \link{vorbis:spec:lookup1:values}{lookup1\_values}(\varname{[codebook\_entries]}, \varname{[codebook\_dimensions]} )
 
   \} else \{
 
-     6) [codebook_lookup_values] = \varname{[codebook_entries]} * \varname{[codebook_dimensions]}
+     6) [codebook\_lookup\_values] = \varname{[codebook\_entries]} * \varname{[codebook\_dimensions]}
 
   \}
 
-  7) read a total of [codebook_lookup_values] unsigned integers of [codebook_value_bits] each;
-     store these in order in the array [codebook_multiplicands]
+  7) read a total of [codebook\_lookup\_values] unsigned integers of [codebook\_value\_bits] each;
+     store these in order in the array [codebook\_multiplicands]
 \end{Verbatim}
 \item
-A \varname{[codebook_lookup_type]} of greater than two is reserved
+A \varname{[codebook\_lookup\_type]} of greater than two is reserved
 and indicates a stream that is not decodable by the specification in this
 document.
 
@@ -197,8 +197,8 @@ considered an error condition rendering the stream undecodable.
 
 \paragraph{Huffman decision tree representation}
 
-The \varname{[codebook_codeword_lengths]} array and
-\varname{[codebook_entries]} value uniquely define the Huffman decision
+The \varname{[codebook\_codeword\_lengths]} array and
+\varname{[codebook\_entries]} value uniquely define the Huffman decision
 tree used for entropy decoding.
 
 Briefly, each used codebook entry (recall that length-unordered
@@ -266,36 +266,87 @@ eliminated, it's clear that the tree is unfinished:
 Similarly, in the original codebook, it's clear that the tree is fully
 populated and a ninth codeword is impossible.  Both underspecified and
 overspecified trees are an error condition rendering the stream
-undecodable. Take special care that a codebook with a single used
-entry is handled properly; it consists of a single codework of zero
-bits and 'reading' a value out of such a codebook always returns the
-single used value and sinks zero bits.  
+undecodable.
 
 Codebook entries marked 'unused' are simply skipped in the assigning
 process.  They have no codeword and do not appear in the decision
 tree, thus it's impossible for any bit pattern read from the stream to
 decode to that entry number.
 
+\paragraph{Errata 20150226: Single entry codebooks}
 
+A 'single-entry codebook' is a codebook with one active codeword
+entry. A single-entry codebook may be either a fully populated
+codebook with only one declared entry, or a sparse codebook with only
+one entry marked used. The Vorbis I spec provides no means to specify
+a codeword length of zero, and as a result, a single-entry codebook is
+inherently malformed because it is underpopulated.  The original
+specification did not address directly the matter of single-entry
+codebooks; they were implicitly illegal as it was not possible to
+write such a codebook with a valid tree structure.
+
+In r14811 of the libvorbis reference implementation, Xiph added an
+additional check to the codebook implementation to reject
+underpopulated Huffman trees. This change led to the discovery of
+single-entry books used 'in the wild' when the new, stricter checks
+rejected a number of apparently working streams.
+
+In order to minimize breakage of deployed (if technically erroneous)
+streams, r16073 of the reference implementation explicitly
+special-cased single-entry codebooks to tolerate the single-entry
+case.  Commit r16073 also added the following to the specification:
+
+\blockquote{\sout{Take special care that a codebook with a single used
+    entry is handled properly; it consists of a single codework of
+    zero bits and ’reading’ a value out of such a codebook always
+    returns the single used value and sinks zero bits.
+}} 
+
+The intent was to clarify the spec and codify current practice.
+However, this addition is erroneously at odds with the intent of preserving
+usability of existing streams using single-entry codebooks, disagrees
+with the code changes that reinstated decoding, and does not address how
+single-entry codebooks should be encoded.
+
+As such, the above addition made in r16037 is struck from the
+specification and replaced by the following:
+
+\blockquote{It is possible to declare a Vorbis codebook containing a
+  single codework entry.  A single-entry codebook may be either a
+  fully populated codebook with \varname{[codebook\_entries]} set to
+  1, or a sparse codebook marking only one entry used.  Note that it
+  is not possible to also encode a \varname{[codeword\_length]} of
+  zero for the single used codeword, as the unsigned value written to
+  the stream is \varname{[codeword\_length]-1}.  Instead, encoder
+  implementations should indicate a \varname{[codeword\_length]} of 1
+  and 'write' the codeword to a stream during audio encoding by
+  writing a single zero bit.
+
+  Decoder implementations shall reject a codebook if it contains only
+  one used entry and the encoded \varname{[codeword\_length]} of that
+  entry is not 1.  'Reading' a value from single-entry codebook always
+  returns the single used codeword value and sinks one bit.  Decoders
+  should tolerate that the bit read from the stream be '1' instead of
+  '0'; both values shall return the single used codeword.}
 
 \paragraph{VQ lookup table vector representation}
 
 Unpacking the VQ lookup table vectors relies on the following values:
 \begin{programlisting}
-the [codebook_multiplicands] array
-[codebook_minimum_value]
-[codebook_delta_value]
-[codebook_sequence_p]
-[codebook_lookup_type]
-[codebook_entries]
-[codebook_dimensions]
-[codebook_lookup_values]
+the [codebook\_multiplicands] array
+[codebook\_minimum\_value]
+[codebook\_delta\_value]
+[codebook\_sequence\_p]
+[codebook\_lookup\_type]
+[codebook\_entries]
+[codebook\_dimensions]
+[codebook\_lookup\_values]
 \end{programlisting}
 
 \bigskip
 
 Decoding (unpacking) a specific vector in the vector lookup table
-proceeds according to \varname{[codebook_lookup_type]}.  The unpacked
+proceeds according to \varname{[codebook\_lookup\_type]}.  The unpacked
 vector values are what a codebook would return during audio packet
 decode in a VQ context.
 
@@ -304,25 +355,25 @@ decode in a VQ context.
 Lookup type one specifies a lattice VQ lookup table built
 algorithmically from a list of scalar values.  Calculate (unpack) the
 final values of a codebook entry vector from the entries in
-\varname{[codebook_multiplicands]} as follows (\varname{[value_vector]}
+\varname{[codebook\_multiplicands]} as follows (\varname{[value\_vector]}
 is the output vector representing the vector of values for entry number
-\varname{[lookup_offset]} in this codebook):
+\varname{[lookup\_offset]} in this codebook):
 
 \begin{Verbatim}[commandchars=\\\{\}]
   1) [last] = 0;
-  2) [index_divisor] = 1;
-  3) iterate [i] over the range 0 ... [codebook_dimensions]-1 (once for each scalar value in the value vector) \{
+  2) [index\_divisor] = 1;
+  3) iterate [i] over the range 0 ... [codebook\_dimensions]-1 (once for each scalar value in the value vector) \{
 
-       4) [multiplicand_offset] = ( [lookup_offset] divided by [index_divisor] using integer
-          division ) integer modulo [codebook_lookup_values]
+       4) [multiplicand\_offset] = ( [lookup\_offset] divided by [index\_divisor] using integer
+          division ) integer modulo [codebook\_lookup\_values]
 
-       5) vector [value_vector] element [i] =
-            ( [codebook_multiplicands] array element number [multiplicand_offset] ) *
-            [codebook_delta_value] + [codebook_minimum_value] + [last];
+       5) vector [value\_vector] element [i] =
+            ( [codebook\_multiplicands] array element number [multiplicand\_offset] ) *
+            [codebook\_delta\_value] + [codebook\_minimum\_value] + [last];
 
-       6) if ( [codebook_sequence_p] is set ) then set [last] = vector [value_vector] element [i]
+       6) if ( [codebook\_sequence\_p] is set ) then set [last] = vector [value\_vector] element [i]
 
-       7) [index_divisor] = [index_divisor] * [codebook_lookup_values]
+       7) [index\_divisor] = [index\_divisor] * [codebook\_lookup\_values]
 
      \}
 
@@ -334,25 +385,25 @@ is the output vector representing the vector of values for entry number
 \paragraph{Vector value decode: Lookup type 2}
 
 Lookup type two specifies a VQ lookup table in which each scalar in
-each vector is explicitly set by the \varname{[codebook_multiplicands]}
+each vector is explicitly set by the \varname{[codebook\_multiplicands]}
 array in a one-to-one mapping.  Calculate [unpack] the
 final values of a codebook entry vector from the entries in
-\varname{[codebook_multiplicands]} as follows (\varname{[value_vector]}
+\varname{[codebook\_multiplicands]} as follows (\varname{[value\_vector]}
 is the output vector representing the vector of values for entry number
-\varname{[lookup_offset]} in this codebook):
+\varname{[lookup\_offset]} in this codebook):
 
 \begin{Verbatim}[commandchars=\\\{\}]
   1) [last] = 0;
-  2) [multiplicand_offset] = [lookup_offset] * [codebook_dimensions]
-  3) iterate [i] over the range 0 ... [codebook_dimensions]-1 (once for each scalar value in the value vector) \{
+  2) [multiplicand\_offset] = [lookup\_offset] * [codebook\_dimensions]
+  3) iterate [i] over the range 0 ... [codebook\_dimensions]-1 (once for each scalar value in the value vector) \{
 
-       4) vector [value_vector] element [i] =
-            ( [codebook_multiplicands] array element number [multiplicand_offset] ) *
-            [codebook_delta_value] + [codebook_minimum_value] + [last];
+       4) vector [value\_vector] element [i] =
+            ( [codebook\_multiplicands] array element number [multiplicand\_offset] ) *
+            [codebook\_delta\_value] + [codebook\_minimum\_value] + [last];
 
-       5) if ( [codebook_sequence_p] is set ) then set [last] = vector [value_vector] element [i]
+       5) if ( [codebook\_sequence\_p] is set ) then set [last] = vector [value\_vector] element [i]
 
-       6) increment [multiplicand_offset]
+       6) increment [multiplicand\_offset]
 
      \}
 

@@ -40,9 +40,6 @@ char modelname[] = "MiniDLNA";
 char modelnumber[] = "1";
 char presentationurl[] = "http://192.168.0.1:8080/";
 unsigned int updateID = 0;
-#if PNPX
-char pnpx_hwid[] = "VEN_01F2&amp;DEV_0101&amp;REV_01 VEN_0033&amp;DEV_0001&amp;REV_01";
-#endif
 
 int getifaddr(const char * ifname, char * buf, int len)
 {

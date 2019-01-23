@@ -1,11 +1,17 @@
 /* Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
  * \file reasons.c
  * \brief Convert circuit, stream, and orconn error reasons to and/or from
  * strings and errno values.
+ *
+ * This module is just a bunch of functions full of case statements that
+ * convert from one representation of our error codes to another. These are
+ * mainly used in generating log messages, in sending messages to the
+ * controller in control.c, and in converting errors from one protocol layer
+ * to another.
  **/
 
 #include "or.h"

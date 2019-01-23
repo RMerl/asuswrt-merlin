@@ -3,11 +3,10 @@
 dropbear \- lightweight SSH server
 .SH SYNOPSIS
 .B dropbear
-[\-RFEmwsgjki] [\-b
+[\fIflag arguments\fR] [\-b
 .I banner\fR] 
 [\-r
-.I hostkeyfile\fR] [\-p
-.IR [address:]port ]
+.I hostkeyfile\fR] [\-p [\fIaddress\fR:]\fIport\fR]
 .SH DESCRIPTION
 .B dropbear
 is a small SSH server 
@@ -54,7 +53,7 @@ Disable local port forwarding.
 .B \-k
 Disable remote port forwarding.
 .TP
-.B \-p \fI[address:]port
+.B \-p\fR [\fIaddress\fR:]\fIport
 Listen on specified 
 .I address
 and TCP
@@ -100,7 +99,8 @@ Print the version
 .TP
 Authorized Keys
 
-~/.ssh/authorized_keys can be set up to allow remote login with a RSA or DSS
+~/.ssh/authorized_keys can be set up to allow remote login with a RSA,
+ECDSA, or DSS
 key. Each line is of the form
 .TP
 [restrictions] ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIgAsp... [comment]
@@ -127,7 +127,7 @@ Disable PTY allocation. Note that a user can still obtain most of the
 same functionality with other means even if no-pty is set.
 
 .TP
-.B command="\fIforced_command\fR"
+.B command=\fR"\fIforced_command\fR"
 Disregard the command provided by the user and always run \fIforced_command\fR.
 
 The authorized_keys file and its containing ~/.ssh directory must only be
@@ -139,7 +139,7 @@ Host Key Files
 
 Host key files are read at startup from a standard location, by default
 /etc/dropbear/dropbear_dss_host_key, /etc/dropbear/dropbear_rsa_host_key, and 
-/etc/dropbear/dropbear-ecdsa_host_key
+/etc/dropbear/dropbear_ecdsa_host_key
 or specified on the commandline with -r. These are of the form generated
 by dropbearkey. The -R option can be used to automatically generate keys
 in the default location - keys will be generated after startup when the first

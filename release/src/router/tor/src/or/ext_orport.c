@@ -1,10 +1,20 @@
-/* Copyright (c) 2012-2015, The Tor Project, Inc. */
+/* Copyright (c) 2012-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
  * \file ext_orport.c
  * \brief Code implementing the Extended ORPort.
-*/
+ *
+ * The Extended ORPort interface is used by pluggable transports to
+ * communicate additional information to a Tor bridge, including
+ * address information. For more information on this interface,
+ * see pt-spec.txt in torspec.git.
+ *
+ * There is no separate structure for extended ORPort connections; they use
+ * or_connection_t objects, and share most of their implementation with
+ * connection_or.c.  Once the handshake is done, an extended ORPort connection
+ * turns into a regular OR connection, using connection_ext_or_transition().
+ */
 
 #define EXT_ORPORT_PRIVATE
 #include "or.h"
@@ -41,12 +51,7 @@ ext_or_cmd_free(ext_or_cmd_t *cmd)
 static int
 connection_fetch_ext_or_cmd_from_buf(connection_t *conn, ext_or_cmd_t **out)
 {
-  IF_HAS_BUFFEREVENT(conn, {
-    struct evbuffer *input = bufferevent_get_input(conn->bufev);
-    return fetch_ext_or_command_from_evbuffer(input, out);
-  }) ELSE_IF_NO_BUFFEREVENT {
-    return fetch_ext_or_command_from_buf(conn->inbuf, out);
-  }
+  return fetch_ext_or_command_from_buf(conn->inbuf, out);
 }
 
 /** Write an Extended ORPort message to <b>conn</b>. Use
@@ -151,7 +156,7 @@ init_ext_or_cookie_authentication(int is_enabled)
 }
 
 /** Read data from <b>conn</b> and see if the client sent us the
- *  authentication type that she prefers to use in this session.
+ *  authentication type that they prefer to use in this session.
  *
  *  Return -1 if we received corrupted data or if we don't support the
  *  authentication type. Return 0 if we need more data in
@@ -178,7 +183,7 @@ connection_ext_or_auth_neg_auth_type(connection_t *conn)
   return 1;
 }
 
-/** DOCDOC */
+/* DOCDOC */
 STATIC int
 handle_client_auth_nonce(const char *client_nonce, size_t client_nonce_len,
                          char **client_hash_out,
@@ -193,8 +198,7 @@ handle_client_auth_nonce(const char *client_nonce, size_t client_nonce_len,
     return -1;
 
   /* Get our nonce */
-  if (crypto_rand(server_nonce, EXT_OR_PORT_AUTH_NONCE_LEN) < 0)
-    return -1;
+  crypto_rand(server_nonce, EXT_OR_PORT_AUTH_NONCE_LEN);
 
   { /* set up macs */
     size_t hmac_s_msg_len = strlen(EXT_OR_PORT_AUTH_SERVER_TO_CLIENT_CONST) +
@@ -462,8 +466,8 @@ connection_ext_or_handle_cmd_useraddr(connection_t *conn,
     return -1;
 
   { /* do some logging */
-    char *old_address = tor_dup_addr(&conn->addr);
-    char *new_address = tor_dup_addr(&addr);
+    char *old_address = tor_addr_to_str_dup(&conn->addr);
+    char *new_address = tor_addr_to_str_dup(&addr);
 
     log_debug(LD_NET, "Received USERADDR."
              "We rewrite our address from '%s:%u' to '%s:%u'.",
@@ -479,7 +483,7 @@ connection_ext_or_handle_cmd_useraddr(connection_t *conn,
   if (conn->address) {
     tor_free(conn->address);
   }
-  conn->address = tor_dup_addr(&addr);
+  conn->address = tor_addr_to_str_dup(&addr);
 
   return 0;
 }

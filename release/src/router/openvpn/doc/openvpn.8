@@ -4,7 +4,7 @@
 .\"             packet encryption, packet authentication, and
 .\"             packet compression.
 .\"
-.\"  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
+.\"  Copyright (C) 2002-2017 OpenVPN Technologies, Inc. <sales@openvpn.net>
 .\"
 .\"  This program is free software; you can redistribute it and/or modify
 .\"  it under the terms of the GNU General Public License version 2
@@ -15,29 +15,28 @@
 .\"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 .\"  GNU General Public License for more details.
 .\"
-.\"  You should have received a copy of the GNU General Public License
-.\"  along with this program (see the file COPYING included with this
-.\"  distribution); if not, write to the Free Software Foundation, Inc.,
-.\"  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+.\"  You should have received a copy of the GNU General Public License along
+.\"  with this program; if not, write to the Free Software Foundation, Inc.,
+.\"  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 .\"
 .\" Manual page for openvpn
-.\
+.\"
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
 .\" IP indented paragraph
 .\" TP hanging label
-.\
+.\"
 .\" .nf -- no formatting
 .\" .fi -- resume formatting
 .\" .ft 3 -- boldface
 .\" .ft -- normal face
 .\" .in +|-{n} -- indent
 .\"
-.TH openvpn 8 "17 November 2008"
+.TH openvpn 8 "25 August 2016"
 .\"*********************************************************
 .SH NAME
-openvpn - secure IP tunnel daemon.
+openvpn \- secure IP tunnel daemon.
 .\"*********************************************************
 .SH SYNOPSIS
 .ft 3
@@ -221,6 +220,9 @@ options.
 indicates the protocol to use when connecting with the
 remote, and may be "tcp" or "udp".
 
+For forcing IPv4 or IPv6 connection suffix tcp or udp
+with 4/6 like udp4/udp6/tcp4/tcp6.
+
 The client will move on to the next host in the list,
 in the event of connection failure.
 Note that at any given time, the OpenVPN client
@@ -265,9 +267,11 @@ not match
 If
 .B host
 is a DNS name which resolves to multiple IP addresses,
-the first address returned by the system getaddrinfo() function
-will be used (no DNS randomization inside OpenVPN 2.3.x, and
-it will not try multiple addresses).
+OpenVPN will try them in the order that the system getaddrinfo()
+presents them, so priorization and DNS randomization is done
+by the system library.  Unless an IP version is forced by the
+protocol specification (4/6 suffix), OpenVPN will try both IPv4
+and IPv6 addresses, in the order getaddrinfo() returns them.
 .\"*********************************************************
 .TP
 .B \-\-remote\-random\-hostname
@@ -311,20 +315,18 @@ remote 198.19.34.56 443 tcp
 
 <connection>
 remote 198.19.34.56 443 tcp
-http-proxy 192.168.0.8 8080
-http-proxy-retry
+http\-proxy 192.168.0.8 8080
 </connection>
 
 <connection>
 remote 198.19.36.99 443 tcp
-http-proxy 192.168.0.8 8080
-http-proxy-retry
+http\-proxy 192.168.0.8 8080
 </connection>
 
-persist-key
-persist-tun
+persist\-key
+persist\-tun
 pkcs12 client.p12
-ns-cert-type server
+remote\-cert\-tls server
 verb 3
 .in -4
 .ft
@@ -343,30 +345,27 @@ a
 block:
 
 .B bind,
-.B connect-retry,
-.B connect-retry-max,
-.B connect-timeout,
-.B explicit-exit-notify,
+.B connect\-retry,
+.B connect\-retry\-max,
+.B connect\-timeout,
+.B explicit\-exit\-notify,
 .B float,
 .B fragment,
-.B http-proxy,
-.B http-proxy-option,
-.B http-proxy-retry,
-.B http-proxy-timeout,
-.B link-mtu,
+.B http\-proxy,
+.B http\-proxy\-option,
+.B link\-mtu,
 .B local,
 .B lport,
 .B mssfix,
-.B mtu-disc,
+.B mtu\-disc,
 .B nobind,
 .B port,
 .B proto,
 .B remote,
 .B rport,
-.B socks-proxy,
-.B socks-proxy-retry,
-.B tun-mtu and
-.B tun-mtu-extra.
+.B socks\-proxy,
+.B tun\-mtu and
+.B tun\-mtu\-extra.
 
 A defaulting mechanism exists for specifying options to apply to
 all
@@ -415,9 +414,9 @@ for communicating with remote host.
 .B p
 can be
 .B udp,
-.B tcp-client,
+.B tcp\-client,
 or
-.B tcp-server.
+.B tcp\-server.
 
 The default protocol is
 .B udp
@@ -434,7 +433,7 @@ For TCP operation, one peer must use
 and the other must use
 .B \-\-proto tcp\-client.
 A peer started with
-.B tcp-server
+.B tcp\-server
 will wait indefinitely for an incoming connection.  A peer
 started with
 .B tcp\-client
@@ -462,31 +461,27 @@ application-level UDP protocols, or tunneling protocols which don't
 possess a built-in reliability layer.
 .\"*********************************************************
 .TP
-.B \-\-connect\-retry n
-For
-.B \-\-proto tcp\-client,
-take
+.B \-\-connect\-retry n [max]
+Wait
 .B n
-as the
-number of seconds to wait
-between connection retries (default=5).
-.\"*********************************************************
-.TP
-.B \-\-connect\-timeout n
-For
-.B \-\-proto tcp\-client,
-set connection timeout to
-.B n
-seconds (default=10).
+seconds  between connection attempts (default=5). Repeated reconnection
+attempts are slowed down after 5 retries per remote by doubling the wait
+time after each unsuccessful attempt. The optional argument
+.B max
+specifies the maximum value of wait time in seconds at which it gets
+capped (default=300).
 .\"*********************************************************
 .TP
 .B \-\-connect\-retry\-max n
-For
-.B \-\-proto tcp\-client,
-take
 .B n
-as the
-number of retries of connection attempt (default=infinite).
+specifies the number of times each
+.B \-\-remote
+or
+.B <connection>
+entry is tried. Specifying
+.B n
+as one would try each entry exactly once. A successful connection
+resets the counter. (default=unlimited).
 .\"*********************************************************
 .TP
 .B \-\-show\-proxy\-settings
@@ -502,9 +497,12 @@ and port
 If HTTP Proxy-Authenticate is required,
 .B authfile
 is a file containing a username and password on 2 lines, or
-"stdin" to prompt from console.
+"stdin" to prompt from console. Its content can also be specified
+in the config file with the
+.B \-\-http\-proxy\-user\-pass
+option. (See section on inline files)
 
-.B auth-method
+.B auth\-method
 should be one of "none", "basic", or "ntlm".
 
 HTTP Digest authentication is supported as well, but only via
@@ -517,7 +515,7 @@ flags (below).
 The
 .B auto
 flag causes OpenVPN to automatically determine the
-.B auth-method
+.B auth\-method
 and query stdin or the management interface for
 username/password credentials, if required.  This flag
 exists on OpenVPN 2.1 or higher.
@@ -527,17 +525,6 @@ The
 flag (no clear-text auth) instructs OpenVPN to automatically
 determine the authentication method, but to reject weak
 authentication protocols such as HTTP Basic Authentication.
-.\"*********************************************************
-.TP
-.B \-\-http\-proxy\-retry
-Retry indefinitely on HTTP proxy errors.  If an HTTP proxy error
-occurs, simulate a SIGUSR1 reset.
-.\"*********************************************************
-.TP
-.B \-\-http\-proxy\-timeout n
-Set proxy timeout to
-.B n
-seconds, default=5.
 .\"*********************************************************
 .TP
 .B \-\-http\-proxy\-option type [parm]
@@ -552,6 +539,13 @@ Set HTTP version number to
 .B AGENT user-agent --
 Set HTTP "User-Agent" string to
 .B user-agent.
+
+.B CUSTOM\-HEADER name content --
+Adds the custom Header with
+.B name
+as name and
+.B content
+as the content of the custom HTTP header.
 .\"*********************************************************
 .TP
 .B \-\-socks\-proxy server [port] [authfile]
@@ -563,11 +557,6 @@ and port
 .B authfile
 (optional) is a file containing a username and password on 2 lines, or
 "stdin" to prompt from console.
-.\"*********************************************************
-.TP
-.B \-\-socks\-proxy\-retry
-Retry indefinitely on Socks proxy errors.  If a Socks proxy error
-occurs, simulate a SIGUSR1 reset.
 .\"*********************************************************
 .TP
 .B \-\-resolv\-retry n
@@ -582,7 +571,7 @@ Set
 to "infinite" to retry indefinitely.
 
 By default,
-.B \-\-resolv-retry infinite
+.B \-\-resolv\-retry infinite
 is enabled.  You can disable by setting n=0.
 .\"*********************************************************
 .TP
@@ -685,7 +674,7 @@ option. The port can also be set directly using the
 option.
 .\"*********************************************************
 .TP
-.B \-\-bind
+.B \-\-bind [ipv6only]
 Bind to local address and port. This is the default unless any of 
 .B \-\-proto tcp\-client
 ,
@@ -693,6 +682,12 @@ Bind to local address and port. This is the default unless any of
 or
 .B \-\-socks\-proxy
 are used.
+
+If the
+.B ipv6only
+keyword is present OpenVPN will bind only to IPv6 (as oposed
+to IPv6 and IPv4) when a IPv6 socket is opened.
+
 .\"*********************************************************
 .TP
 .B \-\-nobind
@@ -760,13 +755,13 @@ directive, this directive must always be compatible between client and server.
 .B mode
 can be one of:
 
-.B net30 --
+.B net30 \-\-
 Use a point-to-point topology, by allocating one /30 subnet per client.
 This is designed to allow point-to-point semantics when some
 or all of the connecting clients might be Windows systems.  This is the
 default on OpenVPN 2.0.
 
-.B p2p --
+.B p2p \-\-
 Use a point-to-point topology where the remote endpoint of the client's
 tun interface always points to the local endpoint of the server's tun interface.
 This mode allocates a single IP address per connecting client.
@@ -776,7 +771,7 @@ is functionally equivalent to the
 .B \-\-ifconfig\-pool\-linear
 directive which is available in OpenVPN 2.0 and is now deprecated.
 
-.B subnet --
+.B subnet \-\-
 Use a subnet rather than a point-to-point topology by
 configuring the tun interface with a local IP address and subnet mask,
 similar to the topology used in
@@ -799,18 +794,6 @@ Note: Using
 changes the interpretation of the arguments of
 .B \-\-ifconfig
 to mean "address netmask", no longer "local remote".
-.\"*********************************************************
-.TP
-.B \-\-tun\-ipv6
-Build a tun link capable of forwarding IPv6 traffic.
-Should be used in conjunction with
-.B \-\-dev tun
-or
-.B \-\-dev tunX.
-A warning will be displayed
-if no specific IPv6 TUN support for your OS has been compiled into OpenVPN.
-
-See below for further IPv6-related configuration options.
 .\"*********************************************************
 .TP
 .B \-\-dev\-node node
@@ -892,7 +875,7 @@ you will be pinging across the VPN.
 For TAP devices, which provide
 the ability to create virtual
 ethernet segments, or TUN devices in
-.B \-\-topology subnet
+.B --topology subnet
 mode (which create virtual "multipoint networks"),
 .B \-\-ifconfig
 is used to set an IP address and
@@ -984,7 +967,7 @@ when
 is specified.
 
 .B metric
-default \-\- taken from
+default -- taken from
 .B \-\-route\-metric
 otherwise 0.
 
@@ -1017,13 +1000,6 @@ table (not supported on all OSes).
 -- The
 .B \-\-remote
 address if OpenVPN is being run in client mode, and is undefined in server mode.
-.\"*********************************************************
-.TP
-.B \-\-max\-routes n
-Allow a maximum number of n
-.B \-\-route
-options to be specified, either in the local configuration file,
-or pulled from an OpenVPN server.  By default, n=100.
 .\"*********************************************************
 .TP
 .B \-\-route\-gateway gw|'dhcp'
@@ -1193,7 +1169,7 @@ that the original default route is restored.
 
 Option flags:
 
-.B local --
+.B local \-\-
 Add the
 .B local
 flag if both OpenVPN servers are directly connected via a common subnet,
@@ -1203,7 +1179,7 @@ flag will cause step
 .B 1
 above to be omitted.
 
-.B autolocal --
+.B autolocal \-\-
 Try to automatically determine whether to enable
 .B local
 flag above.
@@ -1230,6 +1206,17 @@ on non-Windows clients).
 Block access to local LAN when the tunnel is active, except for
 the LAN gateway itself.  This is accomplished by routing the local
 LAN (except for the LAN gateway address) into the tunnel.
+
+.B ipv6 --
+Redirect IPv6 routing into the tunnel.  This works similar to the
+.B def1
+flag, that is, more specific IPv6 routes are added (2000::/4, 3000::/4),
+covering the whole IPv6 unicast space.
+
+.B !ipv4 --
+Do not redirect IPv4 traffic - typically used in the flag pair
+.B "ipv6 !ipv4"
+to redirect IPv6-only.
 .\"*********************************************************
 .TP
 .B \-\-link\-mtu n
@@ -1626,16 +1613,25 @@ and
 are mutually exclusive and cannot be used together.
 .\"*********************************************************
 .TP
-.B \-\-keepalive n m
+.B \-\-keepalive interval timeout
 A helper directive designed to simplify the expression of
 .B \-\-ping
 and
-.B \-\-ping\-restart
-in server mode configurations.
+.B \-\-ping\-restart.
 
-The server timeout is set twice the value of the second argument.
-This ensures that a timeout is detected on client side
-before the server side drops the connection.
+This option can be used on both client and server side, but it is
+in enough to add this on the server side as it will push appropriate
+.B \-\-ping
+and
+.B \-\-ping\-restart
+options to the client.  If used on both server and client,
+the values pushed from server will override the client local values.
+
+The
+.B timeout
+argument will be twice as long on the server side.  This ensures that
+a timeout is detected on client side before the server side drops
+the connection.
 
 For example,
 .B \-\-keepalive 10 60
@@ -1645,13 +1641,13 @@ expands as follows:
 .ft 3
 .in +4
  if mode server:
-   ping 10
-   ping-restart 120
-   push "ping 10"
-   push "ping-restart 60"
+   ping 10                    # Argument: interval
+   ping\-restart 120           # Argument: timeout*2
+   push "ping 10"             # Argument: interval
+   push "ping\-restart 60"     # Argument: timeout
  else
-   ping 10
-   ping-restart 60
+   ping 10                    # Argument: interval
+   ping\-restart 60            # Argument: timeout
 .in -4
 .ft
 .fi
@@ -1979,16 +1975,16 @@ and scripts.  Lower
 values are more restrictive, higher values are more permissive.  Settings for
 .B level:
 
-.B 0 --
+.B 0 \-\-
 Strictly no calling of external programs.
 .br
-.B 1 --
+.B 1 \-\-
 (Default) Only call built-in executables such as ifconfig, ip, route, or netsh.
 .br
-.B 2 --
+.B 2 \-\-
 Allow calling of built-in executables and user-defined scripts.
 .br
-.B 3 --
+.B 3 \-\-
 Allow passwords to be passed to scripts via environmental variables (potentially unsafe).
 
 OpenVPN releases before v2.3 also supported a
@@ -2320,6 +2316,12 @@ otherwise would be prepended. In particular, this applies to
 log messages sent to stdout.
 .\"*********************************************************
 .TP
+.B \-\-machine\-readable\-output
+Always write timestamps and message flags to log messages, even when they
+otherwise would not be prefixed. In particular, this applies to
+log messages sent to stdout.
+.\"*********************************************************
+.TP
 .B \-\-writepid file
 Write OpenVPN's main process ID to
 .B file.
@@ -2420,13 +2422,13 @@ Set output verbosity to
 Level 3 is recommended if you want a good summary
 of what's happening without being swamped by output.
 
-.B 0 --
+.B 0 \-\-
 No output except fatal errors.
 .br
-.B 1 to 4 --
+.B 1 to 4 \-\-
 Normal usage range.
 .br
-.B 5 --
+.B 5 \-\-
 Output
 .B R
 and
@@ -2434,7 +2436,7 @@ and
 characters to the console for each packet read and write, uppercase is
 used for TCP/UDP packets and lowercase is used for TUN/TAP packets.
 .br
-.B 6 to 11 --
+.B 6 to 11 \-\-
 Debug info range (see errlevel.h for additional
 information on debug levels).
 .\"*********************************************************
@@ -2464,11 +2466,33 @@ consecutive messages in the same category.  This is useful to
 limit repetitive logging of similar message types.
 .\"*********************************************************
 .TP
+.B \-\-compress [algorithm]
+Enable a compression algorithm.
+
+The
+.B algorithm
+parameter may be "lzo", "lz4", or empty.  LZO and LZ4
+are different compression algorithms, with LZ4 generally
+offering the best performance with least CPU usage.
+For backwards compatibility with OpenVPN versions before 2.4, use "lzo"
+(which is identical to the older option "\-\-comp\-lzo yes").
+
+If the
+.B algorithm
+parameter is empty, compression will be turned off, but the packet
+framing for compression will still be enabled, allowing a different
+setting to be pushed later.
+.\"*********************************************************
+.TP
 .B \-\-comp\-lzo [mode]
-Use fast LZO compression -- may add up to 1 byte per
+Use LZO compression -- may add up to 1 byte per
 packet for incompressible data.
 .B mode
 may be "yes", "no", or "adaptive" (default).
+
+This option is deprecated in favor of the newer
+.B --compress
+option.
 
 In a server mode setup, it is possible to selectively turn
 compression on or off for individual clients.
@@ -2491,14 +2515,14 @@ for example:
 .nf
 .ft 3
 .in +4
-comp-lzo yes
+comp\-lzo yes
 push "comp\-lzo yes"
 .in -4
 .ft
 .fi
 
 The first line sets the
-.B comp-lzo
+.B comp\-lzo
 setting for the server
 side of the link, the second sets the client side.
 .\"*********************************************************
@@ -2558,7 +2582,7 @@ to the port, using a telnet client in "raw" mode.  Once connected,
 type "help" for a list of commands.
 
 For detailed documentation on the management interface, see
-the management-notes.txt file in the
+the management\-notes.txt file in the
 .B management
 folder of
 the OpenVPN source distribution.
@@ -2599,10 +2623,21 @@ Allow management interface to override
 .B \-\-remote
 directives (client-only).
 .\"*********************************************************
+.TP
 .B \-\-management\-external\-key
 Allows usage for external private key file instead of
 .B \-\-key
 option (client-only).
+.\"*********************************************************
+.TP
+.B \-\-management\-external\-cert certificate-hint
+Allows usage for external certificate instead of
+.B \-\-cert
+option (client-only).
+.B certificate-hint
+is an arbitrary string which is passed to a management
+interface client as an argument of NEED-CERTIFICATE notification.
+Requires \-\-management\-external\-key.
 .\"*********************************************************
 .TP
 .B \-\-management\-forget\-disconnect
@@ -2650,7 +2685,7 @@ distribution for detailed notes.
 .TP
 .B \-\-management\-client\-pf
 Management interface clients must specify a packet
-filter file for each connecting client.  See management-notes.txt
+filter file for each connecting client.  See management\-notes.txt
 in OpenVPN distribution for detailed notes.
 .\"*********************************************************
 .TP
@@ -2676,6 +2711,34 @@ to the module initialization function.  Multiple
 plugin modules may be loaded into one OpenVPN
 process.
 
+The
+.B module-pathname
+argument can be just a filename or a filename with a relative
+or absolute path.  The format of the filename and path defines
+if the plug-in will be loaded from a default plug-in directory
+or outside this directory.
+
+.nf
+.ft 3
+.in +4
+.B \-\-plugin path\ \ \ \ \ \ \ \ Effective directory used
+====================================================
+ myplug.so            DEFAULT_DIR/myplug.so
+ subdir/myplug.so     DEFAULT_DIR/subdir/myplug.so
+ ./subdir/myplug.so   CWD/subdir/myplug.so
+ /usr/lib/my/plug.so  /usr/lib/my/plug.so
+.in -4
+.fi
+
+DEFAULT_DIR is replaced by the default plug-in directory,
+which is configured at the build time of OpenVPN.  CWD is the
+current directory where OpenVPN was started or the directory
+OpenVPN have swithed into via the
+.B \-\-cd
+option before the
+.B \-\-plugin
+option.
+
 For more information and examples on how to build OpenVPN
 plug-in modules, see the README file in the
 .B plugin
@@ -2694,10 +2757,22 @@ OpenVPN in the order that they are declared in the config
 file.  If both a plugin and script are configured for the same
 callback, the script will be called last.  If the
 return code of the module/script controls an authentication
-function (such as tls-verify, auth-user-pass-verify, or
-client-connect), then
+function (such as tls\-verify, auth\-user\-pass\-verify, or
+client\-connect), then
 every module and script must return success (0) in order for
 the connection to be authenticated.
+.\"*********************************************************
+.TP
+.B \-\-keying-material-exporter label len
+Save Exported Keying Material [RFC5705] of len bytes (must be
+between 16 and 4095 bytes) using label in environment
+(exported_keying_material) for use by plugins in
+OPENVPN_PLUGIN_TLS_FINAL callback.
+
+Note that exporter labels have the potential to collide with existing PRF
+labels. In order to prevent this, labels MUST begin with "EXPORTER".
+
+This option requires OpenSSL 1.0.1 or newer.
 .\"*********************************************************
 .SS Server Mode
 Starting with OpenVPN 2.0, a multi-client TCP/UDP server mode
@@ -2729,15 +2804,15 @@ expands as follows:
 .ft 3
 .in +4
  mode server
- tls-server
+ tls\-server
  push "topology [topology]"
 
  if dev tun AND (topology == net30 OR topology == p2p):
    ifconfig 10.8.0.1 10.8.0.2
    if !nopool:
-     ifconfig-pool 10.8.0.4 10.8.0.251
+     ifconfig\-pool 10.8.0.4 10.8.0.251
    route 10.8.0.0 255.255.255.0
-   if client-to-client:
+   if client\-to\-client:
      push "route 10.8.0.0 255.255.255.0"
    else if topology == net30:
      push "route 10.8.0.1"
@@ -2745,10 +2820,10 @@ expands as follows:
  if dev tap OR (dev tun AND topology == subnet):
    ifconfig 10.8.0.1 255.255.255.0
    if !nopool:
-     ifconfig-pool 10.8.0.2 10.8.0.254 255.255.255.0
-   push "route-gateway 10.8.0.1"
-   if route-gateway unset:
-     route-gateway 10.8.0.2
+     ifconfig\-pool 10.8.0.2 10.8.0.253 255.255.255.0
+   push "route\-gateway 10.8.0.1"
+   if route\-gateway unset:
+     route\-gateway 10.8.0.2
 
 .in -4
 .ft
@@ -2815,17 +2890,17 @@ for OpenVPN to allocate to connecting
 clients.
 
 For example,
-.B server-bridge 10.8.0.4 255.255.255.0 10.8.0.128 10.8.0.254
+.B server\-bridge 10.8.0.4 255.255.255.0 10.8.0.128 10.8.0.254
 expands as follows:
 
 .nf
 .ft 3
 .in +4
 mode server
-tls-server
+tls\-server
 
-ifconfig-pool 10.8.0.128 10.8.0.254 255.255.255.0
-push "route-gateway 10.8.0.4"
+ifconfig\-pool 10.8.0.128 10.8.0.254 255.255.255.0
+push "route\-gateway 10.8.0.4"
 .in -4
 .ft
 .fi
@@ -2838,9 +2913,9 @@ In another example,
 .ft 3
 .in +4
 mode server
-tls-server
+tls\-server
 
-push "route-gateway dhcp"
+push "route\-gateway dhcp"
 .in -4
 .ft
 .fi
@@ -2853,7 +2928,7 @@ expands as follows:
 .ft 3
 .in +4
 mode server
-tls-server
+tls\-server
 .in -4
 .ft
 .fi
@@ -2880,6 +2955,7 @@ This is a partial list of options which can currently be pushed:
 .B \-\-ip\-win32, \-\-dhcp\-option,
 .B \-\-inactive, \-\-ping, \-\-ping\-exit, \-\-ping\-restart,
 .B \-\-setenv,
+.B \-\-auth\-token,
 .B \-\-persist\-key, \-\-persist\-tun, \-\-echo,
 .B \-\-comp\-lzo,
 .B \-\-socket\-flags,
@@ -2894,18 +2970,72 @@ as with a
 configuration file.  This option will ignore
 .B \-\-push
 options at the global config file level.
+.\"*********************************************************
+.TP
+.B \-\-push\-remove opt
+selectively remove all
+.B \-\-push
+options matching "opt" from the option list for a client.  "opt" is matched
+as a substring against the whole option string to-be-pushed to the client, so
+.B \-\-push\-remove route
+would remove all
+.B \-\-push route ...
+and
+.B \-\-push route-ipv6 ...
+statements, while
+.B \-\-push\-remove 'route-ipv6 2001:'
+would only remove IPv6 routes for 2001:... networks.
+
+.B \-\-push\-remove
+can only be used in a client-specific context, like in a
+.B \-\-client\-config\-dir
+file, or
+.B \-\-client\-connect
+script or plugin -- similar to
+.B \-\-push\-reset,
+just more selective.
+
+NOTE: to
+.I change
+an option,
+.B \-\-push\-remove
+can be used to first remove the old value, and then add a new
+.B \-\-push
+option with the new value.
+.\"*********************************************************
 .TP
 .B \-\-push\-peer\-info
-Push additional information about the client to server.  The additional information
-consists of the following data:
+Push additional information about the client to server.
+The following data is always pushed to the server:
 
 IV_VER=<version> -- the client OpenVPN version
 
 IV_PLAT=[linux|solaris|openbsd|mac|netbsd|freebsd|win] -- the client OS platform
 
+IV_LZO_STUB=1 -- if client was built with LZO stub capability
+
+IV_LZ4=1 -- if the client supports LZ4 compressions.
+
+IV_PROTO=2 -- if the client supports peer-id floating mechansim
+
+IV_NCP=2 -- negotiable ciphers, client supports
+.B \-\-cipher
+pushed by the server, a value of 2 or greater indicates client
+supports AES-GCM-128 and AES-GCM-256.
+
+IV_UI_VER=<gui_id> <version> -- the UI version of a UI if one is
+running, for example "de.blinkt.openvpn 0.5.47" for the
+Android app.
+
+When
+.B \-\-push\-peer\-info
+is enabled the additional information consists of the following data:
+
 IV_HWADDR=<mac address> -- the MAC address of clients default gateway
 
-IV_LZO_STUB=1 -- if client was built with LZO stub capability
+IV_SSL=<version string> -- the ssl version used by the client, e.g. "OpenSSL 1.0.2f 28 Jan 2016".
+
+IV_PLAT_VER=x.y - the version of the operating system, e.g. 6.1 for Windows 7.
 
 UV_<name>=<value> -- client environment variables whose names start with "UV_"
 .\"*********************************************************
@@ -2941,7 +3071,7 @@ parameter will also be pushed to clients.
 .\"*********************************************************
 .TP
 .B \-\-ifconfig\-pool\-persist file [seconds]
-Persist/unpersist ifconfig-pool
+Persist/unpersist ifconfig\-pool
 data to
 .B file,
 at
@@ -2992,14 +3122,14 @@ This option is deprecated, and should be replaced with
 which is functionally equivalent.
 .\"*********************************************************
 .TP
-.B \-\-ifconfig\-push local remote-netmask [alias]
+.B \-\-ifconfig\-push local remote\-netmask [alias]
 Push virtual IP endpoints for client tunnel,
 overriding the \-\-ifconfig\-pool dynamic allocation.
 
 The parameters
 .B local
 and
-.B remote-netmask
+.B remote\-netmask
 are set according to the
 .B \-\-ifconfig
 directive which you want to execute on the client machine to
@@ -3015,9 +3145,9 @@ The optional
 .B alias
 parameter may be used in cases where NAT causes the client view
 of its local endpoint to differ from the server view.  In this case
-.B local/remote-netmask
+.B local/remote\-netmask
 will refer to the server view while
-.B alias/remote-netmask
+.B alias/remote\-netmask
 will refer to the client view.
 
 This option must be associated with a specific client instance,
@@ -3218,7 +3348,7 @@ without needing to restart the server.
 
 The following
 options are legal in a client-specific context:
-.B \-\-push, \-\-push\-reset, \-\-iroute, \-\-ifconfig\-push,
+.B \-\-push, \-\-push\-reset, \-\-push\-remove, \-\-iroute, \-\-ifconfig\-push,
 and
 .B \-\-config.
 .\"*********************************************************
@@ -3298,8 +3428,8 @@ The macro expands as follows:
 .ft 3
 .in +4
  if mode server:
-   socket-flags TCP_NODELAY
-   push "socket-flags TCP_NODELAY"
+   socket\-flags TCP_NODELAY
+   push "socket\-flags TCP_NODELAY"
 .in -4
 .ft
 .fi
@@ -3365,8 +3495,10 @@ DoS scenario, legitimate connections might also be refused.
 For the best protection against DoS attacks in server mode,
 use
 .B \-\-proto udp
-and
-.B \-\-tls\-auth.
+and either
+.B \-\-tls\-auth
+or
+.B \-\-tls\-crypt\fR.
 .\"*********************************************************
 .TP
 .B \-\-learn\-address cmd
@@ -3383,19 +3515,19 @@ Three arguments will be appended to any arguments in
 .B cmd
 as follows:
 
-.B [1] operation --
+.B [1] operation \-\-
 "add", "update", or "delete" based on whether or not
 the address is being added to, modified, or deleted from
 OpenVPN's internal routing table.
 .br
-.B [2] address --
+.B [2] address \-\-
 The address being learned or unlearned.  This can be
 an IPv4 address such as "198.162.10.14", an IPv4 subnet
 such as "198.162.10.0/24", or an ethernet MAC address (when
 .B \-\-dev tap
 is being used) such as "00:FF:01:02:03:04".
 .br
-.B [3] common name --
+.B [3] common name \-\-
 The common name on the certificate associated with the
 client linked to this address.  Only present for "add"
 or "update" operations, not "delete".
@@ -3431,7 +3563,7 @@ and/or escaped using a backslash, and should be separated by one or more spaces.
 
 If
 .B method
-is set to "via-env", OpenVPN will call
+is set to "via\-env", OpenVPN will call
 .B script
 with the environmental variables
 .B username
@@ -3444,7 +3576,7 @@ unprivileged processes.
 
 If
 .B method
-is set to "via-file", OpenVPN will write the username and
+is set to "via\-file", OpenVPN will write the username and
 password to the first two lines of a temporary file.  The filename
 will be passed as an argument to
 .B script,
@@ -3482,8 +3614,30 @@ strings are handled.  Never use these strings in such a way
 that they might be escaped or evaluated by a shell interpreter.
 
 For a sample script that performs PAM authentication, see
-.B sample-scripts/auth-pam.pl
+.B sample\-scripts/auth\-pam.pl
 in the OpenVPN source distribution.
+.\"*********************************************************
+.TP
+.B \-\-auth\-gen\-token [lifetime]
+After successful user/password authentication, the OpenVPN
+server will with this option generate a temporary
+authentication token and push that to client.  On the following
+renegotiations, the OpenVPN client will pass this token instead
+of the users password.  On the server side the server will do
+the token authentication internally and it will NOT do any
+additional authentications against configured external
+user/password authentication mechanisms.
+
+The
+.B lifetime
+argument defines how long the generated token is valid.  The
+lifetime is defined in seconds.  If lifetime is not set
+or it is set to 0, the token will never expire.
+
+This feature is useful for environments which is configured
+to use One Time Passwords (OTP) as part of the user/password
+authentications and that authentication mechanism does not
+implement any auth-token support.
 .\"*********************************************************
 .TP
 .B \-\-opt\-verify
@@ -3491,9 +3645,9 @@ Clients that connect with options that are incompatible
 with those of the server will be disconnected.
 
 Options that will be compared for compatibility include
-dev-type, link-mtu, tun-mtu, proto, tun-ipv6, ifconfig,
-comp-lzo, fragment, keydir, cipher, auth, keysize, secret,
-no-replay, no-iv, tls-auth, key-method, tls-server, and tls-client.
+dev\-type, link\-mtu, tun\-mtu, proto, ifconfig,
+comp\-lzo, fragment, keydir, cipher, auth, keysize, secret,
+no\-replay, no\-iv, tls\-auth, key\-method, tls\-server, and tls\-client.
 
 This option requires that
 .B \-\-disable\-occ
@@ -3518,8 +3672,31 @@ to empty strings ("").  The authentication module/script MUST have logic
 to detect this condition and respond accordingly.
 .\"*********************************************************
 .TP
-.B \-\-client\-cert\-not\-required
+.B \-\-client\-cert\-not\-required (DEPRECATED)
 Don't require client certificate, client will authenticate
+using username/password only.  Be aware that using this directive
+is less secure than requiring certificates from all clients.
+
+
+.B Please note:
+This option is now deprecated and will be removed in OpenVPN v2.5.
+It is replaced by
+.B \-\-verify\-client\-cert
+which allows for more flexibility. The option
+.B \-\-verify\-client\-cert none
+is functionally equivalent to
+.B \-\-client\-cert\-not\-required
+.
+
+.\"*********************************************************
+.TP
+.B \-\-verify\-client\-cert none|optional|require
+Specify whether the client is required to supply a valid certificate.
+
+Possible options are
+
+.B none
+: a client certificate is not required. the client need to authenticate
 using username/password only.  Be aware that using this directive
 is less secure than requiring certificates from all clients.
 
@@ -3529,7 +3706,29 @@ entire responsibility of authentication will rest on your
 script, so keep in mind that bugs in your script
 could potentially compromise the security of your VPN.
 
-If you don't use this directive, but you also specify an
+.B \-\-verify\-client\-cert none
+is functionally equivalent to
+.B \-\-client\-cert\-not\-required.
+
+.B optional
+: a client may present a certificate but it is not required to do so.
+When using this directive, you should also use a
+.B \-\-auth\-user\-pass\-verify
+script to ensure that clients are authenticated using a
+certificate, a username and password, or possibly even both.
+
+Again, the entire responsibility of authentication will rest on your
+.B \-\-auth\-user\-pass\-verify
+script, so keep in mind that bugs in your script
+could potentially compromise the security of your VPN.
+
+.B require
+: this is the default option. A client is required to present a
+certificate, otherwise VPN access is refused.
+
+If you don't use this directive (or use
+.B \-\-verify\-client\-cert require
+) but you also specify an
 .B \-\-auth\-user\-pass\-verify
 script, then OpenVPN will perform double authentication.  The
 client certificate verification AND the
@@ -3591,11 +3790,7 @@ carriage-return. no-remapping is only available on the server side.
 .B Please note:
 This option is immediately deprecated.  It is only implemented
 to make the transition to the new formatting less intrusive.  It will be
-removed either in OpenVPN v2.4 or v2.5.  So please make sure you use the
-.B \-\-verify\-x509\-name
-option instead of
-.B \-\-tls\-remote
-as soon as possible and update your scripts where necessary.
+removed in OpenVPN v2.5.  So please update your scripts/plug-ins where necessary.
 .\"*********************************************************
 .TP
 .B \-\-no\-name\-remapping (DEPRECATED)
@@ -3608,8 +3803,8 @@ It ensures compatibility with server configurations using the
 option.
 
 .B Please note:
-This option is now deprecated.  It will be removed either in OpenVPN v2.4
-or v2.5.  So please make sure you support the new X.509 name formatting
+This option is now deprecated.  It will be removed in OpenVPN v2.5.
+So please make sure you support the new X.509 name formatting
 described with the
 .B \-\-compat\-names
 option as soon as possible.
@@ -3654,7 +3849,7 @@ of OpenVPN's client mode.  This directive is equivalent to:
 .ft 3
 .in +4
  pull
- tls-client
+ tls\-client
 .in -4
 .ft
 .fi
@@ -3679,6 +3874,57 @@ or
 .B \-\-client
 in situations where you don't trust the server to have control
 over the client's routing table.
+.\"*********************************************************
+.TP
+.B \-\-pull\-filter accept|ignore|reject \fItext\fR
+Filter options received from the server if the option starts with
+\fItext\fR.  Runs on client. The action flag
+.B accept
+allows the option,
+.B ignore
+removes it and
+.B reject
+flags an error and triggers a SIGUSR1 restart.
+The filters may be specified multiple times, and each filter is
+applied in the order it is specified. The filtering of each
+option stops as soon as a match is found. Unmatched options are accepted
+by default.
+
+Prefix comparison is used to match \fItext\fR against the
+received option so that
+
+.nf
+.ft 3
+.in +4
+\-\-pull\-filter ignore "route"
+.in -4
+.ft
+.fi
+
+would remove all pushed options starting with
+.B route
+which would include, for example,
+.B route\-gateway.
+Enclose \fItext\fR in quotes to embed spaces.
+
+.nf
+.ft 3
+.in +4
+\-\-pull\-filter accept "route 192.168.1."
+\-\-pull\-filter ignore "route "
+.in -4
+.ft
+.fi
+
+would remove all routes that do not start with 192.168.1.
+
+This option may be used only on clients.
+Note that
+.B reject
+may result in a repeated cycle of failure and reconnect,
+unless multiple remotes are specified and connection to the next remote
+succeeds. To silently ignore an option pushed by the server, use
+.B ignore.
 .\"*********************************************************
 .TP
 .B \-\-auth\-user\-pass [up]
@@ -3718,15 +3964,15 @@ tries to connect.
 .B type
 can be one of:
 
-.B none --
+.B none \-\-
 Client will exit with a fatal error (this is the default).
 .br
-.B nointeract --
+.B nointeract \-\-
 Client will retry the connection without requerying for an
 .B \-\-auth\-user\-pass
 username/password.  Use this option for unattended clients.
 .br
-.B interact --
+.B interact \-\-
 Client will requery for an
 .B \-\-auth\-user\-pass
 username/password and/or private key password before attempting a reconnection.
@@ -3750,15 +3996,12 @@ See management\-notes.txt in the OpenVPN distribution for a
 description of the OpenVPN challenge/response protocol.
 .\"*********************************************************
 .TP
-.B \-\-server\-poll\-timeout n
-when polling possible remote servers to connect to
-in a round-robin fashion, spend no more than
+\fB\-\-server\-poll\-timeout n\fR, \fB\-\-connect\-timeout n\fR
+When connecting to a remote server do not wait for more than
 .B n
 seconds waiting for a response before trying the next server.
-As this only makes sense in client-to-server setups, it cannot
-be used in point-to-point setups using
-.B \-\-secret
-symmetrical key mode.
+The default value is 120s. This timeout includes proxy and TCP
+connect timeouts.
 .\"*********************************************************
 .TP
 .B \-\-explicit\-exit\-notify [n]
@@ -3769,8 +4012,23 @@ option will tell the server to immediately close its client instance object
 rather than waiting for a timeout.  The
 .B n
 parameter (default=1) controls the maximum number of attempts that the client
-will try to resend the exit notification message.  OpenVPN will not send any exit
+will try to resend the exit notification message.
+
+In UDP server mode, send RESTART control channel command to connected clients. The
+.B n
+parameter (default=1) controls client behavior. With
+.B n
+= 1 client will attempt to reconnect
+to the same server, with
+.B n
+= 2 client will advance to the next server.
+
+OpenVPN will not send any exit
 notifications unless this option is enabled.
+.TP
+.B \-\-allow\-recursive\-routing
+When this option is set, OpenVPN will not drop incoming tun packets
+with same destination as host.
 .\"*********************************************************
 .SS Data Channel Encryption Options:
 These options are meaningful for both Static & TLS-negotiated key modes
@@ -3852,8 +4110,9 @@ options. Useful when using inline files (See section on inline files).
 .\"*********************************************************
 .TP
 .B \-\-auth alg
-Authenticate packets with HMAC using message
-digest algorithm
+Authenticate data channel packets and (if enabled)
+.B tls-auth
+control channel packets with HMAC using message digest algorithm
 .B alg.
 (The default is
 .B SHA1
@@ -3862,7 +4121,17 @@ HMAC is a commonly used message authentication algorithm (MAC) that uses
 a data string, a secure hash algorithm, and a key, to produce
 a digital signature.
 
-OpenVPN's usage of HMAC is to first encrypt a packet, then HMAC the resulting ciphertext.
+The OpenVPN data channel protocol uses encrypt-then-mac (i.e. first encrypt a
+packet, then HMAC the resulting ciphertext), which prevents padding oracle
+attacks.
+
+If an AEAD cipher mode (e.g. GCM) is chosen, the specified
+.B \-\-auth
+algorithm is ignored for the data channel, and the authentication method of the
+AEAD cipher is used instead.  Note that
+.B alg
+still specifies the digest used for
+.B tls-auth\fR.
 
 In static-key encryption mode, the HMAC key
 is included in the key file generated by
@@ -3885,25 +4154,67 @@ Encrypt data channel packets with cipher algorithm
 The default is
 .B BF-CBC,
 an abbreviation for Blowfish in Cipher Block Chaining mode.
-Blowfish has the advantages of being fast, very secure, and allowing key sizes
-of up to 448 bits.  Blowfish is designed to be used in situations where
-keys are changed infrequently.
 
-For more information on blowfish, see
-.I http://www.counterpane.com/blowfish.html
+Using BF-CBC is no longer recommended, because of it's 64-bit block size.  This
+small block size allows attacks based on collisions, as demonstrated by SWEET32.
+See https://community.openvpn.net/openvpn/wiki/SWEET32 for details.
 
-To see other ciphers that are available with
-OpenVPN, use the
+To see other ciphers that are available with OpenVPN, use the
 .B \-\-show\-ciphers
 option.
-
-OpenVPN supports the CBC, CFB, and OFB cipher modes,
-however CBC is recommended and CFB and OFB should
-be considered advanced modes.
 
 Set
 .B alg=none
 to disable encryption.
+
+As of OpenVPN 2.4, cipher negotiation (NCP) can override the cipher specified by
+.B \-\-cipher\fR.
+See
+.B \-\-ncp\-ciphers
+and
+.B \-\-ncp\-disable
+for more on NCP.
+
+.\"*********************************************************
+.TP
+.B \-\-ncp\-ciphers cipher_list
+Restrict the allowed ciphers to be negotiated to the ciphers in
+.B cipher_list\fR.
+.B cipher_list
+is a colon-separated list of ciphers, and defaults to
+"AES-256-GCM:AES-128-GCM".
+
+For servers, the first cipher from
+.B cipher_list
+will be pushed to clients that support cipher negotiation.
+
+Cipher negotiation is enabled in client-server mode only.  I.e. if
+.B \-\-mode
+is set to 'server' (server-side, implied by setting
+.B \-\-server
+), or if
+.B \-\-pull
+is specified (client-side, implied by setting \-\-client).
+
+If both peers support and do not disable NCP, the negotiated cipher will
+override the cipher specified by
+.B \-\-cipher\fR.
+
+Additionally, to allow for more smooth transition, if NCP is enabled, OpenVPN
+will inherit the cipher of the peer if that cipher is different from the local
+.B \-\-cipher
+setting, but the peer cipher is one of the ciphers specified in
+.B \-\-ncp\-ciphers\fR.
+E.g. a non-NCP client (<=2.3, or with \-\-ncp\-disabled set) connecting to a
+NCP server (2.4+) with "\-\-cipher BF-CBC" and "\-\-ncp-ciphers
+AES-256-GCM:AES-256-CBC" set can either specify "\-\-cipher BF-CBC" or
+"\-\-cipher AES-256-CBC" and both will work.
+
+.\"*********************************************************
+.TP
+.B \-\-ncp\-disable
+Disable "negotiable crypto parameters".  This completely disables cipher
+negotiation.
 .\"*********************************************************
 .TP
 .B \-\-keysize n
@@ -4006,7 +4317,7 @@ is 15 seconds.
 This option is only relevant in UDP mode, i.e.
 when either
 .B \-\-proto udp
-is specifed, or no
+is specified, or no
 .B \-\-proto
 option is specified.
 
@@ -4110,6 +4421,10 @@ This option only makes sense when replay protection is enabled
 .\"*********************************************************
 .TP
 .B \-\-no\-iv
+
+.B DEPRECATED
+This option will be removed in OpenVPN 2.5.
+
 (Advanced) Disable OpenVPN's use of IV (cipher initialization vector).
 Don't use this option unless you are prepared to make
 a tradeoff of greater efficiency in exchange for less
@@ -4202,14 +4517,9 @@ will succeed, both OpenVPN
 peers will exchange temporary session keys, and the tunnel will begin
 passing data.
 
-The OpenVPN distribution contains a set of scripts for
-managing RSA certificates & keys,
-located in the
-.I easy-rsa
-subdirectory.
-
-The easy-rsa package is also rendered in web form here:
-.I http://openvpn.net/easyrsa.html
+The OpenVPN project provides a set of scripts for
+managing RSA certificates & keys:
+.I https://github.com/OpenVPN/easy-rsa
 .\"*********************************************************
 .TP
 .B \-\-tls\-server
@@ -4247,7 +4557,6 @@ they are distributed with OpenVPN, they are totally insecure.
 .TP
 .B \-\-capath dir
 Directory containing trusted certificates (CAs and CRLs).
-Available with OpenSSL version >= 0.9.7 dev.
 Not available with PolarSSL.
 
 When using the
@@ -4271,13 +4580,27 @@ for more information.
 File containing Diffie Hellman parameters
 in .pem format (required for
 .B \-\-tls\-server
-only). Use
+only).
 
-.B openssl dhparam \-out dh1024.pem 1024
+Set
+.B file=none
+to disable Diffie Hellman key exchange (and use ECDH only). Note that this
+requires peers to be using an SSL library that supports ECDH TLS cipher suites
+(e.g. OpenSSL 1.0.1+, or PolarSSL 1.3+).
 
-to generate your own, or use the existing dh1024.pem file
-included with the OpenVPN distribution.  Diffie Hellman parameters
-may be considered public.
+Use
+.B openssl dhparam \-out dh2048.pem 2048
+to generate 2048-bit DH parameters. Diffie Hellman parameters may be considered
+public.
+.\"*********************************************************
+.TP
+.B \-\-ecdh\-curve name
+Specify the curve to use for elliptic curve Diffie Hellman. Available
+curves can be listed with
+.BR \-\-show\-curves .
+The specified curve will only be used for ECDH TLS-ciphers.
+
+This option is not supported in mbed TLS builds of OpenVPN.
 .\"*********************************************************
 .TP
 .B \-\-cert file
@@ -4348,26 +4671,17 @@ above).
 .\"*********************************************************
 .TP
 .B \-\-tls\-version\-min version ['or\-highest']
-Enable TLS version negotiation, and set the minimum
+Sets the minimum
 TLS version we will accept from the peer (default is "1.0").
 Examples for version
 include "1.0", "1.1", or "1.2".  If 'or-highest' is specified
 and version is not recognized, we will only accept the highest TLS
 version supported by the local SSL implementation.
-
-Also see
-.B \-\-tls\-version\-max
-below, for information on compatibility.
 .\"*********************************************************
 .TP
 .B \-\-tls\-version\-max version
 Set the maximum TLS version we will use (default is the highest version
 supported).  Examples for version include "1.0", "1.1", or "1.2".
-
-If and only if this is set to 1.0, and OpenSSL is used (not PolarSSL),
-then OpenVPN will set up OpenSSL to use a fixed TLSv1 handshake. All
-other configurations will autonegotiate in the given limits, and the
-choice of handshake versions is left to the SSL implementation.
 .\"*********************************************************
 .TP
 .B \-\-pkcs12 file
@@ -4380,15 +4694,27 @@ and
 Not available with PolarSSL.
 .\"*********************************************************
 .TP
-.B \-\-verify\-hash hash
-Specify SHA1 fingerprint for level-1 cert.  The level-1 cert is the
+.B \-\-verify\-hash hash [algo]
+Specify SHA1 or SHA256 fingerprint for level-1 cert.  The level-1 cert is the
 CA (or intermediate cert) that signs the leaf certificate, and is
 one removed from the leaf certificate in the direction of the root.
 When accepting a connection from a peer, the level-1 cert
 fingerprint must match
 .B hash
 or certificate verification will fail.  Hash is specified
-as XX:XX:...  For example: AD:B0:95:D8:09:C8:36:45:12:A9:89:C8:90:09:CB:13:72:A6:AD:16
+as XX:XX:... For example:
+
+.nf
+.ft 3
+.in +4
+AD:B0:95:D8:09:C8:36:45:12:A9:89:C8:90:09:CB:13:72:A6:AD:16
+.in -4
+.ft
+.fi
+
+The
+.B algo
+flag can be either SHA1 or SHA256.  If not provided, it defaults to SHA1.
 .\"*********************************************************
 .TP
 .B \-\-pkcs11\-cert\-private [0|1]...
@@ -4429,7 +4755,7 @@ and
 .B \-\-pkcs12.
 
 If p11-kit is present on the system, its
-.B p11-kit-proxy.so
+.B p11\-kit\-proxy.so
 module will be loaded by default if either the
 .B \-\-pkcs11\-id
 or
@@ -4505,7 +4831,10 @@ exchanged over the TLS session.
 
 In method 1 (the default for OpenVPN 1.x), both sides generate
 random encrypt and HMAC-send keys which are forwarded to
-the other host over the TLS channel.
+the other host over the TLS channel. Method 1 is
+.B deprecated in OpenVPN 2.4
+, and
+.B will be removed in OpenVPN 2.5\fR.
 
 In method 2, (the default for OpenVPN 2.0)
 the client generates a random key.  Both client
@@ -4556,7 +4885,8 @@ your VPN connection.  But it is also easy to unwittingly use it to carefully
 align a gun with your foot, or just break your connection.  Use with care!
 
 The default for \-\-tls\-cipher is to use PolarSSL's default cipher list
-when using PolarSSL or "DEFAULT:!EXP:!LOW:!MEDIUM:!PSK:!SRP:!kRSA" when using
+when using PolarSSL or
+"DEFAULT:!EXP:!LOW:!MEDIUM:!kDH:!kECDH:!DSS:!PSK:!SRP:!kRSA" when using
 OpenSSL.
 .\"*********************************************************
 .TP
@@ -4580,11 +4910,18 @@ such as TCP expect this role to be left to them.
 .B \-\-reneg\-bytes n
 Renegotiate data channel key after
 .B n
-bytes sent or received (disabled by default).
+bytes sent or received (disabled by default with an exception, see below).
 OpenVPN allows the lifetime of a key
-to be expressed as a number of bytes encrypted/decrypted, a number of packets, or
-a number of seconds.  A key renegotiation will be forced
+to be expressed as a number of bytes encrypted/decrypted, a number of packets,
+or a number of seconds.  A key renegotiation will be forced
 if any of these three criteria are met by either peer.
+
+If using ciphers with cipher block sizes less than 128-bits, \-\-reneg\-bytes is
+set to 64MB by default, unless it is explicitly disabled by setting the value to
+0, but this is
+.B HIGHLY DISCOURAGED
+as this is designed to add some protection against the SWEET32 attack vector.
+For more information see the \-\-cipher option.
 .\"*********************************************************
 .TP
 .B \-\-reneg\-pkts n
@@ -4657,8 +4994,8 @@ Exit on TLS negotiation failure.
 .\"*********************************************************
 .TP
 .B \-\-tls\-auth file [direction]
-Add an additional layer of HMAC authentication on top of the TLS
-control channel to protect against DoS attacks.
+Add an additional layer of HMAC authentication on top of the TLS control channel
+to mitigate DoS attacks and attacks on the TLS stack.
 
 In a nutshell,
 .B \-\-tls\-auth
@@ -4668,27 +5005,11 @@ bearing an incorrect HMAC signature can be dropped immediately without
 response.
 
 .B file
-(required) is a key file which can be in one of two formats:
-
-.B (1)
-An OpenVPN static key file generated by
+(required) is a file in OpenVPN static key format which can be generated by
 .B \-\-genkey
-(required if
-.B direction
-parameter is used).
 
-.B (2) DEPRECATED
-A freeform passphrase file.  In this case the HMAC key will
-be derived by taking a secure hash of this file, similar to
-the
-.BR md5sum (1)
-or
-.BR sha1sum (1)
-commands. This option is deprecated and will stop working in OpenVPN 2.4 and
-newer releases.
-
-OpenVPN will first try format (1), and if the file fails to parse as
-a static key file, format (2) will be used.
+Older versions (up to 2.3) supported a freeform passphrase file.
+This is no longer supported in newer versions (2.4+).
 
 See the
 .B \-\-secret
@@ -4745,10 +5066,65 @@ option which will keep OpenVPN's replay protection state
 in a file so that it is not lost across restarts.
 
 It should be emphasized that this feature is optional and that the
-passphrase/key file used with
+key file used with
 .B \-\-tls\-auth
 gives a peer nothing more than the power to initiate a TLS
 handshake.  It is not used to encrypt or authenticate any tunnel data.
+
+Use
+.B \-\-tls\-crypt
+instead if you want to use the key file to not only authenticate, but also
+encrypt the TLS control channel.
+.\"*********************************************************
+.TP
+.B \-\-tls\-crypt keyfile
+
+Encrypt and authenticate all control channel packets with the key from
+.B keyfile.
+(See
+.B \-\-tls\-auth
+for more background.)
+
+Encrypting (and authenticating) control channel packets:
+.RS
+.IP \[bu] 2
+provides more privacy by hiding the certificate used for the TLS connection,
+.IP \[bu]
+makes it harder to identify OpenVPN traffic as such,
+.IP \[bu]
+provides "poor-man's" post-quantum security, against attackers who will never
+know the pre-shared key (i.e. no forward secrecy).
+.RE
+
+.IP
+In contrast to
+.B \-\-tls\-auth\fR,
+.B \-\-tls\-crypt
+does *not* require the user to set
+.B \-\-key\-direction\fR.
+
+.B Security Considerations
+
+All peers use the same
+.B \-\-tls-crypt
+pre-shared group key to authenticate and encrypt control channel messages.  To
+ensure that IV collisions remain unlikely, this key should not be used to
+encrypt more than 2^48 client-to-server or 2^48 server-to-client control
+channel messages.  A typical initial negotiation is about 10 packets in each
+direction.  Assuming both initial negotiation and renegotiations are at most
+2^16 (65536) packets (to be conservative), and (re)negotiations happen each
+minute for each user (24/7), this limits the tls\-crypt key lifetime to 8171
+years divided by the number of users.  So a setup with 1000 users should rotate
+the key at least once each eight years.  (And a setup with 8000 users each
+year.)
+
+If IV collisions were to occur, this could result in the security of
+.B \-\-tls\-crypt
+degrading to the same security as using
+.B \-\-tls\-auth\fR.
+That is, the control channel still benefits from the extra protection against
+active man-in-the-middle-attacks and DoS attacks, but may no longer offer
+extra privacy and post-quantum security on top of what TLS itself offers.
 .\"*********************************************************
 .TP
 .B \-\-askpass [file]
@@ -4799,6 +5175,57 @@ This directive does not affect the
 username/password.  It is always cached.
 .\"*********************************************************
 .TP
+.B \-\-auth\-token token
+This is not an option to be used directly in any configuration files,
+but rather push this option from a
+.B \-\-client\-connect
+script or a
+.B \-\-plugin
+which hooks into the OPENVPN_PLUGIN_CLIENT_CONNECT or
+OPENVPN_PLUGIN_CLIENT_CONNECT_V2 calls.  This option provides
+a possibility to replace the clients password with an authentication
+token during the lifetime of the OpenVPN client.
+
+Whenever the connection is renegotiated and the
+.B \-\-auth\-user\-pass\-verify
+script or
+.B \-\-plugin
+making use of the OPENVPN_PLUGIN_AUTH_USER_PASS_VERIFY hook is
+triggered, it will pass over this token as the password
+instead of the password the user provided.  The authentication
+token can only be reset by a full reconnect where the server
+can push new options to the client.  The password the user entered
+is never preserved once an authentication token have been set.  If
+the OpenVPN server side rejects the authentication token, the
+client will receive an AUTH_FAIL and disconnect.
+
+The purpose of this is to enable two factor authentication
+methods, such as HOTP or TOTP, to be used without needing to
+retrieve a new OTP code each time the connection is renegotiated.
+Another use case is to cache authentication data on the client
+without needing to have the users password cached in memory
+during the life time of the session.
+
+To make use of this feature, the
+.B \-\-client\-connect
+script or
+.B \-\-plugin
+needs to put
+
+.nf
+.ft 3
+.in +4
+push "auth\-token UNIQUE_TOKEN_VALUE"
+.in -4
+.ft
+.fi
+
+into the file/buffer for dynamic configuration data.  This
+will then make the OpenVPN server to push this value to the
+client, which replaces the local password with the
+UNIQUE_TOKEN_VALUE.
+.\"*********************************************************
+.TP
 .B \-\-tls\-verify cmd
 Run command
 .B cmd
@@ -4837,7 +5264,7 @@ peer certificate you will accept.  This feature allows you to write a script
 which will test the X509 name on a certificate and decide whether or
 not it should be accepted.  For a simple perl script which will test
 the common name field on the certificate, see the file
-.B verify-cn
+.B verify\-cn
 in the OpenVPN distribution.
 
 See the "Environmental Variables" section below for
@@ -4848,7 +5275,7 @@ additional parameters passed as environmental variables.
 Store the certificates the clients uses upon connection to this
 directory. This will be done before \-\-tls\-verify is called.  The
 certificates will use a temporary name and will be deleted when
-the tls-verify script returns.  The file name used for the certificate
+the tls\-verify script returns.  The file name used for the certificate
 is available via the peer_cert environment variable.
 .\"*********************************************************
 .TP
@@ -4881,6 +5308,8 @@ option will match against the chosen
 .B fieldname
 instead of the Common Name.
 
+Only the subjectAltName and issuerAltName X.509 extensions are supported.
+
 .B Please note:
 This option has a feature which will convert an all-lowercase
 .B fieldname
@@ -4890,49 +5319,6 @@ or one having the
 .B ext:
 prefix will be left as-is.  This automatic upcasing feature
 is deprecated and will be removed in a future release.
-.\"*********************************************************
-.TP
-.B \-\-tls\-remote name (DEPRECATED)
-Accept connections only from a host with X509 name
-or common name equal to
-.B name.
-The remote host must also pass all other tests
-of verification.
-
-.B NOTE:
-Because tls-remote may test against a common name prefix,
-only use this option when you are using OpenVPN with a custom CA
-certificate that is under your control.
-Never use this option when your client certificates are signed by
-a third party, such as a commercial web CA.
-
-Name can also be a common name prefix, for example if you
-want a client to only accept connections to "Server-1",
-"Server-2", etc., you can simply use
-.B \-\-tls\-remote Server
-
-Using a common name prefix is a useful alternative to managing
-a CRL (Certificate Revocation List) on the client, since it allows the client
-to refuse all certificates except for those associated
-with designated servers.
-
-.B \-\-tls\-remote
-is a useful replacement for the
-.B \-\-tls\-verify
-option to verify the remote host, because
-.B \-\-tls\-remote
-works in a
-.B \-\-chroot
-environment too.
-
-.B Please also note:
-This option is now deprecated.  It will be removed either in OpenVPN v2.4
-or v2.5.  So please make sure you support the new X.509 name formatting
-described with the
-.B \-\-compat\-names
-option as soon as possible by updating your configurations to use
-.B \-\-verify\-x509\-name
-instead.
 .\"*********************************************************
 .TP
 .B \-\-verify\-x509\-name name type
@@ -4951,11 +5337,11 @@ Which RDN is verified as name depends on the
 option. But it defaults to the common name (CN), e.g. a certificate with a
 subject DN "C=KG, ST=NA, L=Bishkek, CN=Server-1" would be matched by:
 
-.B \-\-verify\-x509\-name 'C=KG, ST=NA, L=Bishkek, CN=Server-1'
+.B \-\-verify\-x509\-name 'C=KG, ST=NA, L=Bishkek, CN=Server\-1'
 and
-.B \-\-verify\-x509\-name Server-1 name
+.B \-\-verify\-x509\-name Server\-1 name
 or you could use
-.B \-\-verify\-x509\-name Server- name-prefix
+.B \-\-verify\-x509\-name Server -name-prefix
 if you want a client to only accept connections to "Server-1", "Server-2", etc.
 
 .B \-\-verify\-x509\-name
@@ -4989,10 +5375,13 @@ to save values from full cert chain.  Values will be encoded
 as X509_<depth>_<attribute>=<value>.  Multiple
 .B \-\-x509\-track
 options can be defined to track multiple attributes.
-Not available with PolarSSL.
 .\"*********************************************************
 .TP
-.B \-\-ns\-cert\-type client|server
+.B \-\-ns\-cert\-type client|server (DEPRECATED)
+This option is deprecated.  Use the more modern equivalent
+.B \-\-remote\-cert\-tls
+instead.  This option will be removed in OpenVPN 2.5.
+
 Require that peer certificate was signed with an explicit
 .B nsCertType
 designation of "client" or "server".
@@ -5000,7 +5389,7 @@ designation of "client" or "server".
 This is a useful security option for clients, to ensure that
 the host they connect with is a designated server.
 
-See the easy-rsa/build-key-server script for an example
+See the easy\-rsa/build\-key\-server script for an example
 of how to generate a certificate with the
 .B nsCertType
 field set to "server".
@@ -5019,15 +5408,25 @@ or
 .B \-\-tls\-verify.
 .\"*********************************************************
 .TP
-.B \-\-remote\-cert\-ku v...
+.B \-\-remote\-cert\-ku [v...]
 Require that peer certificate was signed with an explicit
 .B key usage.
 
-This is a useful security option for clients, to ensure that
-the host they connect to is a designated server.
+If present in the certificate, the keyUsage value is validated by the TLS
+library during the TLS handshake.  Specifying this option without arguments
+requires this extension to be present (so the TLS library will verify it).
 
-The key usage should be encoded in hex, more than one key
-usage can be specified.
+If the list
+.B v...
+is also supplied, the keyUsage field must have
+.B at least
+the same bits set as the bits in
+.B one of
+the values supplied in the list
+.B v...
+
+The key usage values in the list must be encoded in hex, e.g.
+"\-\-remote\-cert\-ku a0"
 .\"*********************************************************
 .TP
 .B \-\-remote\-cert\-eku oid
@@ -5048,24 +5447,21 @@ and
 .B extended key usage
 based on RFC3280 TLS rules.
 
-This is a useful security option for clients, to ensure that
-the host they connect to is a designated server.
+This is a useful security option for clients, to ensure that the host they
+connect to is a designated server.  Or the other way around; for a server to
+verify that only hosts with a client certificate can connect.
 
 The
 .B \-\-remote\-cert\-tls client
 option is equivalent to
 .B
-\-\-remote\-cert\-ku 80 08 88 \-\-remote\-cert\-eku "TLS Web Client Authentication"
-
-The key usage is digitalSignature and/or keyAgreement.
+\-\-remote\-cert\-ku \-\-remote\-cert\-eku "TLS Web Client Authentication"
 
 The
 .B \-\-remote\-cert\-tls server
 option is equivalent to
 .B
-\-\-remote\-cert\-ku a0 88 \-\-remote\-cert\-eku "TLS Web Server Authentication"
-
-The key usage is digitalSignature and ( keyEncipherment or keyAgreement ).
+\-\-remote\-cert\-ku \-\-remote\-cert\-eku "TLS Web Server Authentication"
 
 This is an important security precaution to protect against
 a man-in-the-middle attack where an authorized client
@@ -5142,6 +5538,13 @@ an ECDSA cipher suite will not work if you are using an RSA certificate, etc.).
 (Standalone)
 Show currently available hardware-based crypto acceleration
 engines supported by the OpenSSL library.
+.\"*********************************************************
+.TP
+.B \-\-show\-curves
+(Standalone)
+Show all available elliptic curves to use with the
+.B \-\-ecdh\-curve
+option.
 .\"*********************************************************
 .SS Generate a random key:
 Used only for non-TLS static key encryption mode.
@@ -5253,7 +5656,7 @@ IP address and netmask using
 Don't use this option unless you are also using
 .B \-\-ifconfig.
 
-.B manual --
+.B manual \-\-
 Don't set the IP address or netmask automatically.
 Instead output a message
 to the console telling the user to configure the
@@ -5279,7 +5682,7 @@ virtual DHCP server address.  In
 .B \-\-dev tun
 mode, OpenVPN will cause the DHCP server to masquerade as if it were
 coming from the remote endpoint.  The optional offset parameter is
-an integer which is > -256 and < 256 and which defaults to 0.
+an integer which is > \-256 and < 256 and which defaults to -1.
 If offset is positive, the DHCP server will masquerade as the IP
 address at network address + offset.
 If offset is negative, the DHCP server will masquerade as the IP
@@ -5298,13 +5701,13 @@ because it prevents routes involving the TAP-Win32 adapter from
 being lost when the system goes to sleep.  The default
 lease time is one year.
 
-.B netsh --
+.B netsh \-\-
 Automatically set the IP address and netmask using
 the Windows command-line "netsh"
 command.  This method appears to work correctly on
 Windows XP but not Windows 2000.
 
-.B ipapi --
+.B ipapi \-\-
 Automatically set the IP address and netmask using the
 Windows IP Helper API.  This approach
 does not have ideal semantics, though testing has indicated
@@ -5313,7 +5716,7 @@ it is best to leave the TCP/IP properties for the TAP-Win32
 adapter in their default state, i.e. "Obtain an IP address
 automatically."
 
-.B adaptive --
+.B adaptive \-\-
 (Default) Try
 .B dynamic
 method initially and fail over to
@@ -5370,28 +5773,39 @@ on the TAP-Win32 adapter, and is particularly useful for
 configuring an OpenVPN client to access a Samba server
 across the VPN.
 
-.B DOMAIN name --
+.B DOMAIN name \-\-
 Set Connection-specific DNS Suffix.
 
-.B DNS addr --
-Set primary domain name server address.  Repeat
+.B DNS addr \-\-
+Set primary domain name server IPv4 address.  Repeat
 this option to set secondary DNS server addresses.
 
-.B WINS addr --
+.B DNS6 addr \-\-
+Set primary domain name server IPv6 address.  Repeat
+this option to set secondary DNS server IPv6 addresses.
+
+Note: currently this is handled using netsh (the
+existing DHCP code can only do IPv4 DHCP, and that protocol only
+permits IPv4 addresses anywhere).  The option will be put into the
+environment, so an
+.B \-\-up
+script could act upon it if needed.
+
+.B WINS addr \-\-
 Set primary WINS server address (NetBIOS over TCP/IP Name Server).
 Repeat this option to set secondary WINS server addresses.
 
-.B NBDD addr --
+.B NBDD addr \-\-
 Set primary NBDD server address (NetBIOS over TCP/IP Datagram Distribution Server)
 Repeat this option
 to set secondary NBDD server addresses.
 
-.B NTP addr --
+.B NTP addr \-\-
 Set primary NTP server address (Network Time Protocol).
 Repeat this option
 to set secondary NTP server addresses.
 
-.B NBT type --
+.B NBT type \-\-
 Set NetBIOS over TCP/IP Node type.  Possible options:
 .B 1
 = b-node (broadcasts),
@@ -5479,14 +5893,11 @@ flag.
 .TP
 .B \-\-dhcp\-release
 Ask Windows to release the TAP adapter lease on shutdown.
-This option has the same caveats as
-.B \-\-dhcp\-renew
-above.
+This option has no effect now, as it is enabled by default starting with version 2.4.1.
 .\"*********************************************************
 .TP
 .B \-\-register\-dns
-Run net stop dnscache, net start dnscache, ipconfig /flushdns
-and ipconfig /registerdns on connection initiation.
+Run ipconfig /flushdns and ipconfig /registerdns on connection initiation.
 This is known to kick Windows into
 recognizing pushed DNS servers.
 .\"*********************************************************
@@ -5498,7 +5909,7 @@ Windows explorer when OpenVPN is run on a configuration
 file using the right-click explorer menu.
 .\"*********************************************************
 .TP
-.B \-\-service exit\-event [0|1]
+.B \-\-service exit-event [0|1]
 Should be used when OpenVPN is being automatically executed by another
 program in such
 a context that no interaction with the user via display or keyboard
@@ -5540,7 +5951,7 @@ option.  On non-Windows systems, the
 command provides similar functionality.
 .\"*********************************************************
 .TP
-.B \-\-allow\-nonadmin [TAP-adapter]
+.B \-\-allow\-nonadmin [TAP\-adapter]
 (Standalone)
 Set
 .B TAP-adapter
@@ -5584,11 +5995,20 @@ if certificates are stored as private objects.
 If p11-kit is present on the system, the
 .B provider
 argument is optional; if omitted the default
-.B p11-kit-proxy.so
+.B p11\-kit\-proxy.so
 module will be queried.
 
 .B \-\-verb
 option can be used BEFORE this option to produce debugging information.
+.\"*********************************************************
+.SS Standalone Debug Options:
+.\"*********************************************************
+.TP
+.B \-\-show\-gateway [v6target]
+(Standalone)
+Show current IPv4 and IPv6 default gateway and interface towards the
+gateway (if the protocol in question is enabled).  If an IPv6 address
+is passed as argument, the IPv6 route for this host is reported.
 .\"*********************************************************
 .SS IPv6 Related Options
 .\"*********************************************************
@@ -5608,24 +6028,28 @@ if no gateway is specified.
 .TP
 .B \-\-route\-ipv6 ipv6addr/bits [gateway] [metric]
 setup IPv6 routing in the system to send the specified IPv6 network
-into OpenVPN's ``tun'' device
+into OpenVPN's ``tun''.  The gateway parameter is only used for
+IPv6 routes across ``tap'' devices, and if missing, the ``ipv6remote''
+field from
+.B \-\-ifconfig\-ipv6
+is used.
 .TP
 .B \-\-server\-ipv6 ipv6addr/bits
 convenience-function to enable a number of IPv6 related options at
 once, namely
-.B \-\-ifconfig\-ipv6, \-\-ifconfig\-ipv6\-pool, \-\-tun\-ipv6
+.B \-\-ifconfig\-ipv6, \-\-ifconfig\-ipv6\-pool
 and
 .B \-\-push tun\-ipv6
-Is only accepted if ``\-\-mode server'' or ``\-\-server'' is set.
+Is only accepted if ``\-\-mode server'' or ``\-\-server'' is set. Pushing of the
+.B \-\-tun\-ipv6
+directive is done for older clients which require an explicit
+``\-\-tun\-ipv6'' in their configuration.
 .TP
 .B \-\-ifconfig\-ipv6\-pool ipv6addr/bits
 Specify an IPv6 address pool for dynamic assignment to clients.  The
 pool starts at
 .B ipv6addr
-and increments by +1 for every new client (linear mode).  The
-.B /bits
-setting controls the size of the pool.  Due to implementation details,
-the pool size must be between /64 and /112.
+and matches the offset determined from the start of the IPv4 pool.
 .TP
 .B \-\-ifconfig\-ipv6\-push ipv6addr/bits ipv6remote
 for ccd/ per-client static IPv6 interface configuration, see
@@ -6035,7 +6459,7 @@ Set on program initiation and reset on SIGHUP.
 .\"*********************************************************
 .TP
 .B local_port
-The local port number, specified by
+The local port number or name, specified by
 .B \-\-port
 or
 .B \-\-lport.
@@ -6047,7 +6471,7 @@ The password provided by a connecting client.
 Set prior to
 .B \-\-auth\-user\-pass\-verify
 script execution only when the
-.B via-env
+.B via\-env
 modifier is specified, and deleted from the environment
 after the script returns.
 .\"*********************************************************
@@ -6150,10 +6574,10 @@ documentation for
 .B script_type
 Prior to execution of any script, this variable is set to the type of
 script being run.  It can be one of the following:
-.B up, down, ipchange, route-up, tls-verify, auth-user-pass-verify,
-.B client-connect, client-disconnect, 
+.B up, down, ipchange, route\-up, tls\-verify, auth\-user\-pass\-verify,
+.B client\-connect, client\-disconnect,
 or
-.B learn-address.
+.B learn\-address.
 Set prior to execution of any script.
 .\"*********************************************************
 .TP
@@ -6163,15 +6587,15 @@ The reason for exit or restart.  Can be one of
 (controlled by
 .B \-\-inactive
 option),
-.B ping-exit
+.B ping\-exit
 (controlled by
 .B \-\-ping\-exit
 option),
-.B ping-restart
+.B ping\-restart
 (controlled by
 .B \-\-ping\-restart
 option),
-.B connection-reset
+.B connection\-reset
 (triggered on TCP connection reset),
 .B error,
 or
@@ -6203,9 +6627,8 @@ Set prior to execution of the
 script.
 .\"*********************************************************
 .TP
-.B tls_digest_{n}
-Contains the certificate SHA1 fingerprint/digest hash value,
-where
+.B tls_digest_{n} / tls_digest_sha256_{n}
+Contains the certificate SHA1 / SHA256 fingerprint, where
 .B n
 is the verification level.  Only set for TLS connections.  Set prior
 to execution of
@@ -6306,7 +6729,7 @@ The username provided by a connecting client.
 Set prior to
 .B \-\-auth\-user\-pass\-verify
 script execution only when the
-.B via-env
+.B via\-env
 modifier is specified.
 .\"*********************************************************
 .TP
@@ -6324,7 +6747,7 @@ no string remapping occurs on these field values (except for remapping
 of control characters to "_").
 For example, the following variables would be set on the
 OpenVPN server using the sample client certificate
-in sample-keys (client.crt).
+in sample\-keys (client.crt).
 Note that the verification level is 0 for the client certificate
 and 1 for the CA certificate.
 
@@ -6347,9 +6770,10 @@ X509_1_C=KG
 .\"*********************************************************
 .SH INLINE FILE SUPPORT
 OpenVPN allows including files in the main configuration for the
-.B \-\-ca, \-\-cert, \-\-dh, \-\-extra\-certs, \-\-key, \-\-pkcs12, \-\-secret
+.B \-\-ca, \-\-cert, \-\-dh, \-\-extra\-certs, \-\-key, \-\-pkcs12, \-\-secret,
+.B \-\-crl\-verify, \-\-http\-proxy\-user\-pass, \-\-tls-auth
 and
-.B \-\-tls\-auth
+.B \-\-tls\-crypt
 options.
 
 Each inline file started by the line

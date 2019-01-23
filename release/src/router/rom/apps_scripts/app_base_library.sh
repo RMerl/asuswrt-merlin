@@ -3,24 +3,29 @@
 
 
 f=`nvram get apps_install_folder`
+apps_new_arm=`nvram get apps_new_arm`
 case $f in
 	"asusware.arm")
 		pkg_type=`echo $f|sed -e "s,asusware\.,,"`
-		PKG_LIST="openssl zlib libcurl libevent ncurses libxml2 libsigc++ libpar2 pcre spawn-fcgi"
+		if [ $apps_new_arm -eq 1 ]; then 
+			PKG_LIST="asusopenssl zlib asuslibcurl libevent ncurses-base ncurses libxml2 libsigc++ libpar2 pcre spawn-fcgi bzip2 libiconv"
+		else
+			PKG_LIST="asusopenssl zlib asuslibcurl libevent ncurses libxml2 libsigc++ libpar2 pcre spawn-fcgi bzip2" 
+		fi
 		;;
 	"asusware.big")
 		# DSL big-endian MIPS: DSL-N66U
 		pkg_type="mipsbig"
-		PKG_LIST="openssl zlib libevent ncurses libxml2 pcre spawn-fcgi"
+		PKG_LIST="asusopenssl zlib asuslibcurl libevent ncurses libxml2 pcre spawn-fcgi bzip2"
 		;;
 	"asusware.mipsbig")
 		# QCA big-endian MIPS: RT-AC55U
 		pkg_type=`echo $f|sed -e "s,asusware\.,,"`
-		PKG_LIST="openssl zlib libevent ncurses libxml2 pcre spawn-fcgi"
+		PKG_LIST="asusopenssl zlib asuslibcurl libevent ncurses libxml2 pcre spawn-fcgi bzip2"
 		;;
 	"asusware")
 		pkg_type="mipsel"
-		PKG_LIST="openssl zlib libcurl libevent ncurses libxml2 libuclibc++ libsigc++ libpar2 pcre spawn-fcgi"
+		PKG_LIST="asusopenssl zlib asuslibcurl libevent ncurses libxml2 libuclibc++ libsigc++ libpar2 pcre spawn-fcgi bzip2"
 		;;
 	*)
 		echo "Unknown apps_install_folder: $f"
@@ -56,7 +61,7 @@ _check_log_message(){
 	if [ "$action" == "Installing" ] || [ "$action" == "Configuring" ]; then
 		target=`echo $got_log |awk '{print $2}'`
 	elif [ "$action" == "Downloading" ]; then
-		target=`echo $got_log |awk '{print $2}' |awk '{FS="/"; print $NF}' |awk '{FS="_"; print $1}'`
+		target=`echo $got_log |awk '{print $2}' |awk 'BEGIN{FS="/"}{print $NF}' |awk 'BEGIN{FS="_"}{print $1}'`
 	elif [ "$action" == "Successfully" ]; then
 		target="terminated"
 	elif [ "$action" == "update-alternatives:" ]; then
@@ -193,13 +198,13 @@ done
 DM_file=`ls $apps_local_space/downloadmaster_*_$pkg_type.ipk`
 if [ -n "$DM_file" ]; then
 	if [ -n "$2" ]; then
-		file_name=`echo $2 |awk '{FS="/"; print $NF}'`
+		file_name=`echo $2 |awk 'BEGIN{FS="/"}{print $NF}'`
 	else
-		file_name=`echo $DM_file |awk '{FS="/"; print $NF}'`
+		file_name=`echo $DM_file |awk 'BEGIN{FS="/"}{print $NF}'`
 	fi
-	file_ver=`echo $file_name |awk '{FS="_"; print $2}'`
-	DM_version1=`echo $file_ver |awk '{FS="."; print $1}'`
-	DM_version4=`echo $file_ver |awk '{FS="."; print $4}'`
+	file_ver=`echo $file_name |awk 'BEGIN{FS="_"}{print $2}'`
+	DM_version1=`echo $file_ver |awk 'BEGIN{FS="."}{print $1}'`
+	DM_version4=`echo $file_ver |awk 'BEGIN{FS="."}{print $4}'`
 	if [ "$DM_version1" -gt "2" ] && [ "$DM_version4" -gt "59" ]; then
 		if [ -z "`echo "$list_installed" |grep "readline - "`" ]; then
 			echo "Installing the package: readline..."

@@ -1,9 +1,9 @@
 This is a patch against SuSEfirewall2-3.1-206 (SuSE 9.x and older)
-It fixes the depancy from the dns daemon name 'named'
+It fixes the dependency from the dns daemon name 'named'
 After appending the patch, the SuSEfirewall is again able to autodetect 
 the dnsmasq named service.
 This is a very old bug in the SuSEfirewall script.
-The SuSE people think the name of the dns server will allways 'named'
+The SuSE people think the name of the dns server will always 'named'
 
 
 --- /sbin/SuSEfirewall2.orig	2004-01-23 13:30:09.000000000 +0100

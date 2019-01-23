@@ -7,7 +7,16 @@ then
 	PARAM="$dev $tun_mtu $link_mtu $ifconfig_local $ifconfig_remote"
 fi
 
+my_logger(){
+	if [ "$VPN_LOGGING" -gt "3" ]
+	then
+		logger -t "openvpn-routing" "$1"
+	fi
+}
+
+
 create_client_list(){
+	OLDIFS=$IFS
 	IFS="<"
 
 	for ENTRY in $VPN_IP_LIST
@@ -50,7 +59,7 @@ create_client_list(){
 		if [ "$SRCC" != "" -o "$DSTC" != "" ]
 		then
 			ip rule add $SRCC $SRCA $DSTC $DSTA table $TARGET_LOOKUP priority $RULE_PRIO
-			logger -t "openvpn-routing" "Adding route for $VPN_IP to $DST_IP through $TARGET_NAME"
+			my_logger "Adding route for $VPN_IP to $DST_IP through $TARGET_NAME"
 		fi
 	done
 	IFS=$OLDIFS
@@ -63,7 +72,7 @@ purge_client_list(){
 		if [ $PRIO -ge $START_PRIO -a $PRIO -le $END_PRIO ]
 		then
 			ip rule del prio $PRIO
-			logger -t "openvpn-routing" "Removing rule $PRIO from routing policy"
+			my_logger "Removing rule $PRIO from routing policy"
 		fi
 	done
 }
@@ -71,20 +80,34 @@ purge_client_list(){
 run_custom_script(){
 	if [ -f /jffs/scripts/openvpn-event ]
 	then
-		logger -t "custom script" "Running /jffs/scripts/openvpn-event (args: $PARAM)"
+		logger -t "custom_script" "Running /jffs/scripts/openvpn-event (args: $PARAM)"
 		sh /jffs/scripts/openvpn-event $PARAM
 	fi
 }
 
 init_table(){
-	logger -t "openvpn-routing" "Creating VPN routing table"
+	my_logger "Creating VPN routing table (mode $VPN_REDIR)"
 	ip route flush table $VPN_TBL
 
 # Fill it with copy of existing main table
-	ip route show table main | while read ROUTE
-	do
-		ip route add table $VPN_TBL $ROUTE
-	done
+	if [ "$VPN_REDIR" == "3" ]
+	then
+		LANIFNAME=$(nvram get lan_ifname)
+		ip route show table main dev $LANIFNAME | while read ROUTE
+		do
+			ip route add table $VPN_TBL $ROUTE dev $LANIFNAME
+		done
+		ip route show table main dev $dev | while read ROUTE
+		do
+			ip route add table $VPN_TBL $ROUTE dev $dev
+		done
+	elif [ "$VPN_REDIR" == "2" ]
+	then
+		ip route show table main | while read ROUTE
+		do
+			ip route add table $VPN_TBL $ROUTE
+		done
+	fi
 }
 
 # Begin
@@ -94,37 +117,42 @@ then
 	VPN_REDIR=$(nvram get vpn_client1_rgw)
 	VPN_FORCE=$(nvram get vpn_client1_enforce)
 	VPN_UNIT=1
+	VPN_LOGGING=$(nvram get vpn_client1_verb)
 elif [ "$dev" == "tun12" ]
 then
 	VPN_IP_LIST=$(nvram get vpn_client2_clientlist)
 	VPN_REDIR=$(nvram get vpn_client2_rgw)
 	VPN_FORCE=$(nvram get vpn_client2_enforce)
 	VPN_UNIT=2
+	VPN_LOGGING=$(nvram get vpn_client2_verb)
 elif [ "$dev" == "tun13" ]
 then
 	VPN_IP_LIST=$(nvram get vpn_client3_clientlist)
 	VPN_REDIR=$(nvram get vpn_client3_rgw)
 	VPN_FORCE=$(nvram get vpn_client3_enforce)
 	VPN_UNIT=3
+	VPN_LOGGING=$(nvram get vpn_client3_verb)
 elif [ "$dev" == "tun14" ]
 then
 	VPN_IP_LIST=$(nvram get vpn_client4_clientlist)
 	VPN_REDIR=$(nvram get vpn_client4_rgw)
 	VPN_FORCE=$(nvram get vpn_client4_enforce)
 	VPN_UNIT=4
+	VPN_LOGGING=$(nvram get vpn_client4_verb)
 elif [ "$dev" == "tun15" ]
 then
 	VPN_IP_LIST=$(nvram get vpn_client5_clientlist)
 	VPN_REDIR=$(nvram get vpn_client5_rgw)
 	VPN_FORCE=$(nvram get vpn_client5_enforce)
 	VPN_UNIT=5
+	VPN_LOGGING=$(nvram get vpn_client5_verb)
 else
 	run_custom_script
 	exit 0
 fi
 
 VPN_TBL="ovpnc"$VPN_UNIT
-START_PRIO=$((1000+(200*($VPN_UNIT-1))))
+START_PRIO=$((10000+(200*($VPN_UNIT-1))))
 END_PRIO=$(($START_PRIO+199))
 WAN_PRIO=$START_PRIO
 VPN_PRIO=$(($START_PRIO+100))
@@ -135,27 +163,27 @@ export VPN_GW VPN_IP VPN_TBL VPN_FORCE
 # webui reports that vpn_force changed while vpn client was down
 if [ $script_type = "rmupdate" ]
 then
-	logger -t "openvpn-routing" "Refreshing policy rules for client $VPN_UNIT"
+	my_logger "Refreshing policy rules for client $VPN_UNIT"
 	purge_client_list
 
-	if [ $VPN_FORCE == "1" -a $VPN_REDIR == "2" ]
+	if [ $VPN_FORCE == "1" -a $VPN_REDIR -ge "2" ]
 	then
 		init_table
-		logger -t "openvpn-routing" "Tunnel down - VPN client access blocked"
+		my_logger "Tunnel down - VPN client access blocked"
 		ip route del default table $VPN_TBL
 		ip route add prohibit default table $VPN_TBL
 		create_client_list
 	else
-		logger -t "openvpn-routing" "Allow WAN access to all VPN clients"
+		my_logger "Allow WAN access to all VPN clients"
 		ip route flush table $VPN_TBL
 	fi
 	ip route flush cache
 	exit 0
 fi
 
-if [ $script_type == "route-up" -a $VPN_REDIR != "2" ]
+if [ $script_type == "route-up" -a $VPN_REDIR -lt "2" ]
 then
-	logger -t "openvpn-routing" "Skipping, client $VPN_UNIT not in routing policy mode"
+	my_logger "Skipping, client $VPN_UNIT not in routing policy mode"
 	run_custom_script
 	exit 0
 fi
@@ -166,14 +194,14 @@ if [ $script_type == "route-pre-down" ]
 then
 	purge_client_list
 
-	if [ $VPN_FORCE == "1" -a $VPN_REDIR == "2" ]
+	if [ $VPN_FORCE == "1" -a $VPN_REDIR -ge "2" ]
 	then
 		logger -t "openvpn-routing" "Tunnel down - VPN client access blocked"
 		ip route change prohibit default table $VPN_TBL
 		create_client_list
 	else
 		ip route flush table $VPN_TBL
-		logger -t "openvpn-routing" "Flushing client routing table"
+		my_logger "Flushing client routing table"
 	fi
 fi	# End route down
 
@@ -188,12 +216,7 @@ then
 	for NET in $NET_LIST
 	do
 		ip route del $NET dev $dev
-		logger -t "openvpn-routing" "Removing route for $NET to $dev from main routing table"
-	done
-
-# Unsure if necessary, but most policy-based routing scripts disable reverse path filtering
-	for i in /proc/sys/net/ipv4/conf/*/rp_filter ; do
-		echo 0 > $i
+		my_logger "Removing route for $NET to $dev from main routing table"
 	done
 
 # Update policy rules
@@ -207,8 +230,13 @@ then
 		then
 			logger -t "openvpn-routing" "Tunnel re-established, restoring WAN access to clients"
 		fi
-		ip route del default table $VPN_TBL
-		ip route add default via $route_vpn_gateway table $VPN_TBL
+		if [ "$route_net_gateway" != "" ]
+		then
+			ip route del default table $VPN_TBL
+			ip route add default via $route_vpn_gateway table $VPN_TBL
+		else
+			logger -t "openvpn-routing" "WARNING: no VPN gateway provided, routing might not work properly!"
+		fi
 	fi
 
 	if [ "$route_net_gateway" != "" ]
@@ -219,7 +247,7 @@ then
 fi	# End route-up
 
 ip route flush cache
-logger -t "openvpn-routing" "Completed routing policy configuration for client $VPN_UNIT"
+my_logger "Completed routing policy configuration for client $VPN_UNIT"
 run_custom_script
 
 exit 0

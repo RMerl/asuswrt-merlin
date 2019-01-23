@@ -3,9 +3,9 @@
 
 struct ipt_mark_target_info {
 #ifdef KERNEL_64_USERSPACE_32
-	unsigned long long mark;
+	unsigned long long mark, mask;
 #else
-	unsigned long mark;
+	unsigned long mark, mask;
 #endif
 };
 
@@ -17,9 +17,9 @@ enum {
 
 struct ipt_mark_target_info_v1 {
 #ifdef KERNEL_64_USERSPACE_32
-	unsigned long long mark;
+	unsigned long long mark, mask;
 #else
-	unsigned long mark;
+	unsigned long mark, mask;
 #endif
 	u_int8_t mode;
 };

@@ -35,6 +35,7 @@ httpd_indexcgi.c -o index.cgi
  *   2576       4    2048    4628    1214 index.cgi.o
  */
 
+#define _GNU_SOURCE 1  /* for strchrnul */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>

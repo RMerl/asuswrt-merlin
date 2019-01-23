@@ -1,12 +1,13 @@
 /* Copyright 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
  * \file circuitlist.c
- * \brief Manage the global circuit list.
+ *
+ * \brief Manage the global circuit list, and looking up circuits within it.
  **/
 #define CIRCUITLIST_PRIVATE
 #include "or.h"
@@ -44,11 +45,17 @@ static smartlist_t *global_circuitlist = NULL;
 /** A list of all the circuits in CIRCUIT_STATE_CHAN_WAIT. */
 static smartlist_t *circuits_pending_chans = NULL;
 
+/** A list of all the circuits that have been marked with
+ * circuit_mark_for_close and which are waiting for circuit_about_to_free. */
+static smartlist_t *circuits_pending_close = NULL;
+
 static void circuit_free_cpath_node(crypt_path_t *victim);
 static void cpath_ref_decref(crypt_path_reference_t *cpath_ref);
 //static void circuit_set_rend_token(or_circuit_t *circ, int is_rend_circ,
 //                                   const uint8_t *token);
 static void circuit_clear_rend_token(or_circuit_t *circ);
+static void circuit_about_to_free_atexit(circuit_t *circ);
+static void circuit_about_to_free(circuit_t *circ);
 
 /********* END VARIABLES ************/
 
@@ -66,7 +73,7 @@ typedef struct chan_circid_circuit_map_t {
 /** Helper for hash tables: compare the channel and circuit ID for a and
  * b, and return less than, equal to, or greater than zero appropriately.
  */
-static INLINE int
+static inline int
 chan_circid_entries_eq_(chan_circid_circuit_map_t *a,
                         chan_circid_circuit_map_t *b)
 {
@@ -75,7 +82,7 @@ chan_circid_entries_eq_(chan_circid_circuit_map_t *a,
 
 /** Helper: return a hash based on circuit ID and the pointer value of
  * chan in <b>a</b>. */
-static INLINE unsigned int
+static inline unsigned int
 chan_circid_entry_hash_(chan_circid_circuit_map_t *a)
 {
   /* Try to squeze the siphash input into 8 bytes to save any extra siphash
@@ -102,7 +109,7 @@ HT_GENERATE2(chan_circid_map, chan_circid_circuit_map_t, node,
  * used to improve performance when many cells arrive in a row from the
  * same circuit.
  */
-chan_circid_circuit_map_t *_last_circid_chan_ent = NULL;
+static chan_circid_circuit_map_t *_last_circid_chan_ent = NULL;
 
 /** Implementation helper for circuit_set_{p,n}_circid_channel: A circuit ID
  * and/or channel for circ has just changed from <b>old_chan, old_id</b>
@@ -451,16 +458,27 @@ circuit_count_pending_on_channel(channel_t *chan)
 void
 circuit_close_all_marked(void)
 {
+  if (circuits_pending_close == NULL)
+    return;
+
   smartlist_t *lst = circuit_get_global_list();
-  SMARTLIST_FOREACH_BEGIN(lst, circuit_t *, circ) {
-    /* Fix up index if SMARTLIST_DEL_CURRENT just moved this one. */
-    circ->global_circuitlist_idx = circ_sl_idx;
-    if (circ->marked_for_close) {
-      circ->global_circuitlist_idx = -1;
-      circuit_free(circ);
-      SMARTLIST_DEL_CURRENT(lst, circ);
+  SMARTLIST_FOREACH_BEGIN(circuits_pending_close, circuit_t *, circ) {
+    tor_assert(circ->marked_for_close);
+
+    /* Remove it from the circuit list. */
+    int idx = circ->global_circuitlist_idx;
+    smartlist_del(lst, idx);
+    if (idx < smartlist_len(lst)) {
+      circuit_t *replacement = smartlist_get(lst, idx);
+      replacement->global_circuitlist_idx = idx;
     }
+    circ->global_circuitlist_idx = -1;
+
+    circuit_about_to_free(circ);
+    circuit_free(circ);
   } SMARTLIST_FOREACH_END(circ);
+
+  smartlist_clear(circuits_pending_close);
 }
 
 /** Return the head of the global linked list of circuits. */
@@ -738,6 +756,18 @@ or_circuit_new(circid_t p_circ_id, channel_t *p_chan)
   return circ;
 }
 
+/** Free all storage held in circ->testing_cell_stats */
+void
+circuit_clear_testing_cell_stats(circuit_t *circ)
+{
+  if (!circ || !circ->testing_cell_stats)
+    return;
+  SMARTLIST_FOREACH(circ->testing_cell_stats, testing_cell_stats_entry_t *,
+                    ent, tor_free(ent));
+  smartlist_free(circ->testing_cell_stats);
+  circ->testing_cell_stats = NULL;
+}
+
 /** Deallocate space associated with circ.
  */
 STATIC void
@@ -748,6 +778,8 @@ circuit_free(circuit_t *circ)
   int should_free = 1;
   if (!circ)
     return;
+
+  circuit_clear_testing_cell_stats(circ);
 
   if (CIRCUIT_IS_ORIGIN(circ)) {
     origin_circuit_t *ocirc = TO_ORIGIN_CIRCUIT(circ);
@@ -885,6 +917,7 @@ circuit_free_all(void)
       }
     }
     tmp->global_circuitlist_idx = -1;
+    circuit_about_to_free_atexit(tmp);
     circuit_free(tmp);
     SMARTLIST_DEL_CURRENT(lst, tmp);
   } SMARTLIST_FOREACH_END(tmp);
@@ -894,6 +927,9 @@ circuit_free_all(void)
 
   smartlist_free(circuits_pending_chans);
   circuits_pending_chans = NULL;
+
+  smartlist_free(circuits_pending_close);
+  circuits_pending_close = NULL;
 
   {
     chan_circid_circuit_map_t **elt, **next, *c;
@@ -1030,7 +1066,7 @@ circuit_get_by_global_id(uint32_t id)
  * If <b>found_entry_out</b> is provided, set it to true if we have a
  * placeholder entry for circid/chan, and leave it unset otherwise.
  */
-static INLINE circuit_t *
+static inline circuit_t *
 circuit_get_by_circid_channel_impl(circid_t circ_id, channel_t *chan,
                                    int *found_entry_out)
 {
@@ -1577,7 +1613,8 @@ circuit_find_to_cannibalize(uint8_t purpose, extend_info_t *info,
   return best;
 }
 
-/** Return the number of hops in circuit's path. */
+/** Return the number of hops in circuit's path. If circ has no entries,
+ * or is NULL, returns 0. */
 int
 circuit_get_cpath_len(origin_circuit_t *circ)
 {
@@ -1593,7 +1630,8 @@ circuit_get_cpath_len(origin_circuit_t *circ)
 }
 
 /** Return the <b>hopnum</b>th hop in <b>circ</b>->cpath, or NULL if there
- * aren't that many hops in the list. */
+ * aren't that many hops in the list. <b>hopnum</b> starts at 1.
+ * Returns NULL if <b>hopnum</b> is 0 or negative. */
 crypt_path_t *
 circuit_get_cpath_hop(origin_circuit_t *circ, int hopnum)
 {
@@ -1703,6 +1741,65 @@ circuit_mark_for_close_, (circuit_t *circ, int reason, int line,
     reason = END_CIRC_REASON_NONE;
   }
 
+  circ->marked_for_close = line;
+  circ->marked_for_close_file = file;
+  circ->marked_for_close_reason = reason;
+  circ->marked_for_close_orig_reason = orig_reason;
+
+  if (!CIRCUIT_IS_ORIGIN(circ)) {
+    or_circuit_t *or_circ = TO_OR_CIRCUIT(circ);
+    if (or_circ->rend_splice) {
+      if (!or_circ->rend_splice->base_.marked_for_close) {
+        /* do this after marking this circuit, to avoid infinite recursion. */
+        circuit_mark_for_close(TO_CIRCUIT(or_circ->rend_splice), reason);
+      }
+      or_circ->rend_splice = NULL;
+    }
+  }
+
+  if (circuits_pending_close == NULL)
+    circuits_pending_close = smartlist_new();
+
+  smartlist_add(circuits_pending_close, circ);
+}
+
+/** Called immediately before freeing a marked circuit <b>circ</b> from
+ * circuit_free_all() while shutting down Tor; this is a safe-at-shutdown
+ * version of circuit_about_to_free().  It's important that it at least
+ * do circuitmux_detach_circuit() when appropriate.
+ */
+static void
+circuit_about_to_free_atexit(circuit_t *circ)
+{
+
+  if (circ->n_chan) {
+    circuit_clear_cell_queue(circ, circ->n_chan);
+    circuitmux_detach_circuit(circ->n_chan->cmux, circ);
+    circuit_set_n_circid_chan(circ, 0, NULL);
+  }
+
+  if (! CIRCUIT_IS_ORIGIN(circ)) {
+    or_circuit_t *or_circ = TO_OR_CIRCUIT(circ);
+
+    if (or_circ->p_chan) {
+      circuit_clear_cell_queue(circ, or_circ->p_chan);
+      circuitmux_detach_circuit(or_circ->p_chan->cmux, circ);
+      circuit_set_p_circid_chan(or_circ, 0, NULL);
+    }
+  }
+}
+
+/** Called immediately before freeing a marked circuit <b>circ</b>.
+ * Disconnects the circuit from other data structures, launches events
+ * as appropriate, and performs other housekeeping.
+ */
+static void
+circuit_about_to_free(circuit_t *circ)
+{
+
+  int reason = circ->marked_for_close_reason;
+  int orig_reason = circ->marked_for_close_orig_reason;
+
   if (circ->state == CIRCUIT_STATE_ONIONSKIN_PENDING) {
     onion_pending_remove(TO_OR_CIRCUIT(circ));
   }
@@ -1726,6 +1823,7 @@ circuit_mark_for_close_, (circuit_t *circ, int reason, int line,
      (circ->state == CIRCUIT_STATE_OPEN)?CIRC_EVENT_CLOSED:CIRC_EVENT_FAILED,
      orig_reason);
   }
+
   if (circ->purpose == CIRCUIT_PURPOSE_C_INTRODUCE_ACK_WAIT) {
     origin_circuit_t *ocirc = TO_ORIGIN_CIRCUIT(circ);
     int timed_out = (reason == END_CIRC_REASON_TIMEOUT);
@@ -1810,20 +1908,6 @@ circuit_mark_for_close_, (circuit_t *circ, int reason, int line,
       connection_edge_destroy(circ->n_circ_id, conn);
     ocirc->p_streams = NULL;
   }
-
-  circ->marked_for_close = line;
-  circ->marked_for_close_file = file;
-
-  if (!CIRCUIT_IS_ORIGIN(circ)) {
-    or_circuit_t *or_circ = TO_OR_CIRCUIT(circ);
-    if (or_circ->rend_splice) {
-      if (!or_circ->rend_splice->base_.marked_for_close) {
-        /* do this after marking this circuit, to avoid infinite recursion. */
-        circuit_mark_for_close(TO_CIRCUIT(or_circ->rend_splice), reason);
-      }
-      or_circ->rend_splice = NULL;
-    }
-  }
 }
 
 /** Given a marked circuit <b>circ</b>, aggressively free its cell queues to
@@ -1836,8 +1920,14 @@ marked_circuit_free_cells(circuit_t *circ)
     return;
   }
   cell_queue_clear(&circ->n_chan_cells);
-  if (! CIRCUIT_IS_ORIGIN(circ))
-    cell_queue_clear(& TO_OR_CIRCUIT(circ)->p_chan_cells);
+  if (circ->n_mux)
+    circuitmux_clear_num_cells(circ->n_mux, circ);
+  if (! CIRCUIT_IS_ORIGIN(circ)) {
+    or_circuit_t *orcirc = TO_OR_CIRCUIT(circ);
+    cell_queue_clear(&orcirc->p_chan_cells);
+    if (orcirc->p_mux)
+      circuitmux_clear_num_cells(orcirc->p_mux, circ);
+  }
 }
 
 static size_t
@@ -1851,6 +1941,7 @@ single_conn_free_bytes(connection_t *conn)
   if (conn->outbuf) {
     result += buf_allocation(conn->outbuf);
     buf_clear(conn->outbuf);
+    conn->outbuf_flushlen = 0;
   }
   if (conn->type == CONN_TYPE_DIR) {
     dir_connection_t *dir_conn = TO_DIR_CONN(conn);
@@ -1933,7 +2024,7 @@ circuit_max_queued_cell_age(const circuit_t *c, uint32_t now)
 
 /** Return the age in milliseconds of the oldest buffer chunk on <b>conn</b>,
  * where age is taken in milliseconds before the time <b>now</b> (in truncated
- * milliseconds since the epoch).  If the connection has no data, treat
+ * absolute monotonic msec).  If the connection has no data, treat
  * it as having age zero.
  **/
 static uint32_t
@@ -2056,7 +2147,6 @@ circuits_handle_oom(size_t current_allocation)
   size_t mem_recovered=0;
   int n_circuits_killed=0;
   int n_dirconns_killed=0;
-  struct timeval now;
   uint32_t now_ms;
   log_notice(LD_GENERAL, "We're low on memory.  Killing circuits with "
              "over-long queues. (This behavior is controlled by "
@@ -2070,8 +2160,7 @@ circuits_handle_oom(size_t current_allocation)
     mem_to_recover = current_allocation - mem_target;
   }
 
-  tor_gettimeofday_cached_monotonic(&now);
-  now_ms = (uint32_t)tv_to_msec(&now);
+  now_ms = (uint32_t)monotime_coarse_absolute_msec();
 
   circlist = circuit_get_global_list();
   SMARTLIST_FOREACH_BEGIN(circlist, circuit_t *, circ) {

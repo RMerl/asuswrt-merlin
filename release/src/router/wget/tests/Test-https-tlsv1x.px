@@ -1,0 +1,79 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Socket;
+use Cwd;
+use WgetFeature qw(https);
+use SSLTest;
+
+###############################################################################
+
+# code, msg, headers, content
+my %urls = (
+    '/somefile.txt' => {
+        code => "200",
+        msg => "Dontcare",
+        headers => {
+            "Content-type" => "text/plain",
+        },
+        content => "blabla",
+    },
+);
+
+# Skip the test if openssl is not available
+my $ossl = `openssl version`;
+unless ($ossl =~ m/OpenSSL 1/)
+{
+  exit 77;
+}
+
+my $srcdir;
+if (@ARGV) {
+    $srcdir = shift @ARGV;
+} elsif (defined $ENV{srcdir}) {
+    $srcdir = $ENV{srcdir};
+}
+$srcdir = Cwd::abs_path("$srcdir");
+
+# HOSTALIASES env variable allows us to create hosts file alias.
+my $testhostname = "WgetTestingServer";
+$ENV{'HOSTALIASES'} = "$srcdir/certs/wgethosts";
+
+my $addr = gethostbyname($testhostname);
+unless ($addr)
+{
+    warn "Failed to resolve $addr, using $srcdir/certs/wgethosts\n";
+    exit 77;
+}
+unless (inet_ntoa($addr) =~ "127.0.0.1")
+{
+    warn "Failed to resolve $$addr, using $srcdir/certs/wgethosts\n";
+    exit 77;
+}
+
+my $port    = 29443;
+my $cmdline = $WgetTest::WGETPATH . " --secure-protocol=TLSv1_1".
+                                    " --ca-certificate=$srcdir/certs/test-ca-cert.pem".
+                                    " https://$testhostname:$port/somefile.txt";
+
+my $expected_error_code = 0;
+
+my %existing_files = (
+);
+
+my %expected_downloaded_files = (
+  'somefile.txt' => {
+    content => "blabla",
+  },
+);
+
+my $sslsock = SSLTest->new(cmdline  => $cmdline,
+                           input    => \%urls,
+                           errcode  => $expected_error_code,
+                           existing => \%existing_files,
+                           output   => \%expected_downloaded_files,
+                           sslport  => $port);
+exit $sslsock->run();
+
+# vim: et ts=4 sw=4

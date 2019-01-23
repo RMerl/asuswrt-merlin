@@ -37,6 +37,15 @@ endif
 export CFLAGS += $(EXTRACFLAGS)
 endif
 
+# New Broadcom/Ralink/MTK/QCA platform.
+KPATH_2636_OR_3X = $(if $(or $(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINUXDIR)),$(findstring linux-3.3.x,$(LINUXDIR)),$(findstring linux-3.4.x,$(LINUXDIR)),$(findstring linux-3.14.x,$(LINUXDIR))),y)
+
+# New Ralink/MTK/QCA platform.
+KPATH_2636X_OR_3X = $(if $(or $(findstring linux-2.6.36.x,$(LINUXDIR)),$(findstring linux-3.x,$(LINUXDIR)),$(findstring linux-3.3.x,$(LINUXDIR)),$(findstring linux-3.4.x,$(LINUXDIR)),$(findstring linux-3.14.x,$(LINUXDIR))),y)
+
+# New Ralink/MTK/QCA platform.
+KPATH_3X = $(if $(or $(findstring linux-3.x,$(LINUXDIR)),$(findstring linux-3.3.x,$(LINUXDIR)),$(findstring linux-3.4.x,$(LINUXDIR)),$(findstring linux-3.14.x,$(LINUXDIR))),y)
+
 ifneq ($(findstring 4G-,$(BUILD_NAME)),)
 MODEL = RT$(subst -,,$(BUILD_NAME))
 else ifneq ($(findstring DSL,$(BUILD_NAME)),)
@@ -232,14 +241,18 @@ SEP=echo "\033[41;1m   $@   \033[0m"
 #
 obj-$(RTCONFIG_NOTIFICATION_CENTER) += sqlite
 obj-$(RTCONFIG_NOTIFICATION_CENTER) += nt_center
+
+obj-y += busybox
+obj-y += shared
+
+obj-$(RTCONFIG_PROTECTION_SERVER) += protect_srv
+
 obj-$(RTCONFIG_QTN) += libqcsapi_client
 obj-$(RTCONFIG_QTN) += qtnimage
 obj-$(RTCONFIG_DMALLOC) += dmalloc
 
 obj-$(RTCONFIG_DHDAP) += dhd $(if $(RTCONFIG_BCM7),pciefd)
 obj-$(RTCONFIG_BCM_7114) += dhd_monitor
-obj-y += busybox
-obj-y += shared
 obj-y += nvram$(BCMEX)
 #obj-$(RTCONFIG_BCMARM) += ctf_arm
 #obj-$(RTAC53U) += ctf_5358
@@ -259,21 +272,10 @@ ifeq ($(RTCONFIG_RALINK),y)
 #################################################################################
 obj-y += wireless_tools
 
-ifeq ($(or $(RTN14U),$(RTAC52U),$(RTAC51U),$(RTN11P),$(RTN300),$(RTN54U),$(RTAC1200HP),$(RTN56UB1),$(RTN56UB2),$(RTAC54U)),y)
-obj-y += reg
+obj-y += $(if $(RTN65U),rt2880_app,ated flash)
+ifeq ($(RTN65U),)
+obj-y += $(if $(or $(RTN14U),$(RTAC52U),$(RTAC51U),$(RTN11P),$(RTN300),$(RTN54U)$(RTAC1200HP),$(RTN56UB1),$(RTN56UB2),$(RTAC54U)),reg,hw_nat)
 endif
-
-ifneq ($(findstring linux-3.x,$(LINUXDIR)),)
-# RT-N65U only
-obj-y += rt2880_app
-else	#!ifneq ($(findstring linux-3.x,$(LINUXDIR)),)
-obj-y += ated
-obj-y += flash
-ifeq ($(or $(RTN14U),$(RTAC52U),$(RTAC51U),$(RTN11P),$(RTN300),$(RTN54U),$(RTAC1200HP),$(RTN56UB1),$(RTN56UB2),$(RTAC54U)),y)
-else
-obj-y += hw_nat
-endif
-endif	#ifneq ($(findstring linux-3.x,$(LINUXDIR)),)
 
 else ifeq ($(RTCONFIG_QCA),y)
 #################################################################################
@@ -282,10 +284,79 @@ else ifeq ($(RTCONFIG_QCA),y)
 obj-y += wireless_tools
 obj-y += libnl-tiny-0.1
 obj-y += swconfig
-obj-y += qca-wifi
-#obj-y += qca-art2
-obj-y += qca-hostap
-obj-y += shortcut-fe
+ifeq ($(RTCONFIG_SOC_IPQ40XX),y)
+SWCONFIG_PKG := qca-swconfig.ipq40xx
+else
+SWCONFIG_PKG := swconfig
+endif
+
+# QCA9558.ILQ 2.0
+obj-$(RTCONFIG_SOC_QCA9557) += shortcut-fe
+obj-$(QCA953X) += shortcut-fe
+obj-$(QCA956X) += shortcut-fe
+ifeq ($(SWITCH_CHIP),QCA8337N)
+obj-$(RTCONFIG_WIFI_QCA9990_QCA9990) += qca-ssdk
+obj-$(RTCONFIG_WIFI_QCA9994_QCA9994) += qca-ssdk30
+endif
+obj-$(or $(RTCONFIG_WIFI_QCA9557_QCA9882),$(QCA953X),$(QCA956X)) += qca-wifi
+#obj-$(RTCONFIG_WIFI_QCA9557_QCA9882) += qca-art2
+obj-$(or $(RTCONFIG_WIFI_QCA9557_QCA9882),$(QCA953X),$(QCA956X)) += qca-hostap
+
+# IPQ8064.ILQ 1.3
+obj-$(RTCONFIG_WIFI_QCA9990_QCA9990) += qca-wifi-qca9990
+obj-$(RTCONFIG_WIFI_QCA9990_QCA9990) += qca-wifi-fw-qca9990
+obj-$(RTCONFIG_WIFI_QCA9990_QCA9990) += qcmbr
+obj-$(RTCONFIG_WIFI_QCA9990_QCA9990) += qca-hostap-qca9990
+obj-$(RTCONFIG_WIFI_QCA9990_QCA9990) += qca-nss-fw
+obj-$(RTCONFIG_WIFI_QCA9990_QCA9990) += qca-nss-drv
+obj-$(RTCONFIG_WIFI_QCA9990_QCA9990) += qca-nss-gmac
+#obj-$(RTCONFIG_WIFI_QCA9990_QCA9990) += qca-nss-macsec	# need IPQ8066, IPQ8068
+obj-$(RTCONFIG_WIFI_QCA9990_QCA9990) += qca-nss-ecm
+obj-$(RTCONFIG_WIFI_QCA9990_QCA9990) += qca-nss-crypto
+obj-$(RTCONFIG_WIFI_QCA9990_QCA9990) += qca-nss-cfi	# need kmod-crypto-ocf
+obj-$(RTCONFIG_WIFI_QCA9990_QCA9990) += qca-nss-clients
+obj-$(RTCONFIG_WIFI_QCA9990_QCA9990) += qca-thermald
+
+# IPQ8064.ILQ 3.0
+obj-$(RTCONFIG_WIFI_QCA9994_QCA9994) += qca-wifi-qca9994
+obj-$(RTCONFIG_WIFI_QCA9994_QCA9994) += qca-wifi-fw-qca9994
+obj-$(RTCONFIG_WIFI_QCA9994_QCA9994) += qcmbr
+obj-$(RTCONFIG_WIFI_QCA9994_QCA9994) += qca-hostap-qca9994 libnl-bf openssl
+obj-$(RTCONFIG_WIFI_QCA9994_QCA9994) += $(if $(RTCONFIG_SWITCH_QCA8337N),qca-mcs30-lkm)
+obj-$(RTCONFIG_WIFI_QCA9994_QCA9994) += qca-nss30-fw
+obj-$(RTCONFIG_WIFI_QCA9994_QCA9994) += qca-nss30-drv
+obj-$(RTCONFIG_WIFI_QCA9994_QCA9994) += qca-nss30-gmac
+#obj-$(RTCONFIG_WIFI_QCA9994_QCA9994) += qca-nss30-macsec	# need IPQ8066, IPQ8068
+obj-$(RTCONFIG_WIFI_QCA9994_QCA9994) += qca-nss30-ecm shortcut-fe30
+obj-$(RTCONFIG_WIFI_QCA9994_QCA9994) += qca-nss30-crypto
+obj-$(RTCONFIG_WIFI_QCA9994_QCA9994) += qca-nss30-cfi	# need kmod-crypto-ocf
+obj-$(RTCONFIG_WIFI_QCA9994_QCA9994) += qca-nss30-clients
+obj-$(RTCONFIG_WIFI_QCA9994_QCA9994) += qca-thermald
+obj-$(RTCONFIG_WIFI_QCA9994_QCA9994) += shortcut-fe30 libnl-bf
+obj-$(RTCONFIG_WIFI_QCA9994_QCA9994) += qca-whc30-lbd libqcacommon
+
+# IPQ8064.ILQ 1.3, IPQ8064.ILQ 3.0
+obj-$(RTCONFIG_SOC_IPQ8064) += devmem2
+obj-$(RTCONFIG_SOC_IPQ8064) += taskset
+
+# IPQ4019 ILQ 1.1 
+#obj-$(RTCONFIG_SOC_IPQ40XX) += qca-nss-drv.ipq40xx
+#obj-$(RTCONFIG_SOC_IPQ40XX) += qca-nss-gmac.ipq40xx
+obj-$(RTCONFIG_SOC_IPQ40XX) += qca-wifi.ipq40xx
+obj-$(RTCONFIG_SOC_IPQ40XX) += qca-wifi-fw.ipq40xx
+obj-$(RTCONFIG_PCIE_QCA9984) += qca-wifi-fw.qca9984
+obj-$(RTCONFIG_PCIE_QCA9888) += qca-wifi-fw.qca9888
+obj-$(RTCONFIG_SOC_IPQ40XX) += qcmbr.ipq40xx
+obj-$(RTCONFIG_SOC_IPQ40XX) += qca-hostap.ipq40xx
+obj-$(RTCONFIG_SOC_IPQ40XX) += qca-rfs.ipq40xx
+obj-$(RTCONFIG_SOC_IPQ40XX) += shortcut-fe.ipq40xx libnl-bf
+obj-$(RTCONFIG_SOC_IPQ40XX) += qca-ssdk.ipq40xx
+obj-$(RTCONFIG_SOC_IPQ40XX) += qca-ssdk-shell.ipq40xx
+
+obj-$(RTCONFIG_SOC_IPQ40XX) += ethtool-3.7
+
+obj-$(RTCONFIG_HIVE_BLUEZ)  += qca-hyfi-qdisc.ipq40xx
+obj-$(RTCONFIG_HIVE_BLUEZ)  += qca-hyfi-bridge.ipq40xx
 
 ifeq ($(PLC_UTILS),y)
 obj-y += plc-utils
@@ -309,7 +380,7 @@ ifeq ($(RTCONFIG_DSL),y)
 obj-y += dsl_drv_tool
 endif
 
-ifneq ($(or $(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINUXDIR)),$(findstring linux-3.3.x,$(LINUXDIR))),)
+ifeq ($(KPATH_2636_OR_3X),y)
 IPTABLES := iptables-1.4.x
 IPTC_LIBDIR := $(TOP)/$(IPTABLES)/libiptc/.libs
 IPTC_LIBS := -lip4tc $(if $(RTCONFIG_IPV6),-lip6tc,) -liptc
@@ -327,8 +398,8 @@ obj-$(RTCONFIG_BWDPI) += sqlite
 obj-$(RTCONFIG_BWDPI) += bwdpi
 obj-$(RTCONFIG_BWDPI) += bwdpi_sqlite
 obj-$(RTCONFIG_BWDPI) += bwdpi_bin
-#obj-$(RTCONFIG_SPEEDTEST) += curl-7.21.7
-obj-y += curl-7.21.7
+#obj-$(RTCONFIG_SPEEDTEST) += curl
+obj-y += curl
 
 obj-$(RTCONFIG_TRAFFIC_LIMITER) += sqlite
 obj-$(RTCONFIG_TRAFFIC_LIMITER) += traffic_limiter
@@ -419,20 +490,22 @@ obj-$(RTCONFIG_USB_MODEM) += comgt-0.32
 obj-$(RTCONFIG_USB_MODEM) += $(if $(RTCONFIG_QCA),,uqmi)
 endif
 
-ifneq ($(or $(findstring linux-2.6.36.x,$(LINUXDIR)),$(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINUXDIR)),$(findstring linux-3.3.x,$(LINUXDIR))),)
-ifeq ($(or $(RTN65U),$(RTAC55U),$(RTAC55UHP),$(RTN56UB1),$(RTN56UB2)),y)
+ifeq ($(KPATH_3X),y)
 obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch-1.2.3
-else
-ifneq ($(RTCONFIG_INTERNAL_GOBI),y)
-obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch
-endif
-endif
+else ifeq ($(KPATH_2636_OR_3X),y)
+obj-$(RTCONFIG_USB_MODEM) += $(if $(or $(RTN56UB1),$(RTN56UB2)),usbmodeswitch-1.2.3,usb-modeswitch)
 else
 ifeq ($(RTCONFIG_BCMWL6),y)
 obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch
 else
 obj-$(RTCONFIG_USB_MODEM) += usb-modeswitch-1.2.3
 endif
+endif
+
+# Remove all possible usbmodeswitch from obj-y for 4G-AC55U.
+# We may need to remove usbmodeswitch from obj-y for all LTE router.
+ifeq ($(RTCONFIG_INTERNAL_GOBI),y)
+obj-y := $(filter-out usbmodeswitch% usb-modeswitch%, $(obj-y))
 endif
 
 obj-$(RTCONFIG_USB_BECEEM) += madwimax-0.1.1 # for Samsung WiMAX
@@ -452,8 +525,8 @@ obj-$(RTCONFIG_NFS) += nfs-utils
 obj-$(RTCONFIG_NFS) += portmap
 
 #obj-y += dosfstools
-obj-$(RTCONFIG_FTP) += $(if $(RTCONFIG_QCA),vsftpd-3.x,vsftpd)
-#obj-$(RTCONFIG_FTP) += vsftpd-3.x
+#obj-$(RTCONFIG_FTP) += $(if $(RTCONFIG_QCA),vsftpd-3.x,vsftpd)
+obj-$(RTCONFIG_FTP) += vsftpd-3.x
 
 ifeq ($(CONFIG_LINUX26),y)
 ifeq ($(RTCONFIG_SAMBASRV),y)
@@ -478,21 +551,16 @@ endif
 # install before samba3(.6.x) for not overwriting some binaries
 obj-$(RTCONFIG_WEBDAV) += samba-3.5.8
 
-ifneq ($(RTCONFIG_SAMBA_MODERN),y)
 ifeq ($(CONFIG_BCMWL5),y)
 ifneq ($(RTCONFIG_8M_SFP),y)
-obj-$(NEED_SAMBA3) += samba-3.0.33
+obj-$(NEED_SAMBA3) += $(if $(RTCONFIG_SAMBA36X),samba-3.6.x,samba-3.0.33)
 else
-obj-$(NEED_SAMBA3) += samba3
+obj-$(NEED_SAMBA3) += $(if $(RTCONFIG_SAMBA36X),samba-3.6.x,samba3)
 endif
 else
-obj-$(NEED_SAMBA3) += samba3
+obj-$(NEED_SAMBA3) += $(if $(RTCONFIG_SAMBA36X),samba-3.6.x,samba3)
 endif
-
-else # Samba 3.6.x
-obj-$(NEED_SAMBA3) += samba36
-obj-$(NEED_SAMBA3) += libiconv-1.14
-endif
+obj-$(RTCONFIG_SAMBA36X) += libiconv-1.14
 
 ifeq ($(RTCONFIG_NTFS),y)
 obj-$(RTCONFIG_OPEN_NTFS3G) += ntfs-3g
@@ -527,7 +595,7 @@ obj-$(RTCONFIG_MEDIA_SERVER) += mt-daapd
 #add by gauss for cloudsync
 obj-$(RTCONFIG_CLOUDSYNC) += openssl
 obj-$(RTCONFIG_CLOUDSYNC) += libxml2
-obj-$(RTCONFIG_CLOUDSYNC) += curl-7.21.7
+obj-$(RTCONFIG_CLOUDSYNC) += curl
 obj-$(RTCONFIG_CLOUDSYNC) += asuswebstorage$(BCMEX)
 obj-$(RTCONFIG_CLOUDSYNC) += inotify
 
@@ -564,17 +632,27 @@ obj-y += mDNSResponder
 endif
 endif
 
+obj-$(RTCONFIG_FBWIFI) += fb_wifi
+obj-$(RTCONFIG_FBWIFI) += httpd_uam
+
 #add for snmpd
 SNMPD_CFLAGS += -D$(BUILD_NAME)
 ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), RT-N66U RT-AC66U RT-AC68U))
 SNMPD_CFLAGS += -DDUAL_BAND
 endif
 obj-$(RTCONFIG_SNMPD) += openssl
-obj-$(RTCONFIG_SNMPD) += libnmp
+#obj-$(RTCONFIG_SNMPD) += libnmp
 obj-$(RTCONFIG_SNMPD) += net-snmp-5.7.2
 ifeq ($(RTCONFIG_SNMPD),y)
 export MIB_MODULE_PASSPOINT =
 endif
+
+#for chillispot
+obj-$(RTCONFIG_CHILLISPOT) += chillispot
+obj-$(RTCONFIG_COOVACHILLI) += coovachilli
+obj-$(RTCONFIG_FREERADIUS) += talloc
+obj-$(RTCONFIG_FREERADIUS) += sqlite
+obj-$(RTCONFIG_FREERADIUS) += freeradius
 
 #
 # configurable packages
@@ -665,7 +743,7 @@ obj-$(RTCONFIG_IPERF) += iperf
 obj-$(RTCONFIG_PUSH_EMAIL) += zlib # for libxml2, curl.
 obj-$(RTCONFIG_PUSH_EMAIL) += openssl
 obj-$(RTCONFIG_PUSH_EMAIL) += libxml2
-obj-$(RTCONFIG_PUSH_EMAIL) += curl-7.21.7
+obj-$(RTCONFIG_PUSH_EMAIL) += curl
 obj-$(RTCONFIG_PUSH_EMAIL) += wb
 obj-$(RTCONFIG_PUSH_EMAIL) += email-3.1.3
 obj-$(RTCONFIG_PUSH_EMAIL) += push_log
@@ -692,9 +770,13 @@ obj-y += asm1042
 endif
 
 ifeq ($(RTCONFIG_BCMARM),y)
-obj-prelibs =$(filter nvram$(BCMEX) libbcmcrypto shared netconf libupnp$(BCMEX)$(EX7) libz libbcm pciefd, $(obj-y))
+obj-prelibs =$(filter busybox% nvram$(BCMEX) libbcmcrypto shared netconf libupnp$(BCMEX)$(EX7) libz libbcm pciefd, $(obj-y))
 obj-postlibs := $(filter-out $(obj-prelibs), $(obj-y))
 endif
+
+obj-$(RTCONFIG_OPENSWAN) += $(if $(RTCONFIG_WIFI_QCA9994_QCA9994),openswan-nss gmp,)
+obj-$(RTCONFIG_QUICKSEC) += quicksec-6.0-fips
+obj-$(RTCONFIG_STRONGSWAN) += strongswan-5.2.1
 
 ifneq ($(RTCONFIG_4M_SFP),y)
 obj-y += netstat-nat
@@ -704,15 +786,22 @@ obj-$(RTCONFIG_TCPDUMP) += libpcap
 obj-$(RTCONFIG_TCPDUMP) += tcpdump-4.4.0
 
 # Merlin addons
-obj-n += wol
+ifneq ($(or $(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINUXDIR))),)
+obj-y += libnfnetlink
+obj-y += libmnl
+obj-y += ipset_arm
+else
 obj-y += ipset
+endif
+obj-$(RTCONFIG_NANO) += ncurses
+obj-$(RTCONFIG_NANO) += nano
 
 obj-$(RTCONFIG_BLINK_LED) += bled
 obj-$(RTCONFIG_BONDING) += ifenslave
 
 obj-$(RTCONFIG_GEOIP) += GeoIP-1.6.2
 
-obj-$(RTCONFIG_TRANSMISSION) += Transmission curl-7.21.7 libevent-2.0.21
+obj-$(RTCONFIG_TRANSMISSION) += Transmission curl libevent-2.0.21
 
 ifeq ($(RTCONFIG_TOR),y)
 obj-y += openssl
@@ -728,7 +817,7 @@ obj-$(RTCONFIG_TR069) += tr069
 obj-$(RTCONFIG_CLOUDCHECK) += cloudcheck
 
 obj-$(RTCONFIG_GETREALIP) += ministun
-
+obj-$(RTCONFIG_OPENVPN) += ministun
 
 ifneq ($(find lighttpd-1.4.39, $(obj-y)),"")
 released_dir += APP-IPK
@@ -740,11 +829,7 @@ obj-install := $(foreach obj,$(obj-y),$(obj)-install)
 MKSQUASHFS_TARGET = mksquashfs
 MKSQUASHFS = $(MKSQUASHFS_TARGET)
 
-ifneq ($(or $(findstring linux-3.x,$(LINUXDIR)),$(findstring linux-3.3.x,$(LINUXDIR))),)
-LINUX_ARCH_ASM_INCL_DIR=$(LINUXDIR)/arch/mips/include/asm
-else
-LINUX_ARCH_ASM_INCL_DIR=$(LINUXDIR)/include/asm-mips
-endif
+LINUX_ARCH_ASM_INCL_DIR = $(if ($KPATH_3X),$(LINUXDIR)/arch/mips/include/asm,$(LINUXDIR)/include/asm-mips)
 
 #
 # Basic rules
@@ -789,7 +874,11 @@ ifeq ($(RTCONFIG_RALINK),y)
 	fi
 endif
 ifeq ($(RTCONFIG_QCA),y)
+ifeq ($(CONFIG_LINUX3_14),y)
+	cp -fr $(LINUXDIR)/include/uapi/* $@/include/uapi/
+else
 	cp $(LINUXDIR)/include/net/switch.h $@/include/linux/
+endif
 endif
 	$(MAKE) -C $(LINUXDIR) prepare scripts
 	find $(LINUXDIR)/include -name autoconf.h -exec cp {} $@/include/linux/ \;
@@ -815,6 +904,9 @@ else ifeq ($(RTCONFIG_QCA),y)
 	if grep -q "CONFIG_MODULES=y" $(LINUXDIR)/.config ; then \
 	    $(MAKE) -C $(LINUXDIR) modules CC=$(KERNELCC) LD=$(KERNELLD); \
 	fi
+ifeq ($(CONFIG_LINUX3_14),y)
+	$(MAKE) -C $(LINUXDIR) dtbs
+endif
 else
 	# Broadcrom MIPS SoC
 	@if ! grep -q "CONFIG_EMBEDDED_RAMDISK=y" $(LINUXDIR)/.config ; then \
@@ -1164,11 +1256,6 @@ ifeq ($(RTCONFIG_L7PAT),y)
 endif
 
 	busybox/examples/depmod.pl -k $(LINUXDIR)/vmlinux -b $(TARGETDIR)/lib/modules/*/
-ifneq ($(RTCONFIG_BCMARM),y)
-	mv $(TARGETDIR)/lib/modules/$(LINUX_KERNEL)/modules.dep $(TARGETDIR)/lib/modules/
-else
-	mv $(TARGETDIR)/lib/modules/*/modules.dep $(TARGETDIR)/lib/modules/
-endif
 
 ifeq ($(RTCONFIG_ROMCFE),y)
 	-cp $(SRCBASE)/cfe/cfe_`echo $(BUILD_NAME)|tr A-Z a-z`.bin $(TARGETDIR)/rom/cfe
@@ -1338,14 +1425,19 @@ oldconfig oldconf: koldconf roldconf bboldconf
 # overrides and extra dependencies
 #
 
-busybox: dummy
-	@$(MAKE) -C busybox EXTRA_CFLAGS="-fPIC $(EXTRACFLAGS)" $(PARALLEL_BUILD)
+busybox: dummy $(if $(RTCONFIG_PROTECTION_SERVER),protect_srv-stage,)
+	@$(MAKE) -C busybox $(PARALLEL_BUILD) \
+		EXTRA_CFLAGS="-fPIC $(EXTRACFLAGS) -I$(STAGEDIR)/usr/include  \
+			$(if $(RTCONFIG_PROTECTION_SERVER),-DSECURITY_NOTIFY,)" \
+		EXTRA_LDFLAGS="-L$(STAGEDIR)/usr/lib" \
+		EXTRA_LDLIBS="$(if $(RTCONFIG_PROTECTION_SERVER),ptcsrv,)"
 
-# V=1
-
-busybox-install:
-	rm -rf $(INSTALLDIR)/busybox
-	$(MAKE) -C busybox install EXTRA_CFLAGS="-fPIC $(EXTRACFLAGS)" CONFIG_PREFIX=$(INSTALLDIR)/busybox
+busybox-install: $(if $(RTCONFIG_PROTECTION_SERVER),protect_srv-stage,)
+	$(MAKE) -C busybox install CONFIG_PREFIX=$(INSTALLDIR)/busybox \
+		EXTRA_CFLAGS="-fPIC $(EXTRACFLAGS) -I$(STAGEDIR)/usr/include  \
+			$(if $(RTCONFIG_PROTECTION_SERVER),-DSECURITY_NOTIFY,)" \
+		EXTRA_LDFLAGS="-L$(STAGEDIR)/usr/lib" \
+		EXTRA_LDLIBS="$(if $(RTCONFIG_PROTECTION_SERVER),ptcsrv,)"
 	chmod 4755 $(INSTALLDIR)/busybox/bin/busybox
 
 busybox-clean:
@@ -1362,7 +1454,8 @@ ifeq ($(RTCONFIG_BCMARM),y)
 		--disable-debugfs --disable-imager --disable-resizer --disable-defrag --disable-uuidd
 else
 	cd e2fsprogs && CFLAGS="-Os $(EXTRACFLAGS)" \
-	$(CONFIGURE) --prefix=/usr --sysconfdir=/etc --enable-elf-shlibs \
+	$(CONFIGURE) LDFLAGS="$(if $(QCA),-ldl)" \
+		--prefix=/usr --sysconfdir=/etc --enable-elf-shlibs \
 		--disable-tls --disable-rpath --disable-nls \
 		--disable-debugfs --disable-imager --disable-resizer --disable-defrag --disable-uuidd
 endif
@@ -1421,7 +1514,13 @@ infosvr: shared nvram${BCMEX}
 httpd: shared nvram$(BCMEX) libdisk $(if $(RTCONFIG_HTTPS),mssl) $(if $(RTCONFIG_PUSH_EMAIL),push_log) $(if $(RTCONFIG_BWDPI),bwdpi) $(if $(RTCONFIG_BWDPI),bwdpi_sqlite) json-c
 
 	@$(SEP)
+	@-rm -f httpd/prebuild/*.o || true
+	@-cp -f httpd/prebuild/models/$(BUILD_NAME)/* httpd/prebuild/
 	@$(MAKE) -C httpd
+
+httpd_uam: shared nvram$(BCMEX)$(EX7) libdisk $(if $(RTCONFIG_HTTPS),mssl) $(if $(RTCONFIG_PUSH_EMAIL),push_log) $(if $(RTCONFIG_FBWIFI),fb_wifi)
+	@$(SEP)
+	@$(MAKE) -C httpd_uam
 
 bonnie: bonnie/Makefile
 	$(MAKE) CXX=$(CXX) -C bonnie
@@ -1454,10 +1553,10 @@ www-install:
 	@$(MAKE) -C www install INSTALLDIR=$(INSTALLDIR)/www TOMATO_EXPERIMENTAL=$(TOMATO_EXPERIMENTAL)
 
 ifeq ($(RTCONFIG_OPENVPN),y)
-OPENSSL_CIPHERS:=enable-rc5
+OPENSSL_CIPHERS:=enable-rc5 no-rc4
 else
 #OPENSSL_CIPHERS:=no-dh no-idea no-rc2 no-rc5 no-aes no-aes192 no-cast no-des no-modes no-tls1 no-tlsext
-OPENSSL_CIPHERS:=
+OPENSSL_CIPHERS:=no-rc4
 endif
 
 #OPENSSL_CIPHERS:=enable-aes enable-tls1 enable-tlsext
@@ -1473,7 +1572,7 @@ openssl-1.0.0q/Makefile:
 #	no-zlib no-engine no-engines no-sse2 no-perlasm \
 #	no-dtls1 no-store no-psk no-md2 no-mdc2 no-ts
 
-	-@$(MAKE) -C openssl-1.0.0q clean
+	-@$(MAKE) -C openssl-1.0.0q clean depend
 	@touch $@
 
 openssl-1.0.0q: openssl-1.0.0q/Makefile
@@ -1483,7 +1582,7 @@ openssl-1.0.0q-clean:
 	[ ! -f openssl-1.0.0q/Makefile ] || $(MAKE) -C openssl-1.0.0q clean
 	@rm -f openssl-1.0.0q/Makefile
 
-openssl-1.0.0q-install: openssl-1.0.0q
+openssl-1.0.0q-install:
 	install -D openssl-1.0.0q/libcrypto-1.0.0q.so.1.0.0 $(INSTALLDIR)/openssl-1.0.0q/usr/lib/libcrypto-1.0.0q.so.1.0.0
 	$(STRIP) $(INSTALLDIR)/openssl-1.0.0q/usr/lib/libcrypto-1.0.0q.so.1.0.0
 	cd $(INSTALLDIR)/openssl-1.0.0q/usr/lib && ln -sf libcrypto-1.0.0q.so.1.0.0 libcrypto-1.0.0q.so
@@ -1510,7 +1609,7 @@ openssl/Makefile:
 #	no-zlib no-engine no-engines no-sse2 no-perlasm \
 #	no-dtls1 no-store no-psk no-md2 no-mdc2 no-ts
 
-	-@$(MAKE) -C openssl clean
+	-@$(MAKE) -C openssl clean depend
 	@touch $@
 
 openssl: openssl/Makefile
@@ -1520,7 +1619,7 @@ openssl-clean:
 	[ ! -f openssl/Makefile ] || $(MAKE) -C openssl clean
 	@rm -f openssl/Makefile
 
-openssl-install: openssl
+openssl-install:
 	install -D openssl/libcrypto.so.1.0.0 $(INSTALLDIR)/openssl/usr/lib/libcrypto.so.1.0.0
 	$(STRIP) $(INSTALLDIR)/openssl/usr/lib/libcrypto.so.1.0.0
 	cd $(INSTALLDIR)/openssl/usr/lib && ln -sf libcrypto.so.1.0.0 libcrypto.so
@@ -1565,26 +1664,27 @@ mssl:	openssl
 
 mdu:	shared mssl
 
-wb: openssl libxml2 curl-7.21.7
+wb: openssl libxml2 curl
 
 push_log: wb
 
-rc: nvram$(BCMEX) shared libbcmcrypto libdisk $(if $(RTCONFIG_PUSH_EMAIL),push_log) $(if $(RTCONFIG_QTN),libqcsapi_client) $(if $(CONFIG_LIBBCM),libbcm) $(if $(RTCONFIG_BWDPI),bwdpi) $(if $(RTCONFIG_USB_SMS_MODEM),smspdu)
-# Dig into our collection of prebuilt objects based on model and architecture.
+rc: nvram$(BCMEX) shared libbcmcrypto libdisk $(if $(RTCONFIG_FBWIFI),fb_wifi) $(if $(RTCONFIG_PUSH_EMAIL),push_log) $(if $(RTCONFIG_QTN),libqcsapi_client) $(if $(CONFIG_LIBBCM),libbcm) $(if $(RTCONFIG_BWDPI),bwdpi) $(if $(RTCONFIG_USB_SMS_MODEM),smspdu)
+	@$(SEP)
+# Dig into our collection of prebuilt objects based on model
 	@-rm -f rc/prebuild/*.o || true
-ifeq ($(RTCONFIG_BCMARM),y)
-	@-cp -f rc/prebuild/arm/* rc/prebuild/
-else
-	@-cp -f rc/prebuild/mips/* rc/prebuild/
-endif
 	@-cp -f rc/prebuild/models/$(BUILD_NAME)/* rc/prebuild/
 	@$(MAKE) -C rc
 
 networkmap: shared
 
 bridge/stamp-h1:
+ifeq ($(CONFIG_LINUX3_14),y)
+	cd bridge && CFLAGS="-Os -g $(EXTRACFLAGS)" \
+	$(CONFIGURE) --prefix="" --with-linux-headers=$(KDIR)/include
+else
 	cd bridge && CFLAGS="-Os -g $(EXTRACFLAGS)" \
 	$(CONFIGURE) --prefix="" --with-linux-headers=$(LINUXDIR)/include
+endif
 	touch $@
 
 bridge: bridge/stamp-h1
@@ -1723,7 +1823,7 @@ endif
 dnsmasq:  $(if $(RTCONFIG_DNSSEC),nettle,)
 	@$(SEP)
 	@$(MAKE) -C dnsmasq \
-	COPTS="-DHAVE_BROKEN_RTC -DHAVE_LEASEFILE_EXPIRE -DNO_AUTH -DNO_LOOP -DNO_INOTIFY -DNO_GMP \
+	COPTS="-DHAVE_BROKEN_RTC -DHAVE_LEASEFILE_EXPIRE -DNO_AUTH -DNO_INOTIFY -DNO_GMP \
 		$(if $(RTCONFIG_IPV6),-DUSE_IPV6,-DNO_IPV6) \
 		$(if $(RTCONFIG_USB_EXTRAS)||$(RTCONFIG_TR069),,-DNO_SCRIPT) \
 		$(if $(RTCONFIG_USB_EXTRAS),,-DNO_TFTP) \
@@ -1740,7 +1840,7 @@ dnsmasq-install:
 nettle/stamp-h1:
 	@cd nettle && \
 	CPPFLAGS="-I$(TOP)/gmp" \
-	CFLAGS="-Os -Wall $(EXTRACFLAGS) -fPIC -ffunction-sections -fdata-sections" \
+	CFLAGS="-O2 -Wall $(EXTRACFLAGS) -fPIC -ffunction-sections -fdata-sections" \
 	LDFLAGS="-L$(TOP)/gmp/.libs -ffunction-sections -fdata-sections -Wl,--gc-sections -fPIC" \
 	$(CONFIGURE) prefix=$(TOP)/nettle --enable-mini-gmp --disable-documentation --disable-shared
 	@touch nettle/stamp-h1
@@ -1785,6 +1885,42 @@ endif
 iptables-clean:
 	-@$(MAKE) -C iptables KERNEL_DIR=$(LINUXDIR) clean
 
+iptables-1.4.21/configure:
+	cd iptables-1.4.21 && ./autogen.sh
+
+iptables-1.4.21/Makefile: iptables-1.4.21/configure
+	cd iptables-1.4.21 && $(CONFIGURE) \
+		--prefix=/usr \
+		--bindir=/usr/sbin \
+		--libdir=/usr/lib \
+		--with-kernel=$(LINUXDIR) \
+		$(if $(RTCONFIG_IPV6),--enable-ipv6,--disable-ipv6) \
+		CFLAGS="-Os $(EXTRACFLAGS) -U CONFIG_NVRAM_SIZE"
+
+iptables-1.4.21: iptables-1.4.21/Makefile
+	@$(SEP)
+	$(MAKE) -C $@ KERNEL_DIR=$(LINUXDIR) COPT_FLAGS="-Os $(EXTRACFLAGS) -U CONFIG_NVRAM_SIZE"
+
+iptables-1.4.21-install:
+	install -D iptables-1.4.21/iptables/.libs/xtables-multi $(INSTALLDIR)/iptables-1.4.21/usr/sbin/xtables-multi
+	cd $(INSTALLDIR)/iptables-1.4.21/usr/sbin && \
+		ln -sf xtables-multi iptables-restore && \
+		ln -sf xtables-multi iptables-save && \
+		ln -sf xtables-multi iptables
+	install -d $(INSTALLDIR)/iptables-1.4.21/usr/lib/xtables
+	install -D iptables-1.4.21/libiptc/.libs/libiptc.so $(INSTALLDIR)/iptables-1.4.21/usr/lib/libiptc.so
+	install -D iptables-1.4.21/libiptc/.libs/libip4tc.so $(INSTALLDIR)/iptables-1.4.21/usr/lib/libip4tc.so
+	cd $(INSTALLDIR)/iptables-1.4.21/usr/lib && \
+		ln -sf libiptc.so  libiptc.so.0 && \
+		ln -sf libiptc.so  libiptc.so.0.0.0 && \
+		ln -sf libip4tc.so libip4tc.so.0 && \
+		ln -sf libip4tc.so libip4tc.so.0.0.0
+	install -D iptables-1.4.21/libxtables/.libs/lib*.so $(INSTALLDIR)/iptables-1.4.21/usr/lib/
+	cd $(INSTALLDIR)/iptables-1.4.21/usr/lib && \
+		ln -sf libxtables.so libxtables.so.10 && \
+		ln -sf libxtables.so libxtables.so.10.0.0
+	install -D iptables-1.4.21/extensions/*.so $(INSTALLDIR)/iptables-1.4.21/usr/lib/xtables
+
 iptables-1.4.x/configure:
 	cd iptables-1.4.x && ./autogen.sh
 
@@ -1797,11 +1933,13 @@ iptables-1.4.x/Makefile: iptables-1.4.x/configure
 		$(if $(RTCONFIG_IPV6),--enable-ipv6,--disable-ipv6) \
 		CFLAGS="-Os $(EXTRACFLAGS) -U CONFIG_NVRAM_SIZE"
 
-iptables-1.4.x: iptables-1.4.x/Makefile
+iptables-1.4.x: iptables-1.4.x/Makefile libnfnetlink
 	@$(SEP)
-	$(MAKE) -C $@ KERNEL_DIR=$(LINUXDIR) COPT_FLAGS="-Os $(EXTRACFLAGS) -U CONFIG_NVRAM_SIZE"
+	$(MAKE) -C $@ KERNEL_DIR=$(LINUXDIR) COPT_FLAGS="-Os $(EXTRACFLAGS) -U CONFIG_NVRAM_SIZE" \
+		CFLAGS="-Wall -Os -D_GNU_SOURCE $(EXTRACFLAGS) -I$(TOP)/libnfnetlink/include" \
+		LDFLAGS="-L$(TOP)/libnfnetlink/src/.libs -lnfnetlink"
 
-iptables-1.4.x-install: iptables-1.4.x
+iptables-1.4.x-install:
 	install -D iptables-1.4.x/iptables/.libs/xtables-multi $(INSTALLDIR)/iptables-1.4.x/usr/sbin/xtables-multi
 	cd $(INSTALLDIR)/iptables-1.4.x/usr/sbin && \
 		ln -sf xtables-multi iptables-save && \
@@ -1840,13 +1978,32 @@ iptables-1.4.x-clean:
 	[ ! -f iptables-1.4.x/Makefile ] || $(MAKE) -C iptables-1.4.x KERNEL_DIR=$(LINUXDIR) distclean
 	@rm -f iptables-1.4.x/Makefile
 
+libnfnetlink/stamp-h1:
+	cd $(TOP)/libnfnetlink && CC=$(CC) STRIP=$(STRIP) \
+		CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
+		LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
+		$(CONFIGURE) --prefix=/usr --enable-shared --enable-static
+	touch libnfnetlink/stamp-h1
+
+libnfnetlink: libnfnetlink/stamp-h1
+	@$(SEP)
+	$(MAKE) -C libnfnetlink
+
+libnfnetlink-install:
+	install -D libnfnetlink/src/.libs/libnfnetlink.so.0.2.0 $(INSTALLDIR)/libnfnetlink/usr/lib/libnfnetlink.so.0.2.0
+	$(STRIP) -s $(INSTALLDIR)/libnfnetlink/usr/lib/libnfnetlink.so.0.2.0
+	cd $(INSTALLDIR)/libnfnetlink/usr/lib/ && \
+		ln -sf libnfnetlink.so.0.2.0 libnfnetlink.so.0 && \
+		ln -sf libnfnetlink.so.0.2.0 libnfnetlink.so
+
+
 upnp: nvram$(BCMEX) shared $(IPTABLES)
 
 miniupnpd/config.h: shared/version.h
 ifeq ($(RTCONFIG_IGD2),y)
-	cd miniupnpd && ./genconfig.sh --vendorcfg --leasefile $(if $(RTCONFIG_IPV6),--ipv6,) --igd2
+	cd miniupnpd && ./genconfig.sh --vendorcfg --leasefile $(if $(RTCONFIG_IPV6),--ipv6,) --igd2 --portinuse
 else
-	cd miniupnpd && ./genconfig.sh --vendorcfg --leasefile
+	cd miniupnpd && ./genconfig.sh --vendorcfg --leasefile --portinuse
 endif
 
 miniupnpd: $(IPTABLES) e2fsprogs miniupnpd/config.h
@@ -1891,7 +2048,7 @@ miniupnpc-install:
 
 # !!TB
 shared: busybox $(if $(RTCONFIG_QTN),libqcsapi_client) $(if $(RTCONFIG_HTTPS),openssl)
-# Dig into our collection of prebuilt objects based on model and architecture.
+# Dig into our collection of prebuilt objects based on model.
 	@-rm -f shared/prebuild/*.o || true
 	@-cp -f shared/prebuild/models/$(BUILD_NAME)/* shared/prebuild/
 
@@ -1900,7 +2057,7 @@ ifeq ($(RTCONFIG_RALINK)$(RTCONFIG_QCA),y)
 endif
 	$(MAKE) -C shared
 
-ifeq ($(RTCONFIG_FTP_SSL),n)
+ifeq ($(RTCONFIG_FTP_SSL),y)
 ftp_dep=openssl
 else
 	ftp_dep=
@@ -1915,7 +2072,7 @@ else
 endif
 	$(MAKE) -C vsftpd
 
-vsftpd-install: vsftpd
+vsftpd-install:
 	install -D vsftpd/vsftpd $(INSTALLDIR)/vsftpd/usr/sbin/vsftpd
 	$(STRIP) -s $(INSTALLDIR)/vsftpd/usr/sbin/vsftpd
 
@@ -1928,7 +2085,7 @@ else
 endif
 	$(MAKE) -C $@
 
-vsftpd-3.x-install: vsftpd-3.x
+vsftpd-3.x-install:
 	install -D vsftpd-3.x/vsftpd $(INSTALLDIR)/vsftpd-3.x/usr/sbin/vsftpd
 	$(STRIP) -s $(INSTALLDIR)/vsftpd-3.x/usr/sbin/vsftpd
 
@@ -2211,8 +2368,8 @@ p910nd:
 samba:
 samba3:
 	@$(MAKE) -C samba3
-samba36: libiconv-1.14
-	@$(MAKE) -C samba36 $(PARALLEL_BUILD)
+samba-3.6.x: libiconv-1.14
+	@$(MAKE) -C samba-3.6.x $(PARALLEL_BUILD)
 samba-3.5.8:
 	@$(MAKE) -C samba-3.5.8 $(PARALLEL_BUILD)
 
@@ -2350,7 +2507,7 @@ pppd-clean:
 	-@$(MAKE) -C pppd clean
 	@rm -f pppd/stamp-h1
 
-pppd-install: pppd
+pppd-install:
 	install -D pppd/pppd/pppd $(INSTALLDIR)/pppd/usr/sbin/pppd
 	$(STRIP) $(INSTALLDIR)/pppd/usr/sbin/pppd
 	install -D pppd/chat/chat $(INSTALLDIR)/pppd/usr/sbin/chat
@@ -2396,7 +2553,8 @@ quagga-install:
 	libtool --mode=install install -c quagga/watchquagga/watchquagga $(INSTALLDIR)/quagga/usr/sbin
 	$(STRIP) $(INSTALLDIR)/quagga/usr/sbin/zebra
 	$(STRIP) $(INSTALLDIR)/quagga/usr/sbin/ripd
-	$(STRIP) $(INSTALLDIR)/quagga/usr/sbin/watchquagga 
+	$(STRIP) $(INSTALLDIR)/quagga/usr/sbin/watchquagga
+	install -D $(shell dirname $(shell which $(CXX)))/../lib/librt.so.0 $(TARGETDIR)/lib/librt.so.0 
 
 zebra/stamp-h1:
 	@cd zebra && rm -f config.cache && \
@@ -2461,7 +2619,8 @@ gctwimax-0.0.3rc4-clean:
 	@rm -f gctwimax-0.0.3rc4/stamp-h1
 
 wpa_supplicant:
-	$(MAKE) -C $@/wpa_supplicant EXTRACFLAGS="-Os $(EXTRACFLAGS)"
+	$(MAKE) -C $@/wpa_supplicant EXTRACFLAGS="-Os -I$(TOP)/openssl/include -L$(TOP)/openssl $(EXTRACFLAGS)" \
+	LDFLAGS="-L$(TOP)/openssl"
 
 wpa_supplicant-install: wpa_supplicant
 	install -D wpa_supplicant/wpa_supplicant/wpa_supplicant $(INSTALLDIR)/wpa_supplicant/usr/sbin/wpa_supplicant
@@ -2528,6 +2687,31 @@ nt_center-clean:
 	-$(MAKE) -C nt_center clean
 	@rm -f nt_center/stamp-h1
 
+protect_srv/stamp-h1:
+	touch $@
+
+protect_srv-stage:
+	$(MAKE) -C protect_srv/lib
+	install -D protect_srv/lib/libptcsrv.so $(STAGEDIR)/usr/lib/libptcsrv.so
+	install -D -m 644 -p protect_srv/include/protect_srv.h $(STAGEDIR)/usr/include/protect_srv.h
+	install -D -m 644 -p protect_srv/include/libptcsrv.h $(STAGEDIR)/usr/include/libptcsrv.h
+
+protect_srv: shared nvram$(BCMEX) protect_srv/stamp-h1
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+protect_srv-install: protect_srv
+	install -d $(INSTALLDIR)/protect_srv/usr/lib/
+	install -d $(INSTALLDIR)/protect_srv/usr/sbin/
+	install -D protect_srv/lib/libptcsrv.so $(INSTALLDIR)/protect_srv/usr/lib/libptcsrv.so
+	install -D protect_srv/protect_srv $(INSTALLDIR)/protect_srv/usr/sbin/protect_srv
+	install -D protect_srv/Send_Event2ptcsrv $(INSTALLDIR)/protect_srv/usr/sbin/Send_Event2ptcsrv
+	$(STRIP) $(INSTALLDIR)/protect_srv/usr/lib/libptcsrv.so
+	$(STRIP) $(INSTALLDIR)/protect_srv/usr/sbin/protect_srv
+
+protect_srv-clean:
+	-$(MAKE) -C protect_srv clean
+	@rm -f protect_srv/stamp-h1
+
 #	$(STRIP) $(INSTALLDIR)/tr/sbin/*
 
 #	libnet:
@@ -2589,7 +2773,7 @@ libbcm-install:
 	install -D libbcm/libbcm.so $(INSTALLDIR)/libbcm/usr/lib/libbcm.so
 	$(STRIP) $(INSTALLDIR)/libbcm/usr/lib/libbcm.so
 
-.PHONY: libnl-tiny-0.1 swconfig
+.PHONY: libnl-tiny-0.1 $(SWCONFIG_PKG)
 libnl-tiny-0.1:
 	$(MAKE) -C $@
 
@@ -2601,13 +2785,13 @@ libnl-tiny-0.1-install: libnl-tiny-0.1
 	$(STRIP) $(INSTALLDIR)/libnl-tiny-0.1/usr/lib/libnl-tiny.so
 
 swconfig: libnl-tiny-0.1
-	$(MAKE) -C $@
+	$(MAKE) -C $(SWCONFIG_PKG)
 
 swconfig-clean:
-	$(MAKE) -C swconfig clean
+	$(MAKE) -C $(SWCONFIG_PKG) clean
 
 swconfig-install: swconfig
-	install -D swconfig/swconfig $(INSTALLDIR)/swconfig/usr/sbin/swconfig
+	install -D $(SWCONFIG_PKG)/swconfig $(INSTALLDIR)/swconfig/usr/sbin/swconfig
 	$(STRIP) $(INSTALLDIR)/swconfig/usr/sbin/swconfig
 
 iperf: iperf/Makefile
@@ -2652,9 +2836,10 @@ tor/Makefile:
 	(cd tor ; $(CONFIGURE) --enable-static-libevent --with-libevent-dir=$(STAGEDIR)/usr \
 					--with-openssl-dir=$(TOP)/openssl \
 					--with-zlib-dir=$(TOP)/zlib \
-					--disable-asciidoc --disable-unittests)
+					--disable-asciidoc --disable-unittests \
+					--disable-tool-name-check)
 
-tor-install: tor
+tor-install:
 	install -D tor/src/or/tor $(INSTALLDIR)/tor/usr/sbin/Tor
 	$(STRIP) $(INSTALLDIR)/tor/usr/sbin/Tor
 
@@ -2666,19 +2851,23 @@ iproute2:
 	@$(SEP)
 	@$(MAKE) -C $@ KERNEL_INCLUDE=$(LINUXDIR)/include EXTRACFLAGS="$(EXTRACFLAGS) $(if $(RTCONFIG_IPV6),-DUSE_IPV6,-DNO_IPV6)" $(PARALLEL_BUILD)
 
-iproute2-install: iproute2
+iproute2-install:
 	install -D iproute2/tc/tc $(INSTALLDIR)/iproute2/usr/sbin/tc
+	install -D iproute2/tc/tc $(INSTALLDIR)/iproute2/usr/sbin/realtc
 	$(STRIP) $(INSTALLDIR)/iproute2/usr/sbin/tc
+	$(STRIP) $(INSTALLDIR)/iproute2/usr/sbin/realtc
 	install -D iproute2/ip/ip $(INSTALLDIR)/iproute2/usr/sbin/ip
 	$(STRIP) $(INSTALLDIR)/iproute2/usr/sbin/ip
 
 iproute2-3.x: kernel_header iptables-1.4.x
 	@$(SEP)
-	@$(MAKE) -C $@ IPTABLES_DIR=$(TOP)/iptables-1.4.x KERNEL_INCLUDE=$(TOP)/kernel_header/include EXTRACFLAGS="$(EXTRACFLAGS) $(if $(RTCONFIG_IPV6),-DUSE_IPV6,-DNO_IPV6)"
+	@$(MAKE) -C $@ IPTABLES_DIR=$(TOP)/iptables-1.4.x KERNEL_INCLUDE=$(TOP)/kernel_header/include EXTRACFLAGS="$(EXTRACFLAGS) $(if $(RTCONFIG_IPV6),-DUSE_IPV6,-DNO_IPV6)" && $(MAKE) -C $@ stage
 
-iproute2-3.x-install: iproute2-3.x
+iproute2-3.x-install:
 	install -D iproute2-3.x/tc/tc $(INSTALLDIR)/iproute2-3.x/usr/sbin/tc
+	install -D iproute2-3.x/tc/tc $(INSTALLDIR)/iproute2-3.x/usr/sbin/realtc
 	$(STRIP) $(INSTALLDIR)/iproute2-3.x/usr/sbin/tc
+	$(STRIP) $(INSTALLDIR)/iproute2-3.x/usr/sbin/realtc
 	install -D iproute2-3.x/ip/ip $(INSTALLDIR)/iproute2-3.x/usr/sbin/ip
 	$(STRIP) $(INSTALLDIR)/iproute2-3.x/usr/sbin/ip
 	@if [ -e iproute2-3.x/tc/m_xt.so ] ; then \
@@ -2696,9 +2885,11 @@ ntpclient: nvram$(BCMEX) shared
 rstats: nvram$(BCMEX) shared
 
 
-dropbear/config.h: dropbear/config.h.in
-	cd dropbear && CPPFLAGS="-O2 -Wall $(EXTRACFLAGS) -DARGTYPE=3 -ffunction-sections -fdata-sections" \
-		LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
+dropbear/config.h: dropbear/config.h.in $(if $(RTCONFIG_PROTECTION_SERVER),protect_srv-stage,)
+	cd dropbear && \
+		CPPFLAGS="-O2 -Wall $(EXTRACFLAGS) -DARGTYPE=3 -ffunction-sections -fdata-sections -I$(STAGEDIR)/usr/include" \
+		LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections -L$(STAGEDIR)/usr/lib" \
+		LIBS="$(if $(RTCONFIG_PROTECTION_SERVER),-lptcsrv)" \
 		$(CONFIGURE) --disable-zlib --disable-pam \
 		--enable-openpty --enable-syslog --enable-shadow --enable-bundled-libtom \
 		--disable-lastlog \
@@ -2752,13 +2943,18 @@ sqlite-clean:
 	-@$(MAKE) -C sqlite clean
 	@rm -f sqlite/stamp-h1
 
-sqlite-install: sqlite
+sqlite-install:
 	@$(SEP)
 
 # commented out for mt-daapd-svn-1696
 ifneq ($(MEDIA_SERVER_STATIC),y)
 	install -D sqlite/.libs/libsqlite3.so.0 $(INSTALLDIR)/sqlite/usr/lib/libsqlite3.so.0
 	$(STRIP) $(INSTALLDIR)/sqlite/usr/lib/libsqlite3.so.0
+endif
+
+ifeq ($(RTCONFIG_FREERADIUS),y)
+	install -D sqlite/.libs/sqlite3 $(INSTALLDIR)/sqlite/usr/sbin/sqlite3
+	$(STRIP) $(INSTALLDIR)/sqlite/usr/sbin/sqlite3
 endif
 
 FFMPEG_FILTER_CONFIG= $(foreach c, $(2), --$(1)="$(c)")
@@ -2801,7 +2997,7 @@ ffmpeg-clean:
 	-@$(MAKE) -C ffmpeg clean
 	@rm -f ffmpeg/stamp-h1 ffmpeg/config.h ffmpeg/config.mak
 
-ffmpeg-install: ffmpeg
+ffmpeg-install:
 	@$(SEP)
 ifneq ($(MEDIA_SERVER_STATIC),y)
 	install -D ffmpeg/libavformat/libavformat.so.52 $(INSTALLDIR)/ffmpeg/usr/lib/libavformat.so.52
@@ -2826,7 +3022,7 @@ libogg-clean:
 	-@$(MAKE) -C libogg clean
 	@rm -f libogg/stamp-h1
 
-libogg-install: libogg
+libogg-install:
 	@$(SEP)
 ifneq ($(MEDIA_SERVER_STATIC),y)
 	install -D libogg/src/.libs/libogg.so.0 $(INSTALLDIR)/libogg/usr/lib/libogg.so.0
@@ -2850,7 +3046,7 @@ flac-clean:
 	-@$(MAKE) -C flac clean
 	@rm -f flac/stamp-h1
 
-flac-install: flac
+flac-install:
 	@$(SEP)
 ifneq ($(MEDIA_SERVER_STATIC),y)
 	install -D flac/src/libFLAC/.libs/libFLAC.so.8 $(INSTALLDIR)/flac/usr/lib/libFLAC.so.8
@@ -2869,7 +3065,7 @@ jpeg-clean:
 	-@$(MAKE) -C jpeg clean
 	@rm -f jpeg/stamp-h1
 
-jpeg-install: jpeg
+jpeg-install:
 	@$(SEP)
 ifneq ($(MEDIA_SERVER_STATIC),y)
 	install -D jpeg/libjpeg.so $(INSTALLDIR)/jpeg/usr/lib/libjpeg.so
@@ -2890,7 +3086,7 @@ libexif-clean:
 	-@$(MAKE) -C libexif clean
 	@rm -f libexif/stamp-h1
 
-libexif-install: libexif
+libexif-install:
 	@$(SEP)
 ifneq ($(MEDIA_SERVER_STATIC),y)
 	install -D libexif/libexif/.libs/libexif.so.12 $(INSTALLDIR)/libexif/usr/lib/libexif.so.12
@@ -2910,7 +3106,7 @@ zlib-clean:
 	-@$(MAKE) -C zlib clean
 	@rm -f zlib/stamp-h1
 
-zlib-install: zlib
+zlib-install:
 	@$(SEP)
 # commented out for mt-daapd-svn-1696
 ifneq ($(MEDIA_SERVER_STATIC),y)
@@ -2939,7 +3135,7 @@ libid3tag-clean:
 	-@$(MAKE) -C libid3tag clean
 	@rm -f libid3tag/stamp-h1
 
-libid3tag-install: libid3tag
+libid3tag-install:
 	@$(SEP)
 #commented out for mt-daapd-svn-1696
 ifneq ($(MEDIA_SERVER_STATIC),y)
@@ -2965,7 +3161,7 @@ libvorbis-clean:
 	-@$(MAKE) -C libvorbis clean
 	@rm -f libvorbis/stamp-h1
 
-libvorbis-install: libvorbis
+libvorbis-install:
 	@$(SEP)
 ifneq ($(MEDIA_SERVER_STATIC),y)
 	install -D libvorbis/lib/.libs/libvorbis.so.0 $(INSTALLDIR)/libvorbis/usr/lib/libvorbis.so.0
@@ -2974,7 +3170,7 @@ endif
 
 minidlna: zlib sqlite ffmpeg libogg flac jpeg libexif libid3tag libvorbis minidlna/Makefile
 	@$(SEP)
-	@$(MAKE) -C minidlna CC=$(CC) $(PARALLEL_BUILD)
+	@$(MAKE) -C minidlna CC=$(CC) $(if $(RTCONFIG_LIMIT_MEDIA_SERVER),MS_LIMIT=1) $(PARALLEL_BUILD)
 
 minidlna/Makefile: minidlna/configure
 	$(MAKE) minidlna-configure
@@ -2985,7 +3181,7 @@ minidlna/configure:
 minidlna-configure:
 	cd minidlna && \
 	LIBS="-ldl -lm -lpthread -lz -lexif -ljpeg -lsqlite3 -lid3tag -lFLAC -lvorbis -logg -lavformat -lavcodec -lavutil" \
-	CFLAGS="-Os -Wall $(EXTRACFLAGS) -D_GNU_SOURC -D_FILE_OFFSET_BITS=64 -ffunction-sections -fdata-sections \
+	CFLAGS="-Os -Wall $(EXTRACFLAGS) -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -ffunction-sections -fdata-sections \
 		$(if $(RTN65U,y),-DRTN56U=1) $(if $(or $(RTN66U), $(RTAC66U)),-DRTN66U=1)" \
 		$(if $(RTAC68U,y),-I$(SRCBASE)/include) \
 	CPPFLAGS="-I$(TOP)/zlib \
@@ -3031,7 +3227,7 @@ libgdbm-clean:
 	-@$(MAKE) -C libgdbm clean
 	@rm -f libgdbm/stamp-h1
 
-libgdbm-install: libgdbm
+libgdbm-install:
 	@$(SEP)
 ifneq ($(MEDIA_SERVER_STATIC),y)
 	install -D libgdbm/.libs/libgdbm.so.3.0.0 $(INSTALLDIR)/libgdbm/usr/lib/libgdbm.so.3.0.0
@@ -3050,13 +3246,12 @@ mDNSResponder:
 	@$(MAKE) -C mDNSResponder CC=$(CC) all $(PARALLEL_BUILD)
 
 
-igmpproxy/stamp-h1:
+igmpproxy/Makefile:
 	cd igmpproxy && CFLAGS="-O2 -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
 	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
 	$(CONFIGURE) --prefix=/usr --disable-dependency-tracking
-	#touch $@ # will be generated by configure.
 
-igmpproxy: igmpproxy/stamp-h1
+igmpproxy: igmpproxy/Makefile
 	@$(SEP)
 	@$(MAKE) -C igmpproxy/src
 
@@ -3065,22 +3260,19 @@ igmpproxy-install: igmpproxy
 	$(STRIP) $(INSTALLDIR)/igmpproxy/usr/sbin/igmpproxy
 
 igmpproxy-clean:
-	-@$(MAKE) -C igmpproxy/src clean
-	@rm -f igmpproxy/stamp-h1
+	[ ! -f igmpproxy/Makefile ] || $(MAKE) -C igmpproxy distclean
+	@rm -f igmpproxy/Makefile
 
 snooper:
-ifeq ($(RTCONFIG_RALINK),y)
-	@true
-else ifeq ($(RTCONFIG_QCA),y)
+ifeq ($(RTCONFIG_QCA),y)
 	@true
 else
-	$(MAKE) -C snooper SWITCH=broadcom EXTRACFLAGS="-I$(SRCBASE)/include $(EXTRACFLAGS)"
+	$(MAKE) -C snooper EXTRACFLAGS="-I$(SRCBASE)/include $(EXTRACFLAGS)" \
+		SWITCH=$(if $(RTCONFIG_RALINK),ralink,broadcom)
 endif
 
 snooper-install:
-ifeq ($(RTCONFIG_RALINK),y)
-	@true
-else ifeq ($(RTCONFIG_QCA),y)
+ifeq ($(RTCONFIG_QCA),y)
 	@true
 else
 	install -D snooper/snooper $(INSTALLDIR)/snooper/usr/sbin/snooper
@@ -3306,7 +3498,7 @@ igs$(BCMEX)$(EX7)-clean:
 ebtables: kernel_header dummy
 	$(MAKE) -C ebtables CC=$(CC) LD=$(LD) \
 	CFLAGS="-Os $(EXTRACFLAGS) -Wall -Wunused" $(PARALLEL_BUILD) \
-	BINDIR="/usr/sbin" LIBDIR="/usr/lib/ebtables" KERNEL_INCLUDES=$(TOP)/kernel_header/include $(if $(RTCONFIG_IPV6),DO_IPV6=1,) $(if $(RTCONFIG_QCA),USE_ARPNAT=1,)
+	BINDIR="/usr/sbin" LIBDIR="/usr/lib/ebtables" KERNEL_INCLUDES=$(TOP)/kernel_header/include $(if $(RTCONFIG_IPV6),DO_IPV6=1,) $(if $(OLD_QCA),USE_ARPNAT=1,)
 
 ebtables-install: ebtables
 	install -D ebtables/ebtables $(INSTALLDIR)/ebtables/usr/sbin/ebtables
@@ -3338,7 +3530,7 @@ lzo-clean:
 	-@$(MAKE) -C lzo clean
 	@rm -f lzo/stamp-h1
 
-lzo-install: lzo
+lzo-install:
 	install -D lzo/src/.libs/liblzo2.so $(INSTALLDIR)/lzo/usr/lib/liblzo2.so.2
 	$(STRIP) $(INSTALLDIR)/lzo/usr/lib/liblzo2.so.2
 	cd $(INSTALLDIR)/lzo/usr/lib && ln -sf liblzo2.so.2 liblzo2.so
@@ -3356,7 +3548,7 @@ openpam-configure:
 		--without-doc --with-pam-unix \
 	)
 
-openpam-install: openpam
+openpam-install:
 	install -D openpam/lib/libpam/.libs/libpam.so.2.0.0 $(INSTALLDIR)/openpam/usr/lib/libpam.so.2
 	$(STRIP) -s $(INSTALLDIR)/openpam/usr/lib/libpam.so.2
 	install -D openpam/modules/pam_unix/.libs/pam_unix.so.2.0.0 $(INSTALLDIR)/openpam/usr/lib/pam_unix.so
@@ -3377,7 +3569,7 @@ openvpn-configure:
 		export OPENSSL_CRYPTO_LIBS="-L$(TOP)/openssl -lcrypto"; \
 		export OPENSSL_SSL_CFLAGS="-I$(TOP)/openssl"; \
 		export OPENSSL_SSL_LIBS="-L$(TOP)/openssl -lssl"; \
-		CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections $(if $(RTCONFIG_HTTPS),-I$(TOP)/openssl/include/openssl)" \
+		CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections $(if $(RTCONFIG_HTTPS),-I$(TOP)/openssl/include/openssl) -std=gnu99" \
 		LDFLAGS="$(EXTRALDFLAGS) -L$(TOP)/nvram$(BCMEX) -lnvram -L$(TOP)/shared -lshared $(if $(RTCONFIG_QTN),-L$(TOP)/libqcsapi_client -lqcsapi_client) $(if $(RTCONFIG_HTTPS),-L$(TOP)/openssl -lcrypto -lssl) -L$(TOP)/zlib -lz -lpthread -ldl -L$(TOP)/lzo/src/.libs -L$(TOP)/openpam/lib/libpam/.libs -ffunction-sections -fdata-sections -Wl,--gc-sections" \
 		CPPFLAGS="-I$(TOP)/lzo/include -I$(TOP)/openssl/include -I$(TOP)/openpam/include -I$(TOP)/shared -I$(SRCBASE)/include" \
 		IPROUTE="/usr/sbin/ip" IFCONFIG="/sbin/ifconfig" ROUTE="/sbin/route" \
@@ -3392,7 +3584,7 @@ openvpn-clean:
 	[ ! -f openvpn/Makefile ] || $(MAKE) -C openvpn clean
 	@rm -f openvpn/Makefile
 
-openvpn-install: openvpn
+openvpn-install:
 	install -D openvpn/src/openvpn/.libs/openvpn $(INSTALLDIR)/openvpn/usr/sbin/openvpn
 	$(STRIP) -s $(INSTALLDIR)/openvpn/usr/sbin/openvpn
 	chmod 0500 $(INSTALLDIR)/openvpn/usr/sbin/openvpn
@@ -3509,38 +3701,44 @@ nas$(BCMEX)$(EX7): nvram$(BCMEX)
 eapd$(BCMEX)$(EX7)-clean:
 	-@cd eapd$(BCMEX)$(EX7)/linux && make clean
 
-lighttpd-1.4.39/stamp-h1:
+lighttpd-1.4.39/Makefile:
+	@$(SEP)
+#ifneq ($(RTCONFIG_BCMARM),y)
+#	cd lighttpd-1.4.39 && ./autogen.sh
+#endif
+
+lighttpd-1.4.39/stamp-h1: lighttpd-1.4.39/Makefile
+
 ifneq ($(RTCONFIG_QTN),y)
 	cd lighttpd-1.4.39 && ./preconfigure-script touch $@
 else
 	cd lighttpd-1.4.39 && ./preconfigure-script-qtn touch $@
 endif
 
-lighttpd-1.4.39: shared nvram$(BCMEX) libdisk samba-3.5.8 pcre-8.31 libxml2 sqlite libexif openssl lighttpd-1.4.39/stamp-h1
+lighttpd-1.4.39: shared nvram$(BCMEX)$(EX7) libdisk samba-3.5.8 pcre-8.31 libxml2 sqlite libexif openssl lighttpd-1.4.39/stamp-h1
 	$(MAKE) -C lighttpd-1.4.39 $(PARALLEL_BUILD)
 
-lighttpd-1.4.39-install: lighttpd-1.4.39
-	install -D lighttpd-1.4.39/src/.libs/lighttpd $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd
-	install -D lighttpd-1.4.39/src/.libs/lighttpd-monitor $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd-monitor
-	install -D lighttpd-1.4.39/src/.libs/lighttpd-arpping $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd-arpping
-	$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd
-	$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd-monitor
-	$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd-arpping
-
-	install -d $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/
-	install -D lighttpd-1.4.39/src/.libs/*.so $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/
-	install -D samba-3.5.8/source3/bin/libsmbclient.so.0 $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/libsmbclient.so.0
-	install -D sqlite/.libs/libsqlite3.so.0 $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/libsqlite3.so.0
-	install -D libexif/libexif/.libs/libexif.so.12 $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/libexif.so.12
-
-	mkdir -p $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd/css && mkdir -p $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd/js
-	cp -rf  lighttpd-1.4.39/external_file/css/ $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd
-	cp -rf  lighttpd-1.4.39/external_file/js/ $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd
-	cp -f APP-IPK/AiCloud-ipk/CONTROL/control $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd
-	cp -f APP-IPK/SmartSync-ipk/CONTROL/control $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd/smartsync_control
-
-	$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/*.so
-	$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/*.so.0
+lighttpd-1.4.39-install:
+	if [ -f lighttpd-1.4.39/Makefile ] ; then \
+		install -D lighttpd-1.4.39/src/.libs/lighttpd $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd ; \
+		install -D lighttpd-1.4.39/src/.libs/lighttpd-monitor $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd-monitor ; \
+		install -D lighttpd-1.4.39/src/.libs/lighttpd-arpping $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd-arpping ; \
+		$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd ; \
+		$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd-monitor ; \
+		$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.39/usr/sbin/lighttpd-arpping ; \
+		install -d $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/ ; \
+		install -D lighttpd-1.4.39/src/.libs/*.so $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/ ; \
+		install -D samba-3.5.8/source3/bin/libsmbclient.so.0 $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/libsmbclient.so.0 ; \
+		install -D sqlite/.libs/libsqlite3.so.0 $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/libsqlite3.so.0 ; \
+		install -D libexif/libexif/.libs/libexif.so.12 $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/libexif.so.12 ; \
+		mkdir -p $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd/css && mkdir -p $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd/js ; \
+		cp -rf lighttpd-1.4.39/external_file/css/ $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd ; \
+		cp -rf lighttpd-1.4.39/external_file/js/ $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd ; \
+		cp -f APP-IPK/AiCloud-ipk/CONTROL/control $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd ; \
+		cp -f APP-IPK/smartsync-pkg-1.0/CONTROL/control $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd/smartsync_control ; \
+		$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/*.so ; \
+		$(STRIP) -s $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/*.so.0 ; \
+	fi
 
 lighttpd-1.4.39-clean:
 	-@$(MAKE) -C lighttpd-1.4.39 clean
@@ -3555,12 +3753,16 @@ pcre-8.31/stamp-h1:
 
 pcre-8.31: pcre-8.31/stamp-h1
 
-pcre-8.31-install: pcre-8.31
+pcre-8.31-install:
 	@$(SEP)
 	install -D pcre-8.31/.libs/libpcre.so.1.0.1 $(INSTALLDIR)/pcre-8.31/usr/lib/libpcre.so.1.0.1
 	cd $(INSTALLDIR)/pcre-8.31/usr/lib && ln -sf libpcre.so.1.0.1 libpcre.so.1
 	cd $(INSTALLDIR)/pcre-8.31/usr/lib && ln -sf libpcre.so.1.0.1 libpcre.so
 	$(STRIP) -s $(INSTALLDIR)/pcre-8.31/usr/lib/libpcre.so.1.0.1
+	install -D pcre-8.31/.libs/libpcreposix.so.0.0.1 $(INSTALLDIR)/pcre-8.31/usr/lib/libpcreposix.so.0.0.1
+	cd $(INSTALLDIR)/pcre-8.31/usr/lib && ln -sf libpcreposix.so.0.0.1 libpcreposix.so.1
+	cd $(INSTALLDIR)/pcre-8.31/usr/lib && ln -sf libpcreposix.so.0.0.1 libpcreposix.so
+	$(STRIP) -s $(INSTALLDIR)/pcre-8.31/usr/lib/libpcreposix.so.0.0.1
 
 pcre-8.31-clean:
 	-@$(MAKE) -C pcre-8.31 clean
@@ -3575,7 +3777,7 @@ libxml2/stamp-h1:
 libxml2: libxml2/stamp-h1
 	$(MAKE) -C libxml2 all $(PARALLEL_BUILD)
 
-libxml2-install: libxml2
+libxml2-install:
 	@$(SEP)
 	install -D libxml2/.libs/libxml2.so.2 $(INSTALLDIR)/libxml2/usr/lib/libxml2.so.2
 	$(STRIP) $(INSTALLDIR)/libxml2/usr/lib/libxml2.so.2
@@ -3594,7 +3796,7 @@ libiconv-1.14/stamp-h1:
 libiconv-1.14:libiconv-1.14/stamp-h1
 	@$(MAKE) -C libiconv-1.14
 
-libiconv-1.14-install: libiconv-1.14
+libiconv-1.14-install:
 	@$(SEP)
 	install -D libiconv-1.14/lib/.libs/libiconv.so.2.5.1 $(INSTALLDIR)/libiconv-1.14/usr/lib/libiconv.so.2.5.1
 	$(STRIP) $(INSTALLDIR)/libiconv-1.14/usr/lib/libiconv.so.2.5.1
@@ -3614,7 +3816,7 @@ ftpclient/stamp-h1:
 
 ftpclient:ftpclient/stamp-h1
 
-ftpclient-install: ftpclient
+ftpclient-install:
 	@$(SEP)
 	install -D ftpclient/ftpclient $(INSTALLDIR)/ftpclient/usr/sbin/ftpclient
 	$(STRIP) $(INSTALLDIR)/ftpclient/usr/sbin/ftpclient
@@ -3634,7 +3836,7 @@ sambaclient/stamp-h1:
 sambaclient: sambaclient/stamp-h1
 	@$(MAKE) -C sambaclient
 
-sambaclient-install: sambaclient
+sambaclient-install:
 	@$(SEP)
 	install -D sambaclient/sambaclient $(INSTALLDIR)/sambaclient/usr/sbin/sambaclient
 	$(STRIP) $(INSTALLDIR)/sambaclient/usr/sbin/sambaclient
@@ -3655,7 +3857,7 @@ usbclient/stamp-h1:
 usbclient: usbclient/stamp-h1
 	@$(MAKE) -C usbclient
 
-usbclient-install: usbclient
+usbclient-install:
 	@$(SEP)
 	install -D usbclient/usbclient $(INSTALLDIR)/usbclient/usr/sbin/usbclient
 	$(STRIP) $(INSTALLDIR)/usbclient/usr/sbin/usbclient
@@ -3668,6 +3870,39 @@ endif
 usbclient-clean:
 	-@$(MAKE) -C usbclient clean
 	rm -rf usbclient/stamp-h1
+
+##strongswan/IPSEC
+strongswan-5.2.1/stamp-h1:
+	cd strongswan-5.2.1 && \
+	touch configure.ac aclocal.m4 configure Makefile.am Makefile.in  && \
+	$(CONFIGURE) CC=$(CC) \
+	--prefix=/usr/ --sysconfdir=/etc/ --localstatedir=/var/ \
+	--bindir=/usr/sbin --libdir=/usr/lib \
+	--libexecdir=/usr/lib --with-ipsecdir=/usr/lib/ipsec --with-user=admin \
+	--disable-gmp --enable-openssl --enable-agent --enable-eap-peap \
+	--enable-eap-md5 --enable-eap-mschapv2 --enable-eap-identity \
+	--with-strongswan-conf=/etc/strongswan.conf --enable-md4 --enable-acert \
+	--enable-cmd --enable-eap-tls --enable-libipsec \
+	CFLAGS='-I$(STAGEDIR)/usr/include -I$(TOP)/openssl/include' \
+	LDFLAGS='-L$(STAGEDIR)/usr/lib -L$(TOP)/openssl' \
+	LIBS='-lssl -lcrypto -lpthread -ldl -lm' \
+	touch $@
+
+strongswan-5.2.1: strongswan-5.2.1/stamp-h1
+	$(MAKE) -C strongswan-5.2.1
+
+strongswan-5.2.1-install: strongswan-5.2.1
+	@$(SEP)
+	@$(MAKE) -C strongswan-5.2.1 install DESTDIR=$(INSTALLDIR)/strongswan-5.2.1/
+	mv $(INSTALLDIR)/strongswan-5.2.1/etc $(INSTALLDIR)/strongswan-5.2.1/usr/
+
+strongswan-5.2.1-clean:
+	-@$(MAKE) -C strongswan-5.2.1 clean
+	@rm -f strongswan-5.2.1/stamp-h1
+	@rm -rf $(INSTALLDIR)/strongswan-5.2.1/
+	@rm -rf $(TARGETDIR)/usr/sbin/strongswan-5.2.1/*
+	@rm -rf $(TARGETDIR)/usr/lib/strongswan-5.2.1/*
+
 
 #add by alan 
 #add install neon 
@@ -3689,7 +3924,7 @@ neon/stamp-h1 neon/config.h:
 neon: libxml2 neon/stamp-h1 neon/config.h
 	$(MAKE) -C neon && $(MAKE) $@-stage
 
-neon-install: neon
+neon-install:
 	@$(SEP)
 	install -D neon/src/.libs/libneon.so.27.2.6 $(INSTALLDIR)/neon/usr/lib/libneon.so.27.2.6
 	$(STRIP) $(INSTALLDIR)/neon/usr/lib/libneon.so.27.2.6
@@ -3709,7 +3944,7 @@ webdav_client$(BCMEX)/stamp-h1:
 webdav_client$(BCMEX): webdav_client$(BCMEX)/stamp-h1 nvram$(BCMEX) zlib libxml2 neon
 	@$(MAKE) -C webdav_client$(BCMEX)
 
-webdav_client$(BCMEX)-install: webdav_client$(BCMEX)
+webdav_client$(BCMEX)-install:
 	@$(SEP)
 	install -D webdav_client$(BCMEX)/webdav_client $(INSTALLDIR)/webdav_client$(BCMEX)/usr/sbin/webdav_client
 	$(STRIP) $(INSTALLDIR)/webdav_client$(BCMEX)/usr/sbin/webdav_client
@@ -3718,36 +3953,61 @@ webdav_client$(BCMEX)-clean:
 	-@$(MAKE) -C webdav_client$(BCMEX) clean
 	rm -rf webdav_client$(BCMEX)/stamp-h1
 
+#fbwifi
+fb_wifi/stamp-h1:
+	touch $@
+
+fb_wifi: curl-7.21.7 fb_wifi/stamp-h1
+	@$(MAKE) -C fb_wifi
+
+fb_wifi-install: fb_wifi
+	@$(SEP)
+	install -D fb_wifi/fb_wifi_check $(INSTALLDIR)/fb_wifi/usr/sbin/fb_wifi_check
+	install -D fb_wifi/fb_wifi_register $(INSTALLDIR)/fb_wifi/usr/sbin/fb_wifi_register
+	install -D fb_wifi/libfbwifi.so $(INSTALLDIR)/fb_wifi/usr/lib/libfbwifi.so
+	$(STRIP) $(INSTALLDIR)/fb_wifi/usr/sbin/fb_wifi_check
+	$(STRIP) $(INSTALLDIR)/fb_wifi/usr/sbin/fb_wifi_register
+	$(STRIP) $(INSTALLDIR)/fb_wifi/usr/lib/libfbwifi.so
+
+fb_wifi-clean:
+	-@$(MAKE) -C fb_wifi clean
+	rm -rf fb_wifi/stamp-h1
+
 #add by gauss
 #add install libcurl
-curl-7.21.7: curl-7.21.7/Makefile
+curl: curl/Makefile
 	@$(MAKE) -C $@ $(PARALLEL_BUILD) && $(MAKE) $@-stage
 
-+curl-7.21.7/Makefile: curl-7.21.7/configure
-	@cd curl-7.21.7 && $(CONFIGURE) CC=$(CC) \
+curl/Makefile: curl/configure
+	@cd curl && $(CONFIGURE) CC=$(CC) \
+		CFLAGS="-Os -Wall -ffunction-sections -fdata-sections" \
 		--prefix=/usr --bindir=/usr/sbin --libdir=/usr/lib \
-		--enable-http --with-ssl=$(TOP)/openssl LDFLAGS="-ldl" \
-		--with-ca-bundle=/rom/ca-bundle.crt \
-	)
+		--enable-http --with-ssl=$(TOP)/openssl/ssl \
+		$(if $(RTCONFIG_IPV6),--enable-ipv6) \
+		--disable-gopher --disable-dict --disable-telnet \
+		--disable-proxy --disable-manual --disable-libcurl-option \
+		CPPFLAGS='-I$(TOP)/openssl/include' \
+		LDFLAGS='$(LDFLAGS) -L$(TOP)/openssl' LIBS='-lcrypto -lssl -ldl' \
+		--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt
 
-curl-7.21.7-install: curl-7.21.7
+curl-install:
 	@$(SEP)
-	install -D curl-7.21.7/lib/.libs/libcurl.so.4.2.0 $(INSTALLDIR)/curl-7.21.7/usr/lib/libcurl.so.4.2.0
-	$(STRIP) $(INSTALLDIR)/curl-7.21.7/usr/lib/libcurl.so.4.2.0
-	cd $(INSTALLDIR)/curl-7.21.7/usr/lib && ln -sf libcurl.so.4.2.0 libcurl.so && ln -sf libcurl.so.4.2.0 libcurl.so.4
+	install -D curl/lib/.libs/libcurl.so.4.4.0 $(INSTALLDIR)/curl/usr/lib/libcurl.so.4.4.0
+	$(STRIP) $(INSTALLDIR)/curl/usr/lib/libcurl.so.4.4.0
+	cd $(INSTALLDIR)/curl/usr/lib && ln -sf libcurl.so.4.4.0 libcurl.so && ln -sf libcurl.so.4.4.0 libcurl.so.4
 #ifeq ($(RTCONFIG_SPEEDTEST),y)
 	# for speedtest
-	install -D curl-7.21.7/src/.libs/curl $(INSTALLDIR)/curl-7.21.7/usr/sbin/curl
-	$(STRIP) $(INSTALLDIR)/curl-7.21.7/usr/sbin/curl
+	install -D curl/src/.libs/curl $(INSTALLDIR)/curl/usr/sbin/curl
+	$(STRIP) $(INSTALLDIR)/curl/usr/sbin/curl
 #endif
 
-curl-7.21.7-clean:
-	[ ! -f curl-7.21.7/Makefile ] || $(MAKE) -C curl-7.21.7 clean
-	@rm -f curl-7.21.7/Makefile
+curl-clean:
+	[ ! -f curl/Makefile ] || $(MAKE) -C curl clean
+	@rm -f curl/Makefile
 
-#snmp with asus mib and openssl 1.0.0
-net-snmp-5.7.2/stamp-h1: shared nvram$(BCMEX) $(if $(RTCONFIG_QTN),libqcsapi_client) libnmp
-	cd $(TOP)/net-snmp-5.7.2 && $(CONFIGURE) --prefix=$(INSTALLDIR)/net-snmp-5.7.2/usr --disable-embedded-perl --with-perl-modules=no --disable-debugging --enable-mini-agent --with-transports=UDP --without-kmem-usage --disable-applications --disable-mib-loading --disable-scripts --disable-mibs --disable-manuals --with-openssl=$(TOP)/openssl --with-ldflags="$(if $(RTCONFIG_QTN),-L$(TOP)/libqcsapi_client -lqcsapi_client) -L$(TOP)/openssl -L$(TOP)/nvram$(BCMEX) -L$(TOP)/shared -L$(TOP)/libnmp" --with-libs="-lnvram -lshared -lnmp $(EXTRA_FLAG)" --with-cflags="$(SNMPD_CFLAGS) -I$(TOP)/libnmp" --with-default-snmp-version="3" --with-sys-location=Unknown --with-logfile=/var/log/snmpd.log --with-persistent-directory=/var/net-snmp --with-sys-contact=root@localhost --enable-static=no --with-mib-modules="\
+#snmp
+net-snmp-5.7.2/stamp-h1:
+	cd $(TOP)/net-snmp-5.7.2 && $(CONFIGURE) --prefix=$(INSTALLDIR)/net-snmp-5.7.2/usr --disable-embedded-perl --with-perl-modules=no --disable-debugging --enable-mini-agent --with-transports=UDP --without-kmem-usage --disable-applications --disable-mib-loading --disable-scripts --disable-mibs --disable-manuals --with-openssl=$(TOP)/openssl --with-ldflags="-L$(TOP)/openssl" --with-libs="$(EXTRA_FLAG)" --with-cflags="$(SNMPD_CFLAGS)" --with-default-snmp-version="3" --with-sys-location=Unknown --with-logfile=/var/log/snmpd.log --with-persistent-directory=/var/net-snmp --with-sys-contact=root@localhost --enable-static=no --with-mib-modules="\
 	host/hr_device,\
 	host/hr_disk,\
 	host/hr_filesys,\
@@ -3813,7 +4073,7 @@ dropbox_client/stamp-h1:
 dropbox_client: dropbox_client/stamp-h1
 	@$(MAKE) -C dropbox_client
 
-dropbox_client-install: dropbox_client
+dropbox_client-install:
 	@$(SEP)
 	install -D dropbox_client/dropbox_client $(INSTALLDIR)/dropbox_client/usr/sbin/dropbox_client
 	$(STRIP) $(INSTALLDIR)/dropbox_client/usr/sbin/dropbox_client
@@ -3856,7 +4116,7 @@ libgpg-error-1.10: libgpg-error-1.10/stamp-h1
 	@$(SEP)
 	@$(MAKE) -C libgpg-error-1.10
 
-libgpg-error-1.10-install: libgpg-error-1.10
+libgpg-error-1.10-install:
 	install -D libgpg-error-1.10/src/.libs/libgpg-error.so.0.8.0 $(INSTALLDIR)/libgpg-error-1.10/usr/lib/libgpg-error.so.0.8.0
 	$(STRIP) $(INSTALLDIR)/libgpg-error-1.10/usr/lib/libgpg-error.so.0.8.0
 	cd $(INSTALLDIR)/libgpg-error-1.10/usr/lib && ln -sf libgpg-error.so.0.8.0 libgpg-error.so.0
@@ -3876,7 +4136,7 @@ libgcrypt-1.5.1: libgcrypt-1.5.1/stamp-h1
 	@$(SEP)
 	@$(MAKE) -C libgcrypt-1.5.1
 
-libgcrypt-1.5.1-install: libgcrypt-1.5.1
+libgcrypt-1.5.1-install:
 	install -D libgcrypt-1.5.1/src/.libs/libgcrypt.so.11.8.0 $(INSTALLDIR)/libgcrypt-1.5.1/usr/lib/libgcrypt.so.11.8.0
 	$(STRIP) $(INSTALLDIR)/libgcrypt-1.5.1/usr/lib/libgcrypt.so.11.8.0
 	cd $(INSTALLDIR)/libgcrypt-1.5.1/usr/lib && ln -sf libgcrypt.so.11.8.0 libgcrypt.so.11
@@ -3919,7 +4179,7 @@ db-4.8.30: db-4.8.30/build_unix/stamp-h1
 	@$(SEP)
 	@$(MAKE) -C db-4.8.30/build_unix $(PARALLEL_BUILD)
 
-db-4.8.30-install: db-4.8.30
+db-4.8.30-install:
 	install -D db-4.8.30/build_unix/.libs/libdb-4.8.so $(INSTALLDIR)/db-4.8.30/usr/lib/libdb-4.8.so
 	$(STRIP) $(INSTALLDIR)/db-4.8.30/usr/lib/libdb-4.8.so
 	cd $(INSTALLDIR)/db-4.8.30/usr/lib && ln -sf libdb-4.8.so libdb.so
@@ -3950,6 +4210,7 @@ netatalk-3.0.5/stamp-h1: openssl libgcrypt-1.5.1 db-4.8.30
 	--without-kerberos \
 	--with-bdb=$(TOP)/db-4.8.30/build_unix \
 	--prefix=$(INSTALLDIR)/netatalk-3.0.5/usr \
+	--with-dtrace=no \
 	--program-prefix= \
 	--with-ssl-dir=$(TOP)/openssl \
 	--disable-static \
@@ -3962,7 +4223,7 @@ netatalk-3.0.5: netatalk-3.0.5/stamp-h1
 	@touch netatalk-3.0.5/configure
 	@$(MAKE) -C netatalk-3.0.5 $(PARALLEL_BUILD)
 
-netatalk-3.0.5-install: netatalk-3.0.5
+netatalk-3.0.5-install:
 	install -D netatalk-3.0.5/etc/afpd/.libs/afpd $(INSTALLDIR)/netatalk-3.0.5/usr/sbin/afpd
 	install -D netatalk-3.0.5/etc/cnid_dbd/.libs/cnid_dbd $(INSTALLDIR)/netatalk-3.0.5/usr/sbin/cnid_dbd
 	install -D netatalk-3.0.5/etc/cnid_dbd/.libs/cnid_metad $(INSTALLDIR)/netatalk-3.0.5/usr/sbin/cnid_metad
@@ -4008,7 +4269,7 @@ expat-2.0.1: expat-2.0.1/stamp-h1
 	@$(SEP)
 	@$(MAKE) -C expat-2.0.1 $(PARALLEL_BUILD) && $(MAKE) $@-stage
 
-expat-2.0.1-install: expat-2.0.1
+expat-2.0.1-install:
 	install -D expat-2.0.1/.libs/libexpat.so.1.5.2 $(INSTALLDIR)/expat-2.0.1/usr/lib/libexpat.so.1.5.2
 	$(STRIP) $(INSTALLDIR)/expat-2.0.1/usr/lib/libexpat.so.1.5.2
 	cd $(INSTALLDIR)/expat-2.0.1/usr/lib && ln -sf libexpat.so.1.5.2 libexpat.so.1
@@ -4037,7 +4298,7 @@ avahi-0.6.31-configure:
 		LIBDAEMON_CFLAGS="-I$(TOP)/libdaemon" --disable-autoipd --with-xml=expat --disable-stack-protector --with-avahi-user="admin" --with-avahi-group="root" \
 	)
 
-avahi-0.6.31-install: avahi-0.6.31
+avahi-0.6.31-install:
 	install -D avahi-0.6.31/avahi-daemon/.libs/avahi-daemon $(INSTALLDIR)/avahi-0.6.31/usr/sbin/avahi-daemon
 	install -D avahi-0.6.31/avahi-common/.libs/libavahi-common.so.3.5.3 $(INSTALLDIR)/avahi-0.6.31/usr/lib/libavahi-common.so.3.5.3
 	install -D avahi-0.6.31/avahi-core/.libs/libavahi-core.so.7.0.2 $(INSTALLDIR)/avahi-0.6.31/usr/lib/libavahi-core.so.7.0.2
@@ -4077,25 +4338,6 @@ ufsd: kernel_header kernel
 
 ufsd-install: ufsd
 	@$(MAKE) -C ufsd install INSTALLDIR=$(INSTALLDIR)/ufsd
-
-wol/stamp-h1:
-	cd $(TOP)/wol && jm_cv_func_working_malloc=yes \
-	CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
-	$(CONFIGURE) --host=mips --prefix=$(INSTALLDIR)/wol CC=mipsel-uclibc-gcc STRIP=mipsel-uclibc-strip \
-	AR=mipsel-uclibc-ar LD=mipsel-uclibc-ld NM=mipsel-uclibc-nm RANLIB=mipsel-uclibc-ranlib
-	@touch $@
-
-wol: wol/stamp-h1
-	@$(SEP)
-	jm_cv_func_working_malloc=yes $(MAKE) -C $@
-
-wol-clean:
-	-@$(MAKE) -C wol distclean
-	@rm -f wol/stamp-h1
-
-wol-install: wol
-	install -D wol/src/wol $(INSTALLDIR)/wol/usr/sbin/wol
-	$(STRIP) $(INSTALLDIR)/wol/usr/sbin/wol
 
 netstat-nat-clean:
 	-@$(MAKE) -C netstat-nat clean
@@ -4167,6 +4409,118 @@ ipset-install:
 	$(STRIP) $(INSTALLDIR)/ipset/usr/lib/*.so
 	$(STRIP) $(INSTALLDIR)/ipset/usr/sbin/ipset
 
+ncurses/Makefile:
+	cd ncurses && CFLAGS="$(EXTRACFLAGS) -Os -I$(STAGEDIR)/usr/include -ffunction-sections -fdata-sections -fPIC" \
+	$(CONFIGURE) --prefix=/usr --without-cxx --without-cxx-binding \
+	LDFLAGS="$(LDFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections -L$(STAGEDIR)/usr/lib" \
+	--enable-echo --enable-const --enable-overwrite --disable-rpath --without-ada \
+	$(if $(RTCONFIG_BCMARM),--enable-widec,) \
+	--without-debug --without-manpages --without-profile --without-progs --without-tests \
+	--disable-home-terminfo --with-normal --with-shared --with-build-cppflags=-D_GNU_SOURCE \
+	--enable-pc-files \
+	--disable-termcap --disable-database --with-fallbacks="xterm,vt100,vt200,linux,ansi,xterm-256color"
+
+#	--with-default-terminfo-dir=/usr/share/terminfo --with-terminfo-dirs=/usr/share/terminfo
+
+ncurses: ncurses/Makefile
+	@$(SEP)
+	cd ncurses && $(MAKE) -C ncurses && $(MAKE) -C misc pc-files
+
+ncurses-clean:
+	-@$(MAKE) -C ncurses distclean
+	@rm -f ncurses/Makefile
+
+ncurses-install:
+ifeq ($(RTCONFIG_BCMARM),y)
+	install -D ncurses/lib/libncursesw.so.6.0 $(INSTALLDIR)/ncurses/usr/lib/libncursesw.so.6.0
+else
+	install -D ncurses/lib/libncurses.so.6.0 $(INSTALLDIR)/ncurses/usr/lib/libncurses.so.6.0
+endif
+
+	$(STRIP) $(INSTALLDIR)/ncurses/usr/lib/*.so.*
+
+ifeq ($(RTCONFIG_BCMARM),y)
+	cd $(INSTALLDIR)/ncurses/usr/lib && ln -sf libncursesw.so.6.0 libncursesw.so.6
+else
+	cd $(INSTALLDIR)/ncurses/usr/lib && ln -sf libncurses.so.6.0 libncurses.so.6
+endif
+
+
+nano/Makefile:
+	cd nano && \
+	autoreconf -i -f && $(CONFIGURE) --prefix=$(INSTALLDIR)/nano/usr \
+		CFLAGS="$(EXTRACFLAGS) -Os -I$(TOP)/ncurses/include -ffunction-sections -fdata-sections" \
+		LDFLAGS="$(LDFLAGS) -L$(TOP)/ncurses/lib -ffunction-sections -fdata-sections -Wl,--gc-sections" \
+		PKG_CONFIG_LIBDIR="$(TOP)/ncurses/misc" PKG_CONFIG_PATH="$(TOP)/ncurses/misc" \
+		$(if $(RTCONFIG_BCMARM),ac_cv_lib_ncursesw_get_wch=yes,ac_cv_lib_ncursesw_get_wch=no) \
+		$(if $(RTCONFIG_BCMARM),--enable-utf8,--enable-tiny) \
+		--disable-speller --disable-extra --disable-tabcomp --enable-wrapping --disable-glibtest \
+		--disable-libmagic --disable-nls
+
+nano-clean:
+	-@$(MAKE) -C nano distclean
+	@rm -f nano/Makefile
+
+nano-install:
+	@$(MAKE) -C nano install-exec INSTALLDIR=$(INSTALLDIR)/nano/usr/bin/nano
+	$(STRIP) $(INSTALLDIR)/nano/usr/bin/nano
+
+nano: ncurses nano/Makefile
+	@$(SEP)
+	$(MAKE) -C $@
+
+libmnl/stamp-h1:
+	cd $(TOP)/libmnl && CC=$(CC) STRIP=$(STRIP) \
+	CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
+	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
+	$(CONFIGURE) --prefix=/usr
+	touch libmnl/stamp-h1
+
+libmnl: libmnl/stamp-h1
+	$(MAKE) -C libmnl
+	$(MAKE) -C libmnl DESTDIR=$(TOP)/libmnl/staged install
+
+libmnl-install: libmnl
+	install -d $(INSTALLDIR)/libmnl/usr/lib/
+	install libmnl/src/.libs/libmnl.so.0.1.0 $(INSTALLDIR)/libmnl/usr/lib/libmnl.so.0.1.0
+	$(STRIP) $(INSTALLDIR)/libmnl/usr/lib/libmnl.so.0.1.0
+	cd $(INSTALLDIR)/libmnl/usr/lib/ && \
+		ln -sf libmnl.so.0.1.0 libmnl.so.0 && \
+		ln -sf libmnl.so.0.1.0 libmnl.so
+
+libmnl-clean:
+	-@$(MAKE) -C libmnl clean
+	-@rm -rf libmnl/staged
+
+ipset_arm/stamp-h1: libmnl
+	cd $(TOP)/ipset_arm && CC=$(CC) STRIP=$(STRIP) \
+	autoreconf -i -f && \
+	CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
+	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
+	libmnl_CFLAGS="-I$(TOP)/libmnl/staged/usr/include" \
+	libmnl_LIBS="-L$(TOP)/libmnl/staged/usr/lib -lmnl" \
+	$(CONFIGURE) --prefix=/usr --with-kmod=yes --with-kbuild=$(LINUXDIR)
+	touch ipset_arm/stamp-h1
+
+ipset_arm: ipset_arm/stamp-h1
+	$(MAKE) -C ipset_arm
+	$(MAKE) -C ipset_arm modules
+
+ipset_arm-install:
+	install -D ipset_arm/src/ipset $(INSTALLDIR)/ipset_arm/usr/sbin/ipset
+	install -d $(INSTALLDIR)/ipset_arm/usr/lib/
+	install ipset_arm/lib/.libs/libipset.so.3.6.0 $(INSTALLDIR)/ipset_arm/usr/lib/libipset.so.3.6.0
+	$(STRIP) $(INSTALLDIR)/ipset_arm/usr/lib/libipset.so.3.6.0
+	$(STRIP) $(INSTALLDIR)/ipset_arm/usr/sbin/ipset
+	cd $(INSTALLDIR)/ipset_arm/usr/lib/ && \
+		ln -sf libipset.so.3.6.0 libipset.so.3 && \
+		ln -sf libipset.so.3.6.0 libipset.so
+
+ipset_arm-clean:
+	-@$(MAKE) -C ipset_arm clean
+	-@$(MAKE) -C ipset_arm modules_clean
+	-@rm -rf ipset_arm/Makefile ipset_arm/stamp-h1
+
 tftp:
 	cd tftp && CC=$(CC) && $(MAKE)
 
@@ -4199,6 +4553,246 @@ traffic_limiter-clean:
 	cd traffic_limiter && $(MAKE) clean
 
 traffic_limiter-install: traffic_limiter
+
+#chillispot
+chillispot/stamp-h1:
+	cd chillispot && \
+	$(CONFIGURE) CC=$(CC) \
+	CFLAGS="-g -Os -pipe -funit-at-a-time -Drpl_malloc=malloc -I$(SRCBASE) -I$(SRCBASE)/include -I. -I$(TOP)/shared" \
+	LDFLAGS="-lgcc_s -L$(TOP)/nvram${BCMEX} -L$(TOP)/shared -lshared" \
+	LIBS="-lnvram"
+	#$(CONFIGURE) CC=$(CC) CFLAGS="-g -Os -pipe -funit-at-a-time -Drpl_malloc=malloc"
+	#touch $@
+
+chillispot: chillispot/stamp-h1
+	@$(MAKE) -C chillispot
+
+chillispot-install: chillispot
+	@$(SEP)
+	install -D chillispot/src/chilli $(INSTALLDIR)/chillispot/usr/sbin/chilli
+	$(STRIP) $(INSTALLDIR)/chillispot/usr/sbin/chilli
+
+chillispot-clean:
+	-@$(MAKE) -C chillispot clean 
+
+#coovachilli
+coovachilli/stamp-h1:
+	cd coovachilli && autoreconf -fi && \
+	$(CONFIGURE) CC=$(CC) --prefix="" --exec_prefix=/usr --enable-shared=no --with-openssl --without-ipv6 \
+	CFLAGS="-g -Os -pipe -funit-at-a-time -Drpl_malloc=malloc -I$(SRCBASE) -I$(SRCBASE)/include -I. -I$(TOP)/shared -I$(SRCBASE)/router/openssl/include" \
+	LDFLAGS="-lgcc_s -L$(TOP)/nvram${BCMEX} -L$(TOP)/shared -lshared -L$(SRCBASE)/router/openssl" \
+	LIBS="-lnvram -lcrypto -lssl $(if $(RTCONFIG_QCA), -ldl)"
+
+	#$(CONFIGURE) CC=$(CC) CFLAGS="-g -Os -pipe -funit-at-a-time -Drpl_malloc=malloc" --prefix="" --exec_prefix=/usr --enable-shared=no --with-openssl --without-ipv6
+
+
+coovachilli:coovachilli/stamp-h1
+	@$(MAKE) -C coovachilli
+
+coovachilli-install:coovachilli
+	@$(SEP)
+	install -D coovachilli/src/chilli $(INSTALLDIR)/coovachilli/usr/sbin/chilli
+	install -D coovachilli/src/chilli_opt $(INSTALLDIR)/coovachilli/usr/sbin/chilli_opt
+	install -D coovachilli/src/chilli_query $(INSTALLDIR)/coovachilli/usr/sbin/chilli_query
+	install -D coovachilli/src/chilli_radconfig $(INSTALLDIR)/coovachilli/usr/sbin/chilli_radconfig
+	install -D coovachilli/src/chilli_response $(INSTALLDIR)/coovachilli/usr/sbin/chilli_response
+	$(STRIP) $(INSTALLDIR)/coovachilli/usr/sbin/*
+
+coovachilli-clean:
+	-@$(MAKE) -C coova-chilli-1.3.0 clean
+
+ #
+
+#talloc
+talloc/stamp-h1:
+	cd talloc-2.1.1 && \
+	CC=$(CC) ./configure --without-gettext  --cross-compile --cross-answers=arm1.txt
+	#touch $@
+
+talloc: talloc/stamp-h1
+	@$(MAKE) -C talloc-2.1.1
+	cd $(TOP)/talloc-2.1.1/bin/default && ln -sf libtalloc.so libtalloc.so.2
+
+talloc-install:talloc
+	@$(SEP)
+	install -D talloc-2.1.1/bin/default/libtalloc.so $(INSTALLDIR)/talloc/usr/lib/libtalloc.so
+	$(STRIP) $(INSTALLDIR)/talloc/usr/lib/libtalloc.so
+	cd $(INSTALLDIR)/talloc/usr/lib && ln -sf libtalloc.so libtalloc.so.2
+
+talloc-clean:
+	-@$(MAKE) -C talloc-2.1.1 clean
+
+#freeradius
+freeradius/stamp-h1:
+	cd freeradius-server-3.0.0 && \
+	ln -sf /usr/share/libtool/config/config.guess config.guess && \
+	ln -sf /usr/share/libtool/config/config.sub config.sub && \
+	$(CONFIGURE) CC=$(CC)  CFLAGS="-I$(SRCBASE) -I$(SRCBASE)/include -I$(TOP)/pcrc-8.31" \
+	LDFLAGS="-L$(TOP)/pcre-8.31/.libs -lpcre -L$(TOP)/talloc-2.1.1/bin/default -Wl,-rpath=$(TOP)/talloc-2.1.1/bin/default -lpthread -ldl" \
+	--prefix=/usr/freeradius --datarootdir=/usr/freeradius/share --with-raddbdir=/usr/freeradius/raddb \
+	--with-openssl-includes=$(TOP)/openssl/include --with-openssl-libraries=$(TOP)/openssl \
+	--with-talloc-lib-dir=$(TOP)/talloc-2.1.1/bin/default --with-talloc-include-dir=$(TOP)/talloc-2.1.1 \
+	--with-sqlite-lib-dir=$(TOP)/sqlite/.libs --with-sqlite-include-dir=$(TOP)/sqlite \
+	--with-pcre-lib-dir=$(TOP)/pcre-8.31/.libs  --with-pcre-include-dir=$(TOP)/pcrc-8.31
+	#touch $@
+freeradius:freeradius/stamp-h1
+	@$(MAKE) -C freeradius-server-3.0.0
+
+freeradius-install:
+	@$(SEP)
+	install -D freeradius-server-3.0.0/build/bin/radiusd $(INSTALLDIR)/freeradius/usr/sbin/radiusd
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/sbin/radiusd
+	mkdir -p $(INSTALLDIR)/freeradius/usr/freeradius/lib
+	mkdir -p $(INSTALLDIR)/freeradius/usr/freeradius/share/freeradius && mkdir -p $(INSTALLDIR)/freeradius/usr/freeradius/raddb
+	mkdir -p $(INSTALLDIR)/freeradius/usr/freeradius/raddb/certs
+	mkdir -p $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available
+	mkdir -p $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-config/attr_filter
+	mkdir -p $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-config/preprocess
+	mkdir -p $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-config/files
+	mkdir -p $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-config/sql/cui/sqlite
+	mkdir -p $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-config/sql/ippool/sqlite
+	mkdir -p $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-config/sql/ippool-dhcp/sqlite
+	mkdir -p $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-config/sql/main/sqlite
+	mkdir -p $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-enabled
+	mkdir -p $(INSTALLDIR)/freeradius/usr/freeradius/raddb/policy.d
+	mkdir -p $(INSTALLDIR)/freeradius/usr/freeradius/raddb/sites-available
+	mkdir -p $(INSTALLDIR)/freeradius/usr/freeradius/raddb/sites-enabled
+	install -D freeradius-server-3.0.0/build/lib/.libs/libfreeradius-eap.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/libfreeradius-eap.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/libfreeradius-radius.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/libfreeradius-radius.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/libfreeradius-server.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/libfreeradius-server.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_always.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_always.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_attr_filter.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_attr_filter.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_cache.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_cache.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_chap.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_chap.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_detail.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_detail.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_dhcp.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_dhcp.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_digest.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_digest.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_dynamic_clients.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_dynamic_clients.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_eap.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_eap_gtc.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_gtc.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_eap_leap.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_leap.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_eap_md5.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_md5.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_eap_mschapv2.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_mschapv2.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_eap_peap.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_peap.so
+#	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_eap_pwd.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_pwd.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_eap_sim.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_sim.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_eap_tls.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_tls.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_eap_ttls.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_ttls.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_exec.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_exec.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_expiration.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_expiration.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_expr.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_expr.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_files.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_files.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_linelog.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_linelog.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_logintime.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_logintime.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_mschap.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_mschap.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_pap.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_pap.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_passwd.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_passwd.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_preprocess.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_preprocess.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_radutmp.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_radutmp.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_realm.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_realm.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_replicate.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_replicate.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_soh.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_soh.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_sql.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_sql.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_sqlcounter.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_sqlcounter.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_sqlippool.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_sqlippool.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_sql_sqlite.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_sql_sqlite.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_unix.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_unix.so
+	install -D freeradius-server-3.0.0/build/lib/.libs/rlm_utf8.so $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_utf8.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/libfreeradius-eap.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/libfreeradius-radius.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/libfreeradius-server.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_always.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_attr_filter.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_cache.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_chap.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_detail.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_dhcp.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_digest.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_dynamic_clients.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_gtc.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_leap.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_md5.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_mschapv2.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_peap.so
+#	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_pwd.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_sim.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_tls.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_eap_ttls.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_exec.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_expiration.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_expr.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_files.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_linelog.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_logintime.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_mschap.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_pap.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_passwd.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_preprocess.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_radutmp.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_realm.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_replicate.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_soh.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_sql.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_sqlcounter.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_sqlippool.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_sql_sqlite.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_unix.so
+	$(STRIP) $(INSTALLDIR)/freeradius/usr/freeradius/lib/rlm_utf8.so
+	cp -rf freeradius-server-3.0.0/share/* $(INSTALLDIR)/freeradius/usr/freeradius/share/freeradius
+	cp -f freeradius-server-3.0.0/raddb/dictionary $(INSTALLDIR)/freeradius/usr/freeradius/raddb/dictionary
+	cp -f freeradius-server-3.0.0/raddb/radiusd.conf $(INSTALLDIR)/freeradius/usr/freeradius/raddb/radiusd.conf
+	cp -f freeradius-server-3.0.0/raddb/test_user.sql $(INSTALLDIR)/freeradius/usr/freeradius/raddb/test_user.sql
+	install -D freeradius-server-3.0.0/raddb/mods-available/always $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/always
+	install -D freeradius-server-3.0.0/raddb/mods-available/attr_filter $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/attr_filter
+	install -D freeradius-server-3.0.0/raddb/mods-available/cache_eap $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/cache_eap
+	install -D freeradius-server-3.0.0/raddb/mods-available/chap $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/chap
+	install -D freeradius-server-3.0.0/raddb/mods-available/detail $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/detail
+	install -D freeradius-server-3.0.0/raddb/mods-available/detail.log $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/detail.log
+	install -D freeradius-server-3.0.0/raddb/mods-available/dhcp $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/dhcp
+	install -D freeradius-server-3.0.0/raddb/mods-available/digest $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/digest
+	install -D freeradius-server-3.0.0/raddb/mods-available/dynamic_clients $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/dynamic_clients
+	install -D freeradius-server-3.0.0/raddb/mods-available/eap $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/eap
+	install -D freeradius-server-3.0.0/raddb/mods-available/echo $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/echo
+	install -D freeradius-server-3.0.0/raddb/mods-available/exec $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/exec
+	install -D freeradius-server-3.0.0/raddb/mods-available/expiration $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/expiration
+	install -D freeradius-server-3.0.0/raddb/mods-available/expr $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/expr
+	install -D freeradius-server-3.0.0/raddb/mods-available/files $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/files
+	install -D freeradius-server-3.0.0/raddb/mods-available/linelog $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/linelog
+	install -D freeradius-server-3.0.0/raddb/mods-available/logintime $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/logintime
+	install -D freeradius-server-3.0.0/raddb/mods-available/mschap $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/mschap
+	install -D freeradius-server-3.0.0/raddb/mods-available/ntlm_auth $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/ntlm_auth
+	install -D freeradius-server-3.0.0/raddb/mods-available/pap $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/pap
+	install -D freeradius-server-3.0.0/raddb/mods-available/passwd $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/passwd
+	install -D freeradius-server-3.0.0/raddb/mods-available/preprocess $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/preprocess
+	install -D freeradius-server-3.0.0/raddb/mods-available/radutmp $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/radutmp
+	install -D freeradius-server-3.0.0/raddb/mods-available/realm $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/realm
+	install -D freeradius-server-3.0.0/raddb/mods-available/replicate $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/replicate
+	install -D freeradius-server-3.0.0/raddb/mods-available/soh $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/soh
+	install -D freeradius-server-3.0.0/raddb/mods-available/sql $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/sql
+	install -D freeradius-server-3.0.0/raddb/mods-available/sradutmp $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/sradutmp
+	install -D freeradius-server-3.0.0/raddb/mods-available/unix $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/unix
+	install -D freeradius-server-3.0.0/raddb/mods-available/utf8 $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-available/utf8
+	cp -rf freeradius-server-3.0.0/raddb/mods-config/attr_filter/* $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-config/attr_filter/
+	cp -rf freeradius-server-3.0.0/raddb/mods-config/preprocess/* $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-config/preprocess/
+	cp -rf freeradius-server-3.0.0/raddb/mods-config/files/* $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-config/files/
+	cp -rf freeradius-server-3.0.0/raddb/mods-config/sql/cui/sqlite/* $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-config/sql/cui/sqlite/
+	cp -rf freeradius-server-3.0.0/raddb/mods-config/sql/ippool/sqlite/* $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-config/sql/ippool/sqlite/
+	cp -rf freeradius-server-3.0.0/raddb/mods-config/sql/ippool-dhcp/sqlite/* $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-config/sql/ippool-dhcp/sqlite/
+	cp -rf freeradius-server-3.0.0/raddb/mods-config/sql/main/sqlite/* $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-config/sql/main/sqlite/
+	cp -rf freeradius-server-3.0.0/raddb/mods-enabled/* $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-enabled/
+	cp -rf freeradius-server-3.0.0/raddb/policy.d/* $(INSTALLDIR)/freeradius/usr/freeradius/raddb/policy.d/
+	cp -rf freeradius-server-3.0.0/raddb/sites-available/default $(INSTALLDIR)/freeradius/usr/freeradius/raddb/sites-available/
+	cp -rf freeradius-server-3.0.0/raddb/sites-available/inner-tunnel $(INSTALLDIR)/freeradius/usr/freeradius/raddb/sites-available/
+	cp -rf freeradius-server-3.0.0/raddb/sites-enabled/* $(INSTALLDIR)/freeradius/usr/freeradius/raddb/sites-enabled/	
+	cd $(TOP)/freeradius-server-3.0.0/raddb/certs && make
+	cp -f $(TOP)/freeradius-server-3.0.0/raddb/certs/server.pem $(INSTALLDIR)/freeradius/usr/freeradius/raddb/certs/
+	cp -f $(TOP)/freeradius-server-3.0.0/raddb/certs/ca.pem $(INSTALLDIR)/freeradius/usr/freeradius/raddb/certs/
+	cp -f $(TOP)/freeradius-server-3.0.0/raddb/certs/dh $(INSTALLDIR)/freeradius/usr/freeradius/raddb/certs/
+	cd $(INSTALLDIR)/freeradius/usr/freeradius/raddb/mods-enabled && ln -sf ../mods-available/sql sql 
+	
+freeradius-clean:
+	-@$(MAKE) -C freeradius-server-3.0.0 distclean
 
 NORTON_DIR := $(SRCBASE)/router/norton${BCMEX}
 
@@ -4241,12 +4835,12 @@ email-3.1.3-clean:
 	-@$(MAKE) -C email-3.1.3 clean
 	@rm -f email-3.1.3/stamp-h1
 
-email-3.1.3-install: email-3.1.3
+email-3.1.3-install:
 	install -D email-3.1.3/src/email $(INSTALLDIR)/email-3.1.3/usr/sbin/email
 	$(STRIP) $(INSTALLDIR)/email-3.1.3/usr/sbin/email
 
 #diskdev_cmds-332.14
-diskdev_cmds-332.14:
+diskdev_cmds-332.14: openssl
 	@$(SEP)
 	cd $(TOP)/diskdev_cmds-332.14 && \
 	make -f Makefile.lnx
@@ -4298,33 +4892,44 @@ GeoIP-1.6.2-clean:
 	-@[ ! -f GeoIP-1.6.2/Makefile ] || $(MAKE) -C GeoIP-1.6.2 distclean
 	@rm -f GeoIP-1.6.2/stamp-h1
 
-Transmission/configure:
-	cd Transmission && ./autogen.sh
-
-Transmission/Makefile: Transmission/configure
-	( cd Transmission ; $(CONFIGURE) --prefix=/usr --bindir=/usr/sbin --libdir=/usr/lib \
-		CFLAGS="$(CFLAGS) -I$(STAGEDIR)/usr/include" \
-		LDFLAGS="$(LDFLAGS) -L$(STAGEDIR)/usr/lib" \
-		--disable-nls --disable-gtk \
+Transmission-configure:
+	( cd Transmission && ./autogen.sh && \
+		$(CONFIGURE) --prefix=/usr --bindir=/usr/sbin --libdir=/usr/lib \
+			CFLAGS="$(CFLAGS) -I$(STAGEDIR)/usr/include" \
+			LDFLAGS="$(LDFLAGS) -L$(STAGEDIR)/usr/lib" \
+			--disable-nls --disable-gtk \
 	)
 
-Transmission: curl-7.21.7 libevent-2.0.21 Transmission/Makefile
+Transmission/Makefile:
+	$(MAKE) Transmission-configure
+
+Transmission: curl libevent-2.0.21 Transmission/Makefile
 	@$(SEP)
 	$(MAKE) -C $@
 
 Transmission-install: Transmission
 	install -D $</daemon/transmission-daemon $(INSTALLDIR)/$</usr/sbin/transmission-daemon
+	install -D $</daemon/transmission-remote $(INSTALLDIR)/$</usr/sbin/transmission-remote
 	$(STRIP) $(INSTALLDIR)/$</usr/sbin/*
 
 Transmission-clean:
-	[ ! -f Transmission/Makefile ] || $(MAKE) -C Transmission KERNEL_DIR=$(LINUXDIR) distclean
+	[ ! -f Transmission/Makefile ] || $(MAKE) -C distclean
 	@rm -f Transmission/Makefile
 
-wget/Makefile:
-	cd wget && autoreconf -i -f && $(CONFIGURE) --with-ssl=openssl --with-libssl-prefix=$(TOP)/openssl --sysconfdir=/etc --disable-opie --disable-ntlm --disable-debug --disable-nls --disable-iri --disable-dependency-tracking CFLAGS="$(EXTRACFLAGS) -I$(TOP)/openssl/include -I$(TOP)/zlib" LDFLAGS="-L$(TOP)/openssl -lssl -lcrypto -L$(TOP)/zlib -lz"
+wget/Makefile.in: wget/Makefile.am
+	cd wget && autoreconf -fi
+
+wget/Makefile: wget/Makefile.in
+	cd wget && $(CONFIGURE) \
+		--with-ssl=openssl --with-libssl-prefix=$(TOP)/openssl \
+		--sysconfdir=/etc --disable-opie --disable-ntlm --disable-debug --disable-nls --disable-rpath \
+		$(if $(RTCONFIG_IPV6),,--disable-ipv6) --disable-iri --without-included-regex  \
+		--disable-dependency-tracking \
+		CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections -I$(TOP)/openssl/include -I$(TOP)/zlib" \
+		LDFLAGS="$(EXTRALDFLAGS) -Wl,--gc-sections -L$(TOP)/openssl -lssl -lcrypto -L$(TOP)/zlib -lz"
 
 wget: openssl zlib wget/Makefile
-	$(MAKE) -C wget CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections -I$(TOP)/openssl/include -I$(TOP)/zlib"
+	$(MAKE) -C $@
 
 wget-clean:
 	[ ! -f wget/Makefile ] || $(MAKE) -C wget distclean
@@ -4333,6 +4938,45 @@ wget-clean:
 wget-install:
 	install -D wget/src/wget $(INSTALLDIR)/wget/usr/sbin/wget
 	$(STRIP) $(INSTALLDIR)/wget/usr/sbin/wget
+
+gmp:
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+gmp-install: gmp
+	$(MAKE) -C $< INSTALLDIR=$(INSTALLDIR)/$< install
+
+gmp-clean:
+	$(MAKE) -C gmp clean
+
+gmp-stage:
+	$(MAKE) -C gmp stage
+
+libqcacommon:
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+libqcacommon-install: libqcacommon
+	$(MAKE) -C $< INSTALLDIR=$(INSTALLDIR)/$< install
+
+libqcacommon-clean:
+	$(MAKE) -C libqcacommon clean
+
+libqcacommon-stage:
+	$(MAKE) -C libqcacommon stage
+
+openswan-nss: gmp
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+openswan-nss-install: openswan-nss
+	$(MAKE) -C $< INSTALLDIR=$(INSTALLDIR)/$< install
+
+openswan-nss-clean:
+	$(MAKE) -C openswan-nss clean
+
+openswan-nss-stage:
+	$(MAKE) -C openswan-nss stage
+
+qca-whc30-lbd: libqcacommon
+	$(MAKE) -C $@ && $(MAKE) $@-stage
 
 qca-wifi:
 	$(MAKE) -C $@ TARGET_CROSS=$(CROSS_COMPILE) LINUX_KARCH=$(ARCH) LINUX_VERSION=$(LINUX_KERNEL) LINUX_DIR=$(LINUXDIR) && $(MAKE) $@-stage
@@ -4347,8 +4991,212 @@ qca-wifi-clean:
 qca-wifi-stage:
 	$(MAKE) -C qca-wifi stage
 
+#qca-wifi.ipq40xx: qca-nss-drv.ipq40xx iproute2-3.x
+qca-wifi.ipq40xx: iproute2-3.x
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-wifi.ipq40xx-install: qca-wifi.ipq40xx
+	$(MAKE) -C $< INSTALLDIR=$(INSTALLDIR)/$< install
+
+qca-wifi.ipq40xx-clean:
+	$(MAKE) -C qca-wifi.ipq40xx clean
+	$(RM) -f qca-wifi.ipq40xx/source/lsdk_flags
+
+qca-wifi.ipq40xx-stage:
+	$(MAKE) -C qca-wifi.ipq40xx stage
+
+qca-wifi-qca9990: qca-nss-drv
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-wifi-qca9990-install: qca-wifi-qca9990
+	$(MAKE) -C $< INSTALLDIR=$(INSTALLDIR)/$< install
+
+qca-wifi-qca9990-clean:
+	$(MAKE) -C qca-wifi-qca9990 clean
+	$(RM) -f qca-wifi-qca9990/lsdk_flags
+
+qca-wifi-qca9990-stage:
+	$(MAKE) -C qca-wifi-qca9990 stage
+
+qca-wifi-qca9994: qca-nss30-drv iproute2-3.x
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-wifi-qca9994-install: qca-wifi-qca9994
+	$(MAKE) -C $< INSTALLDIR=$(INSTALLDIR)/$< install
+
+qca-wifi-qca9994-clean:
+	$(MAKE) -C qca-wifi-qca9994 clean
+	$(RM) -f qca-wifi-qca9994/lsdk_flags
+
+qca-wifi-qca9994-stage:
+	$(MAKE) -C qca-wifi-qca9994 stage
+
 qca-hostap: qca-wifi
 	$(MAKE) -C $@
+
+qca-hostap.ipq40xx: qca-wifi.ipq40xx libnl-bf openssl
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-nss-drv.ipq40xx: qca-nss-gmac.ipq40xx
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-nss-drv.ipq40xx-stage:
+	$(MAKE) -C qca-nss-drv.ipq40xx stage
+
+qca-nss-gmac.ipq40xx:
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-nss-gmac.ipq40xx-stage:
+	$(MAKE) -C qca-nss-gmac.ipq40xx && $(MAKE) -C qca-nss-gmac.ipq40xx stage
+
+qca-rfs.ipq40xx:
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-rfs.ipq40xx-stage:
+	$(MAKE) -C qca-rfs.ipq40xx stage
+
+qca-ssdk.ipq40xx:
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-ssdk.ipq40xx-stage:
+	$(MAKE) -C qca-ssdk.ipq40xx stage
+
+qca-ssdk-shell.ipq40xx:
+	$(MAKE) -C $@
+
+qca-hyfi-qdisc.ipq40xx:
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-hyfi-qdisc.ipq40xx-stage:
+	$(MAKE) -C qca-hyfi-qdisc.ipq40xx && $(MAKE) -C qca-hyfi-qdisc.ipq40xx stage
+
+qca-hyfi-qdisc.ipq40xx-install: qca-hyfi-qdisc.ipq40xx
+	$(MAKE) -C $< INSTALLDIR=$(INSTALLDIR)/$< install
+
+qca-hyfi-bridge.ipq40xx:
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-hyfi-bridge.ipq40xx-stage:
+	$(MAKE) -C qca-hyfi-bridge.ipq40xx && $(MAKE) -C qca-hyfi-bridge.ipq40xx stage
+
+qca-hyfi-bridge.ipq40xx-install: qca-hyfi-bridge.ipq40xx
+	$(MAKE) -C $< INSTALLDIR=$(INSTALLDIR)/$< install
+
+libnl-bf:
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+shortcut-fe.ipq40xx: libnl-bf
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+shortcut-fe.ipq40xx-stage:
+	$(MAKE) -C shortcut-fe.ipq40xx stage
+
+qca-hostap-qca9990: qca-wifi-qca9990
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-hostap-qca9994: qca-wifi-qca9994 libnl-bf openssl
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-mcs30-lkm:
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-mcs30-lkm-stage:
+	$(MAKE) -C qca-mcs30-lkm stage
+
+qca-nss-clients: qca-nss-drv
+	$(MAKE) -C $@
+
+qca-nss30-clients: qca-nss30-drv qca-nss30-crypto
+	$(MAKE) -C $@
+
+qca-nss-drv: qca-nss-gmac
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-nss-drv-stage:
+	$(MAKE) -C qca-nss-drv stage
+
+qca-nss30-drv: qca-nss30-gmac
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-nss30-drv-stage:
+	$(MAKE) -C qca-nss30-drv stage
+
+qca-nss-ecm: qca-nss-drv
+	$(MAKE) -C $@
+
+qca-nss30-ecm: qca-nss30-drv $(if $(CONFIG_SWITCH_QCA8337N),qca-mcs30-lkm) shortcut-fe30
+	$(MAKE) -C $@
+
+qca-nss-gmac:
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-nss-gmac-stage:
+	$(MAKE) -C qca-nss-gmac && $(MAKE) -C qca-nss-gmac stage
+
+qca-nss30-gmac:
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-nss30-gmac-stage:
+	$(MAKE) -C qca-nss30-gmac && $(MAKE) -C qca-nss30-gmac stage
+
+qca-nss-crypto: qca-nss-drv
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-nss-crypto-stage:
+	$(MAKE) -C qca-nss-crypto stage
+
+qca-nss30-crypto: qca-nss30-drv
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-nss30-crypto-stage:
+	$(MAKE) -C qca-nss30-crypto stage
+
+qca-nss-cfi: qca-nss-crypto
+	$(MAKE) -C $@
+
+qca-nss30-cfi: qca-nss30-crypto
+	$(MAKE) -C $@
+
+qca-nss-macsec: qca-nss-gmac
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-nss-macsec-stage:
+	$(MAKE) -C qca-nss-macsec stage
+
+qca-ssdk:
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-ssdk-stage:
+	$(MAKE) -C qca-ssdk stage
+
+qca-ssdk30:
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+qca-ssdk30-stage:
+	$(MAKE) -C qca-ssdk30 stage
+
+ethtool-3.7/configure:
+	cd ethtool-3.7 && ./autogen.sh
+
+ethtool-3.7/Makefile: ethtool-3.7/configure
+	cd ethtool-3.7 && $(CONFIGURE) \
+		--with-kernel=$(LINUXDIR)
+
+ethtool-3.7: ethtool-3.7/Makefile
+	$(MAKE) -C $@ KERNEL_DIR=$(LINUXDIR)
+
+ethtool-3.7-clean:
+	$(MAKE) -C ethtool-3.7 distclean
+
+ethtool-3.7-install: ethtool-3.7
+	install -D ethtool-3.7/ethtool $(INSTALLDIR)/ethtool-3.7/usr/bin/ethtool
+	$(STRIP) $(INSTALLDIR)/ethtool-3.7/usr/bin/ethtool
+
+shortcut-fe30: libnl-bf
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+shortcut-fe30-stage:
+	$(MAKE) -C shortcut-fe30 stage
 
 LinuxART2-install: LinuxART2
 ifneq ($(ART2_INSTALLDIR),)
@@ -4381,8 +5229,8 @@ asusnatnl-install: asusnatnl
 
 mastiff: shared nvram${BCMEX} wb
 	cd aaews && \
-        CC=$(CC) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="-Os -Wall $(EXTRACFLAGS)" \
-        make mastiff
+	CC=$(CC) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="-Os -Wall $(EXTRACFLAGS)" \
+	make mastiff
 
 mastiff-install:
 	install -d $(INSTALLDIR)/wb/usr/lib/
@@ -4396,11 +5244,11 @@ mastiff-clean:
 
 #aaews: wb
 
-#wb: shared nvram curl-7.21.7 openssl libxml2 asusnatnl 
+#wb: shared nvram curl openssl libxml2 asusnatnl 
 aaews: wb
 	cd aaews && \
-        CC=$(CC) CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="-Os -Wall $(EXTRACFLAGS)" \
-        make router 
+	CC=$(CC) CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="-Os -Wall $(EXTRACFLAGS)" \
+	make router
 #make static-lib && \
 
 #$(MAKE)
@@ -4433,7 +5281,7 @@ json-c/stamp-h1:
 json-c: json-c/stamp-h1
 	$(MAKE) -C $@
 
-json-c-install: json-c
+json-c-install:
 	install -D json-c/.libs/libjson-c.so.2.0.1 $(INSTALLDIR)/json-c/usr/lib/libjson-c.so.2.0.1
 	$(STRIP) $(INSTALLDIR)/json-c/usr/lib/libjson-c.so.2.0.1
 	cd $(INSTALLDIR)/json-c/usr/lib && ln -sf libjson-c.so.2.0.1 libjson-c.so
@@ -4453,13 +5301,34 @@ phddns/stamp-h1:
 phddns: phddns/stamp-h1
 	$(MAKE) -C phddns
 
-phddns-install: phddns
+phddns-install:
 	install -D phddns/src/phddns $(INSTALLDIR)/phddns/usr/sbin/phddns
 	$(STRIP) $(INSTALLDIR)/phddns/usr/sbin/phddns
 
 phddns-clean:
 	@[ ! -f phddns/Makefile ] || $(MAKE) -C phddns clean
 	@rm -f phddns/stamp-h1
+
+quicksec-6.0-fips:
+	@$(SEP)
+	@$(MAKE) KDIR=$(LINUXDIR) CAPTURE=IP -C quicksec-6.0-fips/build/linux/usermode-ue all
+	@$(MAKE) KDIR=$(LINUXDIR) CAPTURE=IP -C quicksec-6.0-fips/gplinterceptor/build/linux
+
+quicksec-6.0-fips-install:
+	@install -D quicksec-6.0-fips/gplinterceptor/build/linux/interceptor-gpl/quicksec_usermode.ko $(INSTALLDIR)/quicksec-6.0-fips/lib/modules/3.4.103/kernel/net/quicksec_usermode.ko
+	@install -D quicksec-6.0-fips/build/linux/usermode-ue/quicksecpm_usermode $(INSTALLDIR)/quicksec-6.0-fips/usr/sbin/quicksecpm_usermode
+	@chmod 664 $(INSTALLDIR)/quicksec-6.0-fips/lib/modules/3.4.103/kernel/net/quicksec_usermode.ko
+	@chmod 755 $(INSTALLDIR)/quicksec-6.0-fips/usr/sbin/quicksecpm_usermode
+	@$(STRIP) $(INSTALLDIR)/quicksec-6.0-fips/usr/sbin/quicksecpm_usermode
+ifneq ($(wildcard quicksec-6.0-fips/config/*.xml),)
+	@mkdir -p $(TARGETDIR)/rom/etc/quicksec
+	@cp -a quicksec-6.0-fips/config/*.xml $(TARGETDIR)/rom/etc/quicksec
+	@chmod 644 $(TARGETDIR)/rom/etc/quicksec/*.xml
+endif
+
+quicksec-6.0-fips-clean:
+	-@$(MAKE) KDIR=$(LINUXDIR) -C quicksec-6.0-fips/build/linux clean
+	-@$(MAKE) KDIR=$(LINUXDIR) -C quicksec-6.0-fips/gplinterceptor/build/linux clean
 
 #
 # Generic rules

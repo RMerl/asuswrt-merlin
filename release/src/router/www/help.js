@@ -282,7 +282,7 @@ function overHint(itemNum){
 			statusmenu += "<div class='StatusHint'><#Mobile_no_signal#></div>";
 		}
 		else if(usb_state == 2 && usb_sbstate == 0 && usb_auxstate == 0){
-			statusmenu += "<div class='StatusHint'><#Connected#> <#HSDPAConfig_ISP_itemname#>: </div><span>" + sim_spn + "</span>";
+			statusmenu += "<div class='StatusHint'><#Connected#> <#HSDPAConfig_ISP_itemname#>: </div><span>" + modem_act_provider + "</span>";
 		}
 		else{
 			statusmenu += "<div class='StatusHint'><#Disconnected#></div>";
@@ -394,7 +394,7 @@ function overHint(itemNum){
 
 	// wifi hw switch
 	if(itemNum == 8){
-		statusmenu = "<div class='StatusHint'>Wi-Fi:</div>";
+		statusmenu = "<div class='StatusHint'>Wi-Fi :</div>";
 		wifiDesc = "<b>&nbsp;2.4G:</b> ";
 		if ( wlan0_radio_flag == 1) {
 			if ((extent_chan_arr[0] == 0) || (extent_chan_arr[0] == undefined) || (extent_chan_arr[0] == control_chan_arr[0]))

@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
+ *  Copyright (C) 2002-2017 OpenVPN Technologies, Inc. <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -16,10 +16,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING included with this
- *  distribution); if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -32,7 +31,7 @@
 
 #include "compat.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 /*
  * NOTICE: mingw has much faster gettimeofday!
  * autoconf will set HAVE_GETTIMEOFDAY
@@ -48,12 +47,12 @@ static unsigned int last_msec = 0;
 static int bt_last = 0;
 
 static void
-gettimeofday_calibrate (void)
+gettimeofday_calibrate(void)
 {
-  const time_t t = time(NULL);
-  const DWORD gtc = GetTickCount();
-  gtc_base = t - gtc/1000;
-  gtc_last = gtc;
+    const time_t t = time(NULL);
+    const DWORD gtc = GetTickCount();
+    gtc_base = t - gtc/1000;
+    gtc_last = gtc;
 }
 
 /*
@@ -62,70 +61,74 @@ gettimeofday_calibrate (void)
  * more processor cycles than GetTickCount.
  */
 int
-gettimeofday (struct timeval *tv, void *tz)
+gettimeofday(struct timeval *tv, void *tz)
 {
-  const DWORD gtc = GetTickCount();
-  int bt = 0;
-  time_t sec;
-  unsigned int msec;
-  const int backtrack_hold_seconds = 10;
+    const DWORD gtc = GetTickCount();
+    int bt = 0;
+    time_t sec;
+    unsigned int msec;
+    const int backtrack_hold_seconds = 10;
 
-  (void)tz;
+    (void)tz;
 
-  /* recalibrate at the dreaded 49.7 day mark */
-  if (!gtc_base || gtc < gtc_last)
-    gettimeofday_calibrate ();
-  gtc_last = gtc;
-
-  sec = gtc_base + gtc / 1000;
-  msec = gtc % 1000;
-
-  if (sec == last_sec)
+    /* recalibrate at the dreaded 49.7 day mark */
+    if (!gtc_base || gtc < gtc_last)
     {
-      if (msec < last_msec)
-	{
-	  msec = last_msec;
-	  bt = 1;
-	}
+        gettimeofday_calibrate();
     }
-  else if (sec < last_sec)
+    gtc_last = gtc;
+
+    sec = gtc_base + gtc / 1000;
+    msec = gtc % 1000;
+
+    if (sec == last_sec)
     {
-      /* We try to dampen out backtracks of less than backtrack_hold_seconds.
-	 Larger backtracks will be passed through and dealt with by the
-	 TIME_BACKTRACK_PROTECTION code (if enabled) */
-      if (sec > last_sec - backtrack_hold_seconds)
-	{
-	  sec = last_sec;
-	  msec = last_msec;
-	}
-      bt = 1;
+        if (msec < last_msec)
+        {
+            msec = last_msec;
+            bt = 1;
+        }
+    }
+    else if (sec < last_sec)
+    {
+        /* We try to dampen out backtracks of less than backtrack_hold_seconds.
+         * Larger backtracks will be passed through and dealt with by the
+         * TIME_BACKTRACK_PROTECTION code (if enabled) */
+        if (sec > last_sec - backtrack_hold_seconds)
+        {
+            sec = last_sec;
+            msec = last_msec;
+        }
+        bt = 1;
     }
 
-  tv->tv_sec = (long)last_sec = (long)sec;
-  tv->tv_usec = (last_msec = msec) * 1000;
+    tv->tv_sec = (long)last_sec = (long)sec;
+    tv->tv_usec = (last_msec = msec) * 1000;
 
-  if (bt && !bt_last)
-    gettimeofday_calibrate ();
-  bt_last = bt;
+    if (bt && !bt_last)
+    {
+        gettimeofday_calibrate();
+    }
+    bt_last = bt;
 
-  return 0;
+    return 0;
 }
 
-#else
+#else  /* ifdef _WIN32 */
 
 #ifdef HAVE_TIME_H
 #include <time.h>
 #endif
 
 int
-gettimeofday (struct timeval *tv, void *tz)
+gettimeofday(struct timeval *tv, void *tz)
 {
-	(void)tz;
-	tv->tv_sec = time(NULL);
-	tv->tv_usec = 0;
-	return 0;
+    (void)tz;
+    tv->tv_sec = time(NULL);
+    tv->tv_usec = 0;
+    return 0;
 }
 
-#endif /* WIN32 */
+#endif /* _WIN32 */
 
 #endif /* HAVE_GETTIMEOFDAY */

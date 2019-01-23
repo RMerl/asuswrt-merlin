@@ -1,10 +1,14 @@
 /* Copyright (c) 2001, Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2015, The Tor Project, Inc. */
+ * Copyright (c) 2007-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
-/* Formatting and parsing code for crypto-related data structures. */
+/**
+ * \file crypto_format.c
+ *
+ * \brief Formatting and parsing code for crypto-related data structures.
+ */
 
 #include "orconfig.h"
 #ifdef HAVE_SYS_STAT_H
@@ -119,6 +123,10 @@ crypto_read_tagged_contents_from_file(const char *fname,
   return r;
 }
 
+/** Encode <b>pkey</b> as a base64-encoded string, without trailing "="
+ * characters, in the buffer <b>output</b>, which must have at least
+ * CURVE25519_BASE64_PADDED_LEN+1 bytes available.  Return 0 on success, -1 on
+ * failure. */
 int
 curve25519_public_to_base64(char *output,
                             const curve25519_public_key_t *pkey)
@@ -131,6 +139,9 @@ curve25519_public_to_base64(char *output,
   return 0;
 }
 
+/** Try to decode a base64-encoded curve25519 public key from <b>input</b>
+ * into the object at <b>pkey</b>. Return 0 on success, -1 on failure.
+ * Accepts keys with or without a trailing "=". */
 int
 curve25519_public_from_base64(curve25519_public_key_t *pkey,
                               const char *input)

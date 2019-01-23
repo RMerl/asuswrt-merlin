@@ -98,11 +98,13 @@
 # OutboundBindAddress 10.0.0.5
 
 ## A handle for your relay, so people don't have to refer to it by key.
+## Nicknames must be between 1 and 19 characters inclusive, and must
+## contain only the characters [a-zA-Z0-9].
 #Nickname ididnteditheconfig
 
 ## Define these to limit how much relayed traffic you will allow. Your
 ## own traffic is still unthrottled. Note that RelayBandwidthRate must
-## be at least 20 kilobytes per second.
+## be at least 75 kilobytes per second.
 ## Note that units for these config options are bytes (per second), not
 ## bits (per second), and that prefixes are binary prefixes, i.e. 2^10,
 ## 2^20, etc.

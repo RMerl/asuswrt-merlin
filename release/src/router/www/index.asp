@@ -159,10 +159,8 @@ if(gobi_support) {
 	var dualwan_first_if = wans_dualwan_array[0];
 	var dualwan_second_if = wans_dualwan_array[1];
 }
-if(wans_dualwan_orig.search(" ") == -1)
-	var wans_flag = 0;
-else
-	var wans_flag = (wans_dualwan_orig.search("none") == -1) ? 1:0;
+
+var wans_flag = (wans_dualwan_orig.search("none") != -1 || !parent.dualWAN_support) ? 0 : 1;
 
 // USB function
 var currentUsbPort = new Number();
@@ -379,8 +377,19 @@ function show_smart_connect_status(){
 
 function show_ddns_status(){
 	var ddns_enable = '<% nvram_get("ddns_enable_x"); %>';
-	var ddns_server_x = '<% nvram_get("ddns_server_x");%>';
-	var ddnsName = decodeURIComponent('<% nvram_char_to_ascii("", "ddns_hostname_x"); %>');
+	var ddns_server_x = '<% nvram_get("ddns_server_x"); %>';
+	var ddnsName;
+	var ddns_hostname_x = '<% nvram_get("ddns_hostname_x"); %>';
+	var ddns_username_x = '<% nvram_get("ddns_username_x"); %>';
+
+	switch (ddns_server_x){
+		case "WWW.NAMECHEAP.COM":
+			ddnsName = ddns_hostname_x + "." + ddns_username_x;
+			break;
+		
+		default:
+			ddnsName = ddns_hostname_x; 
+	}
 
 	document.getElementById("ddns_fail_hint").className = "notificationoff";
 	if( ddns_enable == '0')
@@ -1074,10 +1083,12 @@ function edit_confirm(){
 		onEditClient[5] = "";
 
 		for(var i=0; i<originalCustomListArray.length; i++){
-			if(originalCustomListArray[i].split('>')[1] == onEditClient[1]){
-				onEditClient[4] = originalCustomListArray[i].split('>')[4]; // set back callback for ROG device
-				onEditClient[5] = originalCustomListArray[i].split('>')[5]; // set back keeparp for ROG device
-				originalCustomListArray.splice(i, 1); // remove the selected client from original list
+			if(originalCustomListArray[i].split('>')[1] != undefined) {
+				if(originalCustomListArray[i].split('>')[1].toUpperCase() == onEditClient[1].toUpperCase()){
+					onEditClient[4] = originalCustomListArray[i].split('>')[4]; // set back callback for ROG device
+					onEditClient[5] = originalCustomListArray[i].split('>')[5]; // set back keeparp for ROG device
+					originalCustomListArray.splice(i, 1); // remove the selected client from original list
+				}
 			}
 		}
 
@@ -1257,6 +1268,7 @@ function select_image(type){
 
 	document.getElementById('client_image').style.backgroundSize = "";
 	document.getElementById('client_image').className = "clientIcon_no_hover " + icon_type;
+
 	if(verderIcon != "" && type == "type0") {
 		var venderIconClassName = getVenderIconClassName(verderIcon.toLowerCase());
 		if(venderIconClassName != "" && !downsize_4m_support) {
@@ -1673,13 +1685,14 @@ function popupEditBlock(clientObj){
 		}
 	});
 
-	if(isIE8){
+	if(top.isIE8){
 		document.getElementById('client_image').style.backgroundPosition = "50% -15% !important";
+		document.getElementById('client_image').className = "clientIconIE8HACK";
 	}
 }
 
 function check_usb3(){
-	if(based_modelid == "DSL-AC68U" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC87U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP" || based_modelid == "RT-N18U" || based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R"){
+	if(based_modelid == "DSL-AC68U" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC87U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP" || based_modelid == "RT-N18U" || based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC5300" || based_modelid == "RT-AC5300R" || based_modelid == "RT-AC58U"  || based_modelid == "RT-AC82U"){
 		document.getElementById('usb1_image').src = "images/New_ui/networkmap/USB3.png";
 	}
 	else if(based_modelid == "RT-N65U"){
@@ -2291,8 +2304,8 @@ function closeClientDetailView() {
 		<td align="left" valign="top" class="bgarrow">
 		
 		<!--=====Beginning of Network Map=====-->
-		<div id="tabMenu"></div><br>
-		<div id="NM_shift" style="margin-top:-155px;"></div>
+		<div id="tabMenu"></div>
+		<div id="NM_shift" style="margin-top:-140px;"></div>
 		<div id="NM_table" class="NM_table" >
 		<div id="NM_table_div">
 			<table id="_NM_table" border="0" cellpadding="0" cellspacing="0" height="720" style="opacity:.95;" >

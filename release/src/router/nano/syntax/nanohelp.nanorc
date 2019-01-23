@@ -1,0 +1,12 @@
+## This is meant for highlighting key combos in a nano help text.
+
+# It should not apply to any normal file, so no fileregex.
+syntax "nanohelp"
+
+# Key combos:
+color cyan "\^([]4-8A-Z^\_←→↑↓]|Home|End)"  "[←→↑↓]"
+color cyan "\<(Tab|Enter|Home|End|Ins|Del|Bsp|PgUp|PgDn)\>"
+color cyan "\<M-."  "\<F1?[0-9]"  "(\^|M-)Space"
+
+# Quoted indicators:
+color brightred "'(\^|M-)'"

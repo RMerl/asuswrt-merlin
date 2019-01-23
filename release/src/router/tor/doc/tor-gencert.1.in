@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: tor-gencert
 .\"    Author: Nick Mathewson
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 11/13/2015
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 06/08/2017
 .\"    Manual: Tor Manual
 .\"    Source: Tor
 .\"  Language: English
 .\"
-.TH "TOR\-GENCERT" "1" "11/13/2015" "Tor" "Tor Manual"
+.TH "TOR\-GENCERT" "1" "06/08/2017" "Tor" "Tor Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -83,7 +83,7 @@ Number of months that the certificate should be valid\&. Default: 12\&.
 .PP
 \fB\-\-passphrase\-fd\fR \fIFILEDES\fR
 .RS 4
-Filedescriptor to read the file descriptor from\&. Ends at the first NUL or newline\&. Default: read from the terminal\&.
+Filedescriptor to read the passphrase from\&. Ends at the first NUL or newline\&. Default: read from the terminal\&.
 .RE
 .PP
 \fB\-a\fR \fIaddress\fR:\fIport\fR

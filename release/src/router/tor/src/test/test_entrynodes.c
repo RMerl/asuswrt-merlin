@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2015, The Tor Project, Inc. */
+/* Copyright (c) 2014-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "orconfig.h"
@@ -9,14 +9,16 @@
 
 #include "or.h"
 #include "test.h"
+
+#include "config.h"
 #include "entrynodes.h"
-#include "routerparse.h"
 #include "nodelist.h"
-#include "util.h"
+#include "policies.h"
 #include "routerlist.h"
+#include "routerparse.h"
 #include "routerset.h"
 #include "statefile.h"
-#include "config.h"
+#include "util.h"
 
 #include "test_helpers.h"
 
@@ -70,6 +72,14 @@ fake_network_setup(const struct testcase_t *testcase)
   return dummy_state;
 }
 
+static or_options_t mocked_options;
+
+static const or_options_t *
+mock_get_options(void)
+{
+  return &mocked_options;
+}
+
 /** Test choose_random_entry() with none of our routers being guard nodes. */
 static void
 test_choose_random_entry_no_guards(void *arg)
@@ -77,6 +87,14 @@ test_choose_random_entry_no_guards(void *arg)
   const node_t *chosen_entry = NULL;
 
   (void) arg;
+
+  MOCK(get_options, mock_get_options);
+
+  /* Check that we get a guard if it passes preferred
+   * address settings */
+  memset(&mocked_options, 0, sizeof(mocked_options));
+  mocked_options.ClientUseIPv4 = 1;
+  mocked_options.ClientPreferIPv6ORPort = 0;
 
   /* Try to pick an entry even though none of our routers are guards. */
   chosen_entry = choose_random_entry(NULL);
@@ -86,8 +104,55 @@ test_choose_random_entry_no_guards(void *arg)
      can't find a proper entry guard. */
   tt_assert(chosen_entry);
 
+  /* And with the other IP version active */
+  mocked_options.ClientUseIPv6 = 1;
+  chosen_entry = choose_random_entry(NULL);
+  tt_assert(chosen_entry);
+
+  /* And with the preference on auto */
+  mocked_options.ClientPreferIPv6ORPort = -1;
+  chosen_entry = choose_random_entry(NULL);
+  tt_assert(chosen_entry);
+
+  /* Check that we don't get a guard if it doesn't pass mandatory address
+   * settings */
+  memset(&mocked_options, 0, sizeof(mocked_options));
+  mocked_options.ClientUseIPv4 = 0;
+  mocked_options.ClientPreferIPv6ORPort = 0;
+
+  chosen_entry = choose_random_entry(NULL);
+
+  /* If we don't allow IPv4 at all, we don't get a guard*/
+  tt_assert(!chosen_entry);
+
+  /* Check that we get a guard if it passes allowed but not preferred address
+   * settings */
+  memset(&mocked_options, 0, sizeof(mocked_options));
+  mocked_options.ClientUseIPv4 = 1;
+  mocked_options.ClientUseIPv6 = 1;
+  mocked_options.ClientPreferIPv6ORPort = 1;
+
+  chosen_entry = choose_random_entry(NULL);
+  tt_assert(chosen_entry);
+
+  /* Check that we get a guard if it passes preferred address settings when
+   * they're auto */
+  memset(&mocked_options, 0, sizeof(mocked_options));
+  mocked_options.ClientUseIPv4 = 1;
+  mocked_options.ClientPreferIPv6ORPort = -1;
+
+  chosen_entry = choose_random_entry(NULL);
+  tt_assert(chosen_entry);
+
+  /* And with IPv6 active */
+  mocked_options.ClientUseIPv6 = 1;
+
+  chosen_entry = choose_random_entry(NULL);
+  tt_assert(chosen_entry);
+
  done:
-  ;
+  memset(&mocked_options, 0, sizeof(mocked_options));
+  UNMOCK(get_options);
 }
 
 /** Test choose_random_entry() with only one of our routers being a
@@ -101,17 +166,78 @@ test_choose_random_entry_one_possible_guard(void *arg)
 
   (void) arg;
 
+  MOCK(get_options, mock_get_options);
+
   /* Set one of the nodes to be a guard. */
   our_nodelist = nodelist_get_list();
   the_guard = smartlist_get(our_nodelist, 4); /* chosen by fair dice roll */
   the_guard->is_possible_guard = 1;
 
+  /* Check that we get the guard if it passes preferred
+   * address settings */
+  memset(&mocked_options, 0, sizeof(mocked_options));
+  mocked_options.ClientUseIPv4 = 1;
+  mocked_options.ClientPreferIPv6ORPort = 0;
+
   /* Pick an entry. Make sure we pick the node we marked as guard. */
   chosen_entry = choose_random_entry(NULL);
   tt_ptr_op(chosen_entry, OP_EQ, the_guard);
 
+  /* And with the other IP version active */
+  mocked_options.ClientUseIPv6 = 1;
+  chosen_entry = choose_random_entry(NULL);
+  tt_ptr_op(chosen_entry, OP_EQ, the_guard);
+
+  /* And with the preference on auto */
+  mocked_options.ClientPreferIPv6ORPort = -1;
+  chosen_entry = choose_random_entry(NULL);
+  tt_ptr_op(chosen_entry, OP_EQ, the_guard);
+
+  /* Check that we don't get a guard if it doesn't pass mandatory address
+   * settings */
+  memset(&mocked_options, 0, sizeof(mocked_options));
+  mocked_options.ClientUseIPv4 = 0;
+  mocked_options.ClientPreferIPv6ORPort = 0;
+
+  chosen_entry = choose_random_entry(NULL);
+
+  /* If we don't allow IPv4 at all, we don't get a guard*/
+  tt_assert(!chosen_entry);
+
+  /* Check that we get a node if it passes allowed but not preferred
+   * address settings */
+  memset(&mocked_options, 0, sizeof(mocked_options));
+  mocked_options.ClientUseIPv4 = 1;
+  mocked_options.ClientUseIPv6 = 1;
+  mocked_options.ClientPreferIPv6ORPort = 1;
+
+  chosen_entry = choose_random_entry(NULL);
+
+  /* We disable the guard check and the preferred address check at the same
+   * time, so we can't be sure we get the guard */
+  tt_assert(chosen_entry);
+
+  /* Check that we get a node if it is allowed but not preferred when settings
+   * are auto */
+  memset(&mocked_options, 0, sizeof(mocked_options));
+  mocked_options.ClientUseIPv4 = 1;
+  mocked_options.ClientPreferIPv6ORPort = -1;
+
+  chosen_entry = choose_random_entry(NULL);
+
+  /* We disable the guard check and the preferred address check at the same
+   * time, so we can't be sure we get the guard */
+  tt_assert(chosen_entry);
+
+  /* and with IPv6 active */
+  mocked_options.ClientUseIPv6 = 1;
+
+  chosen_entry = choose_random_entry(NULL);
+  tt_assert(chosen_entry);
+
  done:
-  ;
+  memset(&mocked_options, 0, sizeof(mocked_options));
+  UNMOCK(get_options);
 }
 
 /** Helper to conduct tests for populate_live_entry_guards().
@@ -624,6 +750,93 @@ test_entry_is_live(void *arg)
   ; /* XXX */
 }
 
+#define TEST_IPV4_ADDR "123.45.67.89"
+#define TEST_IPV6_ADDR "[1234:5678:90ab:cdef::]"
+
+static void
+test_node_preferred_orport(void *arg)
+{
+  (void)arg;
+  tor_addr_t ipv4_addr;
+  const uint16_t ipv4_port = 4444;
+  tor_addr_t ipv6_addr;
+  const uint16_t ipv6_port = 6666;
+  routerinfo_t node_ri;
+  node_t node;
+  tor_addr_port_t ap;
+
+  /* Setup options */
+  memset(&mocked_options, 0, sizeof(mocked_options));
+  /* We don't test ClientPreferIPv6ORPort here, because it's used in
+   * nodelist_set_consensus to setup node.ipv6_preferred, which we set
+   * directly. */
+  MOCK(get_options, mock_get_options);
+
+  /* Setup IP addresses */
+  tor_addr_parse(&ipv4_addr, TEST_IPV4_ADDR);
+  tor_addr_parse(&ipv6_addr, TEST_IPV6_ADDR);
+
+  /* Setup node_ri */
+  memset(&node_ri, 0, sizeof(node_ri));
+  node_ri.addr = tor_addr_to_ipv4h(&ipv4_addr);
+  node_ri.or_port = ipv4_port;
+  tor_addr_copy(&node_ri.ipv6_addr, &ipv6_addr);
+  node_ri.ipv6_orport = ipv6_port;
+
+  /* Setup node */
+  memset(&node, 0, sizeof(node));
+  node.ri = &node_ri;
+
+  /* Check the preferred address is IPv4 if we're only using IPv4, regardless
+   * of whether we prefer it or not */
+  mocked_options.ClientUseIPv4 = 1;
+  mocked_options.ClientUseIPv6 = 0;
+  node.ipv6_preferred = 0;
+  node_get_pref_orport(&node, &ap);
+  tt_assert(tor_addr_eq(&ap.addr, &ipv4_addr));
+  tt_assert(ap.port == ipv4_port);
+
+  node.ipv6_preferred = 1;
+  node_get_pref_orport(&node, &ap);
+  tt_assert(tor_addr_eq(&ap.addr, &ipv4_addr));
+  tt_assert(ap.port == ipv4_port);
+
+  /* Check the preferred address is IPv4 if we're using IPv4 and IPv6, but
+   * don't prefer the IPv6 address */
+  mocked_options.ClientUseIPv4 = 1;
+  mocked_options.ClientUseIPv6 = 1;
+  node.ipv6_preferred = 0;
+  node_get_pref_orport(&node, &ap);
+  tt_assert(tor_addr_eq(&ap.addr, &ipv4_addr));
+  tt_assert(ap.port == ipv4_port);
+
+  /* Check the preferred address is IPv6 if we prefer it and
+   * ClientUseIPv6 is 1, regardless of ClientUseIPv4 */
+  mocked_options.ClientUseIPv4 = 1;
+  mocked_options.ClientUseIPv6 = 1;
+  node.ipv6_preferred = 1;
+  node_get_pref_orport(&node, &ap);
+  tt_assert(tor_addr_eq(&ap.addr, &ipv6_addr));
+  tt_assert(ap.port == ipv6_port);
+
+  mocked_options.ClientUseIPv4 = 0;
+  node_get_pref_orport(&node, &ap);
+  tt_assert(tor_addr_eq(&ap.addr, &ipv6_addr));
+  tt_assert(ap.port == ipv6_port);
+
+  /* Check the preferred address is IPv6 if we don't prefer it, but
+   * ClientUseIPv4 is 0 */
+  mocked_options.ClientUseIPv4 = 0;
+  mocked_options.ClientUseIPv6 = 1;
+  node.ipv6_preferred = fascist_firewall_prefer_ipv6_orport(&mocked_options);
+  node_get_pref_orport(&node, &ap);
+  tt_assert(tor_addr_eq(&ap.addr, &ipv6_addr));
+  tt_assert(ap.port == ipv6_port);
+
+ done:
+  UNMOCK(get_options);
+}
+
 static const struct testcase_setup_t fake_network = {
   fake_network_setup, fake_network_cleanup
 };
@@ -654,6 +867,9 @@ struct testcase_t entrynodes_tests[] = {
   { "entry_is_live",
     test_entry_is_live,
     TT_FORK, &fake_network, NULL },
+  { "node_preferred_orport",
+    test_node_preferred_orport,
+    0, NULL, NULL },
   END_OF_TESTCASES
 };
 

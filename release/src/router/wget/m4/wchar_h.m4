@@ -1,13 +1,13 @@
 dnl A placeholder for ISO C99 <wchar.h>, for platforms that have issues.
 
-dnl Copyright (C) 2007-2014 Free Software Foundation, Inc.
+dnl Copyright (C) 2007-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Written by Eric Blake.
 
-# wchar_h.m4 serial 39
+# wchar_h.m4 serial 40
 
 AC_DEFUN([gl_WCHAR_H],
 [
@@ -81,8 +81,14 @@ AC_DEFUN([gl_WCHAR_H_INLINE_OK],
 extern int zero (void);
 int main () { return zero(); }
 ]])])
+     dnl Do not rename the object file from conftest.$ac_objext to
+     dnl conftest1.$ac_objext, as this will cause the link to fail on
+     dnl z/OS when using the XPLINK object format (due to duplicate
+     dnl CSECT names). Instead, temporarily redefine $ac_compile so
+     dnl that the object file has the latter name from the start.
+     save_ac_compile="$ac_compile"
+     ac_compile=`echo "$save_ac_compile" | sed s/conftest/conftest1/`
      if AC_TRY_EVAL([ac_compile]); then
-       mv conftest.$ac_objext conftest1.$ac_objext
        AC_LANG_CONFTEST([
          AC_LANG_SOURCE([[#define wcstod renamed_wcstod
 /* Tru64 with Desktop Toolkit C has a bug: <stdio.h> must be included before
@@ -95,8 +101,9 @@ int main () { return zero(); }
 #include <wchar.h>
 int zero (void) { return 0; }
 ]])])
+       dnl See note above about renaming object files.
+       ac_compile=`echo "$save_ac_compile" | sed s/conftest/conftest2/`
        if AC_TRY_EVAL([ac_compile]); then
-         mv conftest.$ac_objext conftest2.$ac_objext
          if $CC -o conftest$ac_exeext $CFLAGS $LDFLAGS conftest1.$ac_objext conftest2.$ac_objext $LIBS >&AS_MESSAGE_LOG_FD 2>&1; then
            :
          else
@@ -104,6 +111,7 @@ int zero (void) { return 0; }
          fi
        fi
      fi
+     ac_compile="$save_ac_compile"
      rm -f conftest1.$ac_objext conftest2.$ac_objext conftest$ac_exeext
     ])
   if test $gl_cv_header_wchar_h_correct_inline = no; then

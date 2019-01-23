@@ -1756,20 +1756,20 @@ dnsmasq est spécifiée comme DNS récursif. Si elles sont fournies, les
 options dns-server et domain-search sont utilisées respectivement pour RDNSS et
 DNSSL.
 .TP
-.B --ra-param=<interface>,[high|low],[[<intervalle d'annonce routeur>],<durée de vie route>]
+.B --ra-param=<interface>,[mtu:<valeur>|<interface>|off,][high,|low,]<intervalle d'annonce routeur>[,<durée de vie route>]
 Configure pour une interface donnée des valeurs pour les annonces routeurs
 différentes des valeurs par défaut. La valeur par défaut du champ priorité
 pour le routeur peut-être changée de "medium" (moyen) à "high" (haute) ou
 "low" (basse). Par exemple :
-.B --ra-param=eth0,high.
+.B --ra-param=eth0,high,0.
 Un intervalle (en secondes) entre les annonces routeur peut-être fourni par :
 .B --ra-param=eth0,60.
 La durée de vie de la route peut-être changée ou mise à zéro, auquel cas 
 le routeur peut annoncer les préfixes mais pas de route :
 .B --ra-parm=eth0,0,0
 (une valeur de zéro pour l'intervalle signifie qu'il garde la valeur par défaut).
-Ces trois paramètres peuvent-être configurés en une fois :
-.B --ra-param=low,60,1200
+Ces quatre paramètres peuvent-être configurés en une fois :
+.B --ra-param=eth0,mtu:1280,low,60,1200
 La valeur pour l'interface peut inclure un caractère joker.
 .TP
 .B --enable-tftp[=<interface>[,<interface>]]

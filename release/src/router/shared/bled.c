@@ -606,6 +606,92 @@ exit___config_usbbus_bled:
 }
 
 /**
+ * Low-level function to add a LED which blinks in accordance with number of interrupt.
+ * which is specified by interrupt_list.
+ * @led_gpio:		pointer to name of "led_xxx_gpio"
+ * @interrupt_list:	interrupt list, e.g., "90 67", etc
+ * @min_blink_speeed:	blink led if speed greater than or equal to min_blink_speeed. (unit: count/s)
+ * @interval:		blinking interval. (unit: ms)
+ * @return:
+ */
+int __config_interrupt_bled(const char *led_gpio, char *interrupt_list, unsigned int min_blink_speed, unsigned int interval)
+{
+	int gpio_nr, fd, r, ret = 0;
+	unsigned int *p;
+	char word[100], *next;
+	struct interrupt_bled il;
+	struct bled_common *bl = &il.bled;
+
+	if (!interrupt_list || *interrupt_list == '\0')
+		return -1;
+
+	if (__update_gpio_nv_var(led_gpio, 1) < 0)
+		return -2;
+
+	if ((gpio_nr = extract_gpio_pin(led_gpio)) < 0) {
+		ret = -3;
+		goto exit___config_interrupt_bled;
+	}
+
+	memset(&il, 0, sizeof(il));
+	p = &il.interrupt[0];
+	foreach(word, interrupt_list, next) {
+		*p++ = atoi(word);
+		il.nr_interrupt++;
+		if (il.nr_interrupt > ARRAY_SIZE(il.interrupt)) {
+			ret = -4;
+			goto exit___config_interrupt_bled;
+		}
+	}
+
+	if ((fd = open(BLED_DEVNAME, O_RDWR)) < 0) {
+		_dprintf("%s: open %s fail. (%s)\n", __func__, BLED_DEVNAME, strerror(errno));
+		ret = -4;
+		goto exit___config_interrupt_bled;
+	}
+
+	bl->gpio_nr = gpio_nr;
+	bl->gpio_api_id = GPIO_API_PLATFORM;
+	bl->active_low = !!(nvram_get_int(led_gpio) & GPIO_ACTIVE_LOW);
+	bl->state = BLED_STATE_STOP;
+	bl->bh_type = BLED_BHTYPE_TIMER;
+	bl->mode = BLED_NORMAL_MODE;
+	bl->min_blink_speed = min_blink_speed;
+	bl->interval = interval;
+
+	if ((r = ioctl(fd, BLED_CTL_ADD_INTERRUPT_BLED, &il)) < 0 && errno != EEXIST) {
+		_dprintf("%s: ioctl(BLED_CTL_ADD_INTERRUPT_BLED) fail, return %d errno %d (%s)\n",
+			__func__, r, errno, strerror(errno));
+		close(fd);
+		ret = -5;
+		goto exit___config_interrupt_bled;
+	}
+
+	close(fd);
+
+	return 0;
+
+exit___config_interrupt_bled:
+	__update_gpio_nv_var(led_gpio, 0);
+	return ret;
+}
+
+/**
+ * Simpler interface to add a LED which blinks in accordance with number of interrupts
+ * which is specified by interrupt_list.
+ * @led_gpio:		pointer to name of "led_xxx_gpio"
+ * @interrupt_list:	interrupt list, e.g., "90 67", etc
+ * @return:
+ */
+int config_interrupt_bled(const char *led_gpio, char *interrupt_list)
+{
+	unsigned int min_blink_speed = 10;	/* times/s */
+	unsigned int interval = 100;		/* ms */
+
+	return __config_interrupt_bled(led_gpio, interrupt_list, min_blink_speed, interval);
+}
+
+/**
  * Return bled type.
  * @led_gpio:	pointer to name of "led_xxx_gpio"
  * @return:

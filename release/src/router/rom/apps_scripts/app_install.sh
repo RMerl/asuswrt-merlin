@@ -14,10 +14,17 @@ download_file=
 apps_from_internet=`nvram get rc_support |grep appnet`
 apps_local_space=`nvram get apps_local_space`
 f=`nvram get apps_install_folder`
+apps_new_arm=`nvram get apps_new_arm`  #sherry add 2016.7.5
 case $f in
 	"asusware.arm")
-		pkg_type=`echo $f|sed -e "s,asusware\.,,"`
-		third_lib="mbwe-bluering"
+		pkg_type=`echo $f|sed -e "s,asusware\.,,"`		
+		#2016.7.5 sherry new oleg arm{
+		#third_lib="mbwe-bluering"  
+		if [ $apps_new_arm -eq 1 ]; then 
+			third_lib="armeabi-ng"
+		else
+			third_lib="mbwe-bluering" 
+		fi #end sherry modify}
 		;;
 	"asusware.big")
 		pkg_type="mipsbig"
@@ -204,6 +211,7 @@ echo "file_ver4=$file_ver4, list_ver4=$list_ver4."
 				pkg_server=$s
 				break
 			fi
+			
 		done
 		if [ -z "$pkg_server" ]; then
 			nvram set apps_state_error=6
@@ -269,6 +277,158 @@ echo "file_ver4=$file_ver4, list_ver4=$list_ver4."
 	return 0
 }
 
+#sherry add for UI app_state{ 
+# $1: ipkg log file
+_check__lib_log_message(){
+
+	got_log=`cat $1 |sed -n '$p'`
+	action=`echo $got_log |awk '{print $1}'`
+
+	if [ "$action" == "Installing" ] || [ "$action" == "Configuring" ]; then
+		target=`echo $got_log |awk '{print $2}'`
+	elif [ "$action" == "Downloading" ]; then
+		target=`echo $got_log |awk '{print $2}' |awk '{FS="/"; print $NF}' |awk '{FS="_"; print $1}'`
+	elif [ "$action" == "Successfully" ]; then
+		target="terminated"
+	elif [ "$action" == "update-alternatives:" ]; then
+		target=""
+	elif [ -z "$action" ]; then
+		target="Space"
+	else
+		target="error"
+	fi
+
+	if [ "$action" == "Installing" ] || [ "$action" == "Configuring" ] || [ "$action" == "Downloading" ]; then
+		nvram set apps_depend_action="$action"
+		nvram set apps_depend_action_target="$target"
+	fi
+
+	echo "$target"
+
+	return 0
+
+}
+
+#instead "_log_ipkg_install()" when install dependent lib 
+# $1: package name (all path), $2: ipkg log file.
+_log_lib_ipkg_install(){
+
+	package_deps=`echo "$1"|awk '{FS="/"; print $NF}'|awk '{FS="_";printf $1}'`
+	nvram set apps_depend_action="$package_deps"
+	nvram set apps_depend_action_target="Installing"
+	
+	ret=`_check__lib_log_message "$2"`
+	while [ "$ret" != "terminated" ] && [ "$ret" != "error" ]; do
+		_loop_delay 10
+		ret=`_check__lib_log_message "$2"`
+	done
+
+	echo "$ret"
+
+	return 0
+}
+
+#instead "_download_package()" when download dependent lib 
+# $1: package name, $2: mounted path.
+_download_lib_package(){
+	if [ "$1" == "uclibc-opt" ] || [ "$1" == "ipkg-opt" ]; then
+		return 0
+	fi
+
+	pkg_server=
+	pkg_file=
+	installed_ipk_path=
+	need_download=1
+
+	if [ "$need_download" == "1" ]; then
+		# Geting the app's file name...
+		server_names=`grep -n '^src.*' $CONF_FILE |awk '{print $3}'`
+
+		if [ "$pkg_type" != "arm" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
+			IS_SUPPORT_SSL=`nvram get rc_support|grep -i HTTPS`
+			if [ -n "$IS_SUPPORT_SSL" ]; then
+				wget_options="$wget_options --no-check-certificate"
+			fi
+		fi
+
+		for s in $server_names; do
+			if [ "$pkg_type" != "arm" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ]; then
+				pkg_file=`_get_pkg_file_name_old $1 $s 0`
+			else
+				pkg_file=`_get_pkg_file_name $1`
+			fi
+			
+			wget --spider $wget_options $s/$pkg_file
+			if [ "$?" == "0" ]; then
+				pkg_server=$s
+				break
+			fi
+		done
+		if [ -z "$pkg_server" ]; then
+			nvram set apps_state_error=6
+			return 1
+		fi
+
+		# Downloading the app's file name...
+		if [ "$pkg_type" != "arm" ] && [ -n "$apps_ipkg_old" ] && [ "$apps_ipkg_old" == "1" ] && [ "$pkg_server" == "$ASUS_SERVER" ]; then
+			ipk_file_name=`_get_pkg_file_name_old $1 $pkg_server 1`
+		else
+			ipk_file_name=$pkg_file
+		fi
+
+		target=$2/$ipk_file_name
+		#nvram set apps_download_file=$ipk_file_name
+		#nvram set apps_download_percent=0
+		echo "wget -c $wget_options $pkg_server/$pkg_file -O $target"
+		wget -c $wget_options $pkg_server/$pkg_file -O $target &
+		wget_pid=`pidof wget`
+		if [ -z "$wget_pid" ] || [ $wget_pid -lt 1 ]; then
+			rm -rf $target
+			sync
+
+			nvram set apps_state_error=6
+			return 1
+		fi
+		i=0
+		while [ $i -lt $wget_timeout ] && [ ! -f "$target" ]; do
+			i=$((i+1))
+			sleep 1
+		done
+
+		wget_pid=`pidof wget`
+		size=`/usr/sbin/app_get_field.sh $1 Size 2`
+		target_size=`ls -l $target |awk '{printf $5}'`
+		percent=$((target_size*100/size))
+		#nvram set apps_download_percent=$percent
+		while [ -n "$wget_pid" ] && [ -n "$target_size" ] && [ $target_size -lt $size ]; do
+			sleep 1
+
+			wget_pid=`pidof wget`
+			target_size=`ls -l $target |awk '{printf $5}'`
+			percent=$((target_size*100/size))
+			#nvram set apps_download_percent=$percent
+		done
+
+		target_size=`ls -l $target |awk '{printf $5}'`
+		percent=$((target_size*100/size))
+		#nvram set apps_download_percent=$percent
+		if [ -z "$percent" ] || [ $percent -ne 100 ]; then
+			rm -rf $target
+			sync
+
+			nvram set apps_state_error=6
+			return 1
+		fi
+
+		installed_ipk_path=$2"/"$ipk_file_name
+	fi
+
+	download_file=$installed_ipk_path
+
+	return 0
+}
+
+#end sherry add }
 
 nvram set apps_state_install=0 # INITIALIZING
 nvram set apps_state_error=0
@@ -317,6 +477,107 @@ APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
 
 
 nvram set apps_state_install=1 # CHECKING_PARTITION
+#sherry add for 2016.7.18
+APPS_INSTALL_FOLDER_BAK=$APPS_INSTALL_FOLDER".bak"
+APPS_INSTALL_PATH_BAK=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER_BAK
+ASUS_UCLIBC_VER=1.0.12-1
+dm_exist=
+aicloud_exist=
+ms_exist=
+if [ $apps_new_arm -eq 1 ]; then 
+	uclibc_control_file=$APPS_INSTALL_PATH/lib/ipkg/info/uclibc-opt.control
+
+	if [ -f "$uclibc_control_file" ]; then
+		uclibc_version=`cat "$uclibc_control_file" |grep "Version:"`
+		uclibc_version=${uclibc_version:9}
+		ASUS_UCLIBC_VER_NUM=`echo $ASUS_UCLIBC_VER |sed 's/\.//g'|sed 's/\-//g'`
+		uclibc_version_num=`echo $uclibc_version |sed 's/\.//g'|sed 's/\-//g'`
+		if [ $ASUS_UCLIBC_VER_NUM -gt $uclibc_version_num ]; then
+			app_init_run.sh allpkg stop
+			if [ -f $APPS_INSTALL_PATH/lib/ipkg/info/downloadmaster.control ]; then
+				dm_exist=1
+			fi
+
+			if [ -f $APPS_INSTALL_PATH/lib/ipkg/info/aicloud.control ]; then
+				aicloud_exist=1
+			fi
+
+			if [ -f $APPS_INSTALL_PATH/lib/ipkg/info/mediaserver.control ]; then
+				ms_exist=1
+			fi
+
+			cp -rf $APPS_INSTALL_PATH $APPS_INSTALL_PATH_BAK
+			rm -rf $APPS_INSTALL_PATH
+
+			app_base_packages.sh $APPS_DEV
+			if [ "$?" != "0" ]; then
+				exit 1
+			fi
+			app_update.sh
+
+			app_inst_error=0
+			dm_inst_error=1
+			ms_inst_error=1
+			aicloud_inst_error=1
+			i=0
+
+			while [ "$i" == "0" -o "$app_inst_error" == "1" ]; do
+	
+				i=$(($i+1))
+				if [ "$i" -gt "2" ]; then
+					break
+				fi
+				
+				if [ "$1" != "downloadmaster" ] && [ "$dm_exist" == "1" ] && [ "$dm_inst_error" == "1" ]; then
+					app_install.sh downloadmaster $APPS_DEV
+					echo $?
+					if [ "$?" == "0" ]; then
+						dm_inst_error=0
+					else
+						app_inst_error=1
+					fi
+				fi
+
+				
+				if [ "$1" != "aicloud" ] && [ "$aicloud_exist" == "1" ] && [ "$aicloud_inst_error" == "1" ]; then
+					app_install.sh aicloud $APPS_DEV
+					if [ "$?" == "0" ]; then
+						aicloud_inst_error=0
+					else
+						app_inst_error=1
+					fi
+				fi
+
+				
+				if [ "$1" != "mediaserver" ] && [ "$ms_exist" == "1" ] && [ "$ms_inst_error" == "1" ]; then
+					app_install.sh mediaserver $APPS_DEV
+					if [ "$?" == "0" ]; then
+						ms_inst_error=0
+					else
+						app_inst_error=1
+					fi
+				fi
+
+			done
+
+			if [ "$app_inst_error" == "1" ]; then #install error
+				rm -rf $APPS_INSTALL_PATH
+				cp -rf $APPS_INSTALL_PATH_BAK $APPS_INSTALL_PATH
+				rm -rf $APPS_INSTALL_PATH_BAK
+				app_init_run.sh allpkg start
+				exit 1
+			else
+				rm -rf $APPS_INSTALL_PATH_BAK
+			fi
+
+
+		fi
+	fi
+
+fi
+
+#end sherry 2016.7.18
+
 /usr/sbin/app_base_packages.sh $APPS_DEV
 if [ "$?" != "0" ]; then
 	# apps_state_error was already set by app_base_packages.sh.
@@ -512,7 +773,50 @@ fi
 for file in $target_file; do
 	echo "Installing the package: $file..."
 	install_log=$APPS_INSTALL_PATH/ipkg_log.txt
+	#2016.7.5 sherry add install dependent lib{
+	if [ $apps_new_arm -eq 1 ]; then 
+		file_tmp=`echo "$file"|awk '{FS="/"; print $NF}'|awk '{FS="_";printf $1}'`
+		base_library=`/usr/sbin/app_get_field.sh $file_tmp Depends 2 |sed 's/,/ /g'`
+		nvram set apps_depend_do="$base_library"
+		lib_install_log=$APPS_INSTALL_PATH/lib_ipkg_log.txt
+		for lib in $base_library; do
+			if [ -n "`echo "$lib"|grep "asus"`" ]; then
+				continue
+			fi
+			_check_package $lib
+			if [ "$?" == "1" ]; then
+				continue
+			fi			
+			_download_lib_package $lib $APPS_INSTALL_PATH/tmp
+
+			if [ "$?" != "0" ]; then
+				echo "Fail to download the package: $lib!"
+				# apps_state_error was already set by _download_package().
+				exit 1
+			fi
+			
+			ipkg install $download_file 1>$lib_install_log &
+
+			result=`_log_lib_ipkg_install $download_file $lib_install_log`
+			if [ "$result" == "error" ]; then
+				echo "Fail to install the package: $file!"
+				nvram set apps_state_error=7
+				exit 1
+			else
+				rm -rf $download_file
+				rm -f $install_log
+			fi
+		done
+	fi
+	#fi #end sherry modify}
 	ipkg install $file 1>$install_log &
+	#2016.7.5 sherry modify{
+	#if [ $apps_new_arm -eq 1 ];then 
+		#sed -i 's|^src/gz optware.asus|#src/gz optware.asus|g' $CONF_FILE
+		#ipkg install $file 1>$install_log &
+	#else
+	#	ipkg install $file 1>$install_log & 
+	#fi #end sherry modify}
 	result=`_log_ipkg_install $1 $install_log`
 	if [ "$result" == "error" ]; then
 		echo "Fail to install the package: $file!"
@@ -523,6 +827,11 @@ for file in $target_file; do
 		rm -f $install_log
 	fi
 done
+#2016.7.5 sherry add{
+#if [ $apps_new_arm -eq 1 ];then 
+#	sed -i 's|^#src/gz optware.asus|src/gz optware.asus|g' $CONF_FILE
+#fi
+#end sherry add}
 
 APPS_MOUNTED_TYPE=`mount |grep "/dev/$APPS_DEV on " |awk '{print $5}'`
 if [ "$APPS_MOUNTED_TYPE" == "vfat" ] || [ "$APPS_MOUNTED_TYPE" == "tfat" ]; then

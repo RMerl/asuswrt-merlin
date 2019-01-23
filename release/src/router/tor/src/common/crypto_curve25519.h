@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Tor Project, Inc. */
+/* Copyright (c) 2012-2016, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #ifndef TOR_CRYPTO_CURVE25519_H
@@ -14,12 +14,20 @@
 /** Length of the result of a curve25519 handshake. */
 #define CURVE25519_OUTPUT_LEN 32
 
-/** Wrapper type for a curve25519 public key */
+/** Wrapper type for a curve25519 public key.
+ *
+ *  (We define a separate type for these to make it less likely that we'll
+ *  mistake them for secret keys.)
+ * */
 typedef struct curve25519_public_key_t {
   uint8_t public_key[CURVE25519_PUBKEY_LEN];
 } curve25519_public_key_t;
 
-/** Wrapper type for a curve25519 secret key */
+/** Wrapper type for a curve25519 secret key
+ *
+ * (We define a separate type for these to make it less likely that we'll
+ * mistake them for public keys.)
+ **/
 typedef struct curve25519_secret_key_t {
   uint8_t secret_key[CURVE25519_SECKEY_LEN];
 } curve25519_secret_key_t;

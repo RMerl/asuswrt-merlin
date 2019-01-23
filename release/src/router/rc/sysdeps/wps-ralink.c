@@ -51,7 +51,7 @@ int
 stop_wps_method(void)
 {
 	char prefix[] = "wlXXXXXXXXXX_", word[256], *next, ifnames[128];
-	int i, wps_band = nvram_get_int("wps_band"), multiband = get_wps_multiband();
+	int i, wps_band = nvram_get_int("wps_band_x"), multiband = get_wps_multiband();
 
 	if(getpid()!=1) {
 		notify_rc("stop_wps_method");
@@ -93,7 +93,7 @@ int is_wps_stopped(void)
 {
 	int i, status, ret = 1;
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_", word[256], *next, ifnames[128];
-	int wps_band = nvram_get_int("wps_band"), multiband = get_wps_multiband();
+	int wps_band = nvram_get_int("wps_band_x"), multiband = get_wps_multiband();
 
 	i = 0;
 	strcpy(ifnames, nvram_safe_get("wl_ifnames"));

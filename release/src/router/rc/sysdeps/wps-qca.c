@@ -77,7 +77,7 @@ int is_wps_stopped(void)
 {
 	int i, ret = 1;
 	char status[16], tmp[128], prefix[] = "wlXXXXXXXXXX_", word[256], *next, ifnames[128];
-	int wps_band = nvram_get_int("wps_band"), multiband = get_wps_multiband();
+	int wps_band = nvram_get_int("wps_band_x"), multiband = get_wps_multiband();
 
 	i = 0;
 	strcpy(ifnames, nvram_safe_get("wl_ifnames"));

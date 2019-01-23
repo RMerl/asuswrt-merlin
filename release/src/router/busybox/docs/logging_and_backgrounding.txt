@@ -45,6 +45,8 @@ udhcpc - auto-backgrounds unless -f after lease is obtained,
 udhcpd - auto-backgrounds and do not log to stderr unless -f,
     otherwise logs to stderr, but option -S makes it log *also* to syslog
 zcip - auto-backgrounds and logs *also* to syslog unless -f
+    behaviour can be overridden with experimental LOGGING env.var
+    (can be set to either "none" or "syslog")
 
 Total: 13 applets (+1 obsolete),
  4 log to syslog by default (crond fakeidentd inetd zcip),

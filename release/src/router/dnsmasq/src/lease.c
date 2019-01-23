@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2016 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2017 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,21 +21,128 @@
 static struct dhcp_lease *leases = NULL, *old_leases = NULL;
 static int dns_dirty, file_dirty, leases_left;
 
-void lease_init(time_t now)
+static int read_leases(time_t now, FILE *leasestream)
 {
   unsigned long ei;
   struct all_addr addr;
   struct dhcp_lease *lease;
   int clid_len, hw_len, hw_type;
+  int items;
+  char *domain = NULL;
+
+  *daemon->dhcp_buff3 = *daemon->dhcp_buff2 = '\0';
+
+  /* client-id max length is 255 which is 255*2 digits + 254 colons
+     borrow DNS packet buffer which is always larger than 1000 bytes
+
+     Check various buffers are big enough for the code below */
+
+#if (DHCP_BUFF_SZ < 255) || (MAXDNAME < 64) || (PACKETSZ+MAXDNAME+RRFIXEDSZ  < 764)
+# error Buffer size breakage in leasefile parsing.
+#endif
+
+    while ((items=fscanf(leasestream, "%255s %255s", daemon->dhcp_buff3, daemon->dhcp_buff2)) == 2)
+      {
+	*daemon->namebuff = *daemon->dhcp_buff = *daemon->packet = '\0';
+	hw_len = hw_type = clid_len = 0;
+	
+#ifdef HAVE_DHCP6
+	if (strcmp(daemon->dhcp_buff3, "duid") == 0)
+	  {
+	    daemon->duid_len = parse_hex(daemon->dhcp_buff2, (unsigned char *)daemon->dhcp_buff2, 130, NULL, NULL);
+	    if (daemon->duid_len < 0)
+	      return 0;
+	    daemon->duid = safe_malloc(daemon->duid_len);
+	    memcpy(daemon->duid, daemon->dhcp_buff2, daemon->duid_len);
+	    continue;
+	  }
+#endif
+	
+	if (fscanf(leasestream, " %64s %255s %764s",
+		   daemon->namebuff, daemon->dhcp_buff, daemon->packet) != 3)
+	  return 0;
+	
+	if (inet_pton(AF_INET, daemon->namebuff, &addr.addr.addr4))
+	  {
+	    if ((lease = lease4_allocate(addr.addr.addr4)))
+	      domain = get_domain(lease->addr);
+	    
+	    hw_len = parse_hex(daemon->dhcp_buff2, (unsigned char *)daemon->dhcp_buff2, DHCP_CHADDR_MAX, NULL, &hw_type);
+	    /* For backwards compatibility, no explicit MAC address type means ether. */
+	    if (hw_type == 0 && hw_len != 0)
+	      hw_type = ARPHRD_ETHER; 
+	  }
+#ifdef HAVE_DHCP6
+	else if (inet_pton(AF_INET6, daemon->namebuff, &addr.addr.addr6))
+	  {
+	    char *s = daemon->dhcp_buff2;
+	    int lease_type = LEASE_NA;
+
+	    if (s[0] == 'T')
+	      {
+		lease_type = LEASE_TA;
+		s++;
+	      }
+	    
+	    if ((lease = lease6_allocate(&addr.addr.addr6, lease_type)))
+	      {
+		lease_set_iaid(lease, strtoul(s, NULL, 10));
+		domain = get_domain6((struct in6_addr *)lease->hwaddr);
+	      }
+	  }
+#endif
+	else
+	  return 0;
+
+	if (!lease)
+	  die (_("too many stored leases"), NULL, EC_MISC);
+
+	if (strcmp(daemon->packet, "*") != 0)
+	  clid_len = parse_hex(daemon->packet, (unsigned char *)daemon->packet, 255, NULL, NULL);
+	
+	lease_set_hwaddr(lease, (unsigned char *)daemon->dhcp_buff2, (unsigned char *)daemon->packet, 
+			 hw_len, hw_type, clid_len, now, 0);
+	
+	if (strcmp(daemon->dhcp_buff, "*") !=  0)
+	  lease_set_hostname(lease, daemon->dhcp_buff, 0, domain, NULL);
+
+	ei = atol(daemon->dhcp_buff3);
+
+#if defined(HAVE_BROKEN_RTC) || defined(HAVE_LEASEFILE_EXPIRE)
+	if (ei != 0)
+	  lease->expires = (time_t)ei + now;
+	else
+	  lease->expires = (time_t)0;
+#ifdef HAVE_BROKEN_RTC
+	lease->length = ei;
+#endif
+#else
+	/* strictly time_t is opaque, but this hack should work on all sane systems,
+	   even when sizeof(time_t) == 8 */
+	lease->expires = (time_t)ei;
+#endif
+	
+	/* set these correctly: the "old" events are generated later from
+	   the startup synthesised SIGHUP. */
+	lease->flags &= ~(LEASE_NEW | LEASE_CHANGED);
+	
+	*daemon->dhcp_buff3 = *daemon->dhcp_buff2 = '\0';
+      }
+    
+    return (items == 0 || items == EOF);
+}
+
+void lease_init(time_t now)
+{
   FILE *leasestream;
-  
+
   leases_left = daemon->dhcp_max;
-  
+
   if (option_bool(OPT_LEASE_RO))
     {
       /* run "<lease_change_script> init" once to get the
 	 initial state of the database. If leasefile-ro is
-	 set without a script, we just do without any 
+	 set without a script, we just do without any
 	 lease database. */
 #ifdef HAVE_SCRIPT
       if (daemon->lease_change_command)
@@ -56,101 +163,24 @@ void lease_init(time_t now)
     {
       /* NOTE: need a+ mode to create file if it doesn't exist */
       leasestream = daemon->lease_stream = fopen(daemon->lease_file, "a+");
-      
+
       if (!leasestream)
 	die(_("cannot open or create lease file %s: %s"), daemon->lease_file, EC_FILE);
-      
+
       /* a+ mode leaves pointer at end. */
       rewind(leasestream);
     }
-  
-  /* client-id max length is 255 which is 255*2 digits + 254 colons 
-     borrow DNS packet buffer which is always larger than 1000 bytes */
+
   if (leasestream)
-    while (fscanf(leasestream, "%255s %255s", daemon->dhcp_buff3, daemon->dhcp_buff2) == 2)
-      {
-#ifdef HAVE_DHCP6
-	if (strcmp(daemon->dhcp_buff3, "duid") == 0)
-	  {
-	    daemon->duid_len = parse_hex(daemon->dhcp_buff2, (unsigned char *)daemon->dhcp_buff2, 130, NULL, NULL);
-	    daemon->duid = safe_malloc(daemon->duid_len);
-	    memcpy(daemon->duid, daemon->dhcp_buff2, daemon->duid_len);
-	    continue;
-	  }
-#endif
+    {
+      if (!read_leases(now, leasestream))
+	my_syslog(MS_DHCP | LOG_ERR, _("failed to parse lease database, invalid line: %s %s %s %s ..."),
+		  daemon->dhcp_buff3, daemon->dhcp_buff2,
+		  daemon->namebuff, daemon->dhcp_buff);
 
-	ei = atol(daemon->dhcp_buff3);
-	
-	if (fscanf(leasestream, " %64s %255s %764s",
-		   daemon->namebuff, daemon->dhcp_buff, daemon->packet) != 3)
-	  break;
-	
-	clid_len = 0;
-	if (strcmp(daemon->packet, "*") != 0)
-	  clid_len = parse_hex(daemon->packet, (unsigned char *)daemon->packet, 255, NULL, NULL);
-	
-	if (inet_pton(AF_INET, daemon->namebuff, &addr.addr.addr4) &&
-	    (lease = lease4_allocate(addr.addr.addr4)))
-	  {
-	    hw_len = parse_hex(daemon->dhcp_buff2, (unsigned char *)daemon->dhcp_buff2, DHCP_CHADDR_MAX, NULL, &hw_type);
-	    /* For backwards compatibility, no explict MAC address type means ether. */
-	    if (hw_type == 0 && hw_len != 0)
-	      hw_type = ARPHRD_ETHER; 
-
-	    lease_set_hwaddr(lease, (unsigned char *)daemon->dhcp_buff2, (unsigned char *)daemon->packet, 
-			     hw_len, hw_type, clid_len, now, 0);
-	    
-	    if (strcmp(daemon->dhcp_buff, "*") !=  0)
-	      lease_set_hostname(lease, daemon->dhcp_buff, 0, get_domain(lease->addr), NULL);
-	  }
-#ifdef HAVE_DHCP6
-	else if (inet_pton(AF_INET6, daemon->namebuff, &addr.addr.addr6))
-	  {
-	    char *s = daemon->dhcp_buff2;
-	    int lease_type = LEASE_NA;
-	    int iaid;
-
-	    if (s[0] == 'T')
-	      {
-		lease_type = LEASE_TA;
-		s++;
-	      }
-	    
-	    iaid = strtoul(s, NULL, 10);
-	    
-	    if ((lease = lease6_allocate(&addr.addr.addr6, lease_type)))
-	      {
-		lease_set_hwaddr(lease, NULL, (unsigned char *)daemon->packet, 0, 0, clid_len, now, 0);
-		lease_set_iaid(lease, iaid);
-		if (strcmp(daemon->dhcp_buff, "*") !=  0)
-		  lease_set_hostname(lease, daemon->dhcp_buff, 0, get_domain6((struct in6_addr *)lease->hwaddr), NULL);
-	      }
-	  }
-#endif
-	else
-	  break;
-
-	if (!lease)
-	  die (_("too many stored leases"), NULL, EC_MISC);
-       	
-#if defined(HAVE_BROKEN_RTC) || defined(HAVE_LEASEFILE_EXPIRE)
-	if (ei != 0)
-	  lease->expires = (time_t)ei + now;
-	else
-	  lease->expires = (time_t)0;
-#ifdef HAVE_BROKEN_RTC
-	lease->length = ei;
-#endif
-#else
-	/* strictly time_t is opaque, but this hack should work on all sane systems,
-	   even when sizeof(time_t) == 8 */
-	lease->expires = (time_t)ei;
-#endif
-	
-	/* set these correctly: the "old" events are generated later from
-	   the startup synthesised SIGHUP. */
-	lease->flags &= ~(LEASE_NEW | LEASE_CHANGED);
-      }
+      if (ferror(leasestream))
+	die(_("failed to read lease file %s: %s"), daemon->lease_file, EC_FILE);
+    }
   
 #ifdef HAVE_SCRIPT
   if (!daemon->lease_stream)
@@ -164,6 +194,7 @@ void lease_init(time_t now)
 	    errno = ENOENT;
 	  else if (WEXITSTATUS(rc) == 126)
 	    errno = EACCES;
+
 	  die(_("cannot run lease-init script %s: %s"), daemon->lease_change_command, EC_FILE);
 	}
       
@@ -200,7 +231,7 @@ void lease_update_from_configs(void)
     else if ((name = host_from_dns(lease->addr)))
       lease_set_hostname(lease, name, 1, get_domain(lease->addr), NULL); /* updates auth flag only */
 }
- 
+
 static void ourprintf(int *errp, char *format, ...)
 {
   va_list ap;
@@ -440,7 +471,7 @@ void lease_ping_reply(struct in6_addr *sender, unsigned char *packet, char *inte
 
 void lease_update_slaac(time_t now)
 {
-  /* Called when we contruct a new RA-names context, to add putative
+  /* Called when we construct a new RA-names context, to add putative
      new SLAAC addresses to existing leases. */
 
   struct dhcp_lease *lease;
@@ -810,7 +841,7 @@ void lease_set_expires(struct dhcp_lease *lease, unsigned int len, time_t now)
     {
       exp = now + (time_t)len;
       /* Check for 2038 overflow. Make the lease
-	 inifinite in that case, as the least disruptive
+	 infinite in that case, as the least disruptive
 	 thing we can do. */
       if (difftime(exp, now) <= 0.0)
 	exp = 0;
@@ -1144,7 +1175,7 @@ int do_script_run(time_t now)
 }
 
 #ifdef HAVE_SCRIPT
-/* delim == -1 -> delim = 0, but embeded 0s, creating extra records, are OK. */
+/* delim == -1 -> delim = 0, but embedded 0s, creating extra records, are OK. */
 void lease_add_extradata(struct dhcp_lease *lease, unsigned char *data, unsigned int len, int delim)
 {
   unsigned int i;
@@ -1152,7 +1183,7 @@ void lease_add_extradata(struct dhcp_lease *lease, unsigned char *data, unsigned
   if (delim == -1)
     delim = 0;
   else
-    /* check for embeded NULLs */
+    /* check for embedded NULLs */
     for (i = 0; i < len; i++)
       if (data[i] == 0)
 	{

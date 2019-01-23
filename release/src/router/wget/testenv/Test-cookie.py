@@ -6,7 +6,6 @@ from misc.wget_file import WgetFile
 """
     This test ensures that Wget's cookie jar support works correctly.
 """
-TEST_NAME = "Basic Cookie Functionality"
 ############# File Definitions ###############################################
 File1 = """All happy families are alike;
 Each unhappy family is unhappy in its own way"""
@@ -48,7 +47,6 @@ post_test = {
 }
 
 err = HTTPTest (
-                name=TEST_NAME,
                 pre_hook=pre_test,
                 test_params=test_options,
                 post_hook=post_test

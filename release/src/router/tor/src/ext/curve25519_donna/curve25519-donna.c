@@ -483,7 +483,6 @@ fcontract(u8 *output, limb *input_limbs) {
   int i;
   int j;
   s32 input[10];
-  s32 mask;
 
   /* |input_limbs[i]| < 2^26, so it's valid to convert to an s32. */
   for (i = 0; i < 10; i++) {
@@ -572,7 +571,7 @@ fcontract(u8 *output, limb *input_limbs) {
   /* It still remains the case that input might be between 2^255-19 and 2^255.
    * In this case, input[1..9] must take their maximum value and input[0] must
    * be >= (2^255-19) & 0x3ffffff, which is 0x3ffffed. */
-  mask = s32_gte(input[0], 0x3ffffed);
+  s32 mask = s32_gte(input[0], 0x3ffffed);
   for (i = 1; i < 10; i++) {
     if ((i & 1) == 1) {
       mask &= s32_eq(input[i], 0x1ffffff);

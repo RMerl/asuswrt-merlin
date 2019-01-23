@@ -1,0 +1,46 @@
+## Here is an example for Go.
+
+syntax "go" "\.go$"
+comment "//"
+
+# Set up a formatter since spelling is probably useless...
+formatter gofmt -w
+
+# Types.
+color green "\<(bool|u?int(8|16|32|64)?|float(32|64)|complex(64|128)|byte|rune|uintptr|string|error)\>"
+color green "\<((<-[[:space:]]*)chan|chan[[:space:]]*<-|const|func|interface|map|struct|type|var)\>"
+
+# Predefined functions.
+color blue "\<(append|cap|close|complex|copy|delete|imag|len|make|new|panic|print|println|real|recover)\>"
+
+# Control structures.
+color brightyellow "\<(case|default|defer|else|for|go|if|range|select|switch)\>"
+
+# Control flow.
+color magenta "\<(break|continue|fallthrough|goto|return)\>"
+
+# Declarations.
+color brightcyan "\<(package|import)\>"
+color brightcyan "//[[:space:]]*\+build[[:space:]]+(([a-zA-Z_0-9]+[[:space:]]*)+,[[:space:]]*)*[a-zA-Z_0-9]+"
+
+# Literals.
+color red "\<[0-9]+\.[0-9]*([Ee][+-][0-9]+)?i?\>"
+color red "\<[0-9]+[Ee][+-][0-9]+i?\>"
+color red "\<\.[0-9]+([Ee][+-][0-9]+)?i?\>"
+color red "\<[0-9]+i\>"
+color red "\<[1-9][0-9]*\>"
+color red "\<0[0-7]*\>"
+icolor red "\<0x[0-9a-f]+\>"
+
+# Strings and characters; slightly fuzzy.
+color red "\<(true|false|nil|iota|_)\>"
+color red "'(\\.|[^'])+'"
+color red ""(\\.|[^"])*""
+color red start=""(\\.|[^"])*\\[[:space:]]*$" end="^(\\.|[^"])*""
+
+# Comments.
+color brightblue "//.*"
+color brightblue start="/\*" end="\*/"
+
+# Trailing whitespace.
+color ,green "[[:space:]]+$"

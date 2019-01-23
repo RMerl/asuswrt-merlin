@@ -53,6 +53,9 @@
 #define USB_EHCI_PORT_3 get_usb_ehci_port(2)
 #define USB_OHCI_PORT_3 get_usb_ohci_port(2)
 
+#if defined(RTCONFIG_M2_SSD)
+#define M2_SSD_PORT USB_EHCI_PORT_3
+#endif
 #ifdef BCM_MMC
 #define SDCARD_PORT USB_EHCI_PORT_3
 #endif
@@ -124,6 +127,11 @@ extern int isPrinterInterface(const char *interface_name);
 #endif
 extern int isStorageInterface(const char *interface_name);
 extern int isStorageDevice(const char *device_name);
+#if defined(RTCONFIG_M2_SSD)
+extern int isM2SSDDevice(const char *device_name);
+#else
+static inline int isM2SSDDevice(const char *device_name) { return 0; }
+#endif
 #ifdef BCM_MMC
 extern int isMMCDevice(const char *device_name);
 #endif
