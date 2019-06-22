@@ -124,6 +124,7 @@ char current_page_name[128];
 char user_agent[1024];
 char gen_token[32]={0};
 char last_fail_token[32]={0};
+int do_ssl = 0; 	// use Global for HTTPS upgrade judgment in web.c
 
 #ifdef TRANSLATE_ON_FLY
 char Accept_Language[16];
@@ -392,7 +393,11 @@ send_login_page(int fromapp_flag, int error_status, char* url, char* file, int l
 				}
 			}
 		}
-		snprintf(inviteCode, sizeof(inviteCode), "<script>top.location.href='/Main_Login.asp';</script>");
+		if(!do_ssl && nvram_match("http_redirect_to_https", "1") && nvram_match("http_enable", "2")){
+			snprintf(inviteCode, sizeof(inviteCode), "<script>top.location.href='https://' + location.host + '/Main_Login.asp';</script>");
+		}else{
+			snprintf(inviteCode, sizeof(inviteCode), "<script>top.location.href='/Main_Login.asp';</script>");
+		}
 	}else{
 		snprintf(inviteCode, sizeof(inviteCode), "\"error_status\":\"%d\"", error_status);
 	}
@@ -2038,7 +2043,6 @@ void reapchild()	// 0527 add
 	wait(NULL);
 }
 
-int do_ssl = 0; 	// use Global for HTTPS upgrade judgment in web.c
 int ssl_stream_fd; 	// use Global for HTTPS stream fd in web.c
 int main(int argc, char **argv)
 {

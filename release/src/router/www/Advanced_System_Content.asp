@@ -168,12 +168,14 @@ function initial(){
 	if(!HTTPS_support){
 		document.getElementById("https_tr").style.display = "none";
 		document.getElementById("https_lanport").style.display = "none";
+		document.getElementById("http_to_https_redirect").style.display = "none";
 	}
 	else{
 		hide_https_lanport(document.form.http_enable.value);
 		hide_https_wanport(document.form.http_enable.value);
 		hide_https_crt();
 		show_cert_details();
+		hide_http_to_https_redirect(document.form.http_enable.value);
 	}	
 	
 	if(wifi_tog_btn_support || wifi_hw_sw_support || sw_mode == 2 || sw_mode == 4){		// wifi_tog_btn && wifi_hw_sw && hide WPS button behavior under repeater mode
@@ -904,6 +906,10 @@ function hide_https_wanport(_value){
 	document.getElementById("https_port").style.display = (_value == "0") ? "none" : "";	
 }
 
+function hide_http_to_https_redirect(_value){
+	document.getElementById("http_to_https_redirect").style.display = (_value == "2") ? "" : "none";
+}
+
 function hide_https_crt(){
 	var protos = document.form.http_enable.value;
 
@@ -1597,11 +1603,18 @@ function upload_cert_key(){
 				<tr id="https_tr">
 					<th><#WLANConfig11b_AuthenticationMethod_itemname#></th>
 					<td>
-						<select name="http_enable" class="input_option" onchange="hide_https_lanport(this.value);hide_https_wanport(this.value);hide_https_crt();">
+						<select name="http_enable" class="input_option" onchange="hide_https_lanport(this.value);hide_https_wanport(this.value);hide_https_crt();hide_http_to_https_redirect(this.value);">
 							<option value="0" <% nvram_match("http_enable", "0", "selected"); %>>HTTP</option>
 							<option value="1" <% nvram_match("http_enable", "1", "selected"); %>>HTTPS</option>
 							<option value="2" <% nvram_match("http_enable", "2", "selected"); %>>BOTH</option>
 						</select>
+					</td>
+				</tr>
+
+				<tr id="http_redirect_to_https">
+					<th>Redirect to HTTPS?</th>
+					<td>
+						<input type="checkbox" value="1" class="input_6_table" name="http_to_https_redirect" checked="<% nvram_get("http_to_https_redirect", "1", "checked"); %>"><#checkbox_Yes#>
 					</td>
 				</tr>
 
