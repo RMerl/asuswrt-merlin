@@ -27,4 +27,4 @@ https://github.com/RMerl/asuswrt-merlin/wiki/Supported-Devices
 
 Firmware images can be downloaded from the official web site:
 
-https://asuswrt.lostrealm.ca/download
+https://www.asuswrt-merlin.net/download
