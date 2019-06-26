@@ -1192,8 +1192,10 @@ void time_zone_x_mapping(void)
 	nvram_set("time_zone_x", tmpstr);
 
 	/* special mapping */
-	if (nvram_match("time_zone", "JST"))
+	if (nvram_match("time_zone", "JST")) {
 		nvram_set("time_zone_x", "UCT-9");
+		snprintf( tmpstr, sizeof(tmpstr), "JST-9" );
+	}
 #if 0
 	else if (nvram_match("time_zone", "TST-10TDT"))
 		nvram_set("time_zone_x", "UCT-10");
