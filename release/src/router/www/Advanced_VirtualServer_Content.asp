@@ -503,6 +503,20 @@ function del_Row(_this){
 	showvts_rulelist(vts_rulelist_array["vts_rulelist_" + wan_idx + ""], "vts_rulelist_" + wan_idx + "");
 }
 
+function edit_Row(_this){ 	
+	var row_idx = $(_this).closest("*[row_tr_idx]").attr( "row_tr_idx" );
+	var wan_idx = $(_this).closest("*[wanUnitID]").attr( "wanUnitID" );
+  	
+	document.getElementById("vts_desc_x_" + wan_idx + "").value = vts_rulelist_array["vts_rulelist_" + wan_idx + ""][row_idx][0];
+	document.getElementById("vts_target_x_" + wan_idx + "").value = vts_rulelist_array["vts_rulelist_" + wan_idx + ""][row_idx][1];
+	document.getElementById("vts_port_x_" + wan_idx + "").value = vts_rulelist_array["vts_rulelist_" + wan_idx + ""][row_idx][2];
+	document.getElementById("vts_ipaddr_x_" + wan_idx + "").value = vts_rulelist_array["vts_rulelist_" + wan_idx + ""][row_idx][3];
+	document.getElementById("vts_lport_x_" + wan_idx + "").value = vts_rulelist_array["vts_rulelist_" + wan_idx + ""][row_idx][4];
+	document.getElementById("vts_proto_x_" + wan_idx + "").value = vts_rulelist_array["vts_rulelist_" + wan_idx + ""][row_idx][5];
+
+	del_Row(_this);
+}
+
 function showvts_rulelist(_arrayData, _tableID) {
 	var wan_idx = _tableID.split("_")[2];
 	var width_array = [20, 20, 16, 18, 10, 10, 6];
@@ -540,7 +554,7 @@ function showvts_rulelist(_arrayData, _tableID) {
 							break;
 					}
 				}
-				
+				code +='<td width="14%"><input class="edit_btn" onclick="edit_Row(this);" value=""/>';
 				code +='<td width="14%"><input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
 				code +='</tr>';
 			}
