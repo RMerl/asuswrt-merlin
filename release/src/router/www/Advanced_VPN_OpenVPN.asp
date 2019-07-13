@@ -372,7 +372,7 @@ function applyRule(){
 		var lan_ip_end = parseInt(origin_lan_ip.split(".")[3]);
 		var pool_start = '<% nvram_get("dhcp_start"); %>';
 		var pool_end = '<% nvram_get("dhcp_end"); %>';
-		var dhcp_staticlists = '<% nvram_get("dhcp_staticlist"); %>';
+		var dhcp_staticlists = "<% nvram_get("dhcp_staticlist"); %>";
 		var staticclist_row = dhcp_staticlists.split('&#60');
 		var netmask_obj = document.form.vpn_server_nm;
 		var vpnSubnet = document.form.vpn_server_sn;
