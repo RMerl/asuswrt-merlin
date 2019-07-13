@@ -81,7 +81,7 @@ var pool_start_end = parseInt(pool_start.split(".")[3]);
 var pool_end_end = parseInt(pool_end.split(".")[3]);
 
 var static_enable = '<% nvram_get("dhcp_static_x"); %>';
-var dhcp_staticlists = '<% nvram_get("dhcp_staticlist"); %>';
+var dhcp_staticlists = "<% nvram_get("dhcp_staticlist"); %>";
 var staticclist_row = dhcp_staticlists.split('&#60');
 
 var lan_domain_curr = '<% nvram_get("lan_domain"); %>';
