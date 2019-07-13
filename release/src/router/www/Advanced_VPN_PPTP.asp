@@ -764,7 +764,7 @@ function check_vpn_conflict() {		//if conflict with LAN ip & DHCP ip pool & stat
 	var origin_lan_ip = '<% nvram_get("lan_ipaddr"); %>';
 	var lan_ip_subnet = origin_lan_ip.split(".")[0]+"."+origin_lan_ip.split(".")[1]+"."+origin_lan_ip.split(".")[2]+".";
 	var lan_ip_end = parseInt(origin_lan_ip.split(".")[3]);
-	var dhcp_staticlists = '<% nvram_get("dhcp_staticlist"); %>'.replace(/&#62/g, ">").replace(/&#60/g, "<");;
+	var dhcp_staticlists = "<% nvram_get("dhcp_staticlist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");;
 	var staticclist_row = dhcp_staticlists.split('<');
 	var pptpd_clients_subnet = document.form._pptpd_clients_start.value.split(".")[0] 
 					   + "." + document.form._pptpd_clients_start.value.split(".")[1] 
