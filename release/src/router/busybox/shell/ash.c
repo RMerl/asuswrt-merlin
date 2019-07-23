@@ -12611,6 +12611,10 @@ helpcmd(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 static int FAST_FUNC
 historycmd(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 {
+	if (nextopt("c") != '\0') {
+		clear_history(line_input_state);
+		return EXIT_SUCCESS;
+	}
 	show_history(line_input_state);
 	return EXIT_SUCCESS;
 }
